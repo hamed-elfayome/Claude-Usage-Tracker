@@ -135,3 +135,5 @@ build-pkg-*/
 pkg/
 release/
 *.zip
+
+.idea

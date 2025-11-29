@@ -1,19 +1,19 @@
 # Claude Usage Tracker
 
 <div align="center">
-  <img src=".github/cover.jpg" alt="Claude Usage Tracker" width="100%">
+  <img src="https://hamedelfayome.dev/m/gcut" alt="Claude Usage Tracker" width="100%">
 
   **A native macOS menu bar application for real-time monitoring of Claude AI usage limits**
 
-  ![macOS](https://img.shields.io/badge/macOS-26.0+-black?style=flat-square&logo=apple)
-  ![Swift](https://img.shields.io/badge/Swift-5.9+-orange?style=flat-square&logo=swift)
-  ![SwiftUI](https://img.shields.io/badge/SwiftUI-3.0+-blue?style=flat-square&logo=swift)
+  ![macOS](https://img.shields.io/badge/macOS-14.0+-black?style=flat-square&logo=apple)
+  ![Swift](https://img.shields.io/badge/Swift-5.0+-orange?style=flat-square&logo=swift)
+  ![SwiftUI](https://img.shields.io/badge/SwiftUI-5.0+-blue?style=flat-square&logo=swift)
   ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
   ![Version](https://img.shields.io/badge/version-1.0.0-blue?style=flat-square)
 
   ### [Download Latest Release (v1.0.0)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
 
-  <sub>macOS 26.0+ (Sequoia) | ~3 MB | Native Swift/SwiftUI</sub>
+  <sub>macOS 14.0+ (Sonoma) | ~3 MB | Native Swift/SwiftUI</sub>
 
   <sub>⚠️ **Note:** This app is not signed with an Apple Developer certificate. You'll need to bypass the security warning on first launch (see installation steps below).</sub>
 </div>
@@ -60,7 +60,7 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 
 ## Requirements
 
-- macOS 26.0 or later
+- macOS 14.0 (Sonoma) or later
 - Active Claude AI account
 - Session key from claude.ai
 
@@ -161,44 +161,12 @@ Access settings through the menu bar or popover:
 
 ### Technology Stack
 
-- **Language**: Swift 5.9+
-- **UI Framework**: SwiftUI 3.0
-- **Platform**: macOS 26.0+ (Sequoia)
+- **Language**: Swift 5.0+
+- **UI Framework**: SwiftUI 5.0+
+- **Platform**: macOS 14.0+ (Sonoma)
 - **Architecture**: MVVM pattern
 - **Storage**: UserDefaults with App Groups
 - **Networking**: URLSession with async/await
-
-### Project Structure
-
-```
-ClaudeUsageTracker/
-├── App/
-│   ├── ClaudeUsageTrackerApp.swift    # Main app entry point
-│   └── AppDelegate.swift               # App lifecycle management
-├── MenuBar/
-│   ├── MenuBarManager.swift            # Status bar controller
-│   └── PopoverContentView.swift        # Main UI interface
-├── Views/
-│   ├── SettingsView.swift              # Settings interface
-│   └── SetupWizardView.swift           # First-run setup
-├── Shared/
-│   ├── Models/
-│   │   └── ClaudeUsage.swift           # Data model
-│   ├── Services/
-│   │   ├── ClaudeAPIService.swift      # API client
-│   │   └── NotificationManager.swift   # Notification handling
-│   ├── Storage/
-│   │   └── DataStore.swift             # Persistence layer
-│   ├── Extensions/
-│   │   ├── Date+Extensions.swift       # Date utilities
-│   │   └── UserDefaults+Extensions.swift
-│   └── Utilities/
-│       ├── Constants.swift             # App constants
-│       └── FormatterHelper.swift       # Formatting utilities
-└── Resources/
-    ├── Assets.xcassets                 # App icons and images
-    └── Info.plist                      # App metadata
-```
 
 ### Key Components
 
@@ -286,7 +254,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Acknowledgments
 
 - Built with Swift and SwiftUI
-- Designed for macOS Sequoia
+- Designed for macOS Sonoma and later
 - Uses Claude AI's usage API
 - Inspired by the need for better usage visibility
 
