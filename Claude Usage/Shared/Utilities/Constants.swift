@@ -10,6 +10,7 @@ enum Constants {
         static let claudeUsageData = "claudeUsageData"
         static let notificationsEnabled = "notificationsEnabled"
         static let refreshInterval = "refreshInterval"
+        static let autoStartSessionEnabled = "autoStartSessionEnabled"
     }
 
     // Claude Code paths

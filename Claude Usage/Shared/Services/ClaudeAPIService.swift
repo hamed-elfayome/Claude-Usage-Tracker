@@ -244,5 +244,69 @@ class ClaudeAPIService {
 
         throw APIError.invalidResponse
     }
+
+    // MARK: - Session Initialization
+
+    /// Sends a minimal message to Claude to initialize a new session
+    /// Uses Claude 3.5 Haiku (cheapest model)
+    func sendInitializationMessage() async throws {
+        let sessionKey = try readSessionKey()
+        let orgId = try await fetchOrganizationId()
+
+        // Create a new conversation
+        let conversationURL = URL(string: "\(baseURL)/organizations/\(orgId)/chat_conversations")!
+        var conversationRequest = URLRequest(url: conversationURL)
+        conversationRequest.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
+        conversationRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        conversationRequest.httpMethod = "POST"
+
+        let conversationBody: [String: Any] = [
+            "uuid": UUID().uuidString.lowercased(),
+            "name": ""
+        ]
+        conversationRequest.httpBody = try JSONSerialization.data(withJSONObject: conversationBody)
+
+        let (conversationData, conversationResponse) = try await URLSession.shared.data(for: conversationRequest)
+
+        guard let httpResponse = conversationResponse as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+
+        guard httpResponse.statusCode == 200 || httpResponse.statusCode == 201 else {
+            throw APIError.serverError(statusCode: httpResponse.statusCode)
+        }
+
+        // Parse conversation UUID
+        guard let json = try? JSONSerialization.jsonObject(with: conversationData) as? [String: Any],
+              let conversationUUID = json["uuid"] as? String else {
+            throw APIError.invalidResponse
+        }
+
+        // Send a minimal "Hi" message to initialize the session
+        let messageURL = URL(string: "\(baseURL)/organizations/\(orgId)/chat_conversations/\(conversationUUID)/completion")!
+        var messageRequest = URLRequest(url: messageURL)
+        messageRequest.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
+        messageRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        messageRequest.httpMethod = "POST"
+
+        let messageBody: [String: Any] = [
+            "prompt": "Hi",
+            "model": "claude-3-5-haiku-20241022",  // Cheapest model
+            "timezone": "UTC"
+        ]
+        messageRequest.httpBody = try JSONSerialization.data(withJSONObject: messageBody)
+
+        let (_, messageResponse) = try await URLSession.shared.data(for: messageRequest)
+
+        guard let messageHTTPResponse = messageResponse as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+
+        guard messageHTTPResponse.statusCode == 200 else {
+            throw APIError.serverError(statusCode: messageHTTPResponse.statusCode)
+        }
+
+        // Message sent successfully - we don't care about the response
+    }
 }
 
