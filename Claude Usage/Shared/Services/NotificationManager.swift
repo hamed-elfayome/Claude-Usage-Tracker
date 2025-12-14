@@ -22,7 +22,7 @@ class NotificationManager {
 
         // Create unique identifier for this notification
         let identifier = "\(type.rawValue)_\(Int(percentage))"
-        
+
         // Check if we've already sent this notification
         guard !sentNotifications.contains(identifier) else {
             return
@@ -48,6 +48,25 @@ class NotificationManager {
         }
     }
 
+    /// Sends a simple notification (for non-usage alerts)
+    func sendSimpleAlert(type: AlertType) {
+        let content = UNMutableNotificationContent()
+        content.title = type.title
+        content.body = type.message(percentage: 0, resetTime: nil)
+        content.sound = .default
+        content.categoryIdentifier = "INFO_ALERT"
+
+        let request = UNNotificationRequest(
+            identifier: type.rawValue,
+            content: content,
+            trigger: nil // Show immediately
+        )
+
+        UNUserNotificationCenter.current().add(request) { _ in
+            // Notification sent
+        }
+    }
+
     /// Checks usage and sends appropriate alerts
     func checkAndNotify(usage: ClaudeUsage) {
         // Session usage alerts
@@ -60,6 +79,21 @@ class NotificationManager {
                 percentage: sessionPercentage,
                 resetTime: usage.sessionResetTime
             )
+
+            // Auto-start new session if enabled
+            if DataStore.shared.loadAutoStartSessionEnabled() {
+                Task {
+                    do {
+                        try await ClaudeAPIService().sendInitializationMessage()
+                        // Send notification on successful auto-start
+                        await MainActor.run {
+                            self.sendSimpleAlert(type: .sessionAutoStarted)
+                        }
+                    } catch {
+                        // Silently fail - don't interrupt the user
+                    }
+                }
+            }
         }
         
         // Update previous percentage for next check
@@ -150,27 +184,33 @@ extension NotificationManager {
         case sessionWarning = "session_warning"
         case sessionCritical = "session_critical"
         case sessionReset = "session_reset"
+        case sessionAutoStarted = "session_auto_started"
         case weeklyWarning = "weekly_warning"
         case weeklyCritical = "weekly_critical"
         case opusWarning = "opus_warning"
         case opusCritical = "opus_critical"
+        case notificationsEnabled = "notifications_enabled"
 
         var title: String {
             switch self {
             case .sessionWarning:
-                return "⚠️ Session Usage Warning"
+                return "Session Usage Warning"
             case .sessionCritical:
-                return "🚨 Session Usage Critical"
+                return "Session Usage Critical"
             case .sessionReset:
-                return "🔄 Session Reset"
+                return "Session Reset"
+            case .sessionAutoStarted:
+                return "Session Auto-Started"
             case .weeklyWarning:
-                return "⚠️ Weekly Usage Warning"
+                return "Weekly Usage Warning"
             case .weeklyCritical:
-                return "🚨 Weekly Usage Critical"
+                return "Weekly Usage Critical"
             case .opusWarning:
-                return "⚠️ Opus Usage Warning"
+                return "Opus Usage Warning"
             case .opusCritical:
-                return "🚨 Opus Usage Critical"
+                return "Opus Usage Critical"
+            case .notificationsEnabled:
+                return "Notifications Enabled"
             }
         }
 
@@ -185,6 +225,8 @@ extension NotificationManager {
                 return "You've used \(percentStr) of your 5-hour session limit! \(resetStr)"
             case .sessionReset:
                 return "Your session has reset! You now have a fresh 5-hour session available."
+            case .sessionAutoStarted:
+                return "A new session has been automatically initialized with Claude 3.5 Haiku. Your fresh 5-hour session is ready!"
             case .weeklyWarning:
                 return "You've used \(percentStr) of your weekly limit. \(resetStr)"
             case .weeklyCritical:
@@ -193,6 +235,8 @@ extension NotificationManager {
                 return "You've used \(percentStr) of your weekly Opus limit. \(resetStr)"
             case .opusCritical:
                 return "You've used \(percentStr) of your weekly Opus limit! \(resetStr)"
+            case .notificationsEnabled:
+                return "You will now receive alerts at 75%, 90%, and 95% usage thresholds, plus session reset notifications."
             }
         }
     }

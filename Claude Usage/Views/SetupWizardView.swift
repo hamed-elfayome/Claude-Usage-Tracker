@@ -7,6 +7,7 @@ struct SetupWizardView: View {
     @State private var sessionKey = ""
     @State private var validationState: ValidationState = .idle
     @State private var showInstructions = false
+    @State private var autoStartSessionEnabled = DataStore.shared.loadAutoStartSessionEnabled()
 
     private let apiService = ClaudeAPIService()
 
@@ -139,6 +140,40 @@ struct SetupWizardView: View {
                     } else if case .error(let message) = validationState {
                         WizardStatusBox(message: message, type: .error)
                     }
+
+                    // Auto-start session option (always visible)
+                    VStack(alignment: .leading, spacing: 8) {
+                        Divider()
+                            .padding(.vertical, 4)
+
+                        HStack(spacing: 6) {
+                            Text("Auto-start session on reset")
+                                .font(.system(size: 13, weight: .semibold))
+
+                            // BETA badge
+                            Text("BETA")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .fill(Color.orange)
+                                )
+                        }
+
+                        Text("Automatically send 'Hi' to Claude 3.5 Haiku when your session resets to 0%. This keeps your session always ready without manual intervention.")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        Toggle(isOn: $autoStartSessionEnabled) {
+                            Text("Enable auto-start session")
+                                .font(.system(size: 12, weight: .medium))
+                        }
+                        .toggleStyle(.switch)
+                    }
+                    .padding(.top, 8)
                 }
                 .padding(32)
             }
@@ -158,6 +193,7 @@ struct SetupWizardView: View {
                     if case .success = validationState {
                         Button("Done") {
                             DataStore.shared.saveHasCompletedSetup(true)
+                            DataStore.shared.saveAutoStartSessionEnabled(autoStartSessionEnabled)
                             dismiss()
                         }
                         .buttonStyle(.borderedProminent)
@@ -179,7 +215,7 @@ struct SetupWizardView: View {
             }
             .padding(20)
         }
-        .frame(width: 580, height: 520)
+        .frame(width: 580, height: 600)
     }
 
     private func validateAndSave() {
@@ -261,7 +297,8 @@ struct WizardStatusBox: View {
                 .font(.system(size: 12))
         }
         .foregroundColor(type.color)
-        .padding(10)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 6)

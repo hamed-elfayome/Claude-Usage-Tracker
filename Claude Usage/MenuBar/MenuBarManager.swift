@@ -19,6 +19,9 @@ class MenuBarManager: NSObject, ObservableObject {
     // Observer for refresh interval changes
     private var refreshIntervalObserver: NSKeyValueObservation?
 
+    // Observer for appearance changes
+    private var appearanceObserver: NSKeyValueObservation?
+
     func setup() {
         // Create status item in menu bar
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -37,9 +40,12 @@ class MenuBarManager: NSObject, ObservableObject {
 
         // Start auto-refresh timer
         startAutoRefresh()
-        
+
         // Observe refresh interval changes
         observeRefreshIntervalChanges()
+
+        // Observe appearance changes
+        observeAppearanceChanges()
     }
 
     func cleanup() {
@@ -47,6 +53,8 @@ class MenuBarManager: NSObject, ObservableObject {
         refreshTimer = nil
         refreshIntervalObserver?.invalidate()
         refreshIntervalObserver = nil
+        appearanceObserver?.invalidate()
+        appearanceObserver = nil
         statusItem = nil
     }
 
@@ -89,16 +97,23 @@ class MenuBarManager: NSObject, ObservableObject {
 
     private func updateStatusButton(_ button: NSStatusBarButton, usage: ClaudeUsage) {
         let percentage = CGFloat(usage.sessionPercentage) / 100.0
-        
+
         // Create a taller image to fit battery + text
         let width: CGFloat = 42
         let totalHeight: CGFloat = 28
         let barHeight: CGFloat = 10
         let image = NSImage(size: NSSize(width: width, height: totalHeight))
-        
+
         image.lockFocus()
-        
-        // Get color based on usage level
+
+        // Detect if menu bar is in dark or light appearance
+        let isDarkAppearance = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+
+        // Choose outline and text color based on menu bar appearance
+        let outlineColor: NSColor = isDarkAppearance ? .white : .black
+        let textColor: NSColor = isDarkAppearance ? .white : .black
+
+        // Get color based on usage level (always vibrant)
         let fillColor: NSColor
         switch usage.statusLevel {
         case .safe:
@@ -108,18 +123,18 @@ class MenuBarManager: NSObject, ObservableObject {
         case .critical:
             fillColor = NSColor.systemRed
         }
-        
+
         // Position and size calculations for the bar
         let barY = totalHeight - barHeight - 4
         let barWidth = width - 2
         let padding: CGFloat = 2.0
-        
+
         // Draw outer capsule/container (at top) - clean rounded rectangle
         let containerPath = NSBezierPath(roundedRect: NSRect(x: 1, y: barY, width: barWidth, height: barHeight), xRadius: 2.5, yRadius: 2.5)
-        NSColor.labelColor.withAlphaComponent(0.3).setStroke()
+        outlineColor.withAlphaComponent(0.5).setStroke()
         containerPath.lineWidth = 1.2
         containerPath.stroke()
-        
+
         // Draw fill level inside - perfectly aligned with container
         let fillWidth = (barWidth - padding * 2) * percentage
         if fillWidth > 1 {
@@ -127,24 +142,23 @@ class MenuBarManager: NSObject, ObservableObject {
             fillColor.setFill()
             fillPath.fill()
         }
-        
+
         // Draw "Claude" text below the battery
         let textAttributes: [NSAttributedString.Key: Any] = [
             .font: NSFont.systemFont(ofSize: 9, weight: .medium),
-            .foregroundColor: NSColor.labelColor.withAlphaComponent(0.7)
+            .foregroundColor: textColor.withAlphaComponent(0.85)
         ]
         let text = "Claude" as NSString
         let textSize = text.size(withAttributes: textAttributes)
         let textX = (width - textSize.width) / 2
         let textY: CGFloat = 2
         text.draw(at: NSPoint(x: textX, y: textY), withAttributes: textAttributes)
-        
+
         image.unlockFocus()
-        
-        // Set template to support dark mode
+
+        // Not using template mode - we manually handle appearance colors
         image.isTemplate = false
-        
-        // Set the image to the button
+
         button.image = image
         button.title = ""
     }
@@ -172,6 +186,20 @@ class MenuBarManager: NSObject, ObservableObject {
                 DispatchQueue.main.async {
                     self?.restartAutoRefresh()
                 }
+            }
+        }
+    }
+
+    private func observeAppearanceChanges() {
+        // Observe appearance changes on the status bar button
+        guard let button = statusItem?.button else { return }
+
+        // Observe effectiveAppearance changes using KVO
+        appearanceObserver = button.observe(\.effectiveAppearance, options: [.new]) { [weak self] button, _ in
+            guard let self = self else { return }
+            DispatchQueue.main.async {
+                // Redraw the icon with the new appearance
+                self.updateStatusButton(button, usage: self.usage)
             }
         }
     }
@@ -223,7 +251,7 @@ class MenuBarManager: NSObject, ObservableObject {
             let window = NSWindow(contentViewController: hostingController)
             window.title = "Claude Usage - Settings"
             window.styleMask = [.titled, .closable, .miniaturizable]
-            window.setContentSize(NSSize(width: 600, height: 550))
+            window.setContentSize(NSSize(width: 720, height: 600))
             window.center()
             window.isReleasedWhenClosed = false
 

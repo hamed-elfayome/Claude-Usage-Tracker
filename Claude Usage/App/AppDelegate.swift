@@ -2,7 +2,7 @@ import Cocoa
 import SwiftUI
 import UserNotifications
 
-class AppDelegate: NSObject, NSApplicationDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate {
     private var menuBarManager: MenuBarManager?
     private var setupWindow: NSWindow?
 
@@ -33,6 +33,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func requestNotificationPermissions() {
         let center = UNUserNotificationCenter.current()
+        center.delegate = self
         center.requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in
             // Silently request permissions
         }
@@ -83,5 +84,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
         // Disable state restoration for menu bar app
         return false
+    }
+
+    // MARK: - UNUserNotificationCenterDelegate
+
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        // Show notifications even when app is in foreground (menu bar apps are always foreground)
+        completionHandler([.banner, .sound])
     }
 }

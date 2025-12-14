@@ -73,6 +73,16 @@ class DataStore {
         return interval > 0 ? interval : Constants.RefreshIntervals.menuBar
     }
 
+    /// Saves auto-start session preference
+    func saveAutoStartSessionEnabled(_ enabled: Bool) {
+        defaults.set(enabled, forKey: Constants.UserDefaultsKeys.autoStartSessionEnabled)
+    }
+
+    /// Loads auto-start session preference
+    func loadAutoStartSessionEnabled() -> Bool {
+        return defaults.bool(forKey: Constants.UserDefaultsKeys.autoStartSessionEnabled)
+    }
+
     // MARK: - Setup State
 
     /// Saves whether the user has completed the setup wizard

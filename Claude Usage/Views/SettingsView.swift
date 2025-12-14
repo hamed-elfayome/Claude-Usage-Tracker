@@ -1,10 +1,12 @@
 import SwiftUI
+import UserNotifications
 
 /// Professional, native macOS Settings interface
 struct SettingsView: View {
     @State private var selectedSection: SettingsSection = .api
     @State private var notificationsEnabled: Bool = DataStore.shared.loadNotificationsEnabled()
     @State private var refreshInterval: Double = DataStore.shared.loadRefreshInterval()
+    @State private var autoStartSessionEnabled: Bool = DataStore.shared.loadAutoStartSessionEnabled()
 
     var body: some View {
         HSplitView {
@@ -19,6 +21,8 @@ struct SettingsView: View {
                     APIView()
                 case .general:
                     GeneralView(refreshInterval: $refreshInterval)
+                case .session:
+                    SessionView(autoStartSessionEnabled: $autoStartSessionEnabled)
                 case .notifications:
                     NotificationsView(notificationsEnabled: $notificationsEnabled)
                 case .about:
@@ -27,13 +31,14 @@ struct SettingsView: View {
             }
             .frame(minWidth: 450, maxWidth: .infinity)
         }
-        .frame(width: 720, height: 480)
+        .frame(width: 720, height: 600)
     }
 }
 
 enum SettingsSection: String, CaseIterable {
     case api = "API"
     case general = "General"
+    case session = "Session"
     case notifications = "Notifications"
     case about = "About"
 
@@ -41,6 +46,7 @@ enum SettingsSection: String, CaseIterable {
         switch self {
         case .api: return "key.horizontal.fill"
         case .general: return "gearshape.fill"
+        case .session: return "clock.arrow.circlepath"
         case .notifications: return "bell.badge.fill"
         case .about: return "info.circle.fill"
         }
@@ -310,6 +316,135 @@ struct GeneralView: View {
     }
 }
 
+// MARK: - Session View
+
+struct FeatureItem: View {
+    let icon: String
+    let title: String
+    let description: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: icon)
+                .foregroundColor(.blue)
+                .font(.system(size: 14))
+                .frame(width: 20)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 12, weight: .medium))
+
+                Text(description)
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+}
+
+struct SessionView: View {
+    @Binding var autoStartSessionEnabled: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 32) {
+            // Header
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Session Management")
+                    .font(.system(size: 20, weight: .semibold))
+
+                Text("Automatically manage your Claude usage sessions")
+                    .font(.system(size: 13))
+                    .foregroundColor(.secondary)
+            }
+
+            Divider()
+
+            // Auto-start session toggle
+            Toggle(isOn: $autoStartSessionEnabled) {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 6) {
+                        Text("Auto-start session on reset")
+                            .font(.system(size: 13, weight: .medium))
+
+                        // BETA badge
+                        Text("BETA")
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(Color.orange)
+                            )
+                    }
+
+                    Text("Automatically initialize a new session when the current session resets")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+            }
+            .toggleStyle(.switch)
+            .onChange(of: autoStartSessionEnabled) { _, newValue in
+                DataStore.shared.saveAutoStartSessionEnabled(newValue)
+            }
+
+            // Explanation card
+            VStack(alignment: .leading, spacing: 16) {
+                Label {
+                    Text("How it works")
+                        .font(.system(size: 13, weight: .semibold))
+                } icon: {
+                    Image(systemName: "info.circle.fill")
+                        .foregroundColor(.blue)
+                }
+
+                VStack(alignment: .leading, spacing: 12) {
+                    FeatureItem(
+                        icon: "clock.arrow.circlepath",
+                        title: "Automatic Detection",
+                        description: "Monitors your session usage and detects when it resets to 0%"
+                    )
+
+                    FeatureItem(
+                        icon: "paperplane.fill",
+                        title: "Instant Initialization",
+                        description: "Sends a simple 'Hi' message to Claude 3.5 Haiku (cheapest model)"
+                    )
+
+                    FeatureItem(
+                        icon: "checkmark.circle.fill",
+                        title: "Fresh Session Ready",
+                        description: "Your new 5-hour session is immediately active and ready to use"
+                    )
+                }
+
+                Divider()
+                    .padding(.vertical, 4)
+
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "lightbulb.fill")
+                        .foregroundColor(.orange)
+                        .font(.system(size: 12))
+
+                    Text("This feature uses minimal tokens (just 'Hi') to initialize your session, ensuring you're always ready to chat with Claude without manual intervention.")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color(nsColor: .controlBackgroundColor))
+            )
+
+            Spacer()
+        }
+        .padding(28)
+    }
+}
+
 // MARK: - Notifications View
 
 struct NotificationsView: View {
@@ -343,6 +478,23 @@ struct NotificationsView: View {
             .toggleStyle(.switch)
             .onChange(of: notificationsEnabled) { _, newValue in
                 DataStore.shared.saveNotificationsEnabled(newValue)
+
+                // Send test notification when notifications are enabled
+                if newValue {
+                    Task {
+                        let center = UNUserNotificationCenter.current()
+                        let settings = await center.notificationSettings()
+
+                        if settings.authorizationStatus == .authorized {
+                            NotificationManager.shared.sendSimpleAlert(type: .notificationsEnabled)
+                        } else if settings.authorizationStatus == .notDetermined {
+                            let granted = try? await center.requestAuthorization(options: [.alert, .sound, .badge])
+                            if granted == true {
+                                NotificationManager.shared.sendSimpleAlert(type: .notificationsEnabled)
+                            }
+                        }
+                    }
+                }
             }
 
             if notificationsEnabled {

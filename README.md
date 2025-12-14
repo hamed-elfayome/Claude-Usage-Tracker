@@ -9,9 +9,9 @@
   ![Swift](https://img.shields.io/badge/Swift-5.0+-orange?style=flat-square&logo=swift)
   ![SwiftUI](https://img.shields.io/badge/SwiftUI-5.0+-blue?style=flat-square&logo=swift)
   ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
-  ![Version](https://img.shields.io/badge/version-1.0.0-blue?style=flat-square)
+  ![Version](https://img.shields.io/badge/version-1.1.0-blue?style=flat-square)
 
-  ### [Download Latest Release (v1.0.0)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
+  ### [Download Latest Release (v1.1.0)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
 
   <sub>macOS 14.0+ (Sonoma) | ~3 MB | Native Swift/SwiftUI</sub>
 
@@ -31,6 +31,23 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
   <sub>Menu bar icon and detailed usage popover</sub>
 </div>
 
+## What's New in v1.1.0
+
+### Auto-Start Session Feature
+Never worry about manually starting a new session! When your 5-hour session resets to 0%, the app automatically sends a simple "Hi" message to Claude 3.5 Haiku (cheapest model) to initialize a fresh session. Configure it in the new **Session Management** tab in Settings.
+
+### Enhanced Notifications
+- Get notified when a session is automatically started
+- Immediate confirmation when enabling notifications
+- Improved notification system with proper delegate support for menu bar apps
+
+### Menu Bar Icon Improvements
+Fixed visibility issues! The menu bar icon now properly adapts to light/dark mode and wallpaper changes in real-time. The outline and text automatically adjust (black on light, white on dark) while keeping the colored progress indicator.
+
+### See [CHANGELOG.md](CHANGELOG.md) for full details
+
+---
+
 ## Features
 
 ### Real-Time Usage Monitoring
@@ -45,11 +62,21 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 - **One-Click Access**: Instant popover interface with detailed statistics
 - **Native macOS Design**: Follows Apple's Human Interface Guidelines
 
+### Session Management
+- **Auto-Start on Reset**: Automatically initialize a new session when usage hits 0%
+- **Zero Manual Intervention**: No need to manually send a message to start your session
+- **Cheapest Model**: Uses Claude 3.5 Haiku to minimize token consumption
+- **Instant Readiness**: Fresh 5-hour session immediately available after reset
+- **Configurable**: Enable or disable in the dedicated Session settings tab
+
 ### Smart Notifications
 - **Threshold Alerts**: Automatic notifications at 75%, 90%, and 95% usage
 - **Session Resets**: Get notified when your 5-hour session resets
+- **Auto-Start Alerts**: Confirmation when a new session is automatically initialized
+- **Enable Confirmation**: Immediate feedback when turning on notifications
 - **Customizable**: Enable or disable notifications in settings
 - **Non-Intrusive**: macOS native notification system integration
+- **Always Visible**: Proper delegate support ensures notifications appear while app is running
 
 ### Advanced Features
 - **Auto-Refresh**: Configurable refresh intervals (5-120 seconds)
