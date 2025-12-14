@@ -97,6 +97,60 @@ class DataStore {
         return defaults.bool(forKey: "checkOverageLimitEnabled")
     }
 
+    // MARK: - Statusline Configuration
+
+    /// Saves statusline show directory preference
+    func saveStatuslineShowDirectory(_ show: Bool) {
+        defaults.set(show, forKey: Constants.UserDefaultsKeys.statuslineShowDirectory)
+    }
+
+    /// Loads statusline show directory preference (defaults to true)
+    func loadStatuslineShowDirectory() -> Bool {
+        if defaults.object(forKey: Constants.UserDefaultsKeys.statuslineShowDirectory) == nil {
+            return true
+        }
+        return defaults.bool(forKey: Constants.UserDefaultsKeys.statuslineShowDirectory)
+    }
+
+    /// Saves statusline show branch preference
+    func saveStatuslineShowBranch(_ show: Bool) {
+        defaults.set(show, forKey: Constants.UserDefaultsKeys.statuslineShowBranch)
+    }
+
+    /// Loads statusline show branch preference (defaults to true)
+    func loadStatuslineShowBranch() -> Bool {
+        if defaults.object(forKey: Constants.UserDefaultsKeys.statuslineShowBranch) == nil {
+            return true
+        }
+        return defaults.bool(forKey: Constants.UserDefaultsKeys.statuslineShowBranch)
+    }
+
+    /// Saves statusline show usage preference
+    func saveStatuslineShowUsage(_ show: Bool) {
+        defaults.set(show, forKey: Constants.UserDefaultsKeys.statuslineShowUsage)
+    }
+
+    /// Loads statusline show usage preference (defaults to true)
+    func loadStatuslineShowUsage() -> Bool {
+        if defaults.object(forKey: Constants.UserDefaultsKeys.statuslineShowUsage) == nil {
+            return true
+        }
+        return defaults.bool(forKey: Constants.UserDefaultsKeys.statuslineShowUsage)
+    }
+
+    /// Saves statusline show progress bar preference
+    func saveStatuslineShowProgressBar(_ show: Bool) {
+        defaults.set(show, forKey: Constants.UserDefaultsKeys.statuslineShowProgressBar)
+    }
+
+    /// Loads statusline show progress bar preference (defaults to true)
+    func loadStatuslineShowProgressBar() -> Bool {
+        if defaults.object(forKey: Constants.UserDefaultsKeys.statuslineShowProgressBar) == nil {
+            return true
+        }
+        return defaults.bool(forKey: Constants.UserDefaultsKeys.statuslineShowProgressBar)
+    }
+
     // MARK: - Setup State
 
     /// Saves whether the user has completed the setup wizard

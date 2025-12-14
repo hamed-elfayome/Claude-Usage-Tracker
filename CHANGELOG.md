@@ -5,6 +5,109 @@ All notable changes to Claude Usage Tracker will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2025-12-14
+
+### Added
+
+#### Claude Code Terminal Integration
+- **New Claude Code Settings Tab** - Dedicated UI for configuring terminal statusline integration
+  - Toggle individual components (directory, git branch, usage, progress bar)
+  - Live preview showing exactly how your statusline will appear
+  - One-click installation with automated script deployment
+  - Visual component selection with clear descriptions
+
+- **Terminal Statusline Display** - Real-time usage monitoring directly in your Claude Code terminal
+  - **Current Directory**: Shows working directory name with blue highlight
+  - **Git Branch**: Live branch indicator with ⎇ icon (automatically detected)
+  - **Usage Percentage**: Session usage with 10-level color gradient (green → yellow → orange → red)
+  - **Progress Bar**: Optional 10-segment visual indicator (▓░) for at-a-glance status
+  - **Reset Time**: Countdown showing when your 5-hour session resets
+  - **Format Example**: `my-project │ ⎇ main │ Usage: 25% ▓▓░░░░░░░░ → Reset: 3:45 PM`
+
+- **Automated Installation** - Scripts installed to `~/.claude/` directory
+  - `fetch-claude-usage.swift`: Swift script for fetching usage data from Claude API
+  - `statusline-command.sh`: Bash script that builds the statusline display
+  - `statusline-config.txt`: Configuration file storing component preferences
+  - Automatic updates to Claude Code's `settings.json`
+  - Secure file permissions (755) set automatically
+
+- **Smart Color Coding** - 10-level gradient provides visual feedback
+  - 0-10%: Dark green (safe zone)
+  - 11-30%: Green shades (light usage)
+  - 31-50%: Yellow-green to olive (moderate usage)
+  - 51-70%: Yellow to orange (elevated usage)
+  - 71-90%: Dark orange to red (high usage)
+  - 91-100%: Deep red (critical usage)
+
+- **Flexible Configuration**
+  - Mix and match any combination of components
+  - Preview updates in real-time as you toggle options
+  - Easy enable/disable with Apply and Reset buttons
+  - Settings persist across app restarts
+
+#### Validation & Error Handling
+- **Session Key Validation** - Checks for valid session key before allowing statusline configuration
+  - Clear error message if session key is not configured
+  - Prevents installation failures by validating prerequisites
+  - Directs users to General tab for API setup
+
+- **Component Validation** - Ensures at least one component is selected before applying
+  - Prevents empty statusline configurations
+  - User-friendly error messages
+
+### Fixed
+
+- **Config File Formatting** - Removed unwanted leading whitespace in statusline configuration file
+  - Ensures proper parsing by bash script
+  - Prevents configuration read errors
+
+- **Conditional Cast Warning** - Removed redundant cast in `ClaudeAPIService.swift`
+  - Cleaned up overage data handling code
+  - Improved code clarity
+
+- **Bash Script Percentage Display** - Fixed double percent sign (`%%`) in statusline output
+  - Now correctly displays single `%` (e.g., "Usage: 25%" instead of "Usage: 25%%")
+
+### Technical Improvements
+
+- Added `StatuslineService` for managing Claude Code integration
+  - Embedded Swift and Bash scripts for portability
+  - File management and permission handling
+  - Claude Code settings.json integration
+  - Installation and configuration management
+
+- Enhanced `DataStore` with statusline preferences
+  - Save/load methods for component visibility settings
+  - Default values (all components enabled by default)
+  - Persistent storage across app launches
+
+- New `StatuslineView` SwiftUI interface
+  - Live preview with dynamic updates
+  - Clean, modern UI matching app design
+  - Status message feedback for user actions
+  - Validation and error handling
+
+- Updated `Constants` with statusline-related keys
+  - UserDefaults keys for component preferences
+  - Centralized configuration management
+
+### Documentation
+
+- **Comprehensive README Updates**
+  - New "Claude Code Integration" section with full setup guide
+  - Component table with descriptions and examples
+  - Color coding reference
+  - Troubleshooting guide
+  - Multiple example configurations
+  - Updated version badges to v1.3.0
+
+- **Inline Code Documentation**
+  - Detailed comments in StatuslineService
+  - Clear explanations of Swift and Bash scripts
+  - Function-level documentation
+
+---
+
 ## [1.2.0] - 2025-12-13
 
 ### Added
@@ -86,6 +189,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Detailed usage dashboard with countdown timers
 - Support for macOS 14.0+ (Sonoma and later)
 
+[1.3.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/tag/v1.0.0

@@ -167,8 +167,7 @@ class ClaudeAPIService {
         var claudeUsage = try parseUsageResponse(usageData)
         
         if checkOverage,
-           let overageResult = try? await overageDataTask,
-           let data = overageResult as? Data,
+           let data = try? await overageDataTask,
            let overage = try? JSONDecoder().decode(OverageSpendLimitResponse.self, from: data),
            overage.isEnabled == true {
             claudeUsage.costUsed = overage.usedCredits

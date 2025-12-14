@@ -9,9 +9,9 @@
   ![Swift](https://img.shields.io/badge/Swift-5.0+-orange?style=flat-square&logo=swift)
   ![SwiftUI](https://img.shields.io/badge/SwiftUI-5.0+-blue?style=flat-square&logo=swift)
   ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
-  ![Version](https://img.shields.io/badge/version-1.2.0-blue?style=flat-square)
+  ![Version](https://img.shields.io/badge/version-1.3.0-blue?style=flat-square)
 
-  ### [Download Latest Release (v1.2.0)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
+  ### [Download Latest Release (v1.3.0)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
 
   <sub>macOS 14.0+ (Sonoma) | ~3 MB | Native Swift/SwiftUI</sub>
 
@@ -32,6 +32,16 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 </div>
 
 ## What's New
+
+### v1.3.0 - Claude Code Terminal Integration
+Display your Claude usage directly in your terminal! The new Claude Code statusline integration brings real-time monitoring to your development workflow:
+- **Live Terminal Statusline**: Shows current directory, git branch, and usage percentage
+- **Color-Coded Progress**: Visual feedback with gradient from green to red based on usage
+- **Customizable Display**: Choose which components to show (directory, branch, usage, progress bar)
+- **One-Click Setup**: Automated installation through the new Claude Code settings tab
+- **Smart Updates**: Real-time usage tracking synchronized with your Claude API session
+
+Perfect for developers who want usage monitoring without leaving the terminal!
 
 ### v1.2.0 - Extra Usage Cost Tracking
 **Contributed by [@khromov](https://github.com/khromov)**
@@ -83,6 +93,18 @@ Never worry about manually starting a new session! When your 5-hour session rese
 - **Customizable**: Enable or disable notifications in settings
 - **Non-Intrusive**: macOS native notification system integration
 - **Always Visible**: Proper delegate support ensures notifications appear while app is running
+
+### Claude Code Integration
+- **Terminal Statusline**: Display usage directly in your Claude Code terminal
+- **Current Directory**: Shows your working directory name with blue highlight
+- **Git Branch**: Live git branch indicator with branch icon (⎇)
+- **Usage Percentage**: Real-time session usage with color gradient (green → red)
+- **Progress Bar**: Optional visual 10-segment progress indicator (▓░)
+- **Reset Time**: Shows when your 5-hour session will reset
+- **Customizable Components**: Choose which elements to display (directory/branch/usage/bar)
+- **Live Preview**: See exactly how your statusline will look before applying
+- **One-Click Install**: Automated script installation to `~/.claude/`
+- **Format**: `directory │ ⎇ branch │ Usage: 25% ▓▓░░░░░░░░ → Reset: 3:45 PM`
 
 ### Advanced Features
 - **Auto-Refresh**: Configurable refresh intervals (5-120 seconds)
@@ -180,15 +202,138 @@ Click the menu bar icon to access:
 
 Access settings through the menu bar or popover:
 
-- **General**: Configure refresh interval (5-120 seconds)
+- **General**: Configure refresh interval (5-120 seconds) and session key
+- **Session**: Enable/disable automatic session initialization on reset
 - **Notifications**: Enable/disable usage alerts
-- **API**: Update session key or test connection
+- **Claude Code**: Configure terminal statusline integration (see Claude Code Integration section)
 - **About**: Version information and credits
 
-### Keyboard Shortcuts
 
-- Click menu bar icon: Toggle popover
-- Settings window: Cmd+, (when popover is open)
+## Claude Code Integration
+
+Bring real-time Claude usage monitoring directly into your terminal with Claude Code statusline integration! Display your current usage percentage, git branch, and working directory without leaving your development workflow.
+
+### What is Claude Code?
+
+[Claude Code](https://claude.com/claude-code) is Anthropic's official CLI tool for interacting with Claude AI directly from your terminal. The statusline feature allows you to display custom information at the bottom of your terminal window.
+
+### Setup Instructions
+
+#### Prerequisites
+
+1. **Claude Code installed**: Download from [claude.com/claude-code](https://claude.com/claude-code)
+2. **Session key configured**: Must be set in the General tab of Claude Usage Tracker
+
+#### Installation Steps
+
+1. **Open Claude Usage Tracker Settings**
+   - Click the menu bar icon
+   - Click "Settings"
+   - Navigate to the "Claude Code" tab
+
+2. **Choose Your Components**
+   - Toggle on/off the components you want to see:
+     - **Directory name**: Shows current working directory
+     - **Git branch**: Displays current branch with ⎇ icon
+     - **Usage statistics**: Shows session percentage with color coding
+     - **Progress bar**: Visual 10-segment indicator (optional when usage is enabled)
+
+3. **Preview Your Statusline**
+   - The live preview shows exactly how it will appear
+   - Example: `claude-usage │ ⎇ main │ Usage: 25% ▓▓░░░░░░░░`
+
+4. **Apply Configuration**
+   - Click "Apply" button
+   - Scripts will be installed to `~/.claude/`
+   - Claude Code's `settings.json` will be updated automatically
+
+5. **Restart Claude Code**
+   - Close and reopen your Claude Code terminal
+   - The statusline will appear at the bottom of your terminal window
+
+### What Gets Installed
+
+The setup automatically creates:
+
+- `~/.claude/fetch-claude-usage.swift`: Swift script that fetches usage data from Claude API
+- `~/.claude/statusline-command.sh`: Bash script that builds the statusline display
+- `~/.claude/statusline-config.txt`: Configuration file with your component preferences
+- `~/.claude/settings.json`: Updated with statusline command (or created if doesn't exist)
+
+All scripts are set with secure permissions (755) and only read your existing session key file.
+
+### Customization
+
+#### Available Components
+
+| Component | Description | Example |
+|-----------|-------------|---------|
+| Directory | Current directory name | `claude-usage` |
+| Git Branch | Active git branch | `⎇ main` |
+| Usage | Session percentage | `Usage: 25%` |
+| Progress Bar | 10-segment visual indicator | `▓▓░░░░░░░░` |
+| Reset Time | When session resets | `→ Reset: 3:45 PM` |
+
+#### Color Coding
+
+Usage percentage is color-coded with a 10-level gradient:
+- **0-10%**: Dark green
+- **11-30%**: Green shades
+- **31-50%**: Yellow-green transitioning to olive
+- **51-70%**: Yellow to orange
+- **71-90%**: Dark orange to red
+- **91-100%**: Deep red
+
+#### Disabling Statusline
+
+To remove the statusline:
+1. Open Claude Usage Tracker Settings → Claude Code tab
+2. Click "Reset" button
+3. Restart Claude Code
+
+This removes the statusline configuration but keeps the scripts installed for easy re-enabling.
+
+### Troubleshooting
+
+#### Statusline Not Appearing
+
+1. Verify Claude Code is installed and working
+2. Check that you restarted Claude Code after applying
+3. Ensure session key is valid in General settings tab
+4. Check that `~/.claude/settings.json` exists and has the statusline configuration
+
+#### Shows "Usage: ~"
+
+This indicates the Swift script couldn't fetch usage data:
+- Verify your session key is valid
+- Check that `~/.claude-session-key` exists
+- Ensure you're connected to the internet
+- Try refreshing your session key from claude.ai
+
+#### Permission Issues
+
+If scripts can't be executed:
+```bash
+chmod 755 ~/.claude/fetch-claude-usage.swift
+chmod 755 ~/.claude/statusline-command.sh
+```
+
+### Example Statuslines
+
+With all components enabled:
+```
+my-project │ ⎇ feature/new-ui │ Usage: 47% ▓▓▓▓▓░░░░░ → Reset: 4:15 PM
+```
+
+Minimal (usage only):
+```
+Usage: 12% ▓░░░░░░░░░
+```
+
+Directory and branch only:
+```
+backend-api │ ⎇ develop
+```
 
 ## Architecture
 

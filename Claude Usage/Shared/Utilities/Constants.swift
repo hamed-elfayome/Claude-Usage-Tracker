@@ -11,6 +11,12 @@ enum Constants {
         static let notificationsEnabled = "notificationsEnabled"
         static let refreshInterval = "refreshInterval"
         static let autoStartSessionEnabled = "autoStartSessionEnabled"
+
+        // Statusline component configuration
+        static let statuslineShowDirectory = "statuslineShowDirectory"
+        static let statuslineShowBranch = "statuslineShowBranch"
+        static let statuslineShowUsage = "statuslineShowUsage"
+        static let statuslineShowProgressBar = "statuslineShowProgressBar"
     }
 
     // Claude Code paths
