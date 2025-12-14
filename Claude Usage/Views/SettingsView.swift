@@ -541,6 +541,13 @@ struct NotificationsView: View {
 // MARK: - About View
 
 struct AboutView: View {
+    private var appVersion: String {
+        if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
+            return version
+        }
+        return "Unknown"
+    }
+    
     var body: some View {
         VStack(spacing: 0) {
             VStack(spacing: 28) {
@@ -557,7 +564,7 @@ struct AboutView: View {
                     Text("Claude Usage Tracker")
                         .font(.system(size: 18, weight: .semibold))
 
-                    Text("Version 1.0.0")
+                    Text("Version \(appVersion)")
                         .font(.system(size: 11))
                         .foregroundColor(.secondary)
                 }
