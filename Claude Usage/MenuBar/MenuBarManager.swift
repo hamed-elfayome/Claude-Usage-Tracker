@@ -10,6 +10,9 @@ class MenuBarManager: NSObject, ObservableObject {
     // Popover for beautiful SwiftUI interface
     private var popover: NSPopover?
     
+    // Detached window reference (when popover is detached)
+    private var detachedWindow: NSWindow?
+    
     // Settings window reference
     private var settingsWindow: NSWindow?
 
@@ -55,14 +58,17 @@ class MenuBarManager: NSObject, ObservableObject {
         refreshIntervalObserver = nil
         appearanceObserver?.invalidate()
         appearanceObserver = nil
+        detachedWindow?.close()
+        detachedWindow = nil
         statusItem = nil
     }
 
     private func setupPopover() {
         let popover = NSPopover()
         popover.contentSize = NSSize(width: 320, height: 600)
-        popover.behavior = .transient
+        popover.behavior = .semitransient  // Changed to allow detaching
         popover.animates = true
+        popover.delegate = self
         
         // Create SwiftUI content view
         let contentView = PopoverContentView(
@@ -71,7 +77,7 @@ class MenuBarManager: NSObject, ObservableObject {
                 self?.refreshUsage()
             },
             onPreferences: { [weak self] in
-                self?.popover?.performClose(nil)
+                self?.closePopoverOrWindow()
                 self?.preferencesClicked()
             },
             onQuit: { [weak self] in
@@ -86,12 +92,29 @@ class MenuBarManager: NSObject, ObservableObject {
     @objc private func togglePopover() {
         guard let button = statusItem?.button else { return }
         
+        // If there's a detached window, close it
+        if let window = detachedWindow {
+            window.close()
+            detachedWindow = nil
+            return
+        }
+        
+        // Otherwise toggle the popover
         if let popover = popover {
             if popover.isShown {
                 popover.performClose(nil)
             } else {
                 popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
             }
+        }
+    }
+    
+    private func closePopoverOrWindow() {
+        if let window = detachedWindow {
+            window.close()
+            detachedWindow = nil
+        } else {
+            popover?.performClose(nil)
         }
     }
 
@@ -272,13 +295,44 @@ class MenuBarManager: NSObject, ObservableObject {
     }
 }
 
+// MARK: - NSPopoverDelegate
+extension MenuBarManager: NSPopoverDelegate {
+    func popoverShouldDetach(_ popover: NSPopover) -> Bool {
+        // Allow popover to be detached by dragging
+        return true
+    }
+    
+    func detachableWindow(for popover: NSPopover) -> NSWindow? {
+        // Create a new window when popover is detached
+        guard let contentViewController = popover.contentViewController else { return nil }
+        
+        let window = NSWindow(contentViewController: contentViewController)
+        window.title = "Claude Usage"
+        window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
+        window.setContentSize(NSSize(width: 320, height: 600))
+        window.isReleasedWhenClosed = false
+        window.level = .floating  // Keep it above other windows
+        window.delegate = self
+        
+        // Store reference to the detached window
+        detachedWindow = window
+        
+        return window
+    }
+}
+
 // MARK: - NSWindowDelegate
 extension MenuBarManager: NSWindowDelegate {
     func windowWillClose(_ notification: Notification) {
-        if let window = notification.object as? NSWindow, window == settingsWindow {
-            // Hide dock icon again when settings window closes
-            NSApp.setActivationPolicy(.accessory)
-            settingsWindow = nil
+        if let window = notification.object as? NSWindow {
+            if window == settingsWindow {
+                // Hide dock icon again when settings window closes
+                NSApp.setActivationPolicy(.accessory)
+                settingsWindow = nil
+            } else if window == detachedWindow {
+                // Clear detached window reference when closed
+                detachedWindow = nil
+            }
         }
     }
 }
