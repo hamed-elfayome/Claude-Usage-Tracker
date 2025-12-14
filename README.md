@@ -1,7 +1,7 @@
 # Claude Usage Tracker
 
 <div align="center">
-  <img src="https://hamedelfayome.dev/m/gcut" alt="Claude Usage Tracker" width="100%">
+  <img src=".github/cover.jpg" alt="Claude Usage Tracker" width="100%">
 
   **A native macOS menu bar application for real-time monitoring of Claude AI usage limits**
 
@@ -9,9 +9,9 @@
   ![Swift](https://img.shields.io/badge/Swift-5.0+-orange?style=flat-square&logo=swift)
   ![SwiftUI](https://img.shields.io/badge/SwiftUI-5.0+-blue?style=flat-square&logo=swift)
   ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
-  ![Version](https://img.shields.io/badge/version-1.1.0-blue?style=flat-square)
+  ![Version](https://img.shields.io/badge/version-1.2.0-blue?style=flat-square)
 
-  ### [Download Latest Release (v1.1.0)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
+  ### [Download Latest Release (v1.2.0)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
 
   <sub>macOS 14.0+ (Sonoma) | ~3 MB | Native Swift/SwiftUI</sub>
 
@@ -31,18 +31,23 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
   <sub>Menu bar icon and detailed usage popover</sub>
 </div>
 
-## What's New in v1.1.0
+## What's New
 
-### Auto-Start Session Feature
+### v1.2.0 - Extra Usage Cost Tracking
+**Contributed by [@khromov](https://github.com/khromov)**
+
+Track your Claude Extra usage costs in real-time! If you have Claude Extra enabled, the app now displays:
+- Current spending vs. budget limit (e.g., 15.38 / 25.00 EUR)
+- Visual progress indicator with percentage
+- Seamlessly integrated below Weekly usage in the popover
+
+### v1.1.0 - Auto-Start Session Feature
 Never worry about manually starting a new session! When your 5-hour session resets to 0%, the app automatically sends a simple "Hi" message to Claude 3.5 Haiku (cheapest model) to initialize a fresh session. Configure it in the new **Session Management** tab in Settings.
 
-### Enhanced Notifications
-- Get notified when a session is automatically started
-- Immediate confirmation when enabling notifications
-- Improved notification system with proper delegate support for menu bar apps
-
-### Menu Bar Icon Improvements
-Fixed visibility issues! The menu bar icon now properly adapts to light/dark mode and wallpaper changes in real-time. The outline and text automatically adjust (black on light, white on dark) while keeping the colored progress indicator.
+**Also in v1.1.0:**
+- Enhanced notifications with session auto-start alerts
+- Fixed menu bar icon visibility in light/dark mode
+- Icon now adapts to appearance changes in real-time
 
 ### See [CHANGELOG.md](CHANGELOG.md) for full details
 
@@ -54,6 +59,7 @@ Fixed visibility issues! The menu bar icon now properly adapts to light/dark mod
 - **Session Tracking**: Monitor your 5-hour rolling window usage with live percentage updates
 - **Weekly Limits**: Track overall weekly token consumption across all models
 - **Opus Tracking**: Dedicated monitoring for Claude Opus weekly usage
+- **Extra Usage Costs**: Real-time tracking of Claude Extra spending with budget monitoring
 - **Visual Indicators**: Color-coded status (green, orange, red) based on consumption levels
 
 ### Menu Bar Integration
@@ -247,6 +253,12 @@ Authentication is handled via session cookie extracted from the browser.
 
 Session keys may expire after a period of time. Extract a new key from claude.ai and update it in Settings → API.
 
+## Contributors
+
+<img src="https://contrib.rocks/image?repo=hamed-elfayome/Claude-Usage-Tracker" alt="Contributors" height="30px" />
+
+This project is built for the community — everyone is welcome
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
@@ -270,13 +282,6 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Author
-
-**Hamed Elfayome**
-
-- GitHub: [@hamed-elfayome](https://github.com/hamed-elfayome)
-- Email: hamedelfayome@gmail.com
 
 ## Acknowledgments
 
