@@ -1,0 +1,57 @@
+name: Bug Report
+description: Report a bug or issue with the app
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out the information below.
+  
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened? What did you expect to happen?
+      placeholder: The app crashes when I click...
+    validations:
+      required: true
+  
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this issue?
+      placeholder: |
+        1. Open the app
+        2. Click on Settings
+        3. ...
+    validations:
+      required: true
+  
+  - type: input
+    id: version
+    attributes:
+      label: App Version
+      description: What version are you using? (Check Settings → About)
+      placeholder: v1.3.0
+    validations:
+      required: true
+  
+  - type: input
+    id: macos
+    attributes:
+      label: macOS Version
+      description: What version of macOS are you running?
+      placeholder: macOS 14.2 (Sonoma)
+    validations:
+      required: true
+  
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any logs, screenshots, or other relevant information
+      placeholder: Console.app shows...
+    validations:
+      required: false
