@@ -314,7 +314,7 @@ struct GeneralView: View {
             // Check Overage Limit Toggle
             Toggle(isOn: $checkOverageLimitEnabled) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Check Overage Limit")
+                    Text("Check Extra Usage Limit")
                         .font(.system(size: 13, weight: .medium))
 
                     Text("Fetch and display monthly cost and overage limit information")

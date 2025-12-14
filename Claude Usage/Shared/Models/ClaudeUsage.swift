@@ -18,7 +18,7 @@ struct ClaudeUsage: Codable, Equatable {
     var opusWeeklyTokensUsed: Int
     var opusWeeklyPercentage: Double
 
-    // Monthly Cost data
+    // Extra usage data
     var costUsed: Double?
     var costLimit: Double?
     var costCurrency: String?

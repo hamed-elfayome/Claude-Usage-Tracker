@@ -167,7 +167,7 @@ struct SmartUsageDashboard: View {
             if let used = usage.costUsed, let limit = usage.costLimit, let currency = usage.costCurrency, limit > 0 {
                 let percentage = (used / limit) * 100.0
                 SmartUsageCard(
-                    title: "Monthly Cost",
+                    title: "Extra Usage",
                     subtitle: String(format: "%.2f / %.2f %@", used / 100.0, limit / 100.0, currency),
                     percentage: percentage,
                     resetTime: nil,
