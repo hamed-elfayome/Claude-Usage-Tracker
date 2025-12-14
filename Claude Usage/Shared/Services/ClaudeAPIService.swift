@@ -33,6 +33,18 @@ class ClaudeAPIService {
         let capabilities: [String]
     }
     
+    struct OverageSpendLimitResponse: Codable {
+        let monthlyCreditLimit: Double?
+        let currency: String?
+        let usedCredits: Double?
+        
+        enum CodingKeys: String, CodingKey {
+            case monthlyCreditLimit = "monthly_credit_limit"
+            case currency
+            case usedCredits = "used_credits"
+        }
+    }
+    
     enum APIError: Error, LocalizedError {
         case noSessionKey
         case invalidSessionKey
@@ -144,8 +156,27 @@ class ClaudeAPIService {
         // First, get organization ID
         let orgId = try await fetchOrganizationId()
         
-        // Fetch usage data
-        let url = URL(string: "\(baseURL)/organizations/\(orgId)/usage")!
+        // Parallel fetching
+        async let usageDataTask = performRequest(endpoint: "/organizations/\(orgId)/usage", sessionKey: sessionKey)
+        async let overageDataTask = performRequest(endpoint: "/organizations/\(orgId)/overage_spend_limit", sessionKey: sessionKey)
+        
+        // Process usage data (required)
+        let usageData = try await usageDataTask
+        var claudeUsage = try parseUsageResponse(usageData)
+        
+        // Process overage data (optional)
+        if let overageData = try? await overageDataTask,
+           let overage = try? JSONDecoder().decode(OverageSpendLimitResponse.self, from: overageData) {
+            claudeUsage.costUsed = overage.usedCredits
+            claudeUsage.costLimit = overage.monthlyCreditLimit
+            claudeUsage.costCurrency = overage.currency
+        }
+        
+        return claudeUsage
+    }
+    
+    private func performRequest(endpoint: String, sessionKey: String) async throws -> Data {
+        let url = URL(string: "\(baseURL)\(endpoint)")!
         var request = URLRequest(url: url)
         request.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
@@ -159,15 +190,12 @@ class ClaudeAPIService {
 
         switch httpResponse.statusCode {
         case 200:
-            // Parse usage data
-            let usageData = try parseUsageResponse(data)
-            return usageData
-            
+            return data
         case 401, 403:
             throw APIError.unauthorized
         default:
             if let errorString = String(data: data, encoding: .utf8) {
-                print("❌ Error response: \(errorString)")
+                print("❌ Error response for \(endpoint): \(errorString)")
             }
             throw APIError.serverError(statusCode: httpResponse.statusCode)
         }
@@ -235,6 +263,9 @@ class ClaudeAPIService {
                 weeklyResetTime: weeklyResetTime,
                 opusWeeklyTokensUsed: opusTokens,
                 opusWeeklyPercentage: opusPercentage,
+                costUsed: nil,
+                costLimit: nil,
+                costCurrency: nil,
                 lastUpdated: Date(),
                 userTimezone: .current
             )

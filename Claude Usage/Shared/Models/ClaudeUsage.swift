@@ -18,6 +18,11 @@ struct ClaudeUsage: Codable, Equatable {
     var opusWeeklyTokensUsed: Int
     var opusWeeklyPercentage: Double
 
+    // Monthly Cost data
+    var costUsed: Double?
+    var costLimit: Double?
+    var costCurrency: String?
+
     // Metadata
     var lastUpdated: Date
     var userTimezone: TimeZone
@@ -47,6 +52,9 @@ struct ClaudeUsage: Codable, Equatable {
             weeklyResetTime: Date().nextMonday1259pm(),
             opusWeeklyTokensUsed: 0,
             opusWeeklyPercentage: 0,
+            costUsed: nil,
+            costLimit: nil,
+            costCurrency: nil,
             lastUpdated: Date(),
             userTimezone: .current
         )
