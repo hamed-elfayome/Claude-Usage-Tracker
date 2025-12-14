@@ -13,6 +13,9 @@ class MenuBarManager: NSObject, ObservableObject {
     // Event monitor for closing popover on outside click
     private var eventMonitor: Any?
     
+    // Detached window reference (when popover is detached)
+    private var detachedWindow: NSWindow?
+    
     // Settings window reference
     private var settingsWindow: NSWindow?
 
@@ -62,15 +65,23 @@ class MenuBarManager: NSObject, ObservableObject {
             NSEvent.removeMonitor(monitor)
             eventMonitor = nil
         }
+        detachedWindow?.close()
+        detachedWindow = nil
         statusItem = nil
     }
 
     private func setupPopover() {
         let popover = NSPopover()
         popover.contentSize = NSSize(width: 320, height: 600)
-        popover.behavior = .transient
+        popover.behavior = .semitransient  // Changed to allow detaching
         popover.animates = true
+        popover.delegate = self
         
+        popover.contentViewController = createContentViewController()
+        self.popover = popover
+    }
+    
+    private func createContentViewController() -> NSHostingController<PopoverContentView> {
         // Create SwiftUI content view
         let contentView = PopoverContentView(
             manager: self,
@@ -78,7 +89,7 @@ class MenuBarManager: NSObject, ObservableObject {
                 self?.refreshUsage()
             },
             onPreferences: { [weak self] in
-                self?.popover?.performClose(nil)
+                self?.closePopoverOrWindow()
                 self?.preferencesClicked()
             },
             onQuit: { [weak self] in
@@ -86,17 +97,28 @@ class MenuBarManager: NSObject, ObservableObject {
             }
         )
         
-        popover.contentViewController = NSHostingController(rootView: contentView)
-        self.popover = popover
+        return NSHostingController(rootView: contentView)
     }
     
     @objc private func togglePopover() {
         guard let button = statusItem?.button else { return }
         
+        // If there's a detached window, close it
+        if let window = detachedWindow {
+            window.close()
+            detachedWindow = nil
+            return
+        }
+        
+        // Otherwise toggle the popover
         if let popover = popover {
             if popover.isShown {
                 closePopover()
             } else {
+                // Recreate content if it was moved to a detached window
+                if popover.contentViewController == nil {
+                    popover.contentViewController = createContentViewController()
+                }
                 popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
                 startMonitoringForOutsideClicks()
             }
@@ -109,9 +131,13 @@ class MenuBarManager: NSObject, ObservableObject {
     }
     
     private func startMonitoringForOutsideClicks() {
-        // Monitor for clicks outside the popover
+        // Only monitor when popover is shown (not detached)
+        // Stop monitoring if popover gets detached
         eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
-            guard let self = self, let popover = self.popover, popover.isShown else { return }
+            guard let self = self,
+                  let popover = self.popover,
+                  popover.isShown,
+                  self.detachedWindow == nil else { return }
             self.closePopover()
         }
     }
@@ -120,6 +146,15 @@ class MenuBarManager: NSObject, ObservableObject {
         if let monitor = eventMonitor {
             NSEvent.removeMonitor(monitor)
             eventMonitor = nil
+        }
+    }
+    
+    private func closePopoverOrWindow() {
+        if let window = detachedWindow {
+            window.close()
+            detachedWindow = nil
+        } else {
+            popover?.performClose(nil)
         }
     }
 
@@ -257,8 +292,8 @@ class MenuBarManager: NSObject, ObservableObject {
 
 
     @objc private func preferencesClicked() {
-        // Close the popover first
-        popover?.performClose(nil)
+        // Close the popover or detached window first
+        closePopoverOrWindow()
 
         // If settings window already exists, just bring it to front
         if let existingWindow = settingsWindow, existingWindow.isVisible {
@@ -300,13 +335,49 @@ class MenuBarManager: NSObject, ObservableObject {
     }
 }
 
+// MARK: - NSPopoverDelegate
+extension MenuBarManager: NSPopoverDelegate {
+    func popoverShouldDetach(_ popover: NSPopover) -> Bool {
+        // Allow popover to be detached by dragging
+        return true
+    }
+    
+    func detachableWindow(for popover: NSPopover) -> NSWindow? {
+        // Stop monitoring for outside clicks when detaching
+        stopMonitoringForOutsideClicks()
+        
+        // Create a new window with NEW content view controller
+        // This prevents the popover from losing its content
+        let newContentViewController = createContentViewController()
+        
+        let window = NSWindow(contentViewController: newContentViewController)
+        window.title = "Claude Usage"
+        window.styleMask = [.titled, .closable]  // Close-only, minimal and clean
+        window.setContentSize(NSSize(width: 320, height: 600))
+        window.isReleasedWhenClosed = false
+        window.level = .floating  // Keep it above other windows
+        window.isRestorable = false  // Don't persist across app restarts
+        window.delegate = self
+        
+        // Store reference to the detached window
+        detachedWindow = window
+        
+        return window
+    }
+}
+
 // MARK: - NSWindowDelegate
 extension MenuBarManager: NSWindowDelegate {
     func windowWillClose(_ notification: Notification) {
-        if let window = notification.object as? NSWindow, window == settingsWindow {
-            // Hide dock icon again when settings window closes
-            NSApp.setActivationPolicy(.accessory)
-            settingsWindow = nil
+        if let window = notification.object as? NSWindow {
+            if window == settingsWindow {
+                // Hide dock icon again when settings window closes
+                NSApp.setActivationPolicy(.accessory)
+                settingsWindow = nil
+            } else if window == detachedWindow {
+                // Clear detached window reference when closed
+                detachedWindow = nil
+            }
         }
     }
 }
