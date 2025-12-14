@@ -321,6 +321,7 @@ extension MenuBarManager: NSPopoverDelegate {
         window.setContentSize(NSSize(width: 320, height: 600))
         window.isReleasedWhenClosed = false
         window.level = .floating  // Keep it above other windows
+        window.isRestorable = false  // Don't persist across app restarts
         window.delegate = self
         
         // Store reference to the detached window
