@@ -29,6 +29,10 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
   <img src=".github/popover.png" alt="Popover Interface" width="200">
 
   <sub>Menu bar icon and detailed usage popover</sub>
+
+  <img src=".github/statusline.png" alt="Claude Code Statusline">
+  <br>
+  <sub>Live terminal statusline showing directory, branch, and color-coded usage</sub>
 </div>
 
 ## What's New
@@ -216,6 +220,12 @@ Bring real-time Claude usage monitoring directly into your terminal with Claude 
 ### What is Claude Code?
 
 [Claude Code](https://claude.com/claude-code) is Anthropic's official CLI tool for interacting with Claude AI directly from your terminal. The statusline feature allows you to display custom information at the bottom of your terminal window.
+
+<div align="center">
+  <img src=".github/statusline.png" alt="Claude Code Statusline in Action" width="90%">
+  <br>
+  <sub>Example: Terminal statusline with all components enabled</sub>
+</div>
 
 ### Setup Instructions
 
