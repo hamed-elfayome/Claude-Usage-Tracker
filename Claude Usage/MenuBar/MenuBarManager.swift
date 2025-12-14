@@ -10,6 +10,9 @@ class MenuBarManager: NSObject, ObservableObject {
     // Popover for beautiful SwiftUI interface
     private var popover: NSPopover?
     
+    // Event monitor for closing popover on outside click
+    private var eventMonitor: Any?
+    
     // Settings window reference
     private var settingsWindow: NSWindow?
 
@@ -55,6 +58,10 @@ class MenuBarManager: NSObject, ObservableObject {
         refreshIntervalObserver = nil
         appearanceObserver?.invalidate()
         appearanceObserver = nil
+        if let monitor = eventMonitor {
+            NSEvent.removeMonitor(monitor)
+            eventMonitor = nil
+        }
         statusItem = nil
     }
 
@@ -88,10 +95,31 @@ class MenuBarManager: NSObject, ObservableObject {
         
         if let popover = popover {
             if popover.isShown {
-                popover.performClose(nil)
+                closePopover()
             } else {
                 popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+                startMonitoringForOutsideClicks()
             }
+        }
+    }
+    
+    private func closePopover() {
+        popover?.performClose(nil)
+        stopMonitoringForOutsideClicks()
+    }
+    
+    private func startMonitoringForOutsideClicks() {
+        // Monitor for clicks outside the popover
+        eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
+            guard let self = self, let popover = self.popover, popover.isShown else { return }
+            self.closePopover()
+        }
+    }
+    
+    private func stopMonitoringForOutsideClicks() {
+        if let monitor = eventMonitor {
+            NSEvent.removeMonitor(monitor)
+            eventMonitor = nil
         }
     }
 
