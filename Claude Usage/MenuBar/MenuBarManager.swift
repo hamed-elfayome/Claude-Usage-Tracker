@@ -10,6 +10,9 @@ class MenuBarManager: NSObject, ObservableObject {
     // Popover for beautiful SwiftUI interface
     private var popover: NSPopover?
     
+    // Event monitor for closing popover on outside click
+    private var eventMonitor: Any?
+    
     // Detached window reference (when popover is detached)
     private var detachedWindow: NSWindow?
     
@@ -58,6 +61,10 @@ class MenuBarManager: NSObject, ObservableObject {
         refreshIntervalObserver = nil
         appearanceObserver?.invalidate()
         appearanceObserver = nil
+        if let monitor = eventMonitor {
+            NSEvent.removeMonitor(monitor)
+            eventMonitor = nil
+        }
         detachedWindow?.close()
         detachedWindow = nil
         statusItem = nil
@@ -106,14 +113,39 @@ class MenuBarManager: NSObject, ObservableObject {
         // Otherwise toggle the popover
         if let popover = popover {
             if popover.isShown {
-                popover.performClose(nil)
+                closePopover()
             } else {
                 // Recreate content if it was moved to a detached window
                 if popover.contentViewController == nil {
                     popover.contentViewController = createContentViewController()
                 }
                 popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+                startMonitoringForOutsideClicks()
             }
+        }
+    }
+    
+    private func closePopover() {
+        popover?.performClose(nil)
+        stopMonitoringForOutsideClicks()
+    }
+    
+    private func startMonitoringForOutsideClicks() {
+        // Only monitor when popover is shown (not detached)
+        // Stop monitoring if popover gets detached
+        eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
+            guard let self = self,
+                  let popover = self.popover,
+                  popover.isShown,
+                  self.detachedWindow == nil else { return }
+            self.closePopover()
+        }
+    }
+    
+    private func stopMonitoringForOutsideClicks() {
+        if let monitor = eventMonitor {
+            NSEvent.removeMonitor(monitor)
+            eventMonitor = nil
         }
     }
     
@@ -311,6 +343,9 @@ extension MenuBarManager: NSPopoverDelegate {
     }
     
     func detachableWindow(for popover: NSPopover) -> NSWindow? {
+        // Stop monitoring for outside clicks when detaching
+        stopMonitoringForOutsideClicks()
+        
         // Create a new window with NEW content view controller
         // This prevents the popover from losing its content
         let newContentViewController = createContentViewController()
