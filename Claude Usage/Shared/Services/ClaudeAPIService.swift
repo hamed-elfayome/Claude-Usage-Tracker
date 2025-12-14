@@ -156,15 +156,12 @@ class ClaudeAPIService {
         // First, get organization ID
         let orgId = try await fetchOrganizationId()
         
-        // Parallel fetching
         async let usageDataTask = performRequest(endpoint: "/organizations/\(orgId)/usage", sessionKey: sessionKey)
         async let overageDataTask = performRequest(endpoint: "/organizations/\(orgId)/overage_spend_limit", sessionKey: sessionKey)
         
-        // Process usage data (required)
         let usageData = try await usageDataTask
         var claudeUsage = try parseUsageResponse(usageData)
         
-        // Process overage data (optional)
         if let overageData = try? await overageDataTask,
            let overage = try? JSONDecoder().decode(OverageSpendLimitResponse.self, from: overageData) {
             claudeUsage.costUsed = overage.usedCredits

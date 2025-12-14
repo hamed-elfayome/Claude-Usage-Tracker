@@ -164,7 +164,6 @@ struct SmartUsageDashboard: View {
                 }
             }
             
-            // Monthly Cost Card (New)
             if let used = usage.costUsed, let limit = usage.costLimit, let currency = usage.costCurrency, limit > 0 {
                 let percentage = (used / limit) * 100.0
                 SmartUsageCard(
