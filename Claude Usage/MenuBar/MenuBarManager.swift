@@ -70,6 +70,11 @@ class MenuBarManager: NSObject, ObservableObject {
         popover.animates = true
         popover.delegate = self
         
+        popover.contentViewController = createContentViewController()
+        self.popover = popover
+    }
+    
+    private func createContentViewController() -> NSHostingController<PopoverContentView> {
         // Create SwiftUI content view
         let contentView = PopoverContentView(
             manager: self,
@@ -85,8 +90,7 @@ class MenuBarManager: NSObject, ObservableObject {
             }
         )
         
-        popover.contentViewController = NSHostingController(rootView: contentView)
-        self.popover = popover
+        return NSHostingController(rootView: contentView)
     }
     
     @objc private func togglePopover() {
@@ -104,6 +108,10 @@ class MenuBarManager: NSObject, ObservableObject {
             if popover.isShown {
                 popover.performClose(nil)
             } else {
+                // Recreate content if it was moved to a detached window
+                if popover.contentViewController == nil {
+                    popover.contentViewController = createContentViewController()
+                }
                 popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
             }
         }
@@ -303,10 +311,11 @@ extension MenuBarManager: NSPopoverDelegate {
     }
     
     func detachableWindow(for popover: NSPopover) -> NSWindow? {
-        // Create a new window when popover is detached
-        guard let contentViewController = popover.contentViewController else { return nil }
+        // Create a new window with NEW content view controller
+        // This prevents the popover from losing its content
+        let newContentViewController = createContentViewController()
         
-        let window = NSWindow(contentViewController: contentViewController)
+        let window = NSWindow(contentViewController: newContentViewController)
         window.title = "Claude Usage"
         window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
         window.setContentSize(NSSize(width: 320, height: 600))
