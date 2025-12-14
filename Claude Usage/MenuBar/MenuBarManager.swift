@@ -260,8 +260,8 @@ class MenuBarManager: NSObject, ObservableObject {
 
 
     @objc private func preferencesClicked() {
-        // Close the popover first
-        popover?.performClose(nil)
+        // Close the popover or detached window first
+        closePopoverOrWindow()
 
         // If settings window already exists, just bring it to front
         if let existingWindow = settingsWindow, existingWindow.isVisible {
