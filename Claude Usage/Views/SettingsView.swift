@@ -272,6 +272,7 @@ struct APIView: View {
 
 struct GeneralView: View {
     @Binding var refreshInterval: Double
+    @State private var checkOverageLimitEnabled: Bool = DataStore.shared.loadCheckOverageLimitEnabled()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 32) {
@@ -308,6 +309,22 @@ struct GeneralView: View {
                 Text("How often to check for usage updates")
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
+            }
+
+            // Check Overage Limit Toggle
+            Toggle(isOn: $checkOverageLimitEnabled) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Check Overage Limit")
+                        .font(.system(size: 13, weight: .medium))
+
+                    Text("Fetch and display monthly cost and overage limit information")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+            }
+            .toggleStyle(.switch)
+            .onChange(of: checkOverageLimitEnabled) { _, newValue in
+                DataStore.shared.saveCheckOverageLimitEnabled(newValue)
             }
 
             Spacer()

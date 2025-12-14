@@ -83,6 +83,20 @@ class DataStore {
         return defaults.bool(forKey: Constants.UserDefaultsKeys.autoStartSessionEnabled)
     }
 
+    /// Saves check overage limit preference
+    func saveCheckOverageLimitEnabled(_ enabled: Bool) {
+        defaults.set(enabled, forKey: "checkOverageLimitEnabled")
+    }
+
+    /// Loads check overage limit preference (defaults to true)
+    func loadCheckOverageLimitEnabled() -> Bool {
+        // If key doesn't exist, register default as true
+        if defaults.object(forKey: "checkOverageLimitEnabled") == nil {
+            return true
+        }
+        return defaults.bool(forKey: "checkOverageLimitEnabled")
+    }
+
     // MARK: - Setup State
 
     /// Saves whether the user has completed the setup wizard

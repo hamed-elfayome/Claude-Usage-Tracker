@@ -159,14 +159,17 @@ class ClaudeAPIService {
         let orgId = try await fetchOrganizationId()
         
         async let usageDataTask = performRequest(endpoint: "/organizations/\(orgId)/usage", sessionKey: sessionKey)
-        async let overageDataTask = performRequest(endpoint: "/organizations/\(orgId)/overage_spend_limit", sessionKey: sessionKey)
+        
+        let checkOverage = DataStore.shared.loadCheckOverageLimitEnabled()
+        async let overageDataTask: Data? = checkOverage ? performRequest(endpoint: "/organizations/\(orgId)/overage_spend_limit", sessionKey: sessionKey) : nil
         
         let usageData = try await usageDataTask
         var claudeUsage = try parseUsageResponse(usageData)
         
-        // Process overage data (optional)
-        if let overageData = try? await overageDataTask,
-           let overage = try? JSONDecoder().decode(OverageSpendLimitResponse.self, from: overageData),
+        if checkOverage,
+           let overageData = try? await overageDataTask,
+           let data = overageData,
+           let overage = try? JSONDecoder().decode(OverageSpendLimitResponse.self, from: data),
            overage.isEnabled == true {
             claudeUsage.costUsed = overage.usedCredits
             claudeUsage.costLimit = overage.monthlyCreditLimit
