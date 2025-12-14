@@ -37,11 +37,13 @@ class ClaudeAPIService {
         let monthlyCreditLimit: Double?
         let currency: String?
         let usedCredits: Double?
+        let isEnabled: Bool?
         
         enum CodingKeys: String, CodingKey {
             case monthlyCreditLimit = "monthly_credit_limit"
             case currency
             case usedCredits = "used_credits"
+            case isEnabled = "is_enabled"
         }
     }
     
@@ -162,8 +164,10 @@ class ClaudeAPIService {
         let usageData = try await usageDataTask
         var claudeUsage = try parseUsageResponse(usageData)
         
+        // Process overage data (optional)
         if let overageData = try? await overageDataTask,
-           let overage = try? JSONDecoder().decode(OverageSpendLimitResponse.self, from: overageData) {
+           let overage = try? JSONDecoder().decode(OverageSpendLimitResponse.self, from: overageData),
+           overage.isEnabled == true {
             claudeUsage.costUsed = overage.usedCredits
             claudeUsage.costLimit = overage.monthlyCreditLimit
             claudeUsage.costCurrency = overage.currency
