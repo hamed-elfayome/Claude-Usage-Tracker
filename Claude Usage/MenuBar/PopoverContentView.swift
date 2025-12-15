@@ -15,6 +15,7 @@ struct PopoverContentView: View {
             // Smart Header with Status
             SmartHeader(
                 usage: manager.usage,
+                status: manager.status,
                 isRefreshing: isRefreshing,
                 onRefresh: {
                     withAnimation(.easeInOut(duration: 0.3)) {
@@ -63,10 +64,20 @@ struct PopoverContentView: View {
 // MARK: - Smart Header Component
 struct SmartHeader: View {
     let usage: ClaudeUsage
+    let status: ClaudeStatus
     let isRefreshing: Bool
     let onRefresh: () -> Void
-    
-    
+
+    private var statusColor: Color {
+        switch status.indicator.color {
+        case .green: return .green
+        case .yellow: return .yellow
+        case .orange: return .orange
+        case .red: return .red
+        case .gray: return .gray
+        }
+    }
+
     var body: some View {
         HStack(spacing: 12) {
             // App Logo
@@ -76,23 +87,35 @@ struct SmartHeader: View {
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 24, height: 24)
                 
-                VStack(alignment: .leading, spacing: 1) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text("Claude Usage")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(.primary)
-                    
-                    // Subtle creator link
+
+                    // Claude Status Badge
                     Button(action: {
-                        if let url = URL(string: "https://github.com/hamed-elfayome") {
+                        if let url = URL(string: "https://status.claude.com") {
                             NSWorkspace.shared.open(url)
                         }
                     }) {
-                        Text("by Hamed Elfayome")
-                            .font(.system(size: 9, weight: .medium))
-                            .foregroundColor(.secondary.opacity(0.7))
+                        HStack(spacing: 4) {
+                            Circle()
+                                .fill(statusColor)
+                                .frame(width: 6, height: 6)
+
+                            Text(status.description)
+                                .font(.system(size: 9, weight: .medium))
+                                .foregroundColor(.primary.opacity(0.8))
+                        }
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(
+                            Capsule()
+                                .fill(statusColor.opacity(0.12))
+                        )
                     }
                     .buttonStyle(.plain)
-                    .help("Created by Hamed Elfayome")
+                    .help("Click to open status.claude.com")
                 }
             }
             
@@ -369,15 +392,7 @@ struct SmartFooter: View {
         VStack(spacing: 0) {
             Divider()
                 .padding(.horizontal, 16)
-            
-            // Claude Status Row
-            ClaudeStatusRow(status: status)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-            
-            Divider()
-                .padding(.horizontal, 16)
-            
+
             // Action buttons
             HStack(spacing: 8) {
                 SmartActionButton(
