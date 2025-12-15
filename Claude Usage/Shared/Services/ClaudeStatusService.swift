@@ -16,6 +16,13 @@ class ClaudeStatusService {
     
     /// Fetch current Claude status
     func fetchStatus() async throws -> ClaudeStatus {
+        // TESTING: Uncomment to test different status states
+        // return ClaudeStatus(indicator: .none, description: "All Systems Operational")      // Green
+        // return ClaudeStatus(indicator: .minor, description: "Minor Service Outage")        // Yellow
+        // return ClaudeStatus(indicator: .major, description: "Major Service Outage")        // Orange
+        // return ClaudeStatus(indicator: .critical, description: "Critical Service Outage")  // Red
+        // return ClaudeStatus(indicator: .unknown, description: "Status Unknown")            // Gray
+        
         var request = URLRequest(url: statusURL)
         request.timeoutInterval = 10  // 10 second timeout
         
