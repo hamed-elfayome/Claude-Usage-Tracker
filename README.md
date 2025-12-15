@@ -135,6 +135,31 @@ Never worry about manually starting a new session! When your 5-hour session rese
 
 ## Installation
 
+### Homebrew (Community Tap)
+
+You can install via a community tap maintained by @ggfevans:
+
+```bash
+brew tap ggfevans/claude-usage-tracker
+brew install --cask claude-usage-tracker
+```
+
+Note: The app is currently unsigned. On first launch, macOS Gatekeeper may block it. Workarounds:
+- System Settings → Privacy & Security → Open Anyway (recommended for most users)
+- Right‑click the app in Applications and choose Open, then Open
+- Advanced users only:
+  ```bash
+  # Skip quarantine during install
+  brew install --cask --no-quarantine claude-usage-tracker
+  # Or remove quarantine after install
+  xattr -dr com.apple.quarantine "/Applications/Claude Usage.app"
+  ```
+
+To uninstall:
+```bash
+brew uninstall --cask claude-usage-tracker
+```
+
 ### Download and Install
 
 **[Download Claude-Usage.zip](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)**
