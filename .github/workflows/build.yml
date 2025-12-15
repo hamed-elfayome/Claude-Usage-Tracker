@@ -1,4 +1,4 @@
-name: Build
+name: CI
 
 on:
   pull_request:
@@ -11,8 +11,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    name: Build App
+  build-and-test:
+    name: Build and Test
     runs-on: macos-15
     timeout-minutes: 20
 
@@ -26,7 +26,32 @@ jobs:
           swift --version
           echo "macOS: $(sw_vers -productVersion)"
 
-      - name: Build
+      - name: Build Debug (for tests)
+        run: |
+          xcodebuild build \
+            -project "Claude Usage.xcodeproj" \
+            -scheme "Claude Usage" \
+            -configuration Debug \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcpretty
+
+      - name: Run Tests
+        run: |
+          xcodebuild test \
+            -project "Claude Usage.xcodeproj" \
+            -scheme "Claude Usage" \
+            -configuration Debug \
+            -derivedDataPath build \
+            -destination "platform=macOS" \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcpretty
+
+      - name: Build Release
         run: |
           xcodebuild build \
             -project "Claude Usage.xcodeproj" \
