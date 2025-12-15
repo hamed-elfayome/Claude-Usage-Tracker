@@ -9,9 +9,9 @@
   ![Swift](https://img.shields.io/badge/Swift-5.0+-orange?style=flat-square&logo=swift)
   ![SwiftUI](https://img.shields.io/badge/SwiftUI-5.0+-blue?style=flat-square&logo=swift)
   ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
-  ![Version](https://img.shields.io/badge/version-1.3.0-blue?style=flat-square)
+  ![Version](https://img.shields.io/badge/version-1.4.0-blue?style=flat-square)
 
-  ### [Download Latest Release (v1.3.0)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
+  ### [Download Latest Release (v1.4.0)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
 
   <sub>macOS 14.0+ (Sonoma) | ~3 MB | Native Swift/SwiftUI</sub>
 
@@ -36,6 +36,16 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 </div>
 
 ## What's New
+
+### v1.4.0 - Claude Status & Detachable Popover
+**Contributed by [@ggfevans](https://github.com/ggfevans)**
+
+- **Real-time Claude Status Indicator**: Live system status from status.claude.com displayed in the popover footer with color-coded indicators (green/yellow/orange/red)
+- **Detachable Popover**: Drag the popover to create a floating window that stays above other windows
+- **Close on Outside Click**: Popover now properly closes when clicking outside
+- **Dynamic Version Display**: About view now shows actual app version from bundle
+- **GitHub Issue Templates**: Structured templates for bug reports, feature requests, and documentation improvements
+- **CONTRIBUTING.md**: Comprehensive contributor guide with development setup, code style, and PR process
 
 ### v1.3.0 - Claude Code Terminal Integration
 Display your Claude usage directly in your terminal! The new Claude Code statusline integration brings real-time monitoring to your development workflow:
