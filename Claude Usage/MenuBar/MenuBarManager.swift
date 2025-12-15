@@ -6,6 +6,7 @@ class MenuBarManager: NSObject, ObservableObject {
     private var statusItem: NSStatusItem?
     private var refreshTimer: Timer?
     @Published private(set) var usage: ClaudeUsage = .empty
+    @Published private(set) var status: ClaudeStatus = .unknown
     
     // Popover for beautiful SwiftUI interface
     private var popover: NSPopover?
@@ -14,6 +15,7 @@ class MenuBarManager: NSObject, ObservableObject {
     private var settingsWindow: NSWindow?
 
     private let apiService = ClaudeAPIService()
+    private let statusService = ClaudeStatusService()
     private let dataStore = DataStore.shared
     
     // Observer for refresh interval changes
@@ -206,8 +208,12 @@ class MenuBarManager: NSObject, ObservableObject {
 
     func refreshUsage() {
         Task {
+            // Fetch usage and status in parallel
+            async let usageResult = apiService.fetchUsageData()
+            async let statusResult = statusService.fetchStatus()
+            
             do {
-                let newUsage = try await apiService.fetchUsageData()
+                let newUsage = try await usageResult
                 
                 await MainActor.run {
                     self.usage = newUsage
@@ -224,9 +230,18 @@ class MenuBarManager: NSObject, ObservableObject {
             } catch {
                 // Silently handle errors - user can check manually
             }
+            
+            // Fetch status separately (don't fail if usage fetch works)
+            do {
+                let newStatus = try await statusResult
+                await MainActor.run {
+                    self.status = newStatus
+                }
+            } catch {
+                // Silently fail - status will remain unknown
+            }
         }
     }
-
 
     @objc private func preferencesClicked() {
         // Close the popover first
