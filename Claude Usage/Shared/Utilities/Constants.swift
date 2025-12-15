@@ -17,6 +17,12 @@ enum Constants {
         static let statuslineShowBranch = "statuslineShowBranch"
         static let statuslineShowUsage = "statuslineShowUsage"
         static let statuslineShowProgressBar = "statuslineShowProgressBar"
+
+        // GitHub star prompt tracking
+        static let firstLaunchDate = "firstLaunchDate"
+        static let lastGitHubStarPromptDate = "lastGitHubStarPromptDate"
+        static let hasStarredGitHub = "hasStarredGitHub"
+        static let neverShowGitHubPrompt = "neverShowGitHubPrompt"
     }
 
     // Claude Code paths
@@ -59,5 +65,14 @@ enum Constants {
         static let warning: Double = 75.0
         static let high: Double = 90.0
         static let critical: Double = 95.0
+    }
+
+    // GitHub repository
+    static let githubRepoURL = "https://github.com/hamed-elfayome/Claude-Usage-Tracker"
+
+    // GitHub star prompt timing (in seconds)
+    enum GitHubPromptTiming {
+        static let initialDelay: TimeInterval = 24 * 60 * 60  // 1 day
+        static let reminderInterval: TimeInterval = 10 * 24 * 60 * 60  // 10 days (between 7-14 days)
     }
 }

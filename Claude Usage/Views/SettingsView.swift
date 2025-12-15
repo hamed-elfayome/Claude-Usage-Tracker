@@ -541,66 +541,107 @@ struct NotificationsView: View {
 // MARK: - About View
 
 struct AboutView: View {
+    @State private var contributors: [Contributor] = []
+    @State private var isLoadingContributors = false
+    @State private var contributorsError: String?
+
     private var appVersion: String {
         if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
             return version
         }
         return "Unknown"
     }
-    
+
     var body: some View {
         VStack(spacing: 0) {
-            VStack(spacing: 28) {
-                Spacer()
+            VStack(spacing: 26) {
+                // App Info Section
+                VStack(spacing: 16) {
+                    Image("AboutLogo")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 64, height: 64)
 
-                // App Logo
-                Image("AboutLogo")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 72, height: 72)
+                    VStack(spacing: 4) {
+                        Text("Claude Usage Tracker")
+                            .font(.system(size: 18, weight: .semibold))
 
-                // Info
-                VStack(spacing: 6) {
-                    Text("Claude Usage Tracker")
-                        .font(.system(size: 18, weight: .semibold))
+                        Text("Version \(appVersion)")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                    }
 
-                    Text("Version \(appVersion)")
+                    Text("Real-time usage monitoring for Claude AI")
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                }
+                .padding(.top, 20)
+
+                // Creator Section
+                VStack(spacing: 8) {
+                    Text("Created by")
                         .font(.system(size: 11))
                         .foregroundColor(.secondary)
-                }
 
-                Text("Real-time usage monitoring for Claude")
-                    .font(.system(size: 12))
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-
-                // Creator Info
-                VStack(spacing: 4) {
-                    Text("Created by")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundColor(.secondary)
-                    
-                    Text("Hamed Elfayome")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.primary)
-                }
-                .padding(.top, 8)
-
-                Spacer()
-
-                // Links
-                VStack(spacing: 8) {
                     Button(action: {
                         if let url = URL(string: "https://github.com/hamed-elfayome") {
                             NSWorkspace.shared.open(url)
                         }
                     }) {
-                        HStack {
-                            Image(systemName: "link")
-                            Text("GitHub")
-                            Spacer()
+                        Text("Hamed Elfayome")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.accentColor)
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                Divider()
+
+                // Contributors Section
+                VStack(spacing: 16) {
+                    HStack {
+                        Text("Contributors")
+                            .font(.system(size: 13, weight: .semibold))
+
+                        if !contributors.isEmpty {
+                            Text("\(contributors.count)")
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(.secondary)
                         }
-                        .font(.system(size: 12))
+                    }
+
+                    if isLoadingContributors {
+                        ContributorsLoadingView()
+                    } else if let error = contributorsError {
+                        ContributorsErrorView(error: error) {
+                            fetchContributors()
+                        }
+                    } else if contributors.isEmpty {
+                        EmptyContributorsView()
+                    } else {
+                        ContributorsGridView(contributors: contributors)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+
+                Divider()
+
+                // Links Section
+                HStack(spacing: 12) {
+                    Button(action: {
+                        if let url = URL(string: "https://github.com/hamed-elfayome/Claude-Usage-Tracker") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "star.fill")
+                                .font(.system(size: 11))
+
+                            Text("Star on GitHub")
+                                .font(.system(size: 12))
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
                     }
                     .buttonStyle(.bordered)
 
@@ -609,19 +650,214 @@ struct AboutView: View {
                             NSWorkspace.shared.open(url)
                         }
                     }) {
-                        HStack {
-                            Image(systemName: "envelope")
-                            Text("Email")
-                            Spacer()
+                        HStack(spacing: 6) {
+                            Image(systemName: "envelope.fill")
+                                .font(.system(size: 11))
+
+                            Text("Send Feedback")
+                                .font(.system(size: 12))
                         }
-                        .font(.system(size: 12))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
                     }
                     .buttonStyle(.bordered)
                 }
-                .frame(maxWidth: 200)
+                .frame(maxWidth: .infinity)
+
+                Spacer()
             }
-            .padding(28)
+            .padding(.horizontal, 32)
+            .padding(.bottom, 32)
         }
+        .onAppear {
+            if contributors.isEmpty && !isLoadingContributors {
+                fetchContributors()
+            }
+        }
+    }
+
+    private func fetchContributors() {
+        isLoadingContributors = true
+        contributorsError = nil
+
+        Task {
+            do {
+                let fetchedContributors = try await GitHubService.shared.fetchContributors()
+                await MainActor.run {
+                    withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
+                        self.contributors = fetchedContributors
+                        self.isLoadingContributors = false
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    self.contributorsError = error.localizedDescription
+                    self.isLoadingContributors = false
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Contributors Grid View
+
+struct ContributorsGridView: View {
+    let contributors: [Contributor]
+
+    var body: some View {
+        LazyVGrid(columns: [
+            GridItem(.adaptive(minimum: 44, maximum: 48), spacing: 10)
+        ], spacing: 10) {
+            ForEach(contributors) { contributor in
+                ContributorAvatar(contributor: contributor)
+            }
+        }
+        .padding(.vertical, 8)
+    }
+}
+
+// MARK: - Contributor Avatar
+
+struct ContributorAvatar: View {
+    let contributor: Contributor
+    @State private var isHovered = false
+    @State private var imageData: Data?
+    @State private var isLoadingImage = true
+
+    var body: some View {
+        Button(action: {
+            if let url = URL(string: contributor.htmlUrl) {
+                NSWorkspace.shared.open(url)
+            }
+        }) {
+            ZStack {
+                if let data = imageData, let nsImage = NSImage(data: data) {
+                    Image(nsImage: nsImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 44, height: 44)
+                        .clipShape(Circle())
+                } else if isLoadingImage {
+                    Circle()
+                        .fill(Color.secondary.opacity(0.1))
+                        .frame(width: 44, height: 44)
+                        .overlay(
+                            ProgressView()
+                                .scaleEffect(0.6)
+                        )
+                } else {
+                    Circle()
+                        .fill(Color.secondary.opacity(0.1))
+                        .frame(width: 44, height: 44)
+                        .overlay(
+                            Image(systemName: "person.fill")
+                                .font(.system(size: 18))
+                                .foregroundColor(.secondary.opacity(0.3))
+                        )
+                }
+            }
+            .overlay(
+                Circle()
+                    .strokeBorder(Color.accentColor, lineWidth: 2)
+                    .opacity(isHovered ? 1 : 0)
+            )
+            .shadow(color: Color.black.opacity(0.1), radius: 2, x: 0, y: 1)
+        }
+        .buttonStyle(.plain)
+        .help(contributor.login)
+        .onHover { hovering in
+            isHovered = hovering
+        }
+        .onAppear {
+            loadAvatar()
+        }
+    }
+
+    private func loadAvatar() {
+        guard let url = URL(string: contributor.avatarUrl) else {
+            isLoadingImage = false
+            return
+        }
+
+        Task {
+            do {
+                let (data, _) = try await URLSession.shared.data(from: url)
+                await MainActor.run {
+                    self.imageData = data
+                    self.isLoadingImage = false
+                }
+            } catch {
+                await MainActor.run {
+                    self.isLoadingImage = false
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Loading View
+
+struct ContributorsLoadingView: View {
+    var body: some View {
+        VStack(spacing: 12) {
+            ProgressView()
+                .scaleEffect(0.8)
+
+            Text("Loading contributors...")
+                .font(.system(size: 11))
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 32)
+    }
+}
+
+// MARK: - Error View
+
+struct ContributorsErrorView: View {
+    let error: String
+    let retry: () -> Void
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 24))
+                .foregroundColor(.orange)
+
+            Text("Failed to load contributors")
+                .font(.system(size: 12, weight: .medium))
+
+            Text(error)
+                .font(.system(size: 10))
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+
+            Button(action: retry) {
+                Label("Retry", systemImage: "arrow.clockwise")
+                    .font(.system(size: 11))
+            }
+            .buttonStyle(.bordered)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 24)
+    }
+}
+
+// MARK: - Empty View
+
+struct EmptyContributorsView: View {
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "person.2.fill")
+                .font(.system(size: 24))
+                .foregroundColor(.secondary.opacity(0.5))
+
+            Text("No contributors found")
+                .font(.system(size: 12))
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 32)
     }
 }
 
