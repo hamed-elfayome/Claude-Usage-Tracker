@@ -430,6 +430,7 @@ struct ClaudeStatusRow: View {
                 Text(status.description)
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(.primary)
+                    .lineLimit(1)
                 
                 Spacer()
                 
