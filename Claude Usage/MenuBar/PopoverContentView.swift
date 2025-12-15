@@ -44,6 +44,7 @@ struct PopoverContentView: View {
             // Smart Footer with Actions
             SmartFooter(
                 usage: manager.usage,
+                status: manager.status,
                 showInsights: $showInsights,
                 onPreferences: onPreferences,
                 onQuit: onQuit
@@ -359,12 +360,21 @@ struct Insight {
 // MARK: - Smart Footer
 struct SmartFooter: View {
     let usage: ClaudeUsage
+    let status: ClaudeStatus
     @Binding var showInsights: Bool
     let onPreferences: () -> Void
     let onQuit: () -> Void
     
     var body: some View {
         VStack(spacing: 0) {
+            Divider()
+                .padding(.horizontal, 16)
+            
+            // Claude Status Row
+            ClaudeStatusRow(status: status)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+            
             Divider()
                 .padding(.horizontal, 16)
             
@@ -386,6 +396,63 @@ struct SmartFooter: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
         }
+    }
+}
+
+// MARK: - Claude Status Row
+struct ClaudeStatusRow: View {
+    let status: ClaudeStatus
+    @State private var isHovered = false
+    
+    private var statusColor: Color {
+        switch status.indicator.color {
+        case .green: return .green
+        case .yellow: return .yellow
+        case .orange: return .orange
+        case .red: return .red
+        case .gray: return .gray
+        }
+    }
+    
+    var body: some View {
+        Button(action: {
+            if let url = URL(string: "https://status.claude.com") {
+                NSWorkspace.shared.open(url)
+            }
+        }) {
+            HStack(spacing: 8) {
+                // Status indicator dot
+                Circle()
+                    .fill(statusColor)
+                    .frame(width: 8, height: 8)
+                
+                // Status text
+                Text(status.description)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(.primary)
+                    .lineLimit(1)
+                
+                Spacer()
+                
+                // External link icon
+                Image(systemName: "arrow.up.right")
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundColor(.secondary.opacity(0.6))
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(isHovered ? Color.secondary.opacity(0.05) : Color.clear)
+            )
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isHovered = hovering
+            }
+        }
+        .help("Click to open status.claude.com")
     }
 }
 
