@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    name: Build and Release
+    runs-on: macos-15
+    timeout-minutes: 20
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Build Environment
+        run: |
+          xcodebuild -version
+          swift --version
+          echo "macOS: $(sw_vers -productVersion)"
+          echo "Tag: ${{ github.ref_name }}"
+
+      - name: Build Release
+        run: |
+          xcodebuild build \
+            -project "Claude Usage.xcodeproj" \
+            -scheme "Claude Usage" \
+            -configuration Release \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcpretty
+
+      - name: Create Release Artifact
+        run: |
+          # Create artifacts directory
+          mkdir -p release
+          
+          # Copy app bundle
+          cp -R "build/Build/Products/Release/Claude Usage.app" release/
+          
+          # Create ZIP archive
+          cd release
+          zip -r "Claude-Usage.zip" "Claude Usage.app"
+          
+          # Generate SHA256 checksum
+          shasum -a 256 "Claude-Usage.zip" > "Claude-Usage.zip.sha256"
+          
+          # Display checksum for logs
+          echo "SHA256 Checksum:"
+          cat "Claude-Usage.zip.sha256"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          draft: true
+          generate_release_notes: true
+          files: |
+            release/Claude-Usage.zip
+            release/Claude-Usage.zip.sha256
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
