@@ -5,6 +5,94 @@ All notable changes to Claude Usage Tracker will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2025-12-15
+
+### Added
+
+#### Claude System Status Indicator
+- **Real-time Claude API Status** - Live status indicator in the popover footer
+  - Fetches status from `status.claude.com` API (Statuspage)
+  - Color-coded indicators: 🟢 Green (operational), 🟡 Yellow (minor), 🟠 Orange (major), 🔴 Red (critical), ⚪ Gray (unknown)
+  - Displays current status description (e.g., "All Systems Operational")
+  - Clickable row opens status.claude.com for detailed information
+  - Hover tooltip and subtle hover effect for better UX
+  - 10-second timeout prevents UI blocking on slow connections
+
+- **New ClaudeStatusService** - Dedicated service for status monitoring
+  - Async/await implementation with proper error handling
+  - Automatic status refresh alongside usage data
+  - Graceful fallback to "Status Unknown" on failures
+
+- **ClaudeStatus Model** - Type-safe status representation
+  - `StatusIndicator` enum: none, minor, major, critical, unknown
+  - `StatusColor` enum for consistent color mapping
+  - Static factories for common states (.unknown, .operational)
+
+#### Detachable Popover
+- **Floating Window Mode** - Drag the popover to detach it into a standalone window
+  - Detaches by dragging the popover away from the menu bar
+  - Floating window stays above other windows (`NSWindow.Level.floating`)
+  - Close button only (minimal chrome) for clean appearance
+  - Window properly cleans up when closed
+  - Menu bar icon click toggles/closes detached window
+
+#### GitHub Issue Templates
+- **Bug Report Template** (`bug_report.yml`) - Structured bug reporting
+  - Description, steps to reproduce, app version, macOS version fields
+  - Additional context section for logs/screenshots
+  
+- **Feature Request Template** (`feature_request.yml`) - Feature suggestions
+  - Problem/use case, proposed solution, alternatives considered
+  
+- **Documentation Template** (`documentation.yml`) - Docs improvements
+  - Issue location, suggested improvement fields
+
+- **Config** (`config.yml`) - Links to GitHub Discussions for questions
+
+#### Developer Documentation
+- **CONTRIBUTING.md** - Comprehensive contributor guide
+  - Development setup and prerequisites
+  - Project structure overview
+  - Code style guidelines (Swift API Design Guidelines)
+  - Commit message conventions (Conventional Commits)
+  - Branch naming conventions
+  - Pull request process with checklist
+  - Release process documentation
+
+### Fixed
+
+#### Popover Behavior
+- **Close on Outside Click** - Popover now properly closes when clicking outside
+  - Global event monitor for left and right mouse clicks
+  - Automatically stops monitoring when popover closes or detaches
+  - Prevents accidental dismissal while interacting with popover
+
+#### About View
+- **Dynamic Version Display** - Version number now reads from app bundle
+  - Pulls `CFBundleShortVersionString` from `Bundle.main`
+  - Falls back to "Unknown" if unavailable
+  - No more hardcoded version strings to update
+
+### Technical Improvements
+
+- **MenuBarManager Enhancements**
+  - Added `@Published var status: ClaudeStatus` for reactive status updates
+  - Integrated `ClaudeStatusService` for parallel status fetching
+  - `NSPopoverDelegate` implementation for detachable window support
+  - `NSWindowDelegate` for proper window lifecycle management
+  - Event monitor management for outside click detection
+
+- **PopoverContentView Updates**
+  - New `ClaudeStatusRow` component with hover effects
+  - `SmartFooter` now displays live Claude status
+  - Smooth animations for status transitions
+
+### Contributors
+- [@hamed-elfayome](https://github.com/hamed-elfayome) (Hamed Elfayome) - Project creator and maintainer
+- [@ggfevans](https://github.com/ggfevans) - Claude status indicator, detachable popover, outside click fix, dynamic version, issue templates, contributing guide
+
+---
+
 ## [1.3.0] - 2025-12-14
 
 ### Added
@@ -189,6 +277,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Detailed usage dashboard with countdown timers
 - Support for macOS 14.0+ (Sonoma and later)
 
+[1.4.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.0.0...v1.1.0
