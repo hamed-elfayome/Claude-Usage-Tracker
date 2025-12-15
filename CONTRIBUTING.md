@@ -320,25 +320,21 @@ Use descriptive branch names with prefixes:
 
 ## Release Process
 
-Releases are managed by maintainers. The general process:
+Releases are automated via GitHub Actions. See [`.github/README.md`](.github/README.md) for technical details.
 
-1. **Version Bump**
-   - Update `MARKETING_VERSION` in `project.pbxproj`
-   - Update version badge in `README.md`
+**Quick reference:**
 
-2. **Changelog**
-   - Update `CHANGELOG.md` with all changes
-   - Follow [Keep a Changelog](https://keepachangelog.com/) format
+```bash
+# 1. Bump MARKETING_VERSION in project.pbxproj
+# 2. Update CHANGELOG.md
+# 3. Commit and tag
+git commit -am "chore: bump version to X.Y.Z"
+git tag vX.Y.Z
+git push origin main --tags
 
-3. **Testing**
-   - Full regression test on clean macOS install
-   - Verify all features work together
-
-4. **Release**
-   - Create GitHub Release with tag (e.g., `v1.4.0`)
-   - Attach built `.app` bundle (zipped)
-   - Include SHA256 checksum
-   - Write comprehensive release notes
+# 4. Workflow creates draft release with assets
+# 5. Review and publish at github.com/.../releases
+```
 
 ## Getting Help
 
