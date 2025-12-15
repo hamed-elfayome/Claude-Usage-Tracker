@@ -30,6 +30,8 @@
 	<false/>
 	<key>NSSupportsAutomaticTermination</key>
 	<true/>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.utilities</string>
 	<key>NSSupportsSuddenTermination</key>
 	<false/>
 </dict>
