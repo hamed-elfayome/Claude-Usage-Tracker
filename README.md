@@ -484,6 +484,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 This application is not affiliated with, endorsed by, or sponsored by Anthropic PBC. Claude is a trademark of Anthropic PBC. This is an independent third-party tool created for personal usage monitoring.
 
+## AI Transparency
+
+This project is developed using AI-assisted workflows (primarily Claude Code via Happy). We believe in transparent collaboration between human developers and AI tools.
+
 ---
 
 <div align="center">
