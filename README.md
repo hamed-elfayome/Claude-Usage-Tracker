@@ -9,9 +9,9 @@
   ![Swift](https://img.shields.io/badge/Swift-5.0+-orange?style=flat-square&logo=swift)
   ![SwiftUI](https://img.shields.io/badge/SwiftUI-5.0+-blue?style=flat-square&logo=swift)
   ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
-  ![Version](https://img.shields.io/badge/version-1.4.0-blue?style=flat-square)
+  ![Version](https://img.shields.io/badge/version-1.5.0-blue?style=flat-square)
 
-  ### [Download Latest Release (v1.4.0)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
+  ### [Download Latest Release (v1.5.0)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
 
   <sub>macOS 14.0+ (Sonoma) | ~3 MB | Native Swift/SwiftUI</sub>
 
@@ -135,27 +135,34 @@ Never worry about manually starting a new session! When your 5-hour session rese
 
 ## Installation
 
-### Homebrew (Community Tap)
-
-You can install via a community tap maintained by @ggfevans:
+### Homebrew (Official Tap)
 
 ```bash
-brew tap ggfevans/claude-usage-tracker
-brew install --cask claude-usage-tracker
+brew install --cask --no-quarantine hamed-elfayome/claude-usage/claude-usage-tracker
 ```
 
-Note: The app is currently unsigned. On first launch, macOS Gatekeeper may block it. Workarounds:
+Or tap first, then install:
+
+```bash
+brew tap hamed-elfayome/claude-usage
+brew install --cask --no-quarantine claude-usage-tracker
+```
+
+**Note about "--no-quarantine"**: The app is currently unsigned. On first launch, macOS Gatekeeper may block it. Workarounds:
 - System Settings → Privacy & Security → Open Anyway (recommended for most users)
 - Right‑click the app in Applications and choose Open, then Open
 - Advanced users only:
   ```bash
-  # Skip quarantine during install
-  brew install --cask --no-quarantine claude-usage-tracker
-  # Or remove quarantine after install
+  # remove quarantine after install
   xattr -dr com.apple.quarantine "/Applications/Claude Usage.app"
   ```
 
-To uninstall:
+**To update**:
+```bash
+brew upgrade --cask claude-usage-tracker
+```
+
+**To uninstall**:
 ```bash
 brew uninstall --cask claude-usage-tracker
 ```
