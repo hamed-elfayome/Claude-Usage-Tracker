@@ -318,6 +318,7 @@ class ClaudeAPIService: APIServiceProtocol {
 
     /// Sends a minimal message to Claude to initialize a new session
     /// Uses Claude 3.5 Haiku (cheapest model)
+    /// Creates a temporary conversation that is deleted after initialization to avoid cluttering chat history
     func sendInitializationMessage() async throws {
         let sessionKey = try readSessionKey()
         let orgId = try await fetchOrganizationId()
@@ -375,7 +376,23 @@ class ClaudeAPIService: APIServiceProtocol {
             throw APIError.serverError(statusCode: messageHTTPResponse.statusCode)
         }
 
-        // Message sent successfully - we don't care about the response
+        // Delete the conversation to keep it out of chat history (incognito mode)
+        let deleteURL = URL(string: "\(baseURL)/organizations/\(orgId)/chat_conversations/\(conversationUUID)")!
+        var deleteRequest = URLRequest(url: deleteURL)
+        deleteRequest.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
+        deleteRequest.httpMethod = "DELETE"
+
+        // Attempt to delete, but don't fail if deletion fails
+        // The session is already initialized, which is the primary goal
+        do {
+            let (_, deleteResponse) = try await URLSession.shared.data(for: deleteRequest)
+            if let deleteHTTPResponse = deleteResponse as? HTTPURLResponse {
+                // Successfully deleted conversation - status code 200 or 204 expected
+                _ = deleteHTTPResponse.statusCode
+            }
+        } catch {
+            // Silently ignore deletion errors - session is already initialized
+        }
     }
 
     // MARK: - Console API Methods
