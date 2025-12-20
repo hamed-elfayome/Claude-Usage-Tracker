@@ -1,7 +1,7 @@
 import Foundation
 
 /// Service for fetching usage data directly from Claude's API
-class ClaudeAPIService {
+class ClaudeAPIService: APIServiceProtocol {
     
     // MARK: - Types
     
@@ -110,8 +110,8 @@ class ClaudeAPIService {
     // MARK: - Properties
 
     private let sessionKeyPath: URL
-    private let baseURL = "https://claude.ai/api"
-    private let consoleBaseURL = "https://console.anthropic.com/api"
+    private let baseURL = Constants.APIEndpoints.claudeBase
+    private let consoleBaseURL = Constants.APIEndpoints.consoleBase
     
     // MARK: - Initialization
     

@@ -81,4 +81,31 @@ enum Constants {
         static let initialDelay: TimeInterval = 24 * 60 * 60  // 1 day
         static let reminderInterval: TimeInterval = 10 * 24 * 60 * 60  // 10 days (between 7-14 days)
     }
+
+    // API Endpoints
+    enum APIEndpoints {
+        static let claudeBase = "https://claude.ai/api"
+        static let consoleBase = "https://console.anthropic.com/api"
+    }
+
+    // UI Timing
+    enum UITiming {
+        static let popoverCloseDelay: TimeInterval = 0.15
+        static let refreshAnimationDuration: TimeInterval = 1.0
+        static let hoverAnimationDuration: TimeInterval = 0.2
+        static let transitionDuration: TimeInterval = 0.3
+    }
+
+    // Window Sizes
+    enum WindowSizes {
+        static let settingsWindow = NSSize(width: 720, height: 600)
+        static let popoverSize = NSSize(width: 320, height: 600)
+    }
+
+    // GitHub Repository Info
+    enum GitHub {
+        static let owner = "hamed-elfayome"
+        static let repo = "Claude-Usage-Tracker"
+        static let repoURL = "https://github.com/\(owner)/\(repo)"
+    }
 }

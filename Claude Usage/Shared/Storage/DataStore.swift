@@ -1,7 +1,7 @@
 import Foundation
 
 /// Manages shared data storage between app and widgets using App Groups
-class DataStore {
+class DataStore: StorageProvider {
     static let shared = DataStore()
 
     private let defaults: UserDefaults
@@ -31,21 +31,25 @@ class DataStore {
             let data = try encoder.encode(usage)
             defaults.set(data, forKey: Constants.UserDefaultsKeys.claudeUsageData)
             defaults.synchronize()
+            LoggingService.shared.logStorageSave("claudeUsageData")
         } catch {
-            // Silently handle encoding errors
+            LoggingService.shared.logStorageError("saveUsage", error: error)
         }
     }
 
     /// Loads usage data from shared storage
     func loadUsage() -> ClaudeUsage? {
         guard let data = defaults.data(forKey: Constants.UserDefaultsKeys.claudeUsageData) else {
+            LoggingService.shared.logStorageLoad("claudeUsageData", success: false)
             return nil
         }
 
         do {
-            return try decoder.decode(ClaudeUsage.self, from: data)
+            let usage = try decoder.decode(ClaudeUsage.self, from: data)
+            LoggingService.shared.logStorageLoad("claudeUsageData", success: true)
+            return usage
         } catch {
-            // Silently handle decoding errors
+            LoggingService.shared.logStorageError("loadUsage", error: error)
             return nil
         }
     }
