@@ -23,6 +23,12 @@ enum Constants {
         static let lastGitHubStarPromptDate = "lastGitHubStarPromptDate"
         static let hasStarredGitHub = "hasStarredGitHub"
         static let neverShowGitHubPrompt = "neverShowGitHubPrompt"
+
+        // API usage tracking
+        static let apiUsageData = "apiUsageData"
+        static let apiTrackingEnabled = "apiTrackingEnabled"
+        static let apiSessionKey = "apiSessionKey"
+        static let apiOrganizationId = "apiOrganizationId"
     }
 
     // Claude Code paths

@@ -31,7 +31,7 @@ struct PopoverContentView: View {
             )
 
             // Intelligent Usage Dashboard
-            SmartUsageDashboard(usage: manager.usage)
+            SmartUsageDashboard(usage: manager.usage, apiUsage: manager.apiUsage)
             
             // Contextual Insights
             if showInsights {
@@ -54,7 +54,7 @@ struct PopoverContentView: View {
         .frame(width: 280)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color(nsColor: .windowBackgroundColor).opacity(0))
+                .fill(Color(nsColor: .windowBackgroundColor))
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
         )
         .shadow(color: .black.opacity(0.15), radius: 25, x: 0, y: 10)
@@ -155,7 +155,8 @@ struct SmartHeader: View {
 // MARK: - Smart Usage Dashboard
 struct SmartUsageDashboard: View {
     let usage: ClaudeUsage
-    
+    let apiUsage: APIUsage?
+
     var body: some View {
         VStack(spacing: 16) {
             // Primary Usage Card
@@ -166,7 +167,7 @@ struct SmartUsageDashboard: View {
                 resetTime: usage.sessionResetTime,
                 isPrimary: true
             )
-            
+
             // Secondary Usage Cards
             HStack(spacing: 12) {
                 SmartUsageCard(
@@ -176,7 +177,7 @@ struct SmartUsageDashboard: View {
                     resetTime: usage.weeklyResetTime,
                     isPrimary: false
                 )
-                
+
                 if usage.opusWeeklyTokensUsed > 0 {
                     SmartUsageCard(
                         title: "Opus",
@@ -187,7 +188,7 @@ struct SmartUsageDashboard: View {
                     )
                 }
             }
-            
+
             if let used = usage.costUsed, let limit = usage.costLimit, let currency = usage.costCurrency, limit > 0 {
                 let percentage = (used / limit) * 100.0
                 SmartUsageCard(
@@ -197,6 +198,11 @@ struct SmartUsageDashboard: View {
                     resetTime: nil,
                     isPrimary: false
                 )
+            }
+
+            // API Usage Card (if enabled)
+            if let apiUsage = apiUsage, DataStore.shared.loadAPITrackingEnabled() {
+                APIUsageCard(apiUsage: apiUsage)
             }
         }
         .padding(.horizontal, 16)
@@ -509,5 +515,105 @@ struct SmartActionButton: View {
                 isHovered = hovering
             }
         }
+    }
+}
+
+// MARK: - API Usage Card
+struct APIUsageCard: View {
+    let apiUsage: APIUsage
+
+    private var usageColor: Color {
+        switch apiUsage.usagePercentage {
+        case 0..<50: return .green
+        case 50..<80: return .orange
+        default: return .red
+        }
+    }
+
+    var body: some View {
+        VStack(spacing: 12) {
+            // Header
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("API Credits")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.primary)
+
+                    Text("Anthropic API Console")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                // Percentage
+                Text("\(Int(apiUsage.usagePercentage))%")
+                    .font(.system(size: 16, weight: .bold, design: .monospaced))
+                    .foregroundColor(usageColor)
+            }
+
+            // Progress Bar
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    // Background
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.secondary.opacity(0.1))
+
+                    // Fill
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(usageColor)
+                        .frame(width: geometry.size.width * (apiUsage.usagePercentage / 100.0))
+                }
+            }
+            .frame(height: 6)
+
+            // Used / Remaining
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Used")
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundColor(.secondary)
+                    Text(apiUsage.formattedUsed)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.primary)
+                }
+
+                Spacer()
+
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("Remaining")
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundColor(.secondary)
+                    Text(apiUsage.formattedRemaining)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.primary)
+                }
+            }
+
+            // Reset Time
+            if apiUsage.resetsAt > Date() {
+                HStack {
+                    Image(systemName: "clock.fill")
+                        .font(.system(size: 8))
+                        .foregroundColor(.secondary)
+
+                    Text("Resets \(apiUsage.resetsAt.formatted(.relative(presentation: .named)))")
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundColor(.secondary)
+
+                    Spacer()
+                }
+            }
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(nsColor: .controlBackgroundColor).opacity(0.4))
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(usageColor.opacity(0.2), lineWidth: 1)
+                )
+        )
     }
 }

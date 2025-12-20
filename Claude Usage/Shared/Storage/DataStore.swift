@@ -267,6 +267,66 @@ class DataStore {
         return timeSinceLastPrompt >= Constants.GitHubPromptTiming.reminderInterval
     }
 
+    // MARK: - API Usage Tracking
+
+    /// Saves API usage data to shared storage
+    func saveAPIUsage(_ usage: APIUsage) {
+        do {
+            let data = try encoder.encode(usage)
+            defaults.set(data, forKey: Constants.UserDefaultsKeys.apiUsageData)
+            defaults.synchronize()
+        } catch {
+            // Silently handle encoding errors
+        }
+    }
+
+    /// Loads API usage data from shared storage
+    func loadAPIUsage() -> APIUsage? {
+        guard let data = defaults.data(forKey: Constants.UserDefaultsKeys.apiUsageData) else {
+            return nil
+        }
+
+        do {
+            return try decoder.decode(APIUsage.self, from: data)
+        } catch {
+            // Silently handle decoding errors
+            return nil
+        }
+    }
+
+    /// Saves API tracking enabled preference
+    func saveAPITrackingEnabled(_ enabled: Bool) {
+        defaults.set(enabled, forKey: Constants.UserDefaultsKeys.apiTrackingEnabled)
+        defaults.synchronize()
+    }
+
+    /// Loads API tracking enabled preference
+    func loadAPITrackingEnabled() -> Bool {
+        return defaults.bool(forKey: Constants.UserDefaultsKeys.apiTrackingEnabled)
+    }
+
+    /// Saves API session key
+    func saveAPISessionKey(_ key: String) {
+        defaults.set(key, forKey: Constants.UserDefaultsKeys.apiSessionKey)
+        defaults.synchronize()
+    }
+
+    /// Loads API session key
+    func loadAPISessionKey() -> String? {
+        return defaults.string(forKey: Constants.UserDefaultsKeys.apiSessionKey)
+    }
+
+    /// Saves selected API organization ID
+    func saveAPIOrganizationId(_ orgId: String) {
+        defaults.set(orgId, forKey: Constants.UserDefaultsKeys.apiOrganizationId)
+        defaults.synchronize()
+    }
+
+    /// Loads selected API organization ID
+    func loadAPIOrganizationId() -> String? {
+        return defaults.string(forKey: Constants.UserDefaultsKeys.apiOrganizationId)
+    }
+
     // MARK: - Testing Helpers
 
     /// Resets all GitHub star prompt tracking (for testing purposes)

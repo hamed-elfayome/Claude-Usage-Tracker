@@ -7,6 +7,7 @@ class MenuBarManager: NSObject, ObservableObject {
     private var refreshTimer: Timer?
     @Published private(set) var usage: ClaudeUsage = .empty
     @Published private(set) var status: ClaudeStatus = .unknown
+    @Published private(set) var apiUsage: APIUsage? = nil
     
     // Popover for beautiful SwiftUI interface
     private var popover: NSPopover?
@@ -45,6 +46,14 @@ class MenuBarManager: NSObject, ObservableObject {
 
         // Setup popover
         setupPopover()
+
+        // Load saved data
+        if let savedUsage = dataStore.loadUsage() {
+            usage = savedUsage
+        }
+        if let savedAPIUsage = dataStore.loadAPIUsage() {
+            apiUsage = savedAPIUsage
+        }
 
         // Load initial data
         refreshUsage()
@@ -277,26 +286,26 @@ class MenuBarManager: NSObject, ObservableObject {
             // Fetch usage and status in parallel
             async let usageResult = apiService.fetchUsageData()
             async let statusResult = statusService.fetchStatus()
-            
+
             do {
                 let newUsage = try await usageResult
-                
+
                 await MainActor.run {
                     self.usage = newUsage
                     dataStore.saveUsage(newUsage)
-                    
+
                     // Update menu bar button
                     if let button = statusItem?.button {
                         updateStatusButton(button, usage: newUsage)
                     }
-                    
+
                     // Check if we should send notifications
                     NotificationManager.shared.checkAndNotify(usage: newUsage)
                 }
             } catch {
                 // Silently handle errors - user can check manually
             }
-            
+
             // Fetch status separately (don't fail if usage fetch works)
             do {
                 let newStatus = try await statusResult
@@ -305,6 +314,21 @@ class MenuBarManager: NSObject, ObservableObject {
                 }
             } catch {
                 // Silently fail - status will remain unknown
+            }
+
+            // Fetch API usage if enabled
+            if dataStore.loadAPITrackingEnabled(),
+               let apiSessionKey = dataStore.loadAPISessionKey(),
+               let orgId = dataStore.loadAPIOrganizationId() {
+                do {
+                    let newAPIUsage = try await apiService.fetchAPIUsageData(organizationId: orgId, apiSessionKey: apiSessionKey)
+                    await MainActor.run {
+                        self.apiUsage = newAPIUsage
+                        dataStore.saveAPIUsage(newAPIUsage)
+                    }
+                } catch {
+                    // Silently fail - API usage will remain nil
+                }
             }
         }
     }

@@ -3,7 +3,7 @@ import UserNotifications
 
 /// Professional, native macOS Settings interface
 struct SettingsView: View {
-    @State private var selectedSection: SettingsSection = .api
+    @State private var selectedSection: SettingsSection = .claudeai
     @State private var notificationsEnabled: Bool = DataStore.shared.loadNotificationsEnabled()
     @State private var refreshInterval: Double = DataStore.shared.loadRefreshInterval()
     @State private var autoStartSessionEnabled: Bool = DataStore.shared.loadAutoStartSessionEnabled()
@@ -17,8 +17,10 @@ struct SettingsView: View {
             // Content
             Group {
                 switch selectedSection {
-                case .api:
+                case .claudeai:
                     APIView()
+                case .apiConsole:
+                    APISettingsView()
                 case .general:
                     GeneralView(refreshInterval: $refreshInterval)
                 case .session:
@@ -38,7 +40,8 @@ struct SettingsView: View {
 }
 
 enum SettingsSection: String, CaseIterable {
-    case api = "API"
+    case claudeai = "Claude.ai"
+    case apiConsole = "API Console"
     case general = "General"
     case session = "Session"
     case notifications = "Notifications"
@@ -47,7 +50,8 @@ enum SettingsSection: String, CaseIterable {
 
     var icon: String {
         switch self {
-        case .api: return "key.horizontal.fill"
+        case .claudeai: return "key.horizontal.fill"
+        case .apiConsole: return "dollarsign.circle.fill"
         case .general: return "gearshape.fill"
         case .session: return "clock.arrow.circlepath"
         case .notifications: return "bell.badge.fill"

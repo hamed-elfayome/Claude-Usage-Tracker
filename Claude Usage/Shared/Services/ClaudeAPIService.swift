@@ -38,13 +38,47 @@ class ClaudeAPIService {
         let currency: String?
         let usedCredits: Double?
         let isEnabled: Bool?
-        
+
         enum CodingKeys: String, CodingKey {
             case monthlyCreditLimit = "monthly_credit_limit"
             case currency
             case usedCredits = "used_credits"
             case isEnabled = "is_enabled"
         }
+    }
+
+    struct CurrentSpendResponse: Codable {
+        let amount: Int
+        let resetsAt: String
+
+        enum CodingKeys: String, CodingKey {
+            case amount
+            case resetsAt = "resets_at"
+        }
+    }
+
+    struct PrepaidCreditsResponse: Codable {
+        let amount: Int
+        let currency: String
+        let autoReloadSettings: AutoReloadSettings?
+
+        enum CodingKeys: String, CodingKey {
+            case amount
+            case currency
+            case autoReloadSettings = "auto_reload_settings"
+        }
+
+        struct AutoReloadSettings: Codable {
+            let enabled: Bool?
+            let threshold: Int?
+            let reloadAmount: Int?
+        }
+    }
+
+    struct ConsoleOrganization: Codable {
+        let id: Int
+        let uuid: String
+        let name: String
     }
     
     enum APIError: Error, LocalizedError {
@@ -74,9 +108,10 @@ class ClaudeAPIService {
     }
     
     // MARK: - Properties
-    
+
     private let sessionKeyPath: URL
     private let baseURL = "https://claude.ai/api"
+    private let consoleBaseURL = "https://console.anthropic.com/api"
     
     // MARK: - Initialization
     
@@ -341,6 +376,101 @@ class ClaudeAPIService {
         }
 
         // Message sent successfully - we don't care about the response
+    }
+
+    // MARK: - Console API Methods
+
+    /// Fetches organizations from Console API using the provided session key
+    func fetchConsoleOrganizations(apiSessionKey: String) async throws -> [APIOrganization] {
+        let url = URL(string: "\(consoleBaseURL)/organizations")!
+        var request = URLRequest(url: url)
+        request.setValue("sessionKey=\(apiSessionKey)", forHTTPHeaderField: "Cookie")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.httpMethod = "GET"
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+
+        switch httpResponse.statusCode {
+        case 200:
+            let organizations = try JSONDecoder().decode([ConsoleOrganization].self, from: data)
+            return organizations.map { APIOrganization(id: $0.uuid, name: $0.name) }
+        case 401, 403:
+            throw APIError.unauthorized
+        default:
+            throw APIError.serverError(statusCode: httpResponse.statusCode)
+        }
+    }
+
+    /// Fetches current spend for the given organization from Console API
+    private func fetchCurrentSpend(organizationId: String, apiSessionKey: String) async throws -> CurrentSpendResponse {
+        let url = URL(string: "\(consoleBaseURL)/organizations/\(organizationId)/current_spend")!
+        var request = URLRequest(url: url)
+        request.setValue("sessionKey=\(apiSessionKey)", forHTTPHeaderField: "Cookie")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.httpMethod = "GET"
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+
+        switch httpResponse.statusCode {
+        case 200:
+            return try JSONDecoder().decode(CurrentSpendResponse.self, from: data)
+        case 401, 403:
+            throw APIError.unauthorized
+        default:
+            throw APIError.serverError(statusCode: httpResponse.statusCode)
+        }
+    }
+
+    /// Fetches prepaid credits for the given organization from Console API
+    private func fetchPrepaidCredits(organizationId: String, apiSessionKey: String) async throws -> PrepaidCreditsResponse {
+        let url = URL(string: "\(consoleBaseURL)/organizations/\(organizationId)/prepaid/credits")!
+        var request = URLRequest(url: url)
+        request.setValue("sessionKey=\(apiSessionKey)", forHTTPHeaderField: "Cookie")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.httpMethod = "GET"
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+
+        switch httpResponse.statusCode {
+        case 200:
+            return try JSONDecoder().decode(PrepaidCreditsResponse.self, from: data)
+        case 401, 403:
+            throw APIError.unauthorized
+        default:
+            throw APIError.serverError(statusCode: httpResponse.statusCode)
+        }
+    }
+
+    /// Fetches complete API usage data for the given organization
+    func fetchAPIUsageData(organizationId: String, apiSessionKey: String) async throws -> APIUsage {
+        async let spendTask = fetchCurrentSpend(organizationId: organizationId, apiSessionKey: apiSessionKey)
+        async let creditsTask = fetchPrepaidCredits(organizationId: organizationId, apiSessionKey: apiSessionKey)
+
+        let spend = try await spendTask
+        let credits = try await creditsTask
+
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let resetsAt = formatter.date(from: spend.resetsAt) ?? Date()
+
+        return APIUsage(
+            currentSpendCents: spend.amount,
+            resetsAt: resetsAt,
+            prepaidCreditsCents: credits.amount,
+            currency: credits.currency
+        )
     }
 }
 
