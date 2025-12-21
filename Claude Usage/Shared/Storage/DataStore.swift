@@ -1,5 +1,44 @@
 import Foundation
 
+/// Menu bar icon style options
+enum MenuBarIconStyle: String, CaseIterable, Codable {
+    case battery = "battery"
+    case progressBar = "progressBar"
+    case percentageOnly = "percentageOnly"
+    case icon = "icon"
+    case compact = "compact"
+
+    var displayName: String {
+        switch self {
+        case .battery:
+            return "Battery (Classic)"
+        case .progressBar:
+            return "Progress Bar"
+        case .percentageOnly:
+            return "Percentage"
+        case .icon:
+            return "Icon with Bar"
+        case .compact:
+            return "Compact"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .battery:
+            return "Original battery-style bar with Claude text below"
+        case .progressBar:
+            return "Clean horizontal progress bar only"
+        case .percentageOnly:
+            return "Just the percentage in color-coded text"
+        case .icon:
+            return "Circular ring with progress indicator"
+        case .compact:
+            return "Minimalist dot indicator"
+        }
+    }
+}
+
 /// Manages shared data storage between app and widgets using App Groups
 class DataStore: StorageProvider {
     static let shared = DataStore()
@@ -329,6 +368,23 @@ class DataStore: StorageProvider {
     /// Loads selected API organization ID
     func loadAPIOrganizationId() -> String? {
         return defaults.string(forKey: Constants.UserDefaultsKeys.apiOrganizationId)
+    }
+
+    // MARK: - Menu Bar Icon Style
+
+    /// Saves menu bar icon style preference
+    func saveMenuBarIconStyle(_ style: MenuBarIconStyle) {
+        defaults.set(style.rawValue, forKey: Constants.UserDefaultsKeys.menuBarIconStyle)
+        defaults.synchronize()
+    }
+
+    /// Loads menu bar icon style preference (defaults to battery)
+    func loadMenuBarIconStyle() -> MenuBarIconStyle {
+        guard let rawValue = defaults.string(forKey: Constants.UserDefaultsKeys.menuBarIconStyle),
+              let style = MenuBarIconStyle(rawValue: rawValue) else {
+            return .battery
+        }
+        return style
     }
 
     // MARK: - Testing Helpers

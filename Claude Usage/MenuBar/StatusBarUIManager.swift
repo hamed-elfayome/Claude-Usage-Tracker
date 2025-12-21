@@ -64,9 +64,23 @@ final class StatusBarUIManager {
     private func updateStatusButton(_ button: NSStatusBarButton, usage: ClaudeUsage) {
         let percentage = usage.sessionPercentage
         let isDarkMode = NSApp.effectiveAppearance.name == .darkAqua
+        let iconStyle = DataStore.shared.loadMenuBarIconStyle()
 
-        // Create the image with battery-style progress
-        let image = createBatteryImage(percentage: percentage, isDarkMode: isDarkMode)
+        // Create the image based on selected style
+        let image: NSImage
+        switch iconStyle {
+        case .battery:
+            image = createBatteryImage(percentage: percentage, isDarkMode: isDarkMode)
+        case .progressBar:
+            image = createBatteryImage(percentage: percentage, isDarkMode: isDarkMode)
+        case .percentageOnly:
+            image = createMinimalImage(percentage: percentage, isDarkMode: isDarkMode)
+        case .icon:
+            image = createBatteryImage(percentage: percentage, isDarkMode: isDarkMode)
+        case .compact:
+            image = createTextOnlyImage(isDarkMode: isDarkMode)
+        }
+
         button.image = image
         button.image?.isTemplate = false
     }
@@ -131,6 +145,79 @@ final class StatusBarUIManager {
         let tipPath = NSBezierPath(rect: tipRect)
         backgroundColor.setFill()
         tipPath.fill()
+
+        return image
+    }
+
+    private func createMinimalImage(percentage: Double, isDarkMode: Bool) -> NSImage {
+        let width: CGFloat = 45
+        let height: CGFloat = 16
+        let image = NSImage(size: NSSize(width: width, height: height))
+
+        image.lockFocus()
+        defer { image.unlockFocus() }
+
+        // Colors
+        let textColor: NSColor = isDarkMode ? .white : .black
+
+        // Determine color based on percentage
+        let percentageColor: NSColor
+        switch percentage {
+        case 0..<50:
+            percentageColor = NSColor(red: 0.3, green: 0.8, blue: 0.3, alpha: 1.0)
+        case 50..<80:
+            percentageColor = NSColor(red: 1.0, green: 0.6, blue: 0.0, alpha: 1.0)
+        default:
+            percentageColor = NSColor(red: 1.0, green: 0.3, blue: 0.3, alpha: 1.0)
+        }
+
+        // Draw "Claude" text
+        let text = "Claude"
+        let font = NSFont.systemFont(ofSize: 10, weight: .medium)
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: textColor
+        ]
+        let textSize = text.size(withAttributes: attributes)
+        let textRect = NSRect(x: 0, y: (height - textSize.height) / 2, width: textSize.width, height: textSize.height)
+        text.draw(in: textRect, withAttributes: attributes)
+
+        // Draw percentage
+        let percentageText = "\(Int(percentage))%"
+        let percentageFont = NSFont.systemFont(ofSize: 10, weight: .medium)
+        let percentageAttributes: [NSAttributedString.Key: Any] = [
+            .font: percentageFont,
+            .foregroundColor: percentageColor
+        ]
+        let percentageSize = percentageText.size(withAttributes: percentageAttributes)
+        let percentageX = textSize.width + 4
+        let percentageRect = NSRect(x: percentageX, y: (height - percentageSize.height) / 2, width: percentageSize.width, height: percentageSize.height)
+        percentageText.draw(in: percentageRect, withAttributes: percentageAttributes)
+
+        return image
+    }
+
+    private func createTextOnlyImage(isDarkMode: Bool) -> NSImage {
+        let width: CGFloat = 40
+        let height: CGFloat = 16
+        let image = NSImage(size: NSSize(width: width, height: height))
+
+        image.lockFocus()
+        defer { image.unlockFocus() }
+
+        // Colors
+        let textColor: NSColor = isDarkMode ? .white : .black
+
+        // Draw "Claude" text
+        let text = "Claude"
+        let font = NSFont.systemFont(ofSize: 10, weight: .medium)
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: textColor
+        ]
+        let textSize = text.size(withAttributes: attributes)
+        let textRect = NSRect(x: 0, y: (height - textSize.height) / 2, width: textSize.width, height: textSize.height)
+        text.draw(in: textRect, withAttributes: attributes)
 
         return image
     }

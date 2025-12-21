@@ -34,6 +34,9 @@ class MenuBarManager: NSObject, ObservableObject {
     // Observer for appearance changes
     private var appearanceObserver: NSKeyValueObservation?
 
+    // Observer for icon style changes
+    private var iconStyleObserver: NSObjectProtocol?
+
     func setup() {
         // Create status item in menu bar
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -66,6 +69,9 @@ class MenuBarManager: NSObject, ObservableObject {
 
         // Observe appearance changes
         observeAppearanceChanges()
+
+        // Observe icon style changes
+        observeIconStyleChanges()
     }
 
     func cleanup() {
@@ -75,6 +81,10 @@ class MenuBarManager: NSObject, ObservableObject {
         refreshIntervalObserver = nil
         appearanceObserver?.invalidate()
         appearanceObserver = nil
+        if let iconStyleObserver = iconStyleObserver {
+            NotificationCenter.default.removeObserver(iconStyleObserver)
+            self.iconStyleObserver = nil
+        }
         if let monitor = eventMonitor {
             NSEvent.removeMonitor(monitor)
             eventMonitor = nil
@@ -173,6 +183,31 @@ class MenuBarManager: NSObject, ObservableObject {
     }
 
     private func updateStatusButton(_ button: NSStatusBarButton, usage: ClaudeUsage) {
+        let iconStyle = dataStore.loadMenuBarIconStyle()
+        let isDarkAppearance = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+
+        // Create the image based on selected style
+        let image: NSImage
+        switch iconStyle {
+        case .battery:
+            image = createBatteryStyle(usage: usage, isDarkMode: isDarkAppearance)
+        case .progressBar:
+            image = createProgressBarStyle(usage: usage, isDarkMode: isDarkAppearance)
+        case .percentageOnly:
+            image = createPercentageOnlyStyle(usage: usage, isDarkMode: isDarkAppearance)
+        case .icon:
+            image = createIconWithBarStyle(usage: usage, isDarkMode: isDarkAppearance)
+        case .compact:
+            image = createCompactStyle(usage: usage, isDarkMode: isDarkAppearance)
+        }
+
+        button.image = image
+        button.image?.isTemplate = false
+        button.title = ""
+    }
+
+    // MARK: - Icon Style: Battery (Classic)
+    private func createBatteryStyle(usage: ClaudeUsage, isDarkMode: Bool) -> NSImage {
         let percentage = CGFloat(usage.sessionPercentage) / 100.0
 
         // Create a taller image to fit battery + text
@@ -182,24 +217,14 @@ class MenuBarManager: NSObject, ObservableObject {
         let image = NSImage(size: NSSize(width: width, height: totalHeight))
 
         image.lockFocus()
-
-        // Detect if menu bar is in dark or light appearance
-        let isDarkAppearance = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        defer { image.unlockFocus() }
 
         // Choose outline and text color based on menu bar appearance
-        let outlineColor: NSColor = isDarkAppearance ? .white : .black
-        let textColor: NSColor = isDarkAppearance ? .white : .black
+        let outlineColor: NSColor = isDarkMode ? .white : .black
+        let textColor: NSColor = isDarkMode ? .white : .black
 
         // Get color based on usage level (always vibrant)
-        let fillColor: NSColor
-        switch usage.statusLevel {
-        case .safe:
-            fillColor = NSColor.systemGreen
-        case .moderate:
-            fillColor = NSColor.systemOrange
-        case .critical:
-            fillColor = NSColor.systemRed
-        }
+        let fillColor = getColorForUsageLevel(usage.statusLevel)
 
         // Position and size calculations for the bar
         let barY = totalHeight - barHeight - 4
@@ -231,13 +256,137 @@ class MenuBarManager: NSObject, ObservableObject {
         let textY: CGFloat = 2
         text.draw(at: NSPoint(x: textX, y: textY), withAttributes: textAttributes)
 
-        image.unlockFocus()
+        return image
+    }
 
-        // Not using template mode - we manually handle appearance colors
-        image.isTemplate = false
+    // MARK: - Icon Style: Progress Bar
+    private func createProgressBarStyle(usage: ClaudeUsage, isDarkMode: Bool) -> NSImage {
+        let width: CGFloat = 40
+        let height: CGFloat = 18
+        let image = NSImage(size: NSSize(width: width, height: height))
 
-        button.image = image
-        button.title = ""
+        image.lockFocus()
+        defer { image.unlockFocus() }
+
+        let fillColor = getColorForUsageLevel(usage.statusLevel)
+        let backgroundColor: NSColor = isDarkMode ? NSColor.white.withAlphaComponent(0.2) : NSColor.black.withAlphaComponent(0.15)
+
+        // Progress bar
+        let barWidth: CGFloat = width - 2
+        let barHeight: CGFloat = 8
+        let barX: CGFloat = 1
+        let barY = (height - barHeight) / 2
+
+        // Background
+        let bgPath = NSBezierPath(roundedRect: NSRect(x: barX, y: barY, width: barWidth, height: barHeight), xRadius: 4, yRadius: 4)
+        backgroundColor.setFill()
+        bgPath.fill()
+
+        // Fill
+        let fillWidth = barWidth * CGFloat(usage.sessionPercentage / 100.0)
+        if fillWidth > 1 {
+            let fillPath = NSBezierPath(roundedRect: NSRect(x: barX, y: barY, width: fillWidth, height: barHeight), xRadius: 4, yRadius: 4)
+            fillColor.setFill()
+            fillPath.fill()
+        }
+
+        return image
+    }
+
+    // MARK: - Icon Style: Percentage Only
+    private func createPercentageOnlyStyle(usage: ClaudeUsage, isDarkMode: Bool) -> NSImage {
+        let percentageText = "\(Int(usage.sessionPercentage))%"
+        let font = NSFont.monospacedDigitSystemFont(ofSize: 13, weight: .semibold)
+        let fillColor = getColorForUsageLevel(usage.statusLevel)
+
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: fillColor
+        ]
+
+        let textSize = percentageText.size(withAttributes: attributes)
+        let image = NSImage(size: NSSize(width: textSize.width + 2, height: 18))
+
+        image.lockFocus()
+        defer { image.unlockFocus() }
+
+        let textY = (18 - textSize.height) / 2
+        percentageText.draw(at: NSPoint(x: 1, y: textY), withAttributes: attributes)
+
+        return image
+    }
+
+    // MARK: - Icon Style: Icon with Bar
+    private func createIconWithBarStyle(usage: ClaudeUsage, isDarkMode: Bool) -> NSImage {
+        let size: CGFloat = 20
+        let image = NSImage(size: NSSize(width: size, height: size))
+
+        image.lockFocus()
+        defer { image.unlockFocus() }
+
+        let textColor: NSColor = isDarkMode ? .white : .black
+        let fillColor = getColorForUsageLevel(usage.statusLevel)
+
+        // Progress arc (outer ring)
+        let percentage = usage.sessionPercentage / 100.0
+        let center = NSPoint(x: size / 2, y: size / 2)
+        let radius = (size - 3.5) / 2
+        let startAngle: CGFloat = 90
+        let endAngle = startAngle + (360 * CGFloat(percentage))
+
+        // Background ring
+        let bgArcPath = NSBezierPath()
+        bgArcPath.appendArc(withCenter: center, radius: radius, startAngle: 0, endAngle: 360, clockwise: false)
+        textColor.withAlphaComponent(0.15).setStroke()
+        bgArcPath.lineWidth = 3.5
+        bgArcPath.lineCapStyle = .round
+        bgArcPath.stroke()
+
+        // Progress ring
+        if percentage > 0 {
+            let arcPath = NSBezierPath()
+            arcPath.appendArc(withCenter: center, radius: radius, startAngle: startAngle, endAngle: endAngle, clockwise: false)
+            fillColor.setStroke()
+            arcPath.lineWidth = 3.5
+            arcPath.lineCapStyle = .round
+            arcPath.stroke()
+        }
+
+        return image
+    }
+
+    // MARK: - Icon Style: Compact
+    private func createCompactStyle(usage: ClaudeUsage, isDarkMode: Bool) -> NSImage {
+        let width: CGFloat = 8
+        let height: CGFloat = 18
+        let image = NSImage(size: NSSize(width: width, height: height))
+
+        image.lockFocus()
+        defer { image.unlockFocus() }
+
+        let fillColor = getColorForUsageLevel(usage.statusLevel)
+        let dotSize: CGFloat = 6
+
+        // Draw dot
+        let dotY = (height - dotSize) / 2
+        let dotRect = NSRect(x: (width - dotSize) / 2, y: dotY, width: dotSize, height: dotSize)
+        let dotPath = NSBezierPath(ovalIn: dotRect)
+        fillColor.setFill()
+        dotPath.fill()
+
+        return image
+    }
+
+    // Helper method to get color based on usage level
+    private func getColorForUsageLevel(_ level: UsageStatusLevel) -> NSColor {
+        switch level {
+        case .safe:
+            return NSColor.systemGreen
+        case .moderate:
+            return NSColor.systemOrange
+        case .critical:
+            return NSColor.systemRed
+        }
     }
 
     private func startAutoRefresh() {
@@ -278,6 +427,20 @@ class MenuBarManager: NSObject, ObservableObject {
                 // Redraw the icon with the new appearance
                 self.updateStatusButton(button, usage: self.usage)
             }
+        }
+    }
+
+    private func observeIconStyleChanges() {
+        // Observe icon style changes from settings
+        iconStyleObserver = NotificationCenter.default.addObserver(
+            forName: .menuBarIconStyleChanged,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self,
+                  let button = self.statusItem?.button else { return }
+            // Redraw the icon with the new style
+            self.updateStatusButton(button, usage: self.usage)
         }
     }
 

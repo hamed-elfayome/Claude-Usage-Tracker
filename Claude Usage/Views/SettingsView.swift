@@ -23,6 +23,8 @@ struct SettingsView: View {
                     APIBillingView()
                 case .general:
                     GeneralSettingsView(refreshInterval: $refreshInterval)
+                case .appearance:
+                    AppearanceSettingsView()
                 case .sessionManagement:
                     SessionManagementView(autoStartSessionEnabled: $autoStartSessionEnabled)
                 case .notifications:
@@ -43,6 +45,7 @@ enum SettingsSection: String, CaseIterable {
     case personalUsage = "Personal Usage"
     case apiBilling = "API Billing"
     case general = "General"
+    case appearance = "Appearance"
     case sessionManagement = "Session Management"
     case notifications = "Notifications"
     case claudeCode = "Claude CLI"
@@ -53,6 +56,7 @@ enum SettingsSection: String, CaseIterable {
         case .personalUsage: return "person.fill"
         case .apiBilling: return "dollarsign.circle.fill"
         case .general: return "gearshape.fill"
+        case .appearance: return "paintbrush.fill"
         case .sessionManagement: return "clock.arrow.circlepath"
         case .notifications: return "bell.badge.fill"
         case .claudeCode: return "chevron.left.forwardslash.chevron.right"
@@ -65,6 +69,7 @@ enum SettingsSection: String, CaseIterable {
         case .personalUsage: return "Track your Claude.ai free tier usage"
         case .apiBilling: return "Monitor API Console billing and credits"
         case .general: return "App behavior and preferences"
+        case .appearance: return "Menu bar icon customization"
         case .sessionManagement: return "Automatic session management"
         case .notifications: return "Usage alerts and notifications"
         case .claudeCode: return "Terminal statusline integration"

@@ -29,6 +29,9 @@ enum Constants {
         static let apiTrackingEnabled = "apiTrackingEnabled"
         static let apiSessionKey = "apiSessionKey"
         static let apiOrganizationId = "apiOrganizationId"
+
+        // Menu bar icon style
+        static let menuBarIconStyle = "menuBarIconStyle"
     }
 
     // Claude Code paths
