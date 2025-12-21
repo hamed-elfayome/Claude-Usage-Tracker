@@ -185,20 +185,21 @@ class MenuBarManager: NSObject, ObservableObject {
     private func updateStatusButton(_ button: NSStatusBarButton, usage: ClaudeUsage) {
         let iconStyle = dataStore.loadMenuBarIconStyle()
         let isDarkAppearance = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        let monochromeMode = dataStore.loadMonochromeMode()
 
         // Create the image based on selected style
         let image: NSImage
         switch iconStyle {
         case .battery:
-            image = createBatteryStyle(usage: usage, isDarkMode: isDarkAppearance)
+            image = createBatteryStyle(usage: usage, isDarkMode: isDarkAppearance, monochromeMode: monochromeMode)
         case .progressBar:
-            image = createProgressBarStyle(usage: usage, isDarkMode: isDarkAppearance)
+            image = createProgressBarStyle(usage: usage, isDarkMode: isDarkAppearance, monochromeMode: monochromeMode)
         case .percentageOnly:
-            image = createPercentageOnlyStyle(usage: usage, isDarkMode: isDarkAppearance)
+            image = createPercentageOnlyStyle(usage: usage, isDarkMode: isDarkAppearance, monochromeMode: monochromeMode)
         case .icon:
-            image = createIconWithBarStyle(usage: usage, isDarkMode: isDarkAppearance)
+            image = createIconWithBarStyle(usage: usage, isDarkMode: isDarkAppearance, monochromeMode: monochromeMode)
         case .compact:
-            image = createCompactStyle(usage: usage, isDarkMode: isDarkAppearance)
+            image = createCompactStyle(usage: usage, isDarkMode: isDarkAppearance, monochromeMode: monochromeMode)
         }
 
         button.image = image
@@ -207,7 +208,7 @@ class MenuBarManager: NSObject, ObservableObject {
     }
 
     // MARK: - Icon Style: Battery (Classic)
-    private func createBatteryStyle(usage: ClaudeUsage, isDarkMode: Bool) -> NSImage {
+    private func createBatteryStyle(usage: ClaudeUsage, isDarkMode: Bool, monochromeMode: Bool) -> NSImage {
         let percentage = CGFloat(usage.sessionPercentage) / 100.0
 
         // Create a taller image to fit battery + text
@@ -223,8 +224,8 @@ class MenuBarManager: NSObject, ObservableObject {
         let outlineColor: NSColor = isDarkMode ? .white : .black
         let textColor: NSColor = isDarkMode ? .white : .black
 
-        // Get color based on usage level (always vibrant)
-        let fillColor = getColorForUsageLevel(usage.statusLevel)
+        // Get color based on usage level or monochrome
+        let fillColor = monochromeMode ? (isDarkMode ? NSColor.white : NSColor.black) : getColorForUsageLevel(usage.statusLevel)
 
         // Position and size calculations for the bar
         let barY = totalHeight - barHeight - 4
@@ -260,7 +261,7 @@ class MenuBarManager: NSObject, ObservableObject {
     }
 
     // MARK: - Icon Style: Progress Bar
-    private func createProgressBarStyle(usage: ClaudeUsage, isDarkMode: Bool) -> NSImage {
+    private func createProgressBarStyle(usage: ClaudeUsage, isDarkMode: Bool, monochromeMode: Bool) -> NSImage {
         let width: CGFloat = 40
         let height: CGFloat = 18
         let image = NSImage(size: NSSize(width: width, height: height))
@@ -268,7 +269,7 @@ class MenuBarManager: NSObject, ObservableObject {
         image.lockFocus()
         defer { image.unlockFocus() }
 
-        let fillColor = getColorForUsageLevel(usage.statusLevel)
+        let fillColor = monochromeMode ? (isDarkMode ? NSColor.white : NSColor.black) : getColorForUsageLevel(usage.statusLevel)
         let backgroundColor: NSColor = isDarkMode ? NSColor.white.withAlphaComponent(0.2) : NSColor.black.withAlphaComponent(0.15)
 
         // Progress bar
@@ -294,10 +295,10 @@ class MenuBarManager: NSObject, ObservableObject {
     }
 
     // MARK: - Icon Style: Percentage Only
-    private func createPercentageOnlyStyle(usage: ClaudeUsage, isDarkMode: Bool) -> NSImage {
+    private func createPercentageOnlyStyle(usage: ClaudeUsage, isDarkMode: Bool, monochromeMode: Bool) -> NSImage {
         let percentageText = "\(Int(usage.sessionPercentage))%"
         let font = NSFont.monospacedDigitSystemFont(ofSize: 13, weight: .semibold)
-        let fillColor = getColorForUsageLevel(usage.statusLevel)
+        let fillColor = monochromeMode ? (isDarkMode ? NSColor.white : NSColor.black) : getColorForUsageLevel(usage.statusLevel)
 
         let attributes: [NSAttributedString.Key: Any] = [
             .font: font,
@@ -317,7 +318,7 @@ class MenuBarManager: NSObject, ObservableObject {
     }
 
     // MARK: - Icon Style: Icon with Bar
-    private func createIconWithBarStyle(usage: ClaudeUsage, isDarkMode: Bool) -> NSImage {
+    private func createIconWithBarStyle(usage: ClaudeUsage, isDarkMode: Bool, monochromeMode: Bool) -> NSImage {
         let size: CGFloat = 20
         let image = NSImage(size: NSSize(width: size, height: size))
 
@@ -325,7 +326,7 @@ class MenuBarManager: NSObject, ObservableObject {
         defer { image.unlockFocus() }
 
         let textColor: NSColor = isDarkMode ? .white : .black
-        let fillColor = getColorForUsageLevel(usage.statusLevel)
+        let fillColor = monochromeMode ? (isDarkMode ? NSColor.white : NSColor.black) : getColorForUsageLevel(usage.statusLevel)
 
         // Progress arc (outer ring)
         let percentage = usage.sessionPercentage / 100.0
@@ -356,7 +357,7 @@ class MenuBarManager: NSObject, ObservableObject {
     }
 
     // MARK: - Icon Style: Compact
-    private func createCompactStyle(usage: ClaudeUsage, isDarkMode: Bool) -> NSImage {
+    private func createCompactStyle(usage: ClaudeUsage, isDarkMode: Bool, monochromeMode: Bool) -> NSImage {
         let width: CGFloat = 8
         let height: CGFloat = 18
         let image = NSImage(size: NSSize(width: width, height: height))
@@ -364,7 +365,7 @@ class MenuBarManager: NSObject, ObservableObject {
         image.lockFocus()
         defer { image.unlockFocus() }
 
-        let fillColor = getColorForUsageLevel(usage.statusLevel)
+        let fillColor = monochromeMode ? (isDarkMode ? NSColor.white : NSColor.black) : getColorForUsageLevel(usage.statusLevel)
         let dotSize: CGFloat = 6
 
         // Draw dot

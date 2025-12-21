@@ -16,7 +16,15 @@ struct PersonalUsageView: View {
     private let apiService = ClaudeAPIService()
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: Spacing.sectionSpacing) {
+            // Header
+            SettingsHeader(
+                title: "Personal Usage",
+                subtitle: "Track your Claude.ai usage and sessions"
+            )
+
+            Divider()
+
             // Session Key Input
             SettingsInputField.secureMonospaced(
                 label: "Session Key",
@@ -33,7 +41,7 @@ struct PersonalUsageView: View {
             }
 
             // Action Buttons
-            HStack(spacing: 10) {
+            HStack(spacing: Spacing.buttonRowSpacing) {
                 SettingsButton(title: "Test Connection") {
                     testKey()
                 }
@@ -47,17 +55,12 @@ struct PersonalUsageView: View {
                 .disabled(sessionKey.isEmpty || validationState == .validating)
             }
 
-            Divider()
-                .padding(.vertical, 4)
-
             // Quick Actions
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: Spacing.md) {
                 Text("Quick Actions")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.secondary)
-                    .textCase(.uppercase)
+                    .font(Typography.sectionHeader)
 
-                HStack(spacing: 10) {
+                HStack(spacing: Spacing.buttonRowSpacing) {
                     SettingsButton(title: "Setup Wizard", icon: "wand.and.stars") {
                         showWizard = true
                     }
@@ -72,7 +75,7 @@ struct PersonalUsageView: View {
 
             Spacer()
         }
-        .padding(28)
+        .contentPadding()
         .sheet(isPresented: $showWizard) {
             SetupWizardView()
         }

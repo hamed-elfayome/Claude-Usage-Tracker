@@ -387,6 +387,17 @@ class DataStore: StorageProvider {
         return style
     }
 
+    /// Saves monochrome mode preference
+    func saveMonochromeMode(_ enabled: Bool) {
+        defaults.set(enabled, forKey: Constants.UserDefaultsKeys.monochromeMode)
+        defaults.synchronize()
+    }
+
+    /// Loads monochrome mode preference (defaults to false)
+    func loadMonochromeMode() -> Bool {
+        return defaults.bool(forKey: Constants.UserDefaultsKeys.monochromeMode)
+    }
+
     // MARK: - Testing Helpers
 
     /// Resets all GitHub star prompt tracking (for testing purposes)

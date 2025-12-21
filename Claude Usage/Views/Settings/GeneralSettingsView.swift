@@ -13,32 +13,36 @@ struct GeneralSettingsView: View {
     @State private var checkOverageLimitEnabled: Bool = DataStore.shared.loadCheckOverageLimitEnabled()
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // Data Refresh
-            VStack(alignment: .leading, spacing: 10) {
-                HStack {
-                    Text("Refresh Interval")
-                        .font(Typography.body)
+        VStack(alignment: .leading, spacing: Spacing.sectionSpacing) {
+            // Header
+            SettingsHeader(
+                title: "General Settings",
+                subtitle: "Configure app behavior and preferences"
+            )
 
-                    Spacer()
+            Divider()
+
+            // Data Refresh Section
+            VStack(alignment: .leading, spacing: Spacing.md) {
+                Text("Refresh Interval")
+                    .font(Typography.sectionHeader)
+
+                HStack {
+                    Slider(value: $refreshInterval, in: 5...120, step: 1)
+                        .onChange(of: refreshInterval) { _, newValue in
+                            DataStore.shared.saveRefreshInterval(newValue)
+                        }
 
                     Text("\(Int(refreshInterval))s")
                         .font(Typography.monospacedValue)
                         .foregroundColor(.secondary)
+                        .frame(width: 40, alignment: .trailing)
                 }
-
-                Slider(value: $refreshInterval, in: 5...120, step: 1)
-                    .onChange(of: refreshInterval) { _, newValue in
-                        DataStore.shared.saveRefreshInterval(newValue)
-                    }
 
                 Text("Shorter intervals provide more real-time data but may impact battery life")
                     .font(Typography.caption)
                     .foregroundColor(.secondary)
             }
-
-            Divider()
-                .padding(.vertical, 4)
 
             // Usage Tracking Options
             SettingToggle(
@@ -52,7 +56,7 @@ struct GeneralSettingsView: View {
 
             Spacer()
         }
-        .padding(28)
+        .contentPadding()
     }
 }
 

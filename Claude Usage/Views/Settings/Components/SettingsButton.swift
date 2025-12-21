@@ -12,12 +12,12 @@ import SwiftUI
 struct SettingsButton: View {
     let title: String
     let icon: String?
-    let style: ButtonStyle
+    let style: SettingsButtonVariant
     let action: () -> Void
 
     @State private var isHovered = false
 
-    enum ButtonStyle {
+    enum SettingsButtonVariant {
         case primary
         case secondary
         case destructive
@@ -69,7 +69,7 @@ struct SettingsButton: View {
     init(
         title: String,
         icon: String? = nil,
-        style: ButtonStyle = .secondary,
+        style: SettingsButtonVariant = .secondary,
         action: @escaping () -> Void
     ) {
         self.title = title

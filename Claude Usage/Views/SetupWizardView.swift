@@ -8,6 +8,8 @@ struct SetupWizardView: View {
     @State private var validationState: ValidationState = .idle
     @State private var showInstructions = false
     @State private var autoStartSessionEnabled = DataStore.shared.loadAutoStartSessionEnabled()
+    @State private var iconStyle: MenuBarIconStyle = DataStore.shared.loadMenuBarIconStyle()
+    @State private var monochromeMode: Bool = DataStore.shared.loadMonochromeMode()
 
     private let apiService = ClaudeAPIService()
 
@@ -174,6 +176,27 @@ struct SetupWizardView: View {
                         .toggleStyle(.switch)
                     }
                     .padding(.top, 8)
+
+                    // Icon Appearance
+                    VStack(alignment: .leading, spacing: 12) {
+                        Divider()
+                            .padding(.vertical, 4)
+
+                        Text("Menu Bar Appearance")
+                            .font(.system(size: 13, weight: .semibold))
+
+                        Text("Choose your preferred icon style")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+
+                        IconStylePicker(selectedStyle: $iconStyle)
+
+                        Toggle("Monochrome (Adaptive)", isOn: $monochromeMode)
+                            .toggleStyle(.switch)
+                            .font(.system(size: 12))
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.top, 8)
                 }
                 .padding(32)
             }
@@ -194,6 +217,9 @@ struct SetupWizardView: View {
                         Button("Done") {
                             DataStore.shared.saveHasCompletedSetup(true)
                             DataStore.shared.saveAutoStartSessionEnabled(autoStartSessionEnabled)
+                            DataStore.shared.saveMenuBarIconStyle(iconStyle)
+                            DataStore.shared.saveMonochromeMode(monochromeMode)
+                            NotificationCenter.default.post(name: .menuBarIconStyleChanged, object: nil)
                             dismiss()
                         }
                         .buttonStyle(.borderedProminent)
@@ -215,7 +241,7 @@ struct SetupWizardView: View {
             }
             .padding(20)
         }
-        .frame(width: 580, height: 600)
+        .frame(width: 580, height: 700)
     }
 
     private func validateAndSave() {

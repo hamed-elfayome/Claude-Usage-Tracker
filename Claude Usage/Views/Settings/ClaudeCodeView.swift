@@ -20,80 +20,75 @@ struct ClaudeCodeView: View {
     @State private var isSuccess: Bool = true
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: Spacing.sectionSpacing) {
             // Header
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Claude CLI Statusline")
-                    .font(.system(size: 20, weight: .semibold))
-
-                Text("Customize your terminal statusline display")
-                    .font(.system(size: 13))
-                    .foregroundColor(.secondary)
-            }
+            SettingsHeader(
+                title: "Claude CLI Statusline",
+                subtitle: "Customize your terminal statusline display"
+            )
 
             Divider()
 
             // Preview Card (keep as is - user loves it!)
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: Spacing.md) {
                 HStack {
                     Label("Live Preview", systemImage: "eye.fill")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(Typography.sectionHeader)
                         .foregroundColor(.primary)
 
                     Spacer()
 
                     Text("Updates in real-time")
-                        .font(.system(size: 11))
+                        .font(Typography.caption)
                         .foregroundColor(.secondary)
                 }
 
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: Spacing.sm) {
                     Text(generatePreview())
-                        .font(.system(size: 12, design: .monospaced))
+                        .font(Typography.monospacedInput)
                         .foregroundColor(.accentColor)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 14)
+                        .padding(Spacing.md)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(
-                            RoundedRectangle(cornerRadius: 8)
+                            RoundedRectangle(cornerRadius: Spacing.radiusMedium)
                                 .fill(Color.accentColor.opacity(0.05))
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
+                                    RoundedRectangle(cornerRadius: Spacing.radiusMedium)
                                         .strokeBorder(Color.accentColor.opacity(0.2), lineWidth: 1)
                                 )
                         )
 
                     Text("This is how your statusline will appear in Claude CLI")
-                        .font(.system(size: 10))
+                        .font(Typography.caption)
                         .foregroundColor(.secondary)
                 }
             }
-            .padding(20)
+            .padding(Spacing.cardPadding)
             .background(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: Spacing.radiusLarge)
                     .fill(Color(nsColor: .controlBackgroundColor))
             )
 
             // Components - Simple and clean
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: Spacing.md) {
                 Text("Display Components")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(Typography.sectionHeader)
 
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: Spacing.sm) {
                     Toggle("Directory name", isOn: $showDirectory)
-                        .font(.system(size: 12))
+                        .font(Typography.label)
 
                     Toggle("Git branch", isOn: $showBranch)
-                        .font(.system(size: 12))
+                        .font(Typography.label)
 
                     Toggle("Usage statistics", isOn: $showUsage)
-                        .font(.system(size: 12))
+                        .font(Typography.label)
 
                     if showUsage {
                         HStack(spacing: 0) {
                             Spacer().frame(width: 20)
                             Toggle("Progress bar", isOn: $showProgressBar)
-                                .font(.system(size: 11))
+                                .font(Typography.caption)
                                 .foregroundColor(.secondary)
                         }
                     }
@@ -101,17 +96,17 @@ struct ClaudeCodeView: View {
             }
 
             // Action buttons - compact
-            HStack(spacing: 10) {
+            HStack(spacing: Spacing.buttonRowSpacing) {
                 Button(action: applyConfiguration) {
                     Text("Apply")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(Typography.label)
                         .frame(minWidth: 70)
                 }
                 .buttonStyle(.borderedProminent)
 
                 Button(action: resetConfiguration) {
                     Text("Reset")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(Typography.label)
                         .frame(minWidth: 70)
                 }
                 .buttonStyle(.bordered)
@@ -119,12 +114,12 @@ struct ClaudeCodeView: View {
 
             // Status message
             if let message = statusMessage {
-                HStack(spacing: 10) {
+                HStack(spacing: Spacing.iconTextSpacing) {
                     Image(systemName: isSuccess ? "checkmark.circle.fill" : "xmark.circle.fill")
                         .foregroundColor(isSuccess ? .green : .red)
 
                     Text(message)
-                        .font(.system(size: 12))
+                        .font(Typography.label)
 
                     Spacer()
 
@@ -134,31 +129,30 @@ struct ClaudeCodeView: View {
                     }
                     .buttonStyle(.plain)
                 }
-                .padding(12)
+                .padding(Spacing.inputPadding)
                 .background(
-                    RoundedRectangle(cornerRadius: 6)
+                    RoundedRectangle(cornerRadius: Spacing.radiusMedium)
                         .fill((isSuccess ? Color.green : Color.red).opacity(0.1))
                 )
             }
 
             // Info - minimal
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: Spacing.sm) {
                 Text("Requirements")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(.secondary)
+                    .font(Typography.sectionHeader)
 
                 Text("• Session key configured in Personal Usage tab")
-                    .font(.system(size: 10))
+                    .font(Typography.caption)
                     .foregroundColor(.secondary)
 
                 Text("• Restart Claude CLI after applying changes")
-                    .font(.system(size: 10))
+                    .font(Typography.caption)
                     .foregroundColor(.secondary)
             }
 
             Spacer()
         }
-        .padding(28)
+        .contentPadding()
     }
 
     // MARK: - Actions

@@ -12,7 +12,15 @@ struct SessionManagementView: View {
     @Binding var autoStartSessionEnabled: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: Spacing.sectionSpacing) {
+            // Header
+            SettingsHeader(
+                title: "Session Management",
+                subtitle: "Automatic session initialization and maintenance"
+            )
+
+            Divider()
+
             // Auto-Start Session Toggle
             SettingToggle(
                 title: "Auto-start session on reset",
@@ -25,23 +33,20 @@ struct SessionManagementView: View {
             }
 
             if autoStartSessionEnabled {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: Spacing.md) {
                     Text("How it works")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.secondary)
-                        .textCase(.uppercase)
+                        .font(Typography.sectionHeader)
 
                     Text("• Detects when your session resets to 0%\n• Sends 'Hi' to Claude 3.5 Haiku (cheapest model)\n• Uses a temporary chat that won't appear in your history\n• New 5-hour session is ready instantly")
                         .font(Typography.caption)
                         .foregroundColor(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                .padding(.leading, 20)
             }
 
             Spacer()
         }
-        .padding(28)
+        .contentPadding()
     }
 }
 

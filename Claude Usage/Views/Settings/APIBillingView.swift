@@ -18,7 +18,15 @@ struct APIBillingView: View {
     private let apiService = ClaudeAPIService()
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: Spacing.sectionSpacing) {
+            // Header
+            SettingsHeader(
+                title: "API Billing",
+                subtitle: "Monitor API usage and spending"
+            )
+
+            Divider()
+
             // Enable/Disable Toggle
             SettingToggle(
                 title: "Enable API billing tracking",
@@ -31,9 +39,6 @@ struct APIBillingView: View {
             }
 
             if trackingEnabled {
-                Divider()
-                    .padding(.vertical, 4)
-
                 // API Session Key Input
                 SettingsInputField.secureMonospaced(
                     label: "API Session Key",
@@ -44,10 +49,9 @@ struct APIBillingView: View {
 
                 // Organization Selection
                 if !organizations.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: Spacing.inputSpacing) {
                         Text("Organization")
-                            .font(Typography.label)
-                            .foregroundColor(.secondary)
+                            .font(Typography.sectionHeader)
 
                         Picker("", selection: $selectedOrganizationId) {
                             ForEach(organizations, id: \.id) { org in
@@ -69,7 +73,7 @@ struct APIBillingView: View {
                 }
 
                 // Action Buttons
-                HStack(spacing: 10) {
+                HStack(spacing: Spacing.buttonRowSpacing) {
                     if organizations.isEmpty {
                         SettingsButton(
                             title: validationState == .validating ? "Fetching..." : "Fetch Organizations",
@@ -91,7 +95,7 @@ struct APIBillingView: View {
 
             Spacer()
         }
-        .padding(28)
+        .contentPadding()
     }
 
     private func fetchOrganizations() {

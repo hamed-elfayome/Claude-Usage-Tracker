@@ -35,8 +35,8 @@ enum Spacing {
 
     // MARK: - Semantic Spacing
 
-    /// Spacing between settings sections (32px)
-    static let sectionSpacing: CGFloat = 32
+    /// Spacing between settings sections (20px)
+    static let sectionSpacing: CGFloat = 20
 
     /// Spacing between cards (16px)
     static let cardSpacing: CGFloat = 16

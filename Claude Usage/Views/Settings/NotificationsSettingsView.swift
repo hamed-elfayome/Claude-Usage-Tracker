@@ -13,7 +13,15 @@ struct NotificationsSettingsView: View {
     @Binding var notificationsEnabled: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: Spacing.sectionSpacing) {
+            // Header
+            SettingsHeader(
+                title: "Notifications",
+                subtitle: "Manage alerts and usage warnings"
+            )
+
+            Divider()
+
             // Enable Notifications Toggle
             SettingToggle(
                 title: "Enable notifications",
@@ -29,17 +37,12 @@ struct NotificationsSettingsView: View {
             }
 
             if notificationsEnabled {
-                Divider()
-                    .padding(.vertical, 4)
-
                 // Threshold indicators
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: Spacing.md) {
                     Text("Alert Thresholds")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.secondary)
-                        .textCase(.uppercase)
+                        .font(Typography.sectionHeader)
 
-                    VStack(spacing: 6) {
+                    VStack(spacing: Spacing.sm) {
                         ThresholdIndicator(level: "75%", color: SettingsColors.usageMedium, label: "Warning")
                         ThresholdIndicator(level: "90%", color: SettingsColors.usageHigh, label: "High Usage")
                         ThresholdIndicator(level: "95%", color: SettingsColors.usageCritical, label: "Critical")
@@ -50,7 +53,7 @@ struct NotificationsSettingsView: View {
 
             Spacer()
         }
-        .padding(28)
+        .contentPadding()
     }
 
     private func requestNotificationPermission() {

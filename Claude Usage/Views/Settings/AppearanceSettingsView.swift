@@ -10,29 +10,44 @@ import SwiftUI
 /// Menu bar icon appearance and customization
 struct AppearanceSettingsView: View {
     @State private var iconStyle: MenuBarIconStyle = DataStore.shared.loadMenuBarIconStyle()
+    @State private var monochromeMode: Bool = DataStore.shared.loadMonochromeMode()
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 32) {
+        VStack(alignment: .leading, spacing: Spacing.sectionSpacing) {
             // Header
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Menu Bar Appearance")
-                    .font(.system(size: 18, weight: .semibold))
+            SettingsHeader(
+                title: "Menu Bar Appearance",
+                subtitle: "Customize your menu bar icon style"
+            )
 
-                Text("Choose your preferred icon style")
-                    .font(.system(size: 13))
-                    .foregroundColor(.secondary)
+            Divider()
+
+            // Icon Style Section
+            VStack(alignment: .leading, spacing: Spacing.md) {
+                Text("Icon Style")
+                    .font(Typography.sectionHeader)
+
+                IconStylePicker(selectedStyle: $iconStyle)
+                    .onChange(of: iconStyle) { _, newValue in
+                        DataStore.shared.saveMenuBarIconStyle(newValue)
+                        NotificationCenter.default.post(name: .menuBarIconStyleChanged, object: nil)
+                    }
             }
 
-            // Icon Style Picker - Row of cards
-            IconStylePicker(selectedStyle: $iconStyle)
-                .onChange(of: iconStyle) { _, newValue in
-                    DataStore.shared.saveMenuBarIconStyle(newValue)
-                    NotificationCenter.default.post(name: .menuBarIconStyleChanged, object: nil)
-                }
+            // Monochrome Mode Toggle
+            SettingToggle(
+                title: "Monochrome (Adaptive)",
+                description: "Remove color coding and adapt to system appearance",
+                isOn: $monochromeMode
+            )
+            .onChange(of: monochromeMode) { _, newValue in
+                DataStore.shared.saveMonochromeMode(newValue)
+                NotificationCenter.default.post(name: .menuBarIconStyleChanged, object: nil)
+            }
 
             Spacer()
         }
-        .padding(28)
+        .contentPadding()
     }
 }
 
