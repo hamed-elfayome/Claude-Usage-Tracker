@@ -9,9 +9,9 @@
   ![Swift](https://img.shields.io/badge/Swift-5.0+-orange?style=flat-square&logo=swift)
   ![SwiftUI](https://img.shields.io/badge/SwiftUI-5.0+-blue?style=flat-square&logo=swift)
   ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
-  ![Version](https://img.shields.io/badge/version-1.6.0-blue?style=flat-square)
+  ![Version](https://img.shields.io/badge/version-1.6.1-blue?style=flat-square)
 
-  ### [Download Latest Release (v1.6.0)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
+  ### [Download Latest Release (v1.6.1)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
 
   <sub>macOS 14.0+ (Sonoma) | ~3 MB | Native Swift/SwiftUI</sub>
 
@@ -48,7 +48,13 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 
 ## What's New
 
-**Latest Release**: The app now features customizable menu bar icon styles, API console usage tracking, and a completely redesigned settings interface with improved modularity and reliability. Terminal integration continues to bring real-time monitoring directly into your development workflow.
+**v1.6.1 - Performance Fix (2025-12-21)**:
+- **Critical CPU usage fix** - Resolved excessive CPU consumption affecting multi-display setups
+- **Image caching system** - Menu bar icon now only redraws when visual factors change
+- **Optimized rendering** - Removed deprecated UserDefaults.synchronize() calls and added debounced updates
+
+**Previous Releases**:
+- The app features customizable menu bar icon styles, API console usage tracking, and a completely redesigned settings interface with improved modularity and reliability. Terminal integration brings real-time monitoring directly into your development workflow.
 
 **[View Full Release History](CHANGELOG.md)**
 

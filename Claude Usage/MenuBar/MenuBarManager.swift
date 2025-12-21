@@ -8,13 +8,13 @@ class MenuBarManager: NSObject, ObservableObject {
     @Published private(set) var usage: ClaudeUsage = .empty
     @Published private(set) var status: ClaudeStatus = .unknown
     @Published private(set) var apiUsage: APIUsage? = nil
-    
+
     // Popover for beautiful SwiftUI interface
     private var popover: NSPopover?
-    
+
     // Event monitor for closing popover on outside click
     private var eventMonitor: Any?
-    
+
     // Detached window reference (when popover is detached)
     private var detachedWindow: NSWindow?
 
@@ -27,7 +27,7 @@ class MenuBarManager: NSObject, ObservableObject {
     private let apiService = ClaudeAPIService()
     private let statusService = ClaudeStatusService()
     private let dataStore = DataStore.shared
-    
+
     // Observer for refresh interval changes
     private var refreshIntervalObserver: NSKeyValueObservation?
 
@@ -36,6 +36,11 @@ class MenuBarManager: NSObject, ObservableObject {
 
     // Observer for icon style changes
     private var iconStyleObserver: NSObjectProtocol?
+
+    // MARK: - Image Caching (CPU Optimization)
+    private var cachedImage: NSImage?
+    private var cachedImageKey: String = ""
+    private var updateDebounceTimer: Timer?
 
     func setup() {
         // Create status item in menu bar
@@ -187,24 +192,45 @@ class MenuBarManager: NSObject, ObservableObject {
         let isDarkAppearance = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
         let monochromeMode = dataStore.loadMonochromeMode()
 
-        // Create the image based on selected style
-        let image: NSImage
-        switch iconStyle {
-        case .battery:
-            image = createBatteryStyle(usage: usage, isDarkMode: isDarkAppearance, monochromeMode: monochromeMode)
-        case .progressBar:
-            image = createProgressBarStyle(usage: usage, isDarkMode: isDarkAppearance, monochromeMode: monochromeMode)
-        case .percentageOnly:
-            image = createPercentageOnlyStyle(usage: usage, isDarkMode: isDarkAppearance, monochromeMode: monochromeMode)
-        case .icon:
-            image = createIconWithBarStyle(usage: usage, isDarkMode: isDarkAppearance, monochromeMode: monochromeMode)
-        case .compact:
-            image = createCompactStyle(usage: usage, isDarkMode: isDarkAppearance, monochromeMode: monochromeMode)
+        // Generate cache key based on all factors that affect the image
+        let percentage = Int(usage.sessionPercentage)
+        let cacheKey = "\(percentage)_\(isDarkAppearance)_\(iconStyle.rawValue)_\(monochromeMode)"
+
+        // Check if we can reuse the cached image
+        if cachedImage != nil && cachedImageKey == cacheKey {
+            // Image hasn't changed, skip expensive redraw
+            return
         }
 
-        button.image = image
-        button.image?.isTemplate = false
-        button.title = ""
+        // Debounce rapid updates to prevent rendering congestion
+        updateDebounceTimer?.invalidate()
+        updateDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: false) { [weak self] _ in
+            guard let self = self else { return }
+
+            // Create the image based on selected style
+            let image: NSImage
+            switch iconStyle {
+            case .battery:
+                image = self.createBatteryStyle(usage: usage, isDarkMode: isDarkAppearance, monochromeMode: monochromeMode)
+            case .progressBar:
+                image = self.createProgressBarStyle(usage: usage, isDarkMode: isDarkAppearance, monochromeMode: monochromeMode)
+            case .percentageOnly:
+                image = self.createPercentageOnlyStyle(usage: usage, isDarkMode: isDarkAppearance, monochromeMode: monochromeMode)
+            case .icon:
+                image = self.createIconWithBarStyle(usage: usage, isDarkMode: isDarkAppearance, monochromeMode: monochromeMode)
+            case .compact:
+                image = self.createCompactStyle(usage: usage, isDarkMode: isDarkAppearance, monochromeMode: monochromeMode)
+            }
+
+            // Cache the image and key
+            self.cachedImage = image
+            self.cachedImageKey = cacheKey
+
+            // Update the button image
+            button.image = image
+            button.image?.isTemplate = false
+            button.title = ""
+        }
     }
 
     // MARK: - Icon Style: Battery (Classic)
@@ -418,14 +444,14 @@ class MenuBarManager: NSObject, ObservableObject {
     }
 
     private func observeAppearanceChanges() {
-        // Observe appearance changes on the status bar button
-        guard let button = statusItem?.button else { return }
-
-        // Observe effectiveAppearance changes using KVO
-        appearanceObserver = button.observe(\.effectiveAppearance, options: [.new]) { [weak self] button, _ in
-            guard let self = self else { return }
+        // Observe appearance changes on NSApp (fires less frequently than button)
+        // This optimization reduces redundant redraws
+        appearanceObserver = NSApp.observe(\.effectiveAppearance, options: [.new]) { [weak self] _, _ in
+            guard let self = self,
+                  let button = self.statusItem?.button else { return }
             DispatchQueue.main.async {
-                // Redraw the icon with the new appearance
+                // Clear cache to force redraw with new appearance
+                self.cachedImageKey = ""
                 self.updateStatusButton(button, usage: self.usage)
             }
         }
@@ -440,7 +466,8 @@ class MenuBarManager: NSObject, ObservableObject {
         ) { [weak self] _ in
             guard let self = self,
                   let button = self.statusItem?.button else { return }
-            // Redraw the icon with the new style
+            // Clear cache to force redraw with new style
+            self.cachedImageKey = ""
             self.updateStatusButton(button, usage: self.usage)
         }
     }

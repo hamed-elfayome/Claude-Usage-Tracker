@@ -112,7 +112,7 @@ struct SettingsButton: View {
     }
 
     private var accessibilityLabelText: String {
-        if let icon = icon {
+        if icon != nil {
             return "\(title) button"
         }
         return title

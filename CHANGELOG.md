@@ -499,6 +499,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Detailed usage dashboard with countdown timers
 - Support for macOS 14.0+ (Sonoma and later)
 
+[1.6.1]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.6.0...v1.6.1
 [1.6.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.3.0...v1.4.0

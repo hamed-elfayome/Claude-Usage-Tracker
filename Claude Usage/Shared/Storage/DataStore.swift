@@ -69,7 +69,7 @@ class DataStore: StorageProvider {
         do {
             let data = try encoder.encode(usage)
             defaults.set(data, forKey: Constants.UserDefaultsKeys.claudeUsageData)
-            defaults.synchronize()
+            // Note: synchronize() is deprecated and unnecessary - UserDefaults auto-syncs
             LoggingService.shared.logStorageSave("claudeUsageData")
         } catch {
             LoggingService.shared.logStorageError("saveUsage", error: error)
@@ -199,7 +199,6 @@ class DataStore: StorageProvider {
     /// Saves whether the user has completed the setup wizard
     func saveHasCompletedSetup(_ completed: Bool) {
         defaults.set(completed, forKey: "hasCompletedSetup")
-        defaults.synchronize()
     }
 
     /// Checks if the user has completed the setup wizard
@@ -227,7 +226,6 @@ class DataStore: StorageProvider {
     /// Saves the first launch date
     func saveFirstLaunchDate(_ date: Date) {
         defaults.set(date, forKey: Constants.UserDefaultsKeys.firstLaunchDate)
-        defaults.synchronize()
     }
 
     /// Loads the first launch date
@@ -238,7 +236,6 @@ class DataStore: StorageProvider {
     /// Saves the last GitHub star prompt date
     func saveLastGitHubStarPromptDate(_ date: Date) {
         defaults.set(date, forKey: Constants.UserDefaultsKeys.lastGitHubStarPromptDate)
-        defaults.synchronize()
     }
 
     /// Loads the last GitHub star prompt date
@@ -249,7 +246,6 @@ class DataStore: StorageProvider {
     /// Saves whether the user has starred the GitHub repository
     func saveHasStarredGitHub(_ starred: Bool) {
         defaults.set(starred, forKey: Constants.UserDefaultsKeys.hasStarredGitHub)
-        defaults.synchronize()
     }
 
     /// Loads whether the user has starred the GitHub repository
@@ -260,7 +256,6 @@ class DataStore: StorageProvider {
     /// Saves the user's preference to never show GitHub prompt
     func saveNeverShowGitHubPrompt(_ neverShow: Bool) {
         defaults.set(neverShow, forKey: Constants.UserDefaultsKeys.neverShowGitHubPrompt)
-        defaults.synchronize()
     }
 
     /// Loads the user's preference to never show GitHub prompt
@@ -317,7 +312,6 @@ class DataStore: StorageProvider {
         do {
             let data = try encoder.encode(usage)
             defaults.set(data, forKey: Constants.UserDefaultsKeys.apiUsageData)
-            defaults.synchronize()
         } catch {
             // Silently handle encoding errors
         }
@@ -340,7 +334,6 @@ class DataStore: StorageProvider {
     /// Saves API tracking enabled preference
     func saveAPITrackingEnabled(_ enabled: Bool) {
         defaults.set(enabled, forKey: Constants.UserDefaultsKeys.apiTrackingEnabled)
-        defaults.synchronize()
     }
 
     /// Loads API tracking enabled preference
@@ -351,7 +344,6 @@ class DataStore: StorageProvider {
     /// Saves API session key
     func saveAPISessionKey(_ key: String) {
         defaults.set(key, forKey: Constants.UserDefaultsKeys.apiSessionKey)
-        defaults.synchronize()
     }
 
     /// Loads API session key
@@ -362,7 +354,6 @@ class DataStore: StorageProvider {
     /// Saves selected API organization ID
     func saveAPIOrganizationId(_ orgId: String) {
         defaults.set(orgId, forKey: Constants.UserDefaultsKeys.apiOrganizationId)
-        defaults.synchronize()
     }
 
     /// Loads selected API organization ID
@@ -375,7 +366,6 @@ class DataStore: StorageProvider {
     /// Saves menu bar icon style preference
     func saveMenuBarIconStyle(_ style: MenuBarIconStyle) {
         defaults.set(style.rawValue, forKey: Constants.UserDefaultsKeys.menuBarIconStyle)
-        defaults.synchronize()
     }
 
     /// Loads menu bar icon style preference (defaults to battery)
@@ -390,7 +380,6 @@ class DataStore: StorageProvider {
     /// Saves monochrome mode preference
     func saveMonochromeMode(_ enabled: Bool) {
         defaults.set(enabled, forKey: Constants.UserDefaultsKeys.monochromeMode)
-        defaults.synchronize()
     }
 
     /// Loads monochrome mode preference (defaults to false)
@@ -406,6 +395,5 @@ class DataStore: StorageProvider {
         defaults.removeObject(forKey: Constants.UserDefaultsKeys.lastGitHubStarPromptDate)
         defaults.removeObject(forKey: Constants.UserDefaultsKeys.hasStarredGitHub)
         defaults.removeObject(forKey: Constants.UserDefaultsKeys.neverShowGitHubPrompt)
-        defaults.synchronize()
     }
 }
