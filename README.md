@@ -9,9 +9,9 @@
   ![Swift](https://img.shields.io/badge/Swift-5.0+-orange?style=flat-square&logo=swift)
   ![SwiftUI](https://img.shields.io/badge/SwiftUI-5.0+-blue?style=flat-square&logo=swift)
   ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
-  ![Version](https://img.shields.io/badge/version-1.5.0-blue?style=flat-square)
+  ![Version](https://img.shields.io/badge/version-1.6.0-blue?style=flat-square)
 
-  ### [Download Latest Release (v1.5.0)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
+  ### [Download Latest Release (v1.6.0)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
 
   <sub>macOS 14.0+ (Sonoma) | ~3 MB | Native Swift/SwiftUI</sub>
 
@@ -24,8 +24,17 @@
 
 Claude Usage Tracker is a lightweight, native macOS menu bar application that provides real-time monitoring of your Claude AI usage limits. Built entirely with Swift and SwiftUI, it offers a clean, intuitive interface to track your 5-hour session window, weekly usage limits, and Opus-specific consumption.
 
+### Key Capabilities
+
+- **Real-Time Monitoring**: Track session, weekly, and API console usage
+- **Customizable Interface**: 5 icon styles + monochrome mode
+- **Smart Automation**: Auto-start sessions, threshold notifications
+- **Developer Tools**: Terminal statusline integration for Claude Code
+- **Privacy-First**: Local storage, no telemetry, no cloud sync
+- **Native Performance**: Lightweight Swift/SwiftUI design for macOS
+
 <div align="center">
-  <img src=".github/icon.jpeg" alt="Menu Bar Icon" height="60">
+  <img src=".github/icon.jpg" alt="Menu Bar Icon" height="180">
   <img src=".github/popover.png" alt="Popover Interface" width="200">
 
   <sub>Menu bar icon and detailed usage popover</sub>
@@ -35,107 +44,32 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
   <sub>Live terminal statusline showing directory, branch, and color-coded usage</sub>
 </div>
 
+---
+
 ## What's New
 
-### v1.4.0 - Claude Status & Detachable Popover
-**Contributed by [@ggfevans](https://github.com/ggfevans)**
+**Latest Release**: The app now features customizable menu bar icon styles, API console usage tracking, and a completely redesigned settings interface with improved modularity and reliability. Terminal integration continues to bring real-time monitoring directly into your development workflow.
 
-- **Real-time Claude Status Indicator**: Live system status from status.claude.com displayed in the popover footer with color-coded indicators (green/yellow/orange/red)
-- **Detachable Popover**: Drag the popover to create a floating window that stays above other windows
-- **Close on Outside Click**: Popover now properly closes when clicking outside
-- **Dynamic Version Display**: About view now shows actual app version from bundle
-- **GitHub Issue Templates**: Structured templates for bug reports, feature requests, and documentation improvements
-- **CONTRIBUTING.md**: Comprehensive contributor guide with development setup, code style, and PR process
-
-### v1.3.0 - Claude Code Terminal Integration
-Display your Claude usage directly in your terminal! The new Claude Code statusline integration brings real-time monitoring to your development workflow:
-- **Live Terminal Statusline**: Shows current directory, git branch, and usage percentage
-- **Color-Coded Progress**: Visual feedback with gradient from green to red based on usage
-- **Customizable Display**: Choose which components to show (directory, branch, usage, progress bar)
-- **One-Click Setup**: Automated installation through the new Claude Code settings tab
-- **Smart Updates**: Real-time usage tracking synchronized with your Claude API session
-
-Perfect for developers who want usage monitoring without leaving the terminal!
-
-### v1.2.0 - Extra Usage Cost Tracking
-**Contributed by [@khromov](https://github.com/khromov)**
-
-Track your Claude Extra usage costs in real-time! If you have Claude Extra enabled, the app now displays:
-- Current spending vs. budget limit (e.g., 15.38 / 25.00 EUR)
-- Visual progress indicator with percentage
-- Seamlessly integrated below Weekly usage in the popover
-
-### v1.1.0 - Auto-Start Session Feature
-Never worry about manually starting a new session! When your 5-hour session resets to 0%, the app automatically sends a simple "Hi" message to Claude 3.5 Haiku (cheapest model) to initialize a fresh session. Configure it in the new **Session Management** tab in Settings.
-
-**Also in v1.1.0:**
-- Enhanced notifications with session auto-start alerts
-- Fixed menu bar icon visibility in light/dark mode
-- Icon now adapts to appearance changes in real-time
-
-### See [CHANGELOG.md](CHANGELOG.md) for full details
+**[View Full Release History](CHANGELOG.md)**
 
 ---
 
-## Features
+## Getting Started
 
-### Real-Time Usage Monitoring
-- **Session Tracking**: Monitor your 5-hour rolling window usage with live percentage updates
-- **Weekly Limits**: Track overall weekly token consumption across all models
-- **Opus Tracking**: Dedicated monitoring for Claude Opus weekly usage
-- **Extra Usage Costs**: Real-time tracking of Claude Extra spending with budget monitoring
-- **Visual Indicators**: Color-coded status (green, orange, red) based on consumption levels
+### Prerequisites
 
-### Menu Bar Integration
-- **Compact Display**: Beautiful custom menu bar icon showing usage at a glance
-- **Battery-Style Indicator**: Visual progress bar with "Claude" branding
-- **One-Click Access**: Instant popover interface with detailed statistics
-- **Native macOS Design**: Follows Apple's Human Interface Guidelines
+Before installing Claude Usage Tracker, ensure you have:
 
-### Session Management
-- **Auto-Start on Reset**: Automatically initialize a new session when usage hits 0%
-- **Zero Manual Intervention**: No need to manually send a message to start your session
-- **Cheapest Model**: Uses Claude 3.5 Haiku to minimize token consumption
-- **Instant Readiness**: Fresh 5-hour session immediately available after reset
-- **Configurable**: Enable or disable in the dedicated Session settings tab
+- **macOS 14.0 (Sonoma) or later** - Check: Apple menu → About This Mac
+- **Active Claude AI account** - Sign up at [claude.ai](https://claude.ai)
+- **Web browser access** - For extracting your session key (Chrome, Safari, Firefox, etc.)
 
-### Smart Notifications
-- **Threshold Alerts**: Automatic notifications at 75%, 90%, and 95% usage
-- **Session Resets**: Get notified when your 5-hour session resets
-- **Auto-Start Alerts**: Confirmation when a new session is automatically initialized
-- **Enable Confirmation**: Immediate feedback when turning on notifications
-- **Customizable**: Enable or disable notifications in settings
-- **Non-Intrusive**: macOS native notification system integration
-- **Always Visible**: Proper delegate support ensures notifications appear while app is running
+**Optional**:
+- [Claude Code](https://claude.com/claude-code) - For terminal statusline integration
 
-### Claude Code Integration
-- **Terminal Statusline**: Display usage directly in your Claude Code terminal
-- **Current Directory**: Shows your working directory name with blue highlight
-- **Git Branch**: Live git branch indicator with branch icon (⎇)
-- **Usage Percentage**: Real-time session usage with color gradient (green → red)
-- **Progress Bar**: Optional visual 10-segment progress indicator (▓░)
-- **Reset Time**: Shows when your 5-hour session will reset
-- **Customizable Components**: Choose which elements to display (directory/branch/usage/bar)
-- **Live Preview**: See exactly how your statusline will look before applying
-- **One-Click Install**: Automated script installation to `~/.claude/`
-- **Format**: `directory │ ⎇ branch │ Usage: 25% ▓▓░░░░░░░░ → Reset: 3:45 PM`
+### Installation
 
-### Advanced Features
-- **Auto-Refresh**: Configurable refresh intervals (5-120 seconds)
-- **Reset Timers**: Countdown to next session and weekly reset
-- **Setup Wizard**: First-run guided setup for API configuration
-- **Secure Storage**: Session keys stored with restrictive file permissions (0600)
-- **Multi-Screen Support**: Works seamlessly across multiple displays
-
-## Requirements
-
-- macOS 14.0 (Sonoma) or later
-- Active Claude AI account
-- Session key from claude.ai
-
-## Installation
-
-### Homebrew (Official Tap)
+#### Option 1: Homebrew (Recommended)
 
 ```bash
 brew install --cask --no-quarantine hamed-elfayome/claude-usage/claude-usage-tracker
@@ -167,7 +101,7 @@ brew upgrade --cask claude-usage-tracker
 brew uninstall --cask claude-usage-tracker
 ```
 
-### Download and Install
+#### Option 2: Direct Download
 
 **[Download Claude-Usage.zip](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)**
 
@@ -186,7 +120,7 @@ brew uninstall --cask claude-usage-tracker
 
 **Note**: This app is open-source and free. It's not signed with an Apple Developer certificate ($100/year), so macOS requires manual approval on first launch.
 
-### Build from Source
+#### Option 3: Build from Source
 
 ```bash
 # Clone the repository
@@ -199,39 +133,117 @@ open "Claude Usage.xcodeproj"
 # Build and run (⌘R)
 ```
 
-## Setup
+### Quick Start Guide
 
-### First Launch
+#### Step 1: Extract Your Session Key
 
-When you launch Claude Usage Tracker for the first time, you'll see a setup wizard:
+Your session key authenticates the app with Claude AI. Here's how to get it:
 
-1. **Extract Session Key**
-   - Open [claude.ai](https://claude.ai) in your browser
-   - Open Developer Tools (F12 or Cmd+Option+I)
-   - Navigate to: Application/Storage → Cookies → https://claude.ai
-   - Find the `sessionKey` cookie
-   - Copy its value (starts with `sk-ant-sid-...`)
+1. **Open Claude AI**
+   - Navigate to [claude.ai](https://claude.ai) in your browser
+   - Make sure you're logged in
 
-2. **Configure Application**
-   - Paste your session key in the setup wizard
-   - Click "Validate" to test the connection
-   - Click "Done" to complete setup
+2. **Open Developer Tools**
+   - **Chrome/Edge**: Press `F12` or `Cmd+Option+I` (macOS) / `Ctrl+Shift+I` (Windows)
+   - **Safari**: Enable Developer menu in Preferences → Advanced, then press `Cmd+Option+I`
+   - **Firefox**: Press `F12` or `Cmd+Option+I` (macOS) / `Ctrl+Shift+I` (Windows)
 
-3. **Start Monitoring**
-   - The app will appear in your menu bar
-   - Click the icon to view detailed usage statistics
+3. **Navigate to Cookies**
+   - Go to: **Application** tab (Chrome/Edge) or **Storage** tab (Firefox)
+   - Expand: **Cookies** → **https://claude.ai**
+   - Find: `sessionKey` cookie
+   - Copy: The value (starts with `sk-ant-sid01-...`)
 
-### Manual Configuration
+<div align="center">
+  <sub>Tip: The session key is a long string starting with "sk-ant-sid01-". Make sure to copy the entire value.</sub>
+</div>
 
-Alternatively, you can manually create the session key file:
+#### Step 2: First Launch Setup
+
+When you open Claude Usage Tracker for the first time:
+
+1. **Welcome Wizard** appears automatically
+2. **Paste your session key** in the text field
+3. **Click "Validate"** to test the connection
+4. **Wait for confirmation** (green checkmark = success)
+5. **Click "Done"** to complete setup
+
+#### Step 3: Verify It's Working
+
+1. **Check Menu Bar**: You should see the Claude Usage icon in your menu bar
+2. **Click the Icon**: Popover appears showing your usage statistics
+3. **View Data**: Session usage, weekly usage, and reset timers should display
+
+**Success!** The app is now monitoring your Claude usage.
+
+#### Next Steps
+
+- **Customize Icon**: Go to Settings → Appearance to choose your preferred menu bar style
+- **Enable Notifications**: Settings → Notifications to get threshold alerts
+- **Auto-Start Sessions**: Settings → Session Management to enable automatic session initialization
+- **Terminal Integration**: Settings → Claude Code to set up statusline (requires [Claude Code](https://claude.com/claude-code))
+
+---
+
+## Advanced Configuration
+
+### Manual Session Key Setup
+
+If you prefer to configure the session key manually instead of using the setup wizard:
 
 ```bash
 # Create session key file
-echo "sk-ant-sid-YOUR_SESSION_KEY_HERE" > ~/.claude-session-key
+echo "sk-ant-sid01-YOUR_SESSION_KEY_HERE" > ~/.claude-session-key
 
-# Set secure permissions
+# Set secure permissions (important for security)
 chmod 600 ~/.claude-session-key
 ```
+
+After creating the file, launch the app and it will automatically detect the session key.
+
+---
+
+## Features
+
+### Usage Tracking & Monitoring
+- Real-time monitoring of 5-hour session, weekly limits, and Opus-specific usage
+- API console usage tracking for comprehensive visibility
+- Extra usage cost tracking for Claude Extra subscribers
+- Color-coded indicators (green/orange/red) based on consumption levels
+- Smart countdown timers for session and weekly resets
+
+### Menu Bar & Interface
+- **5 Customizable Icon Styles**: Battery, Progress Bar, Percentage Only, Icon with Bar, Compact
+- **Monochrome Mode**: Optional black & white aesthetic
+- **Interactive Popover**: One-click access with detachable floating window capability
+- **Live Status Indicator**: Real-time Claude system status from status.claude.com
+- Adaptive colors for light/dark mode
+
+### Automation & Intelligence
+- **Auto-Start Sessions**: Automatically initialize new sessions when usage resets to 0%
+- **Smart Notifications**: Threshold alerts at 75%, 90%, and 95% usage
+- **Configurable Refresh**: Set intervals from 5 to 120 seconds
+- Session reset and auto-start confirmations
+
+### Developer Integration
+- **Claude Code Terminal Statusline**: Real-time usage in your terminal
+- Customizable components: directory, git branch, usage percentage, progress bar, reset timer
+- One-click automated installation
+- Live preview before applying changes
+
+### Security & Privacy
+- Local storage with no cloud sync
+- Session keys protected with 0600 file permissions
+- Zero telemetry or tracking
+- HTTPS-only communication with Claude API
+
+### Advanced Capabilities
+- Multi-screen support
+- First-run guided setup wizard
+- Protocol-based modular architecture
+- Persistent settings with App Groups
+
+---
 
 ## Usage
 
@@ -246,13 +258,58 @@ Click the menu bar icon to access:
 
 ### Settings
 
-Access settings through the menu bar or popover:
+Access comprehensive settings through the menu bar popover → Settings button. The app features a modern, modular settings interface organized into focused tabs:
 
-- **General**: Configure refresh interval (5-120 seconds) and session key
-- **Session**: Enable/disable automatic session initialization on reset
-- **Notifications**: Enable/disable usage alerts
-- **Claude Code**: Configure terminal statusline integration (see Claude Code Integration section)
-- **About**: Version information and credits
+#### General Settings
+- **Session Key Management**: Update your Claude session key
+- **Refresh Interval**: Configure auto-refresh rate (5-120 seconds)
+- **Connection Status**: View current API connection state
+- **Personal Usage**: Track your individual usage patterns
+
+#### Appearance Settings
+Customize how the menu bar icon looks:
+- **Icon Style Selection**: Choose from 5 different display modes
+  - Battery Style (classic indicator with fill)
+  - Progress Bar (horizontal bar with percentage)
+  - Percentage Only (text-only minimalist)
+  - Icon with Bar (Claude icon + progress)
+  - Compact (space-efficient)
+- **Monochrome Mode**: Toggle black & white icon style
+- **Live Preview**: See changes in real-time before applying
+
+#### API Settings
+Configure API console usage tracking:
+- **API Session Key**: Set your API authentication key
+- **Organization ID**: Configure organization for API tracking
+- **Dual Tracking**: Monitor both web and API usage simultaneously
+- **API Billing**: View API console usage costs
+
+#### Session Management
+Control automatic session behavior:
+- **Auto-Start on Reset**: Enable/disable automatic session initialization
+- **Model Selection**: Uses Claude 3.5 Haiku (most cost-effective)
+- **Initialization Status**: View last auto-start activity
+
+#### Notifications
+Fine-tune alert preferences:
+- **Enable/Disable**: Master toggle for all notifications
+- **Threshold Alerts**: Notifications at 75%, 90%, and 95% usage
+- **Session Reset Alerts**: Get notified when 5-hour window refreshes
+- **Auto-Start Alerts**: Confirmations for automatic session initialization
+- **Test Notifications**: Send test notification to verify setup
+
+#### Claude Code Integration
+Set up terminal statusline (requires [Claude Code](https://claude.com/claude-code)):
+- **Component Selection**: Choose what to display (directory, branch, usage, progress bar, reset time)
+- **Live Preview**: See exact statusline format before installing
+- **One-Click Install**: Automated script installation to `~/.claude/`
+- **Configuration Management**: Apply or reset statusline settings
+- See [Claude Code Integration](#claude-code-integration) section for detailed setup
+
+#### About
+- **Version Information**: Current app version
+- **Credits**: Contributors and acknowledgments
+- **Links**: GitHub repository, issue tracker, documentation
 
 
 ## Claude Code Integration
@@ -394,34 +451,51 @@ backend-api │ ⎇ develop
 - **Language**: Swift 5.0+
 - **UI Framework**: SwiftUI 5.0+
 - **Platform**: macOS 14.0+ (Sonoma)
-- **Architecture**: MVVM pattern
+- **Architecture**: MVVM with Protocol-Oriented Design
 - **Storage**: UserDefaults with App Groups
 - **Networking**: URLSession with async/await
-
-### Key Components
-
-**MenuBarManager**: Manages the status bar item, handles user interactions, and coordinates data refresh cycles.
-
-**ClaudeAPIService**: Handles all API communication with Claude's usage endpoint, including authentication and response parsing.
-
-**DataStore**: Provides centralized data persistence using App Groups for potential future widget support.
-
-**NotificationManager**: Manages intelligent notification delivery based on usage thresholds and state changes.
+- **Design Patterns**: Coordinator pattern, Protocol-based services, Modular components
 
 ## API Integration
 
-The application integrates with Claude's internal API:
+The application integrates with multiple Claude API endpoints for comprehensive usage tracking:
+
+### Web Usage Endpoint
 
 ```
 GET https://claude.ai/api/organizations/{org_id}/usage
 ```
 
-Response includes:
-- `five_hour`: Session usage data with utilization percentage and reset time
-- `seven_day`: Weekly usage data with utilization percentage
-- `seven_day_opus`: Opus-specific weekly usage data
+**Authentication**: Session cookie (`sessionKey`) from claude.ai
 
-Authentication is handled via session cookie extracted from the browser.
+**Response Structure**:
+- `five_hour`: 5-hour session usage data
+  - `utilization_pct`: Usage percentage (0-100)
+  - `reset_at`: ISO 8601 timestamp for next reset
+- `seven_day`: Weekly usage across all models
+  - `utilization_pct`: Weekly usage percentage
+- `seven_day_opus`: Opus-specific weekly usage
+  - `utilization_pct`: Opus weekly percentage
+- `extra_usage`: Claude Extra cost tracking (if applicable)
+  - `current_spending`: Amount spent
+  - `budget_limit`: Maximum allowed spending
+
+### API Console Endpoint
+
+```
+GET https://api.anthropic.com/v1/organization/{org_id}/usage
+```
+
+**Authentication**: API Key (`x-api-key` header)
+
+**Response Structure**:
+- API console usage statistics
+- Billing information
+- Rate limits and quotas
+
+### Dual Tracking
+
+The app can simultaneously monitor both web (claude.ai) and API console usage, providing complete visibility into your Claude consumption across all access methods.
 
 ## Security
 

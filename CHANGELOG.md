@@ -5,6 +5,228 @@ All notable changes to Claude Usage Tracker will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2025-12-21
+
+### Added
+
+#### API Console Usage Tracking
+- **New API Settings Tab** - Configure API console usage tracking separately from web usage
+  - API session key input field with validation
+  - Organization ID configuration
+  - Dual tracking capability: Monitor both claude.ai web usage and API console usage simultaneously
+  - API billing view integration
+
+- **API Usage Display** - Enhanced popover shows API console usage data
+  - Real-time API usage statistics
+  - Separate tracking from web usage metrics
+  - Seamless integration with existing usage views
+
+- **ClaudeAPIService Enhancements** - Extended API service to support multiple endpoints
+  - API console endpoint integration (`https://api.anthropic.com/v1/organization/{org_id}/usage`)
+  - Dual authentication support (session cookie + API key)
+  - Parallel usage data fetching for both web and API
+
+#### Customizable Menu Bar Icon Styles
+- **5 Icon Style Options** - Choose your preferred menu bar display mode
+  - **Battery Style**: Classic battery indicator with fill level (original style)
+  - **Progress Bar**: Horizontal progress bar with percentage display
+  - **Percentage Only**: Minimalist text-only display
+  - **Icon with Bar**: Claude icon with integrated progress bar
+  - **Compact**: Space-efficient minimal design
+
+- **New Appearance Settings Tab** - Dedicated UI for visual customization
+  - Icon style picker with visual previews
+  - Live preview showing how each style looks
+  - Monochrome mode toggle (see below)
+  - Real-time updates when changing styles
+
+- **Monochrome Mode** - Optional black & white icon aesthetic
+  - Toggle for minimalist monochrome menu bar icons
+  - Removes colored indicators for clean appearance
+  - Works with all icon styles
+  - Perfect for users who prefer subtle menu bar presence
+
+- **StatusBarUIManager** - New component for menu bar icon rendering
+  - Centralized icon drawing logic for all styles
+  - Handles style switching seamlessly
+  - Manages monochrome mode rendering
+  - Optimized drawing performance
+
+#### Redesigned Settings Interface
+- **Modular Settings Architecture** - Complete refactor with separate view files
+  - **APIBillingView**: API console billing and usage display
+  - **AboutView**: Version info, credits, and links
+  - **AppearanceSettingsView**: Icon styles and visual preferences (new)
+  - **ClaudeCodeView**: Terminal statusline configuration
+  - **GeneralSettingsView**: Session key and refresh settings
+  - **NotificationsSettingsView**: Alert preferences
+  - **PersonalUsageView**: Individual usage tracking
+  - **SessionManagementView**: Auto-start configuration
+
+- **New Design System** - Reusable component library for consistent UI
+  - **SettingsCard**: Bordered container component for grouping settings
+  - **SettingToggle**: Standardized toggle switch with description
+  - **SettingsButton**: Consistent button styling (primary, secondary, danger variants)
+  - **SettingsInputField**: Text input with validation states
+  - **SettingsStatusBox**: Status message display with color coding
+  - **SettingsHeader**: Section headers with consistent styling
+  - **Typography System**: Standardized text styles (title, heading, body, caption, small)
+  - **Spacing System**: Consistent padding and margin values
+  - **Color System**: Centralized color definitions for light/dark mode
+
+- **IconStylePicker Component** - Visual icon style selection interface
+  - Grid layout with style previews
+  - Hover effects and selection states
+  - Clear style descriptions
+  - Intuitive selection UX
+
+#### Core Architecture Improvements
+- **Protocol-Oriented Design** - Enhanced modularity and testability
+  - **APIServiceProtocol**: Service layer abstraction
+  - **NotificationServiceProtocol**: Notification system interface
+  - **StorageProvider**: Storage abstraction for data persistence
+  - Dependency injection support for better testing
+
+- **Coordinator Pattern Implementation**
+  - **UsageRefreshCoordinator**: Orchestrates automatic data refresh cycles
+  - **WindowCoordinator**: Manages popover and detached window lifecycle
+  - **StatusBarUIManager**: Coordinates menu bar icon rendering
+  - Separation of concerns between navigation and business logic
+
+- **LoggingService** - Centralized logging system
+  - Categorized log levels (debug, info, warning, error)
+  - Consistent logging across the application
+  - Helps with debugging and troubleshooting
+  - Production-ready with configurable verbosity
+
+- **ValidationState Model** - Type-safe validation state representation
+  - States: idle, validating, success, error
+  - Used across settings UI for consistent validation feedback
+  - Improves UX with clear validation states
+
+#### Enhanced Data Storage
+- **Extended DataStore Capabilities**
+  - Icon style preference persistence
+  - Monochrome mode setting storage
+  - API configuration storage (API key, organization ID)
+  - Appearance preferences management
+  - App Groups support for future widget integration
+
+- **Constants Utility** - Centralized configuration keys
+  - API endpoint definitions
+  - UI constant values
+  - UserDefaults keys
+  - Improved code maintainability
+
+#### UI/UX Improvements
+- **Standardized Settings Sections** - Consistent headers and spacing across all tabs
+  - SettingsHeader component for uniform section titles
+  - Standardized padding using Spacing design system
+  - Improved visual hierarchy
+
+- **Enhanced Conversation Deletion** - Improved initialization message handling
+  - `sendInitializationMessage` now includes conversation cleanup
+  - Prevents conversation clutter from auto-start sessions
+  - More reliable session initialization
+
+### Fixed
+
+- **Settings Layout Consistency** - Adjusted spacing and alignment across all settings views
+  - Uniform padding in General, Notifications, Session, and Claude Code tabs
+  - Consistent component spacing throughout settings interface
+  - Better visual balance in About view
+
+### Technical Improvements
+
+- **MenuBarManager Enhancements**
+  - Integration with StatusBarUIManager for multi-style icon rendering
+  - Support for icon style switching
+  - Monochrome mode handling
+  - Improved refresh coordination
+
+- **Notification Extensions** - Added notification name constants
+  - `Notification.Name.iconStyleChanged`
+  - `Notification.Name.monochromeChanged`
+  - Reactive UI updates on preference changes
+
+- **Improved Code Organization**
+  - Separated UI components from business logic
+  - Clear file structure with dedicated folders
+  - Reusable design system components
+  - Reduced code duplication
+
+### Documentation
+
+- **Comprehensive README Overhaul**
+  - Restructured for feature-first documentation
+  - Getting Started section moved before Features
+  - Condensed Features section for better readability
+  - Added Table of Contents for easy navigation
+  - Removed decorative emojis for professional tone
+  - Enhanced Architecture section with system diagram
+  - Updated API Integration docs for dual endpoints
+  - Added Prerequisites and Quick Start Guide sections
+  - Expanded Settings documentation covering all 7 tabs
+
+---
+
+## [1.5.0] - 2025-12-16
+
+### Added
+
+#### GitHub Star Prompt
+- **New "Star Us" Feature** - Encourages community engagement
+  - GitHub star prompt displayed in settings after 24 hours of usage
+  - One-time prompt with "Star on GitHub" and "Maybe Later" options
+  - Opens GitHub repository in browser on confirmation
+  - Smart tracking to prevent repeated prompts
+  - Non-intrusive timing ensures positive user experience
+
+- **GitHubService** - New service for GitHub-related operations
+  - Opens repository URL in default browser
+  - Handles GitHub interactions
+  - Extensible for future GitHub integrations
+
+- **Enhanced DataStore** - Star prompt tracking capabilities
+  - `shouldShowStarPrompt()`: Determines if prompt should be shown based on install time
+  - `markStarPromptShown()`: Records when prompt was displayed
+  - Install time tracking for timing calculations
+  - Persistent storage of prompt state
+
+#### Contributors Section
+- **New Contributors Display** in About settings
+  - Shows project contributors with avatars from contrib.rocks
+  - Dynamic image loading from GitHub API
+  - Professional attribution section
+  - Acknowledges community contributions
+
+### Fixed
+
+#### Popover UI Improvements
+- **Enhanced Status Display** - Improved Claude system status UI in popover
+  - Better visual hierarchy for status information
+  - Refined spacing and layout
+  - Improved readability of status messages
+  - More polished overall appearance
+
+### Technical Improvements
+
+- **MenuBarManager Updates**
+  - Integration with star prompt logic
+  - Proper timing checks for prompt display
+  - State management for prompt lifecycle
+
+- **AppDelegate Enhancements**
+  - Install time recording on first launch
+  - Initialization of tracking mechanisms
+
+### Documentation
+
+- **Updated Popover Screenshot** - New popover.png reflecting latest UI improvements
+- **README Updates** - Added contributors section and updated documentation
+
+---
+
 ## [1.4.0] - 2025-12-15
 
 ### Added
@@ -277,6 +499,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Detailed usage dashboard with countdown timers
 - Support for macOS 14.0+ (Sonoma and later)
 
+[1.6.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.5.0...v1.6.0
+[1.5.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.1.0...v1.2.0
