@@ -15,6 +15,8 @@
 
   <sub>macOS 14.0+ (Sonoma) | ~3 MB | Native Swift/SwiftUI</sub>
 
+  [![Buy Me A Coffee](https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=☕&slug=hamedelfayome&button_colour=e48131&font_colour=000000&font_family=Poppins&outline_colour=000000&coffee_colour=ffffff)](https://buymeacoffee.com/hamedelfayome)
+
   <sub>⚠️ **Note:** This app is not signed with an Apple Developer certificate. You'll need to bypass the security warning on first launch (see installation steps below).</sub>
 </div>
 
@@ -529,6 +531,20 @@ The app can simultaneously monitor both web (claude.ai) and API console usage, p
 ### Session Key Expired
 
 Session keys may expire after a period of time. Extract a new key from claude.ai and update it in Settings → API.
+
+### Homebrew Upgrade Issues
+
+If you encounter errors like `Error: Cask 'claude-usage-tracker' is unreadable` during upgrade:
+
+simply re-tap:
+
+```bash
+brew untap hamed-elfayome/claude-usage
+brew tap hamed-elfayome/claude-usage
+brew upgrade --cask claude-usage-tracker
+```
+
+**Note**: Use the correct tap name: `hamed-elfayome/claude-usage/claude-usage-tracker` (not `hamed-elfayomes` with an 's').
 
 ## Contributors
 
