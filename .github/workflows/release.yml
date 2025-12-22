@@ -66,89 +66,42 @@ jobs:
           echo "SHA256 Checksum:"
           cat "Claude-Usage.zip.sha256"
 
-      - name: Generate AI Release Notes
-        id: ai_notes
+      - name: Extract Release Notes from CHANGELOG
+        id: changelog_notes
         continue-on-error: true
         run: |
-          # Check if GEMINI_API_KEY is set
-          if [ -z "${{ secrets.GEMINI_API_KEY }}" ]; then
-            echo "GEMINI_API_KEY not set, skipping AI generation"
-            echo "ai_generated=false" >> $GITHUB_OUTPUT
+          # Extract version from tag
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+
+          echo "Extracting release notes for version $VERSION from CHANGELOG.md"
+
+          # Extract the section for this version from CHANGELOG.md
+          # This extracts everything between ## [$VERSION] and the next ## or ---
+          awk "/## \[$VERSION\]/{flag=1; next} /^---$|^## \[/{flag=0} flag" CHANGELOG.md > release-notes.md
+
+          # Remove trailing empty lines
+          sed -i.bak '/^$/d' release-notes.md 2>/dev/null || sed -i '' -e '/^$/d' release-notes.md
+
+          # Check if we got content
+          if [ ! -s release-notes.md ]; then
+            echo "No release notes found in CHANGELOG.md for version $VERSION"
+            echo "changelog_extracted=false" >> $GITHUB_OUTPUT
             exit 0
           fi
 
-          # Get commits since last release
-          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-
-          if [ -z "$PREVIOUS_TAG" ]; then
-            echo "No previous tag found, using all commits"
-            COMMITS=$(git log --pretty=format:"- %s (%h)" --no-merges)
-          else
-            echo "Getting commits since $PREVIOUS_TAG"
-            COMMITS=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
-          fi
-
-          # Also get diff stats for context
-          if [ -z "$PREVIOUS_TAG" ]; then
-            DIFF_STATS=$(git diff --stat HEAD~10..HEAD 2>/dev/null || echo "No diff available")
-          else
-            DIFF_STATS=$(git diff --stat ${PREVIOUS_TAG}..HEAD)
-          fi
-
-          echo "Commits:"
-          echo "$COMMITS"
-          echo ""
-          echo "Changed files:"
-          echo "$DIFF_STATS"
-
-          # Prepare prompt for Gemini
-          PROMPT="You are a professional technical writer creating release notes for a macOS application called 'Claude Usage Tracker'. Based on the following git commits and file changes, generate professional, user-friendly release notes. Requirements: Use clear, professional language. NO emojis. Group changes into categories: Added, Changed, Fixed, Removed. Focus on user-facing changes, not internal implementation details. Be concise but informative. Use markdown formatting. Start directly with the categories, no introduction needed. Git commits: $COMMITS Files changed: $DIFF_STATS Generate the release notes now:"
-
-          # Call Gemini API (using latest Gemini 2.0 Flash model)
-          PROMPT_JSON=$(echo "$PROMPT" | jq -Rs .)
-
-          RESPONSE=$(curl -s -X POST \
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${{ secrets.GEMINI_API_KEY }}" \
-            -H 'Content-Type: application/json' \
-            -d "{
-              \"contents\": [{
-                \"parts\": [{
-                  \"text\": $PROMPT_JSON
-                }]
-              }],
-              \"generationConfig\": {
-                \"temperature\": 0.3,
-                \"topP\": 0.8,
-                \"topK\": 40,
-                \"maxOutputTokens\": 1024
-              }
-            }")
-
-          # Extract the generated text
-          RELEASE_NOTES=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // empty')
-
-          if [ -z "$RELEASE_NOTES" ]; then
-            echo "Failed to generate AI release notes (API error or empty response)"
-            echo "API Response: $RESPONSE"
-            echo "ai_generated=false" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          # Save to file
-          echo "$RELEASE_NOTES" > release-notes.md
-
-          echo "Generated release notes:"
+          echo "Extracted release notes:"
           cat release-notes.md
 
-          echo "ai_generated=true" >> $GITHUB_OUTPUT
+          echo "changelog_extracted=true" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           name: ${{ github.ref_name }}
           draft: false
-          body_path: ${{ steps.ai_notes.outputs.ai_generated == 'true' && 'release-notes.md' || '' }}
-          generate_release_notes: ${{ steps.ai_notes.outputs.ai_generated != 'true' }}
+          body_path: ${{ steps.changelog_notes.outputs.changelog_extracted == 'true' && 'release-notes.md' || '' }}
+          generate_release_notes: ${{ steps.changelog_notes.outputs.changelog_extracted != 'true' }}
           files: |
             release/Claude-Usage.zip
             release/Claude-Usage.zip.sha256
