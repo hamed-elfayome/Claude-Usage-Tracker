@@ -8,7 +8,7 @@ on:
 jobs:
   release:
     name: Build and Release
-    runs-on: macos-15
+    runs-on: macos-14
     timeout-minutes: 20
     permissions:
       contents: write
@@ -31,22 +31,30 @@ jobs:
             -scheme "Claude Usage" \
             -configuration Release \
             -derivedDataPath build \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            | xcpretty
+            CODE_SIGN_IDENTITY="-"
+
+      - name: Sign App with Ad-hoc Signature
+        run: |
+          # Ad-hoc sign the app bundle to prevent "damaged" errors
+          codesign --force --deep --sign - "build/Build/Products/Release/Claude Usage.app"
+
+          # Verify the signature
+          codesign --verify --verbose "build/Build/Products/Release/Claude Usage.app"
+
+          # Display signature info
+          codesign -dv "build/Build/Products/Release/Claude Usage.app"
 
       - name: Create Release Artifact
         run: |
           # Create artifacts directory
           mkdir -p release
-          
-          # Copy app bundle
-          cp -R "build/Build/Products/Release/Claude Usage.app" release/
-          
-          # Create ZIP archive
+
+          # Copy app bundle (preserving attributes and signatures)
+          cp -pR "build/Build/Products/Release/Claude Usage.app" release/
+
+          # Create ZIP archive using ditto (preserves code signatures)
           cd release
-          zip -r "Claude-Usage.zip" "Claude Usage.app"
+          ditto -c -k --keepParent "Claude Usage.app" "Claude-Usage.zip"
           
           # Generate SHA256 checksum
           shasum -a 256 "Claude-Usage.zip" > "Claude-Usage.zip.sha256"
@@ -59,7 +67,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: ${{ github.ref_name }}
-          draft: true
+          draft: false
           generate_release_notes: true
           files: |
             release/Claude-Usage.zip

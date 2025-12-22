@@ -1,0 +1,103 @@
+name: Update Homebrew Cask
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  update-cask:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract version from tag
+        id: version
+        run: |
+          # Extract version from release tag
+          VERSION="${{ github.event.release.tag_name }}"
+          VERSION="${VERSION#v}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Version: ${VERSION}"
+
+      - name: Download release artifact
+        run: |
+          # Download the Claude-Usage.zip from the release
+          echo "Downloading from: https://github.com/${{ github.repository }}/releases/download/${{ github.event.release.tag_name }}/Claude-Usage.zip"
+
+          curl -L -f -o Claude-Usage.zip \
+            "https://github.com/${{ github.repository }}/releases/download/${{ github.event.release.tag_name }}/Claude-Usage.zip"
+
+          # Verify download succeeded
+          if [ ! -f Claude-Usage.zip ]; then
+            echo "Error: Failed to download Claude-Usage.zip"
+            exit 1
+          fi
+
+          # Check file size is reasonable (should be > 1MB)
+          FILE_SIZE=$(stat -c%s Claude-Usage.zip 2>/dev/null || stat -f%z Claude-Usage.zip)
+          if [ "$FILE_SIZE" -lt 1000000 ]; then
+            echo "Error: Downloaded file is too small ($FILE_SIZE bytes). Likely an error page."
+            exit 1
+          fi
+
+          echo "Download successful! Size: $FILE_SIZE bytes"
+
+      - name: Calculate SHA256
+        id: sha256
+        run: |
+          # Calculate SHA256 of the downloaded zip
+          SHA256=$(sha256sum Claude-Usage.zip | awk '{print $1}')
+          echo "sha256=${SHA256}" >> $GITHUB_OUTPUT
+          echo "SHA256: ${SHA256}"
+
+      - name: Checkout homebrew-claude-usage tap
+        uses: actions/checkout@v4
+        with:
+          repository: hamed-elfayome/homebrew-claude-usage
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: homebrew-tap
+
+      - name: Update cask file
+        run: |
+          cd homebrew-tap
+
+          # Verify cask file exists
+          if [ ! -f Casks/claude-usage-tracker.rb ]; then
+            echo "Error: Cask file not found at Casks/claude-usage-tracker.rb"
+            exit 1
+          fi
+
+          # Update the cask file with new version and SHA256
+          sed -i "s/version \".*\"/version \"${{ steps.version.outputs.version }}\"/" Casks/claude-usage-tracker.rb
+          sed -i "s/sha256 \".*\"/sha256 \"${{ steps.sha256.outputs.sha256 }}\"/" Casks/claude-usage-tracker.rb
+
+          # Verify changes were made
+          if ! grep -q "version \"${{ steps.version.outputs.version }}\"" Casks/claude-usage-tracker.rb; then
+            echo "Error: Version update failed"
+            exit 1
+          fi
+
+          if ! grep -q "sha256 \"${{ steps.sha256.outputs.sha256 }}\"" Casks/claude-usage-tracker.rb; then
+            echo "Error: SHA256 update failed"
+            exit 1
+          fi
+
+          # Show the changes
+          echo "Updated cask file:"
+          cat Casks/claude-usage-tracker.rb
+
+      - name: Commit and push changes
+        run: |
+          cd homebrew-tap
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add Casks/claude-usage-tracker.rb
+          git commit -m "Update claude-usage-tracker to version ${{ steps.version.outputs.version }}"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+
+      - name: Summary
+        run: |
+          echo "Successfully updated Homebrew cask to version ${{ steps.version.outputs.version }}"
+          echo "SHA256: ${{ steps.sha256.outputs.sha256 }}"
