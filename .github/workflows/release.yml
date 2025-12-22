@@ -92,7 +92,8 @@ jobs:
           echo "$DIFF_STATS"
 
           # Prepare prompt for Gemini
-          PROMPT="You are a professional technical writer creating release notes for a macOS application called 'Claude Usage Tracker'.
+          cat > prompt.txt << 'PROMPT_EOF'
+You are a professional technical writer creating release notes for a macOS application called 'Claude Usage Tracker'.
 
 Based on the following git commits and file changes, generate professional, user-friendly release notes.
 
@@ -106,21 +107,26 @@ Requirements:
 - Start directly with the categories, no introduction needed
 
 Git commits:
-$COMMITS
+PROMPT_EOF
+          echo "$COMMITS" >> prompt.txt
+          cat >> prompt.txt << 'PROMPT_EOF'
 
 Files changed:
-$DIFF_STATS
-
-Generate the release notes now:"
+PROMPT_EOF
+          echo "$DIFF_STATS" >> prompt.txt
+          echo "" >> prompt.txt
+          echo "Generate the release notes now:" >> prompt.txt
 
           # Call Gemini API (using latest Gemini 2.0 Flash model)
+          PROMPT_JSON=$(jq -Rs . < prompt.txt)
+
           RESPONSE=$(curl -s -X POST \
             "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${{ secrets.GEMINI_API_KEY }}" \
             -H 'Content-Type: application/json' \
             -d "{
               \"contents\": [{
                 \"parts\": [{
-                  \"text\": $(echo "$PROMPT" | jq -R -s .)
+                  \"text\": $PROMPT_JSON
                 }]
               }],
               \"generationConfig\": {
