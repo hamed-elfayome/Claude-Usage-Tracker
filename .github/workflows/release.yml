@@ -67,6 +67,13 @@ jobs:
         id: ai_notes
         continue-on-error: true
         run: |
+          # Check if GEMINI_API_KEY is set
+          if [ -z "${{ secrets.GEMINI_API_KEY }}" ]; then
+            echo "GEMINI_API_KEY not set, skipping AI generation"
+            echo "ai_generated=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
           # Get commits since last release
           PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
 
@@ -118,9 +125,10 @@ jobs:
           RELEASE_NOTES=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // empty')
 
           if [ -z "$RELEASE_NOTES" ]; then
-            echo "Failed to generate AI release notes"
+            echo "Failed to generate AI release notes (API error or empty response)"
+            echo "API Response: $RESPONSE"
             echo "ai_generated=false" >> $GITHUB_OUTPUT
-            exit 1
+            exit 0
           fi
 
           # Save to file
@@ -142,4 +150,5 @@ jobs:
             release/Claude-Usage.zip
             release/Claude-Usage.zip.sha256
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Use PAT instead of GITHUB_TOKEN to trigger downstream workflows
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
