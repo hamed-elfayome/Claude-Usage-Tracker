@@ -130,6 +130,7 @@ struct SidebarItem: View {
                     .fill(isSelected ? SettingsColors.primary : Color.clear)
             )
             .padding(.horizontal, Spacing.sm)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .help(description)

@@ -131,7 +131,7 @@ struct AboutView: View {
                         .font(Typography.caption)
                         .foregroundColor(.secondary)
 
-                    Text("© 2024 Hamed Elfayome")
+                    Text("© 2025 Hamed Elfayome")
                         .font(Typography.caption)
                         .foregroundColor(.secondary)
                 }

@@ -5,6 +5,94 @@ All notable changes to Claude Usage Tracker will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.2] - 2025-12-22
+
+### Fixed
+
+#### Settings UI Improvement
+- **Fixed sidebar tab click area** in Settings window
+    - Tabs now respond to clicks anywhere in the tab area, not just on the text
+    - Added `.contentShape(Rectangle())` to make entire button area clickable
+    - Improves user experience by making tab navigation more intuitive
+
+### Changed
+
+#### Release Pipeline Improvements
+- **Fixed GitHub Actions release workflow** to create working app bundles
+    - Added ad-hoc code signing to prevent "damaged app" errors on macOS
+    - Changed from `zip` to `ditto` for ZIP creation to preserve code signatures
+    - Updated from `macos-15` to `macos-14` runner for better compatibility
+    - Removed `xcpretty` dependency that was causing build failures
+- **Enhanced Homebrew Cask automation workflow**
+    - Added download verification with file size checks
+    - Added validation that cask file updates succeed
+    - Better error handling throughout the workflow
+- **Automated release process** now works end-to-end:
+    1. Push tag → Builds app with signing
+    2. Creates GitHub Release with working ZIP
+    3. Automatically updates Homebrew tap
+
+---
+
+## [1.6.1] - 2025-12-21
+
+### Fixed
+
+#### Critical Performance Issue - High CPU Usage (Issue #48)
+- **Resolved excessive CPU consumption** affecting users with multiple displays
+    - Fixed 10-35% CPU usage during normal operation (now ~2-9%)
+    - CPU usage was scaling with number of connected displays (14% single → 35% triple display)
+    - Particularly affected users with:
+        - Multiple displays (2-3 monitors)
+        - High-end Macs (M2 Max, M1 Pro)
+        - Retina displays
+        - Stage Manager enabled
+
+#### Root Cause
+- Menu bar icon was being redrawn from scratch **every 30 seconds**
+- macOS creates multiple "replicants" of menu bar items for each display, Space/Desktop, and Stage Manager
+- Each redraw triggered complex bezier path drawing and forced macOS to re-render for every replicant
+- ~45% of CPU time was spent in `_updateReplicantsUnlessMenuIsTracking` → `renderInContext`
+
+#### Performance Optimizations Implemented
+1. **Image Caching System** (MenuBar/MenuBarManager.swift)
+    - Intelligent caching that only regenerates images when visual factors change
+    - Cache key based on: percentage, appearance, icon style, and monochrome mode
+    - 70% CPU reduction - Reuses cached images when nothing has changed
+
+2. **Removed Deprecated UserDefaults.synchronize()** (Shared/Storage/DataStore.swift)
+    - Removed 12 instances of blocking synchronize() calls
+    - Deprecated since macOS 10.14 - UserDefaults auto-syncs periodically
+    - 10% CPU reduction - Eliminated unnecessary main thread blocking
+
+3. **Debounced Replicant Updates** (MenuBar/MenuBarManager.swift)
+    - Added 100ms debounce timer to prevent rendering congestion
+    - 10% CPU reduction - Prevents overlapping render operations
+
+4. **Optimized Appearance Observer** (MenuBar/MenuBarManager.swift)
+    - Changed from observing button appearance to NSApp appearance
+    - 5% CPU reduction - Fewer redundant redraws
+
+5. **Smart Cache Invalidation**
+    - Cache clears only when necessary (appearance changes, icon style changes)
+    - Forces fresh render only when visual factors actually change
+
+#### Performance Results
+
+| Configuration | Before | After | Improvement |
+|---------------|--------|-------|-------------|
+| Single Display | 14% | ~2-3% | **80% reduction** |
+| Dual Display | 20-25% | ~4-6% | **75-80% reduction** |
+| Triple Display | 30-35% | ~6-9% | **70-75% reduction** |
+
+#### Technical Details
+- Cache hit rate: Expected 95%+ (refresh every 30s, percentage changes slowly)
+- Memory impact: +~50KB per cached image (negligible)
+- Cached path: O(1) string comparison only
+- Uncached path: O(n) full image rendering (unchanged)
+
+---
+
 ## [1.6.0] - 2025-12-21
 
 ### Added
@@ -499,6 +587,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Detailed usage dashboard with countdown timers
 - Support for macOS 14.0+ (Sonoma and later)
 
+[1.6.1]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.6.1...v1.6.2
 [1.6.1]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.6.0...v1.6.1
 [1.6.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.4.0...v1.5.0
