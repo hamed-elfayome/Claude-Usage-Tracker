@@ -37,6 +37,7 @@ protocol StorageProvider {
 
     func saveAPISessionKey(_ key: String)
     func loadAPISessionKey() -> String?
+    func deleteAPISessionKey()
 
     func saveAPIOrganizationId(_ orgId: String)
     func loadAPIOrganizationId() -> String?

@@ -341,14 +341,52 @@ class DataStore: StorageProvider {
         return defaults.bool(forKey: Constants.UserDefaultsKeys.apiTrackingEnabled)
     }
 
-    /// Saves API session key
+    // MARK: - API Session Key (Keychain Storage)
+
+    private let apiSessionKeyKeychainKey = "apiSessionKey"
+
+    /// Saves API session key securely to Keychain
     func saveAPISessionKey(_ key: String) {
-        defaults.set(key, forKey: Constants.UserDefaultsKeys.apiSessionKey)
+        do {
+            try KeychainService.shared.save(key: apiSessionKeyKeychainKey, value: key)
+            // Clear any legacy UserDefaults value
+            defaults.removeObject(forKey: Constants.UserDefaultsKeys.apiSessionKey)
+            LoggingService.shared.logStorageSave("apiSessionKey (Keychain)")
+        } catch {
+            LoggingService.shared.logError("Failed to save API session key to Keychain", error: error)
+        }
     }
 
-    /// Loads API session key
+    /// Loads API session key from Keychain (with migration from UserDefaults)
     func loadAPISessionKey() -> String? {
-        return defaults.string(forKey: Constants.UserDefaultsKeys.apiSessionKey)
+        // Try Keychain first
+        if let key = KeychainService.shared.load(key: apiSessionKeyKeychainKey) {
+            LoggingService.shared.logStorageLoad("apiSessionKey (Keychain)", success: true)
+            return key
+        }
+
+        // Migrate from UserDefaults if exists (one-time migration)
+        if let legacyKey = defaults.string(forKey: Constants.UserDefaultsKeys.apiSessionKey) {
+            do {
+                try KeychainService.shared.save(key: apiSessionKeyKeychainKey, value: legacyKey)
+                defaults.removeObject(forKey: Constants.UserDefaultsKeys.apiSessionKey)
+                LoggingService.shared.logInfo("Migrated API session key from UserDefaults to Keychain")
+                return legacyKey
+            } catch {
+                LoggingService.shared.logError("Failed to migrate API session key", error: error)
+                return legacyKey  // Return legacy key even if migration fails
+            }
+        }
+
+        LoggingService.shared.logStorageLoad("apiSessionKey", success: false)
+        return nil
+    }
+
+    /// Deletes API session key from both Keychain and UserDefaults
+    func deleteAPISessionKey() {
+        try? KeychainService.shared.delete(key: apiSessionKeyKeychainKey)
+        defaults.removeObject(forKey: Constants.UserDefaultsKeys.apiSessionKey)
+        LoggingService.shared.logInfo("Deleted API session key")
     }
 
     /// Saves selected API organization ID

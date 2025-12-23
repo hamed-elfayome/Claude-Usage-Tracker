@@ -48,10 +48,17 @@ We'll keep you informed throughout the process and credit you in the security ad
 
 ### Session Key Storage
 
-- Session keys are stored locally in `~/.claude-session-key`
+#### Claude.ai Session Key
+- Stored locally in `~/.claude-session-key`
 - File permissions are automatically set to `0600` (owner read/write only)
 - Keys are never transmitted except to `claude.ai` via HTTPS
 - No cloud sync or external storage
+
+#### Console API Session Key
+- Stored securely in **macOS Keychain** (hardware-backed encryption on Apple Silicon)
+- Protected by `kSecAttrAccessibleWhenUnlocked` - only accessible when device is unlocked
+- Automatic migration from UserDefaults for existing users
+- Keys are never transmitted except to `console.anthropic.com` via HTTPS
 
 ### Application Signing
 
