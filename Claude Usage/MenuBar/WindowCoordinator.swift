@@ -93,6 +93,7 @@ final class WindowCoordinator: NSObject {
         window.contentViewController = contentViewController
         window.level = .floating
         window.center()
+        window.isRestorable = false
         window.makeKeyAndOrderFront(nil)
 
         // Clear popover's content so it can be recreated later
@@ -132,6 +133,7 @@ final class WindowCoordinator: NSObject {
             window.title = "Settings"
             window.contentViewController = hostingController
             window.center()
+            window.isRestorable = false
             window.makeKeyAndOrderFront(nil)
             window.delegate = self
 
@@ -162,6 +164,7 @@ final class WindowCoordinator: NSObject {
         window.title = "Support Claude Usage Tracker"
         window.contentViewController = promptView
         window.center()
+        window.isRestorable = false
         window.makeKeyAndOrderFront(nil)
         window.delegate = self
 

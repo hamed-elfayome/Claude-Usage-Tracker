@@ -563,6 +563,7 @@ class MenuBarManager: NSObject, ObservableObject {
             window.setContentSize(NSSize(width: 720, height: 600))
             window.center()
             window.isReleasedWhenClosed = false
+            window.isRestorable = false
 
             // Set window delegate to clean up reference when closed
             window.delegate = self
@@ -615,6 +616,7 @@ class MenuBarManager: NSObject, ObservableObject {
         window.setContentSize(NSSize(width: 300, height: 145))
         window.center()
         window.isReleasedWhenClosed = false
+        window.isRestorable = false
         window.level = .floating
         window.delegate = self
 

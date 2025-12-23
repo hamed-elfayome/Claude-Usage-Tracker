@@ -93,7 +93,7 @@ struct AboutView: View {
                             .font(Typography.sectionHeader)
 
                         ProgressView()
-                            .scaleEffect(0.7)
+                            .controlSize(.small)
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding(.vertical, Spacing.md)
                     }
@@ -244,7 +244,7 @@ struct ContributorAvatar: View {
                             Group {
                                 if isLoadingImage {
                                     ProgressView()
-                                        .scaleEffect(0.5)
+                                        .controlSize(.small)
                                 } else {
                                     Image(systemName: "person.fill")
                                         .font(.system(size: 16))

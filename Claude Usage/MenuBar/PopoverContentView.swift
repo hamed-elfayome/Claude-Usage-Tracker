@@ -123,10 +123,11 @@ struct SmartHeader: View {
             
             // Smart Refresh Button
             Button(action: onRefresh) {
-                HStack(spacing: 4) {
+                ZStack {
                     if isRefreshing {
                         ProgressView()
-                            .scaleEffect(0.7)
+                            .controlSize(.small)
+                            .frame(width: 14, height: 14)
                     } else {
                         Image(systemName: "arrow.clockwise")
                             .font(.system(size: 11, weight: .medium))
@@ -265,24 +266,23 @@ struct SmartUsageCard: View {
             // Progress visualization
             VStack(spacing: 6) {
                 // Animated progress bar
-                GeometryReader { geometry in
-                    ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.secondary.opacity(0.15))
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.secondary.opacity(0.15))
 
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(
-                                LinearGradient(
-                                    colors: [statusColor, statusColor.opacity(0.8)],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(
+                            LinearGradient(
+                                colors: [statusColor, statusColor.opacity(0.8)],
+                                startPoint: .leading,
+                                endPoint: .trailing
                             )
-                            .frame(width: geometry.size.width * min(percentage / 100.0, 1.0))
-                    }
-                    .animation(.easeInOut(duration: 0.8), value: percentage)
+                        )
+                        .frame(maxWidth: .infinity)
+                        .scaleEffect(x: min(percentage / 100.0, 1.0), y: 1.0, anchor: .leading)
                 }
                 .frame(height: isPrimary ? 8 : 6)
+                .animation(.easeInOut(duration: 0.8), value: percentage)
                 
                 // Reset time information
                 if let reset = resetTime {
@@ -553,17 +553,16 @@ struct APIUsageCard: View {
             }
 
             // Progress Bar
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    // Background
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.secondary.opacity(0.1))
+            ZStack(alignment: .leading) {
+                // Background
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.secondary.opacity(0.1))
 
-                    // Fill
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(usageColor)
-                        .frame(width: geometry.size.width * (apiUsage.usagePercentage / 100.0))
-                }
+                // Fill
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(usageColor)
+                    .frame(maxWidth: .infinity)
+                    .scaleEffect(x: apiUsage.usagePercentage / 100.0, y: 1.0, anchor: .leading)
             }
             .frame(height: 6)
 
