@@ -42,6 +42,11 @@ class MenuBarManager: NSObject, ObservableObject {
     private var cachedImageKey: String = ""
     private var updateDebounceTimer: Timer?
 
+    // MARK: - Initial Load Retry Logic
+    private var initialLoadRetryCount = 0
+    private let maxInitialRetries = 5
+    private var initialLoadTimer: Timer?
+
     func setup() {
         // Create status item in menu bar
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -55,16 +60,21 @@ class MenuBarManager: NSObject, ObservableObject {
         // Setup popover
         setupPopover()
 
-        // Load saved data
+        // Load saved data first (provides immediate feedback)
         if let savedUsage = dataStore.loadUsage() {
             usage = savedUsage
+            // Update the menu bar with cached data immediately
+            if let button = statusItem?.button {
+                updateStatusButton(button, usage: savedUsage)
+            }
         }
         if let savedAPIUsage = dataStore.loadAPIUsage() {
             apiUsage = savedAPIUsage
         }
 
-        // Load initial data
-        refreshUsage()
+        // Start initial data fetch with retry logic
+        // Add a small delay to allow system services to initialize (important for launch at login)
+        scheduleInitialLoad(delay: 2.0)
 
         // Start auto-refresh timer
         startAutoRefresh()
@@ -79,9 +89,88 @@ class MenuBarManager: NSObject, ObservableObject {
         observeIconStyleChanges()
     }
 
+    /// Schedules the initial data load with retry logic
+    /// This handles the case where the app starts at login before network is ready
+    private func scheduleInitialLoad(delay: TimeInterval) {
+        initialLoadTimer?.invalidate()
+        initialLoadTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
+            self?.performInitialLoad()
+        }
+    }
+
+    /// Performs the initial data load with exponential backoff retry
+    private func performInitialLoad() {
+        Task {
+            var usageSuccess = false
+            var statusSuccess = false
+
+            // Try to fetch usage data
+            do {
+                let newUsage = try await apiService.fetchUsageData()
+                await MainActor.run {
+                    self.usage = newUsage
+                    self.dataStore.saveUsage(newUsage)
+                    if let button = self.statusItem?.button {
+                        self.updateStatusButton(button, usage: newUsage)
+                    }
+                    NotificationManager.shared.checkAndNotify(usage: newUsage)
+                }
+                usageSuccess = true
+                LoggingService.shared.logInfo("Initial usage load successful")
+            } catch {
+                LoggingService.shared.logAPIError("Initial usage load", error: error)
+            }
+
+            // Try to fetch status
+            do {
+                let newStatus = try await statusService.fetchStatus()
+                await MainActor.run {
+                    self.status = newStatus
+                }
+                statusSuccess = true
+                LoggingService.shared.logInfo("Initial status load successful")
+            } catch {
+                LoggingService.shared.logAPIError("Initial status load", error: error)
+            }
+
+            // Fetch API usage if enabled
+            if self.dataStore.loadAPITrackingEnabled(),
+               let apiSessionKey = self.dataStore.loadAPISessionKey(),
+               let orgId = self.dataStore.loadAPIOrganizationId() {
+                do {
+                    let newAPIUsage = try await self.apiService.fetchAPIUsageData(organizationId: orgId, apiSessionKey: apiSessionKey)
+                    await MainActor.run {
+                        self.apiUsage = newAPIUsage
+                        self.dataStore.saveAPIUsage(newAPIUsage)
+                    }
+                } catch {
+                    // Silently fail - API usage will remain nil
+                }
+            }
+
+            // If both failed and we haven't exceeded max retries, schedule another attempt
+            await MainActor.run {
+                if !usageSuccess && !statusSuccess && self.initialLoadRetryCount < self.maxInitialRetries {
+                    self.initialLoadRetryCount += 1
+                    // Exponential backoff: 2s, 4s, 8s, 16s, 32s
+                    let nextDelay = pow(2.0, Double(self.initialLoadRetryCount))
+                    LoggingService.shared.logInfo("Scheduling initial load retry #\(self.initialLoadRetryCount) in \(nextDelay)s")
+                    self.scheduleInitialLoad(delay: nextDelay)
+                } else if usageSuccess || statusSuccess {
+                    // At least one succeeded, reset retry count
+                    self.initialLoadRetryCount = 0
+                    self.initialLoadTimer?.invalidate()
+                    self.initialLoadTimer = nil
+                }
+            }
+        }
+    }
+
     func cleanup() {
         refreshTimer?.invalidate()
         refreshTimer = nil
+        initialLoadTimer?.invalidate()
+        initialLoadTimer = nil
         refreshIntervalObserver?.invalidate()
         refreshIntervalObserver = nil
         appearanceObserver?.invalidate()
@@ -705,4 +794,3 @@ extension MenuBarManager: NSWindowDelegate {
         }
     }
 }
-
