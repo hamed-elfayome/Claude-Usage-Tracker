@@ -16,16 +16,16 @@ struct NotificationsSettingsView: View {
         VStack(alignment: .leading, spacing: Spacing.sectionSpacing) {
             // Header
             SettingsHeader(
-                title: "Notifications",
-                subtitle: "Manage alerts and usage warnings"
+                title: "settings.notifications".localized,
+                subtitle: "settings.notifications.description".localized
             )
 
             Divider()
 
             // Enable Notifications Toggle
             SettingToggle(
-                title: "Enable notifications",
-                description: "Receive alerts when approaching usage limits",
+                title: "notifications.enable".localized,
+                description: "notifications.enable.description".localized,
                 isOn: $notificationsEnabled
             )
             .onChange(of: notificationsEnabled) { _, newValue in
@@ -39,14 +39,14 @@ struct NotificationsSettingsView: View {
             if notificationsEnabled {
                 // Threshold indicators
                 VStack(alignment: .leading, spacing: Spacing.md) {
-                    Text("Alert Thresholds")
+                    Text("notifications.alert_thresholds".localized)
                         .font(Typography.sectionHeader)
 
                     VStack(spacing: Spacing.sm) {
-                        ThresholdIndicator(level: "75%", color: SettingsColors.usageMedium, label: "Warning")
-                        ThresholdIndicator(level: "90%", color: SettingsColors.usageHigh, label: "High Usage")
-                        ThresholdIndicator(level: "95%", color: SettingsColors.usageCritical, label: "Critical")
-                        ThresholdIndicator(level: "0%", color: SettingsColors.usageLow, label: "Session Reset")
+                        ThresholdIndicator(level: "75%", color: SettingsColors.usageMedium, label: "notifications.threshold.warning".localized)
+                        ThresholdIndicator(level: "90%", color: SettingsColors.usageHigh, label: "notifications.threshold.high".localized)
+                        ThresholdIndicator(level: "95%", color: SettingsColors.usageCritical, label: "notifications.threshold.critical".localized)
+                        ThresholdIndicator(level: "0%", color: SettingsColors.usageLow, label: "notifications.threshold.session_reset".localized)
                     }
                 }
             }

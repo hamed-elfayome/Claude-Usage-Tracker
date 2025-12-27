@@ -31,10 +31,10 @@ struct SetupWizardView: View {
                     .frame(width: 80, height: 80)
 
                 VStack(spacing: 8) {
-                    Text("Welcome to Claude Usage Tracker")
+                    Text("setup.welcome.title".localized)
                         .font(.system(size: 24, weight: .semibold))
 
-                    Text("Configure your API access to start tracking usage")
+                    Text("setup.welcome.subtitle".localized)
                         .font(.system(size: 13))
                         .foregroundColor(.secondary)
                 }
@@ -137,8 +137,8 @@ struct SetupWizardView: View {
                     }
 
                     // Validation Feedback
-                    if case .success(let message) = validationState {
-                        WizardStatusBox(message: message, type: .success)
+                    if case .success = validationState {
+                        WizardStatusBox(message: "setup.validation.success".localized, type: .success)
                     } else if case .error(let message) = validationState {
                         WizardStatusBox(message: message, type: .error)
                     }
@@ -264,10 +264,10 @@ struct SetupWizardView: View {
                 try apiService.saveSessionKey(sessionKey)
 
                 // Test the connection
-                let orgId = try await apiService.fetchOrganizationId()
+                _ = try await apiService.fetchOrganizationId()
 
                 await MainActor.run {
-                    validationState = .success("Successfully connected to organization")
+                    validationState = .success("setup.validation.success".localized)
                 }
 
             } catch {

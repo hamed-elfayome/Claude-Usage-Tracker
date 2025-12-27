@@ -234,10 +234,10 @@ extension AppError {
     static func sessionKeyNotFound(file: String = #file, line: Int = #line, function: String = #function) -> AppError {
         return AppError(
             code: .sessionKeyNotFound,
-            message: "No session key found",
+            message: "error.session_key_not_found".localized,
             technicalDetails: "Session key file does not exist at expected path",
             isRecoverable: true,
-            recoverySuggestion: "Please configure your Claude session key in Settings",
+            recoverySuggestion: "error.session_key_not_found.suggestion".localized,
             file: file,
             line: line,
             function: function
@@ -247,10 +247,10 @@ extension AppError {
     static func sessionKeyInvalid(reason: String, file: String = #file, line: Int = #line, function: String = #function) -> AppError {
         return AppError(
             code: .sessionKeyInvalid,
-            message: "Invalid session key",
+            message: "error.session_key_invalid".localized,
             technicalDetails: reason,
             isRecoverable: true,
-            recoverySuggestion: "Please check your session key format. It should start with 'sk-ant-'",
+            recoverySuggestion: "error.session_key_invalid.suggestion".localized,
             file: file,
             line: line,
             function: function
@@ -262,10 +262,10 @@ extension AppError {
     static func networkUnavailable(file: String = #file, line: Int = #line, function: String = #function) -> AppError {
         return AppError(
             code: .networkUnavailable,
-            message: "No internet connection",
+            message: "error.network_unavailable".localized,
             technicalDetails: "Network is unreachable",
             isRecoverable: true,
-            recoverySuggestion: "Please check your internet connection and try again",
+            recoverySuggestion: "error.network_unavailable.suggestion".localized,
             file: file,
             line: line,
             function: function
@@ -275,10 +275,10 @@ extension AppError {
     static func networkTimeout(file: String = #file, line: Int = #line, function: String = #function) -> AppError {
         return AppError(
             code: .networkTimeout,
-            message: "Request timed out",
+            message: "error.network_timeout".localized,
             technicalDetails: "The server did not respond in time",
             isRecoverable: true,
-            recoverySuggestion: "Please try again. If the problem persists, check Claude's status at status.claude.com",
+            recoverySuggestion: "error.network_timeout.suggestion".localized,
             file: file,
             line: line,
             function: function
@@ -290,10 +290,10 @@ extension AppError {
     static func apiUnauthorized(file: String = #file, line: Int = #line, function: String = #function) -> AppError {
         return AppError(
             code: .apiUnauthorized,
-            message: "Unauthorized access",
+            message: "error.api_unauthorized".localized,
             technicalDetails: "API returned 401/403 - session key may be expired or invalid",
             isRecoverable: true,
-            recoverySuggestion: "Your session key may have expired. Please update it in Settings",
+            recoverySuggestion: "error.api_unauthorized.suggestion".localized,
             file: file,
             line: line,
             function: function
@@ -303,10 +303,10 @@ extension AppError {
     static func apiServerError(statusCode: Int, file: String = #file, line: Int = #line, function: String = #function) -> AppError {
         return AppError(
             code: .apiServerError,
-            message: "Server error",
+            message: "error.api_server_error".localized,
             technicalDetails: "HTTP \(statusCode)",
             isRecoverable: true,
-            recoverySuggestion: "The server encountered an error. Please try again later",
+            recoverySuggestion: "error.api_server_error.suggestion".localized,
             file: file,
             line: line,
             function: function
@@ -316,10 +316,10 @@ extension AppError {
     static func apiRateLimited(file: String = #file, line: Int = #line, function: String = #function) -> AppError {
         return AppError(
             code: .apiRateLimited,
-            message: "Rate limit exceeded",
+            message: "error.api_rate_limited".localized,
             technicalDetails: "Too many requests to the API",
             isRecoverable: true,
-            recoverySuggestion: "Please wait a few moments before trying again",
+            recoverySuggestion: "error.api_rate_limited.suggestion".localized,
             file: file,
             line: line,
             function: function

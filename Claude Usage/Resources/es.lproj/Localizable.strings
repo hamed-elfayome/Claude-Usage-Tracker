@@ -1,0 +1,166 @@
+/*
+   Localizable.strings
+   Claude Usage Tracker
+
+   Spanish (Español)
+   Created by Claude Code on 2025-12-27.
+*/
+
+/* ==================== */
+/* MARK: - App Info */
+/* ==================== */
+"app.name" = "Rastreador de Uso de Claude";
+
+/* ==================== */
+/* MARK: - Common Actions */
+/* ==================== */
+"common.ok" = "OK";
+"common.cancel" = "Cancelar";
+"common.save" = "Guardar";
+"common.delete" = "Eliminar";
+"common.done" = "Hecho";
+"common.close" = "Cerrar";
+"common.refresh" = "Actualizar";
+"common.settings" = "Ajustes";
+"common.quit" = "Salir";
+"common.validate" = "Validar";
+"common.yes" = "Sí";
+"common.no" = "No";
+
+/* ==================== */
+/* MARK: - Settings Navigation */
+/* ==================== */
+"settings.title" = "Ajustes";
+"settings.personal_usage" = "Uso Personal";
+"settings.personal_usage.description" = "Rastrea tu uso del nivel gratuito de Claude.ai";
+"settings.api_billing" = "Facturación de API";
+"settings.api_billing.description" = "Monitorea la facturación y créditos de la Consola API";
+"settings.general" = "General";
+"settings.general.description" = "Comportamiento y preferencias de la aplicación";
+"settings.appearance" = "Apariencia";
+"settings.appearance.description" = "Personalización del ícono de la barra de menú";
+"settings.session_management" = "Gestión de Sesiones";
+"settings.session_management.description" = "Gestión automática de sesiones";
+"settings.notifications" = "Notificaciones";
+"settings.notifications.description" = "Alertas y notificaciones de uso";
+"settings.claude_cli" = "Claude CLI";
+"settings.claude_cli.description" = "Integración de línea de estado del terminal";
+"settings.about" = "Acerca de";
+"settings.about.description" = "Información y créditos de la aplicación";
+
+/* ==================== */
+/* MARK: - Menu Bar */
+/* ==================== */
+"menubar.claude_usage" = "Uso de Claude";
+"menubar.session_usage" = "Uso de Sesión";
+"menubar.weekly_usage" = "Semanal";
+"menubar.opus_usage" = "Opus";
+"menubar.extra_usage" = "Uso Extra";
+"menubar.api_credits" = "Créditos API";
+"menubar.5_hour_window" = "Ventana móvil de 5 horas";
+"menubar.all_models" = "Todos los modelos";
+"menubar.weekly" = "Semanal";
+"menubar.anthropic_console" = "Consola API de Anthropic";
+"menubar.used" = "Usado";
+"menubar.remaining" = "Restante";
+"menubar.resets_time" = "Se reinicia %@";
+"menubar.click_status" = "Clic para abrir status.claude.com";
+
+/* ==================== */
+/* MARK: - Usage Status */
+/* ==================== */
+"usage.high_session" = "Uso Elevado de Sesión";
+"usage.high_session.desc" = "Considera tomar un descanso para reiniciar tu ventana de sesión";
+"usage.weekly_approaching" = "Acercándose al Límite Semanal";
+"usage.weekly_approaching.desc" = "Estás cerca de tu límite semanal de tokens";
+"usage.efficient" = "Uso Eficiente";
+"usage.efficient.desc" = "¡Excelente trabajo gestionando tu consumo de tokens!";
+
+/* ==================== */
+/* MARK: - General Settings */
+/* ==================== */
+"general.launch_at_login" = "Iniciar al iniciar sesión";
+"general.launch_at_login.description" = "Iniciar automáticamente Claude Usage Tracker al iniciar sesión en tu Mac";
+"general.refresh_interval" = "Intervalo de Actualización";
+"general.refresh_interval.description" = "Intervalos más cortos proporcionan datos más en tiempo real pero pueden afectar la batería";
+"general.check_overage_limit" = "Verificar Límite de Uso Extra";
+"general.check_overage_limit.description" = "Obtener y mostrar información de costo mensual y límite de exceso";
+"general.language.title" = "Idioma";
+"general.language.select" = "Seleccionar Idioma";
+"general.language.restart_note" = "Los cambios de idioma se aplicarán después de reiniciar la aplicación";
+
+/* ==================== */
+/* MARK: - Notifications Settings */
+/* ==================== */
+"notifications.enable" = "Habilitar notificaciones";
+"notifications.enable.description" = "Recibir alertas al acercarse a los límites de uso";
+"notifications.alert_thresholds" = "Umbrales de Alerta";
+"notifications.threshold.warning" = "Advertencia";
+"notifications.threshold.high" = "Uso Alto";
+"notifications.threshold.critical" = "Crítico";
+"notifications.threshold.session_reset" = "Reinicio de Sesión";
+
+/* ==================== */
+/* MARK: - Setup Wizard */
+/* ==================== */
+"setup.welcome.title" = "Bienvenido a Claude Usage Tracker";
+"setup.welcome.subtitle" = "Configura tu acceso a la API para comenzar a rastrear el uso";
+"setup.step.get_session_key" = "Obtén tu Clave de Sesión";
+"setup.open_claude_ai" = "Abrir claude.ai";
+"setup.show_instructions" = "Mostrar Instrucciones";
+"setup.hide_instructions" = "Ocultar";
+"setup.validation.success" = "Conectado exitosamente a la organización";
+
+/* ==================== */
+/* MARK: - About */
+/* ==================== */
+"about.version" = "Versión %@";
+"about.created_by" = "Creado Por";
+"about.contributors" = "Colaboradores (%d)";
+"about.contributors_loading" = "Colaboradores";
+"about.links" = "Enlaces";
+"about.star_github" = "Dar Estrella en GitHub";
+"about.report_issue" = "Reportar Problema";
+"about.send_feedback" = "Enviar Comentarios";
+"about.mit_license" = "Licencia MIT • Código Abierto";
+"about.copyright" = "© 2025 Hamed Elfayome";
+
+/* ==================== */
+/* MARK: - Notification Messages */
+/* ==================== */
+"notification.session_warning.title" = "Advertencia de Uso de Sesión";
+"notification.session_warning.message" = "Has usado %@ de tu límite de sesión de 5 horas. %@";
+"notification.session_critical.title" = "Uso de Sesión Crítico";
+"notification.session_critical.message" = "¡Has usado %@ de tu límite de sesión de 5 horas! %@";
+"notification.session_reset.title" = "Sesión Reiniciada";
+"notification.session_reset.message" = "¡Tu sesión se ha reiniciado! Ahora tienes una sesión de 5 horas nueva disponible.";
+"notification.session_auto_started.title" = "Sesión Iniciada Automáticamente";
+"notification.session_auto_started.message" = "Una nueva sesión ha sido iniciada automáticamente con Claude 3.5 Haiku. ¡Tu sesión de 5 horas está lista!";
+"notification.weekly_warning.title" = "Advertencia de Uso Semanal";
+"notification.weekly_warning.message" = "Has usado %@ de tu límite semanal. %@";
+"notification.weekly_critical.title" = "Uso Semanal Crítico";
+"notification.weekly_critical.message" = "¡Has usado %@ de tu límite semanal! %@";
+"notification.opus_warning.title" = "Advertencia de Uso de Opus";
+"notification.opus_warning.message" = "Has usado %@ de tu límite semanal de Opus. %@";
+"notification.opus_critical.title" = "Uso de Opus Crítico";
+"notification.opus_critical.message" = "¡Has usado %@ de tu límite semanal de Opus! %@";
+"notification.enabled.title" = "Notificaciones Habilitadas";
+"notification.enabled.message" = "Ahora recibirás alertas en los umbrales de uso del 75%, 90% y 95%, además de notificaciones de reinicio de sesión.";
+
+/* ==================== */
+/* MARK: - Error Messages */
+/* ==================== */
+"error.session_key_not_found" = "No se encontró la clave de sesión";
+"error.session_key_not_found.suggestion" = "Por favor configura tu clave de sesión de Claude en Ajustes";
+"error.session_key_invalid" = "Clave de sesión inválida";
+"error.session_key_invalid.suggestion" = "Por favor verifica el formato de tu clave de sesión. Debe comenzar con 'sk-ant-'";
+"error.network_unavailable" = "Sin conexión a internet";
+"error.network_unavailable.suggestion" = "Por favor verifica tu conexión a internet e intenta de nuevo";
+"error.network_timeout" = "Tiempo de espera agotado";
+"error.network_timeout.suggestion" = "Por favor intenta de nuevo. Si el problema persiste, verifica el estado de Claude en status.claude.com";
+"error.api_unauthorized" = "Acceso no autorizado";
+"error.api_unauthorized.suggestion" = "Tu clave de sesión puede haber expirado. Por favor actualízala en Ajustes";
+"error.api_server_error" = "Error del servidor";
+"error.api_server_error.suggestion" = "El servidor encontró un error. Por favor intenta de nuevo más tarde";
+"error.api_rate_limited" = "Límite de tasa excedido";
+"error.api_rate_limited.suggestion" = "Por favor espera unos momentos antes de intentar de nuevo";

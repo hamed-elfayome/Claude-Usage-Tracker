@@ -12,21 +12,22 @@ struct GeneralSettingsView: View {
     @Binding var refreshInterval: Double
     @State private var checkOverageLimitEnabled: Bool = DataStore.shared.loadCheckOverageLimitEnabled()
     @State private var launchAtLogin: Bool = LaunchAtLoginManager.shared.isEnabled
+    @StateObject private var languageManager = LanguageManager.shared
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.sectionSpacing) {
             // Header
             SettingsHeader(
-                title: "General Settings",
-                subtitle: "Configure app behavior and preferences"
+                title: "settings.general".localized,
+                subtitle: "settings.general.description".localized
             )
 
             Divider()
 
             // Launch at Login Toggle
             SettingToggle(
-                title: "Launch at login",
-                description: "Automatically start Claude Usage Tracker when you log in to your Mac",
+                title: "general.launch_at_login".localized,
+                description: "general.launch_at_login.description".localized,
                 isOn: $launchAtLogin
             )
             .onChange(of: launchAtLogin) { _, newValue in
@@ -41,7 +42,7 @@ struct GeneralSettingsView: View {
 
             // Data Refresh Section
             VStack(alignment: .leading, spacing: Spacing.md) {
-                Text("Refresh Interval")
+                Text("general.refresh_interval".localized)
                     .font(Typography.sectionHeader)
 
                 HStack {
@@ -56,19 +57,43 @@ struct GeneralSettingsView: View {
                         .frame(width: 40, alignment: .trailing)
                 }
 
-                Text("Shorter intervals provide more real-time data but may impact battery life")
+                Text("general.refresh_interval.description".localized)
                     .font(Typography.caption)
                     .foregroundColor(.secondary)
             }
 
             // Usage Tracking Options
             SettingToggle(
-                title: "Check Extra Usage Limit",
-                description: "Fetch and display monthly cost and overage limit information",
+                title: "general.check_overage_limit".localized,
+                description: "general.check_overage_limit.description".localized,
                 isOn: $checkOverageLimitEnabled
             )
             .onChange(of: checkOverageLimitEnabled) { _, newValue in
                 DataStore.shared.saveCheckOverageLimitEnabled(newValue)
+            }
+
+            Divider()
+
+            // Language Selection
+            VStack(alignment: .leading, spacing: Spacing.md) {
+                Text("general.language.title".localized)
+                    .font(Typography.sectionHeader)
+
+                Picker("general.language.select".localized, selection: $languageManager.currentLanguage) {
+                    ForEach(LanguageManager.SupportedLanguage.allCases) { language in
+                        HStack(spacing: 8) {
+                            Text(language.flag)
+                            Text(language.displayName)
+                        }
+                        .tag(language)
+                    }
+                }
+                .pickerStyle(.menu)
+                .frame(maxWidth: 300)
+
+                Text("general.language.restart_note".localized)
+                    .font(Typography.caption)
+                    .foregroundColor(.orange)
             }
 
             Spacer()

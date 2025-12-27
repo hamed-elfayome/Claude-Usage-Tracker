@@ -124,7 +124,7 @@ struct PersonalUsageView: View {
             do {
                 // Temporarily save to test (won't persist if test fails)
                 try apiService.saveSessionKey(sessionKey)
-                let orgId = try await apiService.fetchOrganizationId()
+                _ = try await apiService.fetchOrganizationId()
 
                 await MainActor.run {
                     validationState = .success("Connected successfully to organization")

@@ -194,23 +194,23 @@ extension NotificationManager {
         var title: String {
             switch self {
             case .sessionWarning:
-                return "Session Usage Warning"
+                return "notification.session_warning.title".localized
             case .sessionCritical:
-                return "Session Usage Critical"
+                return "notification.session_critical.title".localized
             case .sessionReset:
-                return "Session Reset"
+                return "notification.session_reset.title".localized
             case .sessionAutoStarted:
-                return "Session Auto-Started"
+                return "notification.session_auto_started.title".localized
             case .weeklyWarning:
-                return "Weekly Usage Warning"
+                return "notification.weekly_warning.title".localized
             case .weeklyCritical:
-                return "Weekly Usage Critical"
+                return "notification.weekly_critical.title".localized
             case .opusWarning:
-                return "Opus Usage Warning"
+                return "notification.opus_warning.title".localized
             case .opusCritical:
-                return "Opus Usage Critical"
+                return "notification.opus_critical.title".localized
             case .notificationsEnabled:
-                return "Notifications Enabled"
+                return "notification.enabled.title".localized
             }
         }
 
@@ -220,23 +220,23 @@ extension NotificationManager {
 
             switch self {
             case .sessionWarning:
-                return "You've used \(percentStr) of your 5-hour session limit. \(resetStr)"
+                return "notification.session_warning.message".localized(with: percentStr, resetStr)
             case .sessionCritical:
-                return "You've used \(percentStr) of your 5-hour session limit! \(resetStr)"
+                return "notification.session_critical.message".localized(with: percentStr, resetStr)
             case .sessionReset:
-                return "Your session has reset! You now have a fresh 5-hour session available."
+                return "notification.session_reset.message".localized
             case .sessionAutoStarted:
-                return "A new session has been automatically initialized with Claude 3.5 Haiku. Your fresh 5-hour session is ready!"
+                return "notification.session_auto_started.message".localized
             case .weeklyWarning:
-                return "You've used \(percentStr) of your weekly limit. \(resetStr)"
+                return "notification.weekly_warning.message".localized(with: percentStr, resetStr)
             case .weeklyCritical:
-                return "You've used \(percentStr) of your weekly limit! \(resetStr)"
+                return "notification.weekly_critical.message".localized(with: percentStr, resetStr)
             case .opusWarning:
-                return "You've used \(percentStr) of your weekly Opus limit. \(resetStr)"
+                return "notification.opus_warning.message".localized(with: percentStr, resetStr)
             case .opusCritical:
-                return "You've used \(percentStr) of your weekly Opus limit! \(resetStr)"
+                return "notification.opus_critical.message".localized(with: percentStr, resetStr)
             case .notificationsEnabled:
-                return "You will now receive alerts at 75%, 90%, and 95% usage thresholds, plus session reset notifications."
+                return "notification.enabled.message".localized
             }
         }
     }
