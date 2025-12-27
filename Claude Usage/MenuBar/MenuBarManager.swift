@@ -43,9 +43,6 @@ class MenuBarManager: NSObject, ObservableObject {
     private var cachedImageKey: String = ""
     private var updateDebounceTimer: Timer?
 
-    // Track if initial load has completed successfully
-    private var hasCompletedInitialLoad = false
-
     func setup() {
         // Create status item in menu bar
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -62,7 +59,6 @@ class MenuBarManager: NSObject, ObservableObject {
         // Load saved data first (provides immediate feedback)
         if let savedUsage = dataStore.loadUsage() {
             usage = savedUsage
-            // Update the menu bar with cached data immediately
             if let button = statusItem?.button {
                 updateStatusButton(button, usage: savedUsage)
             }
@@ -71,8 +67,16 @@ class MenuBarManager: NSObject, ObservableObject {
             apiUsage = savedAPIUsage
         }
 
-        // Start network monitoring and fetch data when network is available
-        setupNetworkMonitoring()
+        // Start network monitoring - fetch data when network is available
+        networkMonitor.onNetworkAvailable = { [weak self] in
+            self?.refreshUsage()
+        }
+        networkMonitor.startMonitoring()
+
+        // Initial data fetch (with small delay for launch-at-login scenarios)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            self?.refreshUsage()
+        }
 
         // Start auto-refresh timer
         startAutoRefresh()
@@ -85,95 +89,6 @@ class MenuBarManager: NSObject, ObservableObject {
 
         // Observe icon style changes
         observeIconStyleChanges()
-    }
-
-    /// Sets up network monitoring and triggers initial data load when network is available
-    private func setupNetworkMonitoring() {
-        // Set up handler for when network becomes available
-        networkMonitor.onNetworkAvailable = { [weak self] in
-            guard let self = self else { return }
-            
-            // Only trigger initial load if we haven't completed it yet
-            if !self.hasCompletedInitialLoad {
-                LoggingService.shared.logInfo("Network available - performing initial data load")
-                self.performInitialLoad()
-            }
-        }
-
-        // Start monitoring
-        networkMonitor.startMonitoring()
-
-        // If network is already available, load immediately
-        // Add a small delay to ensure system is fully ready (especially at login)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            guard let self = self, !self.hasCompletedInitialLoad else { return }
-            
-            if self.networkMonitor.isConnected {
-                LoggingService.shared.logInfo("Network already available - performing initial data load")
-                self.performInitialLoad()
-            } else {
-                LoggingService.shared.logInfo("Waiting for network connectivity...")
-            }
-        }
-    }
-
-    /// Performs the initial data load
-    private func performInitialLoad() {
-        Task {
-            var usageSuccess = false
-            var statusSuccess = false
-
-            // Try to fetch usage data
-            do {
-                let newUsage = try await apiService.fetchUsageData()
-                await MainActor.run {
-                    self.usage = newUsage
-                    self.dataStore.saveUsage(newUsage)
-                    if let button = self.statusItem?.button {
-                        self.updateStatusButton(button, usage: newUsage)
-                    }
-                    NotificationManager.shared.checkAndNotify(usage: newUsage)
-                }
-                usageSuccess = true
-                LoggingService.shared.logInfo("Initial usage load successful")
-            } catch {
-                LoggingService.shared.logAPIError("Initial usage load", error: error)
-            }
-
-            // Try to fetch status
-            do {
-                let newStatus = try await statusService.fetchStatus()
-                await MainActor.run {
-                    self.status = newStatus
-                }
-                statusSuccess = true
-                LoggingService.shared.logInfo("Initial status load successful")
-            } catch {
-                LoggingService.shared.logAPIError("Initial status load", error: error)
-            }
-
-            // Fetch API usage if enabled
-            if self.dataStore.loadAPITrackingEnabled(),
-               let apiSessionKey = self.dataStore.loadAPISessionKey(),
-               let orgId = self.dataStore.loadAPIOrganizationId() {
-                do {
-                    let newAPIUsage = try await self.apiService.fetchAPIUsageData(organizationId: orgId, apiSessionKey: apiSessionKey)
-                    await MainActor.run {
-                        self.apiUsage = newAPIUsage
-                        self.dataStore.saveAPIUsage(newAPIUsage)
-                    }
-                } catch {
-                    // Silently fail - API usage will remain nil
-                }
-            }
-
-            // Mark initial load as complete if at least one succeeded
-            await MainActor.run {
-                if usageSuccess || statusSuccess {
-                    self.hasCompletedInitialLoad = true
-                }
-            }
-        }
     }
 
     func cleanup() {
