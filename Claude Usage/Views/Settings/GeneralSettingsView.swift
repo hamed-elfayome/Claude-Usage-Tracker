@@ -11,6 +11,7 @@ import SwiftUI
 struct GeneralSettingsView: View {
     @Binding var refreshInterval: Double
     @State private var checkOverageLimitEnabled: Bool = DataStore.shared.loadCheckOverageLimitEnabled()
+    @State private var launchAtLogin: Bool = LaunchAtLoginManager.shared.isEnabled
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.sectionSpacing) {
@@ -19,6 +20,22 @@ struct GeneralSettingsView: View {
                 title: "General Settings",
                 subtitle: "Configure app behavior and preferences"
             )
+
+            Divider()
+
+            // Launch at Login Toggle
+            SettingToggle(
+                title: "Launch at login",
+                description: "Automatically start Claude Usage Tracker when you log in to your Mac",
+                isOn: $launchAtLogin
+            )
+            .onChange(of: launchAtLogin) { _, newValue in
+                let success = LaunchAtLoginManager.shared.setEnabled(newValue)
+                if !success {
+                    // Revert the toggle if the operation failed
+                    launchAtLogin = LaunchAtLoginManager.shared.isEnabled
+                }
+            }
 
             Divider()
 
@@ -57,6 +74,10 @@ struct GeneralSettingsView: View {
             Spacer()
         }
         .contentPadding()
+        .onAppear {
+            // Refresh the launch at login state when view appears
+            launchAtLogin = LaunchAtLoginManager.shared.isEnabled
+        }
     }
 }
 

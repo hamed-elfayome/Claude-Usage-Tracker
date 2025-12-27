@@ -27,6 +27,7 @@ class MenuBarManager: NSObject, ObservableObject {
     private let apiService = ClaudeAPIService()
     private let statusService = ClaudeStatusService()
     private let dataStore = DataStore.shared
+    private let networkMonitor = NetworkMonitor.shared
 
     // Observer for refresh interval changes
     private var refreshIntervalObserver: NSKeyValueObservation?
@@ -55,16 +56,27 @@ class MenuBarManager: NSObject, ObservableObject {
         // Setup popover
         setupPopover()
 
-        // Load saved data
+        // Load saved data first (provides immediate feedback)
         if let savedUsage = dataStore.loadUsage() {
             usage = savedUsage
+            if let button = statusItem?.button {
+                updateStatusButton(button, usage: savedUsage)
+            }
         }
         if let savedAPIUsage = dataStore.loadAPIUsage() {
             apiUsage = savedAPIUsage
         }
 
-        // Load initial data
-        refreshUsage()
+        // Start network monitoring - fetch data when network is available
+        networkMonitor.onNetworkAvailable = { [weak self] in
+            self?.refreshUsage()
+        }
+        networkMonitor.startMonitoring()
+
+        // Initial data fetch (with small delay for launch-at-login scenarios)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            self?.refreshUsage()
+        }
 
         // Start auto-refresh timer
         startAutoRefresh()
@@ -82,6 +94,7 @@ class MenuBarManager: NSObject, ObservableObject {
     func cleanup() {
         refreshTimer?.invalidate()
         refreshTimer = nil
+        networkMonitor.stopMonitoring()
         refreshIntervalObserver?.invalidate()
         refreshIntervalObserver = nil
         appearanceObserver?.invalidate()
@@ -705,4 +718,3 @@ extension MenuBarManager: NSWindowDelegate {
         }
     }
 }
-
