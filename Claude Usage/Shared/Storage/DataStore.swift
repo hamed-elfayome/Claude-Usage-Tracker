@@ -2,11 +2,11 @@ import Foundation
 
 /// Menu bar icon style options
 enum MenuBarIconStyle: String, CaseIterable, Codable {
-    case battery = "battery"
-    case progressBar = "progressBar"
-    case percentageOnly = "percentageOnly"
-    case icon = "icon"
-    case compact = "compact"
+    case battery
+    case progressBar
+    case percentageOnly
+    case icon
+    case compact
 
     var displayName: String {
         switch self {
@@ -385,6 +385,133 @@ class DataStore: StorageProvider {
     /// Loads monochrome mode preference (defaults to false)
     func loadMonochromeMode() -> Bool {
         return defaults.bool(forKey: Constants.UserDefaultsKeys.monochromeMode)
+    }
+
+    // MARK: - Menu Bar Icon Configuration (Multi-Metric System)
+
+    /// Saves complete menu bar icon configuration
+    func saveMenuBarIconConfiguration(_ config: MenuBarIconConfiguration) {
+        do {
+            let data = try encoder.encode(config)
+            defaults.set(data, forKey: Constants.UserDefaultsKeys.menuBarIconConfiguration)
+        } catch {
+            LoggingService.shared.logStorageError("saveMenuBarIconConfiguration", error: error)
+        }
+    }
+
+    /// Loads complete menu bar icon configuration
+    func loadMenuBarIconConfiguration() -> MenuBarIconConfiguration {
+        // Try to load new configuration format
+        if let data = defaults.data(forKey: Constants.UserDefaultsKeys.menuBarIconConfiguration) {
+            do {
+                let config = try decoder.decode(MenuBarIconConfiguration.self, from: data)
+                return config
+            } catch {
+                LoggingService.shared.logStorageError("loadMenuBarIconConfiguration", error: error)
+            }
+        }
+
+        // Migrate from legacy settings if they exist
+        return migrateFromLegacySettings()
+    }
+
+    /// Migrates from legacy single-icon settings to new multi-metric system
+    private func migrateFromLegacySettings() -> MenuBarIconConfiguration {
+        var config = MenuBarIconConfiguration.default
+
+        // Migrate monochrome mode
+        config.monochromeMode = loadMonochromeMode()
+
+        // Migrate icon style for session (was the only option before)
+        let legacyStyle = loadMenuBarIconStyle()
+        if var sessionConfig = config.config(for: .session) {
+            sessionConfig.iconStyle = legacyStyle
+            sessionConfig.isEnabled = true  // Session was always enabled before
+            config.updateConfig(sessionConfig)
+        }
+
+        // Save migrated config
+        saveMenuBarIconConfiguration(config)
+
+        return config
+    }
+
+    /// Saves show icon names preference
+    func saveShowIconNames(_ show: Bool) {
+        defaults.set(show, forKey: Constants.UserDefaultsKeys.showIconNames)
+    }
+
+    /// Loads show icon names preference (defaults to true)
+    func loadShowIconNames() -> Bool {
+        if defaults.object(forKey: Constants.UserDefaultsKeys.showIconNames) == nil {
+            return true
+        }
+        return defaults.bool(forKey: Constants.UserDefaultsKeys.showIconNames)
+    }
+
+    // MARK: - Per-Metric Configuration Helpers
+
+    /// Updates configuration for a specific metric
+    func updateMetricConfig(_ metricConfig: MetricIconConfig) {
+        var fullConfig = loadMenuBarIconConfiguration()
+        fullConfig.updateConfig(metricConfig)
+        saveMenuBarIconConfiguration(fullConfig)
+    }
+
+    /// Gets configuration for a specific metric type
+    func loadMetricConfig(for metricType: MenuBarMetricType) -> MetricIconConfig? {
+        let config = loadMenuBarIconConfiguration()
+        return config.config(for: metricType)
+    }
+
+    /// Toggles a metric on/off
+    func setMetricEnabled(_ metricType: MenuBarMetricType, enabled: Bool) {
+        var config = loadMenuBarIconConfiguration()
+        if var metricConfig = config.config(for: metricType) {
+            metricConfig.isEnabled = enabled
+            config.updateConfig(metricConfig)
+            saveMenuBarIconConfiguration(config)
+        }
+    }
+
+    /// Updates metric order (for drag-to-reorder)
+    func updateMetricOrder(metricType: MenuBarMetricType, order: Int) {
+        var config = loadMenuBarIconConfiguration()
+        if var metricConfig = config.config(for: metricType) {
+            metricConfig.order = order
+            config.updateConfig(metricConfig)
+            saveMenuBarIconConfiguration(config)
+        }
+    }
+
+    /// Updates icon style for a specific metric
+    func updateMetricIconStyle(metricType: MenuBarMetricType, style: MenuBarIconStyle) {
+        var config = loadMenuBarIconConfiguration()
+        if var metricConfig = config.config(for: metricType) {
+            metricConfig.iconStyle = style
+            config.updateConfig(metricConfig)
+            saveMenuBarIconConfiguration(config)
+        }
+    }
+
+    /// Updates week display mode
+    func updateWeekDisplayMode(_ mode: WeekDisplayMode) {
+        var config = loadMenuBarIconConfiguration()
+        if var weekConfig = config.config(for: .week) {
+            weekConfig.weekDisplayMode = mode
+            config.updateConfig(weekConfig)
+            saveMenuBarIconConfiguration(config)
+        }
+    }
+
+    /// Updates API display mode
+    func updateAPIDisplayMode(_ mode: APIDisplayMode) {
+        var config = loadMenuBarIconConfiguration()
+        if var apiConfig = config.config(for: .api) {
+            apiConfig.apiDisplayMode = mode
+            config.updateConfig(apiConfig)
+            saveMenuBarIconConfiguration(config)
+        }
     }
 
     // MARK: - Testing Helpers

@@ -2,52 +2,129 @@
 //  AppearanceSettingsView.swift
 //  Claude Usage - Menu Bar Appearance Settings
 //
-//  Created by Claude Code on 2025-12-20.
+//  Created by Claude Code on 2025-12-27.
 //
 
 import SwiftUI
 
-/// Menu bar icon appearance and customization
+/// Menu bar icon appearance and customization with multi-metric support
 struct AppearanceSettingsView: View {
-    @State private var iconStyle: MenuBarIconStyle = DataStore.shared.loadMenuBarIconStyle()
-    @State private var monochromeMode: Bool = DataStore.shared.loadMonochromeMode()
+    @State private var configuration: MenuBarIconConfiguration = DataStore.shared.loadMenuBarIconConfiguration()
+    @State private var saveDebounceTimer: Timer?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.sectionSpacing) {
-            // Header
-            SettingsHeader(
-                title: "Menu Bar Appearance",
-                subtitle: "Customize your menu bar icon style"
-            )
+        ScrollView {
+            VStack(alignment: .leading, spacing: Spacing.sectionSpacing) {
+                // Header
+                SettingsHeader(
+                    title: "Menu Bar Appearance",
+                    subtitle: "Customize your menu bar icons and metrics"
+                )
 
-            Divider()
+                Divider()
 
-            // Icon Style Section
-            VStack(alignment: .leading, spacing: Spacing.md) {
-                Text("Icon Style")
+                // Global Settings
+                Text("Global Settings")
                     .font(Typography.sectionHeader)
 
-                IconStylePicker(selectedStyle: $iconStyle)
-                    .onChange(of: iconStyle) { _, newValue in
-                        DataStore.shared.saveMenuBarIconStyle(newValue)
-                        NotificationCenter.default.post(name: .menuBarIconStyleChanged, object: nil)
-                    }
-            }
+                SettingToggle(
+                    title: "Monochrome (Adaptive)",
+                    description: "Remove color coding and adapt to system appearance",
+                    isOn: Binding(
+                        get: { configuration.monochromeMode },
+                        set: { newValue in
+                            configuration.monochromeMode = newValue
+                            saveConfiguration()
+                        }
+                    )
+                )
 
-            // Monochrome Mode Toggle
-            SettingToggle(
-                title: "Monochrome (Adaptive)",
-                description: "Remove color coding and adapt to system appearance",
-                isOn: $monochromeMode
-            )
-            .onChange(of: monochromeMode) { _, newValue in
-                DataStore.shared.saveMonochromeMode(newValue)
-                NotificationCenter.default.post(name: .menuBarIconStyleChanged, object: nil)
-            }
+                SettingToggle(
+                    title: "Show Icon Labels",
+                    description: "Display prefix labels (S:, W:, API:) for each metric",
+                    isOn: Binding(
+                        get: { configuration.showIconNames },
+                        set: { newValue in
+                            configuration.showIconNames = newValue
+                            saveConfiguration()
+                        }
+                    )
+                )
 
-            Spacer()
+                Divider()
+
+                // Metrics Configuration
+                Text("Menu Bar Metrics")
+                    .font(Typography.sectionHeader)
+
+                // Session Usage
+                if let sessionIndex = configuration.metrics.firstIndex(where: { $0.metricType == .session }) {
+                    MetricIconCard(
+                        metricType: .session,
+                        config: Binding(
+                            get: { configuration.metrics[sessionIndex] },
+                            set: { newValue in
+                                configuration.metrics[sessionIndex] = newValue
+                            }
+                        ),
+                        onConfigChanged: { saveConfiguration() },
+                        isLastEnabled: isLastEnabledMetric(.session)
+                    )
+                }
+
+                // Week Usage
+                if let weekIndex = configuration.metrics.firstIndex(where: { $0.metricType == .week }) {
+                    MetricIconCard(
+                        metricType: .week,
+                        config: Binding(
+                            get: { configuration.metrics[weekIndex] },
+                            set: { newValue in
+                                configuration.metrics[weekIndex] = newValue
+                            }
+                        ),
+                        onConfigChanged: { saveConfiguration() },
+                        isLastEnabled: isLastEnabledMetric(.week)
+                    )
+                }
+
+                // API Credits
+                if let apiIndex = configuration.metrics.firstIndex(where: { $0.metricType == .api }) {
+                    MetricIconCard(
+                        metricType: .api,
+                        config: Binding(
+                            get: { configuration.metrics[apiIndex] },
+                            set: { newValue in
+                                configuration.metrics[apiIndex] = newValue
+                            }
+                        ),
+                        onConfigChanged: { saveConfiguration() },
+                        isLastEnabled: isLastEnabledMetric(.api)
+                    )
+                }
+
+                Spacer()
+            }
+            .contentPadding()
         }
-        .contentPadding()
+    }
+
+    // MARK: - Helper Methods
+
+    private func saveConfiguration() {
+        let enabledCount = configuration.metrics.filter { $0.isEnabled }.count
+        if enabledCount == 0 {
+            if let sessionIndex = configuration.metrics.firstIndex(where: { $0.metricType == .session }) {
+                configuration.metrics[sessionIndex].isEnabled = true
+            }
+        }
+
+        DataStore.shared.saveMenuBarIconConfiguration(configuration)
+        NotificationCenter.default.post(name: .menuBarIconConfigChanged, object: nil)
+    }
+
+    private func isLastEnabledMetric(_ metricType: MenuBarMetricType) -> Bool {
+        let enabledMetrics = configuration.metrics.filter { $0.isEnabled }
+        return enabledMetrics.count == 1 && enabledMetrics.first?.metricType == metricType
     }
 }
 

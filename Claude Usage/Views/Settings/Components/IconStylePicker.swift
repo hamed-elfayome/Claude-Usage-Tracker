@@ -12,17 +12,22 @@ struct IconStylePicker: View {
     @Binding var selectedStyle: MenuBarIconStyle
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            ForEach(MenuBarIconStyle.allCases, id: \.self) { style in
-                IconStyleCard(
-                    style: style,
-                    isSelected: selectedStyle == style,
-                    action: {
-                        selectedStyle = style
-                    }
-                )
+        GeometryReader { geometry in
+            let cardWidth = (geometry.size.width - (12 * 4)) / 5  // 5 cards with 12px spacing
+            HStack(alignment: .top, spacing: 12) {
+                ForEach(MenuBarIconStyle.allCases, id: \.self) { style in
+                    IconStyleCard(
+                        style: style,
+                        isSelected: selectedStyle == style,
+                        cardWidth: cardWidth,
+                        action: {
+                            selectedStyle = style
+                        }
+                    )
+                }
             }
         }
+        .frame(height: 80)  // Fixed height for the picker
     }
 }
 
@@ -30,6 +35,7 @@ struct IconStylePicker: View {
 private struct IconStyleCard: View {
     let style: MenuBarIconStyle
     let isSelected: Bool
+    let cardWidth: CGFloat
     let action: () -> Void
 
     var body: some View {
@@ -37,7 +43,7 @@ private struct IconStyleCard: View {
             // Clickable icon area
             Button(action: action) {
                 IconPreviewLarge(style: style)
-                    .frame(width: 80, height: 60)
+                    .frame(width: cardWidth, height: 50)
                     .background(
                         RoundedRectangle(cornerRadius: 6)
                             .fill(isSelected ? SettingsColors.success.opacity(0.1) : Color.clear)
@@ -55,13 +61,14 @@ private struct IconStyleCard: View {
 
             // Name - outside border
             Text(style.displayName)
-                .font(.system(size: 10, weight: .medium))
+                .font(.system(size: 9, weight: .medium))
                 .foregroundColor(isSelected ? .primary : .secondary)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
-                .frame(width: 80)
+                .frame(width: cardWidth)
         }
+        .frame(width: cardWidth)
     }
 }
 

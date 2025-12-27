@@ -3,7 +3,8 @@ import SwiftUI
 import Combine
 
 class MenuBarManager: NSObject, ObservableObject {
-    private var statusItem: NSStatusItem?
+    private var statusItem: NSStatusItem?  // Legacy - kept for backwards compatibility
+    private var statusBarUIManager: StatusBarUIManager?
     private var refreshTimer: Timer?
     @Published private(set) var usage: ClaudeUsage = .empty
     @Published private(set) var status: ClaudeStatus = .unknown
@@ -38,6 +39,9 @@ class MenuBarManager: NSObject, ObservableObject {
     // Observer for icon style changes
     private var iconStyleObserver: NSObjectProtocol?
 
+    // Observer for icon configuration changes
+    private var iconConfigObserver: NSObjectProtocol?
+
     // MARK: - Image Caching (CPU Optimization)
     private var cachedImage: NSImage?
     private var cachedImageKey: String = ""
@@ -45,17 +49,14 @@ class MenuBarManager: NSObject, ObservableObject {
     private var cachedIsDarkMode: Bool = false
 
     func setup() {
-        // Create status item in menu bar
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-
         // Initialize cached appearance to avoid layout recursion
         cachedIsDarkMode = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
 
-        if let button = statusItem?.button {
-            updateStatusButton(button, usage: usage)
-            button.action = #selector(togglePopover)
-            button.target = self
-        }
+        // Setup new multi-metric status bar system
+        let config = dataStore.loadMenuBarIconConfiguration()
+        statusBarUIManager = StatusBarUIManager()
+        statusBarUIManager?.delegate = self
+        statusBarUIManager?.setup(target: self, action: #selector(togglePopover), config: config)
 
         // Setup popover
         setupPopover()
@@ -63,9 +64,7 @@ class MenuBarManager: NSObject, ObservableObject {
         // Load saved data first (provides immediate feedback)
         if let savedUsage = dataStore.loadUsage() {
             usage = savedUsage
-            if let button = statusItem?.button {
-                updateStatusButton(button, usage: savedUsage)
-            }
+            updateAllStatusBarIcons()
         }
         if let savedAPIUsage = dataStore.loadAPIUsage() {
             apiUsage = savedAPIUsage
@@ -93,6 +92,9 @@ class MenuBarManager: NSObject, ObservableObject {
 
         // Observe icon style changes
         observeIconStyleChanges()
+
+        // Observe icon configuration changes
+        observeIconConfigChanges()
     }
 
     func cleanup() {
@@ -107,6 +109,10 @@ class MenuBarManager: NSObject, ObservableObject {
             NotificationCenter.default.removeObserver(iconStyleObserver)
             self.iconStyleObserver = nil
         }
+        if let iconConfigObserver = iconConfigObserver {
+            NotificationCenter.default.removeObserver(iconConfigObserver)
+            self.iconConfigObserver = nil
+        }
         if let monitor = eventMonitor {
             NSEvent.removeMonitor(monitor)
             eventMonitor = nil
@@ -114,6 +120,8 @@ class MenuBarManager: NSObject, ObservableObject {
         detachedWindow?.close()
         detachedWindow = nil
         statusItem = nil
+        statusBarUIManager?.cleanup()
+        statusBarUIManager = nil
     }
 
     private func setupPopover() {
@@ -147,7 +155,8 @@ class MenuBarManager: NSObject, ObservableObject {
     }
 
     @objc private func togglePopover() {
-        guard let button = statusItem?.button else { return }
+        // Use primary button (first enabled metric) for popover positioning
+        guard let button = statusBarUIManager?.primaryButton else { return }
 
         // If there's a detached window, close it
         if let window = detachedWindow {
@@ -204,51 +213,32 @@ class MenuBarManager: NSObject, ObservableObject {
         }
     }
 
+    // MARK: - Status Bar Icon Updates
+
+    /// Updates all enabled status bar icons
+    private func updateAllStatusBarIcons() {
+        statusBarUIManager?.updateAllButtons(
+            usage: usage,
+            apiUsage: apiUsage,
+            manager: self
+        )
+    }
+
+    /// Updates a specific metric's status bar icon
+    private func updateStatusBarIcon(for metricType: MenuBarMetricType) {
+        statusBarUIManager?.updateButton(
+            for: metricType,
+            usage: usage,
+            apiUsage: apiUsage,
+            manager: self
+        )
+    }
+
+    // Legacy method kept for backwards compatibility (now uses new system)
     private func updateStatusButton(_ button: NSStatusBarButton, usage: ClaudeUsage) {
-        let iconStyle = dataStore.loadMenuBarIconStyle()
-        // Use cached appearance to avoid layout recursion
-        let isDarkAppearance = cachedIsDarkMode
-        let monochromeMode = dataStore.loadMonochromeMode()
-
-        // Generate cache key based on all factors that affect the image
-        let percentage = Int(usage.sessionPercentage)
-        let cacheKey = "\(percentage)_\(isDarkAppearance)_\(iconStyle.rawValue)_\(monochromeMode)"
-
-        // Check if we can reuse the cached image
-        if cachedImage != nil && cachedImageKey == cacheKey {
-            // Image hasn't changed, skip expensive redraw
-            return
-        }
-
-        // Debounce rapid updates to prevent rendering congestion
-        updateDebounceTimer?.invalidate()
-        updateDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: false) { [weak self] _ in
-            guard let self = self else { return }
-
-            // Create the image based on selected style
-            let image: NSImage
-            switch iconStyle {
-            case .battery:
-                image = self.createBatteryStyle(usage: usage, isDarkMode: isDarkAppearance, monochromeMode: monochromeMode)
-            case .progressBar:
-                image = self.createProgressBarStyle(usage: usage, isDarkMode: isDarkAppearance, monochromeMode: monochromeMode)
-            case .percentageOnly:
-                image = self.createPercentageOnlyStyle(usage: usage, isDarkMode: isDarkAppearance, monochromeMode: monochromeMode)
-            case .icon:
-                image = self.createIconWithBarStyle(usage: usage, isDarkMode: isDarkAppearance, monochromeMode: monochromeMode)
-            case .compact:
-                image = self.createCompactStyle(usage: usage, isDarkMode: isDarkAppearance, monochromeMode: monochromeMode)
-            }
-
-            // Cache the image and key
-            self.cachedImage = image
-            self.cachedImageKey = cacheKey
-
-            // Update the button image
-            button.image = image
-            button.image?.isTemplate = false
-            button.title = ""
-        }
+        // This method is deprecated but kept for any remaining references
+        // The new system handles updates through updateAllStatusBarIcons()
+        updateAllStatusBarIcons()
     }
 
     // MARK: - Icon Style: Battery (Classic)
@@ -306,11 +296,48 @@ class MenuBarManager: NSObject, ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            guard let self = self,
-                  let button = self.statusItem?.button else { return }
+            guard let self = self else { return }
             // Clear cache to force redraw with new style
             self.cachedImageKey = ""
-            self.updateStatusButton(button, usage: self.usage)
+            self.updateAllStatusBarIcons()
+        }
+    }
+
+    private var lastKnownConfig: MenuBarIconConfiguration?
+
+    private func observeIconConfigChanges() {
+        // Observe configuration changes (metrics enabled/disabled, order changes, etc.)
+        iconConfigObserver = NotificationCenter.default.addObserver(
+            forName: .menuBarIconConfigChanged,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+
+            // Reload configuration
+            let newConfig = self.dataStore.loadMenuBarIconConfiguration()
+
+            // Check if enabled metrics actually changed
+            let oldEnabledMetrics = Set(self.lastKnownConfig?.enabledMetrics.map { $0.metricType } ?? [])
+            let newEnabledMetrics = Set(newConfig.enabledMetrics.map { $0.metricType })
+
+            if oldEnabledMetrics != newEnabledMetrics {
+                // Metrics changed - recreate status bar items
+                self.statusBarUIManager?.updateConfiguration(
+                    target: self,
+                    action: #selector(self.togglePopover),
+                    config: newConfig
+                )
+            }
+            // If only styling changed, skip status bar recreation
+
+            // Always update the icons (styling might have changed)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self.updateAllStatusBarIcons()
+            }
+
+            // Save current config for next comparison
+            self.lastKnownConfig = newConfig
         }
     }
 
@@ -328,10 +355,8 @@ class MenuBarManager: NSObject, ObservableObject {
                     self.usage = newUsage
                     dataStore.saveUsage(newUsage)
 
-                    // Update menu bar button
-                    if let button = statusItem?.button {
-                        updateStatusButton(button, usage: newUsage)
-                    }
+                    // Update all menu bar icons
+                    self.updateAllStatusBarIcons()
 
                     // Check if we should send notifications
                     NotificationManager.shared.checkAndNotify(usage: newUsage)
@@ -549,6 +574,16 @@ extension MenuBarManager: NSPopoverDelegate {
         detachedWindow = window
 
         return window
+    }
+}
+
+// MARK: - StatusBarUIManagerDelegate
+extension MenuBarManager: StatusBarUIManagerDelegate {
+    func statusBarAppearanceDidChange() {
+        // Update cached dark mode state
+        cachedIsDarkMode = NSApp.effectiveAppearance.name == .darkAqua
+        // Update all icons with new appearance
+        updateAllStatusBarIcons()
     }
 }
 

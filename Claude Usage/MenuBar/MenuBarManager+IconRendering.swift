@@ -230,4 +230,28 @@ extension MenuBarManager {
             return NSColor.systemRed
         }
     }
+
+    // MARK: - New Multi-Metric Rendering
+
+    /// Creates an image for a specific metric using the new renderer
+    func createImageForMetric(
+        _ metricType: MenuBarMetricType,
+        config: MetricIconConfig,
+        usage: ClaudeUsage,
+        apiUsage: APIUsage?,
+        isDarkMode: Bool,
+        monochromeMode: Bool,
+        showIconName: Bool
+    ) -> NSImage {
+        let renderer = MenuBarIconRenderer()
+        return renderer.createImage(
+            for: metricType,
+            config: config,
+            usage: usage,
+            apiUsage: apiUsage,
+            isDarkMode: isDarkMode,
+            monochromeMode: monochromeMode,
+            showIconName: showIconName
+        )
+    }
 }

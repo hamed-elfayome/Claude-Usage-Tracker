@@ -358,7 +358,7 @@ final class SessionKeyValidatorTests: XCTestCase {
         let mistakes = [
             "sk-ant",  // Too short
             "sk ant sid01 abcd",  // Spaces instead of hyphens
-            "sessionKey=sk-ant-sid01-abcd",  // Copied the whole cookie line
+            "sessionKey=sk-ant-sid01-abcd"  // Copied the whole cookie line
         ]
 
         for mistake in mistakes {

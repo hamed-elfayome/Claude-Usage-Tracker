@@ -267,7 +267,7 @@ struct SetupWizardView: View {
                 let orgId = try await apiService.fetchOrganizationId()
 
                 await MainActor.run {
-                    validationState = .success("✅ Successfully connected to organization")
+                    validationState = .success("Successfully connected to organization")
                 }
 
             } catch {

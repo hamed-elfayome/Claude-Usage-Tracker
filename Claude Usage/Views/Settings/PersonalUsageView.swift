@@ -95,7 +95,7 @@ struct PersonalUsageView: View {
 
         do {
             try apiService.saveSessionKey(sessionKey)
-            validationState = .success("✅ Session key saved successfully")
+            validationState = .success("Session key saved successfully")
             sessionKey = ""
 
         } catch {
@@ -127,7 +127,7 @@ struct PersonalUsageView: View {
                 let orgId = try await apiService.fetchOrganizationId()
 
                 await MainActor.run {
-                    validationState = .success("✅ Connected successfully to organization")
+                    validationState = .success("Connected successfully to organization")
                 }
 
             } catch {

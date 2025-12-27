@@ -30,9 +30,28 @@ enum Constants {
         static let apiSessionKey = "apiSessionKey"
         static let apiOrganizationId = "apiOrganizationId"
 
-        // Menu bar icon style
+        // Menu bar icon style (legacy - kept for backwards compatibility)
         static let menuBarIconStyle = "menuBarIconStyle"
         static let monochromeMode = "monochromeMode"
+
+        // Menu bar icon configuration (new multi-metric system)
+        static let menuBarIconConfiguration = "menuBarIconConfiguration"
+        static let showIconNames = "showIconNames"
+
+        // Per-metric configurations
+        static let sessionIconEnabled = "sessionIconEnabled"
+        static let sessionIconStyle = "sessionIconStyle"
+        static let sessionIconOrder = "sessionIconOrder"
+
+        static let weekIconEnabled = "weekIconEnabled"
+        static let weekIconStyle = "weekIconStyle"
+        static let weekIconOrder = "weekIconOrder"
+        static let weekDisplayMode = "weekDisplayMode"
+
+        static let apiIconEnabled = "apiIconEnabled"
+        static let apiIconStyle = "apiIconStyle"
+        static let apiIconOrder = "apiIconOrder"
+        static let apiDisplayMode = "apiDisplayMode"
     }
 
     // Claude Code paths

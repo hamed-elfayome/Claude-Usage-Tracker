@@ -145,9 +145,9 @@ class ErrorLogger {
         }
 
         if logged.error.isRecoverable {
-            print("   ✅ Recoverable")
+            print("Recoverable")
         } else {
-            print("   ❌ Not Recoverable")
+            print("Not Recoverable")
         }
 
         if let suggestion = logged.error.recoverySuggestion {
@@ -165,11 +165,11 @@ struct LoggedError {
 }
 
 enum ErrorSeverity: String {
-    case debug = "debug"
-    case info = "info"
-    case warning = "warning"
-    case error = "error"
-    case critical = "critical"
+    case debug
+    case info
+    case warning
+    case error
+    case critical
 
     var icon: String {
         switch self {
