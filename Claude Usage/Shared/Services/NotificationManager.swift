@@ -4,10 +4,10 @@ import UserNotifications
 /// Manages user notifications for usage threshold alerts
 class NotificationManager: NotificationServiceProtocol {
     static let shared = NotificationManager()
-    
+
     // Track previous session percentage to detect resets
     private var previousSessionPercentage: Double = 0.0
-    
+
     // Track which notifications have been sent to prevent duplicates
     private var sentNotifications: Set<String> = []
 
@@ -71,7 +71,7 @@ class NotificationManager: NotificationServiceProtocol {
     func checkAndNotify(usage: ClaudeUsage) {
         // Session usage alerts
         let sessionPercentage = usage.sessionPercentage
-        
+
         // Check for session reset (went from >0% to 0%)
         if previousSessionPercentage > 0.0 && sessionPercentage == 0.0 {
             sendUsageAlert(
@@ -95,13 +95,13 @@ class NotificationManager: NotificationServiceProtocol {
                 }
             }
         }
-        
+
         // Update previous percentage for next check
         previousSessionPercentage = sessionPercentage
-        
+
         // Clear lower threshold notifications to allow re-notification
         clearLowerThresholdNotifications(currentPercentage: sessionPercentage)
-        
+
         if sessionPercentage >= Constants.NotificationThresholds.critical {
             sendUsageAlert(
                 type: .sessionCritical,
@@ -119,7 +119,7 @@ class NotificationManager: NotificationServiceProtocol {
         // Weekly usage alerts
         let weeklyPercentage = usage.weeklyPercentage
         clearLowerThresholdNotifications(currentPercentage: weeklyPercentage)
-        
+
         if weeklyPercentage >= Constants.NotificationThresholds.critical {
             sendUsageAlert(
                 type: .weeklyCritical,
@@ -138,7 +138,7 @@ class NotificationManager: NotificationServiceProtocol {
         if usage.opusWeeklyTokensUsed > 0 {
             let opusPercentage = usage.opusWeeklyPercentage
             clearLowerThresholdNotifications(currentPercentage: opusPercentage)
-            
+
             if opusPercentage >= Constants.NotificationThresholds.critical {
                 sendUsageAlert(
                     type: .opusCritical,
@@ -160,7 +160,7 @@ class NotificationManager: NotificationServiceProtocol {
         UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
         UNUserNotificationCenter.current().removeAllDeliveredNotifications()
     }
-    
+
     /// Clears sent notification tracking for lower percentages
     /// This allows re-notification if usage goes back up
     private func clearLowerThresholdNotifications(currentPercentage: Double) {

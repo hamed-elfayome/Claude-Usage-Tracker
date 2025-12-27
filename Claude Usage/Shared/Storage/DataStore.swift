@@ -46,7 +46,7 @@ class DataStore: StorageProvider {
     private let defaults: UserDefaults
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
-    
+
     /// Public access to the UserDefaults instance for KVO
     var userDefaults: UserDefaults {
         return defaults

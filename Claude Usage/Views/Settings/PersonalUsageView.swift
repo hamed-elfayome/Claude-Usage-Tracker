@@ -93,7 +93,7 @@ struct PersonalUsageView: View {
         }
     }
 
-    private func testKey() {
+    func testKey() {
         validationState = .validating
 
         Task {

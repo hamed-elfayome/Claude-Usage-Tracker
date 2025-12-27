@@ -175,7 +175,7 @@ final class WindowCoordinator: NSObject {
     // MARK: - Event Monitoring
 
     private func startMonitoringForOutsideClicks() {
-        eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
+        eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
             if let popover = self?.popover, popover.isShown {
                 self?.closePopover()
             }

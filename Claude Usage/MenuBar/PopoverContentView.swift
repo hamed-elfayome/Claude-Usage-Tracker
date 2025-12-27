@@ -6,7 +6,7 @@ struct PopoverContentView: View {
     let onRefresh: () -> Void
     let onPreferences: () -> Void
     let onQuit: () -> Void
-    
+
     @State private var isRefreshing = false
     @State private var showInsights = false
 
@@ -32,7 +32,7 @@ struct PopoverContentView: View {
 
             // Intelligent Usage Dashboard
             SmartUsageDashboard(usage: manager.usage, apiUsage: manager.apiUsage)
-            
+
             // Contextual Insights
             if showInsights {
                 ContextualInsights(usage: manager.usage)
@@ -86,7 +86,7 @@ struct SmartHeader: View {
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 24, height: 24)
-                
+
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Claude Usage")
                         .font(.system(size: 13, weight: .semibold))
@@ -118,9 +118,9 @@ struct SmartHeader: View {
                     .help("Click to open status.claude.com")
                 }
             }
-            
+
             Spacer()
-            
+
             // Smart Refresh Button
             Button(action: onRefresh) {
                 ZStack {
@@ -218,7 +218,7 @@ struct SmartUsageCard: View {
     let percentage: Double
     let resetTime: Date?
     let isPrimary: Bool
-    
+
     private var statusColor: Color {
         switch percentage {
         case 0..<50: return .green
@@ -226,7 +226,7 @@ struct SmartUsageCard: View {
         default: return .red
         }
     }
-    
+
     private var statusIcon: String {
         switch percentage {
         case 0..<50: return "checkmark.circle.fill"
@@ -234,7 +234,7 @@ struct SmartUsageCard: View {
         default: return "xmark.circle.fill"
         }
     }
-    
+
     var body: some View {
         VStack(spacing: isPrimary ? 12 : 8) {
             // Header
@@ -243,26 +243,26 @@ struct SmartUsageCard: View {
                     Text(title)
                         .font(.system(size: isPrimary ? 13 : 11, weight: .semibold))
                         .foregroundColor(.primary)
-                    
+
                     Text(subtitle)
                         .font(.system(size: isPrimary ? 10 : 9, weight: .medium))
                         .foregroundColor(.secondary)
                 }
-                
+
                 Spacer()
-                
+
                 // Status indicator
                 HStack(spacing: 4) {
                     Image(systemName: statusIcon)
                         .font(.system(size: isPrimary ? 12 : 10, weight: .medium))
                         .foregroundColor(statusColor)
-                    
+
                     Text("\(Int(percentage))%")
                         .font(.system(size: isPrimary ? 16 : 14, weight: .bold, design: .monospaced))
                         .foregroundColor(statusColor)
                 }
             }
-            
+
             // Progress visualization
             VStack(spacing: 6) {
                 // Animated progress bar
@@ -283,7 +283,7 @@ struct SmartUsageCard: View {
                 }
                 .frame(height: isPrimary ? 8 : 6)
                 .animation(.easeInOut(duration: 0.8), value: percentage)
-                
+
                 // Reset time information
                 if let reset = resetTime {
                     HStack {
@@ -307,10 +307,10 @@ struct SmartUsageCard: View {
 // MARK: - Contextual Insights
 struct ContextualInsights: View {
     let usage: ClaudeUsage
-    
+
     private var insights: [Insight] {
         var result: [Insight] = []
-        
+
         // Session insights
         if usage.sessionPercentage > 80 {
             result.append(Insight(
@@ -320,7 +320,7 @@ struct ContextualInsights: View {
                 description: "Consider taking a break to reset your session window"
             ))
         }
-        
+
         // Weekly insights
         if usage.weeklyPercentage > 90 {
             result.append(Insight(
@@ -330,7 +330,7 @@ struct ContextualInsights: View {
                 description: "You're close to your weekly token limit"
             ))
         }
-        
+
         // Efficiency insights
         if usage.sessionPercentage < 20 && usage.weeklyPercentage < 30 {
             result.append(Insight(
@@ -340,10 +340,10 @@ struct ContextualInsights: View {
                 description: "Great job managing your token consumption!"
             ))
         }
-        
+
         return result
     }
-    
+
     var body: some View {
         VStack(spacing: 8) {
             ForEach(insights, id: \.title) { insight in
@@ -352,18 +352,18 @@ struct ContextualInsights: View {
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(insight.color)
                         .frame(width: 16)
-                    
+
                     VStack(alignment: .leading, spacing: 2) {
                         Text(insight.title)
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundColor(.primary)
-                        
+
                         Text(insight.description)
                             .font(.system(size: 9, weight: .medium))
                             .foregroundColor(.secondary)
                             .lineLimit(2)
                     }
-                    
+
                     Spacer()
                 }
                 .padding(.horizontal, 12)
@@ -393,7 +393,7 @@ struct SmartFooter: View {
     @Binding var showInsights: Bool
     let onPreferences: () -> Void
     let onQuit: () -> Void
-    
+
     var body: some View {
         VStack(spacing: 0) {
             Divider()
@@ -406,7 +406,7 @@ struct SmartFooter: View {
                     title: "Settings",
                     action: onPreferences
                 )
-                
+
                 SmartActionButton(
                     icon: "power",
                     title: "Quit",
@@ -424,7 +424,7 @@ struct SmartFooter: View {
 struct ClaudeStatusRow: View {
     let status: ClaudeStatus
     @State private var isHovered = false
-    
+
     private var statusColor: Color {
         switch status.indicator.color {
         case .green: return .green
@@ -434,7 +434,7 @@ struct ClaudeStatusRow: View {
         case .gray: return .gray
         }
     }
-    
+
     var body: some View {
         Button(action: {
             if let url = URL(string: "https://status.claude.com") {
@@ -446,15 +446,15 @@ struct ClaudeStatusRow: View {
                 Circle()
                     .fill(statusColor)
                     .frame(width: 8, height: 8)
-                
+
                 // Status text
                 Text(status.description)
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(.primary)
                     .lineLimit(1)
-                
+
                 Spacer()
-                
+
                 // External link icon
                 Image(systemName: "arrow.up.right")
                     .font(.system(size: 9, weight: .medium))
@@ -483,9 +483,9 @@ struct SmartActionButton: View {
     let title: String
     var isDestructive: Bool = false
     let action: () -> Void
-    
+
     @State private var isHovered = false
-    
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: 6) {
@@ -493,7 +493,7 @@ struct SmartActionButton: View {
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(isDestructive ? .red : .secondary)
                     .frame(width: 14)
-                
+
                 Text(title)
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(isDestructive ? .red : .primary)
@@ -503,7 +503,7 @@ struct SmartActionButton: View {
             .background(
                 RoundedRectangle(cornerRadius: 6)
                     .fill(
-                        isHovered 
+                        isHovered
                         ? (isDestructive ? Color.red.opacity(0.1) : Color.accentColor.opacity(0.1))
                         : Color.clear
                     )

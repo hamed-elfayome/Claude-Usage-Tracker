@@ -75,6 +75,7 @@ struct SettingsTextFieldStyle: TextFieldStyle {
     let isMonospaced: Bool
     let isFocused: Bool
 
+    // swiftlint:disable:next identifier_name
     func _body(configuration: TextField<Self._Label>) -> some View {
         configuration
             .font(isMonospaced ? Typography.monospacedInput : Typography.body)

@@ -336,4 +336,3 @@ struct WizardStatusBox: View {
 #Preview {
     SetupWizardView()
 }
-
