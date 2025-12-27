@@ -5,20 +5,22 @@ class ClaudeAPIService: APIServiceProtocol {
     // MARK: - Properties
 
     private let sessionKeyPath: URL
+    private let sessionKeyValidator: SessionKeyValidator
     let baseURL = Constants.APIEndpoints.claudeBase
     let consoleBaseURL = Constants.APIEndpoints.consoleBase
 
     // MARK: - Initialization
 
-    init(sessionKeyPath: URL? = nil) {
+    init(sessionKeyPath: URL? = nil, sessionKeyValidator: SessionKeyValidator = SessionKeyValidator()) {
         // Default path: ~/.claude-session-key
         self.sessionKeyPath = sessionKeyPath ?? Constants.ClaudePaths.homeDirectory
             .appendingPathComponent(".claude-session-key")
+        self.sessionKeyValidator = sessionKeyValidator
     }
 
     // MARK: - Session Key Management
 
-    /// Reads the session key from manual file only
+    /// Reads and validates the session key from manual file only
     private func readSessionKey() throws -> String {
         // Read from manual file: ~/.claude-session-key
         guard FileManager.default.fileExists(atPath: sessionKeyPath.path) else {
@@ -26,19 +28,27 @@ class ClaudeAPIService: APIServiceProtocol {
         }
 
         let key = try String(contentsOf: sessionKeyPath, encoding: .utf8)
-            .trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard !key.isEmpty && key.hasPrefix("sk-ant-") else {
+        // Validate the session key using professional validator
+        do {
+            let validatedKey = try sessionKeyValidator.validate(key)
+            return validatedKey
+        } catch {
+            // If validation fails, throw noSessionKey error
             throw APIError.noSessionKey
         }
-
-        return key
     }
 
-    /// Saves a session key to the configured file path
+    /// Saves a session key to the configured file path with validation
     func saveSessionKey(_ key: String) throws {
-        let trimmedKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
-        try trimmedKey.write(to: sessionKeyPath, atomically: true, encoding: .utf8)
+        // Validate the key before saving
+        let validatedKey = try sessionKeyValidator.validate(key)
+
+        // Sanitize for storage
+        let sanitizedKey = sessionKeyValidator.sanitizeForStorage(validatedKey)
+
+        // Write to file
+        try sanitizedKey.write(to: sessionKeyPath, atomically: true, encoding: .utf8)
 
         // Set restrictive permissions (read/write for owner only)
         try FileManager.default.setAttributes(
@@ -53,7 +63,11 @@ class ClaudeAPIService: APIServiceProtocol {
     func fetchOrganizationId() async throws -> String {
         let sessionKey = try readSessionKey()
 
-        let url = URL(string: "\(baseURL)/organizations")!
+        // Build URL safely
+        let url = try URLBuilder(baseURL: baseURL)
+            .appendingPath("/organizations")
+            .build()
+
         var request = URLRequest(url: url)
         request.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
@@ -109,7 +123,11 @@ class ClaudeAPIService: APIServiceProtocol {
     }
 
     private func performRequest(endpoint: String, sessionKey: String) async throws -> Data {
-        let url = URL(string: "\(baseURL)\(endpoint)")!
+        // Build URL safely
+        let url = try URLBuilder(baseURL: baseURL)
+            .appendingPath(endpoint)
+            .build()
+
         var request = URLRequest(url: url)
         request.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
@@ -219,7 +237,10 @@ class ClaudeAPIService: APIServiceProtocol {
         let orgId = try await fetchOrganizationId()
 
         // Create a new conversation
-        let conversationURL = URL(string: "\(baseURL)/organizations/\(orgId)/chat_conversations")!
+        let conversationURL = try URLBuilder(baseURL: baseURL)
+            .appendingPathComponents(["/organizations", orgId, "/chat_conversations"])
+            .build()
+
         var conversationRequest = URLRequest(url: conversationURL)
         conversationRequest.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
         conversationRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -248,7 +269,10 @@ class ClaudeAPIService: APIServiceProtocol {
         }
 
         // Send a minimal "Hi" message to initialize the session
-        let messageURL = URL(string: "\(baseURL)/organizations/\(orgId)/chat_conversations/\(conversationUUID)/completion")!
+        let messageURL = try URLBuilder(baseURL: baseURL)
+            .appendingPathComponents(["/organizations", orgId, "/chat_conversations", conversationUUID, "/completion"])
+            .build()
+
         var messageRequest = URLRequest(url: messageURL)
         messageRequest.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
         messageRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -272,7 +296,10 @@ class ClaudeAPIService: APIServiceProtocol {
         }
 
         // Delete the conversation to keep it out of chat history (incognito mode)
-        let deleteURL = URL(string: "\(baseURL)/organizations/\(orgId)/chat_conversations/\(conversationUUID)")!
+        let deleteURL = try URLBuilder(baseURL: baseURL)
+            .appendingPathComponents(["/organizations", orgId, "/chat_conversations", conversationUUID])
+            .build()
+
         var deleteRequest = URLRequest(url: deleteURL)
         deleteRequest.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
         deleteRequest.httpMethod = "DELETE"

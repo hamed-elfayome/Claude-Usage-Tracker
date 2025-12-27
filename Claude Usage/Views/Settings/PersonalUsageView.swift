@@ -82,25 +82,51 @@ struct PersonalUsageView: View {
     }
 
     private func saveKey() {
+        // Validate using professional validator first
+        let validator = SessionKeyValidator()
+        let validationResult = validator.validationStatus(sessionKey)
+
+        guard validationResult.isValid else {
+            validationState = .error(validationResult.errorMessage ?? "Invalid session key")
+            return
+        }
+
         validationState = .validating
 
         do {
             try apiService.saveSessionKey(sessionKey)
             validationState = .success("Session key saved successfully")
             sessionKey = ""
+        } catch let error as SessionKeyValidationError {
+            validationState = .error(error.localizedDescription)
         } catch {
-            validationState = .error("Failed to save session key")
+            validationState = .error("Failed to save session key: \(error.localizedDescription)")
         }
     }
 
     func testKey() {
+        // Validate using professional validator first
+        let validator = SessionKeyValidator()
+        let validationResult = validator.validationStatus(sessionKey)
+
+        guard validationResult.isValid else {
+            validationState = .error(validationResult.errorMessage ?? "Invalid session key")
+            return
+        }
+
         validationState = .validating
 
         Task {
             do {
+                // Temporarily save to test (won't persist if test fails)
+                try apiService.saveSessionKey(sessionKey)
                 let orgId = try await apiService.fetchOrganizationId()
                 await MainActor.run {
                     validationState = .success("Connected to organization: \(orgId)")
+                }
+            } catch let error as SessionKeyValidationError {
+                await MainActor.run {
+                    validationState = .error(error.localizedDescription)
                 }
             } catch {
                 await MainActor.run {

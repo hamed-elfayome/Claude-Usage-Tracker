@@ -32,7 +32,11 @@ func readSessionKey() -> String? {
     return trimmedKey.isEmpty ? nil : trimmedKey
 }
 func fetchOrganizationId(sessionKey: String) async throws -> String {
-    let url = URL(string: "https://claude.ai/api/organizations")!
+    // Build URL safely
+    guard let url = URL(string: "https://claude.ai/api/organizations") else {
+        throw NSError(domain: "ClaudeAPI", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
+    }
+
     var request = URLRequest(url: url)
     request.setValue("sessionKey=\\(sessionKey)", forHTTPHeaderField: "Cookie")
     request.setValue("application/json", forHTTPHeaderField: "Accept")
@@ -57,7 +61,15 @@ func fetchOrganizationId(sessionKey: String) async throws -> String {
     return firstOrg.uuid
 }
 func fetchUsageData(sessionKey: String, orgId: String) async throws -> (utilization: Int, resetsAt: String?) {
-    let url = URL(string: "https://claude.ai/api/organizations/\\(orgId)/usage")!
+    // Build URL safely - validate orgId doesn't contain path traversal
+    guard !orgId.contains(".."), !orgId.contains("/") else {
+        throw NSError(domain: "ClaudeAPI", code: 5, userInfo: [NSLocalizedDescriptionKey: "Invalid organization ID"])
+    }
+
+    guard let url = URL(string: "https://claude.ai/api/organizations/\\(orgId)/usage") else {
+        throw NSError(domain: "ClaudeAPI", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
+    }
+
     var request = URLRequest(url: url)
     request.setValue("sessionKey=\\(sessionKey)", forHTTPHeaderField: "Cookie")
     request.setValue("application/json", forHTTPHeaderField: "Accept")
@@ -356,7 +368,7 @@ SHOW_PROGRESS_BAR=\(showProgressBar ? "1" : "0")
                FileManager.default.fileExists(atPath: bashScript.path)
     }
 
-    /// Checks if a valid session key is configured
+    /// Checks if a valid session key is configured using professional validator
     func hasValidSessionKey() -> Bool {
         let sessionKeyPath = Constants.ClaudePaths.homeDirectory
             .appendingPathComponent(".claude-session-key")
@@ -366,7 +378,8 @@ SHOW_PROGRESS_BAR=\(showProgressBar ? "1" : "0")
             return false
         }
 
-        let trimmedKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
-        return !trimmedKey.isEmpty && trimmedKey.hasPrefix("sk-ant-")
+        // Use professional validator for comprehensive validation
+        let validator = SessionKeyValidator()
+        return validator.isValid(key)
     }
 }

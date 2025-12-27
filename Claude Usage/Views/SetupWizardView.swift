@@ -245,29 +245,39 @@ struct SetupWizardView: View {
     }
 
     private func validateAndSave() {
-        guard !sessionKey.isEmpty else {
-            validationState = .error("Please enter your session key")
+        // Step 1: Comprehensive validation using professional validator
+        let validator = SessionKeyValidator()
+        let validationResult = validator.validationStatus(sessionKey)
+
+        guard validationResult.isValid else {
+            // Show detailed error message from validator
+            validationState = .error(validationResult.errorMessage ?? "Invalid session key")
             return
         }
 
-        guard sessionKey.hasPrefix("sk-ant-") else {
-            validationState = .error("Invalid format. Should start with 'sk-ant-'")
-            return
-        }
-
+        // Step 2: Start validation process
         validationState = .validating
 
         Task {
             do {
+                // Save with professional validation (will validate again internally)
                 try apiService.saveSessionKey(sessionKey)
+
+                // Test the connection
                 let orgId = try await apiService.fetchOrganizationId()
 
                 await MainActor.run {
-                    validationState = .success("Connected to \(orgId)")
+                    validationState = .success("Successfully connected to organization: \(orgId)")
+                }
+            } catch let error as SessionKeyValidationError {
+                // Handle validation errors with detailed messages
+                await MainActor.run {
+                    validationState = .error(error.localizedDescription)
                 }
             } catch {
+                // Handle connection errors
                 await MainActor.run {
-                    validationState = .error("Connection failed")
+                    validationState = .error("Connection failed: \(error.localizedDescription)")
                 }
             }
         }

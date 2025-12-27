@@ -5,7 +5,11 @@ import Foundation
 extension ClaudeAPIService {
     /// Fetches organizations from Console API using the provided session key
     func fetchConsoleOrganizations(apiSessionKey: String) async throws -> [APIOrganization] {
-        let url = URL(string: "\(consoleBaseURL)/organizations")!
+        // Build URL safely
+        let url = try URLBuilder(baseURL: consoleBaseURL)
+            .appendingPath("/organizations")
+            .build()
+
         var request = URLRequest(url: url)
         request.setValue("sessionKey=\(apiSessionKey)", forHTTPHeaderField: "Cookie")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
@@ -30,7 +34,11 @@ extension ClaudeAPIService {
 
     /// Fetches current spend for the given organization from Console API
     func fetchCurrentSpend(organizationId: String, apiSessionKey: String) async throws -> CurrentSpendResponse {
-        let url = URL(string: "\(consoleBaseURL)/organizations/\(organizationId)/current_spend")!
+        // Build URL safely
+        let url = try URLBuilder(baseURL: consoleBaseURL)
+            .appendingPathComponents(["/organizations", organizationId, "/current_spend"])
+            .build()
+
         var request = URLRequest(url: url)
         request.setValue("sessionKey=\(apiSessionKey)", forHTTPHeaderField: "Cookie")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
@@ -54,7 +62,11 @@ extension ClaudeAPIService {
 
     /// Fetches prepaid credits for the given organization from Console API
     func fetchPrepaidCredits(organizationId: String, apiSessionKey: String) async throws -> PrepaidCreditsResponse {
-        let url = URL(string: "\(consoleBaseURL)/organizations/\(organizationId)/prepaid/credits")!
+        // Build URL safely
+        let url = try URLBuilder(baseURL: consoleBaseURL)
+            .appendingPathComponents(["/organizations", organizationId, "/prepaid/credits"])
+            .build()
+
         var request = URLRequest(url: url)
         request.setValue("sessionKey=\(apiSessionKey)", forHTTPHeaderField: "Cookie")
         request.setValue("application/json", forHTTPHeaderField: "Accept")

@@ -336,7 +336,8 @@ class MenuBarManager: NSObject, ObservableObject {
                     NotificationManager.shared.checkAndNotify(usage: newUsage)
                 }
             } catch {
-                // Silently handle errors - user can check manually
+                // Log error for debugging
+                print("⚠️ Failed to fetch usage: \(error.localizedDescription)")
             }
 
             // Fetch status separately (don't fail if usage fetch works)
@@ -346,7 +347,8 @@ class MenuBarManager: NSObject, ObservableObject {
                     self.status = newStatus
                 }
             } catch {
-                // Silently fail - status will remain unknown
+                // Log error for debugging
+                print("⚠️ Failed to fetch status: \(error.localizedDescription)")
             }
 
             // Fetch API usage if enabled

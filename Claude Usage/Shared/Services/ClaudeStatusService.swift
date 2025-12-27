@@ -2,7 +2,7 @@ import Foundation
 
 /// Service for fetching Claude system status
 class ClaudeStatusService {
-    private let statusURL = URL(string: "https://status.claude.com/api/v2/status.json")!
+    private let statusURL: URL
 
     /// Response structure from Statuspage API
     private struct StatusResponse: Codable {
@@ -13,6 +13,20 @@ class ClaudeStatusService {
             let description: String
         }
     }
+
+    // MARK: - Initialization
+
+    init() {
+        // Build URL safely with fallback to hardcoded URL
+        if let url = try? URLBuilder.claudeStatus(endpoint: "/status.json").build() {
+            self.statusURL = url
+        } else {
+            // Fallback to hardcoded URL (should never happen, but prevents crashes)
+            self.statusURL = URL(string: "https://status.claude.com/api/v2/status.json")!
+        }
+    }
+
+    // MARK: - Status Fetching
 
     /// Fetch current Claude status
     func fetchStatus() async throws -> ClaudeStatus {
