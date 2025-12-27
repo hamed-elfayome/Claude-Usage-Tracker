@@ -24,74 +24,162 @@ class ClaudeAPIService: APIServiceProtocol {
     private func readSessionKey() throws -> String {
         // Read from manual file: ~/.claude-session-key
         guard FileManager.default.fileExists(atPath: sessionKeyPath.path) else {
-            throw APIError.noSessionKey
+            throw AppError.sessionKeyNotFound()
         }
 
-        let key = try String(contentsOf: sessionKeyPath, encoding: .utf8)
-
-        // Validate the session key using professional validator
         do {
+            let key = try String(contentsOf: sessionKeyPath, encoding: .utf8)
+
+            // Validate the session key using professional validator
             let validatedKey = try sessionKeyValidator.validate(key)
             return validatedKey
+
+        } catch let error as SessionKeyValidationError {
+            // Convert validation errors to AppError
+            throw AppError.wrap(error)
         } catch {
-            // If validation fails, throw noSessionKey error
-            throw APIError.noSessionKey
+            // File read errors
+            let appError = AppError(
+                code: .storageReadFailed,
+                message: "Failed to read session key",
+                technicalDetails: error.localizedDescription,
+                underlyingError: error,
+                isRecoverable: true,
+                recoverySuggestion: "Please check file permissions and try again"
+            )
+            ErrorLogger.shared.log(appError)
+            throw appError
         }
     }
 
     /// Saves a session key to the configured file path with validation
     func saveSessionKey(_ key: String) throws {
-        // Validate the key before saving
-        let validatedKey = try sessionKeyValidator.validate(key)
+        do {
+            // Validate the key before saving
+            let validatedKey = try sessionKeyValidator.validate(key)
 
-        // Sanitize for storage
-        let sanitizedKey = sessionKeyValidator.sanitizeForStorage(validatedKey)
+            // Sanitize for storage
+            let sanitizedKey = sessionKeyValidator.sanitizeForStorage(validatedKey)
 
-        // Write to file
-        try sanitizedKey.write(to: sessionKeyPath, atomically: true, encoding: .utf8)
+            // Write to file
+            try sanitizedKey.write(to: sessionKeyPath, atomically: true, encoding: .utf8)
 
-        // Set restrictive permissions (read/write for owner only)
-        try FileManager.default.setAttributes(
-            [.posixPermissions: 0o600],
-            ofItemAtPath: sessionKeyPath.path
-        )
+            // Set restrictive permissions (read/write for owner only)
+            try FileManager.default.setAttributes(
+                [.posixPermissions: 0o600],
+                ofItemAtPath: sessionKeyPath.path
+            )
+
+        } catch let error as SessionKeyValidationError {
+            // Convert validation errors to AppError
+            throw AppError.wrap(error)
+        } catch {
+            // File write or permission errors
+            let appError = AppError(
+                code: .sessionKeyStorageFailed,
+                message: "Failed to save session key",
+                technicalDetails: error.localizedDescription,
+                underlyingError: error,
+                isRecoverable: true,
+                recoverySuggestion: "Please check file permissions in ~/.claude-session-key"
+            )
+            ErrorLogger.shared.log(appError)
+            throw appError
+        }
     }
 
     // MARK: - API Requests
 
     /// Fetches the organization UUID for the authenticated user
     func fetchOrganizationId() async throws -> String {
-        let sessionKey = try readSessionKey()
+        return try await ErrorRecovery.shared.executeWithRetry(maxAttempts: 3) {
+            let sessionKey = try self.readSessionKey()
 
-        // Build URL safely
-        let url = try URLBuilder(baseURL: baseURL)
-            .appendingPath("/organizations")
-            .build()
-
-        var request = URLRequest(url: url)
-        request.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.httpMethod = "GET"
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw APIError.invalidResponse
-        }
-
-        switch httpResponse.statusCode {
-        case 200:
-            // Parse organizations array
-            let organizations = try JSONDecoder().decode([AccountInfo].self, from: data)
-            guard let firstOrg = organizations.first else {
-                throw APIError.invalidResponse
+            // Build URL safely
+            let url: URL
+            do {
+                url = try URLBuilder(baseURL: self.baseURL)
+                    .appendingPath("/organizations")
+                    .build()
+            } catch {
+                throw AppError.wrap(error)
             }
-            return firstOrg.uuid
 
-        case 401, 403:
-            throw APIError.unauthorized
-        default:
-            throw APIError.serverError(statusCode: httpResponse.statusCode)
+            var request = URLRequest(url: url)
+            request.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
+            request.setValue("application/json", forHTTPHeaderField: "Accept")
+            request.httpMethod = "GET"
+            request.timeoutInterval = 30
+
+            let (data, response): (Data, URLResponse)
+            do {
+                (data, response) = try await URLSession.shared.data(for: request)
+            } catch {
+                // Network errors
+                let appError = AppError(
+                    code: .networkGenericError,
+                    message: "Failed to connect to Claude API",
+                    technicalDetails: error.localizedDescription,
+                    underlyingError: error,
+                    isRecoverable: true,
+                    recoverySuggestion: "Please check your internet connection and try again"
+                )
+                ErrorLogger.shared.log(appError)
+                throw appError
+            }
+
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw AppError(
+                    code: .apiInvalidResponse,
+                    message: "Invalid response from server",
+                    isRecoverable: true
+                )
+            }
+
+            switch httpResponse.statusCode {
+            case 200:
+                // Parse organizations array
+                do {
+                    let organizations = try JSONDecoder().decode([AccountInfo].self, from: data)
+                    guard let firstOrg = organizations.first else {
+                        throw AppError(
+                            code: .apiParsingFailed,
+                            message: "No organizations found",
+                            technicalDetails: "Organizations array is empty",
+                            isRecoverable: false,
+                            recoverySuggestion: "Please ensure your Claude account has access to organizations"
+                        )
+                    }
+                    return firstOrg.uuid
+                } catch {
+                    let appError = AppError(
+                        code: .apiParsingFailed,
+                        message: "Failed to parse organizations",
+                        technicalDetails: error.localizedDescription,
+                        underlyingError: error,
+                        isRecoverable: false
+                    )
+                    ErrorLogger.shared.log(appError)
+                    throw appError
+                }
+
+            case 401, 403:
+                throw AppError.apiUnauthorized()
+
+            case 429:
+                throw AppError.apiRateLimited()
+
+            case 500...599:
+                throw AppError.apiServerError(statusCode: httpResponse.statusCode)
+
+            default:
+                throw AppError(
+                    code: .apiGenericError,
+                    message: "Unexpected API response",
+                    technicalDetails: "HTTP \(httpResponse.statusCode)",
+                    isRecoverable: true
+                )
+            }
         }
     }
 

@@ -320,6 +320,7 @@ class MenuBarManager: NSObject, ObservableObject {
             async let usageResult = apiService.fetchUsageData()
             async let statusResult = statusService.fetchStatus()
 
+            // Fetch usage with proper error handling
             do {
                 let newUsage = try await usageResult
 
@@ -335,9 +336,20 @@ class MenuBarManager: NSObject, ObservableObject {
                     // Check if we should send notifications
                     NotificationManager.shared.checkAndNotify(usage: newUsage)
                 }
+
+                // Record success for circuit breaker
+                ErrorRecovery.shared.recordSuccess(for: .api)
+
             } catch {
-                // Log error for debugging
-                print("⚠️ Failed to fetch usage: \(error.localizedDescription)")
+                // Convert to AppError and log
+                let appError = AppError.wrap(error)
+                ErrorLogger.shared.log(appError, severity: .warning)
+
+                // Record failure for circuit breaker
+                ErrorRecovery.shared.recordFailure(for: .api)
+
+                // Don't show error to user for background refresh - just log it
+                print("⚠️ [\(appError.code.rawValue)] Failed to fetch usage: \(appError.message)")
             }
 
             // Fetch status separately (don't fail if usage fetch works)
@@ -347,8 +359,12 @@ class MenuBarManager: NSObject, ObservableObject {
                     self.status = newStatus
                 }
             } catch {
-                // Log error for debugging
-                print("⚠️ Failed to fetch status: \(error.localizedDescription)")
+                // Convert to AppError and log
+                let appError = AppError.wrap(error)
+                ErrorLogger.shared.log(appError, severity: .info)
+
+                // Don't show error for status - it's not critical
+                print("ℹ️ [\(appError.code.rawValue)] Failed to fetch status: \(appError.message)")
             }
 
             // Fetch API usage if enabled
@@ -362,7 +378,11 @@ class MenuBarManager: NSObject, ObservableObject {
                         dataStore.saveAPIUsage(newAPIUsage)
                     }
                 } catch {
-                    // Silently fail - API usage will remain nil
+                    // Convert to AppError and log
+                    let appError = AppError.wrap(error)
+                    ErrorLogger.shared.log(appError, severity: .info)
+
+                    print("ℹ️ [\(appError.code.rawValue)] Failed to fetch API usage: \(appError.message)")
                 }
             }
         }

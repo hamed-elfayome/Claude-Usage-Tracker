@@ -267,17 +267,18 @@ struct SetupWizardView: View {
                 let orgId = try await apiService.fetchOrganizationId()
 
                 await MainActor.run {
-                    validationState = .success("Successfully connected to organization: \(orgId)")
+                    validationState = .success("✅ Successfully connected to organization")
                 }
-            } catch let error as SessionKeyValidationError {
-                // Handle validation errors with detailed messages
-                await MainActor.run {
-                    validationState = .error(error.localizedDescription)
-                }
+
             } catch {
-                // Handle connection errors
+                // Convert to AppError and log
+                let appError = AppError.wrap(error)
+                ErrorLogger.shared.log(appError, severity: .error)
+
                 await MainActor.run {
-                    validationState = .error("Connection failed: \(error.localizedDescription)")
+                    // Show user-friendly error message with error code
+                    let errorMessage = "\(appError.message)\n\nError Code: \(appError.code.rawValue)"
+                    validationState = .error(errorMessage)
                 }
             }
         }

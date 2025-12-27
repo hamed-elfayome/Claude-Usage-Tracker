@@ -95,12 +95,16 @@ struct PersonalUsageView: View {
 
         do {
             try apiService.saveSessionKey(sessionKey)
-            validationState = .success("Session key saved successfully")
+            validationState = .success("✅ Session key saved successfully")
             sessionKey = ""
-        } catch let error as SessionKeyValidationError {
-            validationState = .error(error.localizedDescription)
+
         } catch {
-            validationState = .error("Failed to save session key: \(error.localizedDescription)")
+            // Convert to AppError and log
+            let appError = AppError.wrap(error)
+            ErrorLogger.shared.log(appError, severity: .error)
+
+            let errorMessage = "\(appError.message)\n\nError Code: \(appError.code.rawValue)"
+            validationState = .error(errorMessage)
         }
     }
 
@@ -121,16 +125,19 @@ struct PersonalUsageView: View {
                 // Temporarily save to test (won't persist if test fails)
                 try apiService.saveSessionKey(sessionKey)
                 let orgId = try await apiService.fetchOrganizationId()
+
                 await MainActor.run {
-                    validationState = .success("Connected to organization: \(orgId)")
+                    validationState = .success("✅ Connected successfully to organization")
                 }
-            } catch let error as SessionKeyValidationError {
-                await MainActor.run {
-                    validationState = .error(error.localizedDescription)
-                }
+
             } catch {
+                // Convert to AppError and log
+                let appError = AppError.wrap(error)
+                ErrorLogger.shared.log(appError, severity: .error)
+
                 await MainActor.run {
-                    validationState = .error("Connection failed: \(error.localizedDescription)")
+                    let errorMessage = "\(appError.message)\n\nError Code: \(appError.code.rawValue)"
+                    validationState = .error(errorMessage)
                 }
             }
         }

@@ -69,7 +69,7 @@ final class SessionKeyValidatorTests: XCTestCase {
         // Should trim whitespace and validate
         XCTAssertNoThrow(try validator.validate(keyWithWhitespace))
 
-        let sanitized = try! validator.validate(keyWithWhitespace)
+        let sanitized = try validator.validate(keyWithWhitespace)
         XCTAssertFalse(sanitized.hasPrefix(" "))
         XCTAssertFalse(sanitized.hasSuffix(" "))
     }

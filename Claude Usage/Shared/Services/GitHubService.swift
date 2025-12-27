@@ -55,6 +55,7 @@ class GitHubService {
     }
 }
 
+// Legacy GitHubError - kept for compatibility, converted to AppError
 enum GitHubError: Error, LocalizedError {
     case invalidURL
     case invalidResponse
@@ -68,6 +69,49 @@ enum GitHubError: Error, LocalizedError {
             return "Invalid response from GitHub"
         case .httpError(let code):
             return "HTTP error: \(code)"
+        }
+    }
+
+    // Convert to AppError
+    func toAppError() -> AppError {
+        switch self {
+        case .invalidURL:
+            return AppError(
+                code: .urlInvalidBase,
+                message: "Invalid GitHub URL",
+                isRecoverable: false
+            )
+        case .invalidResponse:
+            return AppError(
+                code: .githubGenericError,
+                message: "Invalid response from GitHub",
+                isRecoverable: true
+            )
+        case .httpError(let code):
+            if code == 404 {
+                return AppError(
+                    code: .githubNotFound,
+                    message: "GitHub resource not found",
+                    technicalDetails: "HTTP \(code)",
+                    isRecoverable: false
+                )
+            } else if code == 429 {
+                return AppError.apiRateLimited()
+            } else if code >= 500 {
+                return AppError(
+                    code: .githubServerError,
+                    message: "GitHub server error",
+                    technicalDetails: "HTTP \(code)",
+                    isRecoverable: true
+                )
+            } else {
+                return AppError(
+                    code: .githubGenericError,
+                    message: "GitHub API error",
+                    technicalDetails: "HTTP \(code)",
+                    isRecoverable: true
+                )
+            }
         }
     }
 }
