@@ -27,6 +27,7 @@ class MenuBarManager: NSObject, ObservableObject {
     private let apiService = ClaudeAPIService()
     private let statusService = ClaudeStatusService()
     private let dataStore = DataStore.shared
+    private let networkMonitor = NetworkMonitor.shared
 
     // Observer for refresh interval changes
     private var refreshIntervalObserver: NSKeyValueObservation?
@@ -42,10 +43,8 @@ class MenuBarManager: NSObject, ObservableObject {
     private var cachedImageKey: String = ""
     private var updateDebounceTimer: Timer?
 
-    // MARK: - Initial Load Retry Logic
-    private var initialLoadRetryCount = 0
-    private let maxInitialRetries = 5
-    private var initialLoadTimer: Timer?
+    // Track if initial load has completed successfully
+    private var hasCompletedInitialLoad = false
 
     func setup() {
         // Create status item in menu bar
@@ -72,9 +71,8 @@ class MenuBarManager: NSObject, ObservableObject {
             apiUsage = savedAPIUsage
         }
 
-        // Start initial data fetch with retry logic
-        // Add a small delay to allow system services to initialize (important for launch at login)
-        scheduleInitialLoad(delay: 2.0)
+        // Start network monitoring and fetch data when network is available
+        setupNetworkMonitoring()
 
         // Start auto-refresh timer
         startAutoRefresh()
@@ -89,16 +87,37 @@ class MenuBarManager: NSObject, ObservableObject {
         observeIconStyleChanges()
     }
 
-    /// Schedules the initial data load with retry logic
-    /// This handles the case where the app starts at login before network is ready
-    private func scheduleInitialLoad(delay: TimeInterval) {
-        initialLoadTimer?.invalidate()
-        initialLoadTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
-            self?.performInitialLoad()
+    /// Sets up network monitoring and triggers initial data load when network is available
+    private func setupNetworkMonitoring() {
+        // Set up handler for when network becomes available
+        networkMonitor.onNetworkAvailable = { [weak self] in
+            guard let self = self else { return }
+            
+            // Only trigger initial load if we haven't completed it yet
+            if !self.hasCompletedInitialLoad {
+                LoggingService.shared.logInfo("Network available - performing initial data load")
+                self.performInitialLoad()
+            }
+        }
+
+        // Start monitoring
+        networkMonitor.startMonitoring()
+
+        // If network is already available, load immediately
+        // Add a small delay to ensure system is fully ready (especially at login)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            guard let self = self, !self.hasCompletedInitialLoad else { return }
+            
+            if self.networkMonitor.isConnected {
+                LoggingService.shared.logInfo("Network already available - performing initial data load")
+                self.performInitialLoad()
+            } else {
+                LoggingService.shared.logInfo("Waiting for network connectivity...")
+            }
         }
     }
 
-    /// Performs the initial data load with exponential backoff retry
+    /// Performs the initial data load
     private func performInitialLoad() {
         Task {
             var usageSuccess = false
@@ -148,19 +167,10 @@ class MenuBarManager: NSObject, ObservableObject {
                 }
             }
 
-            // If both failed and we haven't exceeded max retries, schedule another attempt
+            // Mark initial load as complete if at least one succeeded
             await MainActor.run {
-                if !usageSuccess && !statusSuccess && self.initialLoadRetryCount < self.maxInitialRetries {
-                    self.initialLoadRetryCount += 1
-                    // Exponential backoff: 2s, 4s, 8s, 16s, 32s
-                    let nextDelay = pow(2.0, Double(self.initialLoadRetryCount))
-                    LoggingService.shared.logInfo("Scheduling initial load retry #\(self.initialLoadRetryCount) in \(nextDelay)s")
-                    self.scheduleInitialLoad(delay: nextDelay)
-                } else if usageSuccess || statusSuccess {
-                    // At least one succeeded, reset retry count
-                    self.initialLoadRetryCount = 0
-                    self.initialLoadTimer?.invalidate()
-                    self.initialLoadTimer = nil
+                if usageSuccess || statusSuccess {
+                    self.hasCompletedInitialLoad = true
                 }
             }
         }
@@ -169,8 +179,7 @@ class MenuBarManager: NSObject, ObservableObject {
     func cleanup() {
         refreshTimer?.invalidate()
         refreshTimer = nil
-        initialLoadTimer?.invalidate()
-        initialLoadTimer = nil
+        networkMonitor.stopMonitoring()
         refreshIntervalObserver?.invalidate()
         refreshIntervalObserver = nil
         appearanceObserver?.invalidate()
