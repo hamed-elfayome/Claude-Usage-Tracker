@@ -14,7 +14,7 @@ protocol APIServiceProtocol {
     func saveSessionKey(_ key: String) throws
 
     // MARK: - Claude.ai API
-    func fetchOrganizationId() async throws -> String
+    func fetchOrganizationId(sessionKey: String?) async throws -> String
     func fetchUsageData() async throws -> ClaudeUsage
     func sendInitializationMessage() async throws
 

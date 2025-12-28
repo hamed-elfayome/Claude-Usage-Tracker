@@ -23,8 +23,8 @@ struct ClaudeCodeView: View {
         VStack(alignment: .leading, spacing: Spacing.sectionSpacing) {
             // Header
             SettingsHeader(
-                title: "Claude CLI Statusline",
-                subtitle: "Customize your terminal statusline display"
+                title: "claudecode.title".localized,
+                subtitle: "claudecode.subtitle".localized
             )
 
             Divider()
@@ -32,13 +32,13 @@ struct ClaudeCodeView: View {
             // Preview Card (keep as is - user loves it!)
             VStack(alignment: .leading, spacing: Spacing.md) {
                 HStack {
-                    Label("Live Preview", systemImage: "eye.fill")
+                    Label("claudecode.preview_label".localized, systemImage: "eye.fill")
                         .font(Typography.sectionHeader)
                         .foregroundColor(.primary)
 
                     Spacer()
 
-                    Text("Updates in real-time")
+                    Text("ui.updates_realtime".localized)
                         .font(Typography.caption)
                         .foregroundColor(.secondary)
                 }
@@ -58,7 +58,7 @@ struct ClaudeCodeView: View {
                                 )
                         )
 
-                    Text("This is how your statusline will appear in Claude CLI")
+                    Text("claudecode.preview_description".localized)
                         .font(Typography.caption)
                         .foregroundColor(.secondary)
                 }
@@ -71,23 +71,23 @@ struct ClaudeCodeView: View {
 
             // Components - Simple and clean
             VStack(alignment: .leading, spacing: Spacing.md) {
-                Text("Display Components")
+                Text("ui.display_components".localized)
                     .font(Typography.sectionHeader)
 
                 VStack(alignment: .leading, spacing: Spacing.sm) {
-                    Toggle("Directory name", isOn: $showDirectory)
+                    Toggle("claudecode.component_directory".localized, isOn: $showDirectory)
                         .font(Typography.label)
 
-                    Toggle("Git branch", isOn: $showBranch)
+                    Toggle("claudecode.component_branch".localized, isOn: $showBranch)
                         .font(Typography.label)
 
-                    Toggle("Usage statistics", isOn: $showUsage)
+                    Toggle("claudecode.component_usage".localized, isOn: $showUsage)
                         .font(Typography.label)
 
                     if showUsage {
                         HStack(spacing: 0) {
                             Spacer().frame(width: 20)
-                            Toggle("Progress bar", isOn: $showProgressBar)
+                            Toggle("claudecode.component_progressbar".localized, isOn: $showProgressBar)
                                 .font(Typography.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -98,14 +98,14 @@ struct ClaudeCodeView: View {
             // Action buttons - compact
             HStack(spacing: Spacing.buttonRowSpacing) {
                 Button(action: applyConfiguration) {
-                    Text("Apply")
+                    Text("claudecode.button_apply".localized)
                         .font(Typography.label)
                         .frame(minWidth: 70)
                 }
                 .buttonStyle(.borderedProminent)
 
                 Button(action: resetConfiguration) {
-                    Text("Reset")
+                    Text("claudecode.button_reset".localized)
                         .font(Typography.label)
                         .frame(minWidth: 70)
                 }
@@ -138,14 +138,14 @@ struct ClaudeCodeView: View {
 
             // Info - minimal
             VStack(alignment: .leading, spacing: Spacing.sm) {
-                Text("Requirements")
+                Text("ui.requirements".localized)
                     .font(Typography.sectionHeader)
 
-                Text("• Session key configured in Personal Usage tab")
+                Text("claudecode.requirement_sessionkey".localized)
                     .font(Typography.caption)
                     .foregroundColor(.secondary)
 
-                Text("• Restart Claude CLI after applying changes")
+                Text("claudecode.requirement_restart".localized)
                     .font(Typography.caption)
                     .foregroundColor(.secondary)
             }
@@ -162,14 +162,14 @@ struct ClaudeCodeView: View {
     private func applyConfiguration() {
         // Validate: at least one component must be selected
         guard showDirectory || showBranch || showUsage else {
-            statusMessage = "Please select at least one component to display"
+            statusMessage = "claudecode.error_no_components".localized
             isSuccess = false
             return
         }
 
         // Validate: session key must be configured
         guard StatuslineService.shared.hasValidSessionKey() else {
-            statusMessage = "Session key not configured. Please set it in the Personal Usage tab first."
+            statusMessage = "claudecode.error_no_sessionkey".localized
             isSuccess = false
             return
         }
@@ -195,10 +195,10 @@ struct ClaudeCodeView: View {
             // Update Claude CLI settings.json
             try StatuslineService.shared.updateClaudeCodeSettings(enabled: true)
 
-            statusMessage = "Configuration applied! Restart Claude CLI to see changes."
+            statusMessage = "claudecode.success_applied".localized
             isSuccess = true
         } catch {
-            statusMessage = "Error: \(error.localizedDescription)"
+            statusMessage = "error.generic".localized(with: error.localizedDescription)
             isSuccess = false
         }
     }
@@ -207,10 +207,10 @@ struct ClaudeCodeView: View {
     private func resetConfiguration() {
         do {
             try StatuslineService.shared.updateClaudeCodeSettings(enabled: false)
-            statusMessage = "Statusline disabled. Restart Claude CLI."
+            statusMessage = "claudecode.success_disabled".localized
             isSuccess = true
         } catch {
-            statusMessage = "Error: \(error.localizedDescription)"
+            statusMessage = "error.generic".localized(with: error.localizedDescription)
             isSuccess = false
         }
     }
@@ -231,7 +231,7 @@ struct ClaudeCodeView: View {
             parts.append(showProgressBar ? "Usage: 29% ▓▓▓░░░░░░░" : "Usage: 29%")
         }
 
-        return parts.isEmpty ? "No components selected" : parts.joined(separator: " │ ")
+        return parts.isEmpty ? "claudecode.preview_no_components".localized : parts.joined(separator: " │ ")
     }
 }
 

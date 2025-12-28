@@ -34,5 +34,24 @@
 	<string>public.app-category.utilities</string>
 	<key>NSSupportsSuddenTermination</key>
 	<false/>
+
+	<!-- Sparkle Update Configuration -->
+	<key>SUFeedURL</key>
+	<string>https://hamed-elfayome.github.io/Claude-Usage-Tracker/appcast.xml</string>
+
+	<key>SUPublicEDKey</key>
+	<string>1ol8Exuba8opOy5R93YCQVuBw5Y6q4MgtMrgnsh8Kec=</string>
+
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+
+	<key>SUScheduledCheckInterval</key>
+	<integer>86400</integer>
+
+	<key>SUAllowsAutomaticUpdates</key>
+	<true/>
+
+	<key>SUEnableInstallerLauncherService</key>
+	<true/>
 </dict>
 </plist>

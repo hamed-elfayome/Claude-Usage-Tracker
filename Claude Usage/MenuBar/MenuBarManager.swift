@@ -3,11 +3,12 @@ import SwiftUI
 import Combine
 
 class MenuBarManager: NSObject, ObservableObject {
-    private var statusItem: NSStatusItem?
+    private var statusItem: NSStatusItem?  // Legacy - kept for backwards compatibility
+    private var statusBarUIManager: StatusBarUIManager?
     private var refreshTimer: Timer?
     @Published private(set) var usage: ClaudeUsage = .empty
     @Published private(set) var status: ClaudeStatus = .unknown
-    @Published private(set) var apiUsage: APIUsage? = nil
+    @Published private(set) var apiUsage: APIUsage?
 
     // Popover for beautiful SwiftUI interface
     private var popover: NSPopover?
@@ -24,6 +25,9 @@ class MenuBarManager: NSObject, ObservableObject {
     // GitHub star prompt window reference
     private var githubPromptWindow: NSWindow?
 
+    // Track which button is currently showing the popover
+    private weak var currentPopoverButton: NSStatusBarButton?
+
     private let apiService = ClaudeAPIService()
     private let statusService = ClaudeStatusService()
     private let dataStore = DataStore.shared
@@ -38,20 +42,27 @@ class MenuBarManager: NSObject, ObservableObject {
     // Observer for icon style changes
     private var iconStyleObserver: NSObjectProtocol?
 
+    // Observer for icon configuration changes
+    private var iconConfigObserver: NSObjectProtocol?
+
+    // Observer for session key updates
+    private var sessionKeyObserver: NSObjectProtocol?
+
     // MARK: - Image Caching (CPU Optimization)
     private var cachedImage: NSImage?
     private var cachedImageKey: String = ""
     private var updateDebounceTimer: Timer?
+    private var cachedIsDarkMode: Bool = false
 
     func setup() {
-        // Create status item in menu bar
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        // Initialize cached appearance to avoid layout recursion
+        cachedIsDarkMode = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
 
-        if let button = statusItem?.button {
-            updateStatusButton(button, usage: usage)
-            button.action = #selector(togglePopover)
-            button.target = self
-        }
+        // Setup new multi-metric status bar system
+        let config = dataStore.loadMenuBarIconConfiguration()
+        statusBarUIManager = StatusBarUIManager()
+        statusBarUIManager?.delegate = self
+        statusBarUIManager?.setup(target: self, action: #selector(togglePopover), config: config)
 
         // Setup popover
         setupPopover()
@@ -59,9 +70,7 @@ class MenuBarManager: NSObject, ObservableObject {
         // Load saved data first (provides immediate feedback)
         if let savedUsage = dataStore.loadUsage() {
             usage = savedUsage
-            if let button = statusItem?.button {
-                updateStatusButton(button, usage: savedUsage)
-            }
+            updateAllStatusBarIcons()
         }
         if let savedAPIUsage = dataStore.loadAPIUsage() {
             apiUsage = savedAPIUsage
@@ -89,6 +98,12 @@ class MenuBarManager: NSObject, ObservableObject {
 
         // Observe icon style changes
         observeIconStyleChanges()
+
+        // Observe icon configuration changes
+        observeIconConfigChanges()
+
+        // Observe session key updates
+        observeSessionKeyUpdates()
     }
 
     func cleanup() {
@@ -103,6 +118,10 @@ class MenuBarManager: NSObject, ObservableObject {
             NotificationCenter.default.removeObserver(iconStyleObserver)
             self.iconStyleObserver = nil
         }
+        if let iconConfigObserver = iconConfigObserver {
+            NotificationCenter.default.removeObserver(iconConfigObserver)
+            self.iconConfigObserver = nil
+        }
         if let monitor = eventMonitor {
             NSEvent.removeMonitor(monitor)
             eventMonitor = nil
@@ -110,6 +129,8 @@ class MenuBarManager: NSObject, ObservableObject {
         detachedWindow?.close()
         detachedWindow = nil
         statusItem = nil
+        statusBarUIManager?.cleanup()
+        statusBarUIManager = nil
     }
 
     private func setupPopover() {
@@ -118,11 +139,11 @@ class MenuBarManager: NSObject, ObservableObject {
         popover.behavior = .semitransient  // Changed to allow detaching
         popover.animates = true
         popover.delegate = self
-        
+
         popover.contentViewController = createContentViewController()
         self.popover = popover
     }
-    
+
     private func createContentViewController() -> NSHostingController<PopoverContentView> {
         // Create SwiftUI content view
         let contentView = PopoverContentView(
@@ -138,44 +159,66 @@ class MenuBarManager: NSObject, ObservableObject {
                 self?.quitClicked()
             }
         )
-        
+
         return NSHostingController(rootView: contentView)
     }
-    
-    @objc private func togglePopover() {
-        guard let button = statusItem?.button else { return }
-        
+
+    @objc private func togglePopover(_ sender: Any?) {
+        // Determine which button was clicked
+        let clickedButton: NSStatusBarButton?
+        if let button = sender as? NSStatusBarButton {
+            clickedButton = button
+        } else {
+            // Fallback to primary button for backwards compatibility
+            clickedButton = statusBarUIManager?.primaryButton
+        }
+
+        guard let button = clickedButton else { return }
+
         // If there's a detached window, close it
         if let window = detachedWindow {
             window.close()
             detachedWindow = nil
+            currentPopoverButton = nil
             return
         }
-        
+
         // Otherwise toggle the popover
         if let popover = popover {
             if popover.isShown {
-                closePopover()
+                // Check if clicking the same button or a different one
+                if currentPopoverButton === button {
+                    // Same button - close the popover
+                    closePopover()
+                    currentPopoverButton = nil
+                } else {
+                    // Different button - reposition the popover
+                    popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+                    currentPopoverButton = button
+                }
             } else {
+                // Popover not shown - show it
                 // Recreate content if it was moved to a detached window
                 if popover.contentViewController == nil {
                     popover.contentViewController = createContentViewController()
                 }
                 popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+                currentPopoverButton = button
                 startMonitoringForOutsideClicks()
             }
         }
     }
-    
+
     private func closePopover() {
         popover?.performClose(nil)
         stopMonitoringForOutsideClicks()
+        currentPopoverButton = nil
     }
-    
+
     private func startMonitoringForOutsideClicks() {
         // Only monitor when popover is shown (not detached)
         // Stop monitoring if popover gets detached
-        eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
+        eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
             guard let self = self,
                   let popover = self.popover,
                   popover.isShown,
@@ -183,14 +226,14 @@ class MenuBarManager: NSObject, ObservableObject {
             self.closePopover()
         }
     }
-    
+
     private func stopMonitoringForOutsideClicks() {
         if let monitor = eventMonitor {
             NSEvent.removeMonitor(monitor)
             eventMonitor = nil
         }
     }
-    
+
     private func closePopoverOrWindow() {
         if let window = detachedWindow {
             window.close()
@@ -200,234 +243,35 @@ class MenuBarManager: NSObject, ObservableObject {
         }
     }
 
+    // MARK: - Status Bar Icon Updates
+
+    /// Updates all enabled status bar icons
+    private func updateAllStatusBarIcons() {
+        statusBarUIManager?.updateAllButtons(
+            usage: usage,
+            apiUsage: apiUsage,
+            manager: self
+        )
+    }
+
+    /// Updates a specific metric's status bar icon
+    private func updateStatusBarIcon(for metricType: MenuBarMetricType) {
+        statusBarUIManager?.updateButton(
+            for: metricType,
+            usage: usage,
+            apiUsage: apiUsage,
+            manager: self
+        )
+    }
+
+    // Legacy method kept for backwards compatibility (now uses new system)
     private func updateStatusButton(_ button: NSStatusBarButton, usage: ClaudeUsage) {
-        let iconStyle = dataStore.loadMenuBarIconStyle()
-        let isDarkAppearance = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-        let monochromeMode = dataStore.loadMonochromeMode()
-
-        // Generate cache key based on all factors that affect the image
-        let percentage = Int(usage.sessionPercentage)
-        let cacheKey = "\(percentage)_\(isDarkAppearance)_\(iconStyle.rawValue)_\(monochromeMode)"
-
-        // Check if we can reuse the cached image
-        if cachedImage != nil && cachedImageKey == cacheKey {
-            // Image hasn't changed, skip expensive redraw
-            return
-        }
-
-        // Debounce rapid updates to prevent rendering congestion
-        updateDebounceTimer?.invalidate()
-        updateDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: false) { [weak self] _ in
-            guard let self = self else { return }
-
-            // Create the image based on selected style
-            let image: NSImage
-            switch iconStyle {
-            case .battery:
-                image = self.createBatteryStyle(usage: usage, isDarkMode: isDarkAppearance, monochromeMode: monochromeMode)
-            case .progressBar:
-                image = self.createProgressBarStyle(usage: usage, isDarkMode: isDarkAppearance, monochromeMode: monochromeMode)
-            case .percentageOnly:
-                image = self.createPercentageOnlyStyle(usage: usage, isDarkMode: isDarkAppearance, monochromeMode: monochromeMode)
-            case .icon:
-                image = self.createIconWithBarStyle(usage: usage, isDarkMode: isDarkAppearance, monochromeMode: monochromeMode)
-            case .compact:
-                image = self.createCompactStyle(usage: usage, isDarkMode: isDarkAppearance, monochromeMode: monochromeMode)
-            }
-
-            // Cache the image and key
-            self.cachedImage = image
-            self.cachedImageKey = cacheKey
-
-            // Update the button image
-            button.image = image
-            button.image?.isTemplate = false
-            button.title = ""
-        }
+        // This method is deprecated but kept for any remaining references
+        // The new system handles updates through updateAllStatusBarIcons()
+        updateAllStatusBarIcons()
     }
 
     // MARK: - Icon Style: Battery (Classic)
-    private func createBatteryStyle(usage: ClaudeUsage, isDarkMode: Bool, monochromeMode: Bool) -> NSImage {
-        let percentage = CGFloat(usage.sessionPercentage) / 100.0
-
-        // Create a taller image to fit battery + text
-        let width: CGFloat = 42
-        let totalHeight: CGFloat = 28
-        let barHeight: CGFloat = 10
-        let image = NSImage(size: NSSize(width: width, height: totalHeight))
-
-        image.lockFocus()
-        defer { image.unlockFocus() }
-
-        // Choose outline and text color based on menu bar appearance
-        let outlineColor: NSColor = isDarkMode ? .white : .black
-        let textColor: NSColor = isDarkMode ? .white : .black
-
-        // Get color based on usage level or monochrome
-        let fillColor = monochromeMode ? (isDarkMode ? NSColor.white : NSColor.black) : getColorForUsageLevel(usage.statusLevel)
-
-        // Position and size calculations for the bar
-        let barY = totalHeight - barHeight - 4
-        let barWidth = width - 2
-        let padding: CGFloat = 2.0
-
-        // Draw outer capsule/container (at top) - clean rounded rectangle
-        let containerPath = NSBezierPath(roundedRect: NSRect(x: 1, y: barY, width: barWidth, height: barHeight), xRadius: 2.5, yRadius: 2.5)
-        outlineColor.withAlphaComponent(0.5).setStroke()
-        containerPath.lineWidth = 1.2
-        containerPath.stroke()
-
-        // Draw fill level inside - perfectly aligned with container
-        let fillWidth = (barWidth - padding * 2) * percentage
-        if fillWidth > 1 {
-            let fillPath = NSBezierPath(roundedRect: NSRect(x: 1 + padding, y: barY + padding, width: fillWidth, height: barHeight - padding * 2), xRadius: 1.5, yRadius: 1.5)
-            fillColor.setFill()
-            fillPath.fill()
-        }
-
-        // Draw "Claude" text below the battery
-        let textAttributes: [NSAttributedString.Key: Any] = [
-            .font: NSFont.systemFont(ofSize: 9, weight: .medium),
-            .foregroundColor: textColor.withAlphaComponent(0.85)
-        ]
-        let text = "Claude" as NSString
-        let textSize = text.size(withAttributes: textAttributes)
-        let textX = (width - textSize.width) / 2
-        let textY: CGFloat = 2
-        text.draw(at: NSPoint(x: textX, y: textY), withAttributes: textAttributes)
-
-        return image
-    }
-
-    // MARK: - Icon Style: Progress Bar
-    private func createProgressBarStyle(usage: ClaudeUsage, isDarkMode: Bool, monochromeMode: Bool) -> NSImage {
-        let width: CGFloat = 40
-        let height: CGFloat = 18
-        let image = NSImage(size: NSSize(width: width, height: height))
-
-        image.lockFocus()
-        defer { image.unlockFocus() }
-
-        let fillColor = monochromeMode ? (isDarkMode ? NSColor.white : NSColor.black) : getColorForUsageLevel(usage.statusLevel)
-        let backgroundColor: NSColor = isDarkMode ? NSColor.white.withAlphaComponent(0.2) : NSColor.black.withAlphaComponent(0.15)
-
-        // Progress bar
-        let barWidth: CGFloat = width - 2
-        let barHeight: CGFloat = 8
-        let barX: CGFloat = 1
-        let barY = (height - barHeight) / 2
-
-        // Background
-        let bgPath = NSBezierPath(roundedRect: NSRect(x: barX, y: barY, width: barWidth, height: barHeight), xRadius: 4, yRadius: 4)
-        backgroundColor.setFill()
-        bgPath.fill()
-
-        // Fill
-        let fillWidth = barWidth * CGFloat(usage.sessionPercentage / 100.0)
-        if fillWidth > 1 {
-            let fillPath = NSBezierPath(roundedRect: NSRect(x: barX, y: barY, width: fillWidth, height: barHeight), xRadius: 4, yRadius: 4)
-            fillColor.setFill()
-            fillPath.fill()
-        }
-
-        return image
-    }
-
-    // MARK: - Icon Style: Percentage Only
-    private func createPercentageOnlyStyle(usage: ClaudeUsage, isDarkMode: Bool, monochromeMode: Bool) -> NSImage {
-        let percentageText = "\(Int(usage.sessionPercentage))%"
-        let font = NSFont.monospacedDigitSystemFont(ofSize: 13, weight: .semibold)
-        let fillColor = monochromeMode ? (isDarkMode ? NSColor.white : NSColor.black) : getColorForUsageLevel(usage.statusLevel)
-
-        let attributes: [NSAttributedString.Key: Any] = [
-            .font: font,
-            .foregroundColor: fillColor
-        ]
-
-        let textSize = percentageText.size(withAttributes: attributes)
-        let image = NSImage(size: NSSize(width: textSize.width + 2, height: 18))
-
-        image.lockFocus()
-        defer { image.unlockFocus() }
-
-        let textY = (18 - textSize.height) / 2
-        percentageText.draw(at: NSPoint(x: 1, y: textY), withAttributes: attributes)
-
-        return image
-    }
-
-    // MARK: - Icon Style: Icon with Bar
-    private func createIconWithBarStyle(usage: ClaudeUsage, isDarkMode: Bool, monochromeMode: Bool) -> NSImage {
-        let size: CGFloat = 20
-        let image = NSImage(size: NSSize(width: size, height: size))
-
-        image.lockFocus()
-        defer { image.unlockFocus() }
-
-        let textColor: NSColor = isDarkMode ? .white : .black
-        let fillColor = monochromeMode ? (isDarkMode ? NSColor.white : NSColor.black) : getColorForUsageLevel(usage.statusLevel)
-
-        // Progress arc (outer ring)
-        let percentage = usage.sessionPercentage / 100.0
-        let center = NSPoint(x: size / 2, y: size / 2)
-        let radius = (size - 3.5) / 2
-        let startAngle: CGFloat = 90
-        let endAngle = startAngle + (360 * CGFloat(percentage))
-
-        // Background ring
-        let bgArcPath = NSBezierPath()
-        bgArcPath.appendArc(withCenter: center, radius: radius, startAngle: 0, endAngle: 360, clockwise: false)
-        textColor.withAlphaComponent(0.15).setStroke()
-        bgArcPath.lineWidth = 3.5
-        bgArcPath.lineCapStyle = .round
-        bgArcPath.stroke()
-
-        // Progress ring
-        if percentage > 0 {
-            let arcPath = NSBezierPath()
-            arcPath.appendArc(withCenter: center, radius: radius, startAngle: startAngle, endAngle: endAngle, clockwise: false)
-            fillColor.setStroke()
-            arcPath.lineWidth = 3.5
-            arcPath.lineCapStyle = .round
-            arcPath.stroke()
-        }
-
-        return image
-    }
-
-    // MARK: - Icon Style: Compact
-    private func createCompactStyle(usage: ClaudeUsage, isDarkMode: Bool, monochromeMode: Bool) -> NSImage {
-        let width: CGFloat = 8
-        let height: CGFloat = 18
-        let image = NSImage(size: NSSize(width: width, height: height))
-
-        image.lockFocus()
-        defer { image.unlockFocus() }
-
-        let fillColor = monochromeMode ? (isDarkMode ? NSColor.white : NSColor.black) : getColorForUsageLevel(usage.statusLevel)
-        let dotSize: CGFloat = 6
-
-        // Draw dot
-        let dotY = (height - dotSize) / 2
-        let dotRect = NSRect(x: (width - dotSize) / 2, y: dotY, width: dotSize, height: dotSize)
-        let dotPath = NSBezierPath(ovalIn: dotRect)
-        fillColor.setFill()
-        dotPath.fill()
-
-        return image
-    }
-
-    // Helper method to get color based on usage level
-    private func getColorForUsageLevel(_ level: UsageStatusLevel) -> NSColor {
-        switch level {
-        case .safe:
-            return NSColor.systemGreen
-        case .moderate:
-            return NSColor.systemOrange
-        case .critical:
-            return NSColor.systemRed
-        }
-    }
 
     private func startAutoRefresh() {
         let interval = dataStore.loadRefreshInterval()
@@ -435,7 +279,7 @@ class MenuBarManager: NSObject, ObservableObject {
             self?.refreshUsage()
         }
     }
-    
+
     private func restartAutoRefresh() {
         // Invalidate existing timer
         refreshTimer?.invalidate()
@@ -444,7 +288,7 @@ class MenuBarManager: NSObject, ObservableObject {
         // Start new timer with updated interval
         startAutoRefresh()
     }
-    
+
     private func observeRefreshIntervalChanges() {
         // Observe the same UserDefaults instance that DataStore uses
         refreshIntervalObserver = dataStore.userDefaults.observe(\.refreshInterval, options: [.new]) { [weak self] _, change in
@@ -459,10 +303,15 @@ class MenuBarManager: NSObject, ObservableObject {
     private func observeAppearanceChanges() {
         // Observe appearance changes on NSApp (fires less frequently than button)
         // This optimization reduces redundant redraws
-        appearanceObserver = NSApp.observe(\.effectiveAppearance, options: [.new]) { [weak self] _, _ in
+        appearanceObserver = NSApp.observe(\.effectiveAppearance, options: [.new]) { [weak self] _, change in
             guard let self = self,
                   let button = self.statusItem?.button else { return }
+
+            // Cache the dark mode state to avoid querying it during layout
+            let isDark = change.newValue?.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+
             DispatchQueue.main.async {
+                self.cachedIsDarkMode = isDark
                 // Clear cache to force redraw with new appearance
                 self.cachedImageKey = ""
                 self.updateStatusButton(button, usage: self.usage)
@@ -477,11 +326,61 @@ class MenuBarManager: NSObject, ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            guard let self = self,
-                  let button = self.statusItem?.button else { return }
+            guard let self = self else { return }
             // Clear cache to force redraw with new style
             self.cachedImageKey = ""
-            self.updateStatusButton(button, usage: self.usage)
+            self.updateAllStatusBarIcons()
+        }
+    }
+
+    private var lastKnownConfig: MenuBarIconConfiguration?
+
+    private func observeSessionKeyUpdates() {
+        // Observe session key updates to trigger immediate refresh
+        sessionKeyObserver = NotificationCenter.default.addObserver(
+            forName: .sessionKeyUpdated,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+            LoggingService.shared.logInfo("Session key updated - triggering immediate refresh")
+            self.refreshUsage()
+        }
+    }
+
+    private func observeIconConfigChanges() {
+        // Observe configuration changes (metrics enabled/disabled, order changes, etc.)
+        iconConfigObserver = NotificationCenter.default.addObserver(
+            forName: .menuBarIconConfigChanged,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+
+            // Reload configuration
+            let newConfig = self.dataStore.loadMenuBarIconConfiguration()
+
+            // Check if enabled metrics actually changed
+            let oldEnabledMetrics = Set(self.lastKnownConfig?.enabledMetrics.map { $0.metricType } ?? [])
+            let newEnabledMetrics = Set(newConfig.enabledMetrics.map { $0.metricType })
+
+            if oldEnabledMetrics != newEnabledMetrics {
+                // Metrics changed - recreate status bar items
+                self.statusBarUIManager?.updateConfiguration(
+                    target: self,
+                    action: #selector(self.togglePopover),
+                    config: newConfig
+                )
+            }
+            // If only styling changed, skip status bar recreation
+
+            // Always update the icons (styling might have changed)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self.updateAllStatusBarIcons()
+            }
+
+            // Save current config for next comparison
+            self.lastKnownConfig = newConfig
         }
     }
 
@@ -491,6 +390,7 @@ class MenuBarManager: NSObject, ObservableObject {
             async let usageResult = apiService.fetchUsageData()
             async let statusResult = statusService.fetchStatus()
 
+            // Fetch usage with proper error handling
             do {
                 let newUsage = try await usageResult
 
@@ -498,16 +398,26 @@ class MenuBarManager: NSObject, ObservableObject {
                     self.usage = newUsage
                     dataStore.saveUsage(newUsage)
 
-                    // Update menu bar button
-                    if let button = statusItem?.button {
-                        updateStatusButton(button, usage: newUsage)
-                    }
+                    // Update all menu bar icons
+                    self.updateAllStatusBarIcons()
 
                     // Check if we should send notifications
                     NotificationManager.shared.checkAndNotify(usage: newUsage)
                 }
+
+                // Record success for circuit breaker
+                ErrorRecovery.shared.recordSuccess(for: .api)
+
             } catch {
-                // Silently handle errors - user can check manually
+                // Convert to AppError and log
+                let appError = AppError.wrap(error)
+                ErrorLogger.shared.log(appError, severity: .warning)
+
+                // Record failure for circuit breaker
+                ErrorRecovery.shared.recordFailure(for: .api)
+
+                // Don't show error to user for background refresh - just log it
+                print("⚠️ [\(appError.code.rawValue)] Failed to fetch usage: \(appError.message)")
             }
 
             // Fetch status separately (don't fail if usage fetch works)
@@ -517,7 +427,12 @@ class MenuBarManager: NSObject, ObservableObject {
                     self.status = newStatus
                 }
             } catch {
-                // Silently fail - status will remain unknown
+                // Convert to AppError and log
+                let appError = AppError.wrap(error)
+                ErrorLogger.shared.log(appError, severity: .info)
+
+                // Don't show error for status - it's not critical
+                print("ℹ️ [\(appError.code.rawValue)] Failed to fetch status: \(appError.message)")
             }
 
             // Fetch API usage if enabled
@@ -531,7 +446,11 @@ class MenuBarManager: NSObject, ObservableObject {
                         dataStore.saveAPIUsage(newAPIUsage)
                     }
                 } catch {
-                    // Silently fail - API usage will remain nil
+                    // Convert to AppError and log
+                    let appError = AppError.wrap(error)
+                    ErrorLogger.shared.log(appError, severity: .info)
+
+                    print("ℹ️ [\(appError.code.rawValue)] Failed to fetch API usage: \(appError.message)")
                 }
             }
         }
@@ -563,6 +482,7 @@ class MenuBarManager: NSObject, ObservableObject {
             window.setContentSize(NSSize(width: 720, height: 600))
             window.center()
             window.isReleasedWhenClosed = false
+            window.isRestorable = false
 
             // Set window delegate to clean up reference when closed
             window.delegate = self
@@ -615,6 +535,7 @@ class MenuBarManager: NSObject, ObservableObject {
         window.setContentSize(NSSize(width: 300, height: 145))
         window.center()
         window.isReleasedWhenClosed = false
+        window.isRestorable = false
         window.level = .floating
         window.delegate = self
 
@@ -674,28 +595,38 @@ extension MenuBarManager: NSPopoverDelegate {
         // Allow popover to be detached by dragging
         return true
     }
-    
+
     func detachableWindow(for popover: NSPopover) -> NSWindow? {
         // Stop monitoring for outside clicks when detaching
         stopMonitoringForOutsideClicks()
-        
+
         // Create a new window with NEW content view controller
         // This prevents the popover from losing its content
         let newContentViewController = createContentViewController()
-        
+
         let window = NSWindow(contentViewController: newContentViewController)
-        window.title = "Claude Usage"
+        window.title = "app.window.main".localized
         window.styleMask = [.titled, .closable]  // Close-only, minimal and clean
         window.setContentSize(NSSize(width: 320, height: 600))
         window.isReleasedWhenClosed = false
         window.level = .floating  // Keep it above other windows
         window.isRestorable = false  // Don't persist across app restarts
         window.delegate = self
-        
+
         // Store reference to the detached window
         detachedWindow = window
-        
+
         return window
+    }
+}
+
+// MARK: - StatusBarUIManagerDelegate
+extension MenuBarManager: StatusBarUIManagerDelegate {
+    func statusBarAppearanceDidChange() {
+        // Update cached dark mode state
+        cachedIsDarkMode = NSApp.effectiveAppearance.name == .darkAqua
+        // Update all icons with new appearance
+        updateAllStatusBarIcons()
     }
 }
 

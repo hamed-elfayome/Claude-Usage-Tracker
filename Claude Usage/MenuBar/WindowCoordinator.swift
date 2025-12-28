@@ -89,10 +89,11 @@ final class WindowCoordinator: NSObject {
             backing: .buffered,
             defer: false
         )
-        window.title = "Claude Usage"
+        window.title = "app.window.main".localized
         window.contentViewController = contentViewController
         window.level = .floating
         window.center()
+        window.isRestorable = false
         window.makeKeyAndOrderFront(nil)
 
         // Clear popover's content so it can be recreated later
@@ -129,9 +130,10 @@ final class WindowCoordinator: NSObject {
                 backing: .buffered,
                 defer: false
             )
-            window.title = "Settings"
+            window.title = "app.window.settings".localized
             window.contentViewController = hostingController
             window.center()
+            window.isRestorable = false
             window.makeKeyAndOrderFront(nil)
             window.delegate = self
 
@@ -159,9 +161,10 @@ final class WindowCoordinator: NSObject {
             backing: .buffered,
             defer: false
         )
-        window.title = "Support Claude Usage Tracker"
+        window.title = "app.window.github_prompt".localized
         window.contentViewController = promptView
         window.center()
+        window.isRestorable = false
         window.makeKeyAndOrderFront(nil)
         window.delegate = self
 
@@ -172,7 +175,7 @@ final class WindowCoordinator: NSObject {
     // MARK: - Event Monitoring
 
     private func startMonitoringForOutsideClicks() {
-        eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
+        eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
             if let popover = self?.popover, popover.isShown {
                 self?.closePopover()
             }

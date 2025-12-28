@@ -8,8 +8,6 @@ struct SetupWizardView: View {
     @State private var validationState: ValidationState = .idle
     @State private var showInstructions = false
     @State private var autoStartSessionEnabled = DataStore.shared.loadAutoStartSessionEnabled()
-    @State private var iconStyle: MenuBarIconStyle = DataStore.shared.loadMenuBarIconStyle()
-    @State private var monochromeMode: Bool = DataStore.shared.loadMonochromeMode()
 
     private let apiService = ClaudeAPIService()
 
@@ -31,10 +29,10 @@ struct SetupWizardView: View {
                     .frame(width: 80, height: 80)
 
                 VStack(spacing: 8) {
-                    Text("Welcome to Claude Usage Tracker")
+                    Text("setup.welcome.title".localized)
                         .font(.system(size: 24, weight: .semibold))
 
-                    Text("Configure your API access to start tracking usage")
+                    Text("setup.welcome.subtitle".localized)
                         .font(.system(size: 13))
                         .foregroundColor(.secondary)
                 }
@@ -50,17 +48,17 @@ struct SetupWizardView: View {
                     // Step 1: Get Session Key
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
-                            Text("1")
+                            Text("setup.step_number_1".localized)
                                 .font(.system(size: 18, weight: .semibold))
                                 .foregroundColor(.white)
                                 .frame(width: 24, height: 24)
                                 .background(Circle().fill(Color.accentColor))
 
-                            Text("Get Your Session Key")
+                            Text("setup.step.get_session_key".localized)
                                 .font(.system(size: 16, weight: .semibold))
                         }
 
-                        Text("You'll need to extract your session key from claude.ai")
+                        Text("setup.step.get_session_key.description".localized)
                             .font(.system(size: 13))
                             .foregroundColor(.secondary)
 
@@ -72,7 +70,7 @@ struct SetupWizardView: View {
                             }) {
                                 HStack {
                                     Image(systemName: "safari")
-                                    Text("Open claude.ai")
+                                    Text("setup.open_claude_ai".localized)
                                 }
                                 .font(.system(size: 12))
                                 .frame(maxWidth: .infinity)
@@ -82,7 +80,7 @@ struct SetupWizardView: View {
                             Button(action: { showInstructions.toggle() }) {
                                 HStack {
                                     Image(systemName: showInstructions ? "chevron.up" : "chevron.down")
-                                    Text(showInstructions ? "Hide" : "Show Instructions")
+                                    Text(showInstructions ? "setup.hide_instructions".localized : "setup.show_instructions".localized)
                                 }
                                 .font(.system(size: 12))
                                 .frame(maxWidth: .infinity)
@@ -92,10 +90,10 @@ struct SetupWizardView: View {
 
                         if showInstructions {
                             VStack(alignment: .leading, spacing: 8) {
-                                InstructionRow(text: "Open Developer Tools (F12 or Cmd+Option+I)")
-                                InstructionRow(text: "Go to Application/Storage → Cookies → https://claude.ai")
-                                InstructionRow(text: "Find the 'sessionKey' cookie")
-                                InstructionRow(text: "Double-click its Value and copy (Cmd+C)")
+                                InstructionRow(text: "setup.instruction.step1".localized)
+                                InstructionRow(text: "setup.instruction.step2".localized)
+                                InstructionRow(text: "setup.instruction.step3".localized)
+                                InstructionRow(text: "setup.instruction.step4".localized)
                             }
                             .padding(16)
                             .background(
@@ -108,17 +106,17 @@ struct SetupWizardView: View {
                     // Step 2: Enter Key
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
-                            Text("2")
+                            Text("setup.step_number_2".localized)
                                 .font(.system(size: 18, weight: .semibold))
                                 .foregroundColor(.white)
                                 .frame(width: 24, height: 24)
                                 .background(Circle().fill(Color.accentColor))
 
-                            Text("Enter Your Session Key")
+                            Text("setup.step.enter_session_key".localized)
                                 .font(.system(size: 16, weight: .semibold))
                         }
 
-                        TextField("sk-ant-sid-...", text: $sessionKey)
+                        TextField("personal.placeholder_session_key".localized, text: $sessionKey)
                             .textFieldStyle(.plain)
                             .font(.system(size: 12, design: .monospaced))
                             .padding(10)
@@ -131,14 +129,14 @@ struct SetupWizardView: View {
                                     )
                             )
 
-                        Text("Paste the sessionKey value you copied")
+                        Text("setup.paste_session_key".localized)
                             .font(.system(size: 11))
                             .foregroundColor(.secondary)
                     }
 
                     // Validation Feedback
-                    if case .success(let message) = validationState {
-                        WizardStatusBox(message: message, type: .success)
+                    if case .success = validationState {
+                        WizardStatusBox(message: "setup.validation.success".localized, type: .success)
                     } else if case .error(let message) = validationState {
                         WizardStatusBox(message: message, type: .error)
                     }
@@ -149,11 +147,11 @@ struct SetupWizardView: View {
                             .padding(.vertical, 4)
 
                         HStack(spacing: 6) {
-                            Text("Auto-start session on reset")
+                            Text("setup.auto_start_session".localized)
                                 .font(.system(size: 13, weight: .semibold))
 
                             // BETA badge
-                            Text("BETA")
+                            Text("session.beta_badge".localized)
                                 .font(.system(size: 9, weight: .bold))
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 6)
@@ -164,37 +162,16 @@ struct SetupWizardView: View {
                                 )
                         }
 
-                        Text("Automatically send 'Hi' to Claude 3.5 Haiku when your session resets to 0%. This keeps your session always ready without manual intervention.")
+                        Text("setup.auto_start_session.description".localized)
                             .font(.system(size: 11))
                             .foregroundColor(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
 
                         Toggle(isOn: $autoStartSessionEnabled) {
-                            Text("Enable auto-start session")
+                            Text("setup.enable_auto_start".localized)
                                 .font(.system(size: 12, weight: .medium))
                         }
                         .toggleStyle(.switch)
-                    }
-                    .padding(.top, 8)
-
-                    // Icon Appearance
-                    VStack(alignment: .leading, spacing: 12) {
-                        Divider()
-                            .padding(.vertical, 4)
-
-                        Text("Menu Bar Appearance")
-                            .font(.system(size: 13, weight: .semibold))
-
-                        Text("Choose your preferred icon style")
-                            .font(.system(size: 11))
-                            .foregroundColor(.secondary)
-
-                        IconStylePicker(selectedStyle: $iconStyle)
-
-                        Toggle("Monochrome (Adaptive)", isOn: $monochromeMode)
-                            .toggleStyle(.switch)
-                            .font(.system(size: 12))
-                            .foregroundColor(.secondary)
                     }
                     .padding(.top, 8)
                 }
@@ -206,7 +183,7 @@ struct SetupWizardView: View {
             // Footer
             VStack(spacing: 8) {
                 HStack {
-                    Button("Cancel") {
+                    Button("common.cancel".localized) {
                         dismiss()
                     }
                     .buttonStyle(.bordered)
@@ -214,12 +191,9 @@ struct SetupWizardView: View {
                     Spacer()
 
                     if case .success = validationState {
-                        Button("Done") {
+                        Button("common.done".localized) {
                             DataStore.shared.saveHasCompletedSetup(true)
                             DataStore.shared.saveAutoStartSessionEnabled(autoStartSessionEnabled)
-                            DataStore.shared.saveMenuBarIconStyle(iconStyle)
-                            DataStore.shared.saveMonochromeMode(monochromeMode)
-                            NotificationCenter.default.post(name: .menuBarIconStyleChanged, object: nil)
                             dismiss()
                         }
                         .buttonStyle(.borderedProminent)
@@ -230,7 +204,7 @@ struct SetupWizardView: View {
                                     .scaleEffect(0.6)
                                     .frame(width: 60)
                             } else {
-                                Text("Validate")
+                                Text("common.validate".localized)
                                     .frame(width: 60)
                             }
                         }
@@ -241,33 +215,47 @@ struct SetupWizardView: View {
             }
             .padding(20)
         }
-        .frame(width: 580, height: 700)
+        .frame(width: 580, height: 620)
     }
 
     private func validateAndSave() {
-        guard !sessionKey.isEmpty else {
-            validationState = .error("Please enter your session key")
+        // Step 1: Comprehensive validation using professional validator
+        let validator = SessionKeyValidator()
+        let validationResult = validator.validationStatus(sessionKey)
+
+        guard validationResult.isValid else {
+            // Show detailed error message from validator
+            validationState = .error(validationResult.errorMessage ?? "Invalid session key")
             return
         }
 
-        guard sessionKey.hasPrefix("sk-ant-") else {
-            validationState = .error("Invalid format. Should start with 'sk-ant-'")
-            return
-        }
-
+        // Step 2: Start validation process
         validationState = .validating
 
         Task {
             do {
+                // Save with professional validation (will validate again internally)
                 try apiService.saveSessionKey(sessionKey)
-                let orgId = try await apiService.fetchOrganizationId()
+
+                // Test the connection
+                _ = try await apiService.fetchOrganizationId()
 
                 await MainActor.run {
-                    validationState = .success("Connected to \(orgId)")
+                    validationState = .success("setup.validation.success".localized)
+
+                    // Trigger immediate refresh of usage data
+                    NotificationCenter.default.post(name: .sessionKeyUpdated, object: nil)
                 }
+
             } catch {
+                // Convert to AppError and log
+                let appError = AppError.wrap(error)
+                ErrorLogger.shared.log(appError, severity: .error)
+
                 await MainActor.run {
-                    validationState = .error("Connection failed")
+                    // Show user-friendly error message with error code
+                    let errorMessage = "\(appError.message)\n\nError Code: \(appError.code.rawValue)"
+                    validationState = .error(errorMessage)
                 }
             }
         }
@@ -336,4 +324,3 @@ struct WizardStatusBox: View {
 #Preview {
     SetupWizardView()
 }
-

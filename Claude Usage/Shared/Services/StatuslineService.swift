@@ -12,27 +12,24 @@ class StatuslineService {
 
     /// Swift script that fetches Claude usage data from the API.
     /// Installed to ~/.claude/fetch-claude-usage.swift and executed by the bash statusline script.
-    private let swiftScript = """
+    /// The session key is injected into this script when statusline is enabled.
+    private func generateSwiftScript(sessionKey: String) -> String {
+        return """
 #!/usr/bin/env swift
 
 import Foundation
 func readSessionKey() -> String? {
-    let sessionKeyPath = FileManager.default.homeDirectoryForCurrentUser
-        .appendingPathComponent(".claude-session-key")
-
-    guard FileManager.default.fileExists(atPath: sessionKeyPath.path) else {
-        return nil
-    }
-
-    guard let key = try? String(contentsOf: sessionKeyPath, encoding: .utf8) else {
-        return nil
-    }
-
-    let trimmedKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
+    // Session key injected from Keychain by Claude Usage app
+    let injectedKey = "\(sessionKey)"
+    let trimmedKey = injectedKey.trimmingCharacters(in: .whitespacesAndNewlines)
     return trimmedKey.isEmpty ? nil : trimmedKey
 }
 func fetchOrganizationId(sessionKey: String) async throws -> String {
-    let url = URL(string: "https://claude.ai/api/organizations")!
+    // Build URL safely
+    guard let url = URL(string: "https://claude.ai/api/organizations") else {
+        throw NSError(domain: "ClaudeAPI", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
+    }
+
     var request = URLRequest(url: url)
     request.setValue("sessionKey=\\(sessionKey)", forHTTPHeaderField: "Cookie")
     request.setValue("application/json", forHTTPHeaderField: "Accept")
@@ -57,7 +54,15 @@ func fetchOrganizationId(sessionKey: String) async throws -> String {
     return firstOrg.uuid
 }
 func fetchUsageData(sessionKey: String, orgId: String) async throws -> (utilization: Int, resetsAt: String?) {
-    let url = URL(string: "https://claude.ai/api/organizations/\\(orgId)/usage")!
+    // Build URL safely - validate orgId doesn't contain path traversal
+    guard !orgId.contains(".."), !orgId.contains("/") else {
+        throw NSError(domain: "ClaudeAPI", code: 5, userInfo: [NSLocalizedDescriptionKey: "Invalid organization ID"])
+    }
+
+    guard let url = URL(string: "https://claude.ai/api/organizations/\\(orgId)/usage") else {
+        throw NSError(domain: "ClaudeAPI", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
+    }
+
     var request = URLRequest(url: url)
     request.setValue("sessionKey=\\(sessionKey)", forHTTPHeaderField: "Cookie")
     request.setValue("application/json", forHTTPHeaderField: "Accept")
@@ -107,6 +112,19 @@ Task {
 
 // Keep script alive while async Task executes
 RunLoop.main.run()
+"""
+    }
+
+    /// Placeholder Swift script for when statusline is disabled
+    /// This script returns an error indicating no session key is available
+    private let placeholderSwiftScript = """
+#!/usr/bin/env swift
+
+import Foundation
+
+// No session key available - statusline is disabled
+print("ERROR:NO_SESSION_KEY")
+exit(1)
 """
 
     /// Bash script that builds the statusline display.
@@ -262,26 +280,60 @@ printf "%s\\n" "$output"
 
     // MARK: - Installation
 
-    func installScripts() throws {
+    /// Installs statusline scripts with session key injection
+    /// - Parameter injectSessionKey: If true, injects the session key from Keychain into the Swift script
+    func installScripts(injectSessionKey: Bool = false) throws {
         let claudeDir = Constants.ClaudePaths.claudeDirectory
 
         if !FileManager.default.fileExists(atPath: claudeDir.path) {
             try FileManager.default.createDirectory(at: claudeDir, withIntermediateDirectories: true)
         }
 
+        // Install Swift script (with or without session key)
         let swiftDestination = claudeDir.appendingPathComponent("fetch-claude-usage.swift")
-        try swiftScript.write(to: swiftDestination, atomically: true, encoding: .utf8)
+        let swiftScriptContent: String
+
+        if injectSessionKey {
+            // Load session key from Keychain and inject it
+            guard let sessionKey = try KeychainService.shared.load(for: .claudeSessionKey) else {
+                throw StatuslineError.sessionKeyNotFound
+            }
+            swiftScriptContent = generateSwiftScript(sessionKey: sessionKey)
+            LoggingService.shared.log("Injected session key into statusline Swift script")
+        } else {
+            // Install placeholder script
+            swiftScriptContent = placeholderSwiftScript
+            LoggingService.shared.log("Installed placeholder statusline Swift script")
+        }
+
+        try swiftScriptContent.write(to: swiftDestination, atomically: true, encoding: .utf8)
         try FileManager.default.setAttributes(
             [.posixPermissions: 0o755],
             ofItemAtPath: swiftDestination.path
         )
 
+        // Install bash script
         let bashDestination = claudeDir.appendingPathComponent("statusline-command.sh")
         try bashScript.write(to: bashDestination, atomically: true, encoding: .utf8)
         try FileManager.default.setAttributes(
             [.posixPermissions: 0o755],
             ofItemAtPath: bashDestination.path
         )
+    }
+
+    /// Removes the session key from the statusline Swift script
+    func removeSessionKeyFromScript() throws {
+        let swiftDestination = Constants.ClaudePaths.claudeDirectory
+            .appendingPathComponent("fetch-claude-usage.swift")
+
+        // Replace with placeholder script that returns error
+        try placeholderSwiftScript.write(to: swiftDestination, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes(
+            [.posixPermissions: 0o755],
+            ofItemAtPath: swiftDestination.path
+        )
+
+        LoggingService.shared.log("Removed session key from statusline Swift script")
     }
 
     // MARK: - Configuration
@@ -306,6 +358,8 @@ SHOW_PROGRESS_BAR=\(showProgressBar ? "1" : "0")
     }
 
     /// Enables or disables statusline in Claude Code settings.json
+    /// When enabling, also injects the session key into the Swift script
+    /// When disabling, removes the session key from the Swift script
     func updateClaudeCodeSettings(enabled: Bool) throws {
         let settingsPath = Constants.ClaudePaths.claudeDirectory
             .appendingPathComponent("settings.json")
@@ -314,6 +368,10 @@ SHOW_PROGRESS_BAR=\(showProgressBar ? "1" : "0")
         let commandPath = "\(homeDir)/.claude/statusline-command.sh"
 
         if enabled {
+            // Install scripts with session key injection
+            try installScripts(injectSessionKey: true)
+
+            // Update settings.json
             var settings: [String: Any] = [:]
 
             if FileManager.default.fileExists(atPath: settingsPath.path) {
@@ -331,6 +389,10 @@ SHOW_PROGRESS_BAR=\(showProgressBar ? "1" : "0")
             let jsonData = try JSONSerialization.data(withJSONObject: settings, options: .prettyPrinted)
             try jsonData.write(to: settingsPath)
         } else {
+            // Remove session key from Swift script
+            try removeSessionKeyFromScript()
+
+            // Update settings.json
             if FileManager.default.fileExists(atPath: settingsPath.path) {
                 let existingData = try Data(contentsOf: settingsPath)
                 if var settings = try JSONSerialization.jsonObject(with: existingData) as? [String: Any] {
@@ -356,17 +418,27 @@ SHOW_PROGRESS_BAR=\(showProgressBar ? "1" : "0")
                FileManager.default.fileExists(atPath: bashScript.path)
     }
 
-    /// Checks if a valid session key is configured
+    /// Checks if a valid session key is configured in Keychain using professional validator
     func hasValidSessionKey() -> Bool {
-        let sessionKeyPath = Constants.ClaudePaths.homeDirectory
-            .appendingPathComponent(".claude-session-key")
-
-        guard FileManager.default.fileExists(atPath: sessionKeyPath.path),
-              let key = try? String(contentsOf: sessionKeyPath, encoding: .utf8) else {
+        guard let key = try? KeychainService.shared.load(for: .claudeSessionKey) else {
             return false
         }
 
-        let trimmedKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
-        return !trimmedKey.isEmpty && trimmedKey.hasPrefix("sk-ant-")
+        // Use professional validator for comprehensive validation
+        let validator = SessionKeyValidator()
+        return validator.isValid(key)
+    }
+}
+
+// MARK: - StatuslineError
+
+enum StatuslineError: Error, LocalizedError {
+    case sessionKeyNotFound
+
+    var errorDescription: String? {
+        switch self {
+        case .sessionKeyNotFound:
+            return "Session key not found in Keychain. Please configure your session key first."
+        }
     }
 }

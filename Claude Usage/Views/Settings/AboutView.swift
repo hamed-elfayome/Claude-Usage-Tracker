@@ -31,12 +31,27 @@ struct AboutView: View {
                         .frame(width: 64, height: 64)
 
                     VStack(spacing: Spacing.xs) {
-                        Text("Claude Usage Tracker")
+                        Text("app.name".localized)
                             .font(Typography.title)
 
-                        Text("Version \(appVersion)")
+                        Text("about.version".localized(with: appVersion))
                             .font(Typography.caption)
                             .foregroundColor(.secondary)
+
+                        // Check for Updates button
+                        Button(action: {
+                            UpdateManager.shared.checkForUpdates()
+                        }) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "arrow.down.circle")
+                                    .font(.system(size: 10))
+                                Text("about.check_updates".localized)
+                                    .font(.system(size: 11))
+                            }
+                            .foregroundColor(.blue)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.top, 4)
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -46,7 +61,7 @@ struct AboutView: View {
 
                 // Creator
                 VStack(alignment: .leading, spacing: Spacing.md) {
-                    Text("Created By")
+                    Text("about.created_by".localized)
                         .font(Typography.sectionHeader)
 
                     Button(action: {
@@ -82,18 +97,18 @@ struct AboutView: View {
                 // Contributors
                 if !contributors.isEmpty {
                     VStack(alignment: .leading, spacing: Spacing.md) {
-                        Text("Contributors (\(contributors.count))")
+                        Text("about.contributors".localized(with: contributors.count))
                             .font(Typography.sectionHeader)
 
                         ContributorsGridView(contributors: contributors)
                     }
                 } else if isLoadingContributors {
                     VStack(alignment: .leading, spacing: Spacing.md) {
-                        Text("Contributors")
+                        Text("about.contributors_loading".localized)
                             .font(Typography.sectionHeader)
 
                         ProgressView()
-                            .scaleEffect(0.7)
+                            .controlSize(.small)
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding(.vertical, Spacing.md)
                     }
@@ -101,23 +116,23 @@ struct AboutView: View {
 
                 // Links
                 VStack(alignment: .leading, spacing: Spacing.md) {
-                    Text("Links")
+                    Text("about.links".localized)
                         .font(Typography.sectionHeader)
 
                     VStack(spacing: Spacing.sm) {
-                        LinkButton(title: "Star on GitHub", icon: "star.fill") {
+                        LinkButton(title: "about.star_github".localized, icon: "star.fill") {
                             if let url = URL(string: "https://github.com/hamed-elfayome/Claude-Usage-Tracker") {
                                 NSWorkspace.shared.open(url)
                             }
                         }
 
-                        LinkButton(title: "Report Issue", icon: "exclamationmark.triangle") {
+                        LinkButton(title: "about.report_issue".localized, icon: "exclamationmark.triangle") {
                             if let url = URL(string: "https://github.com/hamed-elfayome/Claude-Usage-Tracker/issues") {
                                 NSWorkspace.shared.open(url)
                             }
                         }
 
-                        LinkButton(title: "Send Feedback", icon: "envelope") {
+                        LinkButton(title: "about.send_feedback".localized, icon: "envelope") {
                             if let url = URL(string: "mailto:hamedelfayome@gmail.com") {
                                 NSWorkspace.shared.open(url)
                             }
@@ -127,11 +142,11 @@ struct AboutView: View {
 
                 // Footer
                 VStack(spacing: Spacing.xs) {
-                    Text("MIT License • Open Source")
+                    Text("about.mit_license".localized)
                         .font(Typography.caption)
                         .foregroundColor(.secondary)
 
-                    Text("© 2025 Hamed Elfayome")
+                    Text("about.copyright".localized)
                         .font(Typography.caption)
                         .foregroundColor(.secondary)
                 }
@@ -244,7 +259,7 @@ struct ContributorAvatar: View {
                             Group {
                                 if isLoadingImage {
                                     ProgressView()
-                                        .scaleEffect(0.5)
+                                        .controlSize(.small)
                                 } else {
                                     Image(systemName: "person.fill")
                                         .font(.system(size: 16))

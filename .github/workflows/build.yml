@@ -16,6 +16,8 @@ jobs:
     runs-on: macos-15
     timeout-minutes: 20
 
+    # CI builds use no code signing (faster, sufficient for testing)
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4

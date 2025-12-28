@@ -2,11 +2,11 @@ import Foundation
 
 /// Menu bar icon style options
 enum MenuBarIconStyle: String, CaseIterable, Codable {
-    case battery = "battery"
-    case progressBar = "progressBar"
-    case percentageOnly = "percentageOnly"
-    case icon = "icon"
-    case compact = "compact"
+    case battery
+    case progressBar
+    case percentageOnly
+    case icon
+    case compact
 
     var displayName: String {
         switch self {
@@ -46,7 +46,7 @@ class DataStore: StorageProvider {
     private let defaults: UserDefaults
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
-    
+
     /// Public access to the UserDefaults instance for KVO
     var userDefaults: UserDefaults {
         return defaults
@@ -341,14 +341,45 @@ class DataStore: StorageProvider {
         return defaults.bool(forKey: Constants.UserDefaultsKeys.apiTrackingEnabled)
     }
 
-    /// Saves API session key
+    /// Saves API session key to Keychain
     func saveAPISessionKey(_ key: String) {
-        defaults.set(key, forKey: Constants.UserDefaultsKeys.apiSessionKey)
+        do {
+            try KeychainService.shared.save(key, for: .apiSessionKey)
+
+            // Migration: Remove from UserDefaults if it exists there
+            if defaults.string(forKey: Constants.UserDefaultsKeys.apiSessionKey) != nil {
+                defaults.removeObject(forKey: Constants.UserDefaultsKeys.apiSessionKey)
+                LoggingService.shared.log("Migrated API session key from UserDefaults to Keychain")
+            }
+        } catch {
+            LoggingService.shared.logStorageError("saveAPISessionKey", error: error)
+        }
     }
 
-    /// Loads API session key
+    /// Loads API session key from Keychain (with fallback to UserDefaults for migration)
     func loadAPISessionKey() -> String? {
-        return defaults.string(forKey: Constants.UserDefaultsKeys.apiSessionKey)
+        do {
+            // Try to load from Keychain first
+            if let key = try KeychainService.shared.load(for: .apiSessionKey) {
+                return key
+            }
+
+            // Migration: Check UserDefaults for existing key
+            if let legacyKey = defaults.string(forKey: Constants.UserDefaultsKeys.apiSessionKey) {
+                LoggingService.shared.log("Found API session key in UserDefaults, migrating to Keychain")
+                // Migrate to Keychain
+                try KeychainService.shared.save(legacyKey, for: .apiSessionKey)
+                // Remove from UserDefaults
+                defaults.removeObject(forKey: Constants.UserDefaultsKeys.apiSessionKey)
+                return legacyKey
+            }
+
+            return nil
+        } catch {
+            LoggingService.shared.logStorageError("loadAPISessionKey", error: error)
+            // Fallback to UserDefaults on error
+            return defaults.string(forKey: Constants.UserDefaultsKeys.apiSessionKey)
+        }
     }
 
     /// Saves selected API organization ID
@@ -385,6 +416,133 @@ class DataStore: StorageProvider {
     /// Loads monochrome mode preference (defaults to false)
     func loadMonochromeMode() -> Bool {
         return defaults.bool(forKey: Constants.UserDefaultsKeys.monochromeMode)
+    }
+
+    // MARK: - Menu Bar Icon Configuration (Multi-Metric System)
+
+    /// Saves complete menu bar icon configuration
+    func saveMenuBarIconConfiguration(_ config: MenuBarIconConfiguration) {
+        do {
+            let data = try encoder.encode(config)
+            defaults.set(data, forKey: Constants.UserDefaultsKeys.menuBarIconConfiguration)
+        } catch {
+            LoggingService.shared.logStorageError("saveMenuBarIconConfiguration", error: error)
+        }
+    }
+
+    /// Loads complete menu bar icon configuration
+    func loadMenuBarIconConfiguration() -> MenuBarIconConfiguration {
+        // Try to load new configuration format
+        if let data = defaults.data(forKey: Constants.UserDefaultsKeys.menuBarIconConfiguration) {
+            do {
+                let config = try decoder.decode(MenuBarIconConfiguration.self, from: data)
+                return config
+            } catch {
+                LoggingService.shared.logStorageError("loadMenuBarIconConfiguration", error: error)
+            }
+        }
+
+        // Migrate from legacy settings if they exist
+        return migrateFromLegacySettings()
+    }
+
+    /// Migrates from legacy single-icon settings to new multi-metric system
+    private func migrateFromLegacySettings() -> MenuBarIconConfiguration {
+        var config = MenuBarIconConfiguration.default
+
+        // Migrate monochrome mode
+        config.monochromeMode = loadMonochromeMode()
+
+        // Migrate icon style for session (was the only option before)
+        let legacyStyle = loadMenuBarIconStyle()
+        if var sessionConfig = config.config(for: .session) {
+            sessionConfig.iconStyle = legacyStyle
+            sessionConfig.isEnabled = true  // Session was always enabled before
+            config.updateConfig(sessionConfig)
+        }
+
+        // Save migrated config
+        saveMenuBarIconConfiguration(config)
+
+        return config
+    }
+
+    /// Saves show icon names preference
+    func saveShowIconNames(_ show: Bool) {
+        defaults.set(show, forKey: Constants.UserDefaultsKeys.showIconNames)
+    }
+
+    /// Loads show icon names preference (defaults to true)
+    func loadShowIconNames() -> Bool {
+        if defaults.object(forKey: Constants.UserDefaultsKeys.showIconNames) == nil {
+            return true
+        }
+        return defaults.bool(forKey: Constants.UserDefaultsKeys.showIconNames)
+    }
+
+    // MARK: - Per-Metric Configuration Helpers
+
+    /// Updates configuration for a specific metric
+    func updateMetricConfig(_ metricConfig: MetricIconConfig) {
+        var fullConfig = loadMenuBarIconConfiguration()
+        fullConfig.updateConfig(metricConfig)
+        saveMenuBarIconConfiguration(fullConfig)
+    }
+
+    /// Gets configuration for a specific metric type
+    func loadMetricConfig(for metricType: MenuBarMetricType) -> MetricIconConfig? {
+        let config = loadMenuBarIconConfiguration()
+        return config.config(for: metricType)
+    }
+
+    /// Toggles a metric on/off
+    func setMetricEnabled(_ metricType: MenuBarMetricType, enabled: Bool) {
+        var config = loadMenuBarIconConfiguration()
+        if var metricConfig = config.config(for: metricType) {
+            metricConfig.isEnabled = enabled
+            config.updateConfig(metricConfig)
+            saveMenuBarIconConfiguration(config)
+        }
+    }
+
+    /// Updates metric order (for drag-to-reorder)
+    func updateMetricOrder(metricType: MenuBarMetricType, order: Int) {
+        var config = loadMenuBarIconConfiguration()
+        if var metricConfig = config.config(for: metricType) {
+            metricConfig.order = order
+            config.updateConfig(metricConfig)
+            saveMenuBarIconConfiguration(config)
+        }
+    }
+
+    /// Updates icon style for a specific metric
+    func updateMetricIconStyle(metricType: MenuBarMetricType, style: MenuBarIconStyle) {
+        var config = loadMenuBarIconConfiguration()
+        if var metricConfig = config.config(for: metricType) {
+            metricConfig.iconStyle = style
+            config.updateConfig(metricConfig)
+            saveMenuBarIconConfiguration(config)
+        }
+    }
+
+    /// Updates week display mode
+    func updateWeekDisplayMode(_ mode: WeekDisplayMode) {
+        var config = loadMenuBarIconConfiguration()
+        if var weekConfig = config.config(for: .week) {
+            weekConfig.weekDisplayMode = mode
+            config.updateConfig(weekConfig)
+            saveMenuBarIconConfiguration(config)
+        }
+    }
+
+    /// Updates API display mode
+    func updateAPIDisplayMode(_ mode: APIDisplayMode) {
+        var config = loadMenuBarIconConfiguration()
+        if var apiConfig = config.config(for: .api) {
+            apiConfig.apiDisplayMode = mode
+            config.updateConfig(apiConfig)
+            saveMenuBarIconConfiguration(config)
+        }
     }
 
     // MARK: - Testing Helpers

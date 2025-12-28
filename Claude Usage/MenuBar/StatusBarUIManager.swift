@@ -2,15 +2,16 @@
 //  StatusBarUIManager.swift
 //  Claude Usage
 //
-//  Created by Claude Code on 2025-12-20.
+//  Created by Claude Code on 2025-12-27.
 //
 
 import Cocoa
 import Combine
 
-/// Manages the menu bar status item UI and appearance
+/// Manages multiple menu bar status items for different metrics
 final class StatusBarUIManager {
-    private var statusItem: NSStatusItem?
+    // Dictionary to hold multiple status items keyed by metric type
+    private var statusItems: [MenuBarMetricType: NSStatusItem] = [:]
     private var appearanceObserver: NSKeyValueObservation?
 
     weak var delegate: StatusBarUIManagerDelegate?
@@ -21,34 +22,176 @@ final class StatusBarUIManager {
 
     // MARK: - Setup
 
-    func setup(target: AnyObject, action: Selector) {
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+    /// Sets up status bar items based on configuration
+    func setup(target: AnyObject, action: Selector, config: MenuBarIconConfiguration) {
+        // Remove all existing items first
+        cleanup()
 
-        if let button = statusItem?.button {
-            button.action = action
-            button.target = target
+        // Create status items for enabled metrics
+        for metricConfig in config.enabledMetrics {
+            let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+
+            if let button = statusItem.button {
+                button.action = action
+                button.target = target
+            }
+
+            statusItems[metricConfig.metricType] = statusItem
         }
 
         observeAppearanceChanges()
-        LoggingService.shared.logUIEvent("Status bar initialized")
+        LoggingService.shared.logUIEvent("Status bar initialized with \(config.enabledMetrics.count) metrics")
+    }
+
+    /// Updates status bar items based on new configuration
+    func updateConfiguration(target: AnyObject, action: Selector, config: MenuBarIconConfiguration) {
+        // Nuclear approach with proper cleanup to minimize warnings
+        // This is the most reliable method even though it triggers some macOS warnings
+        //
+        // Note: macOS may log "Unhandled disconnected scene" warnings when removing status items.
+        // These are harmless internal macOS Control Center messages and don't affect functionality.
+        // The alternative (incremental updates) causes race conditions where wrong metrics appear.
+        // We choose reliability over clean console logs.
+
+        // Step 1: Clean up all existing items properly
+        for (metricType, statusItem) in statusItems {
+            if let button = statusItem.button {
+                button.image = nil
+                button.action = nil
+                button.target = nil
+            }
+            NSStatusBar.system.removeStatusItem(statusItem)
+            LoggingService.shared.logUIEvent("Removed status item for \(metricType.displayName)")
+        }
+        statusItems.removeAll()
+
+        // Step 2: Recreate all enabled metrics
+        // Using the same run loop to avoid delay but after cleanup
+        for metricConfig in config.enabledMetrics {
+            let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+
+            if let button = statusItem.button {
+                button.action = action
+                button.target = target
+            }
+
+            statusItems[metricConfig.metricType] = statusItem
+            LoggingService.shared.logUIEvent("Created status item for \(metricConfig.metricType.displayName)")
+        }
+
+        LoggingService.shared.logUIEvent("Status bar configuration complete: \(config.enabledMetrics.count) metrics")
     }
 
     func cleanup() {
         appearanceObserver?.invalidate()
         appearanceObserver = nil
-        statusItem = nil
+
+        // Properly clean up all status items to avoid scene warnings
+        for (_, statusItem) in statusItems {
+            // Clear button references first
+            if let button = statusItem.button {
+                button.image = nil
+                button.action = nil
+                button.target = nil
+            }
+            // Then remove from status bar
+            NSStatusBar.system.removeStatusItem(statusItem)
+        }
+        statusItems.removeAll()
+
         LoggingService.shared.logUIEvent("Status bar cleaned up")
     }
 
     // MARK: - UI Updates
 
-    func updateButton(usage: ClaudeUsage) {
-        guard let button = statusItem?.button else { return }
-        updateStatusButton(button, usage: usage)
+    /// Updates all status bar buttons based on current usage data
+    func updateAllButtons(
+        usage: ClaudeUsage,
+        apiUsage: APIUsage?,
+        manager: MenuBarManager
+    ) {
+        let config = DataStore.shared.loadMenuBarIconConfiguration()
+        let isDarkMode = NSApp.effectiveAppearance.name == .darkAqua
+
+        for metricConfig in config.enabledMetrics {
+            guard let statusItem = statusItems[metricConfig.metricType],
+                  let button = statusItem.button else {
+                continue
+            }
+
+            let image = manager.createImageForMetric(
+                metricConfig.metricType,
+                config: metricConfig,
+                usage: usage,
+                apiUsage: apiUsage,
+                isDarkMode: isDarkMode,
+                monochromeMode: config.monochromeMode,
+                showIconName: config.showIconNames
+            )
+
+            button.image = image
+            button.image?.isTemplate = false
+        }
     }
 
-    var button: NSStatusBarButton? {
-        return statusItem?.button
+    /// Updates a specific metric's button
+    func updateButton(
+        for metricType: MenuBarMetricType,
+        usage: ClaudeUsage,
+        apiUsage: APIUsage?,
+        manager: MenuBarManager
+    ) {
+        guard let statusItem = statusItems[metricType],
+              let button = statusItem.button else {
+            return
+        }
+
+        let config = DataStore.shared.loadMenuBarIconConfiguration()
+        guard let metricConfig = config.config(for: metricType) else {
+            return
+        }
+
+        let isDarkMode = NSApp.effectiveAppearance.name == .darkAqua
+
+        let image = manager.createImageForMetric(
+            metricType,
+            config: metricConfig,
+            usage: usage,
+            apiUsage: apiUsage,
+            isDarkMode: isDarkMode,
+            monochromeMode: config.monochromeMode,
+            showIconName: config.showIconNames
+        )
+
+        button.image = image
+        button.image?.isTemplate = false
+    }
+
+    /// Get button for a specific metric (used for popover positioning)
+    func button(for metricType: MenuBarMetricType) -> NSStatusBarButton? {
+        return statusItems[metricType]?.button
+    }
+
+    /// Get the first enabled metric's button (for backwards compatibility)
+    var primaryButton: NSStatusBarButton? {
+        let config = DataStore.shared.loadMenuBarIconConfiguration()
+        guard let firstMetric = config.enabledMetrics.first else {
+            return nil
+        }
+        return statusItems[firstMetric.metricType]?.button
+    }
+
+    /// Find which metric type owns the given button (sender)
+    func metricType(for sender: NSStatusBarButton?) -> MenuBarMetricType? {
+        guard let sender = sender else { return nil }
+
+        // Find which status item has this button
+        for (metricType, statusItem) in statusItems {
+            if statusItem.button === sender {
+                return metricType
+            }
+        }
+        return nil
     }
 
     // MARK: - Appearance Observation
@@ -57,169 +200,6 @@ final class StatusBarUIManager {
         appearanceObserver = NSApp.observe(\.effectiveAppearance) { [weak self] _, _ in
             self?.delegate?.statusBarAppearanceDidChange()
         }
-    }
-
-    // MARK: - Button Rendering
-
-    private func updateStatusButton(_ button: NSStatusBarButton, usage: ClaudeUsage) {
-        let percentage = usage.sessionPercentage
-        let isDarkMode = NSApp.effectiveAppearance.name == .darkAqua
-        let iconStyle = DataStore.shared.loadMenuBarIconStyle()
-
-        // Create the image based on selected style
-        let image: NSImage
-        switch iconStyle {
-        case .battery:
-            image = createBatteryImage(percentage: percentage, isDarkMode: isDarkMode)
-        case .progressBar:
-            image = createBatteryImage(percentage: percentage, isDarkMode: isDarkMode)
-        case .percentageOnly:
-            image = createMinimalImage(percentage: percentage, isDarkMode: isDarkMode)
-        case .icon:
-            image = createBatteryImage(percentage: percentage, isDarkMode: isDarkMode)
-        case .compact:
-            image = createTextOnlyImage(isDarkMode: isDarkMode)
-        }
-
-        button.image = image
-        button.image?.isTemplate = false
-    }
-
-    private func createBatteryImage(percentage: Double, isDarkMode: Bool) -> NSImage {
-        let width: CGFloat = 60
-        let height: CGFloat = 16
-        let image = NSImage(size: NSSize(width: width, height: height))
-
-        image.lockFocus()
-        defer { image.unlockFocus() }
-
-        // Colors
-        let textColor: NSColor = isDarkMode ? .white : .black
-        let backgroundColor: NSColor = isDarkMode ? NSColor.white.withAlphaComponent(0.15) : NSColor.black.withAlphaComponent(0.1)
-
-        let fillColor: NSColor
-        switch percentage {
-        case 0..<50:
-            fillColor = NSColor(red: 0.3, green: 0.8, blue: 0.3, alpha: 1.0)
-        case 50..<80:
-            fillColor = NSColor(red: 1.0, green: 0.6, blue: 0.0, alpha: 1.0)
-        default:
-            fillColor = NSColor(red: 1.0, green: 0.3, blue: 0.3, alpha: 1.0)
-        }
-
-        // Draw "Claude" text
-        let text = "Claude"
-        let font = NSFont.systemFont(ofSize: 10, weight: .medium)
-        let attributes: [NSAttributedString.Key: Any] = [
-            .font: font,
-            .foregroundColor: textColor
-        ]
-        let textSize = text.size(withAttributes: attributes)
-        let textRect = NSRect(x: 2, y: (height - textSize.height) / 2, width: textSize.width, height: textSize.height)
-        text.draw(in: textRect, withAttributes: attributes)
-
-        // Battery background
-        let batteryX = textSize.width + 6
-        let batteryWidth: CGFloat = 20
-        let batteryHeight: CGFloat = 10
-        let batteryY = (height - batteryHeight) / 2
-        let batteryRect = NSRect(x: batteryX, y: batteryY, width: batteryWidth, height: batteryHeight)
-
-        let path = NSBezierPath(roundedRect: batteryRect, xRadius: 2, yRadius: 2)
-        backgroundColor.setFill()
-        path.fill()
-
-        // Battery fill
-        let fillWidth = (batteryWidth - 4) * CGFloat(percentage / 100.0)
-        let fillRect = NSRect(x: batteryX + 2, y: batteryY + 2, width: fillWidth, height: batteryHeight - 4)
-        let fillPath = NSBezierPath(roundedRect: fillRect, xRadius: 1, yRadius: 1)
-        fillColor.setFill()
-        fillPath.fill()
-
-        // Battery tip
-        let tipWidth: CGFloat = 2
-        let tipHeight: CGFloat = 4
-        let tipX = batteryX + batteryWidth
-        let tipY = batteryY + (batteryHeight - tipHeight) / 2
-        let tipRect = NSRect(x: tipX, y: tipY, width: tipWidth, height: tipHeight)
-        let tipPath = NSBezierPath(rect: tipRect)
-        backgroundColor.setFill()
-        tipPath.fill()
-
-        return image
-    }
-
-    private func createMinimalImage(percentage: Double, isDarkMode: Bool) -> NSImage {
-        let width: CGFloat = 45
-        let height: CGFloat = 16
-        let image = NSImage(size: NSSize(width: width, height: height))
-
-        image.lockFocus()
-        defer { image.unlockFocus() }
-
-        // Colors
-        let textColor: NSColor = isDarkMode ? .white : .black
-
-        // Determine color based on percentage
-        let percentageColor: NSColor
-        switch percentage {
-        case 0..<50:
-            percentageColor = NSColor(red: 0.3, green: 0.8, blue: 0.3, alpha: 1.0)
-        case 50..<80:
-            percentageColor = NSColor(red: 1.0, green: 0.6, blue: 0.0, alpha: 1.0)
-        default:
-            percentageColor = NSColor(red: 1.0, green: 0.3, blue: 0.3, alpha: 1.0)
-        }
-
-        // Draw "Claude" text
-        let text = "Claude"
-        let font = NSFont.systemFont(ofSize: 10, weight: .medium)
-        let attributes: [NSAttributedString.Key: Any] = [
-            .font: font,
-            .foregroundColor: textColor
-        ]
-        let textSize = text.size(withAttributes: attributes)
-        let textRect = NSRect(x: 0, y: (height - textSize.height) / 2, width: textSize.width, height: textSize.height)
-        text.draw(in: textRect, withAttributes: attributes)
-
-        // Draw percentage
-        let percentageText = "\(Int(percentage))%"
-        let percentageFont = NSFont.systemFont(ofSize: 10, weight: .medium)
-        let percentageAttributes: [NSAttributedString.Key: Any] = [
-            .font: percentageFont,
-            .foregroundColor: percentageColor
-        ]
-        let percentageSize = percentageText.size(withAttributes: percentageAttributes)
-        let percentageX = textSize.width + 4
-        let percentageRect = NSRect(x: percentageX, y: (height - percentageSize.height) / 2, width: percentageSize.width, height: percentageSize.height)
-        percentageText.draw(in: percentageRect, withAttributes: percentageAttributes)
-
-        return image
-    }
-
-    private func createTextOnlyImage(isDarkMode: Bool) -> NSImage {
-        let width: CGFloat = 40
-        let height: CGFloat = 16
-        let image = NSImage(size: NSSize(width: width, height: height))
-
-        image.lockFocus()
-        defer { image.unlockFocus() }
-
-        // Colors
-        let textColor: NSColor = isDarkMode ? .white : .black
-
-        // Draw "Claude" text
-        let text = "Claude"
-        let font = NSFont.systemFont(ofSize: 10, weight: .medium)
-        let attributes: [NSAttributedString.Key: Any] = [
-            .font: font,
-            .foregroundColor: textColor
-        ]
-        let textSize = text.size(withAttributes: attributes)
-        let textRect = NSRect(x: 0, y: (height - textSize.height) / 2, width: textSize.width, height: textSize.height)
-        text.draw(in: textRect, withAttributes: attributes)
-
-        return image
     }
 }
 

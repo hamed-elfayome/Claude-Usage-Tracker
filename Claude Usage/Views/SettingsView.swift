@@ -29,6 +29,8 @@ struct SettingsView: View {
                     SessionManagementView(autoStartSessionEnabled: $autoStartSessionEnabled)
                 case .notifications:
                     NotificationsSettingsView(notificationsEnabled: $notificationsEnabled)
+                case .updates:
+                    UpdatesSettingsView()
                 case .claudeCode:
                     ClaudeCodeView()
                 case .about:
@@ -42,14 +44,29 @@ struct SettingsView: View {
 }
 
 enum SettingsSection: String, CaseIterable {
-    case personalUsage = "Personal Usage"
-    case apiBilling = "API Billing"
-    case general = "General"
-    case appearance = "Appearance"
-    case sessionManagement = "Session Management"
-    case notifications = "Notifications"
-    case claudeCode = "Claude CLI"
-    case about = "About"
+    case personalUsage
+    case apiBilling
+    case general
+    case appearance
+    case sessionManagement
+    case notifications
+    case updates
+    case claudeCode
+    case about
+
+    var title: String {
+        switch self {
+        case .personalUsage: return "settings.personal_usage".localized
+        case .apiBilling: return "settings.api_billing".localized
+        case .general: return "settings.general".localized
+        case .appearance: return "settings.appearance".localized
+        case .sessionManagement: return "settings.session_management".localized
+        case .notifications: return "settings.notifications".localized
+        case .updates: return "settings.updates".localized
+        case .claudeCode: return "settings.claude_cli".localized
+        case .about: return "settings.about".localized
+        }
+    }
 
     var icon: String {
         switch self {
@@ -59,6 +76,7 @@ enum SettingsSection: String, CaseIterable {
         case .appearance: return "paintbrush.fill"
         case .sessionManagement: return "clock.arrow.circlepath"
         case .notifications: return "bell.badge.fill"
+        case .updates: return "arrow.down.circle.fill"
         case .claudeCode: return "chevron.left.forwardslash.chevron.right"
         case .about: return "info.circle.fill"
         }
@@ -66,14 +84,15 @@ enum SettingsSection: String, CaseIterable {
 
     var description: String {
         switch self {
-        case .personalUsage: return "Track your Claude.ai free tier usage"
-        case .apiBilling: return "Monitor API Console billing and credits"
-        case .general: return "App behavior and preferences"
-        case .appearance: return "Menu bar icon customization"
-        case .sessionManagement: return "Automatic session management"
-        case .notifications: return "Usage alerts and notifications"
-        case .claudeCode: return "Terminal statusline integration"
-        case .about: return "App information and credits"
+        case .personalUsage: return "settings.personal_usage.description".localized
+        case .apiBilling: return "settings.api_billing.description".localized
+        case .general: return "settings.general.description".localized
+        case .appearance: return "settings.appearance.description".localized
+        case .sessionManagement: return "settings.session_management.description".localized
+        case .notifications: return "settings.notifications.description".localized
+        case .updates: return "settings.updates.description".localized
+        case .claudeCode: return "settings.claude_cli.description".localized
+        case .about: return "settings.about.description".localized
         }
     }
 }
@@ -88,7 +107,7 @@ struct SidebarView: View {
             ForEach(SettingsSection.allCases, id: \.self) { section in
                 SidebarItem(
                     icon: section.icon,
-                    title: section.rawValue,
+                    title: section.title,
                     description: section.description,
                     isSelected: selectedSection == section
                 ) {

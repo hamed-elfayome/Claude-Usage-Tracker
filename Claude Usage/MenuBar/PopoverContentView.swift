@@ -6,7 +6,7 @@ struct PopoverContentView: View {
     let onRefresh: () -> Void
     let onPreferences: () -> Void
     let onQuit: () -> Void
-    
+
     @State private var isRefreshing = false
     @State private var showInsights = false
 
@@ -32,7 +32,7 @@ struct PopoverContentView: View {
 
             // Intelligent Usage Dashboard
             SmartUsageDashboard(usage: manager.usage, apiUsage: manager.apiUsage)
-            
+
             // Contextual Insights
             if showInsights {
                 ContextualInsights(usage: manager.usage)
@@ -86,9 +86,9 @@ struct SmartHeader: View {
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 24, height: 24)
-                
+
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Claude Usage")
+                    Text("menubar.claude_usage".localized)
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(.primary)
 
@@ -118,15 +118,16 @@ struct SmartHeader: View {
                     .help("Click to open status.claude.com")
                 }
             }
-            
+
             Spacer()
-            
+
             // Smart Refresh Button
             Button(action: onRefresh) {
-                HStack(spacing: 4) {
+                ZStack {
                     if isRefreshing {
                         ProgressView()
-                            .scaleEffect(0.7)
+                            .controlSize(.small)
+                            .frame(width: 14, height: 14)
                     } else {
                         Image(systemName: "arrow.clockwise")
                             .font(.system(size: 11, weight: .medium))
@@ -161,8 +162,8 @@ struct SmartUsageDashboard: View {
         VStack(spacing: 16) {
             // Primary Usage Card
             SmartUsageCard(
-                title: "Session Usage",
-                subtitle: "5-hour rolling window",
+                title: "menubar.session_usage".localized,
+                subtitle: "menubar.5_hour_window".localized,
                 percentage: usage.sessionPercentage,
                 resetTime: usage.sessionResetTime,
                 isPrimary: true
@@ -171,8 +172,8 @@ struct SmartUsageDashboard: View {
             // Secondary Usage Cards
             HStack(spacing: 12) {
                 SmartUsageCard(
-                    title: "Weekly",
-                    subtitle: "All models",
+                    title: "menubar.weekly_usage".localized,
+                    subtitle: "menubar.all_models".localized,
                     percentage: usage.weeklyPercentage,
                     resetTime: usage.weeklyResetTime,
                     isPrimary: false
@@ -180,8 +181,8 @@ struct SmartUsageDashboard: View {
 
                 if usage.opusWeeklyTokensUsed > 0 {
                     SmartUsageCard(
-                        title: "Opus",
-                        subtitle: "Weekly",
+                        title: "menubar.opus_usage".localized,
+                        subtitle: "menubar.weekly".localized,
                         percentage: usage.opusWeeklyPercentage,
                         resetTime: nil,
                         isPrimary: false
@@ -192,7 +193,7 @@ struct SmartUsageDashboard: View {
             if let used = usage.costUsed, let limit = usage.costLimit, let currency = usage.costCurrency, limit > 0 {
                 let percentage = (used / limit) * 100.0
                 SmartUsageCard(
-                    title: "Extra Usage",
+                    title: "menubar.extra_usage".localized,
                     subtitle: String(format: "%.2f / %.2f %@", used / 100.0, limit / 100.0, currency),
                     percentage: percentage,
                     resetTime: nil,
@@ -217,7 +218,7 @@ struct SmartUsageCard: View {
     let percentage: Double
     let resetTime: Date?
     let isPrimary: Bool
-    
+
     private var statusColor: Color {
         switch percentage {
         case 0..<50: return .green
@@ -225,7 +226,7 @@ struct SmartUsageCard: View {
         default: return .red
         }
     }
-    
+
     private var statusIcon: String {
         switch percentage {
         case 0..<50: return "checkmark.circle.fill"
@@ -233,7 +234,7 @@ struct SmartUsageCard: View {
         default: return "xmark.circle.fill"
         }
     }
-    
+
     var body: some View {
         VStack(spacing: isPrimary ? 12 : 8) {
             // Header
@@ -242,53 +243,53 @@ struct SmartUsageCard: View {
                     Text(title)
                         .font(.system(size: isPrimary ? 13 : 11, weight: .semibold))
                         .foregroundColor(.primary)
-                    
+
                     Text(subtitle)
                         .font(.system(size: isPrimary ? 10 : 9, weight: .medium))
                         .foregroundColor(.secondary)
                 }
-                
+
                 Spacer()
-                
+
                 // Status indicator
                 HStack(spacing: 4) {
                     Image(systemName: statusIcon)
                         .font(.system(size: isPrimary ? 12 : 10, weight: .medium))
                         .foregroundColor(statusColor)
-                    
+
                     Text("\(Int(percentage))%")
                         .font(.system(size: isPrimary ? 16 : 14, weight: .bold, design: .monospaced))
                         .foregroundColor(statusColor)
                 }
             }
-            
+
             // Progress visualization
             VStack(spacing: 6) {
                 // Animated progress bar
-                GeometryReader { geometry in
-                    ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.secondary.opacity(0.15))
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.secondary.opacity(0.15))
 
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(
-                                LinearGradient(
-                                    colors: [statusColor, statusColor.opacity(0.8)],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(
+                            LinearGradient(
+                                colors: [statusColor, statusColor.opacity(0.8)],
+                                startPoint: .leading,
+                                endPoint: .trailing
                             )
-                            .frame(width: geometry.size.width * min(percentage / 100.0, 1.0))
-                    }
-                    .animation(.easeInOut(duration: 0.8), value: percentage)
+                        )
+                        .frame(maxWidth: .infinity)
+                        .scaleEffect(x: min(percentage / 100.0, 1.0), y: 1.0, anchor: .leading)
+                        .clipShape(RoundedRectangle(cornerRadius: 4))
                 }
-                .frame(height: isPrimary ? 8 : 6)
-                
+                .frame(height: 8)
+                .animation(.easeInOut(duration: 0.8), value: percentage)
+
                 // Reset time information
                 if let reset = resetTime {
                     HStack {
                         Spacer()
-                        Text("Resets \(reset.resetTimeString())")
+                        Text("menubar.resets_time".localized(with: reset.resetTimeString()))
                             .font(.system(size: isPrimary ? 9 : 8, weight: .medium))
                             .foregroundColor(.secondary)
                     }
@@ -307,43 +308,43 @@ struct SmartUsageCard: View {
 // MARK: - Contextual Insights
 struct ContextualInsights: View {
     let usage: ClaudeUsage
-    
+
     private var insights: [Insight] {
         var result: [Insight] = []
-        
+
         // Session insights
         if usage.sessionPercentage > 80 {
             result.append(Insight(
                 icon: "exclamationmark.triangle.fill",
                 color: .orange,
-                title: "High Session Usage",
-                description: "Consider taking a break to reset your session window"
+                title: "usage.high_session".localized,
+                description: "usage.high_session.desc".localized
             ))
         }
-        
+
         // Weekly insights
         if usage.weeklyPercentage > 90 {
             result.append(Insight(
                 icon: "clock.fill",
                 color: .red,
-                title: "Weekly Limit Approaching",
-                description: "You're close to your weekly token limit"
+                title: "usage.weekly_approaching".localized,
+                description: "usage.weekly_approaching.desc".localized
             ))
         }
-        
+
         // Efficiency insights
         if usage.sessionPercentage < 20 && usage.weeklyPercentage < 30 {
             result.append(Insight(
                 icon: "checkmark.circle.fill",
                 color: .green,
-                title: "Efficient Usage",
-                description: "Great job managing your token consumption!"
+                title: "usage.efficient".localized,
+                description: "usage.efficient.desc".localized
             ))
         }
-        
+
         return result
     }
-    
+
     var body: some View {
         VStack(spacing: 8) {
             ForEach(insights, id: \.title) { insight in
@@ -352,18 +353,18 @@ struct ContextualInsights: View {
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(insight.color)
                         .frame(width: 16)
-                    
+
                     VStack(alignment: .leading, spacing: 2) {
                         Text(insight.title)
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundColor(.primary)
-                        
+
                         Text(insight.description)
                             .font(.system(size: 9, weight: .medium))
                             .foregroundColor(.secondary)
                             .lineLimit(2)
                     }
-                    
+
                     Spacer()
                 }
                 .padding(.horizontal, 12)
@@ -393,7 +394,7 @@ struct SmartFooter: View {
     @Binding var showInsights: Bool
     let onPreferences: () -> Void
     let onQuit: () -> Void
-    
+
     var body: some View {
         VStack(spacing: 0) {
             Divider()
@@ -403,13 +404,13 @@ struct SmartFooter: View {
             HStack(spacing: 8) {
                 SmartActionButton(
                     icon: "gearshape.fill",
-                    title: "Settings",
+                    title: "common.settings".localized,
                     action: onPreferences
                 )
-                
+
                 SmartActionButton(
                     icon: "power",
-                    title: "Quit",
+                    title: "common.quit".localized,
                     isDestructive: true,
                     action: onQuit
                 )
@@ -424,7 +425,7 @@ struct SmartFooter: View {
 struct ClaudeStatusRow: View {
     let status: ClaudeStatus
     @State private var isHovered = false
-    
+
     private var statusColor: Color {
         switch status.indicator.color {
         case .green: return .green
@@ -434,7 +435,7 @@ struct ClaudeStatusRow: View {
         case .gray: return .gray
         }
     }
-    
+
     var body: some View {
         Button(action: {
             if let url = URL(string: "https://status.claude.com") {
@@ -446,15 +447,15 @@ struct ClaudeStatusRow: View {
                 Circle()
                     .fill(statusColor)
                     .frame(width: 8, height: 8)
-                
+
                 // Status text
                 Text(status.description)
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(.primary)
                     .lineLimit(1)
-                
+
                 Spacer()
-                
+
                 // External link icon
                 Image(systemName: "arrow.up.right")
                     .font(.system(size: 9, weight: .medium))
@@ -483,9 +484,9 @@ struct SmartActionButton: View {
     let title: String
     var isDestructive: Bool = false
     let action: () -> Void
-    
+
     @State private var isHovered = false
-    
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: 6) {
@@ -493,7 +494,7 @@ struct SmartActionButton: View {
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(isDestructive ? .red : .secondary)
                     .frame(width: 14)
-                
+
                 Text(title)
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(isDestructive ? .red : .primary)
@@ -503,7 +504,7 @@ struct SmartActionButton: View {
             .background(
                 RoundedRectangle(cornerRadius: 6)
                     .fill(
-                        isHovered 
+                        isHovered
                         ? (isDestructive ? Color.red.opacity(0.1) : Color.accentColor.opacity(0.1))
                         : Color.clear
                     )
@@ -535,11 +536,11 @@ struct APIUsageCard: View {
             // Header
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("API Credits")
+                    Text("menubar.api_credits".localized)
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(.primary)
 
-                    Text("Anthropic API Console")
+                    Text("menubar.anthropic_console".localized)
                         .font(.system(size: 10, weight: .medium))
                         .foregroundColor(.secondary)
                 }
@@ -553,24 +554,24 @@ struct APIUsageCard: View {
             }
 
             // Progress Bar
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    // Background
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.secondary.opacity(0.1))
+            ZStack(alignment: .leading) {
+                // Background
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.secondary.opacity(0.1))
 
-                    // Fill
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(usageColor)
-                        .frame(width: geometry.size.width * (apiUsage.usagePercentage / 100.0))
-                }
+                // Fill
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(usageColor)
+                    .frame(maxWidth: .infinity)
+                    .scaleEffect(x: apiUsage.usagePercentage / 100.0, y: 1.0, anchor: .leading)
+                    .clipShape(RoundedRectangle(cornerRadius: 4))
             }
-            .frame(height: 6)
+            .frame(height: 8)
 
             // Used / Remaining
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Used")
+                    Text("menubar.used".localized)
                         .font(.system(size: 9, weight: .medium))
                         .foregroundColor(.secondary)
                     Text(apiUsage.formattedUsed)
@@ -581,7 +582,7 @@ struct APIUsageCard: View {
                 Spacer()
 
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text("Remaining")
+                    Text("menubar.remaining".localized)
                         .font(.system(size: 9, weight: .medium))
                         .foregroundColor(.secondary)
                     Text(apiUsage.formattedRemaining)
@@ -597,7 +598,7 @@ struct APIUsageCard: View {
                         .font(.system(size: 8))
                         .foregroundColor(.secondary)
 
-                    Text("Resets \(apiUsage.resetsAt.formatted(.relative(presentation: .named)))")
+                    Text("menubar.resets_time".localized(with: apiUsage.resetsAt.formatted(.relative(presentation: .named))))
                         .font(.system(size: 9, weight: .medium))
                         .foregroundColor(.secondary)
 
