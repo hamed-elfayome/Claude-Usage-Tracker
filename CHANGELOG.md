@@ -5,6 +5,186 @@ All notable changes to Claude Usage Tracker will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2025-12-28
+
+### Major Release - Professional Grade Security & User Experience
+
+This major release represents a significant milestone for Claude Usage Tracker, bringing professional-grade features including official Apple code signing, automatic updates, and enterprise-level security.
+
+### Added
+
+#### Official Apple Code Signing
+- **Professionally signed application** with Apple Developer certificate
+  - No more security warnings or workarounds on installation
+  - Seamless installation experience like any other Mac app
+  - Full macOS Gatekeeper compatibility
+  - Users can now install by simply double-clicking the app
+
+#### Automatic Updates (Sparkle Framework)
+- **In-app update system** powered by Sparkle framework
+  - Automatic update checking and notifications
+  - One-click update installation
+  - Secure update delivery with code signature verification
+  - New Updates Settings tab for managing update preferences
+  - Configurable update check frequency
+  - Release notes displayed within the app
+
+#### Enhanced Security
+- **Keychain Integration** - Session keys now stored securely in macOS Keychain
+  - Migration from file-based and UserDefaults storage to Keychain
+  - Automatic one-time migration on first launch of v2.0
+  - Enhanced security for API credentials
+  - KeychainService and KeychainMigrationService implementation
+  - Secure storage for both web and API session keys
+
+#### Multi-Language Support (Internationalization)
+- **6 Language Support** - Comprehensive localization across the entire application
+  - English (en)
+  - Spanish (es)
+  - French (fr)
+  - German (de)
+  - Italian (it)
+  - Portuguese (pt)
+- **Language Switcher** in General Settings
+  - LanguageManager and LocalizationManager for dynamic language switching
+  - Localized strings for all UI components
+  - Localized notification messages
+  - Validation script for ensuring translation completeness
+
+#### Multi-Metric Menu Bar Icons
+- **Multiple Simultaneous Icons** - Display separate menu bar icons for different metrics
+  - Configure independent icons for session, weekly, and opus usage
+  - MenuBarIconConfig for flexible icon configuration
+  - MenuBarIconRenderer for modular rendering logic
+  - Per-metric customization (icon style, monochrome mode)
+  - Global settings with metric-specific overrides
+
+#### Advanced Error Handling System
+- **Comprehensive Error Framework** - Professional error handling throughout the app
+  - AppError enum with categorized error types
+  - ErrorLogger for detailed error tracking
+  - ErrorPresenter for user-friendly error messages
+  - ErrorRecovery with automatic recovery suggestions
+  - Enhanced error feedback in UI components
+  - Improved debugging and troubleshooting
+
+#### Session Key Validation
+- **Robust Validation System** - Enhanced session key validation and API security
+  - SessionKeyValidator with comprehensive validation rules
+  - Format validation (sk-ant-sid01- prefix)
+  - Length validation
+  - Character set validation
+  - URLBuilder for safer API endpoint construction
+  - Comprehensive test coverage (SessionKeyValidatorTests, URLBuilderTests)
+
+#### Network Monitoring
+- **Network Change Detection** - Automatic network status monitoring
+  - NetworkMonitor service for connectivity tracking
+  - Automatic retry on network restoration
+  - Better handling of offline scenarios
+  - User feedback when network is unavailable
+
+#### Launch at Login
+- **System Auto-Start** - Launch the app automatically on macOS login
+  - LaunchAtLoginManager for system integration
+  - Toggle in Session Management settings
+  - Proper cleanup on disable
+  - System-level integration (not login item)
+
+#### Code of Conduct
+- **Contributor Covenant Code of Conduct** - Community guidelines and standards
+  - Clear behavioral standards
+  - Enforcement procedures
+  - Community pledge
+
+### Changed
+
+#### API Service Architecture
+- **Refactored API Service** - Cleaner, more maintainable code structure
+  - ClaudeAPIService split into extensions (ConsoleAPI, Types)
+  - Improved organization ID fetching with session key parameter
+  - Enhanced error handling throughout API layer
+  - Better separation of concerns
+
+#### Icon Rendering System
+- **Modularized Icon Rendering** - Extracted to dedicated components
+  - MenuBarIconRenderer for centralized rendering logic
+  - MenuBar/MenuBarManager+IconRendering.swift extension
+  - Optimized appearance change observation
+  - Better performance and maintainability
+
+#### Popover Management
+- **Multi-Popover Support** - Track and manage multiple menu bar buttons
+  - currentPopoverButton tracking
+  - Enhanced togglePopover for multiple buttons
+  - Improved cleanup and resource management
+  - Better state management
+
+#### Setup Wizard
+- **Streamlined First-Run Experience** - Simplified setup flow
+  - Removed icon style settings from wizard
+  - Immediate data refresh on session key save
+  - Session key observer for reactive updates
+  - Faster time-to-first-use
+
+#### UI Refinements
+- **Window Management** - All custom windows made non-restorable
+  - Cleaner state management
+  - Better user experience
+  - Adjusted control sizes in popover and about view
+  - Improved refresh button styling
+
+### Technical Improvements
+
+#### Testing
+- **Comprehensive Test Coverage** - Added unit tests for critical components
+  - SessionKeyValidatorTests - Validation logic testing
+  - URLBuilderTests - API endpoint construction testing
+  - DataStoreTests - Storage layer testing
+  - DateExtensionsTests - Date utility testing
+  - ClaudeUsageTests - Core functionality testing
+
+#### CI/CD Pipeline
+- **Automated Release Workflow** - Professional release pipeline
+  - GitHub Actions for building, signing, and notarizing
+  - Automatic appcast generation for Sparkle updates
+  - Automated Homebrew cask updates
+  - Changelog-based release notes
+  - Code signing and notarization with Apple
+  - Multi-step release process automation
+
+#### Code Quality
+- **Improved Code Organization** - Better structure and maintainability
+  - Protocol-oriented design enhancements
+  - Cleaner service layer
+  - Reduced code duplication
+  - Better whitespace and formatting consistency
+  - Enhanced documentation
+
+### Fixed
+
+- **Migration Safety** - Keychain migration handles all edge cases
+- **Network Resilience** - Better handling of network interruptions
+- **Error Recovery** - Improved recovery from API failures
+- **Multi-Display Support** - Better handling in multi-popover scenarios
+
+### Breaking Changes
+
+- **Keychain Migration** - Session keys automatically migrated from file/UserDefaults to Keychain
+  - Migration happens automatically on first launch of v2.0
+  - No user action required
+  - Old storage methods deprecated
+  - Users upgrading from v1.x will experience seamless migration
+
+### Security Notes
+
+- All session keys now stored in macOS Keychain (most secure option)
+- App signed with Apple Developer certificate (enhanced trust)
+- Automatic updates delivered over HTTPS with signature verification
+- No breaking changes to API integration
+
+---
+
 ## [1.6.2] - 2025-12-22
 
 ### Fixed
@@ -587,7 +767,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Detailed usage dashboard with countdown timers
 - Support for macOS 14.0+ (Sonoma and later)
 
-[1.6.1]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.6.1...v1.6.2
+[2.0.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.6.2...v2.0.0
+[1.6.2]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.6.1...v1.6.2
 [1.6.1]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.6.0...v1.6.1
 [1.6.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.4.0...v1.5.0

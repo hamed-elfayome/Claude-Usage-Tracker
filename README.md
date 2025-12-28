@@ -9,15 +9,13 @@
   ![Swift](https://img.shields.io/badge/Swift-5.0+-orange?style=flat-square&logo=swift)
   ![SwiftUI](https://img.shields.io/badge/SwiftUI-5.0+-blue?style=flat-square&logo=swift)
   ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
-  ![Version](https://img.shields.io/badge/version-1.6.2-blue?style=flat-square)
+  ![Version](https://img.shields.io/badge/version-2.0.0-blue?style=flat-square)
 
-  ### [Download Latest Release (v1.6.2)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
+  ### [Download Latest Release (v2.0.0)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
 
-  <sub>macOS 14.0+ (Sonoma) | ~3 MB | Native Swift/SwiftUI</sub>
+  <sub>macOS 14.0+ (Sonoma) | ~3 MB | Native Swift/SwiftUI | Officially Signed</sub>
 
   [![Buy Me A Coffee](https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=☕&slug=hamedelfayome&button_colour=e48131&font_colour=000000&font_family=Poppins&outline_colour=000000&coffee_colour=ffffff)](https://buymeacoffee.com/hamedelfayome)
-
-  <sub>⚠️ **Note:** This app is not signed with an Apple Developer certificate. You'll need to bypass the security warning on first launch (see installation steps below).</sub>
 </div>
 
 ---
@@ -50,13 +48,15 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 
 ## What's New
 
-**v1.6.1 - Performance Fix (2025-12-21)**:
-- **Critical CPU usage fix** - Resolved excessive CPU consumption affecting multi-display setups
-- **Image caching system** - Menu bar icon now only redraws when visual factors change
-- **Optimized rendering** - Removed deprecated UserDefaults.synchronize() calls and added debounced updates
-
-**Previous Releases**:
-- The app features customizable menu bar icon styles, API console usage tracking, and a completely redesigned settings interface with improved modularity and reliability. Terminal integration brings real-time monitoring directly into your development workflow.
+**v2.0.0 - Major Release (2025-12-28)**:
+- **Official Apple Code Signing** - No more security warnings! Install like any normal Mac app
+- **Automatic Updates** - Built-in update system powered by Sparkle framework
+- **Enhanced Security** - Session keys now stored in macOS Keychain with automatic migration
+- **Multi-Language Support** - 6 languages: English, Spanish, French, German, Italian, Portuguese
+- **Multi-Metric Menu Bar Icons** - Display separate icons for session, weekly, and api usage
+- **Advanced Error Handling** - Professional error system with user-friendly messages and recovery
+- **Network Monitoring** - Auto-detect connectivity changes and handle offline scenarios
+- **Launch at Login** - System-level auto-start option
 
 **[View Full Release History](CHANGELOG.md)**
 
@@ -80,29 +80,24 @@ Before installing Claude Usage Tracker, ensure you have:
 #### Option 1: Homebrew (Recommended)
 
 ```bash
-brew install --cask --no-quarantine hamed-elfayome/claude-usage/claude-usage-tracker
+brew install --cask hamed-elfayome/claude-usage/claude-usage-tracker
 ```
 
 Or tap first, then install:
 
 ```bash
 brew tap hamed-elfayome/claude-usage
-brew install --cask --no-quarantine claude-usage-tracker
+brew install --cask claude-usage-tracker
 ```
 
-**Note about "--no-quarantine"**: The app is currently unsigned. On first launch, macOS Gatekeeper may block it. Workarounds:
-- System Settings → Privacy & Security → Open Anyway (recommended for most users)
-- Right‑click the app in Applications and choose Open, then Open
-- Advanced users only:
-  ```bash
-  # remove quarantine after install
-  xattr -dr com.apple.quarantine "/Applications/Claude Usage.app"
-  ```
+**Note**: Starting with v2.0.0, the app is officially signed with an Apple Developer certificate. No security workarounds needed!
 
 **To update**:
 ```bash
 brew upgrade --cask claude-usage-tracker
 ```
+
+Or use the built-in automatic update feature (Settings → Updates).
 
 **To uninstall**:
 ```bash
@@ -116,17 +111,11 @@ brew uninstall --cask claude-usage-tracker
 1. Download the `.zip` file from the link above
 2. Extract the zip file (double-click or use Archive Utility)
 3. Drag `Claude Usage.app` to your Applications folder
-4. Try to open the app (you'll see a security warning)
-5. Go to **System Settings** → **Privacy & Security**
-6. Scroll down and click **"Open Anyway"** next to the Claude Usage message
-7. Click **"Open"** in the confirmation dialog
-8. Done! The app will launch
+4. Double-click to launch - that's it!
 
-**Alternative Method**: Right-click (or Control+click) on `Claude Usage.app` in Applications and select **"Open"**, then click **"Open"** again in the security dialog.
+**v2.0.0+ Note**: The app is now officially signed with an Apple Developer certificate. You can install and run it like any other Mac application - no security warnings or workarounds needed.
 
-**First Launch Only**: You need to use one of these methods the first time due to macOS security for unsigned apps. After that, you can open it normally.
-
-**Note**: This app is open-source and free. It's not signed with an Apple Developer certificate ($100/year), so macOS requires manual approval on first launch.
+**Automatic Updates**: Once installed, the app will automatically check for updates and notify you when new versions are available (Settings → Updates).
 
 #### Option 3: Build from Source
 
@@ -213,6 +202,12 @@ After creating the file, launch the app and it will automatically detect the ses
 
 ## Features
 
+### Installation & Updates
+- **Official Apple Code Signing**: Professionally signed application - installs like any Mac app
+- **Automatic Updates**: Built-in update system powered by Sparkle framework
+- **One-Click Installation**: No security workarounds or manual approvals needed
+- **Update Notifications**: Get notified when new versions are available
+
 ### Usage Tracking & Monitoring
 - Real-time monitoring of 5-hour session, weekly limits, and Opus-specific usage
 - API console usage tracking for comprehensive visibility
@@ -222,14 +217,18 @@ After creating the file, launch the app and it will automatically detect the ses
 
 ### Menu Bar & Interface
 - **5 Customizable Icon Styles**: Battery, Progress Bar, Percentage Only, Icon with Bar, Compact
+- **Multi-Metric Icons**: Display separate icons for session, weekly, and api usage simultaneously
 - **Monochrome Mode**: Optional black & white aesthetic
 - **Interactive Popover**: One-click access with detachable floating window capability
 - **Live Status Indicator**: Real-time Claude system status from status.claude.com
+- **Multi-Language Support**: 6 languages (English, Spanish, French, German, Italian, Portuguese)
 - Adaptive colors for light/dark mode
 
 ### Automation & Intelligence
 - **Auto-Start Sessions**: Automatically initialize new sessions when usage resets to 0%
 - **Smart Notifications**: Threshold alerts at 75%, 90%, and 95% usage
+- **Network Monitoring**: Auto-detect connectivity changes and handle offline scenarios
+- **Launch at Login**: System-level auto-start option
 - **Configurable Refresh**: Set intervals from 5 to 120 seconds
 - Session reset and auto-start confirmations
 
@@ -240,8 +239,12 @@ After creating the file, launch the app and it will automatically detect the ses
 - Live preview before applying changes
 
 ### Security & Privacy
+- **macOS Keychain Storage**: Session keys stored in macOS Keychain (most secure option)
+- **Automatic Migration**: Seamless migration from old storage methods
+- **Apple Code Signed**: Verified by Apple for enhanced security and trust
+- **Advanced Error Handling**: Professional error system with user-friendly recovery
+- **Robust Validation**: Session key and API endpoint validation
 - Local storage with no cloud sync
-- Session keys protected with 0600 file permissions
 - Zero telemetry or tracking
 - HTTPS-only communication with Claude API
 
@@ -250,6 +253,7 @@ After creating the file, launch the app and it will automatically detect the ses
 - First-run guided setup wizard
 - Protocol-based modular architecture
 - Persistent settings with App Groups
+- Comprehensive test coverage
 
 ---
 
@@ -313,6 +317,13 @@ Set up terminal statusline (requires [Claude Code](https://claude.com/claude-cod
 - **One-Click Install**: Automated script installation to `~/.claude/`
 - **Configuration Management**: Apply or reset statusline settings
 - See [Claude Code Integration](#claude-code-integration) section for detailed setup
+
+#### Updates
+- **Automatic Update Checking**: Configure how often to check for updates
+- **Update Notifications**: Get notified when new versions are available
+- **One-Click Installation**: Download and install updates with a single click
+- **Release Notes**: View what's new in each update
+- **Update Channel**: Stay on stable releases or opt into beta testing
 
 #### About
 - **Version Information**: Current app version
@@ -507,11 +518,15 @@ The app can simultaneously monitor both web (claude.ai) and API console usage, p
 
 ## Security
 
-- **Local Storage**: Session keys stored in `~/.claude-session-key` with 0600 permissions
+- **macOS Keychain**: Session keys stored securely in macOS Keychain (most secure storage available)
+- **Automatic Migration**: v2.0+ automatically migrates session keys from older storage methods to Keychain
+- **Apple Code Signed**: Officially signed with Apple Developer certificate for verified authenticity
+- **Secure Updates**: Automatic updates delivered over HTTPS with code signature verification
 - **No Cloud Sync**: All data remains local to your machine
 - **No Telemetry**: Zero tracking or analytics
-- **Sandboxing**: Disabled to allow file system access (required for session key)
-- **Network**: HTTPS-only communication with claude.ai
+- **Advanced Error Handling**: Robust error system with user-friendly recovery
+- **Session Key Validation**: Comprehensive validation of API credentials
+- **Network**: HTTPS-only communication with claude.ai and Anthropic API
 
 ## Troubleshooting
 
@@ -530,21 +545,16 @@ The app can simultaneously monitor both web (claude.ai) and API console usage, p
 
 ### Session Key Expired
 
-Session keys may expire after a period of time. Extract a new key from claude.ai and update it in Settings → API.
+Session keys may expire after a period of time. Extract a new key from claude.ai and update it in Settings → General.
 
-### Homebrew Upgrade Issues
+### Updates Not Working
 
-If you encounter errors like `Error: Cask 'claude-usage-tracker' is unreadable` during upgrade:
+If automatic updates aren't working:
 
-simply re-tap:
-
-```bash
-brew untap hamed-elfayome/claude-usage
-brew tap hamed-elfayome/claude-usage
-brew upgrade --cask claude-usage-tracker
-```
-
-**Note**: Use the correct tap name: `hamed-elfayome/claude-usage/claude-usage-tracker` (not `hamed-elfayomes` with an 's').
+1. Check Settings → Updates to ensure automatic checking is enabled
+2. Verify you're running v2.0.0 or later (earlier versions don't have auto-update)
+3. Check your internet connection
+4. Manually download the latest version from GitHub if needed
 
 ## Contributors
 
