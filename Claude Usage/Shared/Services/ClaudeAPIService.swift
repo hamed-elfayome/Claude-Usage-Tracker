@@ -103,9 +103,9 @@ class ClaudeAPIService: APIServiceProtocol {
     // MARK: - API Requests
 
     /// Fetches the organization UUID for the authenticated user
-    func fetchOrganizationId() async throws -> String {
+    func fetchOrganizationId(sessionKey: String? = nil) async throws -> String {
         return try await ErrorRecovery.shared.executeWithRetry(maxAttempts: 3) {
-            let sessionKey = try self.readSessionKey()
+            let sessionKey = try sessionKey ?? self.readSessionKey()
 
             // Build URL safely
             let url: URL
@@ -199,8 +199,8 @@ class ClaudeAPIService: APIServiceProtocol {
     func fetchUsageData() async throws -> ClaudeUsage {
         let sessionKey = try readSessionKey()
 
-        // First, get organization ID
-        let orgId = try await fetchOrganizationId()
+        // First, get organization ID (pass session key to avoid re-reading from Keychain)
+        let orgId = try await fetchOrganizationId(sessionKey: sessionKey)
 
         async let usageDataTask = performRequest(endpoint: "/organizations/\(orgId)/usage", sessionKey: sessionKey)
 
@@ -334,7 +334,7 @@ class ClaudeAPIService: APIServiceProtocol {
     /// Creates a temporary conversation that is deleted after initialization to avoid cluttering chat history
     func sendInitializationMessage() async throws {
         let sessionKey = try readSessionKey()
-        let orgId = try await fetchOrganizationId()
+        let orgId = try await fetchOrganizationId(sessionKey: sessionKey)
 
         // Create a new conversation
         let conversationURL = try URLBuilder(baseURL: baseURL)

@@ -280,8 +280,9 @@ struct SmartUsageCard: View {
                         )
                         .frame(maxWidth: .infinity)
                         .scaleEffect(x: min(percentage / 100.0, 1.0), y: 1.0, anchor: .leading)
+                        .clipShape(RoundedRectangle(cornerRadius: 4))
                 }
-                .frame(height: isPrimary ? 8 : 6)
+                .frame(height: 8)
                 .animation(.easeInOut(duration: 0.8), value: percentage)
 
                 // Reset time information
@@ -563,8 +564,9 @@ struct APIUsageCard: View {
                     .fill(usageColor)
                     .frame(maxWidth: .infinity)
                     .scaleEffect(x: apiUsage.usagePercentage / 100.0, y: 1.0, anchor: .leading)
+                    .clipShape(RoundedRectangle(cornerRadius: 4))
             }
-            .frame(height: 6)
+            .frame(height: 8)
 
             // Used / Remaining
             HStack(spacing: 12) {
