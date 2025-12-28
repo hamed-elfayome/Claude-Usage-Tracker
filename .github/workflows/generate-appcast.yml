@@ -1,0 +1,218 @@
+name: Generate Appcast
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag to generate appcast for (e.g., v1.7.0)'
+        required: false
+        type: string
+
+jobs:
+  generate-appcast:
+    runs-on: macos-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Determine Release Tag
+        id: release_tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ -n "${{ inputs.release_tag }}" ]; then
+              TAG="${{ inputs.release_tag }}"
+            else
+              # Get latest release tag
+              TAG=$(gh api repos/${{ github.repository }}/releases/latest --jq '.tag_name')
+            fi
+          else
+            TAG="${{ github.event.release.tag_name }}"
+          fi
+
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "Processing release: ${TAG}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout gh-pages
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          fetch-depth: 0
+
+      - name: Download Sparkle Tools
+        run: |
+          echo "Downloading Sparkle 2.8.1 tools..."
+          curl -L -o sparkle.tar.xz \
+            https://github.com/sparkle-project/Sparkle/releases/download/2.8.1/Sparkle-2.8.1.tar.xz
+
+          echo "Extracting Sparkle tools..."
+          tar -xf sparkle.tar.xz
+          chmod +x bin/generate_appcast
+
+          echo "Sparkle tools version:"
+          ./bin/generate_appcast --help | head -5
+
+          echo "✅ Sparkle tools ready"
+
+      - name: Download Release Asset
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Create releases directory if it doesn't exist
+          mkdir -p releases
+
+          # Download the release asset
+          echo "Downloading release: ${{ steps.release_tag.outputs.tag }}"
+          gh release download "${{ steps.release_tag.outputs.tag }}" \
+            -p "Claude-Usage.zip" \
+            -D releases/ \
+            --clobber
+
+          # Verify download
+          if [ ! -f "releases/Claude-Usage.zip" ]; then
+            echo "❌ Error: Failed to download Claude-Usage.zip"
+            exit 1
+          fi
+
+          FILE_SIZE=$(stat -f%z "releases/Claude-Usage.zip")
+          echo "Downloaded file size: ${FILE_SIZE} bytes"
+
+          if [ "$FILE_SIZE" -lt 1000000 ]; then
+            echo "❌ Error: File too small (${FILE_SIZE} bytes), likely corrupted"
+            exit 1
+          fi
+
+          echo "✅ Release asset downloaded successfully"
+
+      - name: Extract App for Version Info
+        run: |
+          echo "Extracting app to read version info..."
+
+          # Unzip to temporary directory
+          unzip -q releases/Claude-Usage.zip -d releases/temp
+
+          # Extract version from app bundle
+          VERSION=$(defaults read "$(pwd)/releases/temp/Claude Usage.app/Contents/Info.plist" CFBundleShortVersionString)
+          BUILD=$(defaults read "$(pwd)/releases/temp/Claude Usage.app/Contents/Info.plist" CFBundleVersion)
+          MIN_OS=$(defaults read "$(pwd)/releases/temp/Claude Usage.app/Contents/Info.plist" LSMinimumSystemVersion)
+
+          echo "Detected version: $VERSION (build $BUILD)"
+          echo "Minimum macOS: $MIN_OS"
+
+          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
+          echo "APP_BUILD=$BUILD" >> $GITHUB_ENV
+          echo "MIN_OS=$MIN_OS" >> $GITHUB_ENV
+
+          # Clean up temp extraction
+          rm -rf releases/temp
+
+          echo "✅ Version info extracted"
+
+      - name: Download Previous Releases for Delta Updates
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+        run: |
+          echo "Downloading previous releases for delta update generation..."
+
+          # Get list of recent releases (last 5 for delta generation)
+          RELEASES=$(gh api repos/${{ github.repository }}/releases --jq '.[0:5] | .[] | .tag_name' | grep -v "${{ steps.release_tag.outputs.tag }}" || true)
+
+          if [ -z "$RELEASES" ]; then
+            echo "No previous releases found. Skipping delta generation."
+            exit 0
+          fi
+
+          # Download each previous release
+          for TAG in $RELEASES; do
+            echo "Downloading $TAG..."
+            gh release download "$TAG" \
+              -p "Claude-Usage.zip" \
+              -D releases/ \
+              --skip-existing \
+              2>/dev/null || echo "  Skipped $TAG (not found or already downloaded)"
+          done
+
+          echo "✅ Previous releases downloaded for delta generation"
+
+      - name: Generate Appcast
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          echo "Generating appcast for version ${{ env.APP_VERSION }}..."
+
+          # IMPORTANT: Pipe private key via stdin for security (don't write to disk)
+          # This prevents the private key from ever being written to the filesystem
+          echo "$SPARKLE_PRIVATE_KEY" | ./bin/generate_appcast \
+            --ed-key-file - \
+            --download-url-prefix "https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/download/" \
+            --maximum-deltas 5 \
+            --maximum-versions 10 \
+            releases/
+
+          # Move appcast to root
+          mv releases/appcast.xml ./
+
+          echo "✅ Appcast generated successfully!"
+
+      - name: Display Appcast Preview
+        run: |
+          echo "=== Generated Appcast Preview ==="
+          echo ""
+
+          # Show the latest item in the appcast
+          if command -v xmllint &> /dev/null; then
+            xmllint --format appcast.xml | head -50
+          else
+            head -50 appcast.xml
+          fi
+
+          echo ""
+          echo "Latest version in appcast: ${{ env.APP_VERSION }}"
+          echo "Release tag: ${{ steps.release_tag.outputs.tag }}"
+
+      - name: Commit and Push
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+          git add appcast.xml releases/
+
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "ℹ️  No changes to commit (appcast already up to date)"
+            exit 0
+          fi
+
+          # Commit and push
+          git commit -m "Update appcast for ${{ steps.release_tag.outputs.tag }} (v${{ env.APP_VERSION }})"
+          git push
+
+          echo "✅ Appcast published to GitHub Pages!"
+
+      - name: Verify GitHub Pages Deployment
+        run: |
+          echo "Waiting for GitHub Pages to deploy..."
+          sleep 30
+
+          echo "Verifying appcast URL is accessible..."
+          APPCAST_URL="https://hamed-elfayome.github.io/Claude-Usage-Tracker/appcast.xml"
+
+          if curl -f -s "$APPCAST_URL" > /dev/null; then
+            echo "✅ Appcast is live at: $APPCAST_URL"
+          else
+            echo "⚠️  Appcast URL not yet accessible (GitHub Pages may take 1-2 minutes to deploy)"
+            echo "Check manually: $APPCAST_URL"
+          fi
+
+      - name: Summary
+        run: |
+          echo "🎉 Appcast generation complete!"
+          echo ""
+          echo "📦 Release: ${{ steps.release_tag.outputs.tag }}"
+          echo "📱 Version: ${{ env.APP_VERSION }}"
+          echo "🔗 Appcast URL: https://hamed-elfayome.github.io/Claude-Usage-Tracker/appcast.xml"
+          echo ""
+          echo "ℹ️  Users with automatic updates enabled will be notified within 24 hours"
