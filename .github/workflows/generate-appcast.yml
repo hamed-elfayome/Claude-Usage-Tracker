@@ -40,6 +40,7 @@ jobs:
         with:
           ref: gh-pages
           fetch-depth: 0
+          token: ${{ secrets.RELEASE_TOKEN }}
 
       - name: Download Sparkle Tools
         run: |
