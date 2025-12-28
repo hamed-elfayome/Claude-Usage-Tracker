@@ -63,18 +63,52 @@ jobs:
 
           echo "✅ Code signing certificate imported successfully"
 
-      - name: Build Release (Signed)
+      - name: Build Release (Unsigned)
         run: |
-          echo "Building signed release..."
-          # Certificate is already imported - Xcode will find it automatically
+          echo "Building release (will sign manually after)..."
           xcodebuild build \
             -project "Claude Usage.xcodeproj" \
             -scheme "Claude Usage" \
             -configuration Release \
             -derivedDataPath build \
-            -allowProvisioningUpdates
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
 
           echo "✅ Build completed successfully"
+
+      - name: Sign App Bundle
+        run: |
+          APP_PATH="build/Build/Products/Release/Claude Usage.app"
+
+          echo "Signing all frameworks and nested components..."
+
+          # Sign Sparkle framework and all its components first
+          find "$APP_PATH/Contents/Frameworks/Sparkle.framework" -type f \( -name "*.dylib" -o -name "*.framework" -o -perm +111 \) -print0 | while IFS= read -r -d '' file; do
+            if [[ -f "$file" ]]; then
+              echo "Signing: $file"
+              codesign --force --sign "Developer ID Application" \
+                --timestamp \
+                --options runtime \
+                "$file" || true
+            fi
+          done
+
+          # Deep sign the entire Sparkle framework
+          codesign --force --deep --sign "Developer ID Application" \
+            --timestamp \
+            --options runtime \
+            "$APP_PATH/Contents/Frameworks/Sparkle.framework"
+
+          # Sign the main app bundle
+          echo "Signing main app bundle..."
+          codesign --force --deep --sign "Developer ID Application" \
+            --timestamp \
+            --options runtime \
+            --entitlements "Claude Usage/Claude UsageRelease.entitlements" \
+            "$APP_PATH"
+
+          echo "✅ App bundle signed with Developer ID"
 
       - name: Verify Code Signature
         run: |
