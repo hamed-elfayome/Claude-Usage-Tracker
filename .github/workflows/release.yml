@@ -73,7 +73,7 @@ jobs:
             -derivedDataPath build \
             CODE_SIGN_IDENTITY="Developer ID Application" \
             DEVELOPMENT_TEAM="${{ secrets.TEAM_ID }}" \
-            CODE_SIGN_STYLE=Automatic \
+            CODE_SIGN_STYLE=Manual \
             ENABLE_HARDENED_RUNTIME=YES
 
           echo "✅ Build completed successfully"
