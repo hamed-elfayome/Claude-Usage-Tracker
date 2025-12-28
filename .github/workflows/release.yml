@@ -95,29 +95,49 @@ jobs:
           APP_PATH="build/Build/Products/Release/Claude Usage.app"
 
           echo "Using signing identity: $SIGNING_IDENTITY"
-          echo "Signing all frameworks and nested components..."
+          echo "Signing Sparkle framework components in correct order..."
 
-          # Sign Sparkle framework and all its components first
-          find "$APP_PATH/Contents/Frameworks/Sparkle.framework" -type f \( -name "*.dylib" -o -name "*.framework" -o -perm +111 \) -print0 | while IFS= read -r -d '' file; do
-            if [[ -f "$file" ]]; then
-              echo "Signing: $file"
-              codesign --force --sign "$SIGNING_IDENTITY" \
-                --timestamp \
-                --options runtime \
-                "$file" || true
-            fi
-          done
+          # IMPORTANT: Sign in order - XPC Services first, then framework, then main app
+          # DO NOT use --deep flag as it breaks XPC service signatures
+          # Reference: https://sparkle-project.org/documentation/sandboxing/
 
-          # Deep sign the entire Sparkle framework
-          echo "Deep signing Sparkle framework..."
-          codesign --force --deep --sign "$SIGNING_IDENTITY" \
+          # 1. Sign XPC Services first
+          echo "Signing Installer.xpc..."
+          codesign --force --sign "$SIGNING_IDENTITY" \
+            --timestamp \
+            --options runtime \
+            "$APP_PATH/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/Installer.xpc"
+
+          echo "Signing Downloader.xpc..."
+          codesign --force --sign "$SIGNING_IDENTITY" \
+            --timestamp \
+            --options runtime \
+            "$APP_PATH/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc"
+
+          # 2. Sign Autoupdate helper
+          echo "Signing Autoupdate..."
+          codesign --force --sign "$SIGNING_IDENTITY" \
+            --timestamp \
+            --options runtime \
+            "$APP_PATH/Contents/Frameworks/Sparkle.framework/Versions/B/Autoupdate"
+
+          # 3. Sign Updater.app
+          echo "Signing Updater.app..."
+          codesign --force --sign "$SIGNING_IDENTITY" \
+            --timestamp \
+            --options runtime \
+            "$APP_PATH/Contents/Frameworks/Sparkle.framework/Versions/B/Updater.app"
+
+          # 4. Sign the Sparkle framework itself
+          echo "Signing Sparkle framework..."
+          codesign --force --sign "$SIGNING_IDENTITY" \
             --timestamp \
             --options runtime \
             "$APP_PATH/Contents/Frameworks/Sparkle.framework"
 
-          # Sign the main app bundle
+          # 5. Sign the main app bundle (WITHOUT --deep to preserve nested signatures)
           echo "Signing main app bundle..."
-          codesign --force --deep --sign "$SIGNING_IDENTITY" \
+          codesign --force --sign "$SIGNING_IDENTITY" \
             --timestamp \
             --options runtime \
             --entitlements "Claude Usage/Claude UsageRelease.entitlements" \
