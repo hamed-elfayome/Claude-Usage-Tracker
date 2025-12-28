@@ -1,0 +1,14 @@
+<?xml version="1.0" standalone="yes"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+    <channel>
+        <title>Claude Usage</title>
+        <item>
+            <title>2.0.0</title>
+            <pubDate>Sun, 28 Dec 2025 21:40:45 +0000</pubDate>
+            <sparkle:version>1</sparkle:version>
+            <sparkle:shortVersionString>2.0.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/download/Claude-Usage.zip" length="2630827" type="application/octet-stream"/>
+        </item>
+    </channel>
+</rss>
