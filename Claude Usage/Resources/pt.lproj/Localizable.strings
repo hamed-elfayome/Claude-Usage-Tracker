@@ -1,0 +1,437 @@
+/*
+   Localizable.strings
+   Claude Usage Tracker
+
+   Portuguese (Português)
+   Created by Claude Code on 2025-12-27.
+*/
+
+/* ==================== */
+/* MARK: - App Info */
+/* ==================== */
+"app.name" = "Claude Usage Tracker";
+"app.window.main" = "Uso do Claude";
+"app.window.settings" = "Configurações";
+"app.window.github_prompt" = "Apoie o Claude Usage Tracker";
+
+/* ==================== */
+/* MARK: - Common Actions */
+/* ==================== */
+"common.ok" = "OK";
+"common.cancel" = "Cancelar";
+"common.save" = "Salvar";
+"common.delete" = "Excluir";
+"common.done" = "Concluído";
+"common.close" = "Fechar";
+"common.refresh" = "Atualizar";
+"common.settings" = "Configurações";
+"common.quit" = "Sair";
+"common.validate" = "Validar";
+"common.yes" = "Sim";
+"common.no" = "Não";
+
+/* ==================== */
+/* MARK: - Settings Navigation */
+/* ==================== */
+"settings.title" = "Configurações";
+"settings.personal_usage" = "Uso Pessoal";
+"settings.personal_usage.description" = "Rastreie seu uso do plano gratuito do Claude.ai";
+"settings.api_billing" = "Faturamento da API";
+"settings.api_billing.description" = "Monitore faturamento e créditos do Console da API";
+"settings.general" = "Geral";
+"settings.general.description" = "Comportamento e preferências do aplicativo";
+"settings.appearance" = "Aparência";
+"settings.appearance.description" = "Personalização do ícone da barra de menu";
+"settings.session_management" = "Gerenciamento de Sessão";
+"settings.session_management.description" = "Gerenciamento automático de sessão";
+"settings.notifications" = "Notificações";
+"settings.notifications.description" = "Alertas de uso e notificações";
+"settings.claude_cli" = "Claude CLI";
+"settings.claude_cli.description" = "Integração com linha de status do terminal";
+"settings.about" = "Sobre";
+"settings.about.description" = "Informações e créditos do aplicativo";
+
+/* ==================== */
+/* MARK: - Menu Bar */
+/* ==================== */
+"menubar.claude_usage" = "Uso do Claude";
+"menubar.session_usage" = "Uso da Sessão";
+"menubar.weekly_usage" = "Semanal";
+"menubar.opus_usage" = "Opus";
+"menubar.extra_usage" = "Uso Extra";
+"menubar.api_credits" = "Créditos da API";
+"menubar.5_hour_window" = "Janela móvel de 5 horas";
+"menubar.all_models" = "Todos os modelos";
+"menubar.weekly" = "Semanal";
+"menubar.anthropic_console" = "Console da API Anthropic";
+"menubar.used" = "Usado";
+"menubar.remaining" = "Restante";
+"menubar.resets_time" = "Reinicia %@";
+"menubar.click_status" = "Clique para abrir status.claude.com";
+
+/* ==================== */
+/* MARK: - Usage Status */
+/* ==================== */
+"usage.high_session" = "Uso Alto da Sessão";
+"usage.high_session.desc" = "Considere fazer uma pausa para reiniciar sua janela de sessão";
+"usage.weekly_approaching" = "Aproximando do Limite Semanal";
+"usage.weekly_approaching.desc" = "Você está próximo do seu limite semanal de tokens";
+"usage.efficient" = "Uso Eficiente";
+"usage.efficient.desc" = "Ótimo trabalho gerenciando seu consumo de tokens!";
+
+/* ==================== */
+/* MARK: - General Settings */
+/* ==================== */
+"general.launch_at_login" = "Iniciar ao fazer login";
+"general.launch_at_login.description" = "Iniciar automaticamente o Claude Usage Tracker ao fazer login no seu Mac";
+"general.refresh_interval" = "Intervalo de Atualização";
+"general.refresh_interval.description" = "Intervalos menores fornecem dados mais em tempo real, mas podem impactar a vida útil da bateria";
+"general.check_overage_limit" = "Verificar Limite de Uso Extra";
+"general.check_overage_limit.description" = "Buscar e exibir custo mensal e informações de limite de uso extra";
+"general.language.title" = "Idioma";
+"general.language.select" = "Selecionar Idioma";
+"general.language.restart_note" = "As alterações de idioma entrarão em vigor após reiniciar o aplicativo";
+"general.language.restart_app" = "Reiniciar para Aplicar";
+
+/* ==================== */
+/* MARK: - Appearance Settings */
+/* ==================== */
+"appearance.menu_bar_icons" = "Ícones da Barra de Menu";
+"appearance.menu_bar_icons.subtitle" = "Personalize quais métricas aparecem na sua barra de menu";
+"appearance.show_icon_names" = "Mostrar nomes dos ícones";
+"appearance.show_icon_names.description" = "Exibir rótulos de métricas (S:, W:, API:) ao lado dos ícones";
+"appearance.monochrome_mode" = "Monocromático (Adaptativo)";
+"appearance.monochrome_mode.description" = "Os ícones se adaptam automaticamente ao modo claro/escuro";
+"appearance.metric_configuration" = "Configuração de Métricas";
+"appearance.drag_to_reorder" = "Arraste para reordenar os ícones. Métricas desabilitadas ficam ocultas da barra de menu.";
+
+/* ==================== */
+/* MARK: - Session Management */
+/* ==================== */
+"session.auto_start" = "Iniciar sessão automaticamente ao reiniciar";
+"session.auto_start.description" = "Enviar automaticamente 'Oi' para o Claude 3.5 Haiku quando sua sessão reiniciar para 0%. Isso mantém sua sessão sempre pronta sem intervenção manual.";
+"session.enable_auto_start" = "Habilitar início automático de sessão";
+"session.beta_badge" = "BETA";
+
+/* ==================== */
+/* MARK: - Notifications Settings */
+/* ==================== */
+"notifications.enable" = "Habilitar notificações";
+"notifications.enable.description" = "Receber alertas ao se aproximar dos limites de uso";
+"notifications.alert_thresholds" = "Limites de Alerta";
+"notifications.threshold.warning" = "Aviso";
+"notifications.threshold.high" = "Uso Alto";
+"notifications.threshold.critical" = "Crítico";
+"notifications.threshold.session_reset" = "Reinício de Sessão";
+
+/* ==================== */
+/* MARK: - Setup Wizard */
+/* ==================== */
+"setup.welcome.title" = "Bem-vindo ao Claude Usage Tracker";
+"setup.welcome.subtitle" = "Configure seu acesso à API para começar a rastrear o uso";
+"setup.step.get_session_key" = "Obtenha Sua Chave de Sessão";
+"setup.step.get_session_key.description" = "Você precisará extrair sua chave de sessão do claude.ai";
+"setup.step.enter_session_key" = "Digite Sua Chave de Sessão";
+"setup.open_claude_ai" = "Abrir claude.ai";
+"setup.show_instructions" = "Mostrar Instruções";
+"setup.hide_instructions" = "Ocultar";
+"setup.instruction.step1" = "Abra as Ferramentas do Desenvolvedor (F12 ou Cmd+Option+I)";
+"setup.instruction.step2" = "Vá para Application/Storage → Cookies → https://claude.ai";
+"setup.instruction.step3" = "Encontre o cookie 'sessionKey'";
+"setup.instruction.step4" = "Clique duas vezes no seu Valor e copie (Cmd+C)";
+"setup.paste_session_key" = "Cole o valor de sessionKey que você copiou";
+"setup.auto_start_session" = "Iniciar sessão automaticamente ao reiniciar";
+"setup.auto_start_session.description" = "Enviar automaticamente 'Oi' para o Claude 3.5 Haiku quando sua sessão reiniciar para 0%. Isso mantém sua sessão sempre pronta sem intervenção manual.";
+"setup.enable_auto_start" = "Habilitar início automático de sessão";
+"setup.menubar_appearance" = "Aparência da Barra de Menu";
+"setup.choose_icon_style" = "Escolha seu estilo de ícone preferido";
+"setup.monochrome_adaptive" = "Monocromático (Adaptativo)";
+"setup.validation.success" = "Conectado com sucesso à organização";
+
+/* ==================== */
+/* MARK: - About */
+/* ==================== */
+"about.version" = "Versão %@";
+"about.created_by" = "Criado Por";
+"about.contributors" = "Colaboradores (%d)";
+"about.contributors_loading" = "Colaboradores";
+"about.links" = "Links";
+"about.star_github" = "Dar Estrela no GitHub";
+"about.report_issue" = "Reportar Problema";
+"about.send_feedback" = "Enviar Feedback";
+"about.mit_license" = "Licença MIT • Código Aberto";
+"about.copyright" = "© 2025 Hamed Elfayome";
+
+/* ==================== */
+/* MARK: - Icon Styles */
+/* ==================== */
+"icon_style.battery" = "Bateria";
+"icon_style.percentage" = "Porcentagem";
+"icon_style.text_only" = "Apenas Texto";
+"icon_style.minimal" = "Minimalista";
+
+/* ==================== */
+/* MARK: - Metric Types */
+/* ==================== */
+"metric.session_usage" = "Uso da Sessão";
+"metric.session_usage.description" = "Janela móvel de uso de 5 horas";
+"metric.week_usage" = "Uso Semanal";
+"metric.week_usage.description" = "Uso semanal de tokens (todos os modelos)";
+"metric.api_credits" = "Créditos da API";
+"metric.api_credits.description" = "Créditos de faturamento do Console da API";
+
+/* ==================== */
+/* MARK: - Display Modes */
+/* ==================== */
+"display.remaining_credits" = "Créditos Restantes";
+"display.remaining_credits.description" = "Mostrar apenas créditos restantes";
+"display.used_amount" = "Valor Usado";
+"display.used_amount.description" = "Mostrar apenas valor gasto";
+"display.both_used_total" = "Ambos (Usado / Total)";
+"display.both_used_total.description" = "Mostrar usado e total";
+"display.percentage" = "Porcentagem";
+"display.percentage.description" = "Mostrar como porcentagem (ex: 60%)";
+"display.token_count" = "Contagem de Tokens";
+"display.token_count.description" = "Mostrar números de tokens (ex: 600K/1M)";
+
+/* ==================== */
+/* MARK: - Notification Messages */
+/* ==================== */
+"notification.session_warning.title" = "Aviso de Uso da Sessão";
+"notification.session_warning.message" = "Você usou %@ do seu limite de sessão de 5 horas. %@";
+"notification.session_critical.title" = "Uso da Sessão Crítico";
+"notification.session_critical.message" = "Você usou %@ do seu limite de sessão de 5 horas! %@";
+"notification.session_reset.title" = "Sessão Reiniciada";
+"notification.session_reset.message" = "Sua sessão foi reiniciada! Você agora tem uma nova sessão de 5 horas disponível.";
+"notification.session_auto_started.title" = "Sessão Iniciada Automaticamente";
+"notification.session_auto_started.message" = "Uma nova sessão foi inicializada automaticamente com o Claude 3.5 Haiku. Sua nova sessão de 5 horas está pronta!";
+"notification.weekly_warning.title" = "Aviso de Uso Semanal";
+"notification.weekly_warning.message" = "Você usou %@ do seu limite semanal. %@";
+"notification.weekly_critical.title" = "Uso Semanal Crítico";
+"notification.weekly_critical.message" = "Você usou %@ do seu limite semanal! %@";
+"notification.opus_warning.title" = "Aviso de Uso do Opus";
+"notification.opus_warning.message" = "Você usou %@ do seu limite semanal do Opus. %@";
+"notification.opus_critical.title" = "Uso do Opus Crítico";
+"notification.opus_critical.message" = "Você usou %@ do seu limite semanal do Opus! %@";
+"notification.enabled.title" = "Notificações Habilitadas";
+"notification.enabled.message" = "Você agora receberá alertas em 75%, 90% e 95% dos limites de uso, além de notificações de reinício de sessão.";
+
+/* ==================== */
+/* MARK: - Error Messages */
+/* ==================== */
+"error.session_key_not_found" = "Nenhuma chave de sessão encontrada";
+"error.session_key_not_found.suggestion" = "Por favor, configure sua chave de sessão do Claude nas Configurações";
+"error.session_key_invalid" = "Chave de sessão inválida";
+"error.session_key_invalid.suggestion" = "Por favor, verifique o formato da sua chave de sessão. Ela deve começar com 'sk-ant-'";
+"error.network_unavailable" = "Sem conexão com a internet";
+"error.network_unavailable.suggestion" = "Por favor, verifique sua conexão com a internet e tente novamente";
+"error.network_timeout" = "Tempo de solicitação esgotado";
+"error.network_timeout.suggestion" = "Por favor, tente novamente. Se o problema persistir, verifique o status do Claude em status.claude.com";
+"error.api_unauthorized" = "Acesso não autorizado";
+"error.api_unauthorized.suggestion" = "Sua chave de sessão pode ter expirado. Por favor, atualize-a nas Configurações";
+"error.api_server_error" = "Erro do servidor";
+"error.api_server_error.suggestion" = "O servidor encontrou um erro. Por favor, tente novamente mais tarde";
+"error.api_rate_limited" = "Limite de taxa excedido";
+"error.api_rate_limited.suggestion" = "Por favor, aguarde alguns momentos antes de tentar novamente";
+
+/* ==================== */
+/* MARK: - Validation Messages */
+/* ==================== */
+"validation.session_key_too_short" = "Chave de sessão muito curta";
+"validation.session_key_too_long" = "Chave de sessão muito longa";
+"validation.invalid_prefix" = "Prefixo de chave de sessão inválido";
+"validation.invalid_characters" = "Caracteres inválidos na chave de sessão";
+"validation.invalid_format" = "Formato de chave de sessão inválido";
+"validation.contains_whitespace" = "A chave de sessão contém espaços em branco";
+
+/* ==================== */
+/* MARK: - GitHub Star Prompt */
+/* ==================== */
+"github.enjoy_app" = "Gostando do Claude Usage Tracker?";
+"github.star_description" = "Se este aplicativo foi útil, considere dar uma estrela no GitHub! Isso ajuda outras pessoas a descobrir o projeto e motiva o desenvolvimento contínuo.";
+"github.star_button" = "⭐ Dar Estrela no GitHub";
+"github.maybe_later" = "Talvez Mais Tarde";
+"github.never_show" = "Não Mostrar Novamente";
+
+/* ==================== */
+/* MARK: - API Settings */
+/* ==================== */
+"api.enable_tracking" = "Habilitar rastreamento da API";
+"api.enable_tracking.description" = "Rastreie seus créditos e gastos do Console da API Anthropic";
+"api.session_key_placeholder" = "sk-ant-api03-...";
+"api.configure" = "Configurar Rastreamento da API";
+"api.configure.description" = "Monitore o uso e créditos da sua API do Console Anthropic";
+"api.instructions" = "Para rastrear o uso da API, você precisa fornecer sua chave de sessão da API:";
+"api.instruction_step1" = "Faça login em console.anthropic.com";
+"api.instruction_step2" = "Abra as Ferramentas do Desenvolvedor (F12 ou Cmd+Option+I)";
+"api.instruction_step3" = "Vá para Application → Cookies → https://console.anthropic.com";
+"api.instruction_step4" = "Encontre 'sessionKey' e copie seu valor";
+
+/* ==================== */
+/* MARK: - Personal Usage */
+/* ==================== */
+"personal.configure" = "Configurar Uso Pessoal";
+"personal.configure.description" = "Rastreie seu uso do plano gratuito no claude.ai";
+"personal.status" = "Status";
+"personal.session_key" = "Chave de Sessão";
+"personal.session_key.configured" = "Configurada";
+"personal.session_key.not_configured" = "Não Configurada";
+"personal.reconfigure" = "Reconfigurar";
+"personal.remove" = "Remover Chave de Sessão";
+
+/* ==================== */
+/* MARK: - Claude Code (CLI) */
+/* ==================== */
+"claudecode.title" = "Integração com Claude CLI";
+"claudecode.description" = "Exibir informações de uso na linha de status do seu terminal";
+"claudecode.coming_soon" = "Em Breve";
+"claudecode.features_description" = "A integração com o Claude Code CLI para exibição na linha de status do terminal chegará em uma atualização futura.";
+
+/* ==================== */
+/* MARK: - Additional UI Labels */
+/* ==================== */
+"ui.app_behavior" = "Comportamento do Aplicativo";
+"ui.usage_tracking" = "Rastreamento de Uso";
+"ui.global_settings" = "Configurações Globais";
+"ui.menu_bar_metrics" = "Métricas da Barra de Menu";
+"ui.quick_actions" = "Ações Rápidas";
+"ui.how_it_works" = "Como funciona";
+"ui.display_components" = "Componentes de Exibição";
+"ui.requirements" = "Requisitos";
+"ui.live_preview" = "Visualização ao Vivo";
+"ui.updates_realtime" = "Atualizações em tempo real";
+"ui.organization" = "Organização";
+"ui.icon_style" = "Estilo do Ícone";
+"ui.display_mode" = "Modo de Exibição";
+"ui.at_least_one_metric" = "Pelo menos uma métrica deve estar habilitada";
+
+/* ==================== */
+/* MARK: - Session Management (Additional) */
+/* ==================== */
+"session.subtitle" = "Inicialização e manutenção automática de sessão";
+"session.auto_description_line1" = "• Detecta quando sua sessão reinicia para 0%";
+"session.auto_description_line2" = "• Envia 'Oi' para o Claude 3.5 Haiku (modelo mais barato)";
+"session.auto_description_line3" = "• Usa um chat temporário que não aparecerá no seu histórico";
+"session.auto_description_line4" = "• Nova sessão de 5 horas fica pronta instantaneamente";
+
+/* ==================== */
+/* MARK: - Claude CLI (Additional) */
+/* ==================== */
+"claudecode.subtitle" = "Personalize a exibição da linha de status do seu terminal";
+"claudecode.preview_label" = "Visualização ao Vivo";
+"claudecode.preview_description" = "É assim que sua linha de status aparecerá no Claude CLI";
+"claudecode.component_directory" = "Nome do diretório";
+"claudecode.component_branch" = "Branch do Git";
+"claudecode.component_usage" = "Estatísticas de uso";
+"claudecode.component_progressbar" = "Barra de progresso";
+"claudecode.requirement_sessionkey" = "• Chave de sessão configurada na aba Uso Pessoal";
+"claudecode.requirement_restart" = "• Reiniciar Claude CLI após aplicar as alterações";
+"claudecode.error_no_components" = "Por favor, selecione pelo menos um componente para exibir";
+"claudecode.error_no_sessionkey" = "Chave de sessão não configurada. Por favor, configure-a primeiro na aba Uso Pessoal.";
+"claudecode.success_applied" = "Configuração aplicada! Reinicie o Claude CLI para ver as alterações.";
+"claudecode.success_disabled" = "Linha de status desabilitada. Reinicie o Claude CLI.";
+"claudecode.preview_no_components" = "Nenhum componente selecionado";
+
+/* ==================== */
+/* MARK: - API Billing (Additional) */
+/* ==================== */
+"api.title" = "Faturamento da API";
+"api.subtitle" = "Monitore o uso e gastos da API";
+"api.enable_billing_tracking" = "Habilitar rastreamento de faturamento da API";
+"api.enable_billing_description" = "Monitore seu uso da API, gastos atuais e créditos pré-pagos restantes";
+"api.label_api_session_key" = "Chave de Sessão da API";
+"api.placeholder_api_session_key" = "sk-ant-api03-...";
+"api.help_api_session_key" = "Sua chave de sessão de console.anthropic.com";
+"api.button_fetch_organizations" = "Buscar Organizações";
+"api.button_fetching" = "Buscando...";
+"api.button_save_configuration" = "Salvar Configuração";
+"api.success_organizations_found" = "Encontrada(s) %d organização(ões)";
+"api.error_fetch_failed" = "Falha ao buscar organizações: %@";
+"api.success_configuration_saved" = "Configuração da API salva com sucesso";
+
+/* ==================== */
+/* MARK: - Personal Usage (Additional) */
+/* ==================== */
+"personal.title" = "Uso Pessoal";
+"personal.subtitle" = "Rastreie seu uso e sessões do Claude.ai";
+"personal.label_session_key" = "Chave de Sessão";
+"personal.placeholder_session_key" = "sk-ant-sid-...";
+"personal.help_session_key" = "Cole seu cookie sessionKey do DevTools do claude.ai";
+"personal.button_test_connection" = "Testar Conexão";
+"personal.button_save_and_continue" = "Salvar e Continuar";
+"personal.button_remove_key" = "Remover Chave";
+"personal.success_connected" = "Conectado com sucesso à organização";
+"personal.confirm_remove_title" = "Remover Chave de Sessão?";
+"personal.confirm_remove_message" = "Isso interromperá o rastreamento do seu uso pessoal.";
+
+/* ==================== */
+/* MARK: - Error Presenter */
+/* ==================== */
+"error.code_label" = "Código do Erro:";
+"error.what_to_do" = "O que fazer:";
+"error.occurred_at" = "Ocorreu em: %@";
+
+/* ==================== */
+/* MARK: - General Settings (Additional) */
+/* ==================== */
+"general.slider_realtime" = "Atualizações em tempo real";
+"general.slider_frequent" = "Atualizações frequentes";
+"general.slider_balanced" = "Modo balanceado";
+"general.slider_efficient" = "Economia de energia";
+"general.slider_battery_saver" = "Economia de bateria";
+"general.slider_fast" = "Rápido";
+"general.slider_balanced_label" = "Balanceado";
+"general.slider_battery_saver_label" = "Economia de Bateria";
+"general.available_languages" = "Idiomas Disponíveis (%d)";
+
+/* ==================== */
+/* MARK: - Badges */
+/* ==================== */
+"badge.new" = "NOVO";
+"badge.beta" = "BETA";
+"badge.pro" = "PRO";
+
+/* ==================== */
+/* MARK: - Appearance (Additional) */
+/* ==================== */
+"appearance.title" = "Aparência da Barra de Menu";
+"appearance.subtitle" = "Personalize seus ícones e métricas da barra de menu";
+"appearance.global_settings" = "Configurações Globais";
+"appearance.menu_bar_metrics" = "Métricas da Barra de Menu";
+"appearance.monochrome_title" = "Monocromático (Adaptativo)";
+"appearance.monochrome_description" = "Remove codificação de cores e se adapta à aparência do sistema";
+"appearance.show_labels_title" = "Mostrar Rótulos dos Ícones";
+"appearance.show_labels_description" = "Exibir rótulos de prefixo (S:, W:, API:) para cada métrica";
+
+/* ==================== */
+/* MARK: - Setup Wizard (Additional) */
+/* ==================== */
+"setup.step_number_1" = "1";
+"setup.step_number_2" = "2";
+"setup.step_title_get_key" = "Obtenha Sua Chave de Sessão";
+"setup.step_title_enter_key" = "Digite Sua Chave de Sessão";
+"setup.step_description_get_key" = "Você precisará extrair sua chave de sessão do claude.ai";
+"setup.button_open_claude" = "Abrir claude.ai";
+"setup.paste_instruction" = "Cole o valor de sessionKey que você copiou";
+
+/* ==================== */
+/* MARK: - Component Preview */
+/* ==================== */
+"preview.sample_text_claude" = "Claude";
+"preview.sample_percentage" = "60%";
+"preview.sample_card_content" = "O conteúdo do card vai aqui";
+"preview.sample_more_content" = "Mais conteúdo";
+"preview.sample_update_every" = "Atualizar a cada:";
+"preview.sample_5_minutes" = "5 minutos";
+
+/* ==================== */
+/* MARK: - New Keys Added */
+/* ==================== */
+"api.single_organization" = "Organização única encontrada e selecionada automaticamente";
+"claudecode.button_apply" = "Aplicar";
+"claudecode.button_reset" = "Redefinir";
+"error.generic" = "Erro: %@";
+"personal.button_saving" = "Salvando...";
+"personal.button_setup_wizard" = "Assistente de Configuração";
+"personal.button_open_claude" = "Abrir claude.ai";
+"personal.success_key_saved" = "Chave de sessão salva com sucesso";

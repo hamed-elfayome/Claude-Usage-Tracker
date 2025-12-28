@@ -29,16 +29,16 @@ struct APISettingsView: View {
         VStack(alignment: .leading, spacing: Spacing.sectionSpacing) {
             // Header
             SettingsHeader(
-                title: "API Usage Tracking",
-                subtitle: "Monitor your Anthropic API usage and spending"
+                title: "api.title".localized,
+                subtitle: "api.subtitle".localized
             )
 
             Divider()
 
             // Enable/Disable Toggle
             SettingToggle(
-                title: "Enable API Usage Tracking",
-                description: "Track your API spending and remaining credits from console.anthropic.com",
+                title: "api.enable_billing_tracking".localized,
+                description: "api.enable_billing_description".localized,
                 isOn: $apiTrackingEnabled
             )
             .onChange(of: apiTrackingEnabled) { _, newValue in
@@ -48,10 +48,10 @@ struct APISettingsView: View {
             if apiTrackingEnabled {
                 // API Session Key Input
                 VStack(alignment: .leading, spacing: Spacing.inputSpacing) {
-                    Text("API Console Session Key")
+                    Text("api.label_api_session_key".localized)
                         .font(Typography.sectionHeader)
 
-                    SecureField("sk-ant-sid-...", text: $apiSessionKey)
+                    SecureField("api.placeholder_api_session_key".localized, text: $apiSessionKey)
                         .textFieldStyle(.plain)
                         .font(Typography.monospacedInput)
                         .padding(Spacing.inputPadding)
@@ -64,7 +64,7 @@ struct APISettingsView: View {
                                 )
                         )
 
-                    Text("Paste your sessionKey cookie from console.anthropic.com DevTools")
+                    Text("api.help_api_session_key".localized)
                         .font(Typography.caption)
                         .foregroundColor(.secondary)
                 }
@@ -76,12 +76,12 @@ struct APISettingsView: View {
                             HStack(spacing: Spacing.iconTextSpacing) {
                                 ProgressView()
                                     .scaleEffect(0.6)
-                                Text("Fetching...")
+                                Text("api.button_fetching".localized)
                                     .font(Typography.label)
                             }
                             .frame(width: 140)
                         } else {
-                            Text("Fetch Organizations")
+                            Text("api.button_fetch_organizations".localized)
                                 .font(Typography.label)
                                 .frame(width: 140)
                         }
@@ -95,7 +95,7 @@ struct APISettingsView: View {
                 // Organization Selection
                 if !organizations.isEmpty {
                     VStack(alignment: .leading, spacing: Spacing.inputSpacing) {
-                        Text("Select Organization")
+                        Text("ui.organization".localized)
                             .font(Typography.sectionHeader)
 
                         Picker("", selection: $selectedOrganizationId) {
@@ -111,7 +111,7 @@ struct APISettingsView: View {
                         }
 
                         if organizations.count == 1 {
-                            Text("Single organization found and selected automatically")
+                            Text("api.single_organization".localized)
                                 .font(Typography.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -120,7 +120,7 @@ struct APISettingsView: View {
                     // Save Button
                     HStack {
                         Button(action: saveConfiguration) {
-                            Text("Save Configuration")
+                            Text("api.button_save_configuration".localized)
                                 .font(Typography.label)
                                 .frame(width: 140)
                         }
@@ -167,12 +167,12 @@ struct APISettingsView: View {
                         selectedOrganizationId = orgs[0].id
                     }
 
-                    validationState = .success("Found \(orgs.count) organization(s)")
+                    validationState = .success("api.success_organizations_found".localized(with: orgs.count))
                 }
             } catch {
                 await MainActor.run {
                     fetchingOrgs = false
-                    validationState = .error("Failed to fetch organizations: \(error.localizedDescription)")
+                    validationState = .error("api.error_fetch_failed".localized(with: error.localizedDescription))
                 }
             }
         }
@@ -181,7 +181,7 @@ struct APISettingsView: View {
     private func saveConfiguration() {
         DataStore.shared.saveAPISessionKey(apiSessionKey)
         DataStore.shared.saveAPIOrganizationId(selectedOrganizationId)
-        validationState = .success("Configuration saved successfully")
+        validationState = .success("api.success_configuration_saved".localized)
     }
 }
 

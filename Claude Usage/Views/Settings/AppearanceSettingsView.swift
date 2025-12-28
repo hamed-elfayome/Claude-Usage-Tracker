@@ -17,19 +17,19 @@ struct AppearanceSettingsView: View {
             VStack(alignment: .leading, spacing: Spacing.sectionSpacing) {
                 // Header
                 SettingsHeader(
-                    title: "Menu Bar Appearance",
-                    subtitle: "Customize your menu bar icons and metrics"
+                    title: "appearance.title".localized,
+                    subtitle: "appearance.subtitle".localized
                 )
 
                 Divider()
 
                 // Global Settings
-                Text("Global Settings")
+                Text("appearance.global_settings".localized)
                     .font(Typography.sectionHeader)
 
                 SettingToggle(
-                    title: "Monochrome (Adaptive)",
-                    description: "Remove color coding and adapt to system appearance",
+                    title: "appearance.monochrome_title".localized,
+                    description: "appearance.monochrome_description".localized,
                     isOn: Binding(
                         get: { configuration.monochromeMode },
                         set: { newValue in
@@ -40,8 +40,8 @@ struct AppearanceSettingsView: View {
                 )
 
                 SettingToggle(
-                    title: "Show Icon Labels",
-                    description: "Display prefix labels (S:, W:, API:) for each metric",
+                    title: "appearance.show_labels_title".localized,
+                    description: "appearance.show_labels_description".localized,
                     isOn: Binding(
                         get: { configuration.showIconNames },
                         set: { newValue in
@@ -54,7 +54,7 @@ struct AppearanceSettingsView: View {
                 Divider()
 
                 // Metrics Configuration
-                Text("Menu Bar Metrics")
+                Text("appearance.menu_bar_metrics".localized)
                     .font(Typography.sectionHeader)
 
                 // Session Usage

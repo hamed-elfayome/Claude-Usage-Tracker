@@ -89,7 +89,7 @@ final class WindowCoordinator: NSObject {
             backing: .buffered,
             defer: false
         )
-        window.title = "Claude Usage"
+        window.title = "app.window.main".localized
         window.contentViewController = contentViewController
         window.level = .floating
         window.center()
@@ -130,7 +130,7 @@ final class WindowCoordinator: NSObject {
                 backing: .buffered,
                 defer: false
             )
-            window.title = "Settings"
+            window.title = "app.window.settings".localized
             window.contentViewController = hostingController
             window.center()
             window.isRestorable = false
@@ -161,7 +161,7 @@ final class WindowCoordinator: NSObject {
             backing: .buffered,
             defer: false
         )
-        window.title = "Support Claude Usage Tracker"
+        window.title = "app.window.github_prompt".localized
         window.contentViewController = promptView
         window.center()
         window.isRestorable = false

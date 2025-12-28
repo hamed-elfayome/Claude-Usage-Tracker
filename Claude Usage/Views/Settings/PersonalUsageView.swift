@@ -19,17 +19,17 @@ struct PersonalUsageView: View {
         VStack(alignment: .leading, spacing: Spacing.sectionSpacing) {
             // Header
             SettingsHeader(
-                title: "Personal Usage",
-                subtitle: "Track your Claude.ai usage and sessions"
+                title: "personal.title".localized,
+                subtitle: "personal.subtitle".localized
             )
 
             Divider()
 
             // Session Key Input
             SettingsInputField.secureMonospaced(
-                label: "Session Key",
-                placeholder: "sk-ant-sid-...",
-                helpText: "Paste your sessionKey cookie from claude.ai DevTools",
+                label: "personal.label_session_key".localized,
+                placeholder: "personal.placeholder_session_key".localized,
+                helpText: "personal.help_session_key".localized,
                 text: $sessionKey
             )
 
@@ -42,13 +42,13 @@ struct PersonalUsageView: View {
 
             // Action Buttons
             HStack(spacing: Spacing.buttonRowSpacing) {
-                SettingsButton(title: "Test Connection") {
+                SettingsButton(title: "personal.button_test_connection".localized) {
                     testKey()
                 }
                 .disabled(sessionKey.isEmpty || validationState == .validating)
 
                 SettingsButton.primary(
-                    title: validationState == .validating ? "Saving..." : "Save"
+                    title: validationState == .validating ? "personal.button_saving".localized : "common.save".localized
                 ) {
                     saveKey()
                 }
@@ -57,15 +57,15 @@ struct PersonalUsageView: View {
 
             // Quick Actions
             VStack(alignment: .leading, spacing: Spacing.md) {
-                Text("Quick Actions")
+                Text("ui.quick_actions".localized)
                     .font(Typography.sectionHeader)
 
                 HStack(spacing: Spacing.buttonRowSpacing) {
-                    SettingsButton(title: "Setup Wizard", icon: "wand.and.stars") {
+                    SettingsButton(title: "personal.button_setup_wizard".localized, icon: "wand.and.stars") {
                         showWizard = true
                     }
 
-                    SettingsButton(title: "Open claude.ai", icon: "safari") {
+                    SettingsButton(title: "personal.button_open_claude".localized, icon: "safari") {
                         if let url = URL(string: "https://claude.ai") {
                             NSWorkspace.shared.open(url)
                         }
@@ -95,7 +95,7 @@ struct PersonalUsageView: View {
 
         do {
             try apiService.saveSessionKey(sessionKey)
-            validationState = .success("Session key saved successfully")
+            validationState = .success("personal.success_key_saved".localized)
             sessionKey = ""
 
         } catch {
@@ -127,7 +127,7 @@ struct PersonalUsageView: View {
                 _ = try await apiService.fetchOrganizationId()
 
                 await MainActor.run {
-                    validationState = .success("Connected successfully to organization")
+                    validationState = .success("personal.success_connected".localized)
                 }
 
             } catch {

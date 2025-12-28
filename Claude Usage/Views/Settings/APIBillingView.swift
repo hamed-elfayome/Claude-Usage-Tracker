@@ -21,16 +21,16 @@ struct APIBillingView: View {
         VStack(alignment: .leading, spacing: Spacing.sectionSpacing) {
             // Header
             SettingsHeader(
-                title: "API Billing",
-                subtitle: "Monitor API usage and spending"
+                title: "api.title".localized,
+                subtitle: "api.subtitle".localized
             )
 
             Divider()
 
             // Enable/Disable Toggle
             SettingToggle(
-                title: "Enable API billing tracking",
-                description: "Monitor your API usage, current spend, and remaining prepaid credits",
+                title: "api.enable_billing_tracking".localized,
+                description: "api.enable_billing_description".localized,
                 badge: .new,
                 isOn: $trackingEnabled
             )
@@ -41,16 +41,16 @@ struct APIBillingView: View {
             if trackingEnabled {
                 // API Session Key Input
                 SettingsInputField.secureMonospaced(
-                    label: "API Session Key",
-                    placeholder: "sk-ant-api03-...",
-                    helpText: "Your session key from console.anthropic.com",
+                    label: "api.label_api_session_key".localized,
+                    placeholder: "api.placeholder_api_session_key".localized,
+                    helpText: "api.help_api_session_key".localized,
                     text: $apiSessionKey
                 )
 
                 // Organization Selection
                 if !organizations.isEmpty {
                     VStack(alignment: .leading, spacing: Spacing.inputSpacing) {
-                        Text("Organization")
+                        Text("ui.organization".localized)
                             .font(Typography.sectionHeader)
 
                         Picker("", selection: $selectedOrganizationId) {
@@ -76,7 +76,7 @@ struct APIBillingView: View {
                 HStack(spacing: Spacing.buttonRowSpacing) {
                     if organizations.isEmpty {
                         SettingsButton(
-                            title: validationState == .validating ? "Fetching..." : "Fetch Organizations",
+                            title: validationState == .validating ? "api.button_fetching".localized : "api.button_fetch_organizations".localized,
                             icon: "building.2"
                         ) {
                             fetchOrganizations()
@@ -85,7 +85,7 @@ struct APIBillingView: View {
                     }
 
                     SettingsButton.primary(
-                        title: "Save Configuration"
+                        title: "api.button_save_configuration".localized
                     ) {
                         saveConfiguration()
                     }

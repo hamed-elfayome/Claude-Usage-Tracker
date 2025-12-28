@@ -54,7 +54,7 @@ struct MetricIconCard: View {
                         .font(.system(size: 10))
                         .foregroundColor(SettingsColors.info)
 
-                    Text("At least one metric must be enabled")
+                    Text("ui.at_least_one_metric".localized)
                         .font(.system(size: 10))
                         .foregroundColor(.secondary)
                 }
@@ -68,7 +68,7 @@ struct MetricIconCard: View {
                         .padding(.vertical, Spacing.xs)
 
                     VStack(alignment: .leading, spacing: Spacing.sm) {
-                        Text("Icon Style")
+                        Text("ui.icon_style".localized)
                             .font(.system(size: 11, weight: .medium))
                             .foregroundColor(.secondary)
 
@@ -119,7 +119,7 @@ private struct WeekDisplayOptions: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
-            Text("Display Mode")
+            Text("ui.display_mode".localized)
                 .font(.system(size: 11, weight: .medium))
                 .foregroundColor(.secondary)
 
@@ -153,7 +153,7 @@ private struct APIDisplayOptions: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
-            Text("Display Mode")
+            Text("ui.display_mode".localized)
                 .font(.system(size: 11, weight: .medium))
                 .foregroundColor(.secondary)
 

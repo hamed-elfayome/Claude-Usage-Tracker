@@ -50,17 +50,17 @@ struct SetupWizardView: View {
                     // Step 1: Get Session Key
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
-                            Text("1")
+                            Text("setup.step_number_1".localized)
                                 .font(.system(size: 18, weight: .semibold))
                                 .foregroundColor(.white)
                                 .frame(width: 24, height: 24)
                                 .background(Circle().fill(Color.accentColor))
 
-                            Text("Get Your Session Key")
+                            Text("setup.step.get_session_key".localized)
                                 .font(.system(size: 16, weight: .semibold))
                         }
 
-                        Text("You'll need to extract your session key from claude.ai")
+                        Text("setup.step.get_session_key.description".localized)
                             .font(.system(size: 13))
                             .foregroundColor(.secondary)
 
@@ -72,7 +72,7 @@ struct SetupWizardView: View {
                             }) {
                                 HStack {
                                     Image(systemName: "safari")
-                                    Text("Open claude.ai")
+                                    Text("setup.open_claude_ai".localized)
                                 }
                                 .font(.system(size: 12))
                                 .frame(maxWidth: .infinity)
@@ -82,7 +82,7 @@ struct SetupWizardView: View {
                             Button(action: { showInstructions.toggle() }) {
                                 HStack {
                                     Image(systemName: showInstructions ? "chevron.up" : "chevron.down")
-                                    Text(showInstructions ? "Hide" : "Show Instructions")
+                                    Text(showInstructions ? "setup.hide_instructions".localized : "setup.show_instructions".localized)
                                 }
                                 .font(.system(size: 12))
                                 .frame(maxWidth: .infinity)
@@ -92,10 +92,10 @@ struct SetupWizardView: View {
 
                         if showInstructions {
                             VStack(alignment: .leading, spacing: 8) {
-                                InstructionRow(text: "Open Developer Tools (F12 or Cmd+Option+I)")
-                                InstructionRow(text: "Go to Application/Storage → Cookies → https://claude.ai")
-                                InstructionRow(text: "Find the 'sessionKey' cookie")
-                                InstructionRow(text: "Double-click its Value and copy (Cmd+C)")
+                                InstructionRow(text: "setup.instruction.step1".localized)
+                                InstructionRow(text: "setup.instruction.step2".localized)
+                                InstructionRow(text: "setup.instruction.step3".localized)
+                                InstructionRow(text: "setup.instruction.step4".localized)
                             }
                             .padding(16)
                             .background(
@@ -108,17 +108,17 @@ struct SetupWizardView: View {
                     // Step 2: Enter Key
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
-                            Text("2")
+                            Text("setup.step_number_2".localized)
                                 .font(.system(size: 18, weight: .semibold))
                                 .foregroundColor(.white)
                                 .frame(width: 24, height: 24)
                                 .background(Circle().fill(Color.accentColor))
 
-                            Text("Enter Your Session Key")
+                            Text("setup.step.enter_session_key".localized)
                                 .font(.system(size: 16, weight: .semibold))
                         }
 
-                        TextField("sk-ant-sid-...", text: $sessionKey)
+                        TextField("personal.placeholder_session_key".localized, text: $sessionKey)
                             .textFieldStyle(.plain)
                             .font(.system(size: 12, design: .monospaced))
                             .padding(10)
@@ -131,7 +131,7 @@ struct SetupWizardView: View {
                                     )
                             )
 
-                        Text("Paste the sessionKey value you copied")
+                        Text("setup.paste_session_key".localized)
                             .font(.system(size: 11))
                             .foregroundColor(.secondary)
                     }
@@ -149,11 +149,11 @@ struct SetupWizardView: View {
                             .padding(.vertical, 4)
 
                         HStack(spacing: 6) {
-                            Text("Auto-start session on reset")
+                            Text("setup.auto_start_session".localized)
                                 .font(.system(size: 13, weight: .semibold))
 
                             // BETA badge
-                            Text("BETA")
+                            Text("session.beta_badge".localized)
                                 .font(.system(size: 9, weight: .bold))
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 6)
@@ -164,13 +164,13 @@ struct SetupWizardView: View {
                                 )
                         }
 
-                        Text("Automatically send 'Hi' to Claude 3.5 Haiku when your session resets to 0%. This keeps your session always ready without manual intervention.")
+                        Text("setup.auto_start_session.description".localized)
                             .font(.system(size: 11))
                             .foregroundColor(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
 
                         Toggle(isOn: $autoStartSessionEnabled) {
-                            Text("Enable auto-start session")
+                            Text("setup.enable_auto_start".localized)
                                 .font(.system(size: 12, weight: .medium))
                         }
                         .toggleStyle(.switch)
@@ -182,16 +182,16 @@ struct SetupWizardView: View {
                         Divider()
                             .padding(.vertical, 4)
 
-                        Text("Menu Bar Appearance")
+                        Text("setup.menubar_appearance".localized)
                             .font(.system(size: 13, weight: .semibold))
 
-                        Text("Choose your preferred icon style")
+                        Text("setup.choose_icon_style".localized)
                             .font(.system(size: 11))
                             .foregroundColor(.secondary)
 
                         IconStylePicker(selectedStyle: $iconStyle)
 
-                        Toggle("Monochrome (Adaptive)", isOn: $monochromeMode)
+                        Toggle("setup.monochrome_adaptive".localized, isOn: $monochromeMode)
                             .toggleStyle(.switch)
                             .font(.system(size: 12))
                             .foregroundColor(.secondary)
@@ -206,7 +206,7 @@ struct SetupWizardView: View {
             // Footer
             VStack(spacing: 8) {
                 HStack {
-                    Button("Cancel") {
+                    Button("common.cancel".localized) {
                         dismiss()
                     }
                     .buttonStyle(.bordered)
@@ -214,7 +214,7 @@ struct SetupWizardView: View {
                     Spacer()
 
                     if case .success = validationState {
-                        Button("Done") {
+                        Button("common.done".localized) {
                             DataStore.shared.saveHasCompletedSetup(true)
                             DataStore.shared.saveAutoStartSessionEnabled(autoStartSessionEnabled)
                             DataStore.shared.saveMenuBarIconStyle(iconStyle)
@@ -230,7 +230,7 @@ struct SetupWizardView: View {
                                     .scaleEffect(0.6)
                                     .frame(width: 60)
                             } else {
-                                Text("Validate")
+                                Text("common.validate".localized)
                                     .frame(width: 60)
                             }
                         }

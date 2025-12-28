@@ -20,11 +20,11 @@ struct GitHubStarPromptView: View {
                     .frame(width: 28, height: 28)
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Enjoying the app?")
+                    Text("github.enjoy_app".localized)
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(.primary)
 
-                    Text("Star us on GitHub if you find this useful")
+                    Text("github.star_description".localized)
                         .font(.system(size: 11, weight: .regular))
                         .foregroundColor(.secondary)
                 }
@@ -38,7 +38,7 @@ struct GitHubStarPromptView: View {
             HStack(spacing: 8) {
                 // Maybe Later button
                 Button(action: onMaybeLater) {
-                    Text("Later")
+                    Text("github.maybe_later".localized)
                         .font(.system(size: 11, weight: .medium))
                         .foregroundColor(.secondary)
                         .frame(maxWidth: .infinity)
@@ -59,7 +59,7 @@ struct GitHubStarPromptView: View {
                         Image(systemName: "star.fill")
                             .font(.system(size: 10, weight: .medium))
 
-                        Text("Star on GitHub")
+                        Text("github.star_button".localized)
                             .font(.system(size: 11, weight: .semibold))
                     }
                     .foregroundColor(.white)
@@ -79,7 +79,7 @@ struct GitHubStarPromptView: View {
 
             // Don't Ask Again link
             Button(action: onDontAskAgain) {
-                Text("Don't show again")
+                Text("github.never_show".localized)
                     .font(.system(size: 10, weight: .regular))
                     .foregroundColor(.secondary.opacity(0.7))
                     .underline()

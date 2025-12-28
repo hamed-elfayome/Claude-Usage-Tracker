@@ -562,7 +562,7 @@ extension MenuBarManager: NSPopoverDelegate {
         let newContentViewController = createContentViewController()
 
         let window = NSWindow(contentViewController: newContentViewController)
-        window.title = "Claude Usage"
+        window.title = "app.window.main".localized
         window.styleMask = [.titled, .closable]  // Close-only, minimal and clean
         window.setContentSize(NSSize(width: 320, height: 600))
         window.isReleasedWhenClosed = false

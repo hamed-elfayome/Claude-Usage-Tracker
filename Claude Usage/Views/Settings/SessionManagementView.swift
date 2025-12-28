@@ -15,16 +15,16 @@ struct SessionManagementView: View {
         VStack(alignment: .leading, spacing: Spacing.sectionSpacing) {
             // Header
             SettingsHeader(
-                title: "Session Management",
-                subtitle: "Automatic session initialization and maintenance"
+                title: "settings.session_management".localized,
+                subtitle: "session.subtitle".localized
             )
 
             Divider()
 
             // Auto-Start Session Toggle
             SettingToggle(
-                title: "Auto-start session on reset",
-                description: "Automatically initialize a new 5-hour session when the current one expires",
+                title: "session.auto_start".localized,
+                description: "session.auto_start.description".localized,
                 badge: .beta,
                 isOn: $autoStartSessionEnabled
             )
@@ -34,17 +34,15 @@ struct SessionManagementView: View {
 
             if autoStartSessionEnabled {
                 VStack(alignment: .leading, spacing: Spacing.md) {
-                    Text("How it works")
+                    Text("ui.how_it_works".localized)
                         .font(Typography.sectionHeader)
 
-                    Text(
-                        """
-                        • Detects when your session resets to 0%
-                        • Sends 'Hi' to Claude 3.5 Haiku (cheapest model)
-                        • Uses a temporary chat that won't appear in your history
-                        • New 5-hour session is ready instantly
-                        """
-                    )
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("session.auto_description_line1".localized)
+                        Text("session.auto_description_line2".localized)
+                        Text("session.auto_description_line3".localized)
+                        Text("session.auto_description_line4".localized)
+                    }
                         .font(Typography.caption)
                         .foregroundColor(.secondary)
                         .fixedSize(horizontal: false, vertical: true)

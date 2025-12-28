@@ -10,6 +10,9 @@
 /* MARK: - App Info */
 /* ==================== */
 "app.name" = "Claude Usage Tracker";
+"app.window.main" = "Claude Usage";
+"app.window.settings" = "Settings";
+"app.window.github_prompt" = "Support Claude Usage Tracker";
 
 /* ==================== */
 /* MARK: - Common Actions */
@@ -88,6 +91,7 @@
 "general.language.title" = "Language";
 "general.language.select" = "Select Language";
 "general.language.restart_note" = "Language changes will take effect after restarting the app";
+"general.language.restart_app" = "Restart App to Apply";
 
 /* ==================== */
 /* MARK: - Appearance Settings */
@@ -282,3 +286,152 @@
 "claudecode.description" = "Display usage information in your terminal statusline";
 "claudecode.coming_soon" = "Coming Soon";
 "claudecode.features_description" = "Integration with Claude Code CLI for terminal statusline display is coming in a future update.";
+
+/* ==================== */
+/* MARK: - Additional UI Labels */
+/* ==================== */
+"ui.app_behavior" = "App Behavior";
+"ui.usage_tracking" = "Usage Tracking";
+"ui.global_settings" = "Global Settings";
+"ui.menu_bar_metrics" = "Menu Bar Metrics";
+"ui.quick_actions" = "Quick Actions";
+"ui.how_it_works" = "How it works";
+"ui.display_components" = "Display Components";
+"ui.requirements" = "Requirements";
+"ui.live_preview" = "Live Preview";
+"ui.updates_realtime" = "Updates in real-time";
+"ui.organization" = "Organization";
+"ui.icon_style" = "Icon Style";
+"ui.display_mode" = "Display Mode";
+"ui.at_least_one_metric" = "At least one metric must be enabled";
+
+/* ==================== */
+/* MARK: - Session Management (Additional) */
+/* ==================== */
+"session.subtitle" = "Automatic session initialization and maintenance";
+"session.auto_description_line1" = "• Detects when your session resets to 0%";
+"session.auto_description_line2" = "• Sends 'Hi' to Claude 3.5 Haiku (cheapest model)";
+"session.auto_description_line3" = "• Uses a temporary chat that won't appear in your history";
+"session.auto_description_line4" = "• New 5-hour session is ready instantly";
+
+/* ==================== */
+/* MARK: - Claude CLI (Additional) */
+/* ==================== */
+"claudecode.subtitle" = "Customize your terminal statusline display";
+"claudecode.preview_label" = "Live Preview";
+"claudecode.preview_description" = "This is how your statusline will appear in Claude CLI";
+"claudecode.component_directory" = "Directory name";
+"claudecode.component_branch" = "Git branch";
+"claudecode.component_usage" = "Usage statistics";
+"claudecode.component_progressbar" = "Progress bar";
+"claudecode.requirement_sessionkey" = "• Session key configured in Personal Usage tab";
+"claudecode.requirement_restart" = "• Restart Claude CLI after applying changes";
+"claudecode.error_no_components" = "Please select at least one component to display";
+"claudecode.error_no_sessionkey" = "Session key not configured. Please set it in the Personal Usage tab first.";
+"claudecode.success_applied" = "Configuration applied! Restart Claude CLI to see changes.";
+"claudecode.success_disabled" = "Statusline disabled. Restart Claude CLI.";
+"claudecode.preview_no_components" = "No components selected";
+
+/* ==================== */
+/* MARK: - API Billing (Additional) */
+/* ==================== */
+"api.title" = "API Billing";
+"api.subtitle" = "Monitor API usage and spending";
+"api.enable_billing_tracking" = "Enable API billing tracking";
+"api.enable_billing_description" = "Monitor your API usage, current spend, and remaining prepaid credits";
+"api.label_api_session_key" = "API Session Key";
+"api.placeholder_api_session_key" = "sk-ant-api03-...";
+"api.help_api_session_key" = "Your session key from console.anthropic.com";
+"api.button_fetch_organizations" = "Fetch Organizations";
+"api.button_fetching" = "Fetching...";
+"api.button_save_configuration" = "Save Configuration";
+"api.success_organizations_found" = "Found %d organization(s)";
+"api.error_fetch_failed" = "Failed to fetch organizations: %@";
+"api.success_configuration_saved" = "API configuration saved successfully";
+
+/* ==================== */
+/* MARK: - Personal Usage (Additional) */
+/* ==================== */
+"personal.title" = "Personal Usage";
+"personal.subtitle" = "Track your Claude.ai usage and sessions";
+"personal.label_session_key" = "Session Key";
+"personal.placeholder_session_key" = "sk-ant-sid-...";
+"personal.help_session_key" = "Paste your sessionKey cookie from claude.ai DevTools";
+"personal.button_test_connection" = "Test Connection";
+"personal.button_save_and_continue" = "Save & Continue";
+"personal.button_remove_key" = "Remove Key";
+"personal.success_connected" = "Connected successfully to organization";
+"personal.confirm_remove_title" = "Remove Session Key?";
+"personal.confirm_remove_message" = "This will stop tracking your personal usage.";
+
+/* ==================== */
+/* MARK: - Error Presenter */
+/* ==================== */
+"error.code_label" = "Error Code:";
+"error.what_to_do" = "What to do:";
+"error.occurred_at" = "Occurred: %@";
+
+/* ==================== */
+/* MARK: - General Settings (Additional) */
+/* ==================== */
+"general.slider_realtime" = "Real-time updates";
+"general.slider_frequent" = "Frequent updates";
+"general.slider_balanced" = "Balanced mode";
+"general.slider_efficient" = "Power efficient";
+"general.slider_battery_saver" = "Battery saver";
+"general.slider_fast" = "Fast";
+"general.slider_balanced_label" = "Balanced";
+"general.slider_battery_saver_label" = "Battery Saver";
+"general.available_languages" = "Available Languages (%d)";
+
+/* ==================== */
+/* MARK: - Badges */
+/* ==================== */
+"badge.new" = "NEW";
+"badge.beta" = "BETA";
+"badge.pro" = "PRO";
+
+/* ==================== */
+/* MARK: - Appearance (Additional) */
+/* ==================== */
+"appearance.title" = "Menu Bar Appearance";
+"appearance.subtitle" = "Customize your menu bar icons and metrics";
+"appearance.global_settings" = "Global Settings";
+"appearance.menu_bar_metrics" = "Menu Bar Metrics";
+"appearance.monochrome_title" = "Monochrome (Adaptive)";
+"appearance.monochrome_description" = "Remove color coding and adapt to system appearance";
+"appearance.show_labels_title" = "Show Icon Labels";
+"appearance.show_labels_description" = "Display prefix labels (S:, W:, API:) for each metric";
+
+/* ==================== */
+/* MARK: - Setup Wizard (Additional) */
+/* ==================== */
+"setup.step_number_1" = "1";
+"setup.step_number_2" = "2";
+"setup.step_title_get_key" = "Get Your Session Key";
+"setup.step_title_enter_key" = "Enter Your Session Key";
+"setup.step_description_get_key" = "You'll need to extract your session key from claude.ai";
+"setup.button_open_claude" = "Open claude.ai";
+"setup.paste_instruction" = "Paste the sessionKey value you copied";
+
+/* ==================== */
+/* MARK: - Component Preview */
+/* ==================== */
+"preview.sample_text_claude" = "Claude";
+"preview.sample_percentage" = "60%";
+"preview.sample_card_content" = "Card content goes here";
+"preview.sample_more_content" = "More content";
+"preview.sample_update_every" = "Update every:";
+"preview.sample_5_minutes" = "5 minutes";
+
+/* ==================== */
+/* MARK: - New Keys Added */
+/* ==================== */
+"api.single_organization" = "Single organization found and selected automatically";
+"claudecode.button_apply" = "Apply";
+"claudecode.button_reset" = "Reset";
+"error.generic" = "Error: %@";
+"personal.button_saving" = "Saving...";
+"personal.button_setup_wizard" = "Setup Wizard";
+"personal.button_open_claude" = "Open claude.ai";
+"personal.success_key_saved" = "Session key saved successfully";
