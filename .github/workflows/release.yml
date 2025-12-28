@@ -61,6 +61,19 @@ jobs:
           # Clean up certificate file
           rm -f certificate.p12
 
+          # Find the imported identity
+          echo "Finding imported Developer ID certificate..."
+          IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | grep "Developer ID Application" | head -1 | sed -E 's/.*"(.+)"/\1/')
+
+          if [ -z "$IDENTITY" ]; then
+            echo "❌ Error: Developer ID Application certificate not found"
+            security find-identity -v -p codesigning "$KEYCHAIN_PATH"
+            exit 1
+          fi
+
+          echo "Found identity: $IDENTITY"
+          echo "SIGNING_IDENTITY=$IDENTITY" >> $GITHUB_ENV
+
           echo "✅ Code signing certificate imported successfully"
 
       - name: Build Release (Unsigned)
@@ -81,13 +94,14 @@ jobs:
         run: |
           APP_PATH="build/Build/Products/Release/Claude Usage.app"
 
+          echo "Using signing identity: $SIGNING_IDENTITY"
           echo "Signing all frameworks and nested components..."
 
           # Sign Sparkle framework and all its components first
           find "$APP_PATH/Contents/Frameworks/Sparkle.framework" -type f \( -name "*.dylib" -o -name "*.framework" -o -perm +111 \) -print0 | while IFS= read -r -d '' file; do
             if [[ -f "$file" ]]; then
               echo "Signing: $file"
-              codesign --force --sign "Developer ID Application" \
+              codesign --force --sign "$SIGNING_IDENTITY" \
                 --timestamp \
                 --options runtime \
                 "$file" || true
@@ -95,20 +109,21 @@ jobs:
           done
 
           # Deep sign the entire Sparkle framework
-          codesign --force --deep --sign "Developer ID Application" \
+          echo "Deep signing Sparkle framework..."
+          codesign --force --deep --sign "$SIGNING_IDENTITY" \
             --timestamp \
             --options runtime \
             "$APP_PATH/Contents/Frameworks/Sparkle.framework"
 
           # Sign the main app bundle
           echo "Signing main app bundle..."
-          codesign --force --deep --sign "Developer ID Application" \
+          codesign --force --deep --sign "$SIGNING_IDENTITY" \
             --timestamp \
             --options runtime \
             --entitlements "Claude Usage/Claude UsageRelease.entitlements" \
             "$APP_PATH"
 
-          echo "✅ App bundle signed with Developer ID"
+          echo "✅ App bundle signed with $SIGNING_IDENTITY"
 
       - name: Verify Code Signature
         run: |
