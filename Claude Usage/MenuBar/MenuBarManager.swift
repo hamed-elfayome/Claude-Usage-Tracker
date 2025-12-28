@@ -45,6 +45,9 @@ class MenuBarManager: NSObject, ObservableObject {
     // Observer for icon configuration changes
     private var iconConfigObserver: NSObjectProtocol?
 
+    // Observer for session key updates
+    private var sessionKeyObserver: NSObjectProtocol?
+
     // MARK: - Image Caching (CPU Optimization)
     private var cachedImage: NSImage?
     private var cachedImageKey: String = ""
@@ -98,6 +101,9 @@ class MenuBarManager: NSObject, ObservableObject {
 
         // Observe icon configuration changes
         observeIconConfigChanges()
+
+        // Observe session key updates
+        observeSessionKeyUpdates()
     }
 
     func cleanup() {
@@ -328,6 +334,19 @@ class MenuBarManager: NSObject, ObservableObject {
     }
 
     private var lastKnownConfig: MenuBarIconConfiguration?
+
+    private func observeSessionKeyUpdates() {
+        // Observe session key updates to trigger immediate refresh
+        sessionKeyObserver = NotificationCenter.default.addObserver(
+            forName: .sessionKeyUpdated,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+            LoggingService.shared.logInfo("Session key updated - triggering immediate refresh")
+            self.refreshUsage()
+        }
+    }
 
     private func observeIconConfigChanges() {
         // Observe configuration changes (metrics enabled/disabled, order changes, etc.)

@@ -124,6 +124,9 @@ Temporary Items
 # Backup files
 *.backup.*
 
+# Testing backups (created by reset-for-testing.sh)
+.claude-usage-backups/
+
 # Local settings
 settings.local.json
 

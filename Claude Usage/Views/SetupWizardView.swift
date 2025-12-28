@@ -8,8 +8,6 @@ struct SetupWizardView: View {
     @State private var validationState: ValidationState = .idle
     @State private var showInstructions = false
     @State private var autoStartSessionEnabled = DataStore.shared.loadAutoStartSessionEnabled()
-    @State private var iconStyle: MenuBarIconStyle = DataStore.shared.loadMenuBarIconStyle()
-    @State private var monochromeMode: Bool = DataStore.shared.loadMonochromeMode()
 
     private let apiService = ClaudeAPIService()
 
@@ -176,27 +174,6 @@ struct SetupWizardView: View {
                         .toggleStyle(.switch)
                     }
                     .padding(.top, 8)
-
-                    // Icon Appearance
-                    VStack(alignment: .leading, spacing: 12) {
-                        Divider()
-                            .padding(.vertical, 4)
-
-                        Text("setup.menubar_appearance".localized)
-                            .font(.system(size: 13, weight: .semibold))
-
-                        Text("setup.choose_icon_style".localized)
-                            .font(.system(size: 11))
-                            .foregroundColor(.secondary)
-
-                        IconStylePicker(selectedStyle: $iconStyle)
-
-                        Toggle("setup.monochrome_adaptive".localized, isOn: $monochromeMode)
-                            .toggleStyle(.switch)
-                            .font(.system(size: 12))
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.top, 8)
                 }
                 .padding(32)
             }
@@ -217,9 +194,6 @@ struct SetupWizardView: View {
                         Button("common.done".localized) {
                             DataStore.shared.saveHasCompletedSetup(true)
                             DataStore.shared.saveAutoStartSessionEnabled(autoStartSessionEnabled)
-                            DataStore.shared.saveMenuBarIconStyle(iconStyle)
-                            DataStore.shared.saveMonochromeMode(monochromeMode)
-                            NotificationCenter.default.post(name: .menuBarIconStyleChanged, object: nil)
                             dismiss()
                         }
                         .buttonStyle(.borderedProminent)
@@ -241,7 +215,7 @@ struct SetupWizardView: View {
             }
             .padding(20)
         }
-        .frame(width: 580, height: 700)
+        .frame(width: 580, height: 620)
     }
 
     private func validateAndSave() {
@@ -268,6 +242,9 @@ struct SetupWizardView: View {
 
                 await MainActor.run {
                     validationState = .success("setup.validation.success".localized)
+
+                    // Trigger immediate refresh of usage data
+                    NotificationCenter.default.post(name: .sessionKeyUpdated, object: nil)
                 }
 
             } catch {

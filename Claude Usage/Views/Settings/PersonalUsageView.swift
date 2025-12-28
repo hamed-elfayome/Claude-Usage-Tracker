@@ -98,6 +98,9 @@ struct PersonalUsageView: View {
             validationState = .success("personal.success_key_saved".localized)
             sessionKey = ""
 
+            // Trigger immediate refresh of usage data
+            NotificationCenter.default.post(name: .sessionKeyUpdated, object: nil)
+
         } catch {
             // Convert to AppError and log
             let appError = AppError.wrap(error)
@@ -128,6 +131,9 @@ struct PersonalUsageView: View {
 
                 await MainActor.run {
                     validationState = .success("personal.success_connected".localized)
+
+                    // Trigger immediate refresh of usage data
+                    NotificationCenter.default.post(name: .sessionKeyUpdated, object: nil)
                 }
 
             } catch {
