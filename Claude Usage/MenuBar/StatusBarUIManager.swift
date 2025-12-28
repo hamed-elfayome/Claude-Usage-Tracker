@@ -181,6 +181,19 @@ final class StatusBarUIManager {
         return statusItems[firstMetric.metricType]?.button
     }
 
+    /// Find which metric type owns the given button (sender)
+    func metricType(for sender: NSStatusBarButton?) -> MenuBarMetricType? {
+        guard let sender = sender else { return nil }
+
+        // Find which status item has this button
+        for (metricType, statusItem) in statusItems {
+            if statusItem.button === sender {
+                return metricType
+            }
+        }
+        return nil
+    }
+
     // MARK: - Appearance Observation
 
     private func observeAppearanceChanges() {

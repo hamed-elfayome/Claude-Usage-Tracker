@@ -25,6 +25,9 @@ class MenuBarManager: NSObject, ObservableObject {
     // GitHub star prompt window reference
     private var githubPromptWindow: NSWindow?
 
+    // Track which button is currently showing the popover
+    private weak var currentPopoverButton: NSStatusBarButton?
+
     private let apiService = ClaudeAPIService()
     private let statusService = ClaudeStatusService()
     private let dataStore = DataStore.shared
@@ -154,27 +157,47 @@ class MenuBarManager: NSObject, ObservableObject {
         return NSHostingController(rootView: contentView)
     }
 
-    @objc private func togglePopover() {
-        // Use primary button (first enabled metric) for popover positioning
-        guard let button = statusBarUIManager?.primaryButton else { return }
+    @objc private func togglePopover(_ sender: Any?) {
+        // Determine which button was clicked
+        let clickedButton: NSStatusBarButton?
+        if let button = sender as? NSStatusBarButton {
+            clickedButton = button
+        } else {
+            // Fallback to primary button for backwards compatibility
+            clickedButton = statusBarUIManager?.primaryButton
+        }
+
+        guard let button = clickedButton else { return }
 
         // If there's a detached window, close it
         if let window = detachedWindow {
             window.close()
             detachedWindow = nil
+            currentPopoverButton = nil
             return
         }
 
         // Otherwise toggle the popover
         if let popover = popover {
             if popover.isShown {
-                closePopover()
+                // Check if clicking the same button or a different one
+                if currentPopoverButton === button {
+                    // Same button - close the popover
+                    closePopover()
+                    currentPopoverButton = nil
+                } else {
+                    // Different button - reposition the popover
+                    popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+                    currentPopoverButton = button
+                }
             } else {
+                // Popover not shown - show it
                 // Recreate content if it was moved to a detached window
                 if popover.contentViewController == nil {
                     popover.contentViewController = createContentViewController()
                 }
                 popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+                currentPopoverButton = button
                 startMonitoringForOutsideClicks()
             }
         }
@@ -183,6 +206,7 @@ class MenuBarManager: NSObject, ObservableObject {
     private func closePopover() {
         popover?.performClose(nil)
         stopMonitoringForOutsideClicks()
+        currentPopoverButton = nil
     }
 
     private func startMonitoringForOutsideClicks() {
