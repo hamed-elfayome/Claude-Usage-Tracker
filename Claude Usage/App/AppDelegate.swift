@@ -18,6 +18,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         // Hide dock icon (menu bar app only)
         NSApp.setActivationPolicy(.accessory)
 
+        // Perform Keychain migration (one-time, idempotent)
+        KeychainMigrationService.shared.performMigrationIfNeeded()
+
         // Request notification permissions
         requestNotificationPermissions()
 

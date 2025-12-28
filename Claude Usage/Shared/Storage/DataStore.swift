@@ -341,14 +341,45 @@ class DataStore: StorageProvider {
         return defaults.bool(forKey: Constants.UserDefaultsKeys.apiTrackingEnabled)
     }
 
-    /// Saves API session key
+    /// Saves API session key to Keychain
     func saveAPISessionKey(_ key: String) {
-        defaults.set(key, forKey: Constants.UserDefaultsKeys.apiSessionKey)
+        do {
+            try KeychainService.shared.save(key, for: .apiSessionKey)
+
+            // Migration: Remove from UserDefaults if it exists there
+            if defaults.string(forKey: Constants.UserDefaultsKeys.apiSessionKey) != nil {
+                defaults.removeObject(forKey: Constants.UserDefaultsKeys.apiSessionKey)
+                LoggingService.shared.log("Migrated API session key from UserDefaults to Keychain")
+            }
+        } catch {
+            LoggingService.shared.logStorageError("saveAPISessionKey", error: error)
+        }
     }
 
-    /// Loads API session key
+    /// Loads API session key from Keychain (with fallback to UserDefaults for migration)
     func loadAPISessionKey() -> String? {
-        return defaults.string(forKey: Constants.UserDefaultsKeys.apiSessionKey)
+        do {
+            // Try to load from Keychain first
+            if let key = try KeychainService.shared.load(for: .apiSessionKey) {
+                return key
+            }
+
+            // Migration: Check UserDefaults for existing key
+            if let legacyKey = defaults.string(forKey: Constants.UserDefaultsKeys.apiSessionKey) {
+                LoggingService.shared.log("Found API session key in UserDefaults, migrating to Keychain")
+                // Migrate to Keychain
+                try KeychainService.shared.save(legacyKey, for: .apiSessionKey)
+                // Remove from UserDefaults
+                defaults.removeObject(forKey: Constants.UserDefaultsKeys.apiSessionKey)
+                return legacyKey
+            }
+
+            return nil
+        } catch {
+            LoggingService.shared.logStorageError("loadAPISessionKey", error: error)
+            // Fallback to UserDefaults on error
+            return defaults.string(forKey: Constants.UserDefaultsKeys.apiSessionKey)
+        }
     }
 
     /// Saves selected API organization ID

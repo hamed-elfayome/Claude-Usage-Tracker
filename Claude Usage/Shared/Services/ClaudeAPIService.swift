@@ -20,68 +20,80 @@ class ClaudeAPIService: APIServiceProtocol {
 
     // MARK: - Session Key Management
 
-    /// Reads and validates the session key from manual file only
+    /// Reads and validates the session key from Keychain
     private func readSessionKey() throws -> String {
-        // Read from manual file: ~/.claude-session-key
-        guard FileManager.default.fileExists(atPath: sessionKeyPath.path) else {
-            throw AppError.sessionKeyNotFound()
-        }
-
         do {
-            let key = try String(contentsOf: sessionKeyPath, encoding: .utf8)
+            // Try to load from Keychain first
+            if let key = try KeychainService.shared.load(for: .claudeSessionKey) {
+                // Validate the session key using professional validator
+                let validatedKey = try sessionKeyValidator.validate(key)
+                return validatedKey
+            }
 
-            // Validate the session key using professional validator
-            let validatedKey = try sessionKeyValidator.validate(key)
-            return validatedKey
+            // Migration: Check if file exists and migrate to Keychain
+            if FileManager.default.fileExists(atPath: sessionKeyPath.path) {
+                LoggingService.shared.log("Found session key in file, migrating to Keychain")
+                let fileKey = try String(contentsOf: sessionKeyPath, encoding: .utf8)
+                let validatedKey = try sessionKeyValidator.validate(fileKey)
+
+                // Save to Keychain
+                try KeychainService.shared.save(validatedKey, for: .claudeSessionKey)
+
+                // Delete the file (no longer needed as primary storage)
+                // Note: File will be recreated by StatuslineService if statusline is enabled
+                try? FileManager.default.removeItem(at: sessionKeyPath)
+                LoggingService.shared.log("Migrated session key to Keychain and removed file")
+
+                return validatedKey
+            }
+
+            // No key found anywhere
+            throw AppError.sessionKeyNotFound()
 
         } catch let error as SessionKeyValidationError {
             // Convert validation errors to AppError
             throw AppError.wrap(error)
+        } catch let error as AppError {
+            // Re-throw AppError as-is
+            throw error
         } catch {
-            // File read errors
+            // Keychain or file errors
             let appError = AppError(
                 code: .storageReadFailed,
                 message: "Failed to read session key",
                 technicalDetails: error.localizedDescription,
                 underlyingError: error,
                 isRecoverable: true,
-                recoverySuggestion: "Please check file permissions and try again"
+                recoverySuggestion: "Please check your session key configuration and try again"
             )
             ErrorLogger.shared.log(appError)
             throw appError
         }
     }
 
-    /// Saves a session key to the configured file path with validation
+    /// Saves a session key to Keychain with validation
     func saveSessionKey(_ key: String) throws {
         do {
             // Validate the key before saving
             let validatedKey = try sessionKeyValidator.validate(key)
 
-            // Sanitize for storage
-            let sanitizedKey = sessionKeyValidator.sanitizeForStorage(validatedKey)
+            // Save to Keychain (primary storage)
+            try KeychainService.shared.save(validatedKey, for: .claudeSessionKey)
 
-            // Write to file
-            try sanitizedKey.write(to: sessionKeyPath, atomically: true, encoding: .utf8)
-
-            // Set restrictive permissions (read/write for owner only)
-            try FileManager.default.setAttributes(
-                [.posixPermissions: 0o600],
-                ofItemAtPath: sessionKeyPath.path
-            )
+            LoggingService.shared.log("Session key saved to Keychain")
 
         } catch let error as SessionKeyValidationError {
             // Convert validation errors to AppError
             throw AppError.wrap(error)
         } catch {
-            // File write or permission errors
+            // Keychain errors
             let appError = AppError(
                 code: .sessionKeyStorageFailed,
                 message: "Failed to save session key",
                 technicalDetails: error.localizedDescription,
                 underlyingError: error,
                 isRecoverable: true,
-                recoverySuggestion: "Please check file permissions in ~/.claude-session-key"
+                recoverySuggestion: "Please check Keychain access and try again"
             )
             ErrorLogger.shared.log(appError)
             throw appError
