@@ -66,16 +66,13 @@ jobs:
       - name: Build Release (Signed)
         run: |
           echo "Building signed release..."
+          # Certificate is already imported - Xcode will find it automatically
           xcodebuild build \
             -project "Claude Usage.xcodeproj" \
             -scheme "Claude Usage" \
             -configuration Release \
             -derivedDataPath build \
-            CODE_SIGN_IDENTITY="Developer ID Application" \
-            DEVELOPMENT_TEAM="${{ secrets.TEAM_ID }}" \
-            PROVISIONING_PROFILE_SPECIFIER="" \
-            CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO \
-            ENABLE_HARDENED_RUNTIME=YES
+            -allowProvisioningUpdates
 
           echo "✅ Build completed successfully"
 
