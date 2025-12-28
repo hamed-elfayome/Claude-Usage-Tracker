@@ -34,5 +34,27 @@
 	<string>public.app-category.utilities</string>
 	<key>NSSupportsSuddenTermination</key>
 	<false/>
+
+	<!-- Sparkle Update Configuration -->
+	<!-- Note: Update checks will be enabled once appcast is set up and EdDSA keys are generated -->
+	<!-- Uncomment these when ready to enable updates:
+	<key>SUFeedURL</key>
+	<string>https://hamed-elfayome.github.io/Claude-Usage-Tracker/appcast.xml</string>
+
+	<key>SUPublicEDKey</key>
+	<string>PLACEHOLDER_WILL_BE_GENERATED</string>
+
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+
+	<key>SUScheduledCheckInterval</key>
+	<integer>86400</integer>
+
+	<key>SUAllowsAutomaticUpdates</key>
+	<true/>
+
+	<key>SUEnableInstallerLauncherService</key>
+	<true/>
+	-->
 </dict>
 </plist>

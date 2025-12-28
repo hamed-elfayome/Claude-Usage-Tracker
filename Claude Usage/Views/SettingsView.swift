@@ -29,6 +29,8 @@ struct SettingsView: View {
                     SessionManagementView(autoStartSessionEnabled: $autoStartSessionEnabled)
                 case .notifications:
                     NotificationsSettingsView(notificationsEnabled: $notificationsEnabled)
+                case .updates:
+                    UpdatesSettingsView()
                 case .claudeCode:
                     ClaudeCodeView()
                 case .about:
@@ -48,6 +50,7 @@ enum SettingsSection: String, CaseIterable {
     case appearance
     case sessionManagement
     case notifications
+    case updates
     case claudeCode
     case about
 
@@ -59,6 +62,7 @@ enum SettingsSection: String, CaseIterable {
         case .appearance: return "settings.appearance".localized
         case .sessionManagement: return "settings.session_management".localized
         case .notifications: return "settings.notifications".localized
+        case .updates: return "settings.updates".localized
         case .claudeCode: return "settings.claude_cli".localized
         case .about: return "settings.about".localized
         }
@@ -72,6 +76,7 @@ enum SettingsSection: String, CaseIterable {
         case .appearance: return "paintbrush.fill"
         case .sessionManagement: return "clock.arrow.circlepath"
         case .notifications: return "bell.badge.fill"
+        case .updates: return "arrow.down.circle.fill"
         case .claudeCode: return "chevron.left.forwardslash.chevron.right"
         case .about: return "info.circle.fill"
         }
@@ -85,6 +90,7 @@ enum SettingsSection: String, CaseIterable {
         case .appearance: return "settings.appearance.description".localized
         case .sessionManagement: return "settings.session_management.description".localized
         case .notifications: return "settings.notifications.description".localized
+        case .updates: return "settings.updates.description".localized
         case .claudeCode: return "settings.claude_cli.description".localized
         case .about: return "settings.about.description".localized
         }

@@ -435,3 +435,17 @@
 "personal.button_setup_wizard" = "Assistente de Configuração";
 "personal.button_open_claude" = "Abrir claude.ai";
 "personal.success_key_saved" = "Chave de sessão salva com sucesso";
+
+/* ==================== */
+/* MARK: - Updates Settings */
+/* ==================== */
+"settings.updates.title" = "Atualizações de Software";
+"settings.updates.current_version" = "Versão Atual";
+"settings.updates.last_check" = "Última Verificação";
+"settings.updates.never_checked" = "Nunca";
+"settings.updates.automatic" = "Atualizações Automáticas";
+"settings.updates.automatic.description" = "Verificar e baixar atualizações automaticamente todos os dias";
+"settings.updates.check_now" = "Verificar Atualizações";
+"settings.updates.info.title" = "Atualizações Seguras";
+"settings.updates.info.description" = "Todas as atualizações são assinadas criptograficamente e verificadas antes da instalação";
+"about.check_updates" = "Verificar Atualizações";

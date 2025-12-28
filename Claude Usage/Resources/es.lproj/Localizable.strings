@@ -48,6 +48,8 @@
 "settings.notifications.description" = "Alertas y notificaciones de uso";
 "settings.claude_cli" = "Claude CLI";
 "settings.claude_cli.description" = "Integración de línea de estado del terminal";
+"settings.updates" = "Actualizaciones";
+"settings.updates.description" = "Mantén tu aplicación actualizada";
 "settings.about" = "Acerca de";
 "settings.about.description" = "Información y créditos de la aplicación";
 
@@ -416,3 +418,17 @@
 "personal.button_setup_wizard" = "Asistente de Configuración";
 "personal.button_open_claude" = "Abrir claude.ai";
 "personal.success_key_saved" = "Clave de sesión guardada correctamente";
+
+/* ==================== */
+/* MARK: - Updates Settings */
+/* ==================== */
+"settings.updates.title" = "Actualizaciones de Software";
+"settings.updates.current_version" = "Versión Actual";
+"settings.updates.last_check" = "Última Verificación";
+"settings.updates.never_checked" = "Nunca";
+"settings.updates.automatic" = "Actualizaciones Automáticas";
+"settings.updates.automatic.description" = "Buscar y descargar actualizaciones automáticamente cada día";
+"settings.updates.check_now" = "Buscar Actualizaciones";
+"settings.updates.info.title" = "Actualizaciones Seguras";
+"settings.updates.info.description" = "Todas las actualizaciones están firmadas criptográficamente y verificadas antes de la instalación";
+"about.check_updates" = "Buscar Actualizaciones";

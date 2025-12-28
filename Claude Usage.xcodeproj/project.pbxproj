@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		056C52802F017E50007E2A48 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = SPARKLE_PRODUCT_DEP /* Sparkle */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		05CD2CC72EA985A100004C83 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -39,6 +43,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				056C52802F017E50007E2A48 /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -90,6 +95,7 @@
 			);
 			name = "Claude Usage";
 			packageProductDependencies = (
+				SPARKLE_PRODUCT_DEP /* Sparkle */,
 			);
 			productName = "Claude Usage";
 			productReference = 05CD2CB22EA985A100004C83 /* Claude Usage.app */;
@@ -151,6 +157,9 @@
 			);
 			mainGroup = 05CD2CA92EA985A100004C83;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				SPARKLE_PACKAGE_REF /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 05CD2CB32EA985A100004C83 /* Products */;
 			projectDirPath = "";
@@ -500,6 +509,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		SPARKLE_PACKAGE_REF /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.8.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		SPARKLE_PRODUCT_DEP /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = SPARKLE_PACKAGE_REF /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 05CD2CAA2EA985A100004C83 /* Project object */;
 }

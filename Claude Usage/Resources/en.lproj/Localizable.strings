@@ -48,6 +48,8 @@
 "settings.notifications.description" = "Usage alerts and notifications";
 "settings.claude_cli" = "Claude CLI";
 "settings.claude_cli.description" = "Terminal statusline integration";
+"settings.updates" = "Updates";
+"settings.updates.description" = "Keep your app up to date";
 "settings.about" = "About";
 "settings.about.description" = "App information and credits";
 
@@ -152,6 +154,7 @@
 /* MARK: - About */
 /* ==================== */
 "about.version" = "Version %@";
+"about.check_updates" = "Check for Updates";
 "about.created_by" = "Created By";
 "about.contributors" = "Contributors (%d)";
 "about.contributors_loading" = "Contributors";
@@ -161,6 +164,19 @@
 "about.send_feedback" = "Send Feedback";
 "about.mit_license" = "MIT License • Open Source";
 "about.copyright" = "© 2025 Hamed Elfayome";
+
+/* ==================== */
+/* MARK: - Updates Settings */
+/* ==================== */
+"settings.updates.title" = "Software Updates";
+"settings.updates.current_version" = "Current Version";
+"settings.updates.last_check" = "Last Checked";
+"settings.updates.never_checked" = "Never";
+"settings.updates.automatic" = "Automatic Updates";
+"settings.updates.automatic.description" = "Automatically check for and download updates daily";
+"settings.updates.check_now" = "Check for Updates";
+"settings.updates.info.title" = "Secure Updates";
+"settings.updates.info.description" = "All updates are cryptographically signed and verified before installation";
 
 /* ==================== */
 /* MARK: - Icon Styles */
