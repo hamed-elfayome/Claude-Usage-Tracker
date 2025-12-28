@@ -63,7 +63,7 @@ final class SessionKeyValidatorTests: XCTestCase {
         }
     }
 
-    func testSessionKeyWithLeadingTrailingWhitespace() {
+    func testSessionKeyWithLeadingTrailingWhitespace() throws {
         let keyWithWhitespace = "  sk-ant-sid01-abcdefghijklmnopqrstuvwxyz  "
 
         // Should trim whitespace and validate
