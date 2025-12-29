@@ -11,7 +11,7 @@
   ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
   ![Version](https://img.shields.io/badge/version-2.1.0-blue?style=flat-square)
 
-  ### [Download Latest Release (v2.1.0)](https://github.com/alexbartok/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
+  ### [Download Latest Release (v2.1.0)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
 
   <sub>macOS 14.0+ (Sonoma) | ~3 MB | Native Swift/SwiftUI | Officially Signed</sub>
 
