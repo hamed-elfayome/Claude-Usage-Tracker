@@ -412,12 +412,9 @@ class MenuBarManager: NSObject, ObservableObject {
 
     func refreshUsage() {
         Task {
-            // Set loading state
+            // Set loading state (keep existing data visible during refresh)
             await MainActor.run {
                 self.isRefreshing = true
-                // Clear menu bar to show loading state
-                self.usage = .empty
-                self.updateAllStatusBarIcons()
             }
 
             // Fetch usage and status in parallel
