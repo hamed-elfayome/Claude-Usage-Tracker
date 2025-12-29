@@ -16,4 +16,7 @@ extension Notification.Name {
 
     /// Posted when a session key is saved/updated (triggers immediate data refresh)
     static let sessionKeyUpdated = Notification.Name("sessionKeyUpdated")
+
+    /// Posted when the selected organization changes (triggers targeted refresh)
+    static let organizationChanged = Notification.Name("organizationChanged")
 }
