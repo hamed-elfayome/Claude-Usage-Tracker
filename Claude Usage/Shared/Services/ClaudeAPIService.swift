@@ -71,16 +71,33 @@ class ClaudeAPIService: APIServiceProtocol {
         }
     }
 
-    /// Saves a session key to Keychain with validation
-    func saveSessionKey(_ key: String) throws {
+    /// Saves a session key with smart org ID preservation
+    /// Only clears org ID if the key actually changed
+    func saveSessionKey(_ key: String, preserveOrgIfUnchanged: Bool = true) throws {
         do {
             // Validate the key before saving
             let validatedKey = try sessionKeyValidator.validate(key)
+
+            // Check if key actually changed (for smart org clearing)
+            var shouldClearOrg = true
+            if preserveOrgIfUnchanged {
+                let existingKey = try? KeychainService.shared.load(for: .claudeSessionKey)
+                shouldClearOrg = (existingKey != validatedKey)
+            }
 
             // Save to Keychain (primary storage)
             try KeychainService.shared.save(validatedKey, for: .claudeSessionKey)
 
             LoggingService.shared.log("Session key saved to Keychain")
+
+            // Only clear org ID if key actually changed
+            if shouldClearOrg {
+                clearOrganizationIdCache()
+                DataStore.shared.clearOrganizationId()
+                LoggingService.shared.log("Session key changed - cleared organization ID")
+            } else {
+                LoggingService.shared.log("Session key unchanged - preserving organization ID")
+            }
 
         } catch let error as SessionKeyValidationError {
             // Convert validation errors to AppError
@@ -100,10 +117,22 @@ class ClaudeAPIService: APIServiceProtocol {
         }
     }
 
+    // MARK: - Organization ID Caching
+
+    /// Cache organization ID to reduce API calls
+    private var cachedOrgId: String?
+    private var cachedOrgIdSessionKey: String?
+
+    /// Clears the cached organization ID (call when session key changes)
+    func clearOrganizationIdCache() {
+        cachedOrgId = nil
+        cachedOrgIdSessionKey = nil
+    }
+
     // MARK: - API Requests
 
-    /// Fetches the organization UUID for the authenticated user
-    func fetchOrganizationId(sessionKey: String? = nil) async throws -> String {
+    /// Fetches all organizations for the authenticated user
+    func fetchAllOrganizations(sessionKey: String? = nil) async throws -> [AccountInfo] {
         return try await ErrorRecovery.shared.executeWithRetry(maxAttempts: 3) {
             let sessionKey = try sessionKey ?? self.readSessionKey()
 
@@ -153,7 +182,7 @@ class ClaudeAPIService: APIServiceProtocol {
                 // Parse organizations array
                 do {
                     let organizations = try JSONDecoder().decode([AccountInfo].self, from: data)
-                    guard let firstOrg = organizations.first else {
+                    guard !organizations.isEmpty else {
                         throw AppError(
                             code: .apiParsingFailed,
                             message: "No organizations found",
@@ -162,7 +191,14 @@ class ClaudeAPIService: APIServiceProtocol {
                             recoverySuggestion: "Please ensure your Claude account has access to organizations"
                         )
                     }
-                    return firstOrg.uuid
+
+                    // Log all available organizations for debugging
+                    LoggingService.shared.logInfo("Found \(organizations.count) organization(s):")
+                    for (index, org) in organizations.enumerated() {
+                        LoggingService.shared.logInfo("  [\(index)] \(org.name) (ID: \(org.uuid))")
+                    }
+
+                    return organizations
                 } catch {
                     let appError = AppError(
                         code: .apiParsingFailed,
@@ -193,6 +229,47 @@ class ClaudeAPIService: APIServiceProtocol {
                 )
             }
         }
+    }
+
+    // MARK: - Read-Only Testing
+
+    /// Tests a session key without saving to Keychain
+    /// Returns available organizations if successful
+    func testSessionKey(_ key: String) async throws -> [AccountInfo] {
+        // Validate using professional validator
+        let validatedKey = try sessionKeyValidator.validate(key)
+
+        // Fetch organizations using the test key (don't save it)
+        let organizations = try await fetchAllOrganizations(sessionKey: validatedKey)
+
+        LoggingService.shared.logInfo("Tested session key - found \(organizations.count) organization(s)")
+
+        return organizations
+    }
+
+    /// Fetches the organization ID for the authenticated user
+    /// Uses stored org ID if available, otherwise fetches all orgs and auto-selects
+    func fetchOrganizationId(sessionKey: String? = nil) async throws -> String {
+        let sessionKey = try sessionKey ?? self.readSessionKey()
+
+        // Check for stored organization ID first
+        if let storedOrgId = DataStore.shared.loadOrganizationId() {
+            LoggingService.shared.logInfo("Using stored organization ID: \(storedOrgId)")
+            return storedOrgId
+        }
+
+        // No stored org ID - fetch all organizations
+        LoggingService.shared.logInfo("No stored organization ID - fetching all organizations")
+        let organizations = try await fetchAllOrganizations(sessionKey: sessionKey)
+
+        // Auto-select organization (prefer first one for now - user can change later)
+        let selectedOrg = organizations.first!
+        LoggingService.shared.logInfo("Auto-selected organization: \(selectedOrg.name) (ID: \(selectedOrg.uuid))")
+
+        // Store the selected org ID
+        DataStore.shared.saveOrganizationId(selectedOrg.uuid)
+
+        return selectedOrg.uuid
     }
 
     /// Fetches real usage data from Claude's API
@@ -232,23 +309,89 @@ class ClaudeAPIService: APIServiceProtocol {
         request.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.httpMethod = "GET"
+        request.timeoutInterval = 30
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        LoggingService.shared.logAPIRequest(endpoint)
+
+        let (data, response): (Data, URLResponse)
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch {
+            // Network-level errors
+            LoggingService.shared.logAPIError(endpoint, error: error)
+            let appError = AppError(
+                code: .networkGenericError,
+                message: "Failed to connect to Claude API",
+                technicalDetails: "Endpoint: \(endpoint)\nError: \(error.localizedDescription)",
+                underlyingError: error,
+                isRecoverable: true,
+                recoverySuggestion: "Please check your internet connection and try again"
+            )
+            throw appError
+        }
 
         guard let httpResponse = response as? HTTPURLResponse else {
-            throw APIError.invalidResponse
+            throw AppError(
+                code: .apiInvalidResponse,
+                message: "Invalid response from server",
+                technicalDetails: "Endpoint: \(endpoint)",
+                isRecoverable: true
+            )
+        }
+
+        LoggingService.shared.logAPIResponse(endpoint, statusCode: httpResponse.statusCode)
+
+        // Log raw response if debug logging is enabled
+        if DataStore.shared.loadDebugAPILoggingEnabled() {
+            if let responseString = String(data: data, encoding: .utf8) {
+                // Truncate to first 500 chars to avoid huge logs
+                let truncated = responseString.prefix(500)
+                LoggingService.shared.logDebug("API Response [\(endpoint)]: \(truncated)...")
+            }
         }
 
         switch httpResponse.statusCode {
         case 200:
             return data
+
         case 401, 403:
-            throw APIError.unauthorized
+            // Include response body in error for debugging
+            let responsePreview = String(data: data, encoding: .utf8)?.prefix(200) ?? "Unable to read response"
+            throw AppError(
+                code: .apiUnauthorized,
+                message: "Unauthorized. Your session key may have expired.",
+                technicalDetails: "Endpoint: \(endpoint)\nStatus: \(httpResponse.statusCode)\nResponse: \(responsePreview)",
+                isRecoverable: true,
+                recoverySuggestion: "Please update your session key in Settings"
+            )
+
+        case 429:
+            throw AppError(
+                code: .apiRateLimited,
+                message: "Rate limited by Claude API",
+                technicalDetails: "Endpoint: \(endpoint)",
+                isRecoverable: true,
+                recoverySuggestion: "Please wait a few minutes before trying again"
+            )
+
+        case 500...599:
+            let responsePreview = String(data: data, encoding: .utf8)?.prefix(200) ?? "Unable to read response"
+            throw AppError(
+                code: .apiServerError,
+                message: "Claude API server error",
+                technicalDetails: "Endpoint: \(endpoint)\nStatus: \(httpResponse.statusCode)\nResponse: \(responsePreview)",
+                isRecoverable: true,
+                recoverySuggestion: "Please try again later"
+            )
+
         default:
-            if let errorString = String(data: data, encoding: .utf8) {
-                print("❌ Error response for \(endpoint): \(errorString)")
-            }
-            throw APIError.serverError(statusCode: httpResponse.statusCode)
+            let responsePreview = String(data: data, encoding: .utf8)?.prefix(200) ?? "Unable to read response"
+            throw AppError(
+                code: .apiGenericError,
+                message: "Unexpected API response",
+                technicalDetails: "Endpoint: \(endpoint)\nStatus: \(httpResponse.statusCode)\nResponse: \(responsePreview)",
+                isRecoverable: true
+            )
         }
     }
 
@@ -262,8 +405,8 @@ class ClaudeAPIService: APIServiceProtocol {
             var sessionPercentage = 0.0
             var sessionResetTime = Date().addingTimeInterval(5 * 3600)
             if let fiveHour = json["five_hour"] as? [String: Any] {
-                if let utilization = fiveHour["utilization"] as? Int {
-                    sessionPercentage = Double(utilization)
+                if let utilization = fiveHour["utilization"] {
+                    sessionPercentage = parseUtilization(utilization)
                 }
                 if let resetsAt = fiveHour["resets_at"] as? String {
                     let formatter = ISO8601DateFormatter()
@@ -276,8 +419,8 @@ class ClaudeAPIService: APIServiceProtocol {
             var weeklyPercentage = 0.0
             var weeklyResetTime = Date().nextMonday1259pm()
             if let sevenDay = json["seven_day"] as? [String: Any] {
-                if let utilization = sevenDay["utilization"] as? Int {
-                    weeklyPercentage = Double(utilization)
+                if let utilization = sevenDay["utilization"] {
+                    weeklyPercentage = parseUtilization(utilization)
                 }
                 if let resetsAt = sevenDay["resets_at"] as? String {
                     let formatter = ISO8601DateFormatter()
@@ -289,8 +432,8 @@ class ClaudeAPIService: APIServiceProtocol {
             // Extract Opus weekly usage (seven_day_opus)
             var opusPercentage = 0.0
             if let sevenDayOpus = json["seven_day_opus"] as? [String: Any] {
-                if let utilization = sevenDayOpus["utilization"] as? Int {
-                    opusPercentage = Double(utilization)
+                if let utilization = sevenDayOpus["utilization"] {
+                    opusPercentage = parseUtilization(utilization)
                 }
             }
 
@@ -324,7 +467,52 @@ class ClaudeAPIService: APIServiceProtocol {
             return usage
         }
 
-        throw APIError.invalidResponse
+        // Log the actual response for debugging
+        if DataStore.shared.loadDebugAPILoggingEnabled() {
+            if let responseString = String(data: data, encoding: .utf8) {
+                LoggingService.shared.logDebug("Failed to parse usage response: \(responseString)")
+            }
+        }
+
+        throw AppError(
+            code: .apiParsingFailed,
+            message: "Failed to parse usage data",
+            technicalDetails: "Unable to parse JSON response structure",
+            isRecoverable: false,
+            recoverySuggestion: "Please check the error log and report this issue"
+        )
+    }
+
+    // MARK: - Parsing Helpers
+
+    /// Robust utilization parser that handles Int, Double, or String types
+    /// - Parameter value: The utilization value from API (can be Int, Double, or String)
+    /// - Returns: Parsed percentage as Double, or 0.0 if parsing fails
+    private func parseUtilization(_ value: Any) -> Double {
+        // Try Int first (most common)
+        if let intValue = value as? Int {
+            return Double(intValue)
+        }
+
+        // Try Double
+        if let doubleValue = value as? Double {
+            return doubleValue
+        }
+
+        // Try String
+        if let stringValue = value as? String {
+            // Remove any percentage symbols or whitespace
+            let cleaned = stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                .replacingOccurrences(of: "%", with: "")
+
+            if let parsed = Double(cleaned) {
+                return parsed
+            }
+        }
+
+        // Log warning if we couldn't parse
+        LoggingService.shared.logWarning("Failed to parse utilization value: \(value) (type: \(type(of: value)))")
+        return 0.0
     }
 
     // MARK: - Session Initialization

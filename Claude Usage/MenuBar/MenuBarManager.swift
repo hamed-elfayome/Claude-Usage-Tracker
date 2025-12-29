@@ -9,6 +9,10 @@ class MenuBarManager: NSObject, ObservableObject {
     @Published private(set) var usage: ClaudeUsage = .empty
     @Published private(set) var status: ClaudeStatus = .unknown
     @Published private(set) var apiUsage: APIUsage?
+    @Published private(set) var isRefreshing: Bool = false
+
+    // Track when refresh was last triggered (for distinguishing user vs auto refresh)
+    private var lastRefreshTriggerTime: Date = .distantPast
 
     // Popover for beautiful SwiftUI interface
     private var popover: NSPopover?
@@ -47,6 +51,9 @@ class MenuBarManager: NSObject, ObservableObject {
 
     // Observer for session key updates
     private var sessionKeyObserver: NSObjectProtocol?
+
+    // Observer for organization changes
+    private var organizationObserver: NSObjectProtocol?
 
     // MARK: - Image Caching (CPU Optimization)
     private var cachedImage: NSImage?
@@ -344,6 +351,25 @@ class MenuBarManager: NSObject, ObservableObject {
         ) { [weak self] _ in
             guard let self = self else { return }
             LoggingService.shared.logInfo("Session key updated - triggering immediate refresh")
+
+            // Mark this as user-triggered
+            self.lastRefreshTriggerTime = Date()
+
+            self.refreshUsage()
+        }
+
+        // Observe organization changes separately
+        organizationObserver = NotificationCenter.default.addObserver(
+            forName: .organizationChanged,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+            LoggingService.shared.logInfo("Organization changed - triggering refresh")
+
+            // Mark this as user-triggered
+            self.lastRefreshTriggerTime = Date()
+
             self.refreshUsage()
         }
     }
@@ -386,9 +412,16 @@ class MenuBarManager: NSObject, ObservableObject {
 
     func refreshUsage() {
         Task {
+            // Set loading state (keep existing data visible during refresh)
+            await MainActor.run {
+                self.isRefreshing = true
+            }
+
             // Fetch usage and status in parallel
             async let usageResult = apiService.fetchUsageData()
             async let statusResult = statusService.fetchStatus()
+
+            var usageSuccess = false
 
             // Fetch usage with proper error handling
             do {
@@ -407,17 +440,27 @@ class MenuBarManager: NSObject, ObservableObject {
 
                 // Record success for circuit breaker
                 ErrorRecovery.shared.recordSuccess(for: .api)
+                usageSuccess = true
 
             } catch {
                 // Convert to AppError and log
                 let appError = AppError.wrap(error)
-                ErrorLogger.shared.log(appError, severity: .warning)
+                ErrorLogger.shared.log(appError, severity: .error)
 
                 // Record failure for circuit breaker
                 ErrorRecovery.shared.recordFailure(for: .api)
 
-                // Don't show error to user for background refresh - just log it
-                print("⚠️ [\(appError.code.rawValue)] Failed to fetch usage: \(appError.message)")
+                // Show error to user if this was triggered by session key update
+                await MainActor.run {
+                    // Check if this refresh was triggered within last 5 seconds
+                    // (indicates user-initiated action like saving session key)
+                    if abs(self.lastRefreshTriggerTime.timeIntervalSinceNow) < 5 {
+                        ErrorPresenter.shared.showAlert(for: appError)
+                    } else {
+                        // Background refresh - just log to console
+                        print("⚠️ [\(appError.code.rawValue)] Failed to fetch usage: \(appError.message)")
+                    }
+                }
             }
 
             // Fetch status separately (don't fail if usage fetch works)
@@ -453,6 +496,33 @@ class MenuBarManager: NSObject, ObservableObject {
                     print("ℹ️ [\(appError.code.rawValue)] Failed to fetch API usage: \(appError.message)")
                 }
             }
+
+            // Clear loading state
+            await MainActor.run {
+                self.isRefreshing = false
+
+                // Show success notification if this was user-triggered and successful
+                if usageSuccess && abs(self.lastRefreshTriggerTime.timeIntervalSinceNow) < 5 {
+                    self.showSuccessNotification()
+                }
+            }
+        }
+    }
+
+    /// Shows a brief success notification for user-triggered refreshes
+    private func showSuccessNotification() {
+        // Create a simple success notification
+        let notification = NSUserNotification()
+        notification.title = "Claude Usage Updated"
+        notification.informativeText = "Successfully loaded usage data"
+        notification.soundName = nil // Silent
+
+        // Deliver notification
+        NSUserNotificationCenter.default.deliver(notification)
+
+        // Auto-remove after 2 seconds
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            NSUserNotificationCenter.default.removeDeliveredNotification(notification)
         }
     }
 
