@@ -511,19 +511,7 @@ class MenuBarManager: NSObject, ObservableObject {
 
     /// Shows a brief success notification for user-triggered refreshes
     private func showSuccessNotification() {
-        // Create a simple success notification
-        let notification = NSUserNotification()
-        notification.title = "Claude Usage Updated"
-        notification.informativeText = "Successfully loaded usage data"
-        notification.soundName = nil // Silent
-
-        // Deliver notification
-        NSUserNotificationCenter.default.deliver(notification)
-
-        // Auto-remove after 2 seconds
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            NSUserNotificationCenter.default.removeDeliveredNotification(notification)
-        }
+        NotificationManager.shared.sendSuccessNotification()
     }
 
     @objc private func preferencesClicked() {

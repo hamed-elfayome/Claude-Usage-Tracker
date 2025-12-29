@@ -67,6 +67,37 @@ class NotificationManager: NotificationServiceProtocol {
         }
     }
 
+    /// Sends a brief success notification for user-triggered refreshes
+    func sendSuccessNotification() {
+        let center = UNUserNotificationCenter.current()
+
+        // Create notification content
+        let content = UNMutableNotificationContent()
+        content.title = "Claude Usage Updated"
+        content.body = "Successfully loaded usage data"
+        // Silent notification (no sound)
+        content.categoryIdentifier = "SUCCESS_ALERT"
+
+        // Create a trigger to deliver immediately
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 0.1, repeats: false)
+
+        // Create the request with a unique identifier
+        let identifier = "usage_refresh_success_\(UUID().uuidString)"
+        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+
+        // Add the notification request
+        center.add(request) { error in
+            if let error = error {
+                LoggingService.shared.logError("Failed to show success notification: \(error)")
+            }
+        }
+
+        // Auto-remove after 2 seconds
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            center.removeDeliveredNotifications(withIdentifiers: [identifier])
+        }
+    }
+
     /// Checks usage and sends appropriate alerts
     func checkAndNotify(usage: ClaudeUsage) {
         // Session usage alerts

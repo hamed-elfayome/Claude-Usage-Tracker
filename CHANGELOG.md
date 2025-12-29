@@ -5,6 +5,133 @@ All notable changes to Claude Usage Tracker will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2025-12-29
+
+### Enhanced User Experience - Smart Setup Wizard & Modern APIs
+
+This release brings a completely redesigned setup experience with a 3-step wizard flow that makes configuration intuitive and error-free. Combined with modernized notification APIs and critical UX fixes, v2.1.0 significantly improves the onboarding and daily usage experience.
+
+### Added
+
+#### 3-Step Wizard Setup Flow (contributed by [@alexbartok](https://github.com/alexbartok))
+- **Redesigned Initial Setup Wizard** - Complete overhaul of first-run experience
+  - **Step 1: Enter Session Key** - Test your session key without saving
+    - Non-destructive validation using new `testSessionKey()` API method
+    - Discovers all organizations associated with your account
+    - Clear validation feedback with detailed error messages
+    - Auto-advances to next step on success
+
+  - **Step 2: Select Organization** - Choose which organization to track
+    - Visual organization selector with radio buttons
+    - Displays organization name and UUID
+    - Auto-selects first organization for convenience
+    - Prevents common 403 errors from wrong organization selection
+
+  - **Step 3: Confirm & Save** - Review and finalize configuration
+    - Configuration summary with masked session key
+    - Selected organization details
+    - Auto-start session toggle (moved from Step 1)
+    - Only saves to Keychain when explicitly confirmed
+
+- **Visual Progress Indicator**
+  - Step circles (1, 2, 3) with color-coded states
+  - Connecting lines turn green when steps are completed
+  - Current step highlighted in accent color
+  - Completed steps show checkmark icons
+
+- **Personal Usage Settings Wizard** - Settings tab now uses same 3-step flow
+  - Consistent UX between initial setup and settings configuration
+  - Smart organization preservation (only clears when key actually changes)
+  - Clear navigation with Back/Next buttons
+  - Prevents accidental data loss during reconfiguration
+
+#### Modern Notification System
+- **UNUserNotificationCenter Integration** - Replaced deprecated macOS 11.0 APIs
+  - Migrated from `NSUserNotification` to `UNUserNotificationCenter`
+  - All notifications now use modern UserNotifications framework
+  - Success notifications for user-triggered actions
+  - Proper notification categories (`SUCCESS_ALERT`, `INFO_ALERT`, `USAGE_ALERT`)
+
+- **Centralized Notification Architecture**
+  - New `sendSuccessNotification()` method in NotificationManager
+  - All notification logic consolidated in NotificationManager service
+  - Silent success notifications (no sound, 2-second auto-dismiss)
+  - Consistent error logging and handling
+
+### Changed
+
+#### API Service Enhancements (contributed by [@alexbartok](https://github.com/alexbartok))
+- **Non-Destructive Session Key Testing**
+  - New `testSessionKey()` method validates without saving to Keychain
+  - Returns list of discovered organizations
+  - Prevents premature saving that caused configuration issues
+  - Enables proper organization selection before commitment
+
+- **Smart Organization Preservation**
+  - Enhanced `saveSessionKey()` with `preserveOrgIfUnchanged` parameter
+  - Only clears organization ID when session key actually changes
+  - Prevents data loss during reconfiguration
+  - Targeted refresh notifications (session key vs. organization changes)
+
+- **Notification Extensions**
+  - New `.organizationChanged` notification for independent organization updates
+  - MenuBarManager observes organization changes separately from session key
+  - More granular refresh control
+
+### Fixed
+
+#### Menu Bar Icon Flicker (contributed by [@alexbartok](https://github.com/alexbartok))
+- **Smooth Refresh Experience** - Icons no longer briefly show zeros during data refresh
+  - Removed clearing of usage data during refresh process
+  - Old data remains visible until new data arrives
+  - Prevents visual "flashing" that was jarring to users
+  - Maintains professional appearance during background updates
+
+#### Setup Wizard Issues (contributed by [@alexbartok](https://github.com/alexbartok))
+- **Fixed 403 Errors** - Resolved critical issue where saving after organization selection would fail
+  - "Test Connection" and "Save" no longer clear organization IDs prematurely
+  - Proper organization selection workflow prevents API authentication errors
+  - Smart preservation ensures configuration consistency
+
+- **Visual Guidance** - Users now have clear indication of setup progress
+  - No more confusion about what step they're on
+  - Clear path forward with visual progress indicator
+  - Prevents incomplete configurations
+
+#### Deprecation Warnings
+- **Eliminated NSUserNotification Warnings** - Removed all 3 macOS 11.0 deprecation warnings
+  - Replaced deprecated APIs throughout MenuBarManager
+  - App now fully compatible with modern macOS notification system
+  - Cleaner build output with no deprecation warnings
+  - Future-proof notification implementation
+
+### Technical Improvements
+
+#### Architecture
+- **Protocol Conformance** - NotificationManager follows service-oriented architecture
+  - All notification code centralized in dedicated service
+  - No direct UNUserNotificationCenter usage in MenuBarManager
+  - Clean separation of concerns
+  - Permission requests handled by AppDelegate with proper delegate setup
+
+#### Code Organization
+- **Wizard State Machine** - Proper state management for multi-step flows
+  - `SetupWizardStep` enum for type-safe step tracking
+  - `SetupWizardState` struct encapsulates all wizard data
+  - Clean component separation (EnterKeyStepSetup, SelectOrgStepSetup, ConfirmStepSetup)
+  - Reusable visual components (SetupStepCircle, SetupStepLine, SetupStepHeader)
+
+#### DataStore Enhancements
+- **Organization ID Management**
+  - New methods for loading/saving organization IDs
+  - Supports smart preservation logic
+  - Clean data migration path
+
+### Contributors
+- [@alexbartok](https://github.com/alexbartok) (Alex Bartok) - 3-step wizard setup flow, organization selection, smart preservation logic, menu bar icon flicker fix
+
+---
+
 ## [2.0.0] - 2025-12-28
 
 ### Major Release - Professional Grade Security & User Experience
@@ -767,6 +894,7 @@ This major release represents a significant milestone for Claude Usage Tracker, 
 - Detailed usage dashboard with countdown timers
 - Support for macOS 14.0+ (Sonoma and later)
 
+[2.1.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.6.2...v2.0.0
 [1.6.2]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.6.1...v1.6.2
 [1.6.1]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.6.0...v1.6.1
