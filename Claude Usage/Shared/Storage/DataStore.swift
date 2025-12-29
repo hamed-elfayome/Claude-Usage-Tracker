@@ -140,6 +140,39 @@ class DataStore: StorageProvider {
         return defaults.bool(forKey: "checkOverageLimitEnabled")
     }
 
+    // MARK: - Organization Settings
+
+    /// Saves selected organization ID for personal usage tracking
+    func saveOrganizationId(_ organizationId: String) {
+        defaults.set(organizationId, forKey: "selectedOrganizationId")
+        LoggingService.shared.logStorageSave("selectedOrganizationId")
+    }
+
+    /// Loads selected organization ID (returns nil if not set)
+    func loadOrganizationId() -> String? {
+        let orgId = defaults.string(forKey: "selectedOrganizationId")
+        LoggingService.shared.logStorageLoad("selectedOrganizationId", success: orgId != nil)
+        return orgId
+    }
+
+    /// Clears stored organization ID (call when session key changes)
+    func clearOrganizationId() {
+        defaults.removeObject(forKey: "selectedOrganizationId")
+        LoggingService.shared.logInfo("Cleared stored organization ID")
+    }
+
+    // MARK: - Debug Settings
+
+    /// Saves debug API logging preference
+    func saveDebugAPILoggingEnabled(_ enabled: Bool) {
+        defaults.set(enabled, forKey: "debugAPILoggingEnabled")
+    }
+
+    /// Loads debug API logging preference (defaults to false)
+    func loadDebugAPILoggingEnabled() -> Bool {
+        return defaults.bool(forKey: "debugAPILoggingEnabled")
+    }
+
     // MARK: - Statusline Configuration
 
     /// Saves statusline show directory preference

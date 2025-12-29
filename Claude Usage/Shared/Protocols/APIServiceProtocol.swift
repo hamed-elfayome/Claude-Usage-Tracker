@@ -11,7 +11,7 @@ import Foundation
 /// Enables dependency injection and testing with mock API services
 protocol APIServiceProtocol {
     // MARK: - Session Key Management
-    func saveSessionKey(_ key: String) throws
+    func saveSessionKey(_ key: String, preserveOrgIfUnchanged: Bool) throws
 
     // MARK: - Claude.ai API
     func fetchOrganizationId(sessionKey: String?) async throws -> String

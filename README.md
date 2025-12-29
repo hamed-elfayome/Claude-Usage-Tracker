@@ -9,9 +9,9 @@
   ![Swift](https://img.shields.io/badge/Swift-5.0+-orange?style=flat-square&logo=swift)
   ![SwiftUI](https://img.shields.io/badge/SwiftUI-5.0+-blue?style=flat-square&logo=swift)
   ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
-  ![Version](https://img.shields.io/badge/version-2.0.0-blue?style=flat-square)
+  ![Version](https://img.shields.io/badge/version-2.1.0-blue?style=flat-square)
 
-  ### [Download Latest Release (v2.0.0)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
+  ### [Download Latest Release (v2.1.0)](https://github.com/alexbartok/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
 
   <sub>macOS 14.0+ (Sonoma) | ~3 MB | Native Swift/SwiftUI | Officially Signed</sub>
 
@@ -47,6 +47,16 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 ---
 
 ## What's New
+
+**v2.1.0 - UX & Reliability Improvements (2025-12-29)**:
+- **Wizard-Style Setup Flow** - New 3-step guided wizard for session key configuration
+  - Step 1: Non-destructive connection testing (validates without saving)
+  - Step 2: Visual organization selector with radio buttons
+  - Step 3: Configuration summary with masked key preview
+- **Smart Organization Preservation** - Organization IDs only cleared when session key actually changes
+- **Enhanced Data Parsing** - Robust handling of Int/Double/String utilization values from API
+- **Smooth Refresh Experience** - Menu bar icons no longer flicker during data refresh
+- **Improved Error Context** - Detailed error messages with endpoint names and response previews
 
 **v2.0.0 - Major Release (2025-12-28)**:
 - **Official Apple Code Signing** - No more security warnings! Install like any normal Mac app
@@ -121,7 +131,7 @@ brew uninstall --cask claude-usage-tracker
 
 ```bash
 # Clone the repository
-git clone https://github.com/hamed-elfayome/Claude-Usage-Tracker.git
+git clone https://github.com/alexbartok/Claude-Usage-Tracker.git
 cd Claude-Usage-Tracker
 
 # Open in Xcode
@@ -155,15 +165,19 @@ Your session key authenticates the app with Claude AI. Here's how to get it:
   <sub>Tip: The session key is a long string starting with "sk-ant-sid01-". Make sure to copy the entire value.</sub>
 </div>
 
-#### Step 2: First Launch Setup
+#### Step 2: Configure Session Key
 
-When you open Claude Usage Tracker for the first time:
+Access the Personal Usage settings to configure your session key:
 
-1. **Welcome Wizard** appears automatically
-2. **Paste your session key** in the text field
-3. **Click "Validate"** to test the connection
-4. **Wait for confirmation** (green checkmark = success)
-5. **Click "Done"** to complete setup
+1. **Click the menu bar icon** and select "Settings"
+2. **Navigate to "Personal Usage"** tab
+3. **3-Step Wizard** guides you through setup:
+   - **Step 1**: Paste your session key and click "Test Connection"
+   - **Step 2**: Select your Claude organization from the list
+   - **Step 3**: Review and click "Save Configuration"
+4. **Wait for confirmation** (success message appears)
+
+The new wizard validates your key without saving it first, ensuring a smooth setup experience
 
 #### Step 3: Verify It's Working
 
@@ -272,11 +286,19 @@ Click the menu bar icon to access:
 
 Access comprehensive settings through the menu bar popover → Settings button. The app features a modern, modular settings interface organized into focused tabs:
 
+#### Personal Usage
+Configure your Claude.ai personal account:
+- **3-Step Setup Wizard**: Guided session key configuration
+  - Non-destructive connection testing
+  - Visual organization selector
+  - Configuration summary with preview
+- **Smart Updates**: Organization preserved when re-entering same key
+- **Quick Access**: One-click link to claude.ai
+
 #### General Settings
-- **Session Key Management**: Update your Claude session key
 - **Refresh Interval**: Configure auto-refresh rate (5-120 seconds)
 - **Connection Status**: View current API connection state
-- **Personal Usage**: Track your individual usage patterns
+- **Advanced Settings**: Debug logging and error tracking
 
 #### Appearance Settings
 Customize how the menu bar icon looks:
@@ -537,6 +559,23 @@ The app can simultaneously monitor both web (claude.ai) and API console usage, p
 3. Try extracting a fresh session key
 4. Ensure you have an active internet connection
 
+### 403 Permission Errors
+
+If you see "Unauthorized" or 403 errors:
+1. Open Settings → Personal Usage
+2. Use the 3-step wizard to reconfigure:
+   - Test your session key
+   - Select the correct organization
+   - Save configuration
+3. The wizard will preserve your organization selection when updating keys
+
+### Menu Bar Icons Showing Zero
+
+If icons briefly flash to zero during refresh:
+- This has been fixed in v2.1.0+
+- Update to the latest version for smooth refresh experience
+- Old data now stays visible until new data arrives
+
 ### Menu Bar Icon Not Appearing
 
 1. Check System Settings → Desktop & Dock → Menu Bar
@@ -545,7 +584,7 @@ The app can simultaneously monitor both web (claude.ai) and API console usage, p
 
 ### Session Key Expired
 
-Session keys may expire after a period of time. Extract a new key from claude.ai and update it in Settings → General.
+Session keys may expire after a period of time. Extract a new key from claude.ai and update it in Settings → Personal Usage using the wizard.
 
 ### Updates Not Working
 
