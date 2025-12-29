@@ -5,7 +5,7 @@
         <item>
             <title>2.1.0</title>
             <pubDate>Mon, 29 Dec 2025 22:14:36 +0000</pubDate>
-            <sparkle:version>1</sparkle:version>
+            <sparkle:version>2</sparkle:version>
             <sparkle:shortVersionString>2.1.0</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure url="https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/download/v2.1.0/Claude-Usage.zip" length="2726074" type="application/octet-stream" sparkle:edSignature="pQ6VS7AzZB6eaR7L8fNoYRnr1QhFyzMSs8yFkyGTDfe5h/iaB/qQXlflEnm4Qgn4tGCWx3xjg5VaEbmSD/WfBw=="/>
