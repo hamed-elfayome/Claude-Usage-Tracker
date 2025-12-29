@@ -61,23 +61,24 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Create releases directory if it doesn't exist
-          mkdir -p releases
+          # Create tag-specific directory for proper URL generation
+          TAG="${{ steps.release_tag.outputs.tag }}"
+          mkdir -p "releases/${TAG}"
 
-          # Download the release asset
-          echo "Downloading release: ${{ steps.release_tag.outputs.tag }}"
-          gh release download "${{ steps.release_tag.outputs.tag }}" \
+          # Download the release asset into tag-specific subdirectory
+          echo "Downloading release: ${TAG}"
+          gh release download "${TAG}" \
             -p "Claude-Usage.zip" \
-            -D releases/ \
+            -D "releases/${TAG}/" \
             --clobber
 
           # Verify download
-          if [ ! -f "releases/Claude-Usage.zip" ]; then
+          if [ ! -f "releases/${TAG}/Claude-Usage.zip" ]; then
             echo "❌ Error: Failed to download Claude-Usage.zip"
             exit 1
           fi
 
-          FILE_SIZE=$(stat -f%z "releases/Claude-Usage.zip")
+          FILE_SIZE=$(stat -f%z "releases/${TAG}/Claude-Usage.zip")
           echo "Downloaded file size: ${FILE_SIZE} bytes"
 
           if [ "$FILE_SIZE" -lt 1000000 ]; then
@@ -85,14 +86,16 @@ jobs:
             exit 1
           fi
 
-          echo "✅ Release asset downloaded successfully"
+          echo "✅ Release asset downloaded to releases/${TAG}/Claude-Usage.zip"
 
       - name: Extract App for Version Info
         run: |
           echo "Extracting app to read version info..."
 
+          TAG="${{ steps.release_tag.outputs.tag }}"
+
           # Unzip to temporary directory
-          unzip -q releases/Claude-Usage.zip -d releases/temp
+          unzip -q "releases/${TAG}/Claude-Usage.zip" -d releases/temp
 
           # Extract version from app bundle
           VERSION=$(defaults read "$(pwd)/releases/temp/Claude Usage.app/Contents/Info.plist" CFBundleShortVersionString)
@@ -126,14 +129,15 @@ jobs:
             exit 0
           fi
 
-          # Download each previous release
+          # Download each previous release into tag-specific subdirectory
           for TAG in $RELEASES; do
-            echo "Downloading $TAG..."
-            gh release download "$TAG" \
+            echo "Downloading ${TAG}..."
+            mkdir -p "releases/${TAG}"
+            gh release download "${TAG}" \
               -p "Claude-Usage.zip" \
-              -D releases/ \
+              -D "releases/${TAG}/" \
               --skip-existing \
-              2>/dev/null || echo "  Skipped $TAG (not found or already downloaded)"
+              2>/dev/null || echo "  Skipped ${TAG} (not found or already downloaded)"
           done
 
           echo "✅ Previous releases downloaded for delta generation"
