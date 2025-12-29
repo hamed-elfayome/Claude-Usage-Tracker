@@ -8,7 +8,7 @@
             <sparkle:version>2</sparkle:version>
             <sparkle:shortVersionString>2.1.0</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/download/v2.1.0/Claude-Usage.zip" length="2726074" type="application/octet-stream" sparkle:edSignature="pQ6VS7AzZB6eaR7L8fNoYRnr1QhFyzMSs8yFkyGTDfe5h/iaB/qQXlflEnm4Qgn4tGCWx3xjg5VaEbmSD/WfBw=="/>
+            <enclosure url="https://hamed-elfayome.github.io/Claude-Usage-Tracker/releases/Claude-Usage.zip" length="2726077" type="application/octet-stream" sparkle:edSignature="pQ6VS7AzZB6eaR7L8fNoYRnr1QhFyzMSs8yFkyGTDfe5h/iaB/qQXlflEnm4Qgn4tGCWx3xjg5VaEbmSD/WfBw=="/>
         </item>
     </channel>
 </rss>
