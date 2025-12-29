@@ -61,24 +61,23 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Create tag-specific directory for proper URL generation
-          TAG="${{ steps.release_tag.outputs.tag }}"
-          mkdir -p "releases/${TAG}"
+          # Create releases directory if it doesn't exist
+          mkdir -p releases
 
-          # Download the release asset into tag-specific subdirectory
-          echo "Downloading release: ${TAG}"
-          gh release download "${TAG}" \
+          # Download the release asset
+          echo "Downloading release: ${{ steps.release_tag.outputs.tag }}"
+          gh release download "${{ steps.release_tag.outputs.tag }}" \
             -p "Claude-Usage.zip" \
-            -D "releases/${TAG}/" \
+            -D releases/ \
             --clobber
 
           # Verify download
-          if [ ! -f "releases/${TAG}/Claude-Usage.zip" ]; then
+          if [ ! -f "releases/Claude-Usage.zip" ]; then
             echo "❌ Error: Failed to download Claude-Usage.zip"
             exit 1
           fi
 
-          FILE_SIZE=$(stat -f%z "releases/${TAG}/Claude-Usage.zip")
+          FILE_SIZE=$(stat -f%z "releases/Claude-Usage.zip")
           echo "Downloaded file size: ${FILE_SIZE} bytes"
 
           if [ "$FILE_SIZE" -lt 1000000 ]; then
@@ -86,16 +85,14 @@ jobs:
             exit 1
           fi
 
-          echo "✅ Release asset downloaded to releases/${TAG}/Claude-Usage.zip"
+          echo "✅ Release asset downloaded successfully"
 
       - name: Extract App for Version Info
         run: |
           echo "Extracting app to read version info..."
 
-          TAG="${{ steps.release_tag.outputs.tag }}"
-
           # Unzip to temporary directory
-          unzip -q "releases/${TAG}/Claude-Usage.zip" -d releases/temp
+          unzip -q releases/Claude-Usage.zip -d releases/temp
 
           # Extract version from app bundle
           VERSION=$(defaults read "$(pwd)/releases/temp/Claude Usage.app/Contents/Info.plist" CFBundleShortVersionString)
@@ -129,18 +126,10 @@ jobs:
             exit 0
           fi
 
-          # Download each previous release into tag-specific subdirectory
-          for TAG in $RELEASES; do
-            echo "Downloading ${TAG}..."
-            mkdir -p "releases/${TAG}"
-            gh release download "${TAG}" \
-              -p "Claude-Usage.zip" \
-              -D "releases/${TAG}/" \
-              --skip-existing \
-              2>/dev/null || echo "  Skipped ${TAG} (not found or already downloaded)"
-          done
-
-          echo "✅ Previous releases downloaded for delta generation"
+          # Note: We skip downloading previous releases since we keep them in gh-pages
+          # Sparkle will use the files already in the releases/ directory from previous workflow runs
+          echo "ℹ️  Previous releases are already in gh-pages releases/ directory"
+          echo "✅ Using existing files for delta generation"
 
       - name: Generate Appcast
         env:
@@ -150,9 +139,10 @@ jobs:
 
           # IMPORTANT: Pipe private key via stdin for security (don't write to disk)
           # This prevents the private key from ever being written to the filesystem
+          # Use gh-pages URL for downloads (more reliable than GitHub releases)
           echo "$SPARKLE_PRIVATE_KEY" | ./bin/generate_appcast \
             --ed-key-file - \
-            --download-url-prefix "https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/download/" \
+            --download-url-prefix "https://hamed-elfayome.github.io/Claude-Usage-Tracker/releases/" \
             --maximum-deltas 5 \
             --maximum-versions 10 \
             releases/
