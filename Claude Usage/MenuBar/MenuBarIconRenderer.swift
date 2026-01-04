@@ -253,8 +253,13 @@ final class MenuBarIconRenderer {
         // Show metric label if enabled, otherwise show percentage
         let text: NSString
         if showNextSessionTime && metricType == .session, let resetTime = metricData.sessionResetTime {
-            // Show time remaining for session
-            text = resetTime.timeRemainingHoursString() as NSString
+            if showIconName {
+                // Show "S (→2H)" when labels enabled
+                text = "S (\(resetTime.timeRemainingHoursString()))" as NSString
+            } else {
+                // Show just "→2H" when labels disabled
+                text = resetTime.timeRemainingHoursString() as NSString
+            }
         } else if showIconName {
             // Show full word: "Session" or "Week"
             text = (metricType == .session ? "Session" : "Week") as NSString

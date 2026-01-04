@@ -127,7 +127,7 @@ final class StatusBarUIManager {
                 isDarkMode: isDarkMode,
                 monochromeMode: config.monochromeMode,
                 showIconName: config.showIconNames,
-                showNextSessionTime: config.showNextSessionTime
+                showNextSessionTime: metricConfig.showNextSessionTime
             )
 
             button.image = image
@@ -162,7 +162,7 @@ final class StatusBarUIManager {
             isDarkMode: isDarkMode,
             monochromeMode: config.monochromeMode,
             showIconName: config.showIconNames,
-            showNextSessionTime: config.showNextSessionTime
+            showNextSessionTime: metricConfig.showNextSessionTime
         )
 
         button.image = image

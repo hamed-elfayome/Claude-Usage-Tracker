@@ -126,13 +126,17 @@ struct MetricIconConfig: Codable, Equatable {
     /// API-specific configuration
     var apiDisplayMode: APIDisplayMode
 
+    /// Session-specific configuration
+    var showNextSessionTime: Bool
+
     init(
         metricType: MenuBarMetricType,
         isEnabled: Bool = false,
         iconStyle: MenuBarIconStyle = .battery,
         order: Int = 0,
         weekDisplayMode: WeekDisplayMode = .percentage,
-        apiDisplayMode: APIDisplayMode = .remaining
+        apiDisplayMode: APIDisplayMode = .remaining,
+        showNextSessionTime: Bool = false
     ) {
         self.metricType = metricType
         self.isEnabled = isEnabled
@@ -140,6 +144,7 @@ struct MetricIconConfig: Codable, Equatable {
         self.order = order
         self.weekDisplayMode = weekDisplayMode
         self.apiDisplayMode = apiDisplayMode
+        self.showNextSessionTime = showNextSessionTime
     }
 
     /// Default config for session (enabled by default)
@@ -179,13 +184,11 @@ struct MetricIconConfig: Codable, Equatable {
 struct MenuBarIconConfiguration: Codable, Equatable {
     var monochromeMode: Bool
     var showIconNames: Bool
-    var showNextSessionTime: Bool
     var metrics: [MetricIconConfig]
 
     init(
         monochromeMode: Bool = false,
         showIconNames: Bool = true,
-        showNextSessionTime: Bool = false,
         metrics: [MetricIconConfig] = [
             .sessionDefault,
             .weekDefault,
@@ -194,7 +197,6 @@ struct MenuBarIconConfiguration: Codable, Equatable {
     ) {
         self.monochromeMode = monochromeMode
         self.showIconNames = showIconNames
-        self.showNextSessionTime = showNextSessionTime
         self.metrics = metrics
     }
 

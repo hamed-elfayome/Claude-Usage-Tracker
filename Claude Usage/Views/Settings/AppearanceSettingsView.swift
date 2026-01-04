@@ -51,18 +51,6 @@ struct AppearanceSettingsView: View {
                     )
                 )
 
-                SettingToggle(
-                    title: "Show next session time",
-                    description: "Display the session reset time inside battery/progress bar (session metric only)",
-                    isOn: Binding(
-                        get: { configuration.showNextSessionTime },
-                        set: { newValue in
-                            configuration.showNextSessionTime = newValue
-                            saveConfiguration()
-                        }
-                    )
-                )
-
                 Divider()
 
                 // Metrics Configuration
