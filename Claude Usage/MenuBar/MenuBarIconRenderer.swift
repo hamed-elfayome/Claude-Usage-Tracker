@@ -242,24 +242,6 @@ final class MenuBarIconRenderer {
             )
             fillColor.setFill()
             fillPath.fill()
-
-            // Draw session reset time inside the fill area if enabled and this is a session metric
-            if showNextSessionTime && metricType == .session, let resetTime = metricData.sessionResetTime {
-                let timeString = resetTime.nextSessionTimeString(timezone: usage.userTimezone) as NSString
-                let timeFont = NSFont.systemFont(ofSize: 5.5, weight: .medium)
-                let timeAttributes: [NSAttributedString.Key: Any] = [
-                    .font: timeFont,
-                    .foregroundColor: NSColor.white
-                ]
-
-                let timeSize = timeString.size(withAttributes: timeAttributes)
-                // Only draw if there's enough space in the fill area
-                if fillWidth > timeSize.width + 2 {
-                    let timeX = xOffset + 1 + padding + (fillWidth - timeSize.width) / 2
-                    let timeY = barY + padding + (barHeight - padding * 2 - timeSize.height) / 2
-                    timeString.draw(at: NSPoint(x: timeX, y: timeY), withAttributes: timeAttributes)
-                }
-            }
         }
 
         // Label BELOW the battery (replaces percentage text)
@@ -270,7 +252,10 @@ final class MenuBarIconRenderer {
 
         // Show metric label if enabled, otherwise show percentage
         let text: NSString
-        if showIconName {
+        if showNextSessionTime && metricType == .session, let resetTime = metricData.sessionResetTime {
+            // Show time remaining for session
+            text = resetTime.timeRemainingHoursString() as NSString
+        } else if showIconName {
             // Show full word: "Session" or "Week"
             text = (metricType == .session ? "Session" : "Week") as NSString
         } else {
@@ -358,7 +343,7 @@ final class MenuBarIconRenderer {
 
             // Draw session reset time inside the fill area if enabled and this is a session metric
             if showNextSessionTime && metricType == .session, let resetTime = metricData.sessionResetTime {
-                let timeString = resetTime.nextSessionTimeString(timezone: usage.userTimezone) as NSString
+                let timeString = resetTime.timeRemainingHoursString() as NSString
                 let timeFont = NSFont.systemFont(ofSize: 5.5, weight: .medium)
                 let timeAttributes: [NSAttributedString.Key: Any] = [
                     .font: timeFont,

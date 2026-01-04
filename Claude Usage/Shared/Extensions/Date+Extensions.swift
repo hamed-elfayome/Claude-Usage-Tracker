@@ -70,12 +70,20 @@ extension Date {
         return formatter.string(from: self)
     }
 
-    /// Returns a formatted next session time string with arrow (e.g., "→4:35PM")
-    func nextSessionTimeString(timezone: TimeZone = .current) -> String {
-        let formatter = DateFormatter()
-        formatter.timeZone = timezone
-        formatter.dateFormat = "h:mma"  // "4:35PM"
-        let timeString = formatter.string(from: self)
-        return "→\(timeString.uppercased())"  // Ensure AM/PM is uppercase
+    /// Returns time remaining rounded to full hours (e.g., "2H", "1H", "<1H")
+    func timeRemainingHoursString(from now: Date = Date()) -> String {
+        let interval = self.timeIntervalSince(now)
+
+        if interval <= 0 {
+            return "<1H"
+        }
+
+        let hours = Int(ceil(interval / 3600))  // Round up to next hour
+
+        if hours < 1 {
+            return "<1H"
+        } else {
+            return "\(hours)H"
+        }
     }
 }
