@@ -353,7 +353,8 @@ final class MenuBarIconRenderer {
                 let timeSize = timeString.size(withAttributes: timeAttributes)
                 // Only draw if there's enough space in the fill area
                 if fillWidth > timeSize.width + 2 {
-                    let timeX = xOffset + (fillWidth - timeSize.width) / 2
+                    // Right-align the text in the fill area
+                    let timeX = xOffset + fillWidth - timeSize.width - 4
                     let timeY = barY + (barHeight - timeSize.height) / 2
                     timeString.draw(at: NSPoint(x: timeX, y: timeY), withAttributes: timeAttributes)
                 }

@@ -70,20 +70,20 @@ extension Date {
         return formatter.string(from: self)
     }
 
-    /// Returns time remaining rounded to full hours (e.g., "2H", "1H", "<1H")
+    /// Returns time remaining rounded to full hours (e.g., "→2H", "→1H", "→<1H")
     func timeRemainingHoursString(from now: Date = Date()) -> String {
         let interval = self.timeIntervalSince(now)
 
         if interval <= 0 {
-            return "<1H"
+            return "→<1H"
         }
 
         let hours = Int(ceil(interval / 3600))  // Round up to next hour
 
         if hours < 1 {
-            return "<1H"
+            return "→<1H"
         } else {
-            return "\(hours)H"
+            return "→\(hours)H"
         }
     }
 }
