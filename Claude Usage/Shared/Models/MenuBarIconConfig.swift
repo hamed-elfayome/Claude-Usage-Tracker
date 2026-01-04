@@ -179,11 +179,13 @@ struct MetricIconConfig: Codable, Equatable {
 struct MenuBarIconConfiguration: Codable, Equatable {
     var monochromeMode: Bool
     var showIconNames: Bool
+    var showNextSessionTime: Bool
     var metrics: [MetricIconConfig]
 
     init(
         monochromeMode: Bool = false,
         showIconNames: Bool = true,
+        showNextSessionTime: Bool = false,
         metrics: [MetricIconConfig] = [
             .sessionDefault,
             .weekDefault,
@@ -192,6 +194,7 @@ struct MenuBarIconConfiguration: Codable, Equatable {
     ) {
         self.monochromeMode = monochromeMode
         self.showIconNames = showIconNames
+        self.showNextSessionTime = showNextSessionTime
         self.metrics = metrics
     }
 

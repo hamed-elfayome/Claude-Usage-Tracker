@@ -241,7 +241,8 @@ extension MenuBarManager {
         apiUsage: APIUsage?,
         isDarkMode: Bool,
         monochromeMode: Bool,
-        showIconName: Bool
+        showIconName: Bool,
+        showNextSessionTime: Bool
     ) -> NSImage {
         let renderer = MenuBarIconRenderer()
         return renderer.createImage(
@@ -251,7 +252,8 @@ extension MenuBarManager {
             apiUsage: apiUsage,
             isDarkMode: isDarkMode,
             monochromeMode: monochromeMode,
-            showIconName: showIconName
+            showIconName: showIconName,
+            showNextSessionTime: showNextSessionTime
         )
     }
 }

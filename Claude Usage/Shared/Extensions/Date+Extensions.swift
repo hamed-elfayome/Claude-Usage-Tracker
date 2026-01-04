@@ -69,4 +69,13 @@ extension Date {
 
         return formatter.string(from: self)
     }
+
+    /// Returns a formatted next session time string with arrow (e.g., "→4:35PM")
+    func nextSessionTimeString(timezone: TimeZone = .current) -> String {
+        let formatter = DateFormatter()
+        formatter.timeZone = timezone
+        formatter.dateFormat = "h:mma"  // "4:35PM"
+        let timeString = formatter.string(from: self)
+        return "→\(timeString.uppercased())"  // Ensure AM/PM is uppercase
+    }
 }

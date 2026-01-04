@@ -37,6 +37,7 @@ enum Constants {
         // Menu bar icon configuration (new multi-metric system)
         static let menuBarIconConfiguration = "menuBarIconConfiguration"
         static let showIconNames = "showIconNames"
+        static let showNextSessionTime = "showNextSessionTime"
 
         // Per-metric configurations
         static let sessionIconEnabled = "sessionIconEnabled"
