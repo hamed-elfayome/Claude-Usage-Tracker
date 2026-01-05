@@ -78,12 +78,12 @@ extension Date {
             return "→<1H"
         }
 
-        let hours = Int(ceil(interval / 3600))  // Round up to next hour
-
-        if hours < 1 {
+        // Less than 1 hour remaining
+        if interval < 3600 {
             return "→<1H"
-        } else {
-            return "→\(hours)H"
         }
+
+        let hours = Int(ceil(interval / 3600))  // Round up to next hour
+        return "→\(hours)H"
     }
 }
