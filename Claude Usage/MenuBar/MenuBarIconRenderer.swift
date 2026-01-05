@@ -20,7 +20,8 @@ final class MenuBarIconRenderer {
         apiUsage: APIUsage?,
         isDarkMode: Bool,
         monochromeMode: Bool,
-        showIconName: Bool
+        showIconName: Bool,
+        showNextSessionTime: Bool
     ) -> NSImage {
         // Get the metric value and percentage
         let metricData = getMetricData(
@@ -47,7 +48,9 @@ final class MenuBarIconRenderer {
                 metricData: metricData,
                 isDarkMode: isDarkMode,
                 monochromeMode: monochromeMode,
-                showIconName: showIconName
+                showIconName: showIconName,
+                showNextSessionTime: showNextSessionTime,
+                usage: usage
             )
         case .progressBar:
             return createProgressBarStyle(
@@ -55,7 +58,9 @@ final class MenuBarIconRenderer {
                 metricData: metricData,
                 isDarkMode: isDarkMode,
                 monochromeMode: monochromeMode,
-                showIconName: showIconName
+                showIconName: showIconName,
+                showNextSessionTime: showNextSessionTime,
+                usage: usage
             )
         case .percentageOnly:
             return createPercentageOnlyStyle(
@@ -90,6 +95,7 @@ final class MenuBarIconRenderer {
         let percentage: Double
         let displayText: String
         let statusLevel: UsageStatusLevel
+        let sessionResetTime: Date?  // Only populated for session metric
     }
 
     private func getMetricData(
@@ -103,7 +109,8 @@ final class MenuBarIconRenderer {
             return MetricData(
                 percentage: usage.sessionPercentage,
                 displayText: "\(Int(usage.sessionPercentage))%",
-                statusLevel: usage.statusLevel
+                statusLevel: usage.statusLevel,
+                sessionResetTime: usage.sessionResetTime
             )
 
         case .week:
@@ -129,7 +136,8 @@ final class MenuBarIconRenderer {
             return MetricData(
                 percentage: percentage,
                 displayText: displayText,
-                statusLevel: statusLevel
+                statusLevel: statusLevel,
+                sessionResetTime: nil
             )
 
         case .api:
@@ -137,7 +145,8 @@ final class MenuBarIconRenderer {
                 return MetricData(
                     percentage: 0,
                     displayText: "N/A",
-                    statusLevel: .safe
+                    statusLevel: .safe,
+                    sessionResetTime: nil
                 )
             }
 
@@ -165,7 +174,8 @@ final class MenuBarIconRenderer {
             return MetricData(
                 percentage: percentage,
                 displayText: displayText,
-                statusLevel: statusLevel
+                statusLevel: statusLevel,
+                sessionResetTime: nil
             )
         }
     }
@@ -177,7 +187,9 @@ final class MenuBarIconRenderer {
         metricData: MetricData,
         isDarkMode: Bool,
         monochromeMode: Bool,
-        showIconName: Bool
+        showIconName: Bool,
+        showNextSessionTime: Bool,
+        usage: ClaudeUsage
     ) -> NSImage {
         let percentage = CGFloat(metricData.percentage) / 100.0
 
@@ -240,7 +252,15 @@ final class MenuBarIconRenderer {
 
         // Show metric label if enabled, otherwise show percentage
         let text: NSString
-        if showIconName {
+        if showNextSessionTime && metricType == .session, let resetTime = metricData.sessionResetTime {
+            if showIconName {
+                // Show "S (→2H)" when labels enabled
+                text = "S (\(resetTime.timeRemainingHoursString()))" as NSString
+            } else {
+                // Show just "→2H" when labels disabled
+                text = resetTime.timeRemainingHoursString() as NSString
+            }
+        } else if showIconName {
             // Show full word: "Session" or "Week"
             text = (metricType == .session ? "Session" : "Week") as NSString
         } else {
@@ -261,7 +281,9 @@ final class MenuBarIconRenderer {
         metricData: MetricData,
         isDarkMode: Bool,
         monochromeMode: Bool,
-        showIconName: Bool
+        showIconName: Bool,
+        showNextSessionTime: Bool,
+        usage: ClaudeUsage
     ) -> NSImage {
         // For progress bar: show "S" or "W" before the bar (not full prefix)
         let labelWidth: CGFloat = showIconName ? 10 : 0
@@ -323,6 +345,25 @@ final class MenuBarIconRenderer {
             )
             fillColor.setFill()
             fillPath.fill()
+
+            // Draw session reset time inside the fill area if enabled and this is a session metric
+            if showNextSessionTime && metricType == .session, let resetTime = metricData.sessionResetTime {
+                let timeString = resetTime.timeRemainingHoursString() as NSString
+                let timeFont = NSFont.systemFont(ofSize: 5.5, weight: .medium)
+                let timeAttributes: [NSAttributedString.Key: Any] = [
+                    .font: timeFont,
+                    .foregroundColor: NSColor.white
+                ]
+
+                let timeSize = timeString.size(withAttributes: timeAttributes)
+                // Only draw if there's enough space in the fill area
+                if fillWidth > timeSize.width + 2 {
+                    // Right-align the text in the fill area
+                    let timeX = xOffset + fillWidth - timeSize.width - 4
+                    let timeY = barY + (barHeight - timeSize.height) / 2
+                    timeString.draw(at: NSPoint(x: timeX, y: timeY), withAttributes: timeAttributes)
+                }
+            }
         }
 
         return image

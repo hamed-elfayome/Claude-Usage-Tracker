@@ -83,7 +83,12 @@ struct MetricIconCard: View {
                 }
 
                 // Metric-specific options
-                if metricType == .week && config.iconStyle == .percentageOnly {
+                if metricType == .session && (config.iconStyle == .battery || config.iconStyle == .progressBar) {
+                    Divider()
+                        .padding(.vertical, Spacing.xs)
+
+                    SessionDisplayOptions(config: $config, onConfigChanged: onConfigChanged)
+                } else if metricType == .week && config.iconStyle == .percentageOnly {
                     Divider()
                         .padding(.vertical, Spacing.xs)
 
@@ -108,6 +113,34 @@ struct MetricIconCard: View {
                     lineWidth: 1
                 )
         )
+    }
+}
+
+// MARK: - Session Display Options
+
+private struct SessionDisplayOptions: View {
+    @Binding var config: MetricIconConfig
+    let onConfigChanged: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            Toggle(isOn: Binding(
+                get: { config.showNextSessionTime },
+                set: { newValue in
+                    config.showNextSessionTime = newValue
+                    onConfigChanged()
+                }
+            )) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Show time until next session")
+                        .font(.system(size: 11, weight: .medium))
+                    Text("Display time remaining (e.g., →2H) in the icon")
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                }
+            }
+            .toggleStyle(.switch)
+        }
     }
 }
 
