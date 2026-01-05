@@ -5,6 +5,49 @@ All notable changes to Claude Usage Tracker will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - 2026-01-05
+
+### Added
+
+#### Next Session Time Display (contributed by [@khromov](https://github.com/khromov))
+- **Session reset countdown in menu bar icon** - See exactly when your next 5-hour session starts
+  - Displays time until next session in HH:MM format (e.g., "2:45" for 2 hours 45 minutes)
+  - Shows "in <1h" when less than an hour remains
+  - Automatically updates as time progresses
+  - Toggle on/off in Appearance Settings
+  - Works with all icon styles
+  - Clean, compact display that fits naturally in the menu bar
+
+#### Enhanced Date Utilities
+- **New time formatting helpers** in Date+Extensions
+  - `timeUntilSessionReset(from:)` - Calculates hours and minutes until next session
+  - `formattedTimeUntilReset(from:)` - Returns human-readable time string
+
+### Changed
+
+#### Menu Bar Icon Configuration
+- **Extended MenuBarIconConfig** - New `showTimeToNextSession` property
+  - Per-metric configuration support
+  - Persistent storage via DataStore
+  - Default: enabled for better user awareness
+
+#### Appearance Settings
+- **Session time toggle** - New option in Appearance Settings tab
+  - Easy enable/disable of time-to-next-session display
+  - Located in MetricIconCard for per-metric control
+  - Applies to all configured menu bar icons
+
+### Fixed
+
+- **Time formatting for sessions under 1 hour** - Fixed display bug showing incorrect format
+  - Properly shows "in <1h" when less than 60 minutes remain
+  - Prevents confusion with negative or invalid time displays
+
+### Contributors
+- [@khromov](https://github.com/khromov) (Stanislav Khromov) - Next session time display feature
+
+---
+
 ## [2.1.0] - 2025-12-29
 
 ### Enhanced User Experience - Smart Setup Wizard & Modern APIs
@@ -894,6 +937,7 @@ This major release represents a significant milestone for Claude Usage Tracker, 
 - Detailed usage dashboard with countdown timers
 - Support for macOS 14.0+ (Sonoma and later)
 
+[2.1.1]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.6.2...v2.0.0
 [1.6.2]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.6.1...v1.6.2

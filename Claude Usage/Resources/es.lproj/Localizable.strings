@@ -254,7 +254,7 @@
 /* ==================== */
 "github.enjoy_app" = "¿Disfrutando Claude Usage Tracker?";
 "github.star_description" = "Si esta aplicación te ha sido útil, ¡considera darle una estrella en GitHub! Ayuda a otros a descubrir el proyecto y motiva el desarrollo continuo.";
-"github.star_button" = "⭐ Dar Estrella en GitHub";
+"github.star_button" = "Dar Estrella en GitHub";
 "github.maybe_later" = "Quizás Más Tarde";
 "github.never_show" = "No Mostrar de Nuevo";
 

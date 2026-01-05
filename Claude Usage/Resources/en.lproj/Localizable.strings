@@ -265,7 +265,7 @@
 /* ==================== */
 "github.enjoy_app" = "Enjoying Claude Usage Tracker?";
 "github.star_description" = "If this app has been helpful, please consider starring it on GitHub! It helps others discover the project and motivates continued development.";
-"github.star_button" = "⭐ Star on GitHub";
+"github.star_button" = "Star on GitHub";
 "github.maybe_later" = "Maybe Later";
 "github.never_show" = "Don't Show Again";
 

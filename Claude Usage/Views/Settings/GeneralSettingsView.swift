@@ -255,7 +255,7 @@ struct GeneralSettingsView: View {
 
     /// Only show languages that have translation files
     private var availableLanguages: [LanguageManager.SupportedLanguage] {
-        [.english, .spanish, .french, .german, .italian, .portuguese]
+        [.english, .spanish, .french, .german, .italian, .portuguese, .japanese]
     }
 
     private var refreshIntervalDescription: String {

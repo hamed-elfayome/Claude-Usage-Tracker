@@ -21,6 +21,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         // Perform Keychain migration (one-time, idempotent)
         KeychainMigrationService.shared.performMigrationIfNeeded()
 
+        // Initialize update manager to enable automatic update checks
+        _ = UpdateManager.shared
+
         // Request notification permissions
         requestNotificationPermissions()
 
