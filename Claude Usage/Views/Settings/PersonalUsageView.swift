@@ -333,12 +333,19 @@ struct ConfirmStep: View {
                     DataStore.shared.saveOrganizationId(selectedOrgId)
                 }
 
+                // Update statusline scripts if key or org changed (only if already installed)
+                let keyChanged = keyHasChanged()
+                let orgChanged = wizardState.selectedOrgId != wizardState.originalOrgId
+                if keyChanged || orgChanged {
+                    try? StatuslineService.shared.updateScriptsIfInstalled()
+                }
+
                 await MainActor.run {
                     // Determine which notification to send
-                    if keyHasChanged() {
+                    if keyChanged {
                         // Key changed - full refresh
                         NotificationCenter.default.post(name: .sessionKeyUpdated, object: nil)
-                    } else if wizardState.selectedOrgId != wizardState.originalOrgId {
+                    } else if orgChanged {
                         // Only org changed - targeted refresh
                         NotificationCenter.default.post(name: .organizationChanged, object: nil)
                     }

@@ -12,8 +12,8 @@ class StatuslineService {
 
     /// Swift script that fetches Claude usage data from the API.
     /// Installed to ~/.claude/fetch-claude-usage.swift and executed by the bash statusline script.
-    /// The session key is injected into this script when statusline is enabled.
-    private func generateSwiftScript(sessionKey: String) -> String {
+    /// The session key and organization ID are injected into this script when statusline is enabled.
+    private func generateSwiftScript(sessionKey: String, organizationId: String) -> String {
         return """
 #!/usr/bin/env swift
 
@@ -24,34 +24,11 @@ func readSessionKey() -> String? {
     let trimmedKey = injectedKey.trimmingCharacters(in: .whitespacesAndNewlines)
     return trimmedKey.isEmpty ? nil : trimmedKey
 }
-func fetchOrganizationId(sessionKey: String) async throws -> String {
-    // Build URL safely
-    guard let url = URL(string: "https://claude.ai/api/organizations") else {
-        throw NSError(domain: "ClaudeAPI", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
-    }
-
-    var request = URLRequest(url: url)
-    request.setValue("sessionKey=\\(sessionKey)", forHTTPHeaderField: "Cookie")
-    request.setValue("application/json", forHTTPHeaderField: "Accept")
-    request.httpMethod = "GET"
-
-    let (data, response) = try await URLSession.shared.data(for: request)
-
-    guard let httpResponse = response as? HTTPURLResponse,
-          httpResponse.statusCode == 200 else {
-        throw NSError(domain: "ClaudeAPI", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to fetch org ID"])
-    }
-
-    struct Organization: Codable {
-        let uuid: String
-    }
-
-    let organizations = try JSONDecoder().decode([Organization].self, from: data)
-    guard let firstOrg = organizations.first else {
-        throw NSError(domain: "ClaudeAPI", code: 2, userInfo: [NSLocalizedDescriptionKey: "No organizations found"])
-    }
-
-    return firstOrg.uuid
+func readOrganizationId() -> String? {
+    // Organization ID injected from settings by Claude Usage app
+    let injectedOrgId = "\(organizationId)"
+    let trimmedOrgId = injectedOrgId.trimmingCharacters(in: .whitespacesAndNewlines)
+    return trimmedOrgId.isEmpty ? nil : trimmedOrgId
 }
 func fetchUsageData(sessionKey: String, orgId: String) async throws -> (utilization: Int, resetsAt: String?) {
     // Build URL safely - validate orgId doesn't contain path traversal
@@ -93,8 +70,12 @@ Task {
         exit(1)
     }
 
+    guard let orgId = readOrganizationId() else {
+        print("ERROR:NO_ORG_CONFIGURED")
+        exit(1)
+    }
+
     do {
-        let orgId = try await fetchOrganizationId(sessionKey: sessionKey)
         let (utilization, resetsAt) = try await fetchUsageData(sessionKey: sessionKey, orgId: orgId)
 
         // Output format: UTILIZATION|RESETS_AT
@@ -298,8 +279,12 @@ printf "%s\\n" "$output"
             guard let sessionKey = try KeychainService.shared.load(for: .claudeSessionKey) else {
                 throw StatuslineError.sessionKeyNotFound
             }
-            swiftScriptContent = generateSwiftScript(sessionKey: sessionKey)
-            LoggingService.shared.log("Injected session key into statusline Swift script")
+            // Load selected organization ID from DataStore
+            guard let organizationId = DataStore.shared.loadOrganizationId() else {
+                throw StatuslineError.organizationNotConfigured
+            }
+            swiftScriptContent = generateSwiftScript(sessionKey: sessionKey, organizationId: organizationId)
+            LoggingService.shared.log("Injected session key and org ID into statusline Swift script")
         } else {
             // Install placeholder script
             swiftScriptContent = placeholderSwiftScript
@@ -407,7 +392,7 @@ SHOW_PROGRESS_BAR=\(showProgressBar ? "1" : "0")
 
     // MARK: - Status
 
-    func isInstalled() -> Bool {
+    var isInstalled: Bool {
         let swiftScript = Constants.ClaudePaths.claudeDirectory
             .appendingPathComponent("fetch-claude-usage.swift")
 
@@ -416,6 +401,12 @@ SHOW_PROGRESS_BAR=\(showProgressBar ? "1" : "0")
 
         return FileManager.default.fileExists(atPath: swiftScript.path) &&
                FileManager.default.fileExists(atPath: bashScript.path)
+    }
+
+    /// Updates scripts only if already installed (installation is optional)
+    func updateScriptsIfInstalled() throws {
+        guard isInstalled else { return }
+        try installScripts(injectSessionKey: true)
     }
 
     /// Checks if a valid session key is configured in Keychain using professional validator
@@ -434,11 +425,14 @@ SHOW_PROGRESS_BAR=\(showProgressBar ? "1" : "0")
 
 enum StatuslineError: Error, LocalizedError {
     case sessionKeyNotFound
+    case organizationNotConfigured
 
     var errorDescription: String? {
         switch self {
         case .sessionKeyNotFound:
             return "Session key not found in Keychain. Please configure your session key first."
+        case .organizationNotConfigured:
+            return "Organization not configured. Please select an organization in the app settings."
         }
     }
 }
