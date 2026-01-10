@@ -5,6 +5,35 @@ All notable changes to Claude Usage Tracker will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.2] - 2026-01-10
+
+### Fixed
+
+#### Statusline Script Updates
+- **Conditional Script Updates** - Scripts now only update if already installed
+  - Added `updateScriptsIfInstalled()` method with installation check
+  - Prevents errors when statusline is not configured
+  - Changed `isInstalled()` to computed property for cleaner syntax
+  - Fixes issue where app tried to update non-existent scripts
+
+#### Organization ID Handling
+- **Direct Organization Injection** - Organization ID now injected into scripts instead of fetching via API
+  - Removed API call from Swift statusline script (`fetchOrganizationId()`)
+  - Organization ID read from injected value (similar to session key)
+  - Eliminates unnecessary network requests during statusline execution
+  - Improves performance and reliability
+
+#### Error Handling
+- **New Error Case** - Added `organizationNotConfigured` error
+  - Clear error message when organization not set
+  - Better user feedback during statusline configuration
+  - Prevents script installation with incomplete settings
+
+### Contributors
+- [@oomathias](https://github.com/oomathias) - Organization ID injection fix
+
+---
+
 ## [2.1.1] - 2026-01-05
 
 ### Added
@@ -937,6 +966,7 @@ This major release represents a significant milestone for Claude Usage Tracker, 
 - Detailed usage dashboard with countdown timers
 - Support for macOS 14.0+ (Sonoma and later)
 
+[2.1.2]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v1.6.2...v2.0.0

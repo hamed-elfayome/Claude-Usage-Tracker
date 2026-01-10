@@ -9,12 +9,12 @@
   ![Swift](https://img.shields.io/badge/Swift-5.0+-orange?style=flat-square&logo=swift)
   ![SwiftUI](https://img.shields.io/badge/SwiftUI-5.0+-blue?style=flat-square&logo=swift)
   ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
-  ![Version](https://img.shields.io/badge/version-2.1.1-blue?style=flat-square)
+  ![Version](https://img.shields.io/badge/version-2.1.2-blue?style=flat-square)
   ![Languages](https://img.shields.io/badge/languages-7-purple?style=flat-square)
 
   <sub>🇬🇧 English • 🇪🇸 Español • 🇫🇷 Français • 🇩🇪 Deutsch • 🇮🇹 Italiano • 🇵🇹 Português • 🇯🇵 日本語</sub>
 
-  ### [Download Latest Release (v2.1.1)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
+  ### [Download Latest Release (v2.1.2)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
 
   <sub>macOS 14.0+ (Sonoma) | ~3 MB | Native Swift/SwiftUI | Officially Signed</sub>
 
@@ -51,24 +51,13 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 
 ## What's New
 
-**v2.1.1 - Session Timer Display (2026-01-05)**:
-- **Next Session Time in Menu Bar** - Countdown to your next 5-hour session reset (e.g., "2:45")
-- Toggle on/off in Appearance Settings
+**v2.1.2 - Statusline Improvements (2026-01-10)**:
+- Fixed statusline script updates to only run when installed
+- Optimized organization ID injection (no extra API calls)
 
-**v2.1.0 - UX & Reliability Improvements (2025-12-29)**:
-- **Wizard-Style Setup Flow** - New 3-step guided wizard for session key configuration
-- **Smart Organization Preservation** - Organization IDs only cleared when session key actually changes
-- **Smooth Refresh Experience** - Menu bar icons no longer flicker during data refresh
-
-**v2.0.0 - Major Release (2025-12-28)**:
-- **Official Apple Code Signing** - No more security warnings! Install like any normal Mac app
-- **Automatic Updates** - Built-in update system powered by Sparkle framework
-- **Enhanced Security** - Session keys now stored in macOS Keychain with automatic migration
-- **Multi-Language Support** - 6 languages: English, Spanish, French, German, Italian, Portuguese
-- **Multi-Metric Menu Bar Icons** - Display separate icons for session, weekly, and api usage
-- **Advanced Error Handling** - Professional error system with user-friendly messages and recovery
-- **Network Monitoring** - Auto-detect connectivity changes and handle offline scenarios
-- **Launch at Login** - System-level auto-start option
+**v2.1.1** - Session timer countdown in menu bar
+**v2.1.0** - 3-step setup wizard, smart organization preservation
+**v2.0.0** - Apple code signing, automatic updates, Keychain security, multi-language support
 
 **[View Full Release History](CHANGELOG.md)**
 
