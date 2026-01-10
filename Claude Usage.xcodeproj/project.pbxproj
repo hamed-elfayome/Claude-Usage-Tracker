@@ -155,6 +155,7 @@
 				it,
 				pt,
 				ja,
+				ko,
 			);
 			mainGroup = 05CD2CA92EA985A100004C83;
 			minimizedProjectReferenceProxies = 1;

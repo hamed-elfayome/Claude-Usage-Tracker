@@ -18,8 +18,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         // Hide dock icon (menu bar app only)
         NSApp.setActivationPolicy(.accessory)
 
-        // Perform Keychain migration (one-time, idempotent)
-        KeychainMigrationService.shared.performMigrationIfNeeded()
+        // Load profiles into ProfileManager (synchronously)
+        ProfileManager.shared.loadProfiles()
 
         // Initialize update manager to enable automatic update checks
         _ = UpdateManager.shared
@@ -27,29 +27,37 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         // Request notification permissions
         requestNotificationPermissions()
 
+        // Listen for manual wizard trigger (for testing)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleShowSetupWizard),
+            name: .showSetupWizard,
+            object: nil
+        )
+
         // Check if setup has been completed
-        if !DataStore.shared.hasCompletedSetup() {
-            showSetupWizard()
+        if !shouldShowSetupWizard() {
+            // Initialize menu bar with active profile
+            menuBarManager = MenuBarManager()
+            menuBarManager?.setup()
+        } else {
+            showSetupWizardManually()
         }
 
-        // Initialize menu bar
-        menuBarManager = MenuBarManager()
-        menuBarManager?.setup()
-
         // Track first launch date for GitHub star prompt
-        if DataStore.shared.loadFirstLaunchDate() == nil {
-            DataStore.shared.saveFirstLaunchDate(Date())
+        if SharedDataStore.shared.loadFirstLaunchDate() == nil {
+            SharedDataStore.shared.saveFirstLaunchDate(Date())
         }
 
         // TESTING: Check for launch argument to force GitHub star prompt
         if CommandLine.arguments.contains("--show-github-prompt") {
-            DataStore.shared.resetGitHubStarPromptForTesting()
-            DataStore.shared.saveFirstLaunchDate(Date().addingTimeInterval(-2 * 24 * 60 * 60))
+            SharedDataStore.shared.resetGitHubStarPromptForTesting()
+            SharedDataStore.shared.saveFirstLaunchDate(Date().addingTimeInterval(-2 * 24 * 60 * 60))
         }
 
         // Check if we should show GitHub star prompt (with a slight delay to not interrupt app startup)
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
-            if DataStore.shared.shouldShowGitHubStarPrompt() {
+            if SharedDataStore.shared.shouldShowGitHubStarPrompt() {
                 self?.menuBarManager?.showGitHubStarPrompt()
             }
         }
@@ -63,12 +71,29 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         }
     }
 
-    private func showSetupWizard() {
+    private func shouldShowSetupWizard() -> Bool {
+        // Only show wizard on first launch when no profiles exist
+        // (Per-credential setup is now handled in individual settings tabs)
+        return ProfileManager.shared.activeProfile == nil
+    }
+
+    /// Handles notification to show setup wizard
+    @objc private func handleShowSetupWizard() {
+        LoggingService.shared.log("AppDelegate: Received showSetupWizard notification")
+        showSetupWizardManually()
+    }
+
+    /// Shows the setup wizard window (can be called manually for testing)
+    func showSetupWizardManually() {
+        LoggingService.shared.log("AppDelegate: showSetupWizardManually called")
+
         // Temporarily show dock icon for the setup window
         NSApp.setActivationPolicy(.regular)
+        LoggingService.shared.log("AppDelegate: Set activation policy to regular")
 
         let setupView = SetupWizardView()
         let hostingController = NSHostingController(rootView: setupView)
+        LoggingService.shared.log("AppDelegate: Created hosting controller")
 
         let window = NSWindow(contentViewController: hostingController)
         window.title = "Claude Usage Tracker Setup"
@@ -76,6 +101,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         window.center()
         window.isReleasedWhenClosed = false
         window.makeKeyAndOrderFront(nil)
+        LoggingService.shared.log("AppDelegate: Window created and made key")
 
         // Hide dock icon again when setup window closes
         NotificationCenter.default.addObserver(
@@ -85,6 +111,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         ) { [weak self] _ in
             NSApp.setActivationPolicy(.accessory)
             self?.setupWindow = nil
+
+            // Initialize menu bar after setup completes
+            if self?.menuBarManager == nil {
+                self?.menuBarManager = MenuBarManager()
+                self?.menuBarManager?.setup()
+            }
         }
 
         setupWindow = window

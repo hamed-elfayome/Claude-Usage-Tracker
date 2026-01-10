@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AppKit
 
 /// About page with app information and contributors
 struct AboutView: View {
@@ -22,20 +23,20 @@ struct AboutView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: Spacing.sectionSpacing) {
+            VStack(spacing: DesignTokens.Spacing.section) {
                 // Header with App Info
-                VStack(spacing: Spacing.md) {
+                VStack(spacing: DesignTokens.Spacing.medium) {
                     Image("AboutLogo")
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .frame(width: 64, height: 64)
 
-                    VStack(spacing: Spacing.xs) {
+                    VStack(spacing: DesignTokens.Spacing.extraSmall) {
                         Text("app.name".localized)
-                            .font(Typography.title)
+                            .font(DesignTokens.Typography.pageTitle)
 
                         Text("about.version".localized(with: appVersion))
-                            .font(Typography.caption)
+                            .font(DesignTokens.Typography.caption)
                             .foregroundColor(.secondary)
 
                         // Check for Updates button
@@ -55,32 +56,32 @@ struct AboutView: View {
                     }
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.top, Spacing.lg)
+                .padding(.top, DesignTokens.Spacing.cardPadding)
 
                 Divider()
 
                 // Creator
-                VStack(alignment: .leading, spacing: Spacing.md) {
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
                     Text("about.created_by".localized)
-                        .font(Typography.sectionHeader)
+                        .font(DesignTokens.Typography.sectionTitle)
 
                     Button(action: {
                         if let url = URL(string: "https://github.com/hamed-elfayome") {
                             NSWorkspace.shared.open(url)
                         }
                     }) {
-                        HStack(spacing: Spacing.md) {
+                        HStack(spacing: DesignTokens.Spacing.medium) {
                             Image(systemName: "person.circle.fill")
                                 .font(.system(size: 20))
                                 .foregroundColor(.secondary)
 
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("Hamed Elfayome")
-                                    .font(Typography.body)
+                                Text("creator.name".localized)
+                                    .font(DesignTokens.Typography.body)
                                     .foregroundColor(.primary)
 
-                                Text("@hamed-elfayome")
-                                    .font(Typography.caption)
+                                Text("creator.username".localized)
+                                    .font(DesignTokens.Typography.caption)
                                     .foregroundColor(.secondary)
                             }
 
@@ -96,30 +97,30 @@ struct AboutView: View {
 
                 // Contributors
                 if !contributors.isEmpty {
-                    VStack(alignment: .leading, spacing: Spacing.md) {
+                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
                         Text("about.contributors".localized(with: contributors.count))
-                            .font(Typography.sectionHeader)
+                            .font(DesignTokens.Typography.sectionTitle)
 
                         ContributorsGridView(contributors: contributors)
                     }
                 } else if isLoadingContributors {
-                    VStack(alignment: .leading, spacing: Spacing.md) {
+                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
                         Text("about.contributors_loading".localized)
-                            .font(Typography.sectionHeader)
+                            .font(DesignTokens.Typography.sectionTitle)
 
                         ProgressView()
                             .controlSize(.small)
                             .frame(maxWidth: .infinity, alignment: .center)
-                            .padding(.vertical, Spacing.md)
+                            .padding(.vertical, DesignTokens.Spacing.medium)
                     }
                 }
 
                 // Links
-                VStack(alignment: .leading, spacing: Spacing.md) {
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
                     Text("about.links".localized)
-                        .font(Typography.sectionHeader)
+                        .font(DesignTokens.Typography.sectionTitle)
 
-                    VStack(spacing: Spacing.sm) {
+                    VStack(spacing: DesignTokens.Spacing.small) {
                         LinkButton(title: "about.star_github".localized, icon: "star.fill") {
                             if let url = URL(string: "https://github.com/hamed-elfayome/Claude-Usage-Tracker") {
                                 NSWorkspace.shared.open(url)
@@ -137,21 +138,28 @@ struct AboutView: View {
                                 NSWorkspace.shared.open(url)
                             }
                         }
+
+                        Divider()
+
+                        LinkButton(title: "about.run_setup_wizard".localized, icon: "wand.and.stars") {
+                            LoggingService.shared.log("AboutView: Setup Wizard button clicked - posting notification")
+                            NotificationCenter.default.post(name: .showSetupWizard, object: nil)
+                        }
                     }
                 }
 
                 // Footer
-                VStack(spacing: Spacing.xs) {
+                VStack(spacing: DesignTokens.Spacing.extraSmall) {
                     Text("about.mit_license".localized)
-                        .font(Typography.caption)
+                        .font(DesignTokens.Typography.caption)
                         .foregroundColor(.secondary)
 
                     Text("about.copyright".localized)
-                        .font(Typography.caption)
+                        .font(DesignTokens.Typography.caption)
                         .foregroundColor(.secondary)
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, Spacing.md)
+                .padding(.vertical, DesignTokens.Spacing.medium)
 
                 Spacer()
             }
@@ -196,14 +204,14 @@ struct LinkButton: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: Spacing.iconTextSpacing) {
+            HStack(spacing: DesignTokens.Spacing.iconText) {
                 Image(systemName: icon)
-                    .font(.system(size: 12))
+                    .font(.system(size: DesignTokens.Icons.small))
                     .foregroundColor(.secondary)
-                    .frame(width: 16)
+                    .frame(width: DesignTokens.Spacing.cardPadding)
 
                 Text(title)
-                    .font(Typography.label)
+                    .font(DesignTokens.Typography.body)
                     .foregroundColor(.primary)
 
                 Spacer()
@@ -224,8 +232,8 @@ struct ContributorsGridView: View {
 
     var body: some View {
         LazyVGrid(columns: [
-            GridItem(.adaptive(minimum: 40, maximum: 44), spacing: Spacing.sm)
-        ], spacing: Spacing.sm) {
+            GridItem(.adaptive(minimum: 40, maximum: 44), spacing: DesignTokens.Spacing.small)
+        ], spacing: DesignTokens.Spacing.small) {
             ForEach(contributors) { contributor in
                 ContributorAvatar(contributor: contributor)
             }

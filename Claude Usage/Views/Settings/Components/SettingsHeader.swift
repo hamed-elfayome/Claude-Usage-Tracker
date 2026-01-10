@@ -7,7 +7,8 @@
 
 import SwiftUI
 
-/// Unified header component for all settings tabs
+/// Unified header component for all settings tabs (legacy compatibility)
+/// NOTE: New code should use SettingsPageHeader from SettingsComponents.swift
 struct SettingsHeader: View {
     let title: String
     let subtitle: String
@@ -48,23 +49,4 @@ struct SettingsHeader: View {
             }
         }
     }
-}
-
-// MARK: - Previews
-
-#Preview("Header without Icon") {
-    SettingsHeader(
-        title: "General Settings",
-        subtitle: "Configure app behavior and preferences"
-    )
-    .padding()
-}
-
-#Preview("Header with Icon") {
-    SettingsHeader(
-        title: "Notifications",
-        subtitle: "Manage alerts and usage warnings",
-        icon: "bell.fill"
-    )
-    .padding()
 }

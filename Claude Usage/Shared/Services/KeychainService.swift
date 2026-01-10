@@ -60,12 +60,27 @@ class KeychainService {
 
         // If update fails because item doesn't exist, add new item
         if updateStatus == errSecItemNotFound {
+            // Create access control that doesn't require password
+            var accessControlError: Unmanaged<CFError>?
+            guard let accessControl = SecAccessControlCreateWithFlags(
+                kCFAllocatorDefault,
+                kSecAttrAccessibleWhenUnlocked,
+                [],
+                &accessControlError
+            ) else {
+                if let error = accessControlError?.takeRetainedValue() {
+                    LoggingService.shared.log("Failed to create access control: \(error)")
+                }
+                throw KeychainError.saveFailed(status: errSecParam)
+            }
+
             let addQuery: [String: Any] = [
                 kSecClass as String: kSecClassGenericPassword,
                 kSecAttrService as String: key.service,
                 kSecAttrAccount as String: key.account,
                 kSecValueData as String: data,
-                kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock
+                kSecAttrAccessControl as String: accessControl,
+                kSecAttrSynchronizable as String: false
             ]
 
             let addStatus = SecItemAdd(addQuery as CFDictionary, nil)
@@ -148,6 +163,7 @@ class KeychainService {
         let status = SecItemCopyMatching(query as CFDictionary, nil)
         return status == errSecSuccess
     }
+
 }
 
 // MARK: - KeychainError

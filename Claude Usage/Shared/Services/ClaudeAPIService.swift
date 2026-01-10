@@ -20,35 +20,26 @@ class ClaudeAPIService: APIServiceProtocol {
 
     // MARK: - Session Key Management
 
-    /// Reads and validates the session key from Keychain
+    /// Reads and validates the session key from active profile
     private func readSessionKey() throws -> String {
         do {
-            // Try to load from Keychain first
-            if let key = try KeychainService.shared.load(for: .claudeSessionKey) {
-                // Validate the session key using professional validator
-                let validatedKey = try sessionKeyValidator.validate(key)
-                return validatedKey
+            // Load from active profile only
+            guard let activeProfile = ProfileManager.shared.activeProfile else {
+                LoggingService.shared.logError("ClaudeAPIService.readSessionKey: No active profile")
+                throw AppError.sessionKeyNotFound()
             }
 
-            // Migration: Check if file exists and migrate to Keychain
-            if FileManager.default.fileExists(atPath: sessionKeyPath.path) {
-                LoggingService.shared.log("Found session key in file, migrating to Keychain")
-                let fileKey = try String(contentsOf: sessionKeyPath, encoding: .utf8)
-                let validatedKey = try sessionKeyValidator.validate(fileKey)
+            LoggingService.shared.log("ClaudeAPIService.readSessionKey: Profile '\(activeProfile.name)'")
+            LoggingService.shared.log("  - claudeSessionKey: \(activeProfile.claudeSessionKey == nil ? "NIL" : "EXISTS (len: \(activeProfile.claudeSessionKey!.count))")")
 
-                // Save to Keychain
-                try KeychainService.shared.save(validatedKey, for: .claudeSessionKey)
-
-                // Delete the file (no longer needed as primary storage)
-                // Note: File will be recreated by StatuslineService if statusline is enabled
-                try? FileManager.default.removeItem(at: sessionKeyPath)
-                LoggingService.shared.log("Migrated session key to Keychain and removed file")
-
-                return validatedKey
+            guard let key = activeProfile.claudeSessionKey else {
+                LoggingService.shared.logError("ClaudeAPIService.readSessionKey: Profile has NIL claudeSessionKey - throwing sessionKeyNotFound")
+                throw AppError.sessionKeyNotFound()
             }
 
-            // No key found anywhere
-            throw AppError.sessionKeyNotFound()
+            let validatedKey = try sessionKeyValidator.validate(key)
+            LoggingService.shared.log("ClaudeAPIService.readSessionKey: Key validated successfully")
+            return validatedKey
 
         } catch let error as SessionKeyValidationError {
             // Convert validation errors to AppError
@@ -57,14 +48,13 @@ class ClaudeAPIService: APIServiceProtocol {
             // Re-throw AppError as-is
             throw error
         } catch {
-            // Keychain or file errors
             let appError = AppError(
                 code: .storageReadFailed,
-                message: "Failed to read session key",
+                message: "Failed to read session key from profile",
                 technicalDetails: error.localizedDescription,
                 underlyingError: error,
                 isRecoverable: true,
-                recoverySuggestion: "Please check your session key configuration and try again"
+                recoverySuggestion: "Please check your session key configuration in the active profile"
             )
             ErrorLogger.shared.log(appError)
             throw appError
@@ -78,22 +68,34 @@ class ClaudeAPIService: APIServiceProtocol {
             // Validate the key before saving
             let validatedKey = try sessionKeyValidator.validate(key)
 
+            guard let profileId = ProfileManager.shared.activeProfile?.id else {
+                throw AppError(
+                    code: .storageWriteFailed,
+                    message: "No active profile found",
+                    technicalDetails: "Cannot save session key without an active profile",
+                    isRecoverable: true,
+                    recoverySuggestion: "Please ensure a profile is active"
+                )
+            }
+
             // Check if key actually changed (for smart org clearing)
             var shouldClearOrg = true
             if preserveOrgIfUnchanged {
-                let existingKey = try? KeychainService.shared.load(for: .claudeSessionKey)
+                let existingKey = ProfileManager.shared.activeProfile?.claudeSessionKey
                 shouldClearOrg = (existingKey != validatedKey)
             }
 
-            // Save to Keychain (primary storage)
-            try KeychainService.shared.save(validatedKey, for: .claudeSessionKey)
+            // Save to active profile
+            var credentials = (try? ProfileManager.shared.loadCredentials(for: profileId)) ?? ProfileCredentials()
+            credentials.claudeSessionKey = validatedKey
+            try ProfileManager.shared.saveCredentials(for: profileId, credentials: credentials)
 
-            LoggingService.shared.log("Session key saved to Keychain")
+            LoggingService.shared.log("Session key saved to active profile")
 
             // Only clear org ID if key actually changed
             if shouldClearOrg {
                 clearOrganizationIdCache()
-                DataStore.shared.clearOrganizationId()
+                ProfileManager.shared.updateOrganizationId(nil, for: profileId)
                 LoggingService.shared.log("Session key changed - cleared organization ID")
             } else {
                 LoggingService.shared.log("Session key unchanged - preserving organization ID")
@@ -252,9 +254,9 @@ class ClaudeAPIService: APIServiceProtocol {
     func fetchOrganizationId(sessionKey: String? = nil) async throws -> String {
         let sessionKey = try sessionKey ?? self.readSessionKey()
 
-        // Check for stored organization ID first
-        if let storedOrgId = DataStore.shared.loadOrganizationId() {
-            LoggingService.shared.logInfo("Using stored organization ID: \(storedOrgId)")
+        // Check for stored organization ID in active profile first
+        if let storedOrgId = ProfileManager.shared.activeProfile?.organizationId {
+            LoggingService.shared.logInfo("Using stored organization ID from profile: \(storedOrgId)")
             return storedOrgId
         }
 
@@ -266,8 +268,10 @@ class ClaudeAPIService: APIServiceProtocol {
         let selectedOrg = organizations.first!
         LoggingService.shared.logInfo("Auto-selected organization: \(selectedOrg.name) (ID: \(selectedOrg.uuid))")
 
-        // Store the selected org ID
-        DataStore.shared.saveOrganizationId(selectedOrg.uuid)
+        // Store the selected org ID in active profile
+        if let profileId = ProfileManager.shared.activeProfile?.id {
+            ProfileManager.shared.updateOrganizationId(selectedOrg.uuid, for: profileId)
+        }
 
         return selectedOrg.uuid
     }
@@ -281,7 +285,8 @@ class ClaudeAPIService: APIServiceProtocol {
 
         async let usageDataTask = performRequest(endpoint: "/organizations/\(orgId)/usage", sessionKey: sessionKey)
 
-        let checkOverage = DataStore.shared.loadCheckOverageLimitEnabled()
+        // Use active profile's checkOverageLimitEnabled setting
+        let checkOverage = ProfileManager.shared.activeProfile?.checkOverageLimitEnabled ?? true
         async let overageDataTask: Data? = checkOverage ? performRequest(endpoint: "/organizations/\(orgId)/overage_spend_limit", sessionKey: sessionKey) : nil
 
         let usageData = try await usageDataTask

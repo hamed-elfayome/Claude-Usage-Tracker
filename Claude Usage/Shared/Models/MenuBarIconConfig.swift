@@ -154,7 +154,7 @@ struct MetricIconConfig: Codable, Equatable {
             isEnabled: true,
             iconStyle: .battery,
             order: 0,
-            showNextSessionTime: true
+            showNextSessionTime: false
         )
     }
 

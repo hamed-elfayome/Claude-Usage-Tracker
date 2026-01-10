@@ -14,6 +14,9 @@ final class StatusBarUIManager {
     private var statusItems: [MenuBarMetricType: NSStatusItem] = [:]
     private var appearanceObserver: NSKeyValueObservation?
 
+    // Icon renderer for creating menu bar images
+    private let renderer = MenuBarIconRenderer()
+
     weak var delegate: StatusBarUIManagerDelegate?
 
     // MARK: - Initialization
@@ -27,59 +30,90 @@ final class StatusBarUIManager {
         // Remove all existing items first
         cleanup()
 
-        // Create status items for enabled metrics
-        for metricConfig in config.enabledMetrics {
+        // Check if there are any enabled metrics
+        if config.enabledMetrics.isEmpty {
+            // No credentials/metrics - show default app logo
             let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
             if let button = statusItem.button {
                 button.action = action
                 button.target = target
+                // Set a temporary placeholder - will be updated with actual logo
+                button.title = ""
             }
 
-            statusItems[metricConfig.metricType] = statusItem
+            // Use a special key to identify the default icon
+            statusItems[.session] = statusItem  // Use session as placeholder key
+            LoggingService.shared.logUIEvent("Status bar initialized with default app logo (no credentials)")
+        } else {
+            // Create status items for enabled metrics
+            for metricConfig in config.enabledMetrics {
+                let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+
+                if let button = statusItem.button {
+                    button.action = action
+                    button.target = target
+                }
+
+                statusItems[metricConfig.metricType] = statusItem
+            }
+
+            LoggingService.shared.logUIEvent("Status bar initialized with \(config.enabledMetrics.count) metrics")
         }
 
         observeAppearanceChanges()
-        LoggingService.shared.logUIEvent("Status bar initialized with \(config.enabledMetrics.count) metrics")
     }
 
-    /// Updates status bar items based on new configuration
+    /// Updates status bar items based on new configuration (incremental approach)
     func updateConfiguration(target: AnyObject, action: Selector, config: MenuBarIconConfiguration) {
-        // Nuclear approach with proper cleanup to minimize warnings
-        // This is the most reliable method even though it triggers some macOS warnings
-        //
-        // Note: macOS may log "Unhandled disconnected scene" warnings when removing status items.
-        // These are harmless internal macOS Control Center messages and don't affect functionality.
-        // The alternative (incremental updates) causes race conditions where wrong metrics appear.
-        // We choose reliability over clean console logs.
-
-        // Step 1: Clean up all existing items properly
-        for (metricType, statusItem) in statusItems {
-            if let button = statusItem.button {
-                button.image = nil
-                button.action = nil
-                button.target = nil
-            }
-            NSStatusBar.system.removeStatusItem(statusItem)
-            LoggingService.shared.logUIEvent("Removed status item for \(metricType.displayName)")
+        // Determine what the new set of items should be
+        let newMetricTypes: Set<MenuBarMetricType>
+        if config.enabledMetrics.isEmpty {
+            // No credentials/metrics - show default app logo using .session as placeholder
+            newMetricTypes = [.session]
+        } else {
+            newMetricTypes = Set(config.enabledMetrics.map { $0.metricType })
         }
-        statusItems.removeAll()
 
-        // Step 2: Recreate all enabled metrics
-        // Using the same run loop to avoid delay but after cleanup
-        for metricConfig in config.enabledMetrics {
+        let currentMetricTypes = Set(statusItems.keys)
+
+        // Step 1: Remove items that are no longer needed
+        let itemsToRemove = currentMetricTypes.subtracting(newMetricTypes)
+        for metricType in itemsToRemove {
+            if let statusItem = statusItems[metricType] {
+                if let button = statusItem.button {
+                    button.image = nil
+                    button.action = nil
+                    button.target = nil
+                }
+                NSStatusBar.system.removeStatusItem(statusItem)
+                LoggingService.shared.logUIEvent("Removed status item for \(metricType.displayName)")
+            }
+            statusItems.removeValue(forKey: metricType)
+        }
+
+        // Step 2: Add items that are new
+        let itemsToAdd = newMetricTypes.subtracting(currentMetricTypes)
+        for metricType in itemsToAdd {
             let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
             if let button = statusItem.button {
                 button.action = action
                 button.target = target
+                if metricType == .session {
+                    // Default logo placeholder
+                    button.title = ""
+                }
             }
 
-            statusItems[metricConfig.metricType] = statusItem
-            LoggingService.shared.logUIEvent("Created status item for \(metricConfig.metricType.displayName)")
+            statusItems[metricType] = statusItem
+            LoggingService.shared.logUIEvent("Created status item for \(metricType.displayName)")
         }
 
-        LoggingService.shared.logUIEvent("Status bar configuration complete: \(config.enabledMetrics.count) metrics")
+        // Step 3: Items that already exist don't need recreation, just keep them
+        // Their images will be updated by updateAllButtons() or updateButton()
+
+        LoggingService.shared.logUIEvent("Status bar configuration updated: removed=\(itemsToRemove.count), added=\(itemsToAdd.count), kept=\(currentMetricTypes.intersection(newMetricTypes).count)")
     }
 
     func cleanup() {
@@ -107,20 +141,36 @@ final class StatusBarUIManager {
     /// Updates all status bar buttons based on current usage data
     func updateAllButtons(
         usage: ClaudeUsage,
-        apiUsage: APIUsage?,
-        manager: MenuBarManager
+        apiUsage: APIUsage?
     ) {
-        let config = DataStore.shared.loadMenuBarIconConfiguration()
+        // Get config from active profile
+        let profile = ProfileManager.shared.activeProfile
+        let config = profile?.iconConfig ?? .default
         let isDarkMode = NSApp.effectiveAppearance.name == .darkAqua
 
+        // Check if we should show default logo (no usage credentials OR no enabled metrics)
+        let hasUsageCredentials = profile?.hasUsageCredentials ?? false
+        if !hasUsageCredentials || config.enabledMetrics.isEmpty {
+            // Show default app logo
+            if let statusItem = statusItems[.session],  // We use .session as placeholder key
+               let button = statusItem.button {
+                let logoImage = renderer.createDefaultAppLogo(isDarkMode: isDarkMode)
+                button.image = logoImage
+                button.image?.isTemplate = false
+            }
+            return
+        }
+
+        // Normal metric display
         for metricConfig in config.enabledMetrics {
             guard let statusItem = statusItems[metricConfig.metricType],
                   let button = statusItem.button else {
                 continue
             }
 
-            let image = manager.createImageForMetric(
-                metricConfig.metricType,
+            // Create image directly using our renderer
+            let image = renderer.createImage(
+                for: metricConfig.metricType,
                 config: metricConfig,
                 usage: usage,
                 apiUsage: apiUsage,
@@ -139,23 +189,24 @@ final class StatusBarUIManager {
     func updateButton(
         for metricType: MenuBarMetricType,
         usage: ClaudeUsage,
-        apiUsage: APIUsage?,
-        manager: MenuBarManager
+        apiUsage: APIUsage?
     ) {
         guard let statusItem = statusItems[metricType],
               let button = statusItem.button else {
             return
         }
 
-        let config = DataStore.shared.loadMenuBarIconConfiguration()
+        // Get config from active profile
+        let config = ProfileManager.shared.activeProfile?.iconConfig ?? .default
         guard let metricConfig = config.config(for: metricType) else {
             return
         }
 
         let isDarkMode = NSApp.effectiveAppearance.name == .darkAqua
 
-        let image = manager.createImageForMetric(
-            metricType,
+        // Create image directly using our renderer
+        let image = renderer.createImage(
+            for: metricType,
             config: metricConfig,
             usage: usage,
             apiUsage: apiUsage,

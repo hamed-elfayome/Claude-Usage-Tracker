@@ -31,61 +31,59 @@ struct UpdatesSettingsView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: Spacing.sectionSpacing) {
-                // Header
-                SettingsHeader(
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.section) {
+                // Page Header
+                SettingsPageHeader(
                     title: "settings.updates.title".localized,
                     subtitle: "settings.updates.description".localized
                 )
 
-                Divider()
-
                 // Version Info Section
-                VStack(alignment: .leading, spacing: Spacing.md) {
-                    Text("Version Information")
-                        .font(Typography.sectionHeader)
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
+                    Text("updates.version_info".localized)
+                        .font(DesignTokens.Typography.sectionTitle)
 
-                    VStack(spacing: Spacing.sm) {
+                    VStack(spacing: DesignTokens.Spacing.small) {
                         // Current Version
                         HStack {
-                            HStack(spacing: Spacing.iconTextSpacing) {
+                            HStack(spacing: DesignTokens.Spacing.iconText) {
                                 Image(systemName: "app.badge")
-                                    .font(.system(size: 14))
+                                    .font(.system(size: DesignTokens.Icons.standard))
                                     .foregroundColor(.accentColor)
-                                    .frame(width: 20)
+                                    .frame(width: DesignTokens.Spacing.iconFrame)
                                 Text("settings.updates.current_version".localized)
-                                    .font(Typography.body)
+                                    .font(DesignTokens.Typography.body)
                             }
                             Spacer()
                             Text("v\(appVersion) (\(buildNumber))")
-                                .font(Typography.monospacedValue)
+                                .font(DesignTokens.Typography.monospaced)
                                 .foregroundColor(.secondary)
                         }
-                        .padding(Spacing.md)
+                        .padding(DesignTokens.Spacing.medium)
                         .background(
-                            RoundedRectangle(cornerRadius: Spacing.radiusMedium)
-                                .fill(Color(nsColor: .controlBackgroundColor))
+                            RoundedRectangle(cornerRadius: DesignTokens.Radius.small)
+                                .fill(DesignTokens.Colors.cardBackground)
                         )
 
                         // Last Check
                         HStack {
-                            HStack(spacing: Spacing.iconTextSpacing) {
+                            HStack(spacing: DesignTokens.Spacing.iconText) {
                                 Image(systemName: "clock")
-                                    .font(.system(size: 14))
+                                    .font(.system(size: DesignTokens.Icons.standard))
                                     .foregroundColor(.accentColor)
-                                    .frame(width: 20)
+                                    .frame(width: DesignTokens.Spacing.iconFrame)
                                 Text("settings.updates.last_check".localized)
-                                    .font(Typography.body)
+                                    .font(DesignTokens.Typography.body)
                             }
                             Spacer()
                             Text(lastCheckDescription)
-                                .font(Typography.body)
+                                .font(DesignTokens.Typography.body)
                                 .foregroundColor(.secondary)
                         }
-                        .padding(Spacing.md)
+                        .padding(DesignTokens.Spacing.medium)
                         .background(
-                            RoundedRectangle(cornerRadius: Spacing.radiusMedium)
-                                .fill(Color(nsColor: .controlBackgroundColor))
+                            RoundedRectangle(cornerRadius: DesignTokens.Radius.small)
+                                .fill(DesignTokens.Colors.cardBackground)
                         )
                     }
                 }
@@ -93,19 +91,19 @@ struct UpdatesSettingsView: View {
                 Divider()
 
                 // Automatic Updates Section
-                VStack(alignment: .leading, spacing: Spacing.md) {
-                    Text("Update Preferences")
-                        .font(Typography.sectionHeader)
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
+                    Text("updates.update_preferences".localized)
+                        .font(DesignTokens.Typography.sectionTitle)
 
-                    VStack(alignment: .leading, spacing: Spacing.md) {
+                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
                         HStack {
-                            HStack(spacing: Spacing.iconTextSpacing) {
+                            HStack(spacing: DesignTokens.Spacing.iconText) {
                                 Image(systemName: "arrow.triangle.2.circlepath")
-                                    .font(.system(size: 14))
+                                    .font(.system(size: DesignTokens.Icons.standard))
                                     .foregroundColor(.accentColor)
-                                    .frame(width: 20)
+                                    .frame(width: DesignTokens.Spacing.iconFrame)
                                 Text("settings.updates.automatic".localized)
-                                    .font(Typography.body)
+                                    .font(DesignTokens.Typography.body)
                             }
                             Spacer()
                             Toggle("", isOn: $autoUpdateEnabled)
@@ -116,14 +114,14 @@ struct UpdatesSettingsView: View {
                         }
 
                         Text("settings.updates.automatic.description".localized)
-                            .font(Typography.caption)
+                            .font(DesignTokens.Typography.caption)
                             .foregroundColor(.secondary)
                             .padding(.leading, 32)
                     }
-                    .padding(Spacing.md)
+                    .padding(DesignTokens.Spacing.medium)
                     .background(
-                        RoundedRectangle(cornerRadius: Spacing.radiusMedium)
-                            .fill(Color(nsColor: .controlBackgroundColor))
+                        RoundedRectangle(cornerRadius: DesignTokens.Radius.small)
+                            .fill(DesignTokens.Colors.cardBackground)
                     )
                 }
 
@@ -138,26 +136,26 @@ struct UpdatesSettingsView: View {
                 .disabled(!updateManager.canCheckForUpdates)
 
                 // Info Box
-                HStack(spacing: Spacing.md) {
+                HStack(spacing: DesignTokens.Spacing.medium) {
                     Image(systemName: "info.circle.fill")
-                        .font(.system(size: 16))
+                        .font(.system(size: DesignTokens.Icons.standard))
                         .foregroundColor(.blue)
                     VStack(alignment: .leading, spacing: 4) {
                         Text("settings.updates.info.title".localized)
-                            .font(Typography.body)
+                            .font(DesignTokens.Typography.body)
                         Text("settings.updates.info.description".localized)
-                            .font(Typography.caption)
+                            .font(DesignTokens.Typography.caption)
                             .foregroundColor(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
-                .padding(Spacing.md)
+                .padding(DesignTokens.Spacing.medium)
                 .background(
-                    RoundedRectangle(cornerRadius: Spacing.radiusMedium)
+                    RoundedRectangle(cornerRadius: DesignTokens.Radius.small)
                         .fill(Color.blue.opacity(0.05))
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: Spacing.radiusMedium)
+                    RoundedRectangle(cornerRadius: DesignTokens.Radius.small)
                         .strokeBorder(Color.blue.opacity(0.2), lineWidth: 1)
                 )
 

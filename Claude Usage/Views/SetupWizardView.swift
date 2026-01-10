@@ -81,7 +81,10 @@ struct SetupWizardView: View {
         }
         .frame(width: 580, height: 680)
         .onAppear {
-            wizardState.autoStartSessionEnabled = DataStore.shared.loadAutoStartSessionEnabled()
+            // Load auto-start preference from active profile
+            if let activeProfile = ProfileManager.shared.activeProfile {
+                wizardState.autoStartSessionEnabled = activeProfile.autoStartSessionEnabled
+            }
         }
     }
 }
@@ -197,7 +200,7 @@ struct EnterKeyStepSetup: View {
                             .scaleEffect(0.6)
                             .frame(width: 100)
                     } else {
-                        Text("Test Connection")
+                        Text("wizard.test_connection".localized)
                             .frame(width: 100)
                     }
                 }
@@ -257,12 +260,12 @@ struct SelectOrgStepSetup: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     // Step header
-                    SetupStepHeader(stepNumber: 2, title: "Select Organization")
+                    SetupStepHeader(stepNumber: 2, title: "wizard.select_organization".localized)
 
-                    Text("Which organization do you want to track?")
+                    Text("wizard.select_org_title".localized)
                         .font(.system(size: 13))
 
-                    Text("Select the Claude organization for usage monitoring")
+                    Text("wizard.select_org_subtitle".localized)
                         .font(.system(size: 12))
                         .foregroundColor(.secondary)
 
@@ -307,7 +310,7 @@ struct SelectOrgStepSetup: View {
 
             // Footer
             HStack {
-                Button("Back") {
+                Button("common.back".localized) {
                     withAnimation {
                         wizardState.currentStep = .enterKey
                     }
@@ -316,7 +319,7 @@ struct SelectOrgStepSetup: View {
 
                 Spacer()
 
-                Button("Next") {
+                Button("common.next".localized) {
                     withAnimation {
                         wizardState.currentStep = .confirm
                     }
@@ -349,16 +352,16 @@ struct ConfirmStepSetup: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     // Step header
-                    SetupStepHeader(stepNumber: 3, title: "Confirm & Save")
+                    SetupStepHeader(stepNumber: 3, title: "wizard.review_config".localized)
 
                     // Summary Card
                     VStack(alignment: .leading, spacing: 16) {
-                        Text("Configuration Summary")
+                        Text("wizard.config_summary".localized)
                             .font(.system(size: 14, weight: .semibold))
 
                         // Session Key (masked)
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Session Key")
+                            Text("wizard.session_key".localized)
                                 .font(.system(size: 12, weight: .medium))
                                 .foregroundColor(.secondary)
                             Text(maskSessionKey(wizardState.sessionKey))
@@ -369,13 +372,13 @@ struct ConfirmStepSetup: View {
 
                         // Selected Organization
                         VStack(alignment: .leading, spacing: 6) {
-                            Text("Organization")
+                            Text("wizard.organization".localized)
                                 .font(.system(size: 12, weight: .medium))
                                 .foregroundColor(.secondary)
                             if let selectedOrg = wizardState.testedOrganizations.first(where: { $0.uuid == wizardState.selectedOrgId }) {
                                 Text(selectedOrg.name)
                                     .font(.system(size: 13))
-                                Text("ID: \(selectedOrg.uuid)")
+                                Text(String(format: "wizard.organization_id".localized, selectedOrg.uuid))
                                     .font(.system(size: 11, design: .monospaced))
                                     .foregroundColor(.secondary)
                             }
@@ -423,7 +426,7 @@ struct ConfirmStepSetup: View {
 
             // Footer
             HStack {
-                Button("Back") {
+                Button("common.back".localized) {
                     withAnimation {
                         wizardState.currentStep = .selectOrg
                     }
@@ -455,26 +458,39 @@ struct ConfirmStepSetup: View {
 
         Task {
             do {
-                // Save session key with smart org preservation
-                try apiService.saveSessionKey(
-                    wizardState.sessionKey,
-                    preserveOrgIfUnchanged: true
-                )
-
-                // Save selected organization
-                if let selectedOrgId = wizardState.selectedOrgId {
-                    DataStore.shared.saveOrganizationId(selectedOrgId)
+                guard let profileId = ProfileManager.shared.activeProfile?.id else {
+                    throw NSError(domain: "SetupWizard", code: 1, userInfo: [
+                        NSLocalizedDescriptionKey: "No active profile found"
+                    ])
                 }
 
-                // Save auto-start preference
-                DataStore.shared.saveAutoStartSessionEnabled(wizardState.autoStartSessionEnabled)
+                // Save to profile-specific Keychain using the refactored pattern
+                var creds = try ProfileStore.shared.loadProfileCredentials(profileId)
+                creds.claudeSessionKey = wizardState.sessionKey
+                creds.organizationId = wizardState.selectedOrgId
+                try ProfileStore.shared.saveProfileCredentials(profileId, credentials: creds)
 
-                // Mark setup as completed
-                DataStore.shared.saveHasCompletedSetup(true)
+                // Also update the Profile model with the new credentials
+                if var profile = ProfileManager.shared.activeProfile {
+                    profile.claudeSessionKey = wizardState.sessionKey
+                    profile.organizationId = wizardState.selectedOrgId
+                    profile.autoStartSessionEnabled = wizardState.autoStartSessionEnabled
+                    ProfileManager.shared.updateProfile(profile)
+                    LoggingService.shared.log("SetupWizard: Updated profile model with new credentials")
+                }
+
+                // Update statusline scripts if installed
+                try? StatuslineService.shared.updateScriptsIfInstalled()
+
+                // Mark setup as completed (shared setting)
+                SharedDataStore.shared.saveHasCompletedSetup(true)
 
                 await MainActor.run {
+                    // Reset circuit breaker on successful credential save
+                    ErrorRecovery.shared.recordSuccess(for: .api)
+
                     // Trigger immediate refresh of usage data
-                    NotificationCenter.default.post(name: .sessionKeyUpdated, object: nil)
+                    NotificationCenter.default.post(name: .credentialsChanged, object: nil)
 
                     isSaving = false
                     dismiss()
