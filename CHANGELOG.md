@@ -5,6 +5,294 @@ All notable changes to Claude Usage Tracker will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-01-12
+
+### Major Release - Multi-Profile Management System 
+
+This major release introduces comprehensive multi-profile support, allowing you to manage unlimited Claude accounts with automatic credential switching and per-profile settings. Combined with Claude Code CLI integration and Korean language support, v2.2.0 represents a significant evolution of the application.
+
+### Added
+
+#### Multi-Profile System
+- **Unlimited Profiles**: Create and manage unlimited profiles for different Claude accounts
+  - Each profile has isolated credentials, settings, and usage data
+  - Fun auto-generated names ("Quantum Llama", "Sneaky Penguin", "Turbo Sloth", etc.)
+  - Custom naming support - rename profiles to whatever you prefer
+  - Profile deletion (minimum 1 profile enforced)
+  - Last used timestamp tracking
+
+- **Profile Switcher**: Quick profile switching in multiple locations
+  - Popover header dropdown with profile badges
+  - Settings sidebar picker with visual indicators
+  - Dedicated "Manage Profiles" tab for full profile management
+  - Profile badges show Claude.ai and CLI credential status
+
+- **Per-Profile Settings**: Each profile maintains independent configuration
+  - Credentials: Claude.ai session key, organization ID, API keys
+  - Appearance: Icon style, monochrome mode (5 icon styles available)
+  - Refresh interval: 5-300 seconds
+  - Auto-start sessions: Enable/disable per profile
+  - Notifications: Independent threshold alerts (75%, 90%, 95%)
+  - Usage data: Tracked and stored separately per profile
+
+#### Claude Code CLI Integration
+- **ClaudeCodeSyncService**: New service for CLI credential management
+  - One-click sync from currently logged-in Claude Code account
+  - Reads credentials from system Keychain (`Claude Code-credentials`)
+  - Stores credentials per-profile for isolated management
+  - Security command integration for Keychain read/write operations
+
+- **Automatic Credential Switching**: Seamless CLI account switching
+  - When changing profiles, CLI credentials automatically update
+  - System Keychain updated with selected profile's credentials
+  - Claude Code automatically switches to the profile's account
+  - Smart re-sync before switching captures any CLI login changes
+
+- **CLI Account Settings Tab**: Dedicated UI for CLI management
+  - Sync status display (synced/not synced)
+  - Masked access token display
+  - Subscription type and scopes information
+  - One-click sync and remove operations
+  - Last synced timestamp
+
+- **Automatic Statusline Updates**: Terminal statusline stays in sync
+  - Statusline scripts auto-update when switching profiles
+  - Organization ID and session key injected automatically
+  - No manual reconfiguration needed
+
+#### Auto-Start Session Service (Per-Profile)
+- **AutoStartSessionService**: Background monitoring for all profiles
+  - 5-minute check cycle monitors all profiles with auto-start enabled
+  - Detects session resets (usage drops to 0%)
+  - Automatically initializes new sessions using Claude 3.5 Haiku
+  - Per-profile auto-start toggle in General settings
+  - Notification on successful auto-start
+  - Works independently for each profile
+
+#### Korean Language Support
+- **8th Language Added**: Full Korean (한국어) localization
+  - 497 localized strings added to ko.lproj/Localizable.strings
+  - Complete UI translation for all new features
+  - Profile management, CLI account, and settings strings
+  - Language badge: 🇰🇷
+
+#### Reorganized Settings Interface
+- **New Settings Structure**: Modern sidebar with profile switcher
+  - Profile switcher at top of sidebar
+  - Credentials section: Claude.AI, API Console, CLI Account
+  - Profile Settings: Appearance, General
+  - App-Wide Settings: Manage Profiles, Language, Claude Code, Updates, About
+
+- **New Settings Tabs**:
+  - **Manage Profiles**: Full profile CRUD operations
+  - **CLI Account**: Claude Code credential sync management
+  - **Language Settings**: Dedicated language selection tab (previously in General)
+
+- **DesignTokens**: Centralized design system
+  - Typography, spacing, colors, icons standardized
+  - Consistent UI across all settings views
+  - Reusable components (SettingsComponents.swift)
+
+#### New Models & Architecture
+- **Profile Model** (Shared/Models/Profile.swift)
+  - Complete profile representation with all settings
+  - Credentials stored directly in profile (encrypted in UserDefaults)
+  - Computed properties: hasClaudeAI, hasAPIConsole, hasUsageCredentials
+  - Per-profile usage data storage
+
+- **ProfileManager** (Shared/Services/ProfileManager.swift)
+  - Centralized profile lifecycle management
+  - Observable with `@Published` properties (Combine framework)
+  - Async profile activation with CLI credential sync
+  - Thread-safe switching with semaphore
+  - Create, update, delete, toggle selection operations
+
+- **ProfileStore** (Shared/Storage/ProfileStore.swift)
+  - Profile-specific storage (separate from app-wide settings)
+  - Saves/loads profiles, active profile ID, display mode
+  - UserDefaults integration with App Groups support
+
+- **SharedDataStore** (Shared/Storage/SharedDataStore.swift)
+  - App-wide settings (language, statusline, GitHub prompt, etc.)
+  - Separated from profile-specific DataStore
+
+- **ProfileMigrationService** (Shared/Services/ProfileMigrationService.swift)
+  - Automatic migration from v2.1.x to multi-profile system
+  - Migrates credentials from old Keychain keys
+  - Migrates settings (icon config, refresh interval, notifications, auto-start)
+  - One-time migration on first launch of v2.2.0
+  - Migration flag: `didMigrateToProfilesV3`
+
+- **FunnyNameGenerator** (Shared/Utilities/FunnyNameGenerator.swift)
+  - 30 fun profile names (Quantum Llama, Sneaky Penguin, Turbo Sloth, etc.)
+  - Ensures uniqueness across profiles
+  - Fallback to "Profile XXXX" when names exhausted
+
+- **NotificationSettings Model** (Shared/Models/NotificationSettings.swift)
+  - Per-profile notification configuration
+  - Threshold toggles: 75%, 90%, 95%
+  - Profile name for notification messages
+
+- **ProfileDisplayMode Enum** (Shared/Models/ProfileDisplayMode.swift)
+  - `.single`: Show only active profile (current implementation)
+  - `.multi`: Reserved for future multi-profile menu bar display
+
+#### New Views
+- **ManageProfilesView** (Views/Settings/App/ManageProfilesView.swift)
+  - Full profile management interface
+  - Profile list with inline name editing
+  - Create, delete, activate operations
+  - Profile status badges
+  - Info card explaining profile features
+
+- **CLIAccountView** (Views/Settings/Credentials/CLIAccountView.swift)
+  - CLI account sync management
+  - Status card with sync indicator
+  - Credential display (masked tokens)
+  - Subscription info display
+  - Sync and remove operations
+
+- **LanguageSettingsView** (Views/Settings/App/LanguageSettingsView.swift)
+  - Dedicated language selection interface
+  - Previously embedded in General settings
+  - 8 language options with flags
+
+- **Reorganized Settings Views**:
+  - PersonalUsageView → Views/Settings/Credentials/
+  - APIBillingView → Views/Settings/Credentials/
+  - AppearanceSettingsView → Views/Settings/Profile/
+  - GeneralSettingsView → Views/Settings/Profile/
+
+#### Enhanced Localization
+- **200+ New Strings Per Language**:
+  - Profile management strings
+  - CLI account strings
+  - Settings reorganization strings
+  - New tabs and sections
+  - All 7 existing languages updated (de, en, es, fr, it, ja, pt)
+
+### Changed
+
+#### Settings Architecture
+- **Sidebar-Based Navigation**: Replaced tab-based settings with sidebar
+  - Profile switcher integrated into sidebar
+  - Credentials, Profile Settings, and App Settings sections
+  - More scalable for future features
+
+- **Profile-Aware Components**: All settings respect active profile
+  - Credentials apply to active profile only
+  - Appearance changes affect active profile
+  - Notifications configured per profile
+
+- **SettingsSection Enum**: Expanded and reorganized
+  - Credentials: `.claudeAI`, `.apiConsole`, `.cliAccount`
+  - Profile Settings: `.appearance`, `.general`
+  - App-Wide: `.manageProfiles`, `.language`, `.claudeCode`, `.updates`, `.about`
+
+#### Popover Interface
+- **Profile Switcher Header**: New compact profile selector
+  - Dropdown menu showing all profiles
+  - Profile badges (CLI , Claude.ai , active indicator)
+  - "Manage Profiles" quick action
+  - Active profile name prominently displayed
+
+#### Data Storage
+- **Profile-Based Storage**: Credentials now stored per-profile
+  - Each profile stores credentials directly in Profile model
+  - Encrypted in UserDefaults (App Groups)
+  - No more shared session keys
+
+- **Separated Datastores**:
+  - ProfileStore: Profile-specific data
+  - SharedDataStore: App-wide settings (language, statusline, etc.)
+  - DataStore: Legacy compatibility (being phased out)
+
+#### Menu Bar Manager
+- **Profile-Aware Refresh**: Fetches usage for active profile
+  - Observes ProfileManager `@Published` properties via Combine
+  - Automatic data refresh on profile switch
+  - Updates menu bar icons with active profile's configuration
+  - Restart refresh timer with profile's interval
+
+- **Automatic Profile Switch Handling**:
+  - Clears current usage data before switch
+  - Updates refresh interval from new profile
+  - Triggers immediate refresh after activation
+  - Updates statusline scripts if credentials available
+
+### Fixed
+
+#### Migration Integration
+- **ProfileMigrationService Now Called**: Added to AppDelegate
+  - Migration runs before ProfileManager.loadProfiles()
+  - Automatically migrates v2.1.x settings to first profile
+  - Credentials, icon config, refresh interval, notifications preserved
+  - One-time migration with flag tracking
+
+### Technical Improvements
+
+#### Architecture
+- **Protocol-Oriented Design**: ProfileManager uses Observable pattern
+  - `@Published` properties for reactive UI updates
+  - Combine framework integration
+  - Main Actor isolation for thread safety
+
+- **Service Layer**:
+  - ClaudeCodeSyncService for CLI integration
+  - AutoStartSessionService for background monitoring
+  - ProfileMigrationService for seamless upgrades
+
+- **Centralized Profile Activation**:
+  - Single `activateProfile(id)` method handles all switches
+  - Automatic CLI credential application
+  - Statusline script updates
+  - Re-sync of current profile before leaving
+
+#### Code Organization
+- **20 New Files Added**:
+  - 4 Models: Profile, NotificationSettings, ProfileDisplayMode, (+ ProfileCredentials)
+  - 4 Services: ProfileManager, ClaudeCodeSyncService, AutoStartSessionService, ProfileMigrationService
+  - 2 Storage: ProfileStore, SharedDataStore
+  - 1 Utility: FunnyNameGenerator
+  - 6 Views: ManageProfilesView, CLIAccountView, LanguageSettingsView, + reorganized credential views
+  - 3 Components: DesignTokens, SettingsComponents, ThresholdIndicator
+
+- **File Reorganization**:
+  - Settings views organized into subdirectories (Credentials/, Profile/, App/)
+  - Cleaner project structure
+  - Better separation of concerns
+
+#### Stats
+- **64 Files Changed**: 8,201 insertions(+), 2,409 deletions(-)
+- **Net Addition**: ~5,800 lines of code
+- **New Swift Files**: 20
+- **Updated Localizations**: 8 languages (7 existing + 1 new Korean)
+
+### Breaking Changes
+
+#### Automatic Migration
+- **First Launch Migration**: Automatic conversion to multi-profile system
+  - Existing configuration becomes first profile
+  - Fun name auto-generated (e.g., "Quantum Llama")
+  - All credentials and settings preserved
+  - Old Keychain keys kept for safety (can be cleaned up later)
+  - Migration flag prevents re-running
+
+#### Storage Changes
+- **Profile-Based Storage**: Credentials now per-profile
+  - Old single-set credentials migrated to first profile
+  - New profiles start fresh
+  - App Groups UserDefaults for future widget support
+
+### Security Notes
+
+- **CLI Credentials Stored Securely**: Per-profile in UserDefaults (encrypted)
+- **System Keychain Integration**: Reads/writes Claude Code credentials via `security` command
+- **Credential Isolation**: Each profile's credentials completely isolated
+- **Migration Safety**: Old Keychain keys preserved during migration
+
+---
+
 ## [2.1.2] - 2026-01-10
 
 ### Fixed
@@ -966,6 +1254,7 @@ This major release represents a significant milestone for Claude Usage Tracker, 
 - Detailed usage dashboard with countdown timers
 - Support for macOS 14.0+ (Sonoma and later)
 
+[2.2.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v2.1.2...v2.2.0
 [2.1.2]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v2.0.0...v2.1.0

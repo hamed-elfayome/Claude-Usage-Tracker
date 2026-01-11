@@ -18,6 +18,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         // Hide dock icon (menu bar app only)
         NSApp.setActivationPolicy(.accessory)
 
+        // CRITICAL: Run migration FIRST before loading profiles
+        ProfileMigrationService.shared.migrateIfNeeded()
+
         // Load profiles into ProfileManager (synchronously)
         ProfileManager.shared.loadProfiles()
 
