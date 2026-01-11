@@ -158,11 +158,11 @@ final class SharedDataStoreTests: XCTestCase {
         sharedDataStore.saveHasStarredGitHub(false)
         sharedDataStore.saveNeverShowGitHubPrompt(false)
 
-        // Set first launch to 1 day ago (too early)
-        let oneDayAgo = Date().addingTimeInterval(-1 * 24 * 60 * 60)
-        sharedDataStore.saveFirstLaunchDate(oneDayAgo)
+        // Set first launch to 12 hours ago (less than 1 day threshold)
+        let twelveHoursAgo = Date().addingTimeInterval(-12 * 60 * 60)
+        sharedDataStore.saveFirstLaunchDate(twelveHoursAgo)
 
-        // Should NOT show prompt (<2 days)
+        // Should NOT show prompt (< 1 day threshold)
         XCTAssertFalse(sharedDataStore.shouldShowGitHubStarPrompt())
     }
 
