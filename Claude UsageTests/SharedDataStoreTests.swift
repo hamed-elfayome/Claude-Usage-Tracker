@@ -82,10 +82,10 @@ final class SharedDataStoreTests: XCTestCase {
 
     func testHasCompletedSetup() {
         sharedDataStore.saveHasCompletedSetup(false)
-        XCTAssertFalse(sharedDataStore.loadHasCompletedSetup())
+        XCTAssertFalse(sharedDataStore.hasCompletedSetup())
 
         sharedDataStore.saveHasCompletedSetup(true)
-        XCTAssertTrue(sharedDataStore.loadHasCompletedSetup())
+        XCTAssertTrue(sharedDataStore.hasCompletedSetup())
     }
 
     // MARK: - GitHub Star Prompt Tests
