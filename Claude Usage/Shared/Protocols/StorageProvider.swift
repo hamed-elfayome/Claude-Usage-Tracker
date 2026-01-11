@@ -42,17 +42,8 @@ protocol StorageProvider {
     func loadAPIOrganizationId() -> String?
 
     // MARK: - Statusline Configuration
-    func saveStatuslineShowDirectory(_ show: Bool)
-    func loadStatuslineShowDirectory() -> Bool
-
-    func saveStatuslineShowBranch(_ show: Bool)
-    func loadStatuslineShowBranch() -> Bool
-
-    func saveStatuslineShowUsage(_ show: Bool)
-    func loadStatuslineShowUsage() -> Bool
-
-    func saveStatuslineShowProgressBar(_ show: Bool)
-    func loadStatuslineShowProgressBar() -> Bool
+    // NOTE: Statusline methods moved to SharedDataStore
+    // (app-wide settings, not profile-specific)
 
     // MARK: - Setup State
     func saveHasCompletedSetup(_ completed: Bool)

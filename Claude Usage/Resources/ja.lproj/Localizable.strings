@@ -221,6 +221,8 @@
 "notification.session_reset.message" = "セッションがリセットされました！新しい5時間セッションが利用可能です。";
 "notification.session_auto_started.title" = "セッション自動開始";
 "notification.session_auto_started.message" = "Claude 3.5 Haikuで新しいセッションが自動的に初期化されました。新しい5時間セッションの準備ができました！";
+"notification.session_auto_start_failed.title" = "自動開始失敗";
+"notification.session_auto_start_failed.message" = "セッションの自動開始に失敗しました。認証情報を確認してください。";
 "notification.weekly_warning.title" = "週次使用量警告";
 "notification.weekly_warning.message" = "週次制限の%@を使用しました。%@";
 "notification.weekly_critical.title" = "週次使用量クリティカル";
@@ -340,6 +342,7 @@
 "claudecode.component_branch" = "Gitブランチ";
 "claudecode.component_usage" = "使用統計";
 "claudecode.component_progressbar" = "プログレスバー";
+"claudecode.component_resettime" = "リセット時刻";
 "claudecode.requirement_sessionkey" = "• 個人使用タブでセッションキーが構成されている";
 "claudecode.requirement_restart" = "• 変更適用後にClaude CLIを再起動";
 "claudecode.error_no_components" = "表示する少なくとも1つのコンポーネントを選択してください";
@@ -451,3 +454,211 @@
 "personal.button_setup_wizard" = "セットアップウィザード";
 "personal.button_open_claude" = "claude.aiを開く";
 "personal.success_key_saved" = "セッションキーが正常に保存されました";
+
+/* ==================== */
+/* MARK: - Manage Profiles */
+/* ==================== */
+"profiles.title" = "プロファイル管理";
+"profiles.subtitle" = "複数のClaudeアカウントを作成および管理";
+"profiles.create_new" = "新しいプロファイルを作成";
+"profiles.about_title" = "プロファイルについて";
+"profiles.about_description" = "各プロファイルには以下が含まれます：";
+"profiles.about_credentials" = "Claude.ai認証情報";
+"profiles.about_api" = "APIコンソール認証情報";
+"profiles.about_cli" = "CLIアカウント同期";
+"profiles.about_appearance" = "メニューバーの外観";
+"profiles.about_notifications" = "通知設定";
+"profiles.about_refresh" = "更新間隔";
+"profiles.active_badge" = "アクティブ";
+"profiles.created" = "作成日";
+"profiles.cli_synced" = "CLI同期済み";
+"profiles.rename" = "プロファイル名を変更";
+"profiles.activate" = "プロファイルを有効化";
+"profiles.delete" = "プロファイルを削除";
+"profiles.delete_title" = "プロファイルを削除";
+"profiles.delete_confirm" = "\"%@\"を削除してもよろしいですか？これにより、関連するすべての認証情報と設定が削除されます。";
+"profiles.create_title" = "新しいプロファイルを作成";
+"profiles.name_label" = "プロファイル名（オプション）";
+"profiles.name_placeholder" = "ランダムな名前の場合は空白のまま";
+"profiles.name_hint" = "空白のままにすると、楽しいランダムな名前が生成されます！";
+
+/* ==================== */
+/* MARK: - General Settings (Profile-Level) */
+/* ==================== */
+"general.title" = "一般";
+"general.subtitle" = "更新間隔、自動開始、通知";
+"general.refresh_title" = "更新間隔";
+"general.refresh_subtitle" = "使用状況の更新を確認する頻度";
+"general.refresh_seconds" = "%d秒";
+"general.refresh_min" = "10秒";
+"general.refresh_max" = "300秒";
+"general.autostart_title" = "セッション自動開始";
+"general.autostart_subtitle" = "必要に応じて自動的に新しいセッションを開始";
+"general.autostart_toggle" = "新しいセッションを自動開始";
+"general.autostart_description" = "セッションがリセットされたときに自動的にメッセージを送信";
+"general.notifications_title" = "通知";
+"general.notifications_subtitle" = "使用状況のマイルストーンについて通知を受け取る";
+"general.connected" = "接続済み";
+"general.not_connected" = "未接続";
+
+/* ==================== */
+/* MARK: - Updates Settings */
+/* ==================== */
+"updates.version_info" = "バージョン情報";
+"updates.update_preferences" = "更新設定";
+"updates.version_label" = "v%@ (%@)";
+
+/* ==================== */
+/* MARK: - Appearance (Additional) */
+/* ==================== */
+"appearance.global_subtitle" = "メニューバーアイコンの動作をカスタマイズ";
+"appearance.metrics_subtitle" = "メニューバーに表示するメトリックを選択";
+
+/* ==================== */
+/* MARK: - Metric Card */
+/* ==================== */
+"metric.show_countdown" = "次のセッションまでの時間を表示";
+"metric.countdown_description" = "アイコンに残り時間（例：→2H）を表示";
+
+/* ==================== */
+/* MARK: - Personal Usage (Additional) */
+/* ==================== */
+"personal.configuration_title" = "設定";
+"personal.status_connected" = "接続済み";
+"personal.status_not_connected" = "未接続";
+
+/* ==================== */
+/* MARK: - Language Settings */
+/* ==================== */
+"language.title" = "言語";
+"language.subtitle" = "優先言語を選択";
+"language.select_language" = "言語を選択";
+"language.available" = "利用可能な言語";
+"language.restart_required" = "再起動が必要";
+"language.restart_message" = "言語の変更を有効にするには、アプリを再起動する必要があります。";
+"language.restart_now" = "今すぐ再起動";
+"language.restart_later" = "後で";
+
+/* ==================== */
+/* MARK: - Common Actions (Additional) */
+/* ==================== */
+"common.create" = "作成";
+"common.rename" = "名前を変更";
+"common.activate" = "有効化";
+"common.connected" = "接続済み";
+"common.not_connected" = "未接続";
+"common.back" = "戻る";
+"common.next" = "次へ";
+"common.remove" = "削除";
+"common.switch" = "切り替え";
+
+/* ==================== */
+/* MARK: - Popover/Menu Bar */
+/* ==================== */
+"popover.manage_profiles" = "プロファイル管理";
+"popover.no_profile" = "プロファイルなし";
+"popover.profiles_count" = "%dプロファイル";
+"popover.profile_count_singular" = "1プロファイル";
+
+/* ==================== */
+/* MARK: - Setup Wizard */
+/* ==================== */
+"setup.step.enter_session_key" = "キーを入力";
+"wizard.test_connection" = "接続をテスト";
+"wizard.select_org_title" = "どの組織を追跡しますか？";
+"wizard.select_org_subtitle" = "使用状況モニタリング用のClaude組織を選択";
+"wizard.config_summary" = "設定の概要";
+"wizard.session_key" = "セッションキー";
+"wizard.api_session_key" = "APIセッションキー";
+"wizard.organization" = "組織";
+"wizard.organization_id" = "ID：%@";
+"wizard.select_organization" = "組織を選択";
+"wizard.choose_organization" = "追跡する組織を選択";
+"wizard.review_config" = "設定を確認";
+"wizard.confirm_settings" = "保存する前に設定を確認してください";
+"wizard.key_will_update" = "セッションキーが更新されます";
+"wizard.api_key_will_update" = "APIセッションキーが更新されます";
+
+/* ==================== */
+/* MARK: - CLI Account */
+/* ==================== */
+"cli.access_token" = "アクセストークン";
+"cli.subscription" = "サブスクリプション";
+"cli.scopes" = "スコープ";
+"cli.sync_instructions" = "認証情報をインポートするには、下の「Claude Codeから同期」をクリックしてください";
+"cli.about_title" = "CLIアカウント同期について";
+"cli.benefits" = "メリット：";
+"cli.tracking_note" = "注：使用状況追跡にはClaude.ai認証情報を使用します。CLI認証情報はアカウント切り替えのみに使用されます。";
+
+/* ==================== */
+/* MARK: - Settings Sections (Titles & Descriptions) */
+/* ==================== */
+"section.credentials" = "認証情報";
+"section.active_profile" = "アクティブなプロファイル";
+"section.settings" = "設定";
+"section.app" = "アプリ";
+
+"section.claudeai_title" = "Claude.ai";
+"section.claudeai_desc" = "Claude.ai認証情報";
+"section.api_console_title" = "APIコンソール";
+"section.api_console_desc" = "APIコンソール認証情報";
+"section.cli_account_title" = "CLIアカウント";
+"section.cli_account_desc" = "CLIアカウント同期";
+"section.appearance_title" = "外観";
+"section.appearance_desc" = "メニューバーの外観";
+"section.general_title" = "一般";
+"section.general_desc" = "一般設定";
+"section.manage_profiles_title" = "プロファイル管理";
+"section.manage_profiles_desc" = "プロファイルを管理";
+
+/* ==================== */
+/* MARK: - Creator Info */
+/* ==================== */
+"creator.name" = "Hamed Elfayome";
+"creator.username" = "@hamed-elfayome";
+
+/* ==================== */
+/* MARK: - Wizard Steps & Actions */
+/* ==================== */
+"wizard.enter_key" = "キーを入力";
+"wizard.select_org" = "組織を選択";
+"wizard.confirm" = "確認";
+"wizard.testing" = "テスト中...";
+"wizard.test_connection" = "接続をテスト";
+"wizard.fetching" = "取得中...";
+"wizard.fetch_organizations" = "組織を取得";
+"wizard.saving" = "保存中...";
+"wizard.save_configuration" = "設定を保存";
+
+/* ==================== */
+/* MARK: - CLI Account Sync */
+/* ==================== */
+"cli.title" = "CLIアカウント";
+"cli.subtitle" = "ログイン済みのClaude Codeアカウントを同期";
+"cli.synced" = "CLIアカウント同期済み";
+"cli.not_synced" = "未同期";
+"cli.account_details" = "アカウント詳細";
+"cli.credentials_synced" = "同期されたCLI認証情報";
+"cli.no_credentials" = "まだ認証情報が同期されていません";
+"cli.resync" = "再同期";
+"cli.sync_from_code" = "Claude Codeから同期";
+"cli.benefit_1" = "プロファイルでClaude Codeログインを自動切り替え";
+"cli.benefit_2" = "CLIとアプリアカウントを同期状態に保つ";
+"cli.benefit_3" = "プロファイル切り替え時に認証情報を自動更新";
+
+/* ==================== */
+/* MARK: - Additional Keys */
+/* ==================== */
+"api.single_organization" = "単一の組織が見つかり、自動的に選択されました";
+"api.remove_title" = "認証情報を削除";
+"api.remove_subtitle" = "このプロファイルからAPIコンソールセッションキーを完全に削除";
+"claudecode.button_apply" = "適用";
+"claudecode.button_reset" = "リセット";
+"error.generic" = "エラー: %@";
+"personal.button_saving" = "保存中...";
+"personal.button_setup_wizard" = "セットアップウィザード";
+"personal.button_open_claude" = "claude.aiを開く";
+"personal.success_key_saved" = "セッションキーが正常に保存されました";
+"personal.remove_title" = "認証情報を削除";
+"personal.remove_subtitle" = "このプロファイルからClaude.aiセッションキーを完全に削除";
+"about.run_setup_wizard" = "セットアップウィザードを実行";

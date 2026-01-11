@@ -120,11 +120,13 @@ if [ -f "$config_file" ]; then
   show_branch=$SHOW_BRANCH
   show_usage=$SHOW_USAGE
   show_bar=$SHOW_PROGRESS_BAR
+  show_reset=$SHOW_RESET_TIME
 else
   show_dir=1
   show_branch=1
   show_usage=1
   show_bar=1
+  show_reset=1
 fi
 
 input=$(cat)
@@ -222,12 +224,20 @@ if [ "$show_usage" = "1" ]; then
       fi
 
       reset_time_display=""
-      if [ -n "$resets_at" ] && [ "$resets_at" != "null" ]; then
+      if [ "$show_reset" = "1" ] && [ -n "$resets_at" ] && [ "$resets_at" != "null" ]; then
         iso_time=$(echo "$resets_at" | sed 's/\\.[0-9]*Z$//')
         epoch=$(date -ju -f "%Y-%m-%dT%H:%M:%S" "$iso_time" "+%s" 2>/dev/null)
 
         if [ -n "$epoch" ]; then
-          reset_time=$(date -r "$epoch" "+%I:%M %p" 2>/dev/null)
+          # Detect system time format (12h vs 24h) from macOS locale preferences
+          time_format=$(defaults read -g AppleICUForce24HourTime 2>/dev/null)
+          if [ "$time_format" = "1" ]; then
+            # 24-hour format
+            reset_time=$(date -r "$epoch" "+%H:%M" 2>/dev/null)
+          else
+            # 12-hour format (default)
+            reset_time=$(date -r "$epoch" "+%I:%M %p" 2>/dev/null)
+          fi
           [ -n "$reset_time" ] && reset_time_display=$(printf " → Reset: %s" "$reset_time")
         fi
       fi
@@ -261,8 +271,8 @@ printf "%s\\n" "$output"
 
     // MARK: - Installation
 
-    /// Installs statusline scripts with session key injection
-    /// - Parameter injectSessionKey: If true, injects the session key from Keychain into the Swift script
+    /// Installs statusline scripts with session key injection from active profile
+    /// - Parameter injectSessionKey: If true, injects the session key from active profile into the Swift script
     func installScripts(injectSessionKey: Bool = false) throws {
         let claudeDir = Constants.ClaudePaths.claudeDirectory
 
@@ -275,16 +285,21 @@ printf "%s\\n" "$output"
         let swiftScriptContent: String
 
         if injectSessionKey {
-            // Load session key from Keychain and inject it
-            guard let sessionKey = try KeychainService.shared.load(for: .claudeSessionKey) else {
+            // Load session key and org ID from active profile
+            guard let activeProfile = ProfileManager.shared.activeProfile else {
+                throw StatuslineError.noActiveProfile
+            }
+
+            guard let sessionKey = activeProfile.claudeSessionKey else {
                 throw StatuslineError.sessionKeyNotFound
             }
-            // Load selected organization ID from DataStore
-            guard let organizationId = DataStore.shared.loadOrganizationId() else {
+
+            guard let organizationId = activeProfile.organizationId else {
                 throw StatuslineError.organizationNotConfigured
             }
+
             swiftScriptContent = generateSwiftScript(sessionKey: sessionKey, organizationId: organizationId)
-            LoggingService.shared.log("Injected session key and org ID into statusline Swift script")
+            LoggingService.shared.log("Injected session key and org ID from profile '\(activeProfile.name)' into statusline")
         } else {
             // Install placeholder script
             swiftScriptContent = placeholderSwiftScript
@@ -327,7 +342,8 @@ printf "%s\\n" "$output"
         showDirectory: Bool,
         showBranch: Bool,
         showUsage: Bool,
-        showProgressBar: Bool
+        showProgressBar: Bool,
+        showResetTime: Bool
     ) throws {
         let configPath = Constants.ClaudePaths.claudeDirectory
             .appendingPathComponent("statusline-config.txt")
@@ -337,6 +353,7 @@ SHOW_DIRECTORY=\(showDirectory ? "1" : "0")
 SHOW_BRANCH=\(showBranch ? "1" : "0")
 SHOW_USAGE=\(showUsage ? "1" : "0")
 SHOW_PROGRESS_BAR=\(showProgressBar ? "1" : "0")
+SHOW_RESET_TIME=\(showResetTime ? "1" : "0")
 """
 
         try config.write(to: configPath, atomically: true, encoding: .utf8)
@@ -409,9 +426,10 @@ SHOW_PROGRESS_BAR=\(showProgressBar ? "1" : "0")
         try installScripts(injectSessionKey: true)
     }
 
-    /// Checks if a valid session key is configured in Keychain using professional validator
+    /// Checks if active profile has a valid session key
     func hasValidSessionKey() -> Bool {
-        guard let key = try? KeychainService.shared.load(for: .claudeSessionKey) else {
+        guard let activeProfile = ProfileManager.shared.activeProfile,
+              let key = activeProfile.claudeSessionKey else {
             return false
         }
 
@@ -424,15 +442,18 @@ SHOW_PROGRESS_BAR=\(showProgressBar ? "1" : "0")
 // MARK: - StatuslineError
 
 enum StatuslineError: Error, LocalizedError {
+    case noActiveProfile
     case sessionKeyNotFound
     case organizationNotConfigured
 
     var errorDescription: String? {
         switch self {
+        case .noActiveProfile:
+            return "No active profile found. Please create or select a profile first."
         case .sessionKeyNotFound:
-            return "Session key not found in Keychain. Please configure your session key first."
+            return "Session key not found in active profile. Please configure your session key first."
         case .organizationNotConfigured:
-            return "Organization not configured. Please select an organization in the app settings."
+            return "Organization not configured in active profile. Please select an organization in the app settings."
         }
     }
 }

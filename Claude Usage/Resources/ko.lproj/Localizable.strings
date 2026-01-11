@@ -1,0 +1,497 @@
+/*
+   Localizable.strings
+   Claude Usage Tracker
+
+   Korean (한국어)
+   Created by Claude Code on 2026-01-11.
+*/
+
+/* ==================== */
+/* MARK: - App Info */
+/* ==================== */
+"app.name" = "Claude 사용량 추적기";
+"app.window.main" = "Claude 사용량";
+"app.window.settings" = "설정";
+"app.window.github_prompt" = "Claude Usage Tracker 지원하기";
+
+/* ==================== */
+/* MARK: - Common Actions */
+/* ==================== */
+"common.ok" = "확인";
+"common.cancel" = "취소";
+"common.save" = "저장";
+"common.delete" = "삭제";
+"common.done" = "완료";
+"common.close" = "닫기";
+"common.refresh" = "새로고침";
+"common.settings" = "설정";
+"common.quit" = "종료";
+"common.validate" = "확인";
+"common.yes" = "예";
+"common.no" = "아니오";
+"common.create" = "생성";
+"common.rename" = "이름 변경";
+"common.activate" = "활성화";
+"common.connected" = "연결됨";
+"common.not_connected" = "연결 안 됨";
+"common.back" = "뒤로";
+"common.next" = "다음";
+"common.remove" = "제거";
+"common.switch" = "전환";
+
+/* ==================== */
+/* MARK: - Settings Navigation */
+/* ==================== */
+"settings.title" = "설정";
+"settings.personal_usage" = "개인 사용량";
+"settings.personal_usage.description" = "Claude.ai 무료 티어 사용량 추적";
+"settings.api_billing" = "API 요금";
+"settings.api_billing.description" = "API 콘솔 요금 및 크레딧 모니터링";
+"settings.general" = "일반";
+"settings.general.description" = "앱 동작 및 환경설정";
+"settings.appearance" = "외형";
+"settings.appearance.description" = "메뉴 바 아이콘 사용자 지정";
+"settings.session_management" = "세션 관리";
+"settings.session_management.description" = "자동 세션 관리";
+"settings.notifications" = "알림";
+"settings.notifications.description" = "사용량 알림 및 경고";
+"settings.claude_cli" = "Claude CLI";
+"settings.claude_cli.description" = "터미널 상태표시줄 통합";
+"settings.updates" = "업데이트";
+"settings.updates.description" = "소프트웨어 업데이트";
+"settings.about" = "정보";
+"settings.about.description" = "버전 정보 및 크레딧";
+
+/* ==================== */
+/* MARK: - Manage Profiles */
+/* ==================== */
+"profiles.title" = "프로필 관리";
+"profiles.subtitle" = "여러 Claude 계정 생성 및 관리";
+"profiles.create_new" = "새 프로필 생성";
+"profiles.about_title" = "프로필 정보";
+"profiles.about_description" = "각 프로필에는 다음이 포함됩니다:";
+"profiles.about_credentials" = "Claude.ai 인증 정보";
+"profiles.about_api" = "API 콘솔 인증 정보";
+"profiles.about_cli" = "CLI 계정 동기화";
+"profiles.about_appearance" = "메뉴 바 외형";
+"profiles.about_notifications" = "알림 설정";
+"profiles.about_refresh" = "새로고침 간격";
+"profiles.active_badge" = "활성";
+"profiles.created" = "생성됨";
+"profiles.cli_synced" = "CLI 동기화됨";
+"profiles.rename" = "프로필 이름 변경";
+"profiles.activate" = "프로필 활성화";
+"profiles.delete" = "프로필 삭제";
+"profiles.delete_title" = "프로필 삭제";
+"profiles.delete_confirm" = "\"%@\"을(를) 삭제하시겠습니까? 관련된 모든 인증 정보와 설정이 제거됩니다.";
+"profiles.create_title" = "새 프로필 생성";
+"profiles.name_label" = "프로필 이름 (선택사항)";
+"profiles.name_placeholder" = "무작위 이름은 비워두기";
+"profiles.name_hint" = "비워두면 재미있는 무작위 이름이 생성됩니다!";
+
+/* ==================== */
+/* MARK: - General Settings (Profile-Level) */
+/* ==================== */
+"general.title" = "일반";
+"general.subtitle" = "새로고침 간격, 자동 시작, 알림";
+"general.refresh_title" = "새로고침 간격";
+"general.refresh_subtitle" = "사용량 업데이트 확인 주기";
+"general.refresh_seconds" = "%d초";
+"general.refresh_min" = "10초";
+"general.refresh_max" = "300초";
+"general.autostart_title" = "세션 자동 시작";
+"general.autostart_subtitle" = "필요 시 자동으로 새 세션 시작";
+"general.autostart_toggle" = "새 세션 자동 시작";
+"general.autostart_description" = "세션 재설정 시 자동으로 메시지 전송";
+"general.notifications_title" = "알림";
+"general.notifications_subtitle" = "사용량 마일스톤 알림 받기";
+"general.connected" = "연결됨";
+"general.not_connected" = "연결 안 됨";
+
+/* ==================== */
+/* MARK: - Updates Settings */
+/* ==================== */
+"updates.version_info" = "버전 정보";
+"updates.update_preferences" = "업데이트 환경설정";
+"updates.version_label" = "v%@ (%@)";
+
+/* ==================== */
+/* MARK: - Appearance */
+/* ==================== */
+"appearance.title" = "외형";
+"appearance.subtitle" = "메뉴 바 사용자 지정";
+"appearance.global_settings" = "전역 설정";
+"appearance.global_subtitle" = "메뉴 바 아이콘 동작 사용자 지정";
+"appearance.menu_bar_metrics" = "메뉴 바 메트릭";
+"appearance.metrics_subtitle" = "메뉴 바에 표시할 메트릭 선택";
+"appearance.monochrome_title" = "단색 (적응형)";
+"appearance.monochrome_description" = "색상 코딩 제거 및 시스템 외형에 적응";
+"appearance.show_labels_title" = "아이콘 레이블 표시";
+"appearance.show_labels_description" = "각 메트릭에 접두사 레이블(S:, W:, API:) 표시";
+
+/* ==================== */
+/* MARK: - Metric Card */
+/* ==================== */
+"metric.show_countdown" = "다음 세션까지 시간 표시";
+"metric.countdown_description" = "아이콘에 남은 시간(예: →2H) 표시";
+"metric.session_usage" = "세션 사용량";
+"metric.session_usage.description" = "현재 대화 세션 사용량";
+"metric.week_usage" = "주간 사용량";
+"metric.week_usage.description" = "지난 7일간 총 사용량";
+"metric.api_credits" = "API 크레딧";
+"metric.api_credits.description" = "남은 API 콘솔 크레딧";
+
+/* ==================== */
+/* MARK: - Personal Usage */
+/* ==================== */
+"personal.configuration_title" = "설정";
+"personal.status_connected" = "연결됨";
+"personal.status_not_connected" = "연결 안 됨";
+
+/* ==================== */
+/* MARK: - Language Settings */
+/* ==================== */
+"language.title" = "언어";
+"language.subtitle" = "선호하는 언어 선택";
+"language.select_language" = "언어 선택";
+"language.available" = "사용 가능한 언어";
+"language.restart_required" = "재시작 필요";
+"language.restart_message" = "언어 변경사항을 적용하려면 앱을 재시작해야 합니다.";
+"language.restart_now" = "지금 재시작";
+"language.restart_later" = "나중에";
+
+/* ==================== */
+/* MARK: - Popover/Menu Bar */
+/* ==================== */
+"popover.manage_profiles" = "프로필 관리";
+"popover.no_profile" = "프로필 없음";
+"popover.profiles_count" = "%d개 프로필";
+"popover.profile_count_singular" = "1개 프로필";
+
+/* ==================== */
+/* MARK: - Setup Wizard */
+/* ==================== */
+"setup.step.enter_session_key" = "키 입력";
+"wizard.test_connection" = "연결 테스트";
+"wizard.select_org_title" = "어떤 조직을 추적하시겠습니까?";
+"wizard.select_org_subtitle" = "사용량 모니터링을 위한 Claude 조직 선택";
+"wizard.config_summary" = "설정 요약";
+"wizard.session_key" = "세션 키";
+"wizard.api_session_key" = "API 세션 키";
+"wizard.organization" = "조직";
+"wizard.organization_id" = "ID: %@";
+"wizard.select_organization" = "조직 선택";
+"wizard.choose_organization" = "추적할 조직 선택";
+"wizard.review_config" = "설정 검토";
+"wizard.confirm_settings" = "저장하기 전에 설정 확인";
+"wizard.key_will_update" = "세션 키가 업데이트됩니다";
+"wizard.api_key_will_update" = "API 세션 키가 업데이트됩니다";
+
+/* ==================== */
+/* MARK: - CLI Account */
+/* ==================== */
+"cli.access_token" = "액세스 토큰";
+"cli.subscription" = "구독";
+"cli.scopes" = "범위";
+"cli.sync_instructions" = "인증 정보를 가져오려면 아래 'Claude Code에서 동기화'를 클릭하세요";
+"cli.about_title" = "CLI 계정 동기화 정보";
+"cli.benefits" = "이점:";
+"cli.tracking_note" = "참고: 사용량 추적은 Claude.ai 인증 정보를 사용합니다. CLI 인증 정보는 계정 전환용입니다.";
+
+/* ==================== */
+/* MARK: - Settings Sections */
+/* ==================== */
+"section.credentials" = "인증 정보";
+"section.active_profile" = "활성 프로필";
+"section.settings" = "설정";
+"section.app" = "앱";
+
+"section.claudeai_title" = "Claude.ai";
+"section.claudeai_desc" = "Claude.ai 인증 정보";
+"section.api_console_title" = "API 콘솔";
+"section.api_console_desc" = "API 콘솔 인증 정보";
+"section.cli_account_title" = "CLI 계정";
+"section.cli_account_desc" = "CLI 계정 동기화";
+"section.appearance_title" = "외형";
+"section.appearance_desc" = "메뉴 바 외형";
+"section.general_title" = "일반";
+"section.general_desc" = "일반 설정";
+"section.manage_profiles_title" = "프로필 관리";
+"section.manage_profiles_desc" = "프로필 관리";
+
+/* ==================== */
+/* MARK: - Creator Info */
+/* ==================== */
+"creator.name" = "Hamed Elfayome";
+"creator.username" = "@hamed-elfayome";
+
+/* ==================== */
+/* MARK: - Additional Keys */
+/* ==================== */
+"api.single_organization" = "단일 조직을 찾아 자동으로 선택했습니다";
+"claudecode.button_apply" = "적용";
+"claudecode.button_reset" = "재설정";
+"error.generic" = "오류: %@";
+"personal.button_saving" = "저장 중...";
+"personal.button_setup_wizard" = "설정 마법사";
+"personal.button_open_claude" = "claude.ai 열기";
+"personal.success_key_saved" = "세션 키가 성공적으로 저장되었습니다";
+
+/* ==================== */
+/* MARK: - Personal Usage */
+/* ==================== */
+"personal.title" = "개인 사용량";
+"personal.subtitle" = "Claude.ai 무료 티어 모니터링";
+"personal.label_session_key" = "세션 키";
+"personal.placeholder_session_key" = "세션 키를 입력하세요";
+"personal.help_session_key" = "Claude.ai에서 세션 키를 추출해야 합니다";
+"personal.button_test_connection" = "연결 테스트";
+"personal.button_save" = "저장";
+"personal.status_testing" = "테스트 중...";
+"personal.success_connection" = "연결 성공! %d개 조직 발견";
+"personal.error_connection_failed" = "연결 실패. 세션 키를 확인하세요.";
+
+/* ==================== */
+/* MARK: - API Billing */
+/* ==================== */
+"api.title" = "API 요금";
+"api.subtitle" = "API 콘솔 크레딧 모니터링";
+"api.enable_billing_tracking" = "API 요금 추적 활성화";
+"api.enable_billing_description" = "API 콘솔 사용량 및 크레딧 모니터링";
+"api.label_api_session_key" = "API 세션 키";
+"api.placeholder_api_session_key" = "API 세션 키를 입력하세요";
+"api.help_api_session_key" = "console.anthropic.com에서 API 세션 키를 추출하세요";
+"api.button_fetch_organizations" = "조직 가져오기";
+"api.button_fetching" = "가져오는 중...";
+"api.button_save_configuration" = "구성 저장";
+"api.success_organizations_found" = "%d개 조직 발견";
+"api.success_configuration_saved" = "API 구성이 저장되었습니다";
+"api.error_fetch_failed" = "조직 가져오기 실패";
+
+/* ==================== */
+/* MARK: - Session Timer */
+/* ==================== */
+"session.timer_active" = "다음까지 남은 시간";
+"session.timer_inactive" = "타이머가 활성화되지 않음";
+"session.timer_paused" = "일시 중지됨";
+"session.timer_reset" = "재설정됨";
+
+/* ==================== */
+/* MARK: - Status Messages */
+/* ==================== */
+"status.fetching" = "데이터 가져오는 중...";
+"status.error" = "오류가 발생했습니다";
+"status.no_data" = "데이터 없음";
+"status.loading" = "로드 중...";
+"status.syncing" = "동기화 중...";
+"status.success" = "성공";
+
+/* ==================== */
+/* MARK: - Usage Display */
+/* ==================== */
+"usage.session" = "세션";
+"usage.week" = "주간";
+"usage.api_credits" = "API 크레딧";
+"usage.remaining" = "남음";
+"usage.used" = "사용됨";
+"usage.limit" = "한도";
+"usage.unlimited" = "무제한";
+"usage.next_reset" = "다음 재설정";
+"usage.time_until_reset" = "재설정까지";
+
+/* ==================== */
+/* MARK: - Notifications */
+/* ==================== */
+"notification.usage_warning_title" = "사용량 경고";
+"notification.usage_warning_body" = "사용량이 %d%%에 도달했습니다";
+"notification.usage_exceeded_title" = "사용량 초과";
+"notification.usage_exceeded_body" = "월간 한도를 초과했습니다";
+"notification.session_reset_title" = "세션 재설정됨";
+"notification.session_reset_body" = "새 세션이 시작되었습니다";
+"notification.session_auto_started.title" = "세션 자동 시작됨";
+"notification.session_auto_started.message" = "Claude 3.5 Haiku로 새 세션이 자동으로 초기화되었습니다. 새로운 5시간 세션이 준비되었습니다!";
+"notification.session_auto_start_failed.title" = "자동 시작 실패";
+"notification.session_auto_start_failed.message" = "세션 자동 시작에 실패했습니다. 인증 정보를 확인하세요.";
+
+/* ==================== */
+/* MARK: - Errors */
+/* ==================== */
+"error.network" = "네트워크 오류";
+"error.invalid_key" = "잘못된 세션 키";
+"error.unauthorized" = "권한 없음";
+"error.rate_limit" = "속도 제한 초과";
+"error.server" = "서버 오류";
+"error.unknown" = "알 수 없는 오류";
+"error.invalid_response" = "잘못된 응답";
+
+/* ==================== */
+/* MARK: - About */
+/* ==================== */
+"about.version" = "버전";
+"about.build" = "빌드";
+"about.created_by" = "제작자";
+"about.contributors" = "기여자";
+"about.contributors_loading" = "기여자 로드 중...";
+"about.links" = "링크";
+"about.star_github" = "GitHub에서 스타 주기";
+"about.report_issue" = "이슈 신고";
+"about.send_feedback" = "피드백 보내기";
+"about.check_updates" = "업데이트 확인";
+"about.copyright" = "© %d Hamed Elfayome";
+"about.mit_license" = "MIT 라이선스로 배포됨";
+
+/* ==================== */
+/* MARK: - Claude CLI Statusline */
+/* ==================== */
+"claudecode.title" = "Claude CLI 상태표시줄";
+"claudecode.subtitle" = "터미널 상태표시줄 통합";
+"claudecode.install_statusline" = "상태표시줄 스크립트 설치";
+"claudecode.uninstall_statusline" = "상태표시줄 스크립트 제거";
+"claudecode.statusline_installed" = "설치됨";
+"claudecode.statusline_not_installed" = "설치되지 않음";
+"claudecode.shell_support" = "지원되는 셸";
+"claudecode.installation_guide" = "설치 가이드";
+"claudecode.component_session" = "세션 사용량 표시";
+"claudecode.component_week" = "주간 사용량 표시";
+"claudecode.component_api" = "API 크레딧 표시";
+"claudecode.component_directory" = "현재 디렉토리 표시";
+"claudecode.component_branch" = "Git 브랜치 표시";
+"claudecode.component_usage" = "사용 통계";
+"claudecode.component_progressbar" = "진행 표시줄";
+"claudecode.component_resettime" = "재설정 시간";
+"claudecode.success_installed" = "상태표시줄이 성공적으로 설치되었습니다";
+"claudecode.success_uninstalled" = "상태표시줄이 제거되었습니다";
+"claudecode.error_installation_failed" = "설치 실패";
+
+/* ==================== */
+/* MARK: - General Settings (Older Keys) */
+/* ==================== */
+"general.launch_at_login" = "로그인 시 실행";
+"general.launch_at_login.description" = "macOS에 로그인할 때 자동으로 앱 시작";
+"general.refresh_interval" = "새로고침 간격";
+"general.refresh_interval.description" = "사용량 데이터 업데이트 빈도";
+"general.check_overage_limit" = "초과 한도 확인";
+"general.check_overage_limit.description" = "한도 초과 시 알림 받기";
+"general.language.title" = "언어";
+"general.language.select" = "언어 선택";
+"general.language.restart_note" = "언어 변경사항을 적용하려면 앱을 재시작해야 합니다";
+"general.language.restart_app" = "앱 재시작";
+"general.slider_realtime" = "실시간";
+"general.slider_frequent" = "자주";
+"general.slider_balanced" = "균형";
+"general.slider_efficient" = "효율적";
+"general.slider_battery_saver" = "절전";
+"general.slider_fast" = "빠름";
+"general.slider_balanced_label" = "균형";
+"general.slider_battery_saver_label" = "절전";
+"general.available_languages" = "사용 가능한 언어";
+
+/* ==================== */
+/* MARK: - Appearance (Older Keys) */
+/* ==================== */
+"appearance.title" = "외형";
+"appearance.subtitle" = "메뉴 바 사용자 지정";
+"appearance.global_settings" = "전역 설정";
+"appearance.menu_bar_icons" = "메뉴 바 아이콘";
+"appearance.menu_bar_icons.subtitle" = "표시할 아이콘 선택";
+"appearance.show_icon_names" = "아이콘 이름 표시";
+"appearance.show_icon_names.description" = "각 아이콘 옆에 레이블 표시";
+"appearance.monochrome_mode" = "단색 모드";
+"appearance.monochrome_mode.description" = "색상 제거 및 시스템 외형에 적응";
+"appearance.metric_configuration" = "메트릭 구성";
+"appearance.drag_to_reorder" = "드래그하여 재정렬";
+"appearance.menu_bar_metrics" = "메뉴 바 메트릭";
+"appearance.monochrome_title" = "단색 (적응형)";
+"appearance.monochrome_description" = "색상 코딩 제거 및 시스템 외형에 적응";
+"appearance.show_labels_title" = "아이콘 레이블 표시";
+"appearance.show_labels_description" = "각 메트릭에 접두사 레이블(S:, W:, API:) 표시";
+
+/* ==================== */
+/* MARK: - Metrics */
+/* ==================== */
+"metric.session_usage" = "세션 사용량";
+"metric.session_usage.description" = "현재 대화 세션 사용량";
+"metric.week_usage" = "주간 사용량";
+"metric.week_usage.description" = "지난 7일간 총 사용량";
+"metric.api_credits" = "API 크레딧";
+"metric.api_credits.description" = "남은 API 콘솔 크레딧";
+
+/* ==================== */
+/* MARK: - Setup Wizard (Additional) */
+/* ==================== */
+"setup.step_number_1" = "1";
+"setup.step_number_2" = "2";
+"setup.step_title_get_key" = "세션 키 받기";
+"setup.step_title_enter_key" = "세션 키 입력";
+"setup.step_description_get_key" = "claude.ai에서 세션 키를 추출해야 합니다";
+"setup.button_open_claude" = "claude.ai 열기";
+"setup.paste_instruction" = "복사한 sessionKey 값을 붙여넣으세요";
+
+/* ==================== */
+/* MARK: - Component Preview */
+/* ==================== */
+"preview.sample_text_claude" = "Claude";
+"preview.sample_percentage" = "60%";
+"preview.sample_card_content" = "카드 내용이 여기에 표시됩니다";
+"preview.sample_more_content" = "더 많은 내용";
+"preview.sample_update_every" = "업데이트 주기:";
+"preview.sample_5_minutes" = "5분";
+
+/* ==================== */
+/* MARK: - Updates Settings (Additional) */
+/* ==================== */
+"settings.updates.title" = "소프트웨어 업데이트";
+"settings.updates.current_version" = "현재 버전";
+"settings.updates.last_check" = "마지막 확인";
+"settings.updates.never_checked" = "확인 안 함";
+"settings.updates.automatic" = "자동 업데이트";
+"settings.updates.automatic.description" = "매일 업데이트 자동 확인 및 다운로드";
+"settings.updates.check_now" = "업데이트 확인";
+"settings.updates.info.title" = "안전한 업데이트";
+"settings.updates.info.description" = "모든 업데이트는 암호화 서명되어 설치 전 검증됩니다";
+
+/* ==================== */
+/* MARK: - Wizard Steps & Actions */
+/* ==================== */
+"wizard.enter_key" = "키 입력";
+"wizard.select_org" = "조직 선택";
+"wizard.confirm" = "확인";
+"wizard.testing" = "테스트 중...";
+"wizard.test_connection" = "연결 테스트";
+"wizard.fetching" = "가져오는 중...";
+"wizard.fetch_organizations" = "조직 가져오기";
+"wizard.saving" = "저장 중...";
+"wizard.save_configuration" = "구성 저장";
+
+/* ==================== */
+/* MARK: - CLI Account Sync */
+/* ==================== */
+"cli.title" = "CLI 계정";
+"cli.subtitle" = "로그인된 Claude Code 계정 동기화";
+"cli.synced" = "CLI 계정 동기화됨";
+"cli.not_synced" = "동기화되지 않음";
+"cli.account_details" = "계정 세부정보";
+"cli.credentials_synced" = "동기화된 CLI 자격 증명";
+"cli.no_credentials" = "아직 동기화된 자격 증명 없음";
+"cli.resync" = "다시 동기화";
+"cli.sync_from_code" = "Claude Code에서 동기화";
+"cli.benefit_1" = "프로필로 Claude Code 로그인 자동 전환";
+"cli.benefit_2" = "CLI 및 앱 계정 동기화 유지";
+"cli.benefit_3" = "프로필 전환 시 자격 증명 자동 새로 고침";
+
+/* ==================== */
+/* MARK: - Additional Keys */
+/* ==================== */
+"api.single_organization" = "단일 조직이 발견되어 자동으로 선택되었습니다";
+"api.remove_title" = "자격 증명 제거";
+"api.remove_subtitle" = "이 프로필에서 API 콘솔 세션 키를 영구적으로 삭제";
+"claudecode.button_apply" = "적용";
+"claudecode.button_reset" = "재설정";
+"error.generic" = "오류: %@";
+"personal.button_saving" = "저장 중...";
+"personal.button_setup_wizard" = "설정 마법사";
+"personal.button_open_claude" = "claude.ai 열기";
+"personal.success_key_saved" = "세션 키가 성공적으로 저장되었습니다";
+"personal.remove_title" = "자격 증명 제거";
+"personal.remove_subtitle" = "이 프로필에서 Claude.ai 세션 키를 영구적으로 삭제";
+"about.run_setup_wizard" = "설정 마법사 실행";

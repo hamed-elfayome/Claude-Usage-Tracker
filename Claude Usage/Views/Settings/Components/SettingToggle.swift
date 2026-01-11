@@ -50,11 +50,11 @@ struct SettingToggle: View {
     }
 
     var body: some View {
-        Toggle(isOn: $isOn) {
-            VStack(alignment: .leading, spacing: Spacing.toggleDescriptionSpacing) {
-                HStack(spacing: Spacing.sm) {
+        HStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.extraSmall) {
+                HStack(spacing: DesignTokens.Spacing.small) {
                     Text(title)
-                        .font(Typography.body)
+                        .font(DesignTokens.Typography.body)
                         .foregroundColor(.primary)
 
                     if let badge = badge {
@@ -64,13 +64,18 @@ struct SettingToggle: View {
 
                 if let description = description {
                     Text(description)
-                        .font(Typography.caption)
+                        .font(DesignTokens.Typography.caption)
                         .foregroundColor(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
+
+            Spacer(minLength: DesignTokens.Spacing.cardPadding)
+
+            Toggle("", isOn: $isOn)
+                .labelsHidden()
+                .toggleStyle(.switch)
         }
-        .toggleStyle(.switch)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityLabelText)
     }
@@ -93,7 +98,7 @@ private struct BadgeView: View {
 
     var body: some View {
         Text(badge.text)
-            .font(Typography.badge)
+            .font(.system(size: 9, weight: .bold))
             .foregroundColor(.white)
             .padding(.horizontal, 6)
             .padding(.vertical, 2)

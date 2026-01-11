@@ -141,6 +141,31 @@ enum LocalizationKey: String {
     case notifEnabledTitle = "notification.enabled.title"
     case notifEnabledMessage = "notification.enabled.message"
 
+    // MARK: - Wizard Steps
+    case wizardEnterKey = "wizard.enter_key"
+    case wizardSelectOrg = "wizard.select_org"
+    case wizardConfirm = "wizard.confirm"
+    case wizardTesting = "wizard.testing"
+    case wizardTestConnection = "wizard.test_connection"
+    case wizardFetching = "wizard.fetching"
+    case wizardFetchOrganizations = "wizard.fetch_organizations"
+    case wizardSaving = "wizard.saving"
+    case wizardSaveConfiguration = "wizard.save_configuration"
+
+    // MARK: - CLI Account
+    case cliTitle = "cli.title"
+    case cliSubtitle = "cli.subtitle"
+    case cliSynced = "cli.synced"
+    case cliNotSynced = "cli.not_synced"
+    case cliAccountDetails = "cli.account_details"
+    case cliCredentialsSynced = "cli.credentials_synced"
+    case cliNoCredentials = "cli.no_credentials"
+    case cliResync = "cli.resync"
+    case cliSyncFromCode = "cli.sync_from_code"
+    case cliBenefit1 = "cli.benefit_1"
+    case cliBenefit2 = "cli.benefit_2"
+    case cliBenefit3 = "cli.benefit_3"
+
     /// Localized value
     var localized: String {
         return rawValue.localized

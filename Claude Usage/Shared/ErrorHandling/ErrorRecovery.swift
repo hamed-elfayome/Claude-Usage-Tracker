@@ -110,12 +110,12 @@ class ErrorRecovery {
 
                 switch decision {
                 case .retryAfter(let delay, _):
-                    print("⚠️ Attempt \(attemptNumber) failed. Retrying after \(delay)s...")
+                    LoggingService.shared.log("ErrorRecovery: Attempt \(attemptNumber) failed. Retrying after \(delay)s...")
                     try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
                     attemptNumber += 1
 
                 case .doNotRetry(let reason):
-                    print("❌ Not retrying: \(reason)")
+                    LoggingService.shared.logError("ErrorRecovery: Not retrying - \(reason)")
                     throw error
                 }
 

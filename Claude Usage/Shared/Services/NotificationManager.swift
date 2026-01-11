@@ -98,33 +98,25 @@ class NotificationManager: NotificationServiceProtocol {
         }
     }
 
-    /// Checks usage and sends appropriate alerts
-    func checkAndNotify(usage: ClaudeUsage) {
-        // Session usage alerts
+    /// Checks usage and sends appropriate alerts (profile-aware)
+    func checkAndNotify(usage: ClaudeUsage, profileName: String, settings: NotificationSettings) {
+        // Check if notifications are enabled for this profile
+        guard settings.enabled else {
+            return
+        }
+
         let sessionPercentage = usage.sessionPercentage
 
         // Check for session reset (went from >0% to 0%)
         if previousSessionPercentage > 0.0 && sessionPercentage == 0.0 {
-            sendUsageAlert(
+            sendProfileAlert(
+                profileName: profileName,
                 type: .sessionReset,
                 percentage: sessionPercentage,
                 resetTime: usage.sessionResetTime
             )
 
-            // Auto-start new session if enabled
-            if DataStore.shared.loadAutoStartSessionEnabled() {
-                Task {
-                    do {
-                        try await ClaudeAPIService().sendInitializationMessage()
-                        // Send notification on successful auto-start
-                        await MainActor.run {
-                            self.sendSimpleAlert(type: .sessionAutoStarted)
-                        }
-                    } catch {
-                        // Silently fail - don't interrupt the user
-                    }
-                }
-            }
+            // Note: Auto-start session is handled per-profile but called from elsewhere
         }
 
         // Update previous percentage for next check
@@ -133,55 +125,112 @@ class NotificationManager: NotificationServiceProtocol {
         // Clear lower threshold notifications to allow re-notification
         clearLowerThresholdNotifications(currentPercentage: sessionPercentage)
 
-        if sessionPercentage >= Constants.NotificationThresholds.critical {
-            sendUsageAlert(
+        // 95% threshold
+        if sessionPercentage >= 95 && settings.threshold95Enabled {
+            sendProfileAlert(
+                profileName: profileName,
                 type: .sessionCritical,
                 percentage: sessionPercentage,
                 resetTime: usage.sessionResetTime
             )
-        } else if sessionPercentage >= Constants.NotificationThresholds.warning {
-            sendUsageAlert(
+        }
+        // 90% threshold
+        else if sessionPercentage >= 90 && settings.threshold90Enabled {
+            sendProfileAlert(
+                profileName: profileName,
                 type: .sessionWarning,
                 percentage: sessionPercentage,
                 resetTime: usage.sessionResetTime
             )
         }
-
-        // Weekly usage alerts
-        let weeklyPercentage = usage.weeklyPercentage
-        clearLowerThresholdNotifications(currentPercentage: weeklyPercentage)
-
-        if weeklyPercentage >= Constants.NotificationThresholds.critical {
-            sendUsageAlert(
-                type: .weeklyCritical,
-                percentage: weeklyPercentage,
-                resetTime: usage.weeklyResetTime
-            )
-        } else if weeklyPercentage >= Constants.NotificationThresholds.warning {
-            sendUsageAlert(
-                type: .weeklyWarning,
-                percentage: weeklyPercentage,
-                resetTime: usage.weeklyResetTime
+        // 75% threshold
+        else if sessionPercentage >= 75 && settings.threshold75Enabled {
+            sendProfileAlert(
+                profileName: profileName,
+                type: .sessionInfo,
+                percentage: sessionPercentage,
+                resetTime: usage.sessionResetTime
             )
         }
+    }
 
-        // Opus usage alerts (if applicable)
-        if usage.opusWeeklyTokensUsed > 0 {
-            let opusPercentage = usage.opusWeeklyPercentage
-            clearLowerThresholdNotifications(currentPercentage: opusPercentage)
+    /// Checks usage and sends appropriate alerts (legacy, for backwards compatibility)
+    func checkAndNotify(usage: ClaudeUsage) {
+        // Fallback to old behavior if called without profile
+        guard DataStore.shared.loadNotificationsEnabled() else {
+            return
+        }
 
-            if opusPercentage >= Constants.NotificationThresholds.critical {
-                sendUsageAlert(
-                    type: .opusCritical,
-                    percentage: opusPercentage,
-                    resetTime: usage.weeklyResetTime
-                )
-            } else if opusPercentage >= Constants.NotificationThresholds.warning {
-                sendUsageAlert(
-                    type: .opusWarning,
-                    percentage: opusPercentage,
-                    resetTime: usage.weeklyResetTime
-                )
+        let settings = NotificationSettings(
+            enabled: true,
+            threshold75Enabled: true,
+            threshold90Enabled: true,
+            threshold95Enabled: true
+        )
+
+        checkAndNotify(usage: usage, profileName: "Default", settings: settings)
+    }
+
+    /// Sends a profile-specific usage alert
+    private func sendProfileAlert(profileName: String, type: AlertType, percentage: Double, resetTime: Date?) {
+        // Create unique identifier for this notification
+        let identifier = "\(profileName)_\(type.rawValue)_\(Int(percentage))"
+
+        // Check if we've already sent this notification
+        guard !sentNotifications.contains(identifier) else {
+            return
+        }
+
+        let content = UNMutableNotificationContent()
+        content.title = "\(profileName) - \(type.title)"
+        content.body = type.message(percentage: percentage, resetTime: resetTime)
+        content.sound = .default
+        content.categoryIdentifier = "USAGE_ALERT"
+
+        let request = UNNotificationRequest(
+            identifier: identifier,
+            content: content,
+            trigger: nil // Show immediately
+        )
+
+        UNUserNotificationCenter.current().add(request) { [weak self] error in
+            if error == nil {
+                // Mark this notification as sent
+                self?.sentNotifications.insert(identifier)
+            }
+        }
+    }
+
+    /// Sends auto-start session notification
+    func sendAutoStartNotification(profileName: String, success: Bool, error: String?) {
+        let content = UNMutableNotificationContent()
+
+        if success {
+            content.title = "\(profileName) - \(AlertType.sessionAutoStarted.title)"
+            content.body = AlertType.sessionAutoStarted.message(percentage: 0, resetTime: nil)
+            content.sound = .default
+            content.categoryIdentifier = "INFO_ALERT"
+        } else {
+            content.title = "\(profileName) - \(AlertType.sessionAutoStartFailed.title)"
+            var message = AlertType.sessionAutoStartFailed.message(percentage: 0, resetTime: nil)
+            if let error = error {
+                message += " Error: \(error)"
+            }
+            content.body = message
+            content.sound = .default
+            content.categoryIdentifier = "ERROR_ALERT"
+        }
+
+        let identifier = success ? "auto_start_\(profileName)_success" : "auto_start_\(profileName)_failed_\(Date().timeIntervalSince1970)"
+        let request = UNNotificationRequest(
+            identifier: identifier,
+            content: content,
+            trigger: nil // Show immediately
+        )
+
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                LoggingService.shared.logError("Failed to send auto-start notification: \(error)")
             }
         }
     }
@@ -212,10 +261,12 @@ class NotificationManager: NotificationServiceProtocol {
 
 extension NotificationManager {
     enum AlertType: String {
-        case sessionWarning = "session_warning"
-        case sessionCritical = "session_critical"
+        case sessionInfo = "session_info"  // 75% threshold
+        case sessionWarning = "session_warning"  // 90% threshold
+        case sessionCritical = "session_critical"  // 95% threshold
         case sessionReset = "session_reset"
         case sessionAutoStarted = "session_auto_started"
+        case sessionAutoStartFailed = "session_auto_start_failed"
         case weeklyWarning = "weekly_warning"
         case weeklyCritical = "weekly_critical"
         case opusWarning = "opus_warning"
@@ -224,6 +275,8 @@ extension NotificationManager {
 
         var title: String {
             switch self {
+            case .sessionInfo:
+                return "Usage Info"
             case .sessionWarning:
                 return "notification.session_warning.title".localized
             case .sessionCritical:
@@ -232,6 +285,8 @@ extension NotificationManager {
                 return "notification.session_reset.title".localized
             case .sessionAutoStarted:
                 return "notification.session_auto_started.title".localized
+            case .sessionAutoStartFailed:
+                return "notification.session_auto_start_failed.title".localized
             case .weeklyWarning:
                 return "notification.weekly_warning.title".localized
             case .weeklyCritical:
@@ -250,6 +305,8 @@ extension NotificationManager {
             let resetStr = resetTime.map { "Resets \(FormatterHelper.timeUntilReset(from: $0))" } ?? ""
 
             switch self {
+            case .sessionInfo:
+                return "You've used \(percentStr) of your session limit. \(resetStr)"
             case .sessionWarning:
                 return "notification.session_warning.message".localized(with: percentStr, resetStr)
             case .sessionCritical:
@@ -258,6 +315,8 @@ extension NotificationManager {
                 return "notification.session_reset.message".localized
             case .sessionAutoStarted:
                 return "notification.session_auto_started.message".localized
+            case .sessionAutoStartFailed:
+                return "notification.session_auto_start_failed.message".localized
             case .weeklyWarning:
                 return "notification.weekly_warning.message".localized(with: percentStr, resetStr)
             case .weeklyCritical:

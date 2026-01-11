@@ -53,5 +53,9 @@
 
 	<key>SUEnableInstallerLauncherService</key>
 	<true/>
+
+	<!-- Enable gentle reminders for background apps -->
+	<key>SUEnableAutomaticUpdateReminders</key>
+	<true/>
 </dict>
 </plist>

@@ -10,85 +10,92 @@ import SwiftUI
 /// Claude Code statusline integration settings
 struct ClaudeCodeView: View {
     // Component visibility settings
-    @State private var showDirectory: Bool = DataStore.shared.loadStatuslineShowDirectory()
-    @State private var showBranch: Bool = DataStore.shared.loadStatuslineShowBranch()
-    @State private var showUsage: Bool = DataStore.shared.loadStatuslineShowUsage()
-    @State private var showProgressBar: Bool = DataStore.shared.loadStatuslineShowProgressBar()
+    @State private var showDirectory: Bool = SharedDataStore.shared.loadStatuslineShowDirectory()
+    @State private var showBranch: Bool = SharedDataStore.shared.loadStatuslineShowBranch()
+    @State private var showUsage: Bool = SharedDataStore.shared.loadStatuslineShowUsage()
+    @State private var showProgressBar: Bool = SharedDataStore.shared.loadStatuslineShowProgressBar()
+    @State private var showResetTime: Bool = SharedDataStore.shared.loadStatuslineShowResetTime()
 
     // Status feedback
     @State private var statusMessage: String?
     @State private var isSuccess: Bool = true
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.sectionSpacing) {
-            // Header
-            SettingsHeader(
-                title: "claudecode.title".localized,
-                subtitle: "claudecode.subtitle".localized
-            )
-
-            Divider()
+        ScrollView {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.section) {
+                // Page Header
+                SettingsPageHeader(
+                    title: "claudecode.title".localized,
+                    subtitle: "claudecode.subtitle".localized
+                )
 
             // Preview Card (keep as is - user loves it!)
-            VStack(alignment: .leading, spacing: Spacing.md) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
                 HStack {
                     Label("claudecode.preview_label".localized, systemImage: "eye.fill")
-                        .font(Typography.sectionHeader)
+                        .font(DesignTokens.Typography.sectionTitle)
                         .foregroundColor(.primary)
 
                     Spacer()
 
                     Text("ui.updates_realtime".localized)
-                        .font(Typography.caption)
+                        .font(DesignTokens.Typography.caption)
                         .foregroundColor(.secondary)
                 }
 
-                VStack(alignment: .leading, spacing: Spacing.sm) {
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
                     Text(generatePreview())
-                        .font(Typography.monospacedInput)
+                        .font(DesignTokens.Typography.monospaced)
                         .foregroundColor(.accentColor)
-                        .padding(Spacing.md)
+                        .padding(DesignTokens.Spacing.medium)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(
-                            RoundedRectangle(cornerRadius: Spacing.radiusMedium)
+                            RoundedRectangle(cornerRadius: DesignTokens.Radius.small)
                                 .fill(Color.accentColor.opacity(0.05))
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: Spacing.radiusMedium)
+                                    RoundedRectangle(cornerRadius: DesignTokens.Radius.small)
                                         .strokeBorder(Color.accentColor.opacity(0.2), lineWidth: 1)
                                 )
                         )
 
                     Text("claudecode.preview_description".localized)
-                        .font(Typography.caption)
+                        .font(DesignTokens.Typography.caption)
                         .foregroundColor(.secondary)
                 }
             }
-            .padding(Spacing.cardPadding)
+            .padding(DesignTokens.Spacing.cardPadding)
             .background(
-                RoundedRectangle(cornerRadius: Spacing.radiusLarge)
-                    .fill(Color(nsColor: .controlBackgroundColor))
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.card)
+                    .fill(DesignTokens.Colors.cardBackground)
             )
 
             // Components - Simple and clean
-            VStack(alignment: .leading, spacing: Spacing.md) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
                 Text("ui.display_components".localized)
-                    .font(Typography.sectionHeader)
+                    .font(DesignTokens.Typography.sectionTitle)
 
-                VStack(alignment: .leading, spacing: Spacing.sm) {
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
                     Toggle("claudecode.component_directory".localized, isOn: $showDirectory)
-                        .font(Typography.label)
+                        .font(DesignTokens.Typography.body)
 
                     Toggle("claudecode.component_branch".localized, isOn: $showBranch)
-                        .font(Typography.label)
+                        .font(DesignTokens.Typography.body)
 
                     Toggle("claudecode.component_usage".localized, isOn: $showUsage)
-                        .font(Typography.label)
+                        .font(DesignTokens.Typography.body)
 
                     if showUsage {
                         HStack(spacing: 0) {
                             Spacer().frame(width: 20)
                             Toggle("claudecode.component_progressbar".localized, isOn: $showProgressBar)
-                                .font(Typography.caption)
+                                .font(DesignTokens.Typography.caption)
+                                .foregroundColor(.secondary)
+                        }
+
+                        HStack(spacing: 0) {
+                            Spacer().frame(width: 20)
+                            Toggle("claudecode.component_resettime".localized, isOn: $showResetTime)
+                                .font(DesignTokens.Typography.caption)
                                 .foregroundColor(.secondary)
                         }
                     }
@@ -96,17 +103,17 @@ struct ClaudeCodeView: View {
             }
 
             // Action buttons - compact
-            HStack(spacing: Spacing.buttonRowSpacing) {
+            HStack(spacing: DesignTokens.Spacing.iconText) {
                 Button(action: applyConfiguration) {
                     Text("claudecode.button_apply".localized)
-                        .font(Typography.label)
+                        .font(DesignTokens.Typography.body)
                         .frame(minWidth: 70)
                 }
                 .buttonStyle(.borderedProminent)
 
                 Button(action: resetConfiguration) {
                     Text("claudecode.button_reset".localized)
-                        .font(Typography.label)
+                        .font(DesignTokens.Typography.body)
                         .frame(minWidth: 70)
                 }
                 .buttonStyle(.bordered)
@@ -114,12 +121,12 @@ struct ClaudeCodeView: View {
 
             // Status message
             if let message = statusMessage {
-                HStack(spacing: Spacing.iconTextSpacing) {
+                HStack(spacing: DesignTokens.Spacing.iconText) {
                     Image(systemName: isSuccess ? "checkmark.circle.fill" : "xmark.circle.fill")
                         .foregroundColor(isSuccess ? .green : .red)
 
                     Text(message)
-                        .font(Typography.label)
+                        .font(DesignTokens.Typography.body)
 
                     Spacer()
 
@@ -129,30 +136,31 @@ struct ClaudeCodeView: View {
                     }
                     .buttonStyle(.plain)
                 }
-                .padding(Spacing.inputPadding)
+                .padding(DesignTokens.Spacing.medium)
                 .background(
-                    RoundedRectangle(cornerRadius: Spacing.radiusMedium)
+                    RoundedRectangle(cornerRadius: DesignTokens.Radius.small)
                         .fill((isSuccess ? Color.green : Color.red).opacity(0.1))
                 )
             }
 
             // Info - minimal
-            VStack(alignment: .leading, spacing: Spacing.sm) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
                 Text("ui.requirements".localized)
-                    .font(Typography.sectionHeader)
+                    .font(DesignTokens.Typography.sectionTitle)
 
                 Text("claudecode.requirement_sessionkey".localized)
-                    .font(Typography.caption)
+                    .font(DesignTokens.Typography.caption)
                     .foregroundColor(.secondary)
 
                 Text("claudecode.requirement_restart".localized)
-                    .font(Typography.caption)
+                    .font(DesignTokens.Typography.caption)
                     .foregroundColor(.secondary)
             }
 
             Spacer()
+            }
+            .padding()
         }
-        .contentPadding()
     }
 
     // MARK: - Actions
@@ -175,10 +183,11 @@ struct ClaudeCodeView: View {
         }
 
         // Save user preferences
-        DataStore.shared.saveStatuslineShowDirectory(showDirectory)
-        DataStore.shared.saveStatuslineShowBranch(showBranch)
-        DataStore.shared.saveStatuslineShowUsage(showUsage)
-        DataStore.shared.saveStatuslineShowProgressBar(showProgressBar)
+        SharedDataStore.shared.saveStatuslineShowDirectory(showDirectory)
+        SharedDataStore.shared.saveStatuslineShowBranch(showBranch)
+        SharedDataStore.shared.saveStatuslineShowUsage(showUsage)
+        SharedDataStore.shared.saveStatuslineShowProgressBar(showProgressBar)
+        SharedDataStore.shared.saveStatuslineShowResetTime(showResetTime)
 
         do {
             // Install scripts to ~/.claude/
@@ -189,7 +198,8 @@ struct ClaudeCodeView: View {
                 showDirectory: showDirectory,
                 showBranch: showBranch,
                 showUsage: showUsage,
-                showProgressBar: showProgressBar
+                showProgressBar: showProgressBar,
+                showResetTime: showResetTime
             )
 
             // Update Claude CLI settings.json
@@ -228,7 +238,14 @@ struct ClaudeCodeView: View {
         }
 
         if showUsage {
-            parts.append(showProgressBar ? "Usage: 29% ▓▓▓░░░░░░░" : "Usage: 29%")
+            var usageText = "Usage: 29%"
+            if showProgressBar {
+                usageText += " ▓▓▓░░░░░░░"
+            }
+            if showResetTime {
+                usageText += " → Reset: 14:30"
+            }
+            parts.append(usageText)
         }
 
         return parts.isEmpty ? "claudecode.preview_no_components".localized : parts.joined(separator: " │ ")

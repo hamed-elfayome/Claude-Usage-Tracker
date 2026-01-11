@@ -9,12 +9,12 @@
   ![Swift](https://img.shields.io/badge/Swift-5.0+-orange?style=flat-square&logo=swift)
   ![SwiftUI](https://img.shields.io/badge/SwiftUI-5.0+-blue?style=flat-square&logo=swift)
   ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
-  ![Version](https://img.shields.io/badge/version-2.1.2-blue?style=flat-square)
-  ![Languages](https://img.shields.io/badge/languages-7-purple?style=flat-square)
+  ![Version](https://img.shields.io/badge/version-2.2.0-blue?style=flat-square)
+  ![Languages](https://img.shields.io/badge/languages-8-purple?style=flat-square)
 
-  <sub>🇬🇧 English • 🇪🇸 Español • 🇫🇷 Français • 🇩🇪 Deutsch • 🇮🇹 Italiano • 🇵🇹 Português • 🇯🇵 日本語</sub>
+  <sub>🇬🇧 English • 🇪🇸 Español • 🇫🇷 Français • 🇩🇪 Deutsch • 🇮🇹 Italiano • 🇵🇹 Português • 🇯🇵 日本語 • 🇰🇷 한국어</sub>
 
-  ### [Download Latest Release (v2.1.2)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
+  ### [Download Latest Release (v2.2.0)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
 
   <sub>macOS 14.0+ (Sonoma) | ~3 MB | Native Swift/SwiftUI | Officially Signed</sub>
 
@@ -29,10 +29,12 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 
 ### Key Capabilities
 
-- **Real-Time Monitoring**: Track session, weekly, and API console usage
-- **Customizable Interface**: 5 icon styles + monochrome mode
-- **Smart Automation**: Auto-start sessions, threshold notifications
-- **Developer Tools**: Terminal statusline integration for Claude Code
+- **Multi-Profile Support**: Manage unlimited Claude accounts with isolated credentials and settings
+- **Claude Code Integration**: Sync CLI accounts and auto-switch credentials when changing profiles
+- **Real-Time Monitoring**: Track session, weekly, and API console usage per profile
+- **Customizable Interface**: 5 icon styles + monochrome mode, per-profile configuration
+- **Smart Automation**: Auto-start sessions (per-profile background service), threshold notifications
+- **Developer Tools**: Terminal statusline integration with automatic profile updates
 - **Privacy-First**: Local storage, no telemetry, no cloud sync
 - **Native Performance**: Lightweight Swift/SwiftUI design for macOS
 
@@ -51,13 +53,19 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 
 ## What's New
 
-**v2.1.2 - Statusline Improvements (2026-01-10)**:
-- Fixed statusline script updates to only run when installed
-- Optimized organization ID injection (no extra API calls)
+**v2.2.0 - Multi-Profile Management (2026-01-12)**:
+- **Multiple Profiles**: Create unlimited profiles for different Claude accounts (work, personal, testing)
+- **Claude Code Integration**: Sync your CLI account and auto-switch credentials when changing profiles
+- **Profile Switcher**: Quick profile switching in popover and settings
+- **Auto-Start Sessions**: Background service monitors all profiles and auto-starts sessions per-profile
+- **Fun Profile Names**: Auto-generated names like "Quantum Llama", "Sneaky Penguin", "Turbo Sloth"
+- **Korean Language**: Added 🇰🇷 Korean support (now 8 languages total)
+- **Reorganized Settings**: New tabs for Manage Profiles, CLI Account, and dedicated Language settings
 
+**v2.1.2** - Statusline improvements, organization ID optimization
 **v2.1.1** - Session timer countdown in menu bar
 **v2.1.0** - 3-step setup wizard, smart organization preservation
-**v2.0.0** - Apple code signing, automatic updates, Keychain security, multi-language support
+**v2.0.0** - Apple code signing, automatic updates, Keychain security
 
 **[View Full Release History](CHANGELOG.md)**
 
@@ -205,6 +213,67 @@ After creating the file, launch the app and it will automatically detect the ses
 
 ---
 
+## Multi-Profile Management
+
+**New in v2.2.0**: Claude Usage Tracker now supports unlimited profiles, allowing you to manage multiple Claude accounts seamlessly with automatic credential switching.
+
+### Features
+
+#### Profile Management
+- **Unlimited Profiles**: Create as many profiles as needed for different Claude accounts
+- **Fun Auto-Names**: Profiles auto-generate with names like "Quantum Llama", "Sneaky Penguin", "Turbo Sloth"
+- **Custom Names**: Rename profiles to whatever you prefer
+- **Quick Switching**: Switch profiles instantly via popover dropdown or settings sidebar
+- **Profile Badges**: Visual indicators show which profiles have Claude.ai credentials and CLI accounts
+
+#### Claude Code CLI Integration
+- **One-Click Sync**: Sync your currently logged-in Claude Code account to a profile
+- **Automatic Switching**: When you switch profiles, CLI credentials automatically update
+- **Credential Display**: View masked access tokens and subscription type
+- **Smart Re-Sync**: Credentials automatically refresh before profile switches to capture CLI changes
+- **Per-Profile CLI**: Each profile can have its own Claude Code account or share the system account
+
+#### Per-Profile Settings
+Each profile has isolated settings:
+- **Credentials**: Separate Claude.ai session keys, API keys, and organization IDs
+- **Appearance**: Independent icon styles and monochrome mode
+- **Refresh Interval**: Custom refresh rates (5-300 seconds)
+- **Auto-Start Sessions**: Enable/disable per profile
+- **Notifications**: Independent threshold alerts (75%, 90%, 95%)
+- **Usage Data**: Tracked separately per profile
+
+#### Profile Switcher
+Access profile switcher in multiple places:
+- **Popover Header**: Dropdown menu with profile badges
+- **Settings Sidebar**: Active profile picker with visual indicators
+- **Manage Profiles Tab**: Full profile management interface
+
+#### How to Use
+
+1. **Create Profiles**:
+   - Go to Settings → Manage Profiles
+   - Click "Create New Profile"
+   - Auto-generates a fun name or enter your own
+
+2. **Configure Credentials**:
+   - Switch to desired profile in sidebar
+   - Go to Claude.AI / API Console / CLI Account tabs
+   - Enter credentials (isolated per profile)
+
+3. **Sync Claude Code** (Optional):
+   - Log in to Claude Code in terminal
+   - Open Settings → CLI Account
+   - Click "Sync from Claude Code"
+   - Now when you switch profiles, CLI credentials auto-update!
+
+4. **Switch Profiles**:
+   - Click popover dropdown
+   - Or use settings sidebar picker
+   - CLI credentials apply automatically
+
+
+---
+
 ## Features
 
 ### Installation & Updates
@@ -275,9 +344,16 @@ Click the menu bar icon to access:
 
 ### Settings
 
-Access comprehensive settings through the menu bar popover → Settings button. The app features a modern, modular settings interface organized into focused tabs:
+Access comprehensive settings through the menu bar popover → Settings button. The app features a modern sidebar interface with profile switcher and organized tabs:
 
-#### Personal Usage
+### Profile-Specific Settings
+
+#### Profile Switcher (Sidebar)
+- **Quick Profile Selection**: Dropdown to switch between profiles instantly
+- **Profile Badges**: Visual indicators for Claude.ai 🔵 and CLI ✅ credentials
+- **Active Profile Display**: Shows currently selected profile
+
+#### Claude.AI (Credentials)
 Configure your Claude.ai personal account:
 - **3-Step Setup Wizard**: Guided session key configuration
   - Non-destructive connection testing
@@ -286,13 +362,22 @@ Configure your Claude.ai personal account:
 - **Smart Updates**: Organization preserved when re-entering same key
 - **Quick Access**: One-click link to claude.ai
 
-#### General Settings
-- **Refresh Interval**: Configure auto-refresh rate (5-120 seconds)
-- **Connection Status**: View current API connection state
-- **Advanced Settings**: Debug logging and error tracking
+#### API Console (Credentials)
+Configure API console usage tracking:
+- **API Session Key**: Set your API authentication key
+- **Organization ID**: Configure organization for API tracking
+- **Dual Tracking**: Monitor both web and API usage simultaneously
+- **API Billing**: View API console usage costs
 
-#### Appearance Settings
-Customize how the menu bar icon looks:
+#### CLI Account (Credentials)
+Sync Claude Code CLI credentials:
+- **One-Click Sync**: Copy currently logged-in Claude Code account to profile
+- **Credential Display**: View masked access token and subscription type
+- **Auto-Switch**: Credentials automatically update when changing profiles
+- **Remove Sync**: Unlink CLI account from profile
+
+#### Appearance
+Customize menu bar icon per profile:
 - **Icon Style Selection**: Choose from 5 different display modes
   - Battery Style (classic indicator with fill)
   - Progress Bar (horizontal bar with percentage)
@@ -302,43 +387,45 @@ Customize how the menu bar icon looks:
 - **Monochrome Mode**: Toggle black & white icon style
 - **Live Preview**: See changes in real-time before applying
 
-#### API Settings
-Configure API console usage tracking:
-- **API Session Key**: Set your API authentication key
-- **Organization ID**: Configure organization for API tracking
-- **Dual Tracking**: Monitor both web and API usage simultaneously
-- **API Billing**: View API console usage costs
-
-#### Session Management
-Control automatic session behavior:
-- **Auto-Start on Reset**: Enable/disable automatic session initialization
+#### General (Profile Settings)
+Per-profile behavior configuration:
+- **Refresh Interval**: Configure auto-refresh rate (5-300 seconds)
+- **Auto-Start Sessions**: Enable/disable automatic session initialization on reset
 - **Model Selection**: Uses Claude 3.5 Haiku (most cost-effective)
-- **Initialization Status**: View last auto-start activity
+- **Notifications**: Per-profile threshold alerts (75%, 90%, 95%)
 
-#### Notifications
-Fine-tune alert preferences:
-- **Enable/Disable**: Master toggle for all notifications
-- **Threshold Alerts**: Notifications at 75%, 90%, and 95% usage
-- **Session Reset Alerts**: Get notified when 5-hour window refreshes
-- **Auto-Start Alerts**: Confirmations for automatic session initialization
-- **Test Notifications**: Send test notification to verify setup
+### App-Wide Settings
 
-#### Claude Code Integration
-Set up terminal statusline (requires [Claude Code](https://claude.com/claude-code)):
+#### Manage Profiles
+Create and manage multiple profiles:
+- **Create Profiles**: Add new profiles with fun auto-generated names
+- **Rename Profiles**: Customize profile names
+- **Delete Profiles**: Remove unused profiles (minimum 1 required)
+- **Profile List**: View all profiles with credential status indicators
+
+#### Language
+Application language preferences:
+- **Language Selection**: Choose from 8 supported languages
+- **Live Updates**: Interface updates immediately when language changes
+- Supported: English, Spanish, French, German, Italian, Portuguese, Japanese, Korean
+
+#### Claude Code (Statusline)
+Terminal integration (app-wide):
 - **Component Selection**: Choose what to display (directory, branch, usage, progress bar, reset time)
 - **Live Preview**: See exact statusline format before installing
 - **One-Click Install**: Automated script installation to `~/.claude/`
-- **Configuration Management**: Apply or reset statusline settings
+- **Automatic Updates**: Statusline updates when switching profiles
 - See [Claude Code Integration](#claude-code-integration) section for detailed setup
 
 #### Updates
+Automatic update configuration:
 - **Automatic Update Checking**: Configure how often to check for updates
 - **Update Notifications**: Get notified when new versions are available
 - **One-Click Installation**: Download and install updates with a single click
 - **Release Notes**: View what's new in each update
-- **Update Channel**: Stay on stable releases or opt into beta testing
 
 #### About
+Application information:
 - **Version Information**: Current app version
 - **Credits**: Contributors and acknowledgments
 - **Links**: GitHub repository, issue tracker, documentation

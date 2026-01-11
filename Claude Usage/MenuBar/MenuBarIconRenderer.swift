@@ -569,6 +569,49 @@ final class MenuBarIconRenderer {
         return image
     }
 
+    // MARK: - Default App Logo (for profiles without credentials)
+
+    /// Creates a default app logo icon for the menu bar when no credentials are configured
+    func createDefaultAppLogo(isDarkMode: Bool) -> NSImage {
+        // Try to load the app logo from assets
+        if let logo = NSImage(named: "HeaderLogo") {
+            // Create a copy to avoid modifying the original
+            let resizedLogo = NSImage(size: NSSize(width: 20, height: 20))
+            resizedLogo.lockFocus()
+            defer { resizedLogo.unlockFocus() }
+
+            // Draw the logo centered
+            logo.draw(in: NSRect(x: 0, y: 0, width: 20, height: 20),
+                     from: NSRect.zero,
+                     operation: .sourceOver,
+                     fraction: 1.0)
+
+            return resizedLogo
+        }
+
+        // Fallback: Create a simple circle icon if logo not found
+        let size: CGFloat = 20
+        let image = NSImage(size: NSSize(width: size, height: size))
+
+        image.lockFocus()
+        defer { image.unlockFocus() }
+
+        let color: NSColor = isDarkMode ? .white : .black
+
+        // Draw a simple circle
+        let circlePath = NSBezierPath(ovalIn: NSRect(x: 2, y: 2, width: size - 4, height: size - 4))
+        color.withAlphaComponent(0.7).setStroke()
+        circlePath.lineWidth = 2.0
+        circlePath.stroke()
+
+        // Draw a small dot in the center
+        let dotPath = NSBezierPath(ovalIn: NSRect(x: size/2 - 2, y: size/2 - 2, width: 4, height: 4))
+        color.setFill()
+        dotPath.fill()
+
+        return image
+    }
+
     // MARK: - Helper Methods
 
     private func getColorForStatusLevel(_ level: UsageStatusLevel) -> NSColor {

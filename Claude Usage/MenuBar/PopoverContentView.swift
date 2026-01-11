@@ -9,10 +9,11 @@ struct PopoverContentView: View {
 
     @State private var isRefreshing = false
     @State private var showInsights = false
+    @StateObject private var profileManager = ProfileManager.shared
 
     var body: some View {
         VStack(spacing: 0) {
-            // Smart Header with Status
+            // Smart Header with Status and Profile Switcher
             SmartHeader(
                 usage: manager.usage,
                 status: manager.status,
@@ -27,7 +28,8 @@ struct PopoverContentView: View {
                             isRefreshing = false
                         }
                     }
-                }
+                },
+                onManageProfiles: onPreferences
             )
 
             // Intelligent Usage Dashboard
@@ -61,12 +63,293 @@ struct PopoverContentView: View {
     }
 }
 
+// MARK: - Profile Switcher Compact (for header)
+
+struct ProfileSwitcherCompact: View {
+    @StateObject private var profileManager = ProfileManager.shared
+    @State private var isHovered = false
+    let onManageProfiles: () -> Void
+
+    var body: some View {
+        Menu {
+            ForEach(profileManager.profiles) { profile in
+                Button(action: {
+                    Task {
+                        await profileManager.activateProfile(profile.id)
+                    }
+                }) {
+                    HStack(spacing: 8) {
+                        // Profile icon
+                        Image(systemName: "person.circle.fill")
+                            .font(.system(size: 12))
+
+                        // Profile name
+                        Text(profile.name)
+                            .font(.system(size: 12, weight: .medium))
+
+                        Spacer()
+
+                        // Badges
+                        HStack(spacing: 4) {
+                            // CLI Account badge
+                            if profile.hasCliAccount {
+                                Image(systemName: "terminal.fill")
+                                    .font(.system(size: 9))
+                                    .foregroundColor(.green)
+                            }
+
+                            // Claude.ai badge
+                            if profile.claudeSessionKey != nil {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 9))
+                                    .foregroundColor(.blue)
+                            }
+
+                            // Active indicator
+                            if profile.id == profileManager.activeProfile?.id {
+                                Image(systemName: "circle.fill")
+                                    .font(.system(size: 6))
+                                    .foregroundColor(.accentColor)
+                            }
+                        }
+                    }
+                }
+            }
+
+            Divider()
+
+            Button(action: onManageProfiles) {
+                HStack {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 12))
+                    Text("popover.manage_profiles".localized)
+                        .font(.system(size: 12, weight: .medium))
+                }
+            }
+        } label: {
+            HStack(spacing: 5) {
+                Text(profileManager.activeProfile?.name ?? "popover.no_profile".localized)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.primary)
+                    .lineLimit(1)
+
+                // Status badges
+                if profileManager.activeProfile?.hasCliAccount == true || profileManager.activeProfile?.claudeSessionKey != nil {
+                    HStack(spacing: 3) {
+                        if profileManager.activeProfile?.hasCliAccount == true {
+                            Circle()
+                                .fill(Color.green)
+                                .frame(width: 5, height: 5)
+                        }
+                        if profileManager.activeProfile?.claudeSessionKey != nil {
+                            Circle()
+                                .fill(Color.blue)
+                                .frame(width: 5, height: 5)
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal, 7)
+            .padding(.vertical, 3)
+            .background(
+                Capsule()
+                    .fill(isHovered ? Color.accentColor.opacity(0.1) : Color.clear)
+            )
+        }
+        .menuStyle(.borderlessButton)
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.15)) {
+                isHovered = hovering
+            }
+        }
+    }
+}
+
+// MARK: - Profile Switcher Bar
+
+struct ProfileSwitcherBar: View {
+    @StateObject private var profileManager = ProfileManager.shared
+    @State private var isHovered = false
+    let onManageProfiles: () -> Void
+
+    var body: some View {
+        Menu {
+            ForEach(profileManager.profiles) { profile in
+                Button(action: {
+                    Task {
+                        await profileManager.activateProfile(profile.id)
+                    }
+                }) {
+                    HStack(spacing: 8) {
+                        // Profile icon
+                        Image(systemName: "person.circle.fill")
+                            .font(.system(size: 12))
+
+                        // Profile name
+                        Text(profile.name)
+                            .font(.system(size: 12, weight: .medium))
+
+                        Spacer()
+
+                        // Badges
+                        HStack(spacing: 4) {
+                            // CLI Account badge
+                            if profile.hasCliAccount {
+                                Image(systemName: "terminal.fill")
+                                    .font(.system(size: 9))
+                                    .foregroundColor(.green)
+                            }
+
+                            // Claude.ai badge
+                            if profile.claudeSessionKey != nil {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 9))
+                                    .foregroundColor(.blue)
+                            }
+
+                            // Active indicator
+                            if profile.id == profileManager.activeProfile?.id {
+                                Image(systemName: "circle.fill")
+                                    .font(.system(size: 6))
+                                    .foregroundColor(.accentColor)
+                            }
+                        }
+                    }
+                }
+            }
+
+            Divider()
+
+            Button(action: onManageProfiles) {
+                HStack {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 12))
+                    Text("popover.manage_profiles".localized)
+                        .font(.system(size: 12, weight: .medium))
+                }
+            }
+        } label: {
+            HStack(spacing: 10) {
+                // Profile avatar with gradient background
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.accentColor.opacity(0.8), Color.accentColor],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 32, height: 32)
+
+                    Text(profileInitials)
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white)
+                }
+
+                // Profile info
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 4) {
+                        Text(profileManager.activeProfile?.name ?? "popover.no_profile".localized)
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(.primary)
+                            .lineLimit(1)
+
+                        // Status badges
+                        HStack(spacing: 3) {
+                            if profileManager.activeProfile?.hasCliAccount == true {
+                                Circle()
+                                    .fill(Color.green)
+                                    .frame(width: 5, height: 5)
+                            }
+                            if profileManager.activeProfile?.claudeSessionKey != nil {
+                                Circle()
+                                    .fill(Color.blue)
+                                    .frame(width: 5, height: 5)
+                            }
+                        }
+                    }
+
+                    HStack(spacing: 4) {
+                        if profileManager.profiles.count > 1 {
+                            Text(String(format: "popover.profiles_count".localized, profileManager.profiles.count))
+                                .font(.system(size: 9, weight: .medium))
+                                .foregroundColor(.secondary)
+                        } else {
+                            Text("popover.profile_count_singular".localized)
+                                .font(.system(size: 9, weight: .medium))
+                                .foregroundColor(.secondary)
+                        }
+
+                        Text("•")
+                            .font(.system(size: 9, weight: .medium))
+                            .foregroundColor(.secondary.opacity(0.5))
+
+                        Text("common.switch".localized)
+                            .font(.system(size: 9, weight: .medium))
+                            .foregroundColor(.secondary)
+                    }
+                }
+
+                Spacer()
+
+                // Chevron indicator
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(.secondary.opacity(0.6))
+                    .rotationEffect(.degrees(isHovered ? 180 : 0))
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(
+                        isHovered
+                        ? Color.accentColor.opacity(0.08)
+                        : Color(nsColor: .controlBackgroundColor).opacity(0.5)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .strokeBorder(
+                                isHovered
+                                ? Color.accentColor.opacity(0.3)
+                                : Color.secondary.opacity(0.1),
+                                lineWidth: 1
+                            )
+                    )
+            )
+        }
+        .menuStyle(.borderlessButton)
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isHovered = hovering
+            }
+        }
+    }
+
+    private var profileInitials: String {
+        guard let name = profileManager.activeProfile?.name else { return "?" }
+        let words = name.split(separator: " ")
+        if words.count >= 2 {
+            return String(words[0].prefix(1) + words[1].prefix(1)).uppercased()
+        } else if let first = words.first {
+            return String(first.prefix(2)).uppercased()
+        }
+        return "?"
+    }
+}
+
 // MARK: - Smart Header Component
 struct SmartHeader: View {
     let usage: ClaudeUsage
     let status: ClaudeStatus
     let isRefreshing: Bool
     let onRefresh: () -> Void
+    let onManageProfiles: () -> Void
+
+    @StateObject private var profileManager = ProfileManager.shared
 
     private var statusColor: Color {
         switch status.indicator.color {
@@ -88,9 +371,8 @@ struct SmartHeader: View {
                     .frame(width: 24, height: 24)
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("menubar.claude_usage".localized)
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.primary)
+                    // Profile Switcher replacing title
+                    ProfileSwitcherCompact(onManageProfiles: onManageProfiles)
 
                     // Claude Status Badge
                     Button(action: {
@@ -157,6 +439,12 @@ struct SmartHeader: View {
 struct SmartUsageDashboard: View {
     let usage: ClaudeUsage
     let apiUsage: APIUsage?
+    @StateObject private var profileManager = ProfileManager.shared
+
+    // Check if API tracking is enabled globally
+    private var isAPITrackingEnabled: Bool {
+        DataStore.shared.loadAPITrackingEnabled()
+    }
 
     var body: some View {
         VStack(spacing: 16) {
@@ -201,8 +489,11 @@ struct SmartUsageDashboard: View {
                 )
             }
 
-            // API Usage Card (if enabled)
-            if let apiUsage = apiUsage, DataStore.shared.loadAPITrackingEnabled() {
+            // API Usage Card (only if tracking is enabled AND profile has credentials)
+            if isAPITrackingEnabled,
+               let apiUsage = apiUsage,
+               let profile = profileManager.activeProfile,
+               profile.hasAPIConsole {
                 APIUsageCard(apiUsage: apiUsage)
             }
         }
@@ -266,24 +557,25 @@ struct SmartUsageCard: View {
             // Progress visualization
             VStack(spacing: 6) {
                 // Animated progress bar
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.secondary.opacity(0.15))
+                GeometryReader { geometry in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.secondary.opacity(0.15))
 
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(
-                            LinearGradient(
-                                colors: [statusColor, statusColor.opacity(0.8)],
-                                startPoint: .leading,
-                                endPoint: .trailing
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(
+                                LinearGradient(
+                                    colors: [statusColor, statusColor.opacity(0.8)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
                             )
-                        )
-                        .frame(maxWidth: .infinity)
-                        .scaleEffect(x: min(percentage / 100.0, 1.0), y: 1.0, anchor: .leading)
-                        .clipShape(RoundedRectangle(cornerRadius: 4))
+                            .frame(width: geometry.size.width * min(percentage / 100.0, 1.0))
+                            .clipShape(RoundedRectangle(cornerRadius: 4))
+                            .animation(.easeInOut(duration: 0.8), value: percentage)
+                    }
                 }
                 .frame(height: 8)
-                .animation(.easeInOut(duration: 0.8), value: percentage)
 
                 // Reset time information
                 if let reset = resetTime {

@@ -207,6 +207,8 @@
 "notification.session_reset.message" = "Ihre Sitzung wurde zurückgesetzt! Sie haben jetzt eine neue 5-Stunden-Sitzung verfügbar.";
 "notification.session_auto_started.title" = "Sitzung Automatisch Gestartet";
 "notification.session_auto_started.message" = "Eine neue Sitzung wurde automatisch mit Claude 3.5 Haiku initialisiert. Ihre 5-Stunden-Sitzung ist bereit!";
+"notification.session_auto_start_failed.title" = "Auto-Start Fehlgeschlagen";
+"notification.session_auto_start_failed.message" = "Automatischer Sitzungsstart fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten.";
 "notification.weekly_warning.title" = "Wöchentliche Nutzungswarnung";
 "notification.weekly_warning.message" = "Sie haben %@ Ihres wöchentlichen Limits verwendet. %@";
 "notification.weekly_critical.title" = "Wöchentliche Nutzung Kritisch";
@@ -326,6 +328,7 @@
 "claudecode.component_branch" = "Git-Branch";
 "claudecode.component_usage" = "Nutzungsstatistiken";
 "claudecode.component_progressbar" = "Fortschrittsbalken";
+"claudecode.component_resettime" = "Zurücksetzungszeit";
 "claudecode.requirement_sessionkey" = "• Sitzungsschlüssel im Tab 'Persönliche Nutzung' konfiguriert";
 "claudecode.requirement_restart" = "• Claude CLI nach Anwendung der Änderungen neu starten";
 "claudecode.error_no_components" = "Bitte wählen Sie mindestens eine Komponente zur Anzeige";
@@ -451,3 +454,211 @@
 "settings.updates.info.title" = "Sichere Updates";
 "settings.updates.info.description" = "Alle Updates sind kryptographisch signiert und werden vor der Installation verifiziert";
 "about.check_updates" = "Nach Updates Suchen";
+
+/* ==================== */
+/* MARK: - Manage Profiles */
+/* ==================== */
+"profiles.title" = "Profile Verwalten";
+"profiles.subtitle" = "Mehrere Claude-Konten erstellen und verwalten";
+"profiles.create_new" = "Neues Profil Erstellen";
+"profiles.about_title" = "Über Profile";
+"profiles.about_description" = "Jedes Profil hat eigene:";
+"profiles.about_credentials" = "Claude.ai-Anmeldedaten";
+"profiles.about_api" = "API-Konsolen-Anmeldedaten";
+"profiles.about_cli" = "CLI-Konto-Synchronisation";
+"profiles.about_appearance" = "Menüleisten-Darstellung";
+"profiles.about_notifications" = "Benachrichtigungseinstellungen";
+"profiles.about_refresh" = "Aktualisierungsintervall";
+"profiles.active_badge" = "Aktiv";
+"profiles.created" = "Erstellt";
+"profiles.cli_synced" = "CLI Synchronisiert";
+"profiles.rename" = "Profil umbenennen";
+"profiles.activate" = "Profil aktivieren";
+"profiles.delete" = "Profil löschen";
+"profiles.delete_title" = "Profil Löschen";
+"profiles.delete_confirm" = "Möchten Sie \"%@\" wirklich löschen? Dies entfernt alle zugehörigen Anmeldedaten und Einstellungen.";
+"profiles.create_title" = "Neues Profil Erstellen";
+"profiles.name_label" = "Profilname (optional)";
+"profiles.name_placeholder" = "Leer lassen für zufälligen Namen";
+"profiles.name_hint" = "Wenn leer gelassen, wird ein lustiger zufälliger Name generiert!";
+
+/* ==================== */
+/* MARK: - General Settings (Profile-Level) */
+/* ==================== */
+"general.title" = "Allgemein";
+"general.subtitle" = "Aktualisierungsintervall, Auto-Start und Benachrichtigungen";
+"general.refresh_title" = "Aktualisierungsintervall";
+"general.refresh_subtitle" = "Wie oft nach Nutzungsaktualisierungen gesucht wird";
+"general.refresh_seconds" = "%d Sekunden";
+"general.refresh_min" = "10s";
+"general.refresh_max" = "300s";
+"general.autostart_title" = "Sitzungs-Auto-Start";
+"general.autostart_subtitle" = "Automatisch eine neue Sitzung bei Bedarf starten";
+"general.autostart_toggle" = "Neue Sitzung Automatisch Starten";
+"general.autostart_description" = "Automatisch eine Nachricht senden, wenn die Sitzung zurückgesetzt wird";
+"general.notifications_title" = "Benachrichtigungen";
+"general.notifications_subtitle" = "Über Nutzungsmeilensteine benachrichtigt werden";
+"general.connected" = "Verbunden";
+"general.not_connected" = "Nicht Verbunden";
+
+/* ==================== */
+/* MARK: - Updates Settings */
+/* ==================== */
+"updates.version_info" = "Versionsinformationen";
+"updates.update_preferences" = "Update-Einstellungen";
+"updates.version_label" = "v%@ (%@)";
+
+/* ==================== */
+/* MARK: - Appearance (Additional) */
+/* ==================== */
+"appearance.global_subtitle" = "Menüleisten-Symbol-Verhalten anpassen";
+"appearance.metrics_subtitle" = "Metriken auswählen, die in der Menüleiste angezeigt werden";
+
+/* ==================== */
+/* MARK: - Metric Card */
+/* ==================== */
+"metric.show_countdown" = "Zeit bis zur nächsten Sitzung anzeigen";
+"metric.countdown_description" = "Verbleibende Zeit (z.B. →2H) im Symbol anzeigen";
+
+/* ==================== */
+/* MARK: - Personal Usage (Additional) */
+/* ==================== */
+"personal.configuration_title" = "Konfiguration";
+"personal.status_connected" = "Verbunden";
+"personal.status_not_connected" = "Nicht Verbunden";
+
+/* ==================== */
+/* MARK: - Language Settings */
+/* ==================== */
+"language.title" = "Sprache";
+"language.subtitle" = "Wählen Sie Ihre bevorzugte Sprache";
+"language.select_language" = "Sprache Auswählen";
+"language.available" = "Verfügbare Sprachen";
+"language.restart_required" = "Neustart Erforderlich";
+"language.restart_message" = "Die App muss neu gestartet werden, damit Sprachänderungen wirksam werden.";
+"language.restart_now" = "Jetzt Neu Starten";
+"language.restart_later" = "Später";
+
+/* ==================== */
+/* MARK: - Common Actions (Additional) */
+/* ==================== */
+"common.create" = "Erstellen";
+"common.rename" = "Umbenennen";
+"common.activate" = "Aktivieren";
+"common.connected" = "Verbunden";
+"common.not_connected" = "Nicht Verbunden";
+"common.back" = "Zurück";
+"common.next" = "Weiter";
+"common.remove" = "Entfernen";
+"common.switch" = "Wechseln";
+
+/* ==================== */
+/* MARK: - Popover/Menu Bar */
+/* ==================== */
+"popover.manage_profiles" = "Profile Verwalten";
+"popover.no_profile" = "Kein Profil";
+"popover.profiles_count" = "%d Profile";
+"popover.profile_count_singular" = "1 Profil";
+
+/* ==================== */
+/* MARK: - Setup Wizard */
+/* ==================== */
+"setup.step.enter_session_key" = "Schlüssel Eingeben";
+"wizard.test_connection" = "Verbindung Testen";
+"wizard.select_org_title" = "Welche Organisation möchten Sie verfolgen?";
+"wizard.select_org_subtitle" = "Wählen Sie die Claude-Organisation für die Nutzungsüberwachung";
+"wizard.config_summary" = "Konfigurationszusammenfassung";
+"wizard.session_key" = "Sitzungsschlüssel";
+"wizard.api_session_key" = "API-Sitzungsschlüssel";
+"wizard.organization" = "Organisation";
+"wizard.organization_id" = "ID: %@";
+"wizard.select_organization" = "Organisation Auswählen";
+"wizard.choose_organization" = "Wählen Sie die zu verfolgende Organisation";
+"wizard.review_config" = "Konfiguration Überprüfen";
+"wizard.confirm_settings" = "Bestätigen Sie Ihre Einstellungen vor dem Speichern";
+"wizard.key_will_update" = "Sitzungsschlüssel wird aktualisiert";
+"wizard.api_key_will_update" = "API-Sitzungsschlüssel wird aktualisiert";
+
+/* ==================== */
+/* MARK: - CLI Account */
+/* ==================== */
+"cli.access_token" = "Zugangstoken";
+"cli.subscription" = "Abonnement";
+"cli.scopes" = "Bereiche";
+"cli.sync_instructions" = "Klicken Sie unten auf 'Von Claude Code Synchronisieren', um Ihre Anmeldedaten zu importieren";
+"cli.about_title" = "Über CLI-Konto-Synchronisation";
+"cli.benefits" = "Vorteile:";
+"cli.tracking_note" = "Hinweis: Die Nutzungsverfolgung verwendet Claude.ai-Anmeldedaten. CLI-Anmeldedaten sind nur zum Kontowechsel.";
+
+/* ==================== */
+/* MARK: - Settings Sections (Titles & Descriptions) */
+/* ==================== */
+"section.credentials" = "ANMELDEDATEN";
+"section.active_profile" = "Aktives Profil";
+"section.settings" = "EINSTELLUNGEN";
+"section.app" = "ANWENDUNG";
+
+"section.claudeai_title" = "Claude.ai";
+"section.claudeai_desc" = "Claude.ai-Anmeldedaten";
+"section.api_console_title" = "API-Konsole";
+"section.api_console_desc" = "API-Konsolen-Anmeldedaten";
+"section.cli_account_title" = "CLI-Konto";
+"section.cli_account_desc" = "CLI-Konto-Synchronisation";
+"section.appearance_title" = "Darstellung";
+"section.appearance_desc" = "Menüleisten-Darstellung";
+"section.general_title" = "Allgemein";
+"section.general_desc" = "Allgemeine Einstellungen";
+"section.manage_profiles_title" = "Profile Verwalten";
+"section.manage_profiles_desc" = "Profile verwalten";
+
+/* ==================== */
+/* MARK: - Creator Info */
+/* ==================== */
+"creator.name" = "Hamed Elfayome";
+"creator.username" = "@hamed-elfayome";
+
+/* ==================== */
+/* MARK: - Wizard Steps & Actions */
+/* ==================== */
+"wizard.enter_key" = "Schlüssel Eingeben";
+"wizard.select_org" = "Org Wählen";
+"wizard.confirm" = "Bestätigen";
+"wizard.testing" = "Teste...";
+"wizard.test_connection" = "Verbindung Testen";
+"wizard.fetching" = "Abrufen...";
+"wizard.fetch_organizations" = "Organisationen Abrufen";
+"wizard.saving" = "Speichere...";
+"wizard.save_configuration" = "Konfiguration Speichern";
+
+/* ==================== */
+/* MARK: - CLI Account Sync */
+/* ==================== */
+"cli.title" = "CLI-Konto";
+"cli.subtitle" = "Synchronisieren Sie Ihr angemeldetes Claude Code-Konto";
+"cli.synced" = "CLI-Konto Synchronisiert";
+"cli.not_synced" = "Nicht Synchronisiert";
+"cli.account_details" = "Kontodetails";
+"cli.credentials_synced" = "Ihre synchronisierten CLI-Anmeldedaten";
+"cli.no_credentials" = "Noch keine Anmeldedaten synchronisiert";
+"cli.resync" = "Neu Synchronisieren";
+"cli.sync_from_code" = "Von Claude Code Synchronisieren";
+"cli.benefit_1" = "Automatischer Wechsel der Claude Code-Anmeldung mit Profilen";
+"cli.benefit_2" = "CLI- und App-Konten synchron halten";
+"cli.benefit_3" = "Automatische Aktualisierung der Anmeldedaten beim Profilwechsel";
+
+/* ==================== */
+/* MARK: - Additional Keys */
+/* ==================== */
+"api.single_organization" = "Einzelne Organisation gefunden und automatisch ausgewählt";
+"api.remove_title" = "Anmeldedaten Entfernen";
+"api.remove_subtitle" = "Ihren API Console-Sitzungsschlüssel dauerhaft aus diesem Profil löschen";
+"claudecode.button_apply" = "Anwenden";
+"claudecode.button_reset" = "Zurücksetzen";
+"error.generic" = "Fehler: %@";
+"personal.button_saving" = "Speichere...";
+"personal.button_setup_wizard" = "Einrichtungsassistent";
+"personal.button_open_claude" = "claude.ai Öffnen";
+"personal.success_key_saved" = "Sitzungsschlüssel erfolgreich gespeichert";
+"personal.remove_title" = "Anmeldedaten Entfernen";
+"personal.remove_subtitle" = "Ihren Claude.ai-Sitzungsschlüssel dauerhaft aus diesem Profil löschen";
+"about.run_setup_wizard" = "Einrichtungsassistent Ausführen";

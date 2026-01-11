@@ -36,6 +36,14 @@ class MenuBarManager: NSObject, ObservableObject {
     private let statusService = ClaudeStatusService()
     private let dataStore = DataStore.shared
     private let networkMonitor = NetworkMonitor.shared
+    private let profileManager = ProfileManager.shared
+    private let autoStartService = AutoStartSessionService.shared
+
+    // Combine cancellables for profile observation
+    private var cancellables = Set<AnyCancellable>()
+
+    // Track if we've handled the first profile switch (to allow returning to initial profile)
+    private var hasHandledFirstProfileSwitch = false
 
     // Observer for refresh interval changes
     private var refreshIntervalObserver: NSKeyValueObservation?
@@ -49,11 +57,8 @@ class MenuBarManager: NSObject, ObservableObject {
     // Observer for icon configuration changes
     private var iconConfigObserver: NSObjectProtocol?
 
-    // Observer for session key updates
-    private var sessionKeyObserver: NSObjectProtocol?
-
-    // Observer for organization changes
-    private var organizationObserver: NSObjectProtocol?
+    // Observer for credential changes (add, remove, update)
+    private var credentialsObserver: NSObjectProtocol?
 
     // MARK: - Image Caching (CPU Optimization)
     private var cachedImage: NSImage?
@@ -65,58 +70,108 @@ class MenuBarManager: NSObject, ObservableObject {
         // Initialize cached appearance to avoid layout recursion
         cachedIsDarkMode = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
 
-        // Setup new multi-metric status bar system
-        let config = dataStore.loadMenuBarIconConfiguration()
+        // Observe profile changes - CRITICAL: Set up before anything else
+        observeProfileChanges()
+
+        // Setup new multi-metric status bar system with active profile's config
+        let config = profileManager.activeProfile?.iconConfig ?? .default
+        let hasUsageCredentials = profileManager.activeProfile?.hasUsageCredentials ?? false
+
+        // If no usage credentials, create empty config to show default logo
+        let displayConfig: MenuBarIconConfiguration
+        if !hasUsageCredentials {
+            displayConfig = MenuBarIconConfiguration(
+                monochromeMode: config.monochromeMode,
+                showIconNames: config.showIconNames,
+                metrics: config.metrics.map { metric in
+                    var updatedMetric = metric
+                    updatedMetric.isEnabled = false
+                    return updatedMetric
+                }
+            )
+        } else {
+            displayConfig = config
+        }
+
         statusBarUIManager = StatusBarUIManager()
         statusBarUIManager?.delegate = self
-        statusBarUIManager?.setup(target: self, action: #selector(togglePopover), config: config)
+        statusBarUIManager?.setup(target: self, action: #selector(togglePopover), config: displayConfig)
 
         // Setup popover
         setupPopover()
 
-        // Load saved data first (provides immediate feedback)
-        if let savedUsage = dataStore.loadUsage() {
-            usage = savedUsage
+        // Load saved data from active profile first (provides immediate feedback)
+        // BUT only if profile has usage credentials - CLI alone can't show usage
+        if let profile = profileManager.activeProfile {
+            if profile.hasUsageCredentials {
+                // Profile has usage credentials - show saved usage data if available
+                if let savedUsage = profile.claudeUsage {
+                    usage = savedUsage
+                }
+                if let savedAPIUsage = profile.apiUsage {
+                    apiUsage = savedAPIUsage
+                }
+            } else {
+                // No usage credentials - clear any old usage data and show default logo
+                usage = .empty
+                apiUsage = nil
+                LoggingService.shared.log("MenuBarManager: Profile has no usage credentials, showing default logo")
+            }
             updateAllStatusBarIcons()
-        }
-        if let savedAPIUsage = dataStore.loadAPIUsage() {
-            apiUsage = savedAPIUsage
         }
 
         // Start network monitoring - fetch data when network is available
         networkMonitor.onNetworkAvailable = { [weak self] in
-            self?.refreshUsage()
+            // Only refresh if we haven't refreshed recently (avoid duplicate on startup)
+            guard let self = self else { return }
+
+            // Skip if profile has no usage credentials (CLI alone can't be used)
+            guard let profile = self.profileManager.activeProfile, profile.hasUsageCredentials else {
+                LoggingService.shared.log("Skipping network-available refresh (no usage credentials)")
+                return
+            }
+
+            let timeSinceLastRefresh = Date().timeIntervalSince(self.lastRefreshTriggerTime)
+            if timeSinceLastRefresh > 2.0 {  // At least 2 seconds since last refresh
+                self.refreshUsage()
+            } else {
+                LoggingService.shared.log("Skipping network-available refresh (too soon after last refresh)")
+            }
         }
         networkMonitor.startMonitoring()
 
         // Initial data fetch (with small delay for launch-at-login scenarios)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            self?.refreshUsage()
+        // Only if profile has usage credentials (not just CLI)
+        if let profile = profileManager.activeProfile, profile.hasUsageCredentials {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.refreshUsage()
+            }
+        } else {
+            LoggingService.shared.log("Skipping initial refresh (no usage credentials)")
         }
 
-        // Start auto-refresh timer
+        // Start auto-refresh timer with active profile's interval
         startAutoRefresh()
 
-        // Observe refresh interval changes
-        observeRefreshIntervalChanges()
+        // Start auto-start session service (5-minute cycle for all profiles)
+        autoStartService.start()
 
         // Observe appearance changes
         observeAppearanceChanges()
-
-        // Observe icon style changes
-        observeIconStyleChanges()
 
         // Observe icon configuration changes
         observeIconConfigChanges()
 
         // Observe session key updates
-        observeSessionKeyUpdates()
+        observeCredentialChanges()
     }
 
     func cleanup() {
         refreshTimer?.invalidate()
         refreshTimer = nil
         networkMonitor.stopMonitoring()
+        autoStartService.stop()
+        cancellables.removeAll()  // Clean up Combine subscriptions
         refreshIntervalObserver?.invalidate()
         refreshIntervalObserver = nil
         appearanceObserver?.invalidate()
@@ -129,6 +184,10 @@ class MenuBarManager: NSObject, ObservableObject {
             NotificationCenter.default.removeObserver(iconConfigObserver)
             self.iconConfigObserver = nil
         }
+        if let credentialsObserver = credentialsObserver {
+            NotificationCenter.default.removeObserver(credentialsObserver)
+            self.credentialsObserver = nil
+        }
         if let monitor = eventMonitor {
             NSEvent.removeMonitor(monitor)
             eventMonitor = nil
@@ -138,6 +197,142 @@ class MenuBarManager: NSObject, ObservableObject {
         statusItem = nil
         statusBarUIManager?.cleanup()
         statusBarUIManager = nil
+    }
+
+    // MARK: - Profile Observation
+
+    private func observeProfileChanges() {
+        // Store the initial profile ID to skip only the very first startup update
+        let initialProfileId = profileManager.activeProfile?.id
+
+        // Observe active profile changes
+        profileManager.$activeProfile
+            .removeDuplicates { oldProfile, newProfile in
+                // Only trigger if the profile ID actually changed
+                let result = oldProfile?.id == newProfile?.id
+                if !result {
+                    LoggingService.shared.log("MenuBarManager: Profile ID changed from \(oldProfile?.id.uuidString ?? "nil") to \(newProfile?.id.uuidString ?? "nil")")
+                }
+                return result
+            }
+            .dropFirst()  // Skip the initial value
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] newProfile in
+                guard let self = self, let profile = newProfile else { return }
+
+                // Skip ONLY if this is the startup profile AND we haven't switched yet
+                if !self.hasHandledFirstProfileSwitch && profile.id == initialProfileId {
+                    LoggingService.shared.log("MenuBarManager: Skipping initial startup profile update to: \(profile.name)")
+                    self.hasHandledFirstProfileSwitch = true
+                    return
+                }
+
+                // Mark that we've handled at least one profile switch
+                self.hasHandledFirstProfileSwitch = true
+
+                Task { @MainActor in
+                    await self.handleProfileSwitch(to: profile)
+                }
+            }
+            .store(in: &cancellables)
+
+        LoggingService.shared.log("MenuBarManager: Observing profile changes (initial: \(initialProfileId?.uuidString ?? "nil"))")
+    }
+
+    private func handleProfileSwitch(to profile: Profile) async {
+        LoggingService.shared.log("MenuBarManager: Handling profile switch to: \(profile.name)")
+
+        // 1. Load saved data from new profile (for immediate display)
+        await MainActor.run {
+            if let savedUsage = profile.claudeUsage {
+                self.usage = savedUsage
+            } else {
+                self.usage = .empty
+            }
+
+            if let savedAPIUsage = profile.apiUsage {
+                self.apiUsage = savedAPIUsage
+            } else {
+                self.apiUsage = nil
+            }
+        }
+
+        // 2. Update refresh interval with profile's setting
+        restartAutoRefreshWithInterval(profile.refreshInterval)
+
+        // 3. Update menu bar configuration
+        updateMenuBarDisplay(with: profile.iconConfig)
+
+        // 4. Recreate popover with new profile data
+        recreatePopover()
+
+        // 5. Trigger immediate refresh ONLY if profile has usage credentials
+        if profile.hasUsageCredentials {
+            self.lastRefreshTriggerTime = Date()
+            refreshUsage()
+        } else {
+            LoggingService.shared.log("MenuBarManager: Skipping refresh for profile without usage credentials")
+        }
+    }
+
+    private func recreatePopover() {
+        // Close existing popover if open
+        if popover?.isShown == true {
+            closePopover()
+        }
+
+        // Recreate popover with fresh content
+        let newPopover = NSPopover()
+        newPopover.contentSize = NSSize(width: 320, height: 600)
+        newPopover.behavior = .semitransient
+        newPopover.animates = true
+        newPopover.delegate = self
+        newPopover.contentViewController = createContentViewController()
+
+        self.popover = newPopover
+
+        LoggingService.shared.log("MenuBarManager: Popover recreated for profile switch")
+    }
+
+    private func updateMenuBarDisplay(with config: MenuBarIconConfiguration) {
+        // Check if active profile has usage credentials (not just CLI)
+        let hasUsageCredentials = profileManager.activeProfile?.hasUsageCredentials ?? false
+
+        // If no usage credentials, use an empty config (will show default logo)
+        let displayConfig: MenuBarIconConfiguration
+        if !hasUsageCredentials {
+            // Create config with no enabled metrics (will trigger default logo)
+            displayConfig = MenuBarIconConfiguration(
+                monochromeMode: config.monochromeMode,
+                showIconNames: config.showIconNames,
+                metrics: config.metrics.map { metric in
+                    var updatedMetric = metric
+                    updatedMetric.isEnabled = false
+                    return updatedMetric
+                }
+            )
+        } else {
+            displayConfig = config
+        }
+
+        statusBarUIManager?.updateConfiguration(
+            target: self,
+            action: #selector(togglePopover),
+            config: displayConfig
+        )
+
+        updateAllStatusBarIcons()
+    }
+
+    private func restartAutoRefreshWithInterval(_ interval: TimeInterval) {
+        refreshTimer?.invalidate()
+        refreshTimer = nil
+
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+            self?.refreshUsage()
+        }
+
+        LoggingService.shared.log("Updated refresh interval to \(interval)s")
     }
 
     private func setupPopover() {
@@ -256,8 +451,7 @@ class MenuBarManager: NSObject, ObservableObject {
     private func updateAllStatusBarIcons() {
         statusBarUIManager?.updateAllButtons(
             usage: usage,
-            apiUsage: apiUsage,
-            manager: self
+            apiUsage: apiUsage
         )
     }
 
@@ -266,8 +460,7 @@ class MenuBarManager: NSObject, ObservableObject {
         statusBarUIManager?.updateButton(
             for: metricType,
             usage: usage,
-            apiUsage: apiUsage,
-            manager: self
+            apiUsage: apiUsage
         )
     }
 
@@ -281,10 +474,11 @@ class MenuBarManager: NSObject, ObservableObject {
     // MARK: - Icon Style: Battery (Classic)
 
     private func startAutoRefresh() {
-        let interval = dataStore.loadRefreshInterval()
+        let interval = profileManager.activeProfile?.refreshInterval ?? 30.0
         refreshTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             self?.refreshUsage()
         }
+        LoggingService.shared.log("Started auto-refresh with interval: \(interval)s")
     }
 
     private func restartAutoRefresh() {
@@ -327,9 +521,9 @@ class MenuBarManager: NSObject, ObservableObject {
     }
 
     private func observeIconStyleChanges() {
-        // Observe icon style changes from settings
+        // Observe icon style changes from settings (now consolidated with menuBarIconConfigChanged)
         iconStyleObserver = NotificationCenter.default.addObserver(
-            forName: .menuBarIconStyleChanged,
+            forName: .menuBarIconConfigChanged,
             object: nil,
             queue: .main
         ) { [weak self] _ in
@@ -340,37 +534,37 @@ class MenuBarManager: NSObject, ObservableObject {
         }
     }
 
-    private var lastKnownConfig: MenuBarIconConfiguration?
-
-    private func observeSessionKeyUpdates() {
-        // Observe session key updates to trigger immediate refresh
-        sessionKeyObserver = NotificationCenter.default.addObserver(
-            forName: .sessionKeyUpdated,
+    private func observeCredentialChanges() {
+        // Observe credential changes (add, remove, or update)
+        credentialsObserver = NotificationCenter.default.addObserver(
+            forName: .credentialsChanged,
             object: nil,
             queue: .main
         ) { [weak self] _ in
             guard let self = self else { return }
-            LoggingService.shared.logInfo("Session key updated - triggering immediate refresh")
 
-            // Mark this as user-triggered
-            self.lastRefreshTriggerTime = Date()
+            Task { @MainActor in
+                // Check if active profile has usage credentials
+                guard let profile = self.profileManager.activeProfile, profile.hasUsageCredentials else {
+                    LoggingService.shared.logInfo("Credentials changed but no usage credentials - showing default logo")
 
-            self.refreshUsage()
-        }
+                    // Reconfigure menu bar to show default logo
+                    let config = self.profileManager.activeProfile?.iconConfig ?? .default
+                    self.updateMenuBarDisplay(with: config)
+                    return
+                }
 
-        // Observe organization changes separately
-        organizationObserver = NotificationCenter.default.addObserver(
-            forName: .organizationChanged,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            guard let self = self else { return }
-            LoggingService.shared.logInfo("Organization changed - triggering refresh")
+                LoggingService.shared.logInfo("Credentials changed - triggering immediate refresh")
 
-            // Mark this as user-triggered
-            self.lastRefreshTriggerTime = Date()
+                // Reconfigure menu bar to show metrics (in case we were showing default logo)
+                let config = profile.iconConfig
+                self.updateMenuBarDisplay(with: config)
 
-            self.refreshUsage()
+                // Mark this as user-triggered
+                self.lastRefreshTriggerTime = Date()
+
+                self.refreshUsage()
+            }
         }
     }
 
@@ -383,34 +577,38 @@ class MenuBarManager: NSObject, ObservableObject {
         ) { [weak self] _ in
             guard let self = self else { return }
 
-            // Reload configuration
-            let newConfig = self.dataStore.loadMenuBarIconConfiguration()
+            // Reload configuration from active profile (already on main queue)
+            Task { @MainActor in
+                let newConfig = self.profileManager.activeProfile?.iconConfig ?? .default
 
-            // Check if enabled metrics actually changed
-            let oldEnabledMetrics = Set(self.lastKnownConfig?.enabledMetrics.map { $0.metricType } ?? [])
-            let newEnabledMetrics = Set(newConfig.enabledMetrics.map { $0.metricType })
-
-            if oldEnabledMetrics != newEnabledMetrics {
-                // Metrics changed - recreate status bar items
-                self.statusBarUIManager?.updateConfiguration(
-                    target: self,
-                    action: #selector(self.togglePopover),
-                    config: newConfig
-                )
+                // Always use updateMenuBarDisplay which handles credential checks
+                // and will do incremental updates (once implemented)
+                self.updateMenuBarDisplay(with: newConfig)
             }
-            // If only styling changed, skip status bar recreation
-
-            // Always update the icons (styling might have changed)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                self.updateAllStatusBarIcons()
-            }
-
-            // Save current config for next comparison
-            self.lastKnownConfig = newConfig
         }
     }
 
     func refreshUsage() {
+        // Check if active profile has any credentials before attempting refresh
+        guard let profile = profileManager.activeProfile else {
+            LoggingService.shared.log("MenuBarManager.refreshUsage: No active profile")
+            return
+        }
+
+        // Detailed logging
+        LoggingService.shared.log("MenuBarManager.refreshUsage called:")
+        LoggingService.shared.log("  - Profile: '\(profile.name)'")
+        LoggingService.shared.log("  - hasUsageCredentials: \(profile.hasUsageCredentials)")
+
+        // Check for usage credentials (Claude.ai or API Console, not just CLI)
+        guard profile.hasUsageCredentials else {
+            LoggingService.shared.log("MenuBarManager: Skipping refresh - no usage credentials")
+            // Update icons to show default logo if needed
+            updateAllStatusBarIcons()
+            return
+        }
+
+        LoggingService.shared.log("MenuBarManager: Proceeding with refresh")
         Task {
             // Set loading state (keep existing data visible during refresh)
             await MainActor.run {
@@ -429,13 +627,23 @@ class MenuBarManager: NSObject, ObservableObject {
 
                 await MainActor.run {
                     self.usage = newUsage
-                    dataStore.saveUsage(newUsage)
+
+                    // Save to active profile instead of global DataStore
+                    if let profileId = self.profileManager.activeProfile?.id {
+                        self.profileManager.saveClaudeUsage(newUsage, for: profileId)
+                    }
 
                     // Update all menu bar icons
                     self.updateAllStatusBarIcons()
 
-                    // Check if we should send notifications
-                    NotificationManager.shared.checkAndNotify(usage: newUsage)
+                    // Check if we should send notifications (using active profile's settings)
+                    if let profile = self.profileManager.activeProfile {
+                        NotificationManager.shared.checkAndNotify(
+                            usage: newUsage,
+                            profileName: profile.name,
+                            settings: profile.notificationSettings
+                        )
+                    }
                 }
 
                 // Record success for circuit breaker
@@ -457,8 +665,8 @@ class MenuBarManager: NSObject, ObservableObject {
                     if abs(self.lastRefreshTriggerTime.timeIntervalSinceNow) < 5 {
                         ErrorPresenter.shared.showAlert(for: appError)
                     } else {
-                        // Background refresh - just log to console
-                        print("⚠️ [\(appError.code.rawValue)] Failed to fetch usage: \(appError.message)")
+                        // Background refresh - just log
+                        LoggingService.shared.logError("MenuBarManager: Failed to fetch usage - [\(appError.code.rawValue)] \(appError.message)")
                     }
                 }
             }
@@ -475,25 +683,29 @@ class MenuBarManager: NSObject, ObservableObject {
                 ErrorLogger.shared.log(appError, severity: .info)
 
                 // Don't show error for status - it's not critical
-                print("ℹ️ [\(appError.code.rawValue)] Failed to fetch status: \(appError.message)")
+                LoggingService.shared.log("MenuBarManager: Failed to fetch status - [\(appError.code.rawValue)] \(appError.message)")
             }
 
-            // Fetch API usage if enabled
-            if dataStore.loadAPITrackingEnabled(),
-               let apiSessionKey = dataStore.loadAPISessionKey(),
-               let orgId = dataStore.loadAPIOrganizationId() {
+            // Fetch API usage if enabled (using active profile's API credentials)
+            if let profile = await MainActor.run(body: { self.profileManager.activeProfile }),
+               let apiSessionKey = profile.apiSessionKey,
+               let orgId = profile.apiOrganizationId {
                 do {
                     let newAPIUsage = try await apiService.fetchAPIUsageData(organizationId: orgId, apiSessionKey: apiSessionKey)
                     await MainActor.run {
                         self.apiUsage = newAPIUsage
-                        dataStore.saveAPIUsage(newAPIUsage)
+
+                        // Save to active profile instead of global DataStore
+                        if let profileId = self.profileManager.activeProfile?.id {
+                            self.profileManager.saveAPIUsage(newAPIUsage, for: profileId)
+                        }
                     }
                 } catch {
                     // Convert to AppError and log
                     let appError = AppError.wrap(error)
                     ErrorLogger.shared.log(appError, severity: .info)
 
-                    print("ℹ️ [\(appError.code.rawValue)] Failed to fetch API usage: \(appError.message)")
+                    LoggingService.shared.log("MenuBarManager: Failed to fetch API usage - [\(appError.code.rawValue)] \(appError.message)")
                 }
             }
 

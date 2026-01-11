@@ -12,7 +12,6 @@ struct MetricIconCard: View {
     let metricType: MenuBarMetricType
     @Binding var config: MetricIconConfig
     let onConfigChanged: () -> Void
-    var isLastEnabled: Bool = false  // True if this is the only enabled metric
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
@@ -43,22 +42,6 @@ struct MetricIconCard: View {
                 ))
                 .toggleStyle(.switch)
                 .labelsHidden()
-                .disabled(isLastEnabled && config.isEnabled)  // Can't disable if it's the last one
-                .opacity(isLastEnabled && config.isEnabled ? 0.6 : 1.0)
-            }
-
-            // Show info message if this is the last enabled metric
-            if isLastEnabled && config.isEnabled {
-                HStack(alignment: .top, spacing: 6) {
-                    Image(systemName: "info.circle.fill")
-                        .font(.system(size: 10))
-                        .foregroundColor(SettingsColors.info)
-
-                    Text("ui.at_least_one_metric".localized)
-                        .font(.system(size: 10))
-                        .foregroundColor(.secondary)
-                }
-                .padding(.horizontal, Spacing.xs)
             }
 
             if config.isEnabled {
@@ -132,9 +115,9 @@ private struct SessionDisplayOptions: View {
                 }
             )) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Show time until next session")
+                    Text("metric.show_countdown".localized)
                         .font(.system(size: 11, weight: .medium))
-                    Text("Display time remaining (e.g., →2H) in the icon")
+                    Text("metric.countdown_description".localized)
                         .font(.system(size: 10))
                         .foregroundColor(.secondary)
                 }
