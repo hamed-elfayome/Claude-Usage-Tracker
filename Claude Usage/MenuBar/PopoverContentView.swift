@@ -479,8 +479,8 @@ struct SmartUsageDashboard: View {
 
                 if usage.sonnetWeeklyTokensUsed > 0 {
                     SmartUsageCard(
-                        title: "menubar.sonnet_usage".localized,
-                        subtitle: "menubar.weekly".localized,
+                        title: "menubar.weekly".localized,
+                        subtitle: "menubar.sonnet_usage".localized,
                         percentage: usage.sonnetWeeklyPercentage,
                         resetTime: nil,
                         isPrimary: false
