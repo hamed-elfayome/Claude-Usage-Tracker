@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Cocoa
 
 /// Background service that monitors all profiles and auto-starts sessions when they reset
 @MainActor
@@ -17,6 +18,13 @@ final class AutoStartSessionService {
 
     // Track previous session percentages per profile to detect resets
     private var previousSessionPercentages: [UUID: Double] = [:]
+
+    // Track last check time to prevent duplicate checks on wake
+    private var lastCheckTime: Date = .distantPast
+
+    // Observers for sleep/wake notifications
+    private var wakeObserver: NSObjectProtocol?
+    private var sleepObserver: NSObjectProtocol?
 
     private let apiService: ClaudeAPIService
     private let profileManager: ProfileManager
@@ -31,47 +39,99 @@ final class AutoStartSessionService {
     // MARK: - Lifecycle
 
     func start() {
-        // Start 5-minute check timer
-        checkTimer = Timer.scheduledTimer(
+        // Start 5-minute check timer with tolerance for energy efficiency
+        let timer = Timer.scheduledTimer(
             withTimeInterval: 300, // 5 minutes
             repeats: true
         ) { [weak self] _ in
             Task { @MainActor [weak self] in
                 guard let self = self else { return }
-                self.checkAllProfiles()
+                await self.performCheckIfNeeded(source: "timer")
+            }
+        }
+        timer.tolerance = 30 // Allow up to 30 seconds of drift for energy efficiency
+        checkTimer = timer
+
+        // Register for wake/sleep notifications
+        let workspace = NSWorkspace.shared
+
+        wakeObserver = workspace.notificationCenter.addObserver(
+            forName: NSWorkspace.didWakeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
+                LoggingService.shared.logInfo("Mac woke from sleep - checking for session resets")
+                await self.performCheckIfNeeded(source: "wake")
             }
         }
 
-        LoggingService.shared.logInfo("AutoStartSessionService started (5-minute cycle)")
+        sleepObserver = workspace.notificationCenter.addObserver(
+            forName: NSWorkspace.willSleepNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            LoggingService.shared.logDebug("Mac going to sleep")
+        }
+
+        LoggingService.shared.logInfo("AutoStartSessionService started (5-minute cycle + wake detection)")
+
+        // Perform immediate initial check to populate state
+        Task { @MainActor in
+            await self.performCheckIfNeeded(source: "startup")
+        }
     }
 
     func stop() {
         checkTimer?.invalidate()
         checkTimer = nil
         previousSessionPercentages.removeAll()
+
+        // Remove observers
+        if let wakeObserver = wakeObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(wakeObserver)
+            self.wakeObserver = nil
+        }
+        if let sleepObserver = sleepObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(sleepObserver)
+            self.sleepObserver = nil
+        }
+
         LoggingService.shared.logInfo("AutoStartSessionService stopped")
     }
 
     // MARK: - Profile Checking
 
-    private func checkAllProfiles() {
-        Task {
-            LoggingService.shared.logDebug("AutoStartSessionService: Checking all profiles for auto-start")
+    /// Performs check with debouncing to prevent duplicate checks
+    private func performCheckIfNeeded(source: String) async {
+        // Debounce: Don't check if we checked less than 10 seconds ago
+        let timeSinceLastCheck = Date().timeIntervalSince(lastCheckTime)
+        if timeSinceLastCheck < 10 {
+            LoggingService.shared.logDebug("Skipping check from \(source) - checked \(Int(timeSinceLastCheck))s ago")
+            return
+        }
 
-            // Get all profiles with auto-start enabled
-            let profilesWithAutoStart = profileManager.profiles.filter { $0.autoStartSessionEnabled }
+        lastCheckTime = Date()
+        await checkAllProfiles(source: source)
+    }
 
-            guard !profilesWithAutoStart.isEmpty else {
-                LoggingService.shared.logDebug("No profiles with auto-start enabled")
-                return
-            }
+    private func checkAllProfiles(source: String) async {
+        LoggingService.shared.logDebug("AutoStartSessionService: Checking all profiles for auto-start (source: \(source))")
 
-            LoggingService.shared.logInfo("Checking \(profilesWithAutoStart.count) profile(s) with auto-start enabled")
+        // Get all profiles with auto-start enabled
+        let profilesWithAutoStart = profileManager.profiles.filter { $0.autoStartSessionEnabled }
 
-            // Check each profile
-            for profile in profilesWithAutoStart {
-                await checkProfile(profile)
-            }
+        guard !profilesWithAutoStart.isEmpty else {
+            LoggingService.shared.logDebug("No profiles with auto-start enabled")
+            return
+        }
+
+        LoggingService.shared.logInfo("Checking \(profilesWithAutoStart.count) profile(s) with auto-start enabled")
+
+        // Check each profile
+        for profile in profilesWithAutoStart {
+            await checkProfile(profile)
         }
     }
 
