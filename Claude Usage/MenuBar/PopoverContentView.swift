@@ -460,8 +460,8 @@ struct SmartUsageDashboard: View {
             // Secondary Usage Cards
             HStack(spacing: 12) {
                 SmartUsageCard(
-                    title: "menubar.weekly_usage".localized,
-                    subtitle: "menubar.all_models".localized,
+                    title: "menubar.all_models".localized,
+                    subtitle: "menubar.weekly".localized,
                     percentage: usage.weeklyPercentage,
                     resetTime: usage.weeklyResetTime,
                     isPrimary: false
@@ -473,6 +473,16 @@ struct SmartUsageDashboard: View {
                         subtitle: "menubar.weekly".localized,
                         percentage: usage.opusWeeklyPercentage,
                         resetTime: nil,
+                        isPrimary: false
+                    )
+                }
+
+                if usage.sonnetWeeklyTokensUsed > 0 {
+                    SmartUsageCard(
+                        title: "menubar.sonnet_usage".localized,
+                        subtitle: "menubar.weekly".localized,
+                        percentage: usage.sonnetWeeklyPercentage,
+                        resetTime: usage.sonnetWeeklyResetTime,
                         isPrimary: false
                     )
                 }

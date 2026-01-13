@@ -58,6 +58,7 @@
 "menubar.session_usage" = "Uso da Sessão";
 "menubar.weekly_usage" = "Semanal";
 "menubar.opus_usage" = "Opus";
+"menubar.sonnet_usage" = "Sonnet";
 "menubar.extra_usage" = "Uso Extra";
 "menubar.api_credits" = "Créditos da API";
 "menubar.5_hour_window" = "Janela móvel de 5 horas";

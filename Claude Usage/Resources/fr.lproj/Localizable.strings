@@ -60,6 +60,7 @@
 "menubar.session_usage" = "Utilisation de Session";
 "menubar.weekly_usage" = "Hebdomadaire";
 "menubar.opus_usage" = "Opus";
+"menubar.sonnet_usage" = "Sonnet";
 "menubar.extra_usage" = "Utilisation Supplémentaire";
 "menubar.api_credits" = "Crédits API";
 "menubar.5_hour_window" = "Fenêtre glissante de 5 heures";
