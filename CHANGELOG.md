@@ -5,6 +5,25 @@ All notable changes to Claude Usage Tracker will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.1] - 2026-01-14
+
+### Added
+- **Sonnet Weekly Usage Tracking**: Display Claude Sonnet 3.5 specific weekly usage alongside total weekly usage
+  - New `sonnetWeeklyTokensUsed` and `sonnetWeeklyPercentage` fields in ClaudeUsage model
+  - Added to popover display with localization support in all 8 languages
+  - Parsed from `seven_day_sonnet_3_5` API field
+
+### Fixed
+- **Auto-Start Session Reliability**: Fixed auto-start sessions not working after Mac sleep/wake
+  - Added `NSWorkspace.didWakeNotification` observer to detect Mac wake events
+  - Performs immediate check when Mac wakes from sleep to catch session resets that occurred during sleep
+  - Added immediate initial check on service startup to populate state correctly
+  - Implemented debouncing (10-second window) to prevent duplicate checks
+  - Set timer tolerance to 30 seconds for energy efficiency
+  - Sessions now reliably auto-start even after extended sleep periods
+
+---
+
 ## [2.2.0] - 2026-01-12
 
 ### Major Release - Multi-Profile Management System 
