@@ -18,6 +18,10 @@ struct ClaudeUsage: Codable, Equatable {
     var opusWeeklyTokensUsed: Int
     var opusWeeklyPercentage: Double
 
+    // Weekly data (Sonnet only)
+    var sonnetWeeklyTokensUsed: Int
+    var sonnetWeeklyPercentage: Double
+
     // Extra usage data
     var costUsed: Double?
     var costLimit: Double?
@@ -52,6 +56,8 @@ struct ClaudeUsage: Codable, Equatable {
             weeklyResetTime: Date().nextMonday1259pm(),
             opusWeeklyTokensUsed: 0,
             opusWeeklyPercentage: 0,
+            sonnetWeeklyTokensUsed: 0,
+            sonnetWeeklyPercentage: 0,
             costUsed: nil,
             costLimit: nil,
             costCurrency: nil,

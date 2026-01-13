@@ -206,9 +206,18 @@ final class AutoStartSessionService {
             }
         }
 
+        // Extract Sonnet weekly usage (seven_day_sonnet)
+        var sonnetPercentage = 0.0
+        if let sevenDaySonnet = json["seven_day_sonnet"] as? [String: Any] {
+            if let utilization = sevenDaySonnet["utilization"] {
+                sonnetPercentage = parseUtilization(utilization)
+            }
+        }
+
         let weeklyLimit = Constants.weeklyLimit
         let weeklyTokens = Int(Double(weeklyLimit) * (weeklyPercentage / 100.0))
         let opusTokens = Int(Double(weeklyLimit) * (opusPercentage / 100.0))
+        let sonnetTokens = Int(Double(weeklyLimit) * (sonnetPercentage / 100.0))
 
         return ClaudeUsage(
             sessionTokensUsed: 0,
@@ -221,6 +230,8 @@ final class AutoStartSessionService {
             weeklyResetTime: weeklyResetTime,
             opusWeeklyTokensUsed: opusTokens,
             opusWeeklyPercentage: opusPercentage,
+            sonnetWeeklyTokensUsed: sonnetTokens,
+            sonnetWeeklyPercentage: sonnetPercentage,
             costUsed: nil,
             costLimit: nil,
             costCurrency: nil,

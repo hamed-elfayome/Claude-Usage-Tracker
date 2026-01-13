@@ -60,6 +60,7 @@
 "menubar.session_usage" = "セッション使用";
 "menubar.weekly_usage" = "週次";
 "menubar.opus_usage" = "Opus";
+"menubar.sonnet_usage" = "Sonnet";
 "menubar.extra_usage" = "追加使用";
 "menubar.api_credits" = "APIクレジット";
 "menubar.5_hour_window" = "5時間ローリングウィンドウ";

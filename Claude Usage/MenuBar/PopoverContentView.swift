@@ -476,6 +476,16 @@ struct SmartUsageDashboard: View {
                         isPrimary: false
                     )
                 }
+
+                if usage.sonnetWeeklyTokensUsed > 0 {
+                    SmartUsageCard(
+                        title: "menubar.sonnet_usage".localized,
+                        subtitle: "menubar.weekly".localized,
+                        percentage: usage.sonnetWeeklyPercentage,
+                        resetTime: nil,
+                        isPrimary: false
+                    )
+                }
             }
 
             if let used = usage.costUsed, let limit = usage.costLimit, let currency = usage.costCurrency, limit > 0 {

@@ -442,6 +442,14 @@ class ClaudeAPIService: APIServiceProtocol {
                 }
             }
 
+            // Extract Sonnet weekly usage (seven_day_sonnet)
+            var sonnetPercentage = 0.0
+            if let sevenDaySonnet = json["seven_day_sonnet"] as? [String: Any] {
+                if let utilization = sevenDaySonnet["utilization"] {
+                    sonnetPercentage = parseUtilization(utilization)
+                }
+            }
+
             // We don't know user's plan, so we use 0 for limits we can't determine
             let weeklyLimit = Constants.weeklyLimit
 
@@ -450,6 +458,7 @@ class ClaudeAPIService: APIServiceProtocol {
             let sessionLimit = 0   // Unknown without plan
             let weeklyTokens = Int(Double(weeklyLimit) * (weeklyPercentage / 100.0))
             let opusTokens = Int(Double(weeklyLimit) * (opusPercentage / 100.0))
+            let sonnetTokens = Int(Double(weeklyLimit) * (sonnetPercentage / 100.0))
 
             let usage = ClaudeUsage(
                 sessionTokensUsed: sessionTokens,
@@ -462,6 +471,8 @@ class ClaudeAPIService: APIServiceProtocol {
                 weeklyResetTime: weeklyResetTime,
                 opusWeeklyTokensUsed: opusTokens,
                 opusWeeklyPercentage: opusPercentage,
+                sonnetWeeklyTokensUsed: sonnetTokens,
+                sonnetWeeklyPercentage: sonnetPercentage,
                 costUsed: nil,
                 costLimit: nil,
                 costCurrency: nil,

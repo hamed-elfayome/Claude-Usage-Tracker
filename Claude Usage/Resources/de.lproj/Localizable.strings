@@ -60,6 +60,7 @@
 "menubar.session_usage" = "Sitzungsnutzung";
 "menubar.weekly_usage" = "Wöchentlich";
 "menubar.opus_usage" = "Opus";
+"menubar.sonnet_usage" = "Sonnet";
 "menubar.extra_usage" = "Zusätzliche Nutzung";
 "menubar.api_credits" = "API-Guthaben";
 "menubar.5_hour_window" = "5-Stunden-Gleitfenster";
