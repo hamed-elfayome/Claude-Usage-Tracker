@@ -208,9 +208,15 @@ final class AutoStartSessionService {
 
         // Extract Sonnet weekly usage (seven_day_sonnet)
         var sonnetPercentage = 0.0
+        var sonnetResetTime: Date? = nil
         if let sevenDaySonnet = json["seven_day_sonnet"] as? [String: Any] {
             if let utilization = sevenDaySonnet["utilization"] {
                 sonnetPercentage = parseUtilization(utilization)
+            }
+            if let resetsAt = sevenDaySonnet["resets_at"] as? String {
+                let formatter = ISO8601DateFormatter()
+                formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                sonnetResetTime = formatter.date(from: resetsAt)
             }
         }
 
@@ -232,6 +238,7 @@ final class AutoStartSessionService {
             opusWeeklyPercentage: opusPercentage,
             sonnetWeeklyTokensUsed: sonnetTokens,
             sonnetWeeklyPercentage: sonnetPercentage,
+            sonnetWeeklyResetTime: sonnetResetTime,
             costUsed: nil,
             costLimit: nil,
             costCurrency: nil,

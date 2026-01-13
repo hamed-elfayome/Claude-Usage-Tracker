@@ -482,7 +482,7 @@ struct SmartUsageDashboard: View {
                         title: "menubar.weekly".localized,
                         subtitle: "menubar.sonnet_usage".localized,
                         percentage: usage.sonnetWeeklyPercentage,
-                        resetTime: nil,
+                        resetTime: usage.sonnetWeeklyResetTime,
                         isPrimary: false
                     )
                 }
