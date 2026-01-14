@@ -16,9 +16,6 @@ final class AutoStartSessionService {
     // Timer for 5-minute check cycle
     private var checkTimer: Timer?
 
-    // Track previous session percentages per profile to detect resets
-    private var previousSessionPercentages: [UUID: Double] = [:]
-
     // Track last check time to prevent duplicate checks on wake
     private var lastCheckTime: Date = .distantPast
 
@@ -86,7 +83,6 @@ final class AutoStartSessionService {
     func stop() {
         checkTimer?.invalidate()
         checkTimer = nil
-        previousSessionPercentages.removeAll()
 
         // Remove observers
         if let wakeObserver = wakeObserver {
@@ -146,25 +142,17 @@ final class AutoStartSessionService {
             // Fetch current usage for this profile
             let usage = try await fetchUsageForProfile(profile)
 
-            // Get previous percentage (0.0 if first check)
-            let previousPercentage = previousSessionPercentages[profile.id] ?? 0.0
             let currentPercentage = usage.sessionPercentage
 
-            // Detect session reset: went from >0% to 0%
-            let didReset = previousPercentage > 0.0 && currentPercentage == 0.0
-
-            // Update stored percentage for next check
-            await MainActor.run {
-                previousSessionPercentages[profile.id] = currentPercentage
-            }
-
-            if didReset {
-                LoggingService.shared.logInfo("Session reset detected for profile '\(profile.name)' - triggering auto-start")
+            // Simple logic (like v1.1.0): If session is at 0%, start it
+            // The initialization message will bring usage above 0%, preventing repeated starts
+            if currentPercentage == 0.0 {
+                LoggingService.shared.logInfo("Session at 0% for profile '\(profile.name)' - triggering auto-start")
 
                 // Auto-start the session
                 await autoStartSession(for: profile)
             } else {
-                LoggingService.shared.logDebug("Profile '\(profile.name)': session at \(currentPercentage)% (no reset)")
+                LoggingService.shared.logDebug("Profile '\(profile.name)': session at \(currentPercentage)% (active)")
             }
 
         } catch {

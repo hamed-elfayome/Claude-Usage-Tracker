@@ -21,11 +21,11 @@ class ProfileStore {
     }
 
     init() {
-        if let groupDefaults = UserDefaults(suiteName: Constants.appGroupIdentifier) {
-            self.defaults = groupDefaults
-        } else {
-            self.defaults = UserDefaults.standard
+        guard let groupDefaults = UserDefaults(suiteName: Constants.appGroupIdentifier) else {
+            fatalError("App Group '\(Constants.appGroupIdentifier)' not accessible. Check entitlements file includes com.apple.security.application-groups")
         }
+        self.defaults = groupDefaults
+        LoggingService.shared.log("ProfileStore: Using App Group storage")
     }
 
     // MARK: - Profile Management
