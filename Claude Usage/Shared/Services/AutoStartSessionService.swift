@@ -161,17 +161,11 @@ final class AutoStartSessionService {
     }
 
     private func fetchUsageForProfile(_ profile: Profile) async throws -> ClaudeUsage {
-        guard let sessionKey = profile.claudeSessionKey,
-              let orgId = profile.organizationId else {
-            throw AppError(
-                code: .sessionKeyNotFound,
-                message: "Missing credentials for profile '\(profile.name)'",
-                isRecoverable: false
-            )
-        }
+        // Use ClaudeAPIService which now supports OAuth fallback
+        let apiService = ClaudeAPIService()
 
-        // Fetch usage using profile's credentials
-        let usage = try await fetchUsageData(sessionKey: sessionKey, orgId: orgId)
+        // Fetch usage - will automatically use fallback if needed
+        let usage = try await apiService.fetchUsageData()
 
         // Save usage to profile
         await MainActor.run {

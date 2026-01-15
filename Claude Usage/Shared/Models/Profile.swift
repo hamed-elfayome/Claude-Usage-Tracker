@@ -97,9 +97,16 @@ struct Profile: Codable, Identifiable, Equatable {
         apiSessionKey != nil && apiOrganizationId != nil
     }
 
-    /// True if profile has credentials that can fetch usage data (Claude.ai or API Console, NOT just CLI)
+    /// True if profile has credentials that can fetch usage data (Claude.ai, CLI OAuth, or API Console)
     var hasUsageCredentials: Bool {
-        hasClaudeAI || hasAPIConsole
+        hasClaudeAI || hasAPIConsole || hasValidCLIOAuth
+    }
+
+    /// True if profile has CLI OAuth credentials that are not expired
+    var hasValidCLIOAuth: Bool {
+        guard let cliJSON = cliCredentialsJSON else { return false }
+        // Check if not expired
+        return !ClaudeCodeSyncService.shared.isTokenExpired(cliJSON)
     }
 
     var hasAnyCredentials: Bool {

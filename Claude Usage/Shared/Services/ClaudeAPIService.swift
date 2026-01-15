@@ -2,6 +2,15 @@ import Foundation
 
 /// Service for fetching usage data directly from Claude's API
 class ClaudeAPIService: APIServiceProtocol {
+    // MARK: - Types
+
+    /// Authentication method for API requests
+    private enum AuthenticationType {
+        case claudeAISession(String)      // Cookie: sessionKey=...
+        case cliOAuth(String)              // Authorization: Bearer ... (with anthropic-beta header)
+        case consoleAPISession(String)     // Cookie: sessionKey=... (different endpoint)
+    }
+
     // MARK: - Properties
 
     private let sessionKeyPath: URL
@@ -59,6 +68,67 @@ class ClaudeAPIService: APIServiceProtocol {
             ErrorLogger.shared.log(appError)
             throw appError
         }
+    }
+
+    /// Gets the best available authentication method with fallback support
+    /// Priority: 1) claude.ai session → 2) CLI OAuth
+    /// Note: Console API session is NOT used as fallback (it only provides billing data, not usage)
+    private func getAuthentication() throws -> AuthenticationType {
+        guard let activeProfile = ProfileManager.shared.activeProfile else {
+            LoggingService.shared.logError("ClaudeAPIService.getAuthentication: No active profile")
+            throw AppError.sessionKeyNotFound()
+        }
+
+        // Try claude.ai session key first
+        if let sessionKey = activeProfile.claudeSessionKey {
+            do {
+                let validatedKey = try sessionKeyValidator.validate(sessionKey)
+                LoggingService.shared.log("ClaudeAPIService: Using claude.ai session key")
+                return .claudeAISession(validatedKey)
+            } catch {
+                LoggingService.shared.logError("ClaudeAPIService: claude.ai session key validation failed: \(error.localizedDescription)")
+            }
+        }
+
+        // Fall back to CLI OAuth token if available and not expired
+        if let cliJSON = activeProfile.cliCredentialsJSON {
+            if !ClaudeCodeSyncService.shared.isTokenExpired(cliJSON),
+               let accessToken = ClaudeCodeSyncService.shared.extractAccessToken(from: cliJSON) {
+                LoggingService.shared.log("ClaudeAPIService: Falling back to CLI OAuth token")
+                return .cliOAuth(accessToken)
+            } else {
+                LoggingService.shared.log("ClaudeAPIService: CLI OAuth token is expired or invalid")
+            }
+        }
+
+        LoggingService.shared.logError("ClaudeAPIService.getAuthentication: No valid credentials for usage data")
+        throw AppError.sessionKeyNotFound()
+    }
+
+    /// Builds an authenticated request with the appropriate headers for the auth type
+    private func buildAuthenticatedRequest(url: URL, auth: AuthenticationType) -> URLRequest {
+        var request = URLRequest(url: url)
+
+        switch auth {
+        case .claudeAISession(let sessionKey):
+            // Existing claude.ai authentication
+            request.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
+            request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        case .cliOAuth(let accessToken):
+            // CLI OAuth authentication (requires specific headers)
+            request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.setValue("claude-code/2.1.5", forHTTPHeaderField: "User-Agent")
+            request.setValue("oauth-2025-04-20", forHTTPHeaderField: "anthropic-beta")
+
+        case .consoleAPISession(let apiKey):
+            // Console API authentication
+            request.setValue("sessionKey=\(apiKey)", forHTTPHeaderField: "Cookie")
+            request.setValue("application/json", forHTTPHeaderField: "Accept")
+        }
+
+        return request
     }
 
     /// Saves a session key with smart org ID preservation
@@ -278,30 +348,82 @@ class ClaudeAPIService: APIServiceProtocol {
 
     /// Fetches real usage data from Claude's API
     func fetchUsageData() async throws -> ClaudeUsage {
-        let sessionKey = try readSessionKey()
+        let auth = try getAuthentication()
 
-        // First, get organization ID (pass session key to avoid re-reading from Keychain)
-        let orgId = try await fetchOrganizationId(sessionKey: sessionKey)
+        switch auth {
+        case .claudeAISession(let sessionKey):
+            // Use existing claude.ai flow
+            let orgId = try await fetchOrganizationId(sessionKey: sessionKey)
 
-        async let usageDataTask = performRequest(endpoint: "/organizations/\(orgId)/usage", sessionKey: sessionKey)
+            async let usageDataTask = performRequest(endpoint: "/organizations/\(orgId)/usage", sessionKey: sessionKey)
 
-        // Use active profile's checkOverageLimitEnabled setting
-        let checkOverage = ProfileManager.shared.activeProfile?.checkOverageLimitEnabled ?? true
-        async let overageDataTask: Data? = checkOverage ? performRequest(endpoint: "/organizations/\(orgId)/overage_spend_limit", sessionKey: sessionKey) : nil
+            // Use active profile's checkOverageLimitEnabled setting
+            let checkOverage = ProfileManager.shared.activeProfile?.checkOverageLimitEnabled ?? true
+            async let overageDataTask: Data? = checkOverage ? performRequest(endpoint: "/organizations/\(orgId)/overage_spend_limit", sessionKey: sessionKey) : nil
 
-        let usageData = try await usageDataTask
-        var claudeUsage = try parseUsageResponse(usageData)
+            let usageData = try await usageDataTask
+            var claudeUsage = try parseUsageResponse(usageData)
 
-        if checkOverage,
-           let data = try? await overageDataTask,
-           let overage = try? JSONDecoder().decode(OverageSpendLimitResponse.self, from: data),
-           overage.isEnabled == true {
-            claudeUsage.costUsed = overage.usedCredits
-            claudeUsage.costLimit = overage.monthlyCreditLimit
-            claudeUsage.costCurrency = overage.currency
+            if checkOverage,
+               let data = try? await overageDataTask,
+               let overage = try? JSONDecoder().decode(OverageSpendLimitResponse.self, from: data),
+               overage.isEnabled == true {
+                claudeUsage.costUsed = overage.usedCredits
+                claudeUsage.costLimit = overage.monthlyCreditLimit
+                claudeUsage.costCurrency = overage.currency
+            }
+
+            return claudeUsage
+
+        case .cliOAuth:
+            // Use OAuth endpoint (no organization ID needed)
+            LoggingService.shared.log("ClaudeAPIService: Fetching usage via OAuth endpoint")
+
+            guard let url = URL(string: "https://api.anthropic.com/api/oauth/usage") else {
+                throw AppError(
+                    code: .urlMalformed,
+                    message: "Invalid OAuth usage endpoint",
+                    isRecoverable: false
+                )
+            }
+
+            var request = buildAuthenticatedRequest(url: url, auth: auth)
+            request.httpMethod = "GET"
+            request.timeoutInterval = 30
+
+            let (data, response) = try await URLSession.shared.data(for: request)
+
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw AppError(
+                    code: .apiInvalidResponse,
+                    message: "Invalid response from OAuth endpoint",
+                    isRecoverable: true
+                )
+            }
+
+            guard httpResponse.statusCode == 200 else {
+                let responsePreview = String(data: data, encoding: .utf8)?.prefix(200) ?? "Unable to read response"
+                throw AppError(
+                    code: .apiUnauthorized,
+                    message: "OAuth authentication failed",
+                    technicalDetails: "Status: \(httpResponse.statusCode)\nResponse: \(responsePreview)",
+                    isRecoverable: true,
+                    recoverySuggestion: "Please re-sync your CLI account in Settings"
+                )
+            }
+
+            return try parseUsageResponse(data)
+
+        case .consoleAPISession:
+            // Console API is for billing/credits only, not usage data
+            throw AppError(
+                code: .sessionKeyNotFound,
+                message: "No valid credentials for usage data",
+                technicalDetails: "Console API only provides billing data, not usage statistics",
+                isRecoverable: true,
+                recoverySuggestion: "Please add a claude.ai session key or sync your CLI account"
+            )
         }
-
-        return claudeUsage
     }
 
     private func performRequest(endpoint: String, sessionKey: String) async throws -> Data {

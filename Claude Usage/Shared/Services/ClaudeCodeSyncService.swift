@@ -189,6 +189,26 @@ class ClaudeCodeSyncService {
         return (subType, scopes)
     }
 
+    /// Extracts the token expiry date from CLI credentials JSON
+    func extractTokenExpiry(from jsonData: String) -> Date? {
+        guard let data = jsonData.data(using: .utf8),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let oauth = json["claudeAiOauth"] as? [String: Any],
+              let expiresAt = oauth["expiresAt"] as? TimeInterval else {
+            return nil
+        }
+        return Date(timeIntervalSince1970: expiresAt)
+    }
+
+    /// Checks if the OAuth token in the credentials JSON is expired
+    func isTokenExpired(_ jsonData: String) -> Bool {
+        guard let expiryDate = extractTokenExpiry(from: jsonData) else {
+            // No expiry info = assume valid
+            return false
+        }
+        return Date() > expiryDate
+    }
+
     // MARK: - Auto Re-sync Before Switching
 
     /// Re-syncs credentials from system Keychain before profile switching
