@@ -132,6 +132,7 @@
 "general.autostart_subtitle" = "필요 시 자동으로 새 세션 시작";
 "general.autostart_toggle" = "새 세션 자동 시작";
 "general.autostart_description" = "세션 재설정 시 자동으로 메시지 전송";
+"general.autostart_requirement" = "• 자격 증명 → Claude.ai 탭에서 세션 키 구성됨";
 "general.notifications_title" = "알림";
 "general.notifications_subtitle" = "사용량 마일스톤 알림 받기";
 "general.connected" = "연결됨";
@@ -449,7 +450,7 @@
 "claudecode.component_usage" = "사용 통계";
 "claudecode.component_progressbar" = "진행률 표시줄";
 "claudecode.component_resettime" = "리셋 시간";
-"claudecode.requirement_sessionkey" = "• 개인 사용량 탭에서 세션 키 구성됨";
+"claudecode.requirement_sessionkey" = "• 자격 증명 → Claude.ai 탭에서 세션 키 구성됨";
 "claudecode.requirement_restart" = "• 변경사항 적용 후 Claude CLI 재시작";
 "claudecode.error_no_components" = "표시할 구성요소를 하나 이상 선택하세요";
 "claudecode.error_no_sessionkey" = "세션 키가 구성되지 않았습니다. 먼저 개인 사용량 탭에서 설정하세요.";

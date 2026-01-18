@@ -328,7 +328,7 @@
 "claudecode.component_usage" = "Estatísticas de uso";
 "claudecode.component_progressbar" = "Barra de progresso";
 "claudecode.component_resettime" = "Hora de reinício";
-"claudecode.requirement_sessionkey" = "• Chave de sessão configurada na aba Uso Pessoal";
+"claudecode.requirement_sessionkey" = "• Chave de sessão configurada em Credenciais → aba Claude.ai";
 "claudecode.requirement_restart" = "• Reiniciar Claude CLI após aplicar as alterações";
 "claudecode.error_no_components" = "Por favor, selecione pelo menos um componente para exibir";
 "claudecode.error_no_sessionkey" = "Chave de sessão não configurada. Por favor, configure-a primeiro na aba Uso Pessoal.";
@@ -495,6 +495,7 @@
 "general.autostart_subtitle" = "Iniciar automaticamente uma nova sessão quando necessário";
 "general.autostart_toggle" = "Início Automático de Nova Sessão";
 "general.autostart_description" = "Enviar automaticamente uma mensagem quando a sessão for redefinida";
+"general.autostart_requirement" = "• Chave de sessão configurada em Credenciais → aba Claude.ai";
 "general.notifications_title" = "Notificações";
 "general.notifications_subtitle" = "Receber notificações sobre marcos de uso";
 "general.connected" = "Conectado";

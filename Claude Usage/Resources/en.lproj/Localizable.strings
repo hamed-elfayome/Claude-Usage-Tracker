@@ -344,7 +344,7 @@
 "claudecode.component_usage" = "Usage statistics";
 "claudecode.component_progressbar" = "Progress bar";
 "claudecode.component_resettime" = "Reset time";
-"claudecode.requirement_sessionkey" = "• Session key configured in Personal Usage tab";
+"claudecode.requirement_sessionkey" = "• Session key configured in Credentials → Claude.ai tab";
 "claudecode.requirement_restart" = "• Restart Claude CLI after applying changes";
 "claudecode.error_no_components" = "Please select at least one component to display";
 "claudecode.error_no_sessionkey" = "Session key not configured. Please set it in the Personal Usage tab first.";
@@ -485,6 +485,7 @@
 "general.autostart_subtitle" = "Automatically start a new session when needed";
 "general.autostart_toggle" = "Auto-Start New Session";
 "general.autostart_description" = "Automatically send a message when session resets";
+"general.autostart_requirement" = "• Session key configured in Credentials → Claude.ai tab";
 "general.notifications_title" = "Notifications";
 "general.notifications_subtitle" = "Get notified about usage milestones";
 "general.connected" = "Connected";

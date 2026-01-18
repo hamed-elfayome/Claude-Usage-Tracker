@@ -330,7 +330,7 @@
 "claudecode.component_usage" = "Nutzungsstatistiken";
 "claudecode.component_progressbar" = "Fortschrittsbalken";
 "claudecode.component_resettime" = "Zurücksetzungszeit";
-"claudecode.requirement_sessionkey" = "• Sitzungsschlüssel im Tab 'Persönliche Nutzung' konfiguriert";
+"claudecode.requirement_sessionkey" = "• Sitzungsschlüssel im Tab 'Anmeldedaten → Claude.ai' konfiguriert";
 "claudecode.requirement_restart" = "• Claude CLI nach Anwendung der Änderungen neu starten";
 "claudecode.error_no_components" = "Bitte wählen Sie mindestens eine Komponente zur Anzeige";
 "claudecode.error_no_sessionkey" = "Sitzungsschlüssel nicht konfiguriert. Bitte richten Sie ihn zuerst im Tab 'Persönliche Nutzung' ein.";
@@ -497,6 +497,7 @@
 "general.autostart_subtitle" = "Automatisch eine neue Sitzung bei Bedarf starten";
 "general.autostart_toggle" = "Neue Sitzung Automatisch Starten";
 "general.autostart_description" = "Automatisch eine Nachricht senden, wenn die Sitzung zurückgesetzt wird";
+"general.autostart_requirement" = "• Sitzungsschlüssel im Tab 'Anmeldedaten → Claude.ai' konfiguriert";
 "general.notifications_title" = "Benachrichtigungen";
 "general.notifications_subtitle" = "Über Nutzungsmeilensteine benachrichtigt werden";
 "general.connected" = "Verbunden";

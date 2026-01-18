@@ -5,6 +5,36 @@ All notable changes to Claude Usage Tracker will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.2] - 2026-01-18
+
+### Added
+
+#### CLI OAuth Authentication Fallback
+- **Robust authentication system** with automatic fallback
+  - Prioritizes claude.ai session key as primary authentication method
+  - Falls back to Claude Code CLI OAuth when session key unavailable
+  - System Keychain integration for CLI OAuth tokens
+  - Automatic token expiration checking in Profile model
+  - Seamless authentication without user intervention
+
+### Changed
+
+#### Auto-Start Session Improvements
+- **Simplified auto-start logic** for better reliability
+  - Removed complex reset detection mechanism
+  - Direct 0% session check for cleaner trigger logic
+  - Updated model selection to ensure proper usage tracking
+  - More predictable auto-start behavior
+
+### Technical Improvements
+
+- Enhanced ClaudeAPIService with multi-authentication support
+- ClaudeCodeSyncService improvements for better token management
+- Network client entitlements for proper API access
+- Image asset refinements
+
+---
+
 ## [2.2.1] - 2026-01-14
 
 ### Added

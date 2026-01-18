@@ -9,14 +9,14 @@
   ![Swift](https://img.shields.io/badge/Swift-5.0+-orange?style=flat-square&logo=swift)
   ![SwiftUI](https://img.shields.io/badge/SwiftUI-5.0+-blue?style=flat-square&logo=swift)
   ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
-  ![Version](https://img.shields.io/badge/version-2.2.1-blue?style=flat-square)
+  ![Version](https://img.shields.io/badge/version-2.2.2-blue?style=flat-square)
   ![Languages](https://img.shields.io/badge/languages-8-purple?style=flat-square)
 
   <sub>🇬🇧 English • 🇪🇸 Español • 🇫🇷 Français • 🇩🇪 Deutsch • 🇮🇹 Italiano • 🇵🇹 Português • 🇯🇵 日本語 • 🇰🇷 한국어</sub>
 
-  ### [Download Latest Release (v2.2.1)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
+  ### [Download Latest Release (v2.2.2)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
 
-  <sub>macOS 14.0+ (Sonoma) | ~3 MB | Native Swift/SwiftUI | Officially Signed</sub>
+  <sub>macOS 14.0+ (Sonoma) | ~4 MB | Native Swift/SwiftUI | Officially Signed</sub>
 
   <a href="https://www.buymeacoffee.com/hamedelfayome" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="40"></a>
 </div>
@@ -53,15 +53,14 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 
 ## What's New
 
-**v2.2.0 - Multi-Profile Management (2026-01-12)**:
-- **Multiple Profiles**: Create unlimited profiles for different Claude accounts (work, personal, testing)
-- **Claude Code Integration**: Sync your CLI account and auto-switch credentials when changing profiles
-- **Profile Switcher**: Quick profile switching in popover and settings
-- **Auto-Start Sessions**: Background service monitors all profiles and auto-starts sessions per-profile
-- **Fun Profile Names**: Auto-generated names like "Quantum Llama", "Sneaky Penguin", "Turbo Sloth"
-- **Korean Language**: Added 🇰🇷 Korean support (now 8 languages total)
-- **Reorganized Settings**: New tabs for Manage Profiles, CLI Account, and dedicated Language settings
+**v2.2.2 - CLI OAuth Authentication Fallback (2026-01-18)**:
+- **Automatic Authentication**: If you have Claude Code installed and logged in, the app automatically uses your CLI credentials
+- **No Manual Setup Required**: Users with Claude Code can skip manual session key extraction
+- **Robust Fallback System**: Automatically falls back to CLI OAuth when session key is unavailable
+- **Simplified Auto-Start**: Improved reliability with direct 0% session detection
+- **Enhanced Storage**: App Group storage for better data persistence
 
+**v2.2.0** - Multi-profile management, CLI integration, Korean language
 **v2.1.2** - Statusline improvements, organization ID optimization
 **v2.1.1** - Session timer countdown in menu bar
 **v2.1.0** - 3-step setup wizard, smart organization preservation
@@ -79,10 +78,12 @@ Before installing Claude Usage Tracker, ensure you have:
 
 - **macOS 14.0 (Sonoma) or later** - Check: Apple menu → About This Mac
 - **Active Claude AI account** - Sign up at [claude.ai](https://claude.ai)
-- **Web browser access** - For extracting your session key (Chrome, Safari, Firefox, etc.)
 
-**Optional**:
-- [Claude Code](https://claude.com/claude-code) - For terminal statusline integration
+**Authentication** (choose one method):
+- **Easiest**: [Claude Code](https://claude.com/claude-code) installed and logged in - App automatically uses CLI credentials (v2.2.2+)
+- **Manual**: Web browser access to extract session key from claude.ai (Chrome, Safari, Firefox, etc.)
+
+**Note**: For terminal statusline integration, you'll still need to manually configure a session key even if using Claude Code OAuth
 
 ### Installation
 
@@ -141,9 +142,29 @@ open "Claude Usage.xcodeproj"
 
 ### Quick Start Guide
 
-#### Step 1: Extract Your Session Key
+#### Option A: Automatic Setup with Claude Code (Easiest)
 
-Your session key authenticates the app with Claude AI. Here's how to get it:
+**New in v2.2.2**: If you have Claude Code installed and logged in, the app works automatically!
+
+1. **Install Claude Code** (if not already installed)
+   - Download from [claude.com/claude-code](https://claude.com/claude-code)
+   - Log in using `claude login`
+
+2. **Launch Claude Usage Tracker**
+   - The app automatically detects your CLI credentials
+   - No manual configuration needed!
+
+3. **Verify It's Working**
+   - Click the menu bar icon
+   - You should see your usage statistics immediately
+
+**That's it!** The app will automatically use your Claude Code credentials.
+
+#### Option B: Manual Setup with Session Key
+
+If you prefer manual configuration or don't use Claude Code:
+
+**Step 1: Extract Your Session Key**
 
 1. **Open Claude AI**
    - Navigate to [claude.ai](https://claude.ai) in your browser
@@ -160,13 +181,7 @@ Your session key authenticates the app with Claude AI. Here's how to get it:
    - Find: `sessionKey` cookie
    - Copy: The value (starts with `sk-ant-sid01-...`)
 
-<div align="center">
-  <sub>Tip: The session key is a long string starting with "sk-ant-sid01-". Make sure to copy the entire value.</sub>
-</div>
-
-#### Step 2: Configure Session Key
-
-Access the Personal Usage settings to configure your session key:
+**Step 2: Configure Session Key**
 
 1. **Click the menu bar icon** and select "Settings"
 2. **Navigate to "Personal Usage"** tab
@@ -176,9 +191,7 @@ Access the Personal Usage settings to configure your session key:
    - **Step 3**: Review and click "Save Configuration"
 4. **Wait for confirmation** (success message appears)
 
-The new wizard validates your key without saving it first, ensuring a smooth setup experience
-
-#### Step 3: Verify It's Working
+**Step 3: Verify It's Working**
 
 1. **Check Menu Bar**: You should see the Claude Usage icon in your menu bar
 2. **Click the Icon**: Popover appears showing your usage statistics
@@ -191,7 +204,7 @@ The new wizard validates your key without saving it first, ensuring a smooth set
 - **Customize Icon**: Go to Settings → Appearance to choose your preferred menu bar style
 - **Enable Notifications**: Settings → Notifications to get threshold alerts
 - **Auto-Start Sessions**: Settings → Session Management to enable automatic session initialization
-- **Terminal Integration**: Settings → Claude Code to set up statusline (requires [Claude Code](https://claude.com/claude-code))
+- **Terminal Integration**: Settings → Claude Code to set up statusline (requires session key configuration)
 
 ---
 
@@ -450,7 +463,7 @@ Bring real-time Claude usage monitoring directly into your terminal with Claude 
 #### Prerequisites
 
 1. **Claude Code installed**: Download from [claude.com/claude-code](https://claude.com/claude-code)
-2. **Session key configured**: Must be set in the General tab of Claude Usage Tracker
+2. **Session key configured**: Must be manually configured in the Personal Usage tab (Claude Code OAuth doesn't work for statusline - it requires direct session key)
 
 #### Installation Steps
 

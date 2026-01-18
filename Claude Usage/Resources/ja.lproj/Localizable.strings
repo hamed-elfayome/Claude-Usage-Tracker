@@ -344,7 +344,7 @@
 "claudecode.component_usage" = "使用統計";
 "claudecode.component_progressbar" = "プログレスバー";
 "claudecode.component_resettime" = "リセット時刻";
-"claudecode.requirement_sessionkey" = "• 個人使用タブでセッションキーが構成されている";
+"claudecode.requirement_sessionkey" = "• 認証情報 → Claude.aiタブでセッションキーが構成されている";
 "claudecode.requirement_restart" = "• 変更適用後にClaude CLIを再起動";
 "claudecode.error_no_components" = "表示する少なくとも1つのコンポーネントを選択してください";
 "claudecode.error_no_sessionkey" = "セッションキーが構成されていません。最初に個人使用タブで設定してください。";
@@ -497,6 +497,7 @@
 "general.autostart_subtitle" = "必要に応じて自動的に新しいセッションを開始";
 "general.autostart_toggle" = "新しいセッションを自動開始";
 "general.autostart_description" = "セッションがリセットされたときに自動的にメッセージを送信";
+"general.autostart_requirement" = "• 認証情報 → Claude.aiタブでセッションキーが構成されている";
 "general.notifications_title" = "通知";
 "general.notifications_subtitle" = "使用状況のマイルストーンについて通知を受け取る";
 "general.connected" = "接続済み";
