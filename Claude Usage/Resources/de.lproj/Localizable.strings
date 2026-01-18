@@ -677,3 +677,13 @@
 "about.reset_confirmation_title" = "Alle App-Daten zurücksetzen?";
 "about.reset_confirm" = "Zurücksetzen";
 "about.reset_confirmation_message" = "Dies löscht dauerhaft alle Profile, Anmeldedaten und Einstellungen. Die App wird beendet und Sie müssen sie erneut einrichten. Dies kann nicht rückgängig gemacht werden.";
+
+/* Claude Code Info */
+"wizard.claude_code_info_title" = "Claude Code verwenden?";
+"wizard.claude_code_info_description" = "Nutzungsverfolgung funktioniert, aber CLI-Statuszeile & Auto-Start-Sitzung funktionieren nicht ohne Sitzungsschlüssel";
+"wizard.claude_code_skip_setup" = "Setup überspringen";
+
+/* Migration Strings */
+"wizard.migrate_description_short" = "Importieren Sie Ihre alten Profildaten aus der vorherigen App-Version";
+"wizard.skip_migration" = "Überspringen";
+"wizard.migration_skipped" = "Übersprungen";

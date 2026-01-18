@@ -658,3 +658,13 @@
 "about.reset_confirmation_title" = "¿Restablecer todos los datos de la app?";
 "about.reset_confirm" = "Restablecer";
 "about.reset_confirmation_message" = "Esto eliminará permanentemente todos los perfiles, credenciales y configuraciones. La aplicación se cerrará y deberá configurarla nuevamente. Esto no se puede deshacer.";
+
+/* Claude Code Info */
+"wizard.claude_code_info_title" = "¿Usando Claude Code?";
+"wizard.claude_code_info_description" = "El seguimiento de uso funcionará, pero la línea de estado CLI y el inicio automático de sesión no funcionarán sin clave de sesión";
+"wizard.claude_code_skip_setup" = "Omitir configuración";
+
+/* Migration Strings */
+"wizard.migrate_description_short" = "Importar datos de perfiles antiguos de la versión anterior de la aplicación";
+"wizard.skip_migration" = "Omitir";
+"wizard.migration_skipped" = "Omitido";

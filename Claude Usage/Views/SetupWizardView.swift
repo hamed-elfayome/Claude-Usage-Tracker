@@ -27,6 +27,9 @@ struct SetupWizardState {
 struct SetupWizardView: View {
     @Environment(\.dismiss) var dismiss
     @State private var wizardState = SetupWizardState()
+    @State private var hasClaudeCodeCredentials = false
+    @State private var isMigrating = false
+    @State private var migrationMessage: String?
     private let apiService = ClaudeAPIService()
 
     var body: some View {
@@ -66,6 +69,96 @@ struct SetupWizardView: View {
 
             Divider()
 
+            // Claude Code info section - compact (only show if credentials exist)
+            if hasClaudeCodeCredentials {
+                HStack(spacing: 12) {
+                    Image(systemName: "terminal")
+                        .font(.system(size: 16))
+                        .foregroundColor(.purple)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("wizard.claude_code_info_title".localized)
+                            .font(.system(size: 12, weight: .medium))
+                        Text("wizard.claude_code_info_description".localized)
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                            .lineLimit(2)
+                    }
+
+                    Spacer()
+
+                    Button(action: {
+                        dismiss()
+                    }) {
+                        Text("wizard.claude_code_skip_setup".localized)
+                            .font(.system(size: 11))
+                    }
+                    .buttonStyle(.bordered)
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .background(Color.purple.opacity(0.08))
+
+                Divider()
+            }
+
+            // Migration section - compact (only show if migration not completed yet)
+            if MigrationService.shared.shouldShowMigrationOption() {
+                HStack(spacing: 12) {
+                    Image(systemName: "arrow.down.doc")
+                        .font(.system(size: 16))
+                        .foregroundColor(.blue)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("wizard.migrate_old_data".localized)
+                            .font(.system(size: 12, weight: .medium))
+
+                        if let message = migrationMessage {
+                            Text(message)
+                                .font(.system(size: 11))
+                                .foregroundColor(.green)
+                                .lineLimit(1)
+                        } else {
+                            Text("wizard.migrate_description_short".localized)
+                                .font(.system(size: 11))
+                                .foregroundColor(.secondary)
+                                .lineLimit(2)
+                        }
+                    }
+
+                    Spacer()
+
+                    HStack(spacing: 8) {
+                        Button(action: migrateOldData) {
+                            HStack {
+                                if isMigrating {
+                                    ProgressView()
+                                        .scaleEffect(0.6)
+                                } else {
+                                    Text("wizard.migrate_button".localized)
+                                        .font(.system(size: 11))
+                                }
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                        .disabled(isMigrating)
+
+                        Button(action: skipMigration) {
+                            Text("wizard.skip_migration".localized)
+                                .font(.system(size: 11))
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundColor(.secondary)
+                        .disabled(isMigrating)
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .background(Color.blue.opacity(0.08))
+
+                Divider()
+            }
+
             // Step content based on wizard state
             Group {
                 switch wizardState.currentStep {
@@ -85,7 +178,60 @@ struct SetupWizardView: View {
             if let activeProfile = ProfileManager.shared.activeProfile {
                 wizardState.autoStartSessionEnabled = activeProfile.autoStartSessionEnabled
             }
+
+            // Check if Claude Code credentials exist
+            Task {
+                do {
+                    let credentials = try ClaudeCodeSyncService.shared.readSystemCredentials()
+                    await MainActor.run {
+                        hasClaudeCodeCredentials = (credentials != nil)
+                    }
+                } catch {
+                    // If error reading credentials, assume they don't exist
+                    await MainActor.run {
+                        hasClaudeCodeCredentials = false
+                    }
+                }
+            }
         }
+    }
+
+    // MARK: - Migration Functions
+
+    private func migrateOldData() {
+        isMigrating = true
+        migrationMessage = nil
+
+        Task {
+            do {
+                let count = try MigrationService.shared.migrateFromAppGroup()
+                await MainActor.run {
+                    isMigrating = false
+                    migrationMessage = String(format: "wizard.migration_success".localized, count)
+                    // Reload profiles to reflect migrated data
+                    ProfileManager.shared.loadProfiles()
+                }
+
+                // Auto-close wizard after successful migration
+                // Give user a moment to see the success message
+                try? await Task.sleep(nanoseconds: 1_500_000_000) // 1.5 seconds
+
+                await MainActor.run {
+                    dismiss()
+                }
+            } catch {
+                await MainActor.run {
+                    isMigrating = false
+                    migrationMessage = String(format: "wizard.migration_failed".localized, error.localizedDescription)
+                }
+            }
+        }
+    }
+
+    private func skipMigration() {
+        // Mark migration as completed (declined) so we don't ask again
+        UserDefaults.standard.set(true, forKey: "HasMigratedFromAppGroup")
+        migrationMessage = "wizard.migration_skipped".localized
     }
 }
 
@@ -95,9 +241,6 @@ struct EnterKeyStepSetup: View {
     @Environment(\.dismiss) var dismiss
     @Binding var wizardState: SetupWizardState
     let apiService: ClaudeAPIService
-    @State private var showMigration = false
-    @State private var isMigrating = false
-    @State private var migrationMessage: String?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -105,65 +248,6 @@ struct EnterKeyStepSetup: View {
                 VStack(alignment: .leading, spacing: 20) {
                     // Step header
                     SetupStepHeader(stepNumber: 1, title: "setup.step.get_session_key".localized)
-
-                    // Migration card (show if migration not completed yet)
-                    if MigrationService.shared.shouldShowMigrationOption() {
-                        VStack(alignment: .leading, spacing: 12) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "arrow.down.doc")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.blue)
-                                Text("wizard.migrate_old_data".localized)
-                                    .font(.system(size: 13, weight: .medium))
-                            }
-
-                            Text("wizard.migrate_description".localized)
-                                .font(.system(size: 12))
-                                .foregroundColor(.secondary)
-
-                            if let message = migrationMessage {
-                                Text(message)
-                                    .font(.system(size: 12))
-                                    .foregroundColor(.green)
-                            }
-
-                            HStack(spacing: 8) {
-                                Button(action: migrateOldData) {
-                                    HStack {
-                                        if isMigrating {
-                                            ProgressView()
-                                                .scaleEffect(0.7)
-                                        } else {
-                                            Image(systemName: "arrow.down.circle")
-                                            Text("wizard.migrate_button".localized)
-                                        }
-                                    }
-                                    .font(.system(size: 12))
-                                }
-                                .buttonStyle(.bordered)
-                                .disabled(isMigrating)
-
-                                Button(action: skipMigration) {
-                                    Text("wizard.skip_migration".localized)
-                                        .font(.system(size: 12))
-                                }
-                                .buttonStyle(.plain)
-                                .foregroundColor(.secondary)
-                                .disabled(isMigrating)
-                            }
-                        }
-                        .padding(16)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Color.blue.opacity(0.08))
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .strokeBorder(Color.blue.opacity(0.3), lineWidth: 1)
-                        )
-
-                        Divider()
-                    }
 
                     Text("setup.step.get_session_key.description".localized)
                         .font(.system(size: 13))
@@ -272,42 +356,6 @@ struct EnterKeyStepSetup: View {
             }
             .padding(20)
         }
-    }
-
-    private func migrateOldData() {
-        isMigrating = true
-        migrationMessage = nil
-
-        Task {
-            do {
-                let count = try MigrationService.shared.migrateFromAppGroup()
-                await MainActor.run {
-                    isMigrating = false
-                    migrationMessage = String(format: "wizard.migration_success".localized, count)
-                    // Reload profiles to reflect migrated data
-                    ProfileManager.shared.loadProfiles()
-                }
-
-                // Auto-close wizard after successful migration
-                // Give user a moment to see the success message
-                try? await Task.sleep(nanoseconds: 1_500_000_000) // 1.5 seconds
-
-                await MainActor.run {
-                    dismiss()
-                }
-            } catch {
-                await MainActor.run {
-                    isMigrating = false
-                    migrationMessage = String(format: "wizard.migration_failed".localized, error.localizedDescription)
-                }
-            }
-        }
-    }
-
-    private func skipMigration() {
-        // Mark migration as completed (declined) so we don't ask again
-        UserDefaults.standard.set(true, forKey: "HasMigratedFromAppGroup")
-        migrationMessage = "wizard.migration_skipped".localized
     }
 
     private func testConnection() {

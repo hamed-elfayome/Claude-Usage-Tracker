@@ -9,12 +9,12 @@
   ![Swift](https://img.shields.io/badge/Swift-5.0+-orange?style=flat-square&logo=swift)
   ![SwiftUI](https://img.shields.io/badge/SwiftUI-5.0+-blue?style=flat-square&logo=swift)
   ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
-  ![Version](https://img.shields.io/badge/version-2.2.2-blue?style=flat-square)
+  ![Version](https://img.shields.io/badge/version-2.2.3-blue?style=flat-square)
   ![Languages](https://img.shields.io/badge/languages-8-purple?style=flat-square)
 
   <sub>🇬🇧 English • 🇪🇸 Español • 🇫🇷 Français • 🇩🇪 Deutsch • 🇮🇹 Italiano • 🇵🇹 Português • 🇯🇵 日本語 • 🇰🇷 한국어</sub>
 
-  ### [Download Latest Release (v2.2.2)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
+  ### [Download Latest Release (v2.2.3)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
 
   <sub>macOS 14.0+ (Sonoma) | ~4 MB | Native Swift/SwiftUI | Officially Signed</sub>
 
@@ -53,13 +53,10 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 
 ## What's New
 
-**v2.2.2 - CLI OAuth Authentication Fallback (2026-01-18)**:
-- **Automatic Authentication**: If you have Claude Code installed and logged in, the app automatically uses your CLI credentials
-- **No Manual Setup Required**: Users with Claude Code can skip manual session key extraction
-- **Robust Fallback System**: Automatically falls back to CLI OAuth when session key is unavailable
-- **Simplified Auto-Start**: Improved reliability with direct 0% session detection
-- **Enhanced Storage**: App Group storage for better data persistence
+**v2.2.3 - Improved Setup Wizard (2026-01-18)**:
+- **Smart wizard banners**: Shows Claude Code info when Claude Code exist, migration option for previous versions
 
+**v2.2.2** - CLI OAuth authentication fallback, simplified auto-start
 **v2.2.0** - Multi-profile management, CLI integration, Korean language
 **v2.1.2** - Statusline improvements, organization ID optimization
 **v2.1.1** - Session timer countdown in menu bar
@@ -151,14 +148,12 @@ open "Claude Usage.xcodeproj"
    - Log in using `claude login`
 
 2. **Launch Claude Usage Tracker**
-   - The app automatically detects your CLI credentials
+   - The app automatically detects your Claude Code Account
    - No manual configuration needed!
 
 3. **Verify It's Working**
    - Click the menu bar icon
    - You should see your usage statistics immediately
-
-**That's it!** The app will automatically use your Claude Code credentials.
 
 #### Option B: Manual Setup with Session Key
 

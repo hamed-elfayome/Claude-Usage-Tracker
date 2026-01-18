@@ -5,6 +5,15 @@ All notable changes to Claude Usage Tracker will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.3] - 2026-01-18
+
+### Added
+- **Setup wizard banners**: Claude Code info (shows when CLI credentials exist) and data migration (import from previous versions)
+- Manual migration with auto-close on success
+- Complete localization in 8 languages
+
+---
+
 ## [2.2.2] - 2026-01-18
 
 ### Added

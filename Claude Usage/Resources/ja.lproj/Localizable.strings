@@ -677,3 +677,13 @@
 "about.reset_confirmation_title" = "すべてのアプリデータをリセットしますか？";
 "about.reset_confirm" = "リセット";
 "about.reset_confirmation_message" = "これにより、すべてのプロファイル、認証情報、設定が完全に削除されます。アプリは終了し、再度設定する必要があります。この操作は元に戻せません。";
+
+/* Claude Code Info */
+"wizard.claude_code_info_title" = "Claude Codeを使用していますか？";
+"wizard.claude_code_info_description" = "使用状況の追跡は機能しますが、CLIステータスラインと自動セッション開始はセッションキーがないと機能しません";
+"wizard.claude_code_skip_setup" = "セットアップをスキップ";
+
+/* Migration Strings */
+"wizard.migrate_description_short" = "以前のアプリバージョンから古いプロファイルデータをインポート";
+"wizard.skip_migration" = "スキップ";
+"wizard.migration_skipped" = "スキップしました";

@@ -658,9 +658,9 @@
 /* ==================== */
 /* MARK: - Migration & Reset */
 /* ==================== */
-"wizard.migrate_old_data" = "Have Data from Previous Version?";
+"wizard.migrate_old_data" = "Have Old App Data?";
 "wizard.migrate_description" = "If you had a previous version installed, click below to import your old profiles and settings. This will request system permission to access the data.";
-"wizard.migrate_button" = "Migrate Data";
+"wizard.migrate_button" = "Migrate";
 "wizard.migration_success" = "✅ Successfully migrated %d items";
 "wizard.migration_failed" = "⚠️ Migration failed: %@";
 "about.reset_app_data" = "Reset App Data";
@@ -669,3 +669,11 @@
 "about.reset_confirmation_message" = "This will permanently delete all profiles, credentials, and settings. The app will quit and you'll need to set up again. This cannot be undone.";
 "wizard.skip_migration" = "Skip";
 "wizard.migration_skipped" = "Migration skipped. You can manually sync old data later if needed.";
+
+/* Claude Code Info */
+"wizard.claude_code_info_title" = "Using Claude Code?";
+"wizard.claude_code_info_description" = "Usage tracking will work, but CLI status line & auto-start session won't work without session key";
+"wizard.claude_code_skip_setup" = "Skip Setup";
+"wizard.migrate_description_short" = "Import your old profiles data from previous app version";
+"wizard.skip_migration" = "Skip";
+"wizard.migration_skipped" = "Skipped";
