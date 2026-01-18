@@ -654,3 +654,21 @@
 "personal.remove_title" = "Remove Credentials";
 "personal.remove_subtitle" = "Permanently delete your Claude.ai session key from this profile";
 "about.run_setup_wizard" = "Run Setup Wizard";
+
+/* ==================== */
+/* MARK: - Wizard: Choose Method */
+/* ==================== */
+"wizard.choose_auth_method" = "Choose Authentication Method";
+"wizard.choose_auth_description" = "Select how you'd like to authenticate with Claude. You can change this later in Settings.";
+"wizard.method_claudecode" = "Sync with Claude Code CLI";
+"wizard.method_claudecode_description" = "Automatically sync credentials from your Claude Code CLI login. Requires Claude Code to be installed and logged in.";
+"wizard.method_manual" = "Enter Session Key Manually";
+"wizard.method_manual_description" = "Manually enter your Claude.ai session key from your browser. Provides extended features including CLI statusline integration and auto-start sessions. Works for all users.";
+"wizard.recommended" = "RECOMMENDED";
+"wizard.sync_and_continue" = "Sync & Continue";
+"wizard.cli_sync_success" = "Successfully synced Claude Code credentials!";
+"wizard.cli_sync_failed" = "Failed to sync: %@";
+"wizard.error_no_profile" = "No active profile found";
+"wizard.cli_sync_summary" = "Setup Complete";
+"wizard.cli_credentials_synced" = "Claude Code credentials synced successfully";
+"wizard.cli_ready_message" = "Your app is now configured and ready to track your Claude usage. Click Done to start using the app.";

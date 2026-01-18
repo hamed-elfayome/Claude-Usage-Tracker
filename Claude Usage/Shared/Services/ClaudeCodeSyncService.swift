@@ -131,6 +131,10 @@ class ClaudeCodeSyncService {
         profiles[index].cliCredentialsJSON = jsonData
         ProfileStore.shared.saveProfiles(profiles)
 
+        // Mark that user has granted CLI Keychain access permission
+        // This prevents the macOS permission dialog from appearing on future automatic checks
+        SharedDataStore.shared.saveHasGrantedCLIKeychainAccess(true)
+
         LoggingService.shared.log("Synced CLI credentials to profile: \(profileId)")
     }
 

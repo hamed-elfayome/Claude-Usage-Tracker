@@ -27,6 +27,9 @@ class SharedDataStore {
         // Setup State
         static let hasCompletedSetup = "hasCompletedSetup"
 
+        // CLI Credential Access Permission
+        static let hasGrantedCLIKeychainAccess = "hasGrantedCLIKeychainAccess"
+
         // GitHub Star Tracking
         static let firstLaunchDate = "firstLaunchDate"
         static let lastGitHubStarPromptDate = "lastGitHubStarPromptDate"
@@ -135,6 +138,19 @@ class SharedDataStore {
         }
 
         return false
+    }
+
+    // MARK: - CLI Credential Access Permission
+
+    /// Marks that user has granted permission to access CLI credentials from system Keychain
+    /// This flag prevents showing the macOS permission dialog on every app launch
+    func saveHasGrantedCLIKeychainAccess(_ granted: Bool) {
+        defaults.set(granted, forKey: Keys.hasGrantedCLIKeychainAccess)
+    }
+
+    /// Returns true if user has previously granted permission to access CLI credentials
+    func hasGrantedCLIKeychainAccess() -> Bool {
+        return defaults.bool(forKey: Keys.hasGrantedCLIKeychainAccess)
     }
 
     // MARK: - GitHub Star Prompt Tracking

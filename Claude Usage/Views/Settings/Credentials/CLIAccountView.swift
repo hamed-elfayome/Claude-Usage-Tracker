@@ -215,12 +215,6 @@ struct CLIAccountView: View {
                                 .foregroundColor(.secondary)
                             }
 
-                            Text("cli.tracking_note".localized)
-                                .font(DesignTokens.Typography.caption)
-                                .foregroundColor(.orange)
-                                .padding(DesignTokens.Spacing.small)
-                                .background(Color.orange.opacity(0.08))
-                                .cornerRadius(DesignTokens.Radius.tiny)
                         }
                     }
                 }

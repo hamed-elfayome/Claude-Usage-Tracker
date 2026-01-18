@@ -664,3 +664,21 @@
 "personal.remove_title" = "Anmeldedaten Entfernen";
 "personal.remove_subtitle" = "Ihren Claude.ai-Sitzungsschlüssel dauerhaft aus diesem Profil löschen";
 "about.run_setup_wizard" = "Einrichtungsassistent Ausführen";
+
+/* ==================== */
+/* MARK: - Wizard: Choose Method */
+/* ==================== */
+"wizard.choose_auth_method" = "Authentifizierungsmethode Wählen";
+"wizard.choose_auth_description" = "Wählen Sie aus, wie Sie sich bei Claude authentifizieren möchten. Sie können dies später in den Einstellungen ändern.";
+"wizard.method_claudecode" = "Mit Claude Code CLI Synchronisieren";
+"wizard.method_claudecode_description" = "Synchronisieren Sie automatisch Anmeldedaten von Ihrer Claude Code CLI-Anmeldung. Erfordert, dass Claude Code installiert und angemeldet ist.";
+"wizard.method_manual" = "Sitzungsschlüssel Manuell Eingeben";
+"wizard.method_manual_description" = "Geben Sie Ihren Claude.ai-Sitzungsschlüssel manuell aus Ihrem Browser ein. Bietet erweiterte Funktionen wie CLI-Statusleisten-Integration und automatische Sitzungsstarts. Funktioniert für alle Benutzer.";
+"wizard.recommended" = "EMPFOHLEN";
+"wizard.sync_and_continue" = "Synchronisieren & Fortfahren";
+"wizard.cli_sync_success" = "Claude Code-Anmeldedaten erfolgreich synchronisiert!";
+"wizard.cli_sync_failed" = "Synchronisierung fehlgeschlagen: %@";
+"wizard.error_no_profile" = "Kein aktives Profil gefunden";
+"wizard.cli_sync_summary" = "Einrichtung Abgeschlossen";
+"wizard.cli_credentials_synced" = "Claude Code-Anmeldedaten erfolgreich synchronisiert";
+"wizard.cli_ready_message" = "Ihre App ist jetzt konfiguriert und bereit, Ihre Claude-Nutzung zu verfolgen. Klicken Sie auf Fertig, um die App zu verwenden.";

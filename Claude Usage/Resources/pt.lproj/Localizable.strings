@@ -662,3 +662,21 @@
 "personal.remove_title" = "Remover Credenciais";
 "personal.remove_subtitle" = "Excluir permanentemente sua chave de sessão do Claude.ai deste perfil";
 "about.run_setup_wizard" = "Executar Assistente de Configuração";
+
+/* ==================== */
+/* MARK: - Wizard: Choose Method */
+/* ==================== */
+"wizard.choose_auth_method" = "Escolher Método de Autenticação";
+"wizard.choose_auth_description" = "Selecione como você gostaria de autenticar com o Claude. Você pode alterar isso posteriormente nas Configurações.";
+"wizard.method_claudecode" = "Sincronizar com Claude Code CLI";
+"wizard.method_claudecode_description" = "Sincronize automaticamente as credenciais do seu login Claude Code CLI. Requer que o Claude Code esteja instalado e conectado.";
+"wizard.method_manual" = "Inserir Chave de Sessão Manualmente";
+"wizard.method_manual_description" = "Insira manualmente sua chave de sessão do Claude.ai do seu navegador. Fornece recursos estendidos incluindo integração com linha de status CLI e início automático de sessões. Funciona para todos os usuários.";
+"wizard.recommended" = "RECOMENDADO";
+"wizard.sync_and_continue" = "Sincronizar e Continuar";
+"wizard.cli_sync_success" = "Credenciais do Claude Code sincronizadas com sucesso!";
+"wizard.cli_sync_failed" = "Falha ao sincronizar: %@";
+"wizard.error_no_profile" = "Nenhum perfil ativo encontrado";
+"wizard.cli_sync_summary" = "Configuração Concluída";
+"wizard.cli_credentials_synced" = "Credenciais do Claude Code sincronizadas com sucesso";
+"wizard.cli_ready_message" = "Seu aplicativo está configurado e pronto para rastrear seu uso do Claude. Clique em Concluído para começar a usar o aplicativo.";

@@ -664,3 +664,21 @@
 "personal.remove_title" = "認証情報を削除";
 "personal.remove_subtitle" = "このプロファイルからClaude.aiセッションキーを完全に削除";
 "about.run_setup_wizard" = "セットアップウィザードを実行";
+
+/* ==================== */
+/* MARK: - Wizard: Choose Method */
+/* ==================== */
+"wizard.choose_auth_method" = "認証方法を選択";
+"wizard.choose_auth_description" = "Claudeで認証する方法を選択してください。後で設定で変更できます。";
+"wizard.method_claudecode" = "Claude Code CLIと同期";
+"wizard.method_claudecode_description" = "Claude Code CLIログインから資格情報を自動的に同期します。Claude Codeがインストールされ、ログインしている必要があります。";
+"wizard.method_manual" = "セッションキーを手動入力";
+"wizard.method_manual_description" = "ブラウザからClaude.aiセッションキーを手動で入力します。CLIステータスライン統合と自動セッション開始を含む拡張機能を提供します。すべてのユーザーが利用できます。";
+"wizard.recommended" = "推奨";
+"wizard.sync_and_continue" = "同期して続行";
+"wizard.cli_sync_success" = "Claude Code資格情報が正常に同期されました！";
+"wizard.cli_sync_failed" = "同期に失敗しました: %@";
+"wizard.error_no_profile" = "アクティブなプロファイルが見つかりません";
+"wizard.cli_sync_summary" = "セットアップ完了";
+"wizard.cli_credentials_synced" = "Claude Code資格情報が正常に同期されました";
+"wizard.cli_ready_message" = "アプリが設定され、Claudeの使用状況を追跡する準備ができました。「完了」をクリックしてアプリの使用を開始してください。";

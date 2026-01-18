@@ -34,9 +34,6 @@ class ProfileManager: ObservableObject {
             let defaultProfile = createDefaultProfile()
             profiles = [defaultProfile]
             profileStore.saveProfiles(profiles)
-
-            // On first launch, try to sync CLI credentials to the new default profile
-            syncCLICredentialsToDefaultProfile(defaultProfile.id)
         }
 
         // Load active profile
@@ -456,41 +453,6 @@ class ProfileManager: ObservableObject {
     // MARK: - Private Helpers
 
     /// Syncs CLI credentials to default profile on first launch only
-    private func syncCLICredentialsToDefaultProfile(_ profileId: UUID) {
-        do {
-            // Attempt to read credentials from system Keychain
-            guard let jsonData = try cliSyncService.readSystemCredentials() else {
-                LoggingService.shared.log("ProfileManager: No CLI credentials found in system Keychain")
-                return
-            }
-
-            // Validate: not expired
-            if cliSyncService.isTokenExpired(jsonData) {
-                LoggingService.shared.log("ProfileManager: CLI credentials found but expired")
-                return
-            }
-
-            // Validate: has valid access token
-            guard cliSyncService.extractAccessToken(from: jsonData) != nil else {
-                LoggingService.shared.log("ProfileManager: CLI credentials found but missing access token")
-                return
-            }
-
-            // Sync to the newly created default profile
-            try cliSyncService.syncToProfile(profileId)
-
-            // Reload the profile to get updated credentials
-            profiles = profileStore.loadProfiles()
-
-            LoggingService.shared.log("ProfileManager: ✅ Successfully synced CLI credentials to default profile on first launch")
-
-        } catch {
-            LoggingService.shared.logError("ProfileManager: Failed to sync CLI credentials on first launch (non-fatal)", error: error)
-            // Non-fatal: profile will be created without credentials
-            // User can manually sync in settings
-        }
-    }
-
     private func createDefaultProfile() -> Profile {
         Profile(
             name: FunnyNameGenerator.getRandomName(excluding: []),

@@ -76,6 +76,27 @@ jobs:
 
           echo "✅ Code signing certificate imported successfully"
 
+      - name: Install Provisioning Profile
+        env:
+          PROVISIONING_PROFILE_BASE64: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          # Create provisioning profiles directory
+          PP_PATH="$HOME/Library/MobileDevice/Provisioning Profiles"
+          mkdir -p "$PP_PATH"
+
+          # Decode and install provisioning profile
+          echo "Installing provisioning profile..."
+          echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode > "$PP_PATH/profile.provisionprofile"
+
+          # Verify installation
+          if [ -f "$PP_PATH/profile.provisionprofile" ]; then
+            echo "✅ Provisioning profile installed successfully"
+            echo "Profile location: $PP_PATH/profile.provisionprofile"
+          else
+            echo "❌ Error: Failed to install provisioning profile"
+            exit 1
+          fi
+
       - name: Build Release (Unsigned)
         run: |
           echo "Building release (will sign manually after)..."
@@ -144,6 +165,11 @@ jobs:
             "$APP_PATH"
 
           echo "✅ App bundle signed with $SIGNING_IDENTITY"
+
+          # Verify entitlements were embedded
+          echo ""
+          echo "Verifying embedded entitlements..."
+          codesign -d --entitlements :- "$APP_PATH" 2>&1 | grep -A30 "<?xml" || echo "No entitlements found"
 
       - name: Verify Code Signature
         run: |
