@@ -99,7 +99,7 @@ struct Profile: Codable, Identifiable, Equatable {
 
     /// True if profile has credentials that can fetch usage data (Claude.ai, CLI OAuth, or API Console)
     var hasUsageCredentials: Bool {
-        hasClaudeAI || hasAPIConsole || hasValidCLIOAuth || hasValidSystemCLIOAuth
+        hasClaudeAI || hasAPIConsole || hasValidCLIOAuth
     }
 
     /// True if profile has CLI OAuth credentials that are not expired
@@ -107,22 +107,6 @@ struct Profile: Codable, Identifiable, Equatable {
         guard let cliJSON = cliCredentialsJSON else { return false }
         // Check if not expired
         return !ClaudeCodeSyncService.shared.isTokenExpired(cliJSON)
-    }
-
-    /// True if system Keychain has valid CLI OAuth credentials (fallback)
-    var hasValidSystemCLIOAuth: Bool {
-        // Only check system credentials if user has previously granted access
-        // This prevents the macOS permission dialog from appearing automatically
-        guard SharedDataStore.shared.hasGrantedCLIKeychainAccess() else {
-            return false
-        }
-
-        guard let systemCredentials = try? ClaudeCodeSyncService.shared.readSystemCredentials() else {
-            return false
-        }
-        // Check if not expired and has valid access token
-        return !ClaudeCodeSyncService.shared.isTokenExpired(systemCredentials) &&
-               ClaudeCodeSyncService.shared.extractAccessToken(from: systemCredentials) != nil
     }
 
     var hasAnyCredentials: Bool {

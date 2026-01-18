@@ -351,7 +351,22 @@ class MenuBarManager: NSObject, ObservableObject {
         let contentView = PopoverContentView(
             manager: self,
             onRefresh: { [weak self] in
-                self?.refreshUsage()
+                guard let self = self else { return }
+
+                // Re-sync CLI credentials if profile has CLI account
+                if let profile = self.profileManager.activeProfile, profile.hasCliAccount {
+                    LoggingService.shared.log("MenuBarManager: Re-syncing CLI credentials before refresh...")
+                    do {
+                        try ClaudeCodeSyncService.shared.syncToProfile(profile.id)
+                        self.profileManager.loadProfiles()
+                        LoggingService.shared.log("MenuBarManager: ✅ CLI credentials re-synced successfully")
+                    } catch {
+                        LoggingService.shared.log("MenuBarManager: ⚠️ CLI re-sync failed (non-fatal): \(error.localizedDescription)")
+                    }
+                }
+
+                // Continue with normal refresh
+                self.refreshUsage()
             },
             onPreferences: { [weak self] in
                 self?.closePopoverOrWindow()

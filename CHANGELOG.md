@@ -9,13 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-#### CLI OAuth Authentication Fallback
-- **Robust authentication system** with automatic fallback
-  - Prioritizes claude.ai session key as primary authentication method
-  - Falls back to Claude Code CLI OAuth when session key unavailable
-  - System Keychain integration for CLI OAuth tokens
-  - Automatic token expiration checking in Profile model
-  - Seamless authentication without user intervention
+#### Redesigned Setup Wizard
+- **Choose your authentication method** on first launch
+  - Manual Session Key (Recommended): Provides extended features including CLI statusline integration and auto-start sessions
+  - Claude Code CLI Sync: One-click sync from your Claude Code CLI login
+  - Clean, modern wizard UI with step progress indicators
+  - Localized in all 8 languages (English, German, Spanish, French, Italian, Japanese, Korean, Portuguese)
+  - Different confirmation screens based on authentication method chosen
+
+#### Provisioning Profile Support
+- **Mac provisioning profile integration** for App Groups entitlement authorization
+  - Fixes profile data loss during Sparkle auto-updates
+  - GitHub Actions workflow now installs provisioning profile before code signing
+  - Properly preserves App Groups entitlement through notarization
 
 ### Changed
 
@@ -26,12 +32,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated model selection to ensure proper usage tracking
   - More predictable auto-start behavior
 
+#### Authentication & CLI Integration
+- **Profile-based CLI OAuth credentials** with manual sync
+  - CLI credentials stored in profile after sync (no automatic system checks)
+  - Users manually sync CLI credentials in Settings when tokens expire
+  - Prioritizes credentials: Session key → Profile CLI OAuth → API Console
+  - Cleaner authentication flow without permission dialogs
+
 ### Technical Improvements
 
-- Enhanced ClaudeAPIService with multi-authentication support
+- Enhanced ClaudeAPIService with streamlined authentication
 - ClaudeCodeSyncService improvements for better token management
+- Removed automatic system Keychain checks to prevent macOS permission dialogs
 - Network client entitlements for proper API access
 - Image asset refinements
+- Comprehensive localization updates
 
 ---
 

@@ -53,12 +53,12 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 
 ## What's New
 
-**v2.2.2 - CLI OAuth Authentication Fallback (2026-01-18)**:
-- **Automatic Authentication**: If you have Claude Code installed and logged in, the app automatically uses your CLI credentials
-- **No Manual Setup Required**: Users with Claude Code can skip manual session key extraction
-- **Robust Fallback System**: Automatically falls back to CLI OAuth when session key is unavailable
+**v2.2.2 - Redesigned Wizard & Provisioning Profile Support (2026-01-18)**:
+- **Choose Your Authentication Method**: New wizard lets you pick between manual session key (recommended) or Claude Code CLI sync
+- **Profile Data Persistence**: Mac provisioning profile support fixes data loss during auto-updates
+- **Manual CLI Sync**: Sync CLI credentials when needed (tokens expire every 8 hours)
 - **Simplified Auto-Start**: Improved reliability with direct 0% session detection
-- **Enhanced Storage**: App Group storage for better data persistence
+- **8 Languages**: Full localization for wizard and all new features
 
 **v2.2.0** - Multi-profile management, CLI integration, Korean language
 **v2.1.2** - Statusline improvements, organization ID optimization
@@ -142,27 +142,11 @@ open "Claude Usage.xcodeproj"
 
 ### Quick Start Guide
 
-#### Option A: Automatic Setup with Claude Code (Easiest)
+**New in v2.2.2**: The setup wizard now lets you choose your preferred authentication method on first launch!
 
-**New in v2.2.2**: If you have Claude Code installed and logged in, the app works automatically!
+#### Option A: Manual Session Key Setup (Recommended)
 
-1. **Install Claude Code** (if not already installed)
-   - Download from [claude.com/claude-code](https://claude.com/claude-code)
-   - Log in using `claude login`
-
-2. **Launch Claude Usage Tracker**
-   - The app automatically detects your CLI credentials
-   - No manual configuration needed!
-
-3. **Verify It's Working**
-   - Click the menu bar icon
-   - You should see your usage statistics immediately
-
-**That's it!** The app will automatically use your Claude Code credentials.
-
-#### Option B: Manual Setup with Session Key
-
-If you prefer manual configuration or don't use Claude Code:
+**Provides extended features**: CLI statusline integration and auto-start sessions
 
 **Step 1: Extract Your Session Key**
 
@@ -198,6 +182,27 @@ If you prefer manual configuration or don't use Claude Code:
 3. **View Data**: Session usage, weekly usage, and reset timers should display
 
 **Success!** The app is now monitoring your Claude usage.
+
+#### Option B: Claude Code CLI Sync
+
+**Quick one-click setup** if you have Claude Code installed
+
+**Step 1: Install and Login to Claude Code**
+
+1. **Install Claude Code** (if not already installed)
+   - Download from [claude.com/claude-code](https://claude.com/claude-code)
+   - Log in using `claude login`
+
+**Step 2: Sync in Setup Wizard**
+
+1. **Launch Claude Usage Tracker**
+2. **Select "Sync with Claude Code CLI"** in the wizard
+3. **Click "Sync & Continue"**
+   - Permission dialog appears (click "Allow")
+   - Credentials sync automatically
+4. **Click "Done"** to complete setup
+
+**Note**: CLI tokens expire every 8 hours. You'll need to manually re-sync in Settings → Claude CLI Account when they expire.
 
 #### Next Steps
 

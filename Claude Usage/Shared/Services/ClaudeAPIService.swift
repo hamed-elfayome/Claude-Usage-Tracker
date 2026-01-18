@@ -101,31 +101,10 @@ class ClaudeAPIService: APIServiceProtocol {
             }
         }
 
-        // Fall back to reading CLI credentials directly from system Keychain
-        // Only attempt if user has previously granted access permission
-        if SharedDataStore.shared.hasGrantedCLIKeychainAccess() {
-            do {
-                if let systemCredentials = try ClaudeCodeSyncService.shared.readSystemCredentials() {
-                    LoggingService.shared.log("ClaudeAPIService: Found CLI credentials in system Keychain")
-
-                    // Validate token is not expired
-                    if ClaudeCodeSyncService.shared.isTokenExpired(systemCredentials) {
-                        LoggingService.shared.log("ClaudeAPIService: System Keychain CLI token is expired")
-                    } else if let accessToken = ClaudeCodeSyncService.shared.extractAccessToken(from: systemCredentials) {
-                        LoggingService.shared.log("ClaudeAPIService: Using CLI credentials from system Keychain")
-                        return .cliOAuth(accessToken)
-                    } else {
-                        LoggingService.shared.log("ClaudeAPIService: Could not extract access token from system Keychain credentials")
-                    }
-                } else {
-                    LoggingService.shared.log("ClaudeAPIService: No CLI credentials found in system Keychain")
-                }
-            } catch {
-                LoggingService.shared.log("ClaudeAPIService: Could not read system CLI credentials: \(error.localizedDescription)")
-            }
-        } else {
-            LoggingService.shared.log("ClaudeAPIService: Skipping system CLI check (user has not granted permission)")
-        }
+        // DO NOT fall back to reading CLI credentials directly from system Keychain
+        // This would trigger a macOS permission dialog on every app launch
+        // Users should manually sync CLI credentials in Settings instead
+        LoggingService.shared.log("ClaudeAPIService: Not checking system CLI credentials (avoid permission dialog)")
 
         LoggingService.shared.logError("ClaudeAPIService.getAuthentication: No valid credentials for usage data")
         throw AppError.sessionKeyNotFound()
