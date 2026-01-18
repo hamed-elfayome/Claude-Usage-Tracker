@@ -391,7 +391,7 @@ Customize menu bar icon per profile:
 Per-profile behavior configuration:
 - **Refresh Interval**: Configure auto-refresh rate (5-300 seconds)
 - **Auto-Start Sessions**: Enable/disable automatic session initialization on reset
-- **Model Selection**: Uses Claude 3.5 Haiku (most cost-effective)
+- **Model Selection**: Uses the most cost-effective model available
 - **Notifications**: Per-profile threshold alerts (75%, 90%, 95%)
 
 ### App-Wide Settings

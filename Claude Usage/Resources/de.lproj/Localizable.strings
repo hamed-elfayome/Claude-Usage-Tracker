@@ -112,7 +112,7 @@
 /* MARK: - Session Management */
 /* ==================== */
 "session.auto_start" = "Sitzung automatisch beim Zurücksetzen starten";
-"session.auto_start.description" = "Automatisch 'Hallo' an Claude 3.5 Haiku senden, wenn Ihre Sitzung auf 0% zurückgesetzt wird. Dies hält Ihre Sitzung immer bereit ohne manuelle Eingriffe.";
+"session.auto_start.description" = "Automatisch 'Hallo' an Claude senden, wenn Ihre Sitzung auf 0% zurückgesetzt wird. Dies hält Ihre Sitzung immer bereit ohne manuelle Eingriffe.";
 "session.enable_auto_start" = "Auto-Start der Sitzung aktivieren";
 "session.beta_badge" = "BETA";
 
@@ -144,7 +144,7 @@
 "setup.instruction.step4" = "Doppelklicken Sie auf seinen Wert und kopieren Sie (Cmd+C)";
 "setup.paste_session_key" = "Fügen Sie den sessionKey-Wert ein, den Sie kopiert haben";
 "setup.auto_start_session" = "Sitzung automatisch beim Zurücksetzen starten";
-"setup.auto_start_session.description" = "Automatisch 'Hallo' an Claude 3.5 Haiku senden, wenn Ihre Sitzung auf 0% zurückgesetzt wird. Dies hält Ihre Sitzung immer bereit ohne manuelle Eingriffe.";
+"setup.auto_start_session.description" = "Automatisch 'Hallo' an Claude senden, wenn Ihre Sitzung auf 0% zurückgesetzt wird. Dies hält Ihre Sitzung immer bereit ohne manuelle Eingriffe.";
 "setup.enable_auto_start" = "Auto-Start der Sitzung aktivieren";
 "setup.menubar_appearance" = "Menüleisten-Erscheinungsbild";
 "setup.choose_icon_style" = "Wählen Sie Ihren bevorzugten Symbolstil";
@@ -207,7 +207,7 @@
 "notification.session_reset.title" = "Sitzung Zurückgesetzt";
 "notification.session_reset.message" = "Ihre Sitzung wurde zurückgesetzt! Sie haben jetzt eine neue 5-Stunden-Sitzung verfügbar.";
 "notification.session_auto_started.title" = "Sitzung Automatisch Gestartet";
-"notification.session_auto_started.message" = "Eine neue Sitzung wurde automatisch mit Claude 3.5 Haiku initialisiert. Ihre 5-Stunden-Sitzung ist bereit!";
+"notification.session_auto_started.message" = "Eine neue Sitzung wurde automatisch mit Claude initialisiert. Ihre 5-Stunden-Sitzung ist bereit!";
 "notification.session_auto_start_failed.title" = "Auto-Start Fehlgeschlagen";
 "notification.session_auto_start_failed.message" = "Automatischer Sitzungsstart fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten.";
 "notification.weekly_warning.title" = "Wöchentliche Nutzungswarnung";
@@ -315,7 +315,7 @@
 /* ==================== */
 "session.subtitle" = "Automatische Sitzungsinitialisierung und -wartung";
 "session.auto_description_line1" = "• Erkennt, wenn Ihre Sitzung auf 0% zurückgesetzt wird";
-"session.auto_description_line2" = "• Sendet 'Hallo' an Claude 3.5 Haiku (günstigstes Modell)";
+"session.auto_description_line2" = "• Sendet 'Hallo' an Claude (günstigstes Modell)";
 "session.auto_description_line3" = "• Verwendet einen temporären Chat, der nicht in Ihrem Verlauf erscheint";
 "session.auto_description_line4" = "• Neue 5-Stunden-Sitzung ist sofort bereit";
 

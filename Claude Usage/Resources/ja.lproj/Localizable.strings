@@ -112,7 +112,7 @@
 /* MARK: - Session Management */
 /* ==================== */
 "session.auto_start" = "リセット時にセッションを自動開始";
-"session.auto_start.description" = "セッションが0%にリセットされたときに自動的にClaude 3.5 Haikuに「こんにちは」を送信します。これにより、手動操作なしでセッションが常に準備された状態になります。";
+"session.auto_start.description" = "セッションが0%にリセットされたときに自動的にClaudeに「こんにちは」を送信します。これにより、手動操作なしでセッションが常に準備された状態になります。";
 "session.enable_auto_start" = "セッション自動開始を有効にする";
 "session.beta_badge" = "ベータ";
 
@@ -144,7 +144,7 @@
 "setup.instruction.step4" = "値をダブルクリックしてコピー（Cmd+C）";
 "setup.paste_session_key" = "コピーしたsessionKey値を貼り付け";
 "setup.auto_start_session" = "リセット時にセッションを自動開始";
-"setup.auto_start_session.description" = "セッションが0%にリセットされたときに自動的にClaude 3.5 Haikuに「こんにちは」を送信します。これにより、手動操作なしでセッションが常に準備された状態になります。";
+"setup.auto_start_session.description" = "セッションが0%にリセットされたときに自動的にClaudeに「こんにちは」を送信します。これにより、手動操作なしでセッションが常に準備された状態になります。";
 "setup.enable_auto_start" = "セッション自動開始を有効にする";
 "setup.menubar_appearance" = "メニューバーの外観";
 "setup.choose_icon_style" = "お好みのアイコンスタイルを選択";
@@ -221,7 +221,7 @@
 "notification.session_reset.title" = "セッションリセット";
 "notification.session_reset.message" = "セッションがリセットされました！新しい5時間セッションが利用可能です。";
 "notification.session_auto_started.title" = "セッション自動開始";
-"notification.session_auto_started.message" = "Claude 3.5 Haikuで新しいセッションが自動的に初期化されました。新しい5時間セッションの準備ができました！";
+"notification.session_auto_started.message" = "Claudeで新しいセッションが自動的に初期化されました。新しい5時間セッションの準備ができました！";
 "notification.session_auto_start_failed.title" = "自動開始失敗";
 "notification.session_auto_start_failed.message" = "セッションの自動開始に失敗しました。認証情報を確認してください。";
 "notification.weekly_warning.title" = "週次使用量警告";
@@ -329,7 +329,7 @@
 /* ==================== */
 "session.subtitle" = "自動セッション初期化とメンテナンス";
 "session.auto_description_line1" = "• セッションが0%にリセットされたことを検出";
-"session.auto_description_line2" = "• Claude 3.5 Haiku（最安のモデル）に「こんにちは」を送信";
+"session.auto_description_line2" = "• Claude（最安のモデル）に「こんにちは」を送信";
 "session.auto_description_line3" = "• 履歴に表示されない一時的なチャットを使用";
 "session.auto_description_line4" = "• 新しい5時間セッションが即座に準備完了";
 

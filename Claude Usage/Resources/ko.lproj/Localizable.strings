@@ -370,7 +370,7 @@
 "notification.session_reset_title" = "세션 재설정됨";
 "notification.session_reset_body" = "새 세션이 시작되었습니다";
 "notification.session_auto_started.title" = "세션 자동 시작됨";
-"notification.session_auto_started.message" = "Claude 3.5 Haiku로 새 세션이 자동으로 초기화되었습니다. 새로운 5시간 세션이 준비되었습니다!";
+"notification.session_auto_started.message" = "Claude로 새 세션이 자동으로 초기화되었습니다. 새로운 5시간 세션이 준비되었습니다!";
 "notification.session_auto_start_failed.title" = "자동 시작 실패";
 "notification.session_auto_start_failed.message" = "세션 자동 시작에 실패했습니다. 인증 정보를 확인하세요.";
 

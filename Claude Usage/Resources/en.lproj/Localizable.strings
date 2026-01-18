@@ -112,7 +112,7 @@
 /* MARK: - Session Management */
 /* ==================== */
 "session.auto_start" = "Auto-start session on reset";
-"session.auto_start.description" = "Automatically send 'Hi' to Claude 3.5 Haiku when your session resets to 0%. This keeps your session always ready without manual intervention.";
+"session.auto_start.description" = "Automatically send 'Hi' to Claude when your session resets to 0%. This keeps your session always ready without manual intervention.";
 "session.enable_auto_start" = "Enable auto-start session";
 "session.beta_badge" = "BETA";
 
@@ -221,7 +221,7 @@
 "notification.session_reset.title" = "Session Reset";
 "notification.session_reset.message" = "Your session has reset! You now have a fresh 5-hour session available.";
 "notification.session_auto_started.title" = "Session Auto-Started";
-"notification.session_auto_started.message" = "A new session has been automatically initialized with Claude 3.5 Haiku. Your fresh 5-hour session is ready!";
+"notification.session_auto_started.message" = "A new session has been automatically initialized. Your fresh 5-hour session is ready!";
 "notification.session_auto_start_failed.title" = "Auto-Start Failed";
 "notification.session_auto_start_failed.message" = "Failed to automatically start the session. Please check your credentials.";
 "notification.weekly_warning.title" = "Weekly Usage Warning";

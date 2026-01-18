@@ -71,7 +71,7 @@ class ClaudeAPIService: APIServiceProtocol {
     }
 
     /// Gets the best available authentication method with fallback support
-    /// Priority: 1) claude.ai session → 2) CLI OAuth
+    /// Priority: 1) claude.ai session → 2) saved CLI OAuth → 3) system Keychain CLI OAuth
     /// Note: Console API session is NOT used as fallback (it only provides billing data, not usage)
     private func getAuthentication() throws -> AuthenticationType {
         guard let activeProfile = ProfileManager.shared.activeProfile else {
@@ -90,15 +90,36 @@ class ClaudeAPIService: APIServiceProtocol {
             }
         }
 
-        // Fall back to CLI OAuth token if available and not expired
+        // Fall back to saved CLI OAuth token if available and not expired
         if let cliJSON = activeProfile.cliCredentialsJSON {
             if !ClaudeCodeSyncService.shared.isTokenExpired(cliJSON),
                let accessToken = ClaudeCodeSyncService.shared.extractAccessToken(from: cliJSON) {
-                LoggingService.shared.log("ClaudeAPIService: Falling back to CLI OAuth token")
+                LoggingService.shared.log("ClaudeAPIService: Falling back to saved CLI OAuth token")
                 return .cliOAuth(accessToken)
             } else {
-                LoggingService.shared.log("ClaudeAPIService: CLI OAuth token is expired or invalid")
+                LoggingService.shared.log("ClaudeAPIService: Saved CLI OAuth token is expired or invalid")
             }
+        }
+
+        // Fall back to reading CLI credentials directly from system Keychain
+        do {
+            if let systemCredentials = try ClaudeCodeSyncService.shared.readSystemCredentials() {
+                LoggingService.shared.log("ClaudeAPIService: Found CLI credentials in system Keychain")
+
+                // Validate token is not expired
+                if ClaudeCodeSyncService.shared.isTokenExpired(systemCredentials) {
+                    LoggingService.shared.log("ClaudeAPIService: System Keychain CLI token is expired")
+                } else if let accessToken = ClaudeCodeSyncService.shared.extractAccessToken(from: systemCredentials) {
+                    LoggingService.shared.log("ClaudeAPIService: Using CLI credentials from system Keychain")
+                    return .cliOAuth(accessToken)
+                } else {
+                    LoggingService.shared.log("ClaudeAPIService: Could not extract access token from system Keychain credentials")
+                }
+            } else {
+                LoggingService.shared.log("ClaudeAPIService: No CLI credentials found in system Keychain")
+            }
+        } catch {
+            LoggingService.shared.log("ClaudeAPIService: Could not read system CLI credentials: \(error.localizedDescription)")
         }
 
         LoggingService.shared.logError("ClaudeAPIService.getAuthentication: No valid credentials for usage data")
@@ -713,7 +734,7 @@ class ClaudeAPIService: APIServiceProtocol {
 
         let messageBody: [String: Any] = [
             "prompt": "Hi",
-            "model": "claude-3-5-haiku-20241022",  // Cheapest model
+            "model": "claude-haiku-4-5-20251001",  // Haiku 4.5 - ensures non-zero usage to prevent duplicate auto-starts
             "timezone": "UTC"
         ]
         messageRequest.httpBody = try JSONSerialization.data(withJSONObject: messageBody)

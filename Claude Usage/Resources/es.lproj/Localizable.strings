@@ -142,7 +142,7 @@
 "notification.session_reset.title" = "Sesión Reiniciada";
 "notification.session_reset.message" = "¡Tu sesión se ha reiniciado! Ahora tienes una sesión de 5 horas nueva disponible.";
 "notification.session_auto_started.title" = "Sesión Iniciada Automáticamente";
-"notification.session_auto_started.message" = "Una nueva sesión ha sido iniciada automáticamente con Claude 3.5 Haiku. ¡Tu sesión de 5 horas está lista!";
+"notification.session_auto_started.message" = "Una nueva sesión ha sido iniciada automáticamente. ¡Tu sesión de 5 horas está lista!";
 "notification.session_auto_start_failed.title" = "Inicio Automático Fallido";
 "notification.session_auto_start_failed.message" = "Error al iniciar sesión automáticamente. Verifica tus credenciales.";
 "notification.weekly_warning.title" = "Advertencia de Uso Semanal";
@@ -189,7 +189,7 @@
 /* MARK: - Session Management */
 /* ==================== */
 "session.auto_start" = "Auto-iniciar sesión al reiniciar";
-"session.auto_start.description" = "Enviar automáticamente 'Hola' a Claude 3.5 Haiku cuando tu sesión se reinicie a 0%. Esto mantiene tu sesión siempre lista sin intervención manual.";
+"session.auto_start.description" = "Enviar automáticamente 'Hola' a Claude cuando tu sesión se reinicie a 0%. Esto mantiene tu sesión siempre lista sin intervención manual.";
 "session.enable_auto_start" = "Habilitar auto-inicio de sesión";
 "session.beta_badge" = "BETA";
 
@@ -204,7 +204,7 @@
 "setup.instruction.step4" = "Haz doble clic en su Valor y copia (Cmd+C)";
 "setup.paste_session_key" = "Pega el valor de sessionKey que copiaste";
 "setup.auto_start_session" = "Auto-iniciar sesión al reiniciar";
-"setup.auto_start_session.description" = "Enviar automáticamente 'Hola' a Claude 3.5 Haiku cuando tu sesión se reinicie a 0%. Esto mantiene tu sesión siempre lista sin intervención manual.";
+"setup.auto_start_session.description" = "Enviar automáticamente 'Hola' a Claude cuando tu sesión se reinicie a 0%. Esto mantiene tu sesión siempre lista sin intervención manual.";
 "setup.enable_auto_start" = "Habilitar auto-inicio de sesión";
 "setup.menubar_appearance" = "Apariencia de Barra de Menú";
 "setup.choose_icon_style" = "Elige tu estilo de ícono preferido";
@@ -316,7 +316,7 @@
 /* Session Management (Additional) */
 "session.subtitle" = "Inicialización y mantenimiento automático de sesiones";
 "session.auto_description_line1" = "• Detecta cuando tu sesión se reinicia a 0%";
-"session.auto_description_line2" = "• Envía 'Hola' a Claude 3.5 Haiku (modelo más económico)";
+"session.auto_description_line2" = "• Envía 'Hola' a Claude (modelo más económico)";
 "session.auto_description_line3" = "• Usa un chat temporal que no aparecerá en tu historial";
 "session.auto_description_line4" = "• Nueva sesión de 5 horas lista instantáneamente";
 

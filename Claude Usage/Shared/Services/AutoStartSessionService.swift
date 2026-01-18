@@ -161,11 +161,8 @@ final class AutoStartSessionService {
     }
 
     private func fetchUsageForProfile(_ profile: Profile) async throws -> ClaudeUsage {
-        // Use ClaudeAPIService which now supports OAuth fallback
-        let apiService = ClaudeAPIService()
-
-        // Fetch usage - will automatically use fallback if needed
-        let usage = try await apiService.fetchUsageData()
+        // Fetch usage data using the profile's specific credentials
+        let usage = try await fetchUsageData(for: profile)
 
         // Save usage to profile
         await MainActor.run {
@@ -175,7 +172,17 @@ final class AutoStartSessionService {
         return usage
     }
 
-    private func fetchUsageData(sessionKey: String, orgId: String) async throws -> ClaudeUsage {
+    private func fetchUsageData(for profile: Profile) async throws -> ClaudeUsage {
+        // Get credentials from the specific profile
+        guard let sessionKey = profile.claudeSessionKey,
+              let orgId = profile.organizationId else {
+            throw AppError(
+                code: .sessionKeyNotFound,
+                message: "Missing credentials for profile '\(profile.name)'",
+                isRecoverable: false
+            )
+        }
+
         // Build URL
         let url = try URLBuilder(baseURL: Constants.APIEndpoints.claudeBase)
             .appendingPath("/organizations/\(orgId)/usage")
@@ -201,7 +208,7 @@ final class AutoStartSessionService {
             )
         }
 
-        // Parse usage response (simplified version of ClaudeAPIService parsing)
+        // Parse usage response
         return try parseUsageResponse(data)
     }
 
@@ -389,7 +396,7 @@ final class AutoStartSessionService {
 
         let messageBody: [String: Any] = [
             "prompt": "Hi",
-            "model": "claude-3-5-haiku-20241022",  // Cheapest model
+            "model": "claude-haiku-4-5-20251001",  // Ensures non-zero usage to prevent duplicate auto-starts
             "timezone": "UTC"
         ]
         messageRequest.httpBody = try JSONSerialization.data(withJSONObject: messageBody)
