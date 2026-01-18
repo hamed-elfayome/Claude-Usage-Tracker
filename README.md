@@ -9,14 +9,14 @@
   ![Swift](https://img.shields.io/badge/Swift-5.0+-orange?style=flat-square&logo=swift)
   ![SwiftUI](https://img.shields.io/badge/SwiftUI-5.0+-blue?style=flat-square&logo=swift)
   ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
-  ![Version](https://img.shields.io/badge/version-2.2.2-blue?style=flat-square)
+  ![Version](https://img.shields.io/badge/version-2.2.1-blue?style=flat-square)
   ![Languages](https://img.shields.io/badge/languages-8-purple?style=flat-square)
 
   <sub>🇬🇧 English • 🇪🇸 Español • 🇫🇷 Français • 🇩🇪 Deutsch • 🇮🇹 Italiano • 🇵🇹 Português • 🇯🇵 日本語 • 🇰🇷 한국어</sub>
 
-  ### [Download Latest Release (v2.2.2)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
+  ### [Download Latest Release (v2.2.1)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
 
-  <sub>macOS 14.0+ (Sonoma) | ~4 MB | Native Swift/SwiftUI | Officially Signed</sub>
+  <sub>macOS 14.0+ (Sonoma) | ~3 MB | Native Swift/SwiftUI | Officially Signed</sub>
 
   <a href="https://www.buymeacoffee.com/hamedelfayome" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="40"></a>
 </div>
@@ -53,14 +53,15 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 
 ## What's New
 
-**v2.2.2 - Redesigned Wizard & Provisioning Profile Support (2026-01-18)**:
-- **Choose Your Authentication Method**: New wizard lets you pick between manual session key (recommended) or Claude Code CLI sync
-- **Profile Data Persistence**: Mac provisioning profile support fixes data loss during auto-updates
-- **Manual CLI Sync**: Sync CLI credentials when needed (tokens expire every 8 hours)
-- **Simplified Auto-Start**: Improved reliability with direct 0% session detection
-- **8 Languages**: Full localization for wizard and all new features
+**v2.2.0 - Multi-Profile Management (2026-01-12)**:
+- **Multiple Profiles**: Create unlimited profiles for different Claude accounts (work, personal, testing)
+- **Claude Code Integration**: Sync your CLI account and auto-switch credentials when changing profiles
+- **Profile Switcher**: Quick profile switching in popover and settings
+- **Auto-Start Sessions**: Background service monitors all profiles and auto-starts sessions per-profile
+- **Fun Profile Names**: Auto-generated names like "Quantum Llama", "Sneaky Penguin", "Turbo Sloth"
+- **Korean Language**: Added 🇰🇷 Korean support (now 8 languages total)
+- **Reorganized Settings**: New tabs for Manage Profiles, CLI Account, and dedicated Language settings
 
-**v2.2.0** - Multi-profile management, CLI integration, Korean language
 **v2.1.2** - Statusline improvements, organization ID optimization
 **v2.1.1** - Session timer countdown in menu bar
 **v2.1.0** - 3-step setup wizard, smart organization preservation
@@ -78,12 +79,10 @@ Before installing Claude Usage Tracker, ensure you have:
 
 - **macOS 14.0 (Sonoma) or later** - Check: Apple menu → About This Mac
 - **Active Claude AI account** - Sign up at [claude.ai](https://claude.ai)
+- **Web browser access** - For extracting your session key (Chrome, Safari, Firefox, etc.)
 
-**Authentication** (choose one method):
-- **Easiest**: [Claude Code](https://claude.com/claude-code) installed and logged in - App automatically uses CLI credentials (v2.2.2+)
-- **Manual**: Web browser access to extract session key from claude.ai (Chrome, Safari, Firefox, etc.)
-
-**Note**: For terminal statusline integration, you'll still need to manually configure a session key even if using Claude Code OAuth
+**Optional**:
+- [Claude Code](https://claude.com/claude-code) - For terminal statusline integration
 
 ### Installation
 
@@ -142,13 +141,9 @@ open "Claude Usage.xcodeproj"
 
 ### Quick Start Guide
 
-**New in v2.2.2**: The setup wizard now lets you choose your preferred authentication method on first launch!
+#### Step 1: Extract Your Session Key
 
-#### Option A: Manual Session Key Setup (Recommended)
-
-**Provides extended features**: CLI statusline integration and auto-start sessions
-
-**Step 1: Extract Your Session Key**
+Your session key authenticates the app with Claude AI. Here's how to get it:
 
 1. **Open Claude AI**
    - Navigate to [claude.ai](https://claude.ai) in your browser
@@ -165,7 +160,13 @@ open "Claude Usage.xcodeproj"
    - Find: `sessionKey` cookie
    - Copy: The value (starts with `sk-ant-sid01-...`)
 
-**Step 2: Configure Session Key**
+<div align="center">
+  <sub>Tip: The session key is a long string starting with "sk-ant-sid01-". Make sure to copy the entire value.</sub>
+</div>
+
+#### Step 2: Configure Session Key
+
+Access the Personal Usage settings to configure your session key:
 
 1. **Click the menu bar icon** and select "Settings"
 2. **Navigate to "Personal Usage"** tab
@@ -175,7 +176,9 @@ open "Claude Usage.xcodeproj"
    - **Step 3**: Review and click "Save Configuration"
 4. **Wait for confirmation** (success message appears)
 
-**Step 3: Verify It's Working**
+The new wizard validates your key without saving it first, ensuring a smooth setup experience
+
+#### Step 3: Verify It's Working
 
 1. **Check Menu Bar**: You should see the Claude Usage icon in your menu bar
 2. **Click the Icon**: Popover appears showing your usage statistics
@@ -183,33 +186,12 @@ open "Claude Usage.xcodeproj"
 
 **Success!** The app is now monitoring your Claude usage.
 
-#### Option B: Claude Code CLI Sync
-
-**Quick one-click setup** if you have Claude Code installed
-
-**Step 1: Install and Login to Claude Code**
-
-1. **Install Claude Code** (if not already installed)
-   - Download from [claude.com/claude-code](https://claude.com/claude-code)
-   - Log in using `claude login`
-
-**Step 2: Sync in Setup Wizard**
-
-1. **Launch Claude Usage Tracker**
-2. **Select "Sync with Claude Code CLI"** in the wizard
-3. **Click "Sync & Continue"**
-   - Permission dialog appears (click "Allow")
-   - Credentials sync automatically
-4. **Click "Done"** to complete setup
-
-**Note**: CLI tokens expire every 8 hours. You'll need to manually re-sync in Settings → Claude CLI Account when they expire.
-
 #### Next Steps
 
 - **Customize Icon**: Go to Settings → Appearance to choose your preferred menu bar style
 - **Enable Notifications**: Settings → Notifications to get threshold alerts
 - **Auto-Start Sessions**: Settings → Session Management to enable automatic session initialization
-- **Terminal Integration**: Settings → Claude Code to set up statusline (requires session key configuration)
+- **Terminal Integration**: Settings → Claude Code to set up statusline (requires [Claude Code](https://claude.com/claude-code))
 
 ---
 
@@ -409,7 +391,7 @@ Customize menu bar icon per profile:
 Per-profile behavior configuration:
 - **Refresh Interval**: Configure auto-refresh rate (5-300 seconds)
 - **Auto-Start Sessions**: Enable/disable automatic session initialization on reset
-- **Model Selection**: Uses the most cost-effective model available
+- **Model Selection**: Uses Claude 3.5 Haiku (most cost-effective)
 - **Notifications**: Per-profile threshold alerts (75%, 90%, 95%)
 
 ### App-Wide Settings
@@ -468,7 +450,7 @@ Bring real-time Claude usage monitoring directly into your terminal with Claude 
 #### Prerequisites
 
 1. **Claude Code installed**: Download from [claude.com/claude-code](https://claude.com/claude-code)
-2. **Session key configured**: Must be manually configured in the Personal Usage tab (Claude Code OAuth doesn't work for statusline - it requires direct session key)
+2. **Session key configured**: Must be set in the General tab of Claude Usage Tracker
 
 #### Installation Steps
 
