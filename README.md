@@ -53,15 +53,15 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 
 ## What's New
 
-**v2.2.3 - Improved Setup Wizard (2026-01-18)**:
-- **Smart wizard banners**: Shows Claude Code info when Claude Code exist, migration option for previous versions
+- **v2.2.3 - Improved Setup Wizard (2026-01-18)**:
+  - **Smart wizard banners**: Shows Claude Code info when Claude Code exist, migration option for previous versions
 
-**v2.2.2** - CLI OAuth authentication fallback, simplified auto-start
-**v2.2.0** - Multi-profile management, CLI integration, Korean language
-**v2.1.2** - Statusline improvements, organization ID optimization
-**v2.1.1** - Session timer countdown in menu bar
-**v2.1.0** - 3-step setup wizard, smart organization preservation
-**v2.0.0** - Apple code signing, automatic updates, Keychain security
+- **v2.2.2** – CLI OAuth authentication fallback, simplified auto-start
+- **v2.2.0** – Multi-profile management, CLI integration, Korean language
+- **v2.1.2** – Statusline improvements, organization ID optimization
+- **v2.1.1** – Session timer countdown in menu bar
+- **v2.1.0** – 3-step setup wizard, smart organization preservation
+- **v2.0.0** – Apple code signing, automatic updates, Keychain security
 
 **[View Full Release History](CHANGELOG.md)**
 
@@ -197,6 +197,7 @@ If you prefer manual configuration or don't use Claude Code:
 #### Next Steps
 
 - **Customize Icon**: Go to Settings → Appearance to choose your preferred menu bar style
+- **Su**: Go to Settings → Appearance to choose your preferred menu bar style
 - **Enable Notifications**: Settings → Notifications to get threshold alerts
 - **Auto-Start Sessions**: Settings → Session Management to enable automatic session initialization
 - **Terminal Integration**: Settings → Claude Code to set up statusline (requires session key configuration)
