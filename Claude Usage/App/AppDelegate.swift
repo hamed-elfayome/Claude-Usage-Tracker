@@ -42,6 +42,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             menuBarManager?.setup()
         } else {
             showSetupWizardManually()
+            // Mark that wizard has been shown once
+            SharedDataStore.shared.markWizardShown()
         }
 
         // Track first launch date for GitHub star prompt
@@ -71,15 +73,66 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         }
     }
 
+
     private func shouldShowSetupWizard() -> Bool {
-        // Show wizard if profile has no credentials
-        // (ProfileManager always creates a default profile if none exist)
+        // FORCE SHOW wizard on very first app launch (one-time)
+        // This ensures users see the migration option if they have old data
+        if !SharedDataStore.shared.hasShownWizardOnce() {
+            LoggingService.shared.log("AppDelegate: First launch - forcing wizard to show migration option")
+            return true
+        }
+
+        // After first launch, use normal checks:
+
+        // activeProfile will always exist after loadProfiles() is called
+        // (ProfileManager creates a default profile if none exist)
         guard let activeProfile = ProfileManager.shared.activeProfile else {
             return true  // Safety fallback, should never happen
         }
 
-        // Show wizard if profile doesn't have any credentials configured
-        return !activeProfile.hasAnyCredentials
+        // If profile already has any credentials, skip wizard
+        if activeProfile.hasAnyCredentials {
+            return false
+        }
+
+        // Check if valid CLI credentials exist in system Keychain
+        if hasValidSystemCLICredentials() {
+            LoggingService.shared.log("AppDelegate: Found valid CLI credentials, skipping wizard")
+            return false
+        }
+
+        // No credentials found - show wizard
+        return true
+    }
+
+    /// Checks if valid Claude Code CLI credentials exist in system Keychain
+    private func hasValidSystemCLICredentials() -> Bool {
+        do {
+            // Attempt to read credentials from system Keychain
+            guard let jsonData = try ClaudeCodeSyncService.shared.readSystemCredentials() else {
+                LoggingService.shared.log("AppDelegate: No CLI credentials found in system Keychain")
+                return false
+            }
+
+            // Validate: not expired
+            if ClaudeCodeSyncService.shared.isTokenExpired(jsonData) {
+                LoggingService.shared.log("AppDelegate: CLI credentials found but expired")
+                return false
+            }
+
+            // Validate: has valid access token
+            guard ClaudeCodeSyncService.shared.extractAccessToken(from: jsonData) != nil else {
+                LoggingService.shared.log("AppDelegate: CLI credentials found but missing access token")
+                return false
+            }
+
+            LoggingService.shared.log("AppDelegate: Valid CLI credentials found in system Keychain")
+            return true
+
+        } catch {
+            LoggingService.shared.logError("AppDelegate: Failed to check CLI credentials", error: error)
+            return false
+        }
     }
 
     /// Handles notification to show setup wizard

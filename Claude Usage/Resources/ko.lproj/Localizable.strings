@@ -725,20 +725,15 @@
 "personal.remove_subtitle" = "이 프로필에서 Claude.ai 세션 키를 영구적으로 삭제";
 "about.run_setup_wizard" = "설정 마법사 실행";
 
-/* ==================== */
-/* MARK: - Wizard: Choose Method */
-/* ==================== */
-"wizard.choose_auth_method" = "인증 방법 선택";
-"wizard.choose_auth_description" = "Claude 인증 방법을 선택하세요. 나중에 설정에서 변경할 수 있습니다.";
-"wizard.method_claudecode" = "Claude Code CLI와 동기화";
-"wizard.method_claudecode_description" = "Claude Code CLI 로그인에서 자격 증명을 자동으로 동기화합니다. Claude Code가 설치되어 있고 로그인되어 있어야 합니다.";
-"wizard.method_manual" = "세션 키 수동 입력";
-"wizard.method_manual_description" = "브라우저에서 Claude.ai 세션 키를 수동으로 입력합니다. CLI 상태 표시줄 통합 및 자동 세션 시작을 포함한 확장 기능을 제공합니다. 모든 사용자가 사용할 수 있습니다.";
-"wizard.recommended" = "권장";
-"wizard.sync_and_continue" = "동기화 및 계속";
-"wizard.cli_sync_success" = "Claude Code 자격 증명이 성공적으로 동기화되었습니다!";
-"wizard.cli_sync_failed" = "동기화 실패: %@";
-"wizard.error_no_profile" = "활성 프로필을 찾을 수 없음";
-"wizard.cli_sync_summary" = "설정 완료";
-"wizard.cli_credentials_synced" = "Claude Code 자격 증명이 성공적으로 동기화되었습니다";
-"wizard.cli_ready_message" = "앱이 구성되었으며 Claude 사용량 추적을 시작할 준비가 되었습니다. 완료를 클릭하여 앱 사용을 시작하세요.";
+/* Migration & Reset */
+"wizard.migrate_old_data" = "이전 버전의 데이터가 있나요?";
+"wizard.migrate_description" = "이전 버전이 설치되어 있었다면, 아래를 클릭하여 이전 프로필과 설정을 가져오세요. 데이터에 액세스하려면 시스템 권한이 필요합니다.";
+"wizard.migrate_button" = "데이터 마이그레이션";
+"wizard.skip_migration" = "건너뛰기";
+"wizard.migration_success" = "✅ %d개 항목을 성공적으로 마이그레이션했습니다";
+"wizard.migration_failed" = "⚠️ 마이그레이션 실패: %@";
+"wizard.migration_skipped" = "마이그레이션을 건너뛰었습니다. 나중에 이전 데이터를 수동으로 동기화할 수 있습니다.";
+"about.reset_app_data" = "앱 데이터 재설정";
+"about.reset_confirmation_title" = "모든 앱 데이터를 재설정하시겠습니까?";
+"about.reset_confirm" = "재설정";
+"about.reset_confirmation_message" = "이렇게 하면 모든 프로필, 자격 증명 및 설정이 영구적으로 삭제됩니다. 앱이 종료되고 다시 설정해야 합니다. 이 작업은 취소할 수 없습니다.";

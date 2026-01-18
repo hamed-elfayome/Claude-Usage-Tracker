@@ -111,12 +111,6 @@ struct Profile: Codable, Identifiable, Equatable {
 
     /// True if system Keychain has valid CLI OAuth credentials (fallback)
     var hasValidSystemCLIOAuth: Bool {
-        // Only check system credentials if user has previously granted access
-        // This prevents the macOS permission dialog from appearing automatically
-        guard SharedDataStore.shared.hasGrantedCLIKeychainAccess() else {
-            return false
-        }
-
         guard let systemCredentials = try? ClaudeCodeSyncService.shared.readSystemCredentials() else {
             return false
         }

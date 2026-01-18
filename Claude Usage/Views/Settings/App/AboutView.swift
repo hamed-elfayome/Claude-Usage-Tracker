@@ -13,6 +13,7 @@ struct AboutView: View {
     @State private var contributors: [Contributor] = []
     @State private var isLoadingContributors = false
     @State private var contributorsError: String?
+    @State private var showResetConfirmation = false
 
     private var appVersion: String {
         if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
@@ -145,7 +146,19 @@ struct AboutView: View {
                             LoggingService.shared.log("AboutView: Setup Wizard button clicked - posting notification")
                             NotificationCenter.default.post(name: .showSetupWizard, object: nil)
                         }
+
+                        LinkButton(title: "about.reset_app_data".localized, icon: "trash") {
+                            showResetConfirmation = true
+                        }
                     }
+                }
+                .alert("about.reset_confirmation_title".localized, isPresented: $showResetConfirmation) {
+                    Button("common.cancel".localized, role: .cancel) { }
+                    Button("about.reset_confirm".localized, role: .destructive) {
+                        resetAppData()
+                    }
+                } message: {
+                    Text("about.reset_confirmation_message".localized)
                 }
 
                 // Footer
@@ -170,6 +183,17 @@ struct AboutView: View {
                 fetchContributors()
             }
         }
+    }
+
+    private func resetAppData() {
+        LoggingService.shared.log("AboutView: Resetting app data...")
+
+        // Reset all app data (standard container only)
+        MigrationService.shared.resetAppData()
+
+        // Quit the app - user will need to relaunch and set up again
+        LoggingService.shared.log("AboutView: App data reset complete, quitting app")
+        NSApplication.shared.terminate(nil)
     }
 
     private func fetchContributors() {

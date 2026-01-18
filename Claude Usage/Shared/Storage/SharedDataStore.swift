@@ -26,9 +26,7 @@ class SharedDataStore {
 
         // Setup State
         static let hasCompletedSetup = "hasCompletedSetup"
-
-        // CLI Credential Access Permission
-        static let hasGrantedCLIKeychainAccess = "hasGrantedCLIKeychainAccess"
+        static let hasShownWizardOnce = "hasShownWizardOnce"
 
         // GitHub Star Tracking
         static let firstLaunchDate = "firstLaunchDate"
@@ -41,11 +39,9 @@ class SharedDataStore {
     }
 
     init() {
-        if let groupDefaults = UserDefaults(suiteName: Constants.appGroupIdentifier) {
-            self.defaults = groupDefaults
-        } else {
-            self.defaults = UserDefaults.standard
-        }
+        // Use standard UserDefaults (app container)
+        self.defaults = UserDefaults.standard
+        LoggingService.shared.log("SharedDataStore: Using standard app container storage")
     }
 
     // MARK: - Language & Localization
@@ -140,17 +136,12 @@ class SharedDataStore {
         return false
     }
 
-    // MARK: - CLI Credential Access Permission
-
-    /// Marks that user has granted permission to access CLI credentials from system Keychain
-    /// This flag prevents showing the macOS permission dialog on every app launch
-    func saveHasGrantedCLIKeychainAccess(_ granted: Bool) {
-        defaults.set(granted, forKey: Keys.hasGrantedCLIKeychainAccess)
+    func hasShownWizardOnce() -> Bool {
+        return defaults.bool(forKey: Keys.hasShownWizardOnce)
     }
 
-    /// Returns true if user has previously granted permission to access CLI credentials
-    func hasGrantedCLIKeychainAccess() -> Bool {
-        return defaults.bool(forKey: Keys.hasGrantedCLIKeychainAccess)
+    func markWizardShown() {
+        defaults.set(true, forKey: Keys.hasShownWizardOnce)
     }
 
     // MARK: - GitHub Star Prompt Tracking

@@ -663,20 +663,15 @@
 "personal.remove_subtitle" = "Elimina permanentemente la tua chiave di sessione Claude.ai da questo profilo";
 "about.run_setup_wizard" = "Esegui Procedura Guidata";
 
-/* ==================== */
-/* MARK: - Wizard: Choose Method */
-/* ==================== */
-"wizard.choose_auth_method" = "Scegli il Metodo di Autenticazione";
-"wizard.choose_auth_description" = "Seleziona come vuoi autenticarti con Claude. Puoi modificarlo successivamente nelle Impostazioni.";
-"wizard.method_claudecode" = "Sincronizza con Claude Code CLI";
-"wizard.method_claudecode_description" = "Sincronizza automaticamente le credenziali dal tuo accesso Claude Code CLI. Richiede che Claude Code sia installato e connesso.";
-"wizard.method_manual" = "Inserisci la Chiave di Sessione Manualmente";
-"wizard.method_manual_description" = "Inserisci manualmente la tua chiave di sessione Claude.ai dal tuo browser. Fornisce funzionalità estese inclusa l'integrazione della statusline CLI e l'avvio automatico delle sessioni. Funziona per tutti gli utenti.";
-"wizard.recommended" = "CONSIGLIATO";
-"wizard.sync_and_continue" = "Sincronizza e Continua";
-"wizard.cli_sync_success" = "Credenziali Claude Code sincronizzate con successo!";
-"wizard.cli_sync_failed" = "Sincronizzazione fallita: %@";
-"wizard.error_no_profile" = "Nessun profilo attivo trovato";
-"wizard.cli_sync_summary" = "Configurazione Completata";
-"wizard.cli_credentials_synced" = "Credenziali Claude Code sincronizzate con successo";
-"wizard.cli_ready_message" = "La tua app è ora configurata e pronta per tracciare il tuo utilizzo di Claude. Fai clic su Fatto per iniziare a usare l'app.";
+/* Migration & Reset */
+"wizard.migrate_old_data" = "Hai dati da una versione precedente?";
+"wizard.migrate_description" = "Se avevi una versione precedente installata, fai clic qui sotto per importare i tuoi vecchi profili e impostazioni. Questo richiederà l'autorizzazione di sistema per accedere ai dati.";
+"wizard.migrate_button" = "Migra dati";
+"wizard.skip_migration" = "Salta";
+"wizard.migration_success" = "✅ Migrati con successo %d elementi";
+"wizard.migration_failed" = "⚠️ Migrazione fallita: %@";
+"wizard.migration_skipped" = "Migrazione saltata. Puoi sincronizzare manualmente i vecchi dati in seguito.";
+"about.reset_app_data" = "Ripristina dati app";
+"about.reset_confirmation_title" = "Ripristinare tutti i dati dell'app?";
+"about.reset_confirm" = "Ripristina";
+"about.reset_confirmation_message" = "Questo eliminerà permanentemente tutti i profili, credenziali e impostazioni. L'app si chiuderà e dovrai configurarla di nuovo. Questa azione non può essere annullata.";

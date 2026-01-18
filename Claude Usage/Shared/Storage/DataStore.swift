@@ -53,13 +53,9 @@ class DataStore: StorageProvider {
     }
 
     init() {
-        // Use App Group for sharing data between app and widgets
-        if let groupDefaults = UserDefaults(suiteName: Constants.appGroupIdentifier) {
-            self.defaults = groupDefaults
-        } else {
-            // Fallback to standard UserDefaults if App Group not configured
-            self.defaults = UserDefaults.standard
-        }
+        // Use standard UserDefaults (app container)
+        self.defaults = UserDefaults.standard
+        LoggingService.shared.log("DataStore: Using standard app container storage")
     }
 
     // MARK: - Usage Data
