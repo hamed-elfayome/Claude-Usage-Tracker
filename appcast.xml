@@ -5,7 +5,7 @@
         <item>
             <title>2.2.2</title>
             <pubDate>Sun, 18 Jan 2026 01:36:32 +0000</pubDate>
-            <sparkle:version>7</sparkle:version>
+            <sparkle:version>6</sparkle:version>
             <sparkle:shortVersionString>2.2.2</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure url="https://hamed-elfayome.github.io/Claude-Usage-Tracker/releases/Claude-Usage.zip" length="4468041" type="application/octet-stream" sparkle:edSignature="8dVIoh956HvCuoMm4X4dHINJXn7wJWNXMlWyqHTllnb+qBCrH0yKTPwJnzvcUStTKNgAmF8asdFNy11LgXm/Aw=="/>
