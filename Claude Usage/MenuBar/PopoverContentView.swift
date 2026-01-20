@@ -520,18 +520,24 @@ struct SmartUsageCard: View {
     let resetTime: Date?
     let isPrimary: Bool
 
+    /// Remaining percentage (100 - used percentage)
+    private var remainingPercentage: Double {
+        max(0, 100 - percentage)
+    }
+
+    /// Color based on remaining percentage (like Mac battery indicator)
     private var statusColor: Color {
-        switch percentage {
-        case 0..<50: return .green
-        case 50..<80: return .orange
-        default: return .red
+        switch remainingPercentage {
+        case 20...: return .green       // > 20% remaining: safe
+        case 10..<20: return .orange    // 10-20% remaining: warning
+        default: return .red            // < 10% remaining: critical
         }
     }
 
     private var statusIcon: String {
-        switch percentage {
-        case 0..<50: return "checkmark.circle.fill"
-        case 50..<80: return "exclamationmark.triangle.fill"
+        switch remainingPercentage {
+        case 20...: return "checkmark.circle.fill"
+        case 10..<20: return "exclamationmark.triangle.fill"
         default: return "xmark.circle.fill"
         }
     }
@@ -552,19 +558,19 @@ struct SmartUsageCard: View {
 
                 Spacer()
 
-                // Status indicator
+                // Status indicator (shows remaining percentage)
                 HStack(spacing: 4) {
                     Image(systemName: statusIcon)
                         .font(.system(size: isPrimary ? 12 : 10, weight: .medium))
                         .foregroundColor(statusColor)
 
-                    Text("\(Int(percentage))%")
+                    Text("\(Int(remainingPercentage))%")
                         .font(.system(size: isPrimary ? 16 : 14, weight: .bold, design: .monospaced))
                         .foregroundColor(statusColor)
                 }
             }
 
-            // Progress visualization
+            // Progress visualization (shows remaining capacity)
             VStack(spacing: 6) {
                 // Animated progress bar
                 GeometryReader { geometry in
@@ -580,9 +586,9 @@ struct SmartUsageCard: View {
                                     endPoint: .trailing
                                 )
                             )
-                            .frame(width: geometry.size.width * min(percentage / 100.0, 1.0))
+                            .frame(width: geometry.size.width * min(remainingPercentage / 100.0, 1.0))
                             .clipShape(RoundedRectangle(cornerRadius: 4))
-                            .animation(.easeInOut(duration: 0.8), value: percentage)
+                            .animation(.easeInOut(duration: 0.8), value: remainingPercentage)
                     }
                 }
                 .frame(height: 8)
@@ -825,11 +831,17 @@ struct SmartActionButton: View {
 struct APIUsageCard: View {
     let apiUsage: APIUsage
 
+    /// Remaining percentage (100 - used percentage)
+    private var remainingPercentage: Double {
+        max(0, 100 - apiUsage.usagePercentage)
+    }
+
+    /// Color based on remaining percentage (like Mac battery indicator)
     private var usageColor: Color {
-        switch apiUsage.usagePercentage {
-        case 0..<50: return .green
-        case 50..<80: return .orange
-        default: return .red
+        switch remainingPercentage {
+        case 20...: return .green       // > 20% remaining: safe
+        case 10..<20: return .orange    // 10-20% remaining: warning
+        default: return .red            // < 10% remaining: critical
         }
     }
 
@@ -849,13 +861,13 @@ struct APIUsageCard: View {
 
                 Spacer()
 
-                // Percentage
-                Text("\(Int(apiUsage.usagePercentage))%")
+                // Percentage (shows remaining)
+                Text("\(Int(remainingPercentage))%")
                     .font(.system(size: 16, weight: .bold, design: .monospaced))
                     .foregroundColor(usageColor)
             }
 
-            // Progress Bar
+            // Progress Bar (shows remaining capacity)
             ZStack(alignment: .leading) {
                 // Background
                 RoundedRectangle(cornerRadius: 4)
@@ -865,7 +877,7 @@ struct APIUsageCard: View {
                 RoundedRectangle(cornerRadius: 4)
                     .fill(usageColor)
                     .frame(maxWidth: .infinity)
-                    .scaleEffect(x: apiUsage.usagePercentage / 100.0, y: 1.0, anchor: .leading)
+                    .scaleEffect(x: remainingPercentage / 100.0, y: 1.0, anchor: .leading)
                     .clipShape(RoundedRectangle(cornerRadius: 4))
             }
             .frame(height: 8)
