@@ -181,6 +181,67 @@ struct MetricIconConfig: Codable, Equatable {
     }
 }
 
+/// Icon style for multi-profile display
+enum MultiProfileIconStyle: String, Codable, CaseIterable {
+    case concentric   // Concentric circles (session inner, week outer)
+    case progressBar  // Horizontal progress bars stacked
+    case compact      // Minimal dot indicators
+
+    var displayName: String {
+        switch self {
+        case .concentric:
+            return "Concentric Circles"
+        case .progressBar:
+            return "Progress Bars"
+        case .compact:
+            return "Compact Dots"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .concentric:
+            return "Session inside, week outside ring"
+        case .progressBar:
+            return "Horizontal bars stacked vertically"
+        case .compact:
+            return "Minimal colored dots"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .concentric:
+            return "circle.circle"
+        case .progressBar:
+            return "chart.bar.fill"
+        case .compact:
+            return "circle.fill"
+        }
+    }
+}
+
+/// Configuration for multi-profile display mode
+struct MultiProfileDisplayConfig: Codable, Equatable {
+    var iconStyle: MultiProfileIconStyle
+    var showWeek: Bool        // If false, only show session
+    var showProfileLabel: Bool // Show profile name below icon
+
+    init(
+        iconStyle: MultiProfileIconStyle = .concentric,
+        showWeek: Bool = true,
+        showProfileLabel: Bool = true
+    ) {
+        self.iconStyle = iconStyle
+        self.showWeek = showWeek
+        self.showProfileLabel = showProfileLabel
+    }
+
+    static var `default`: MultiProfileDisplayConfig {
+        MultiProfileDisplayConfig()
+    }
+}
+
 /// Global menu bar icon configuration
 struct MenuBarIconConfiguration: Codable, Equatable {
     var monochromeMode: Bool

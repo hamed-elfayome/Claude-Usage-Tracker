@@ -580,6 +580,354 @@ final class MenuBarIconRenderer {
         return image
     }
 
+    // MARK: - Multi-Profile Concentric Icon
+
+    /// Creates a compact concentric circle icon for multi-profile display mode
+    /// - Parameters:
+    ///   - sessionPercentage: Session usage percentage (0-100)
+    ///   - weekPercentage: Week usage percentage (0-100)
+    ///   - sessionStatus: Status level for session (for coloring)
+    ///   - weekStatus: Status level for week (for coloring)
+    ///   - profileInitial: Single character to display in center (e.g., "W" for Work)
+    ///   - monochromeMode: If true, use white color for all elements
+    /// - Returns: NSImage with concentric circles showing both metrics
+    func createConcentricIcon(
+        sessionPercentage: Double,
+        weekPercentage: Double,
+        sessionStatus: UsageStatusLevel,
+        weekStatus: UsageStatusLevel,
+        profileInitial: String,
+        monochromeMode: Bool
+    ) -> NSImage {
+        let size: CGFloat = 24
+        let image = NSImage(size: NSSize(width: size, height: size))
+
+        image.lockFocus()
+        defer { image.unlockFocus() }
+
+        let center = NSPoint(x: size / 2, y: size / 2)
+
+        // Colors
+        let textColor: NSColor = .white
+        let weekColor: NSColor = monochromeMode ? .white : getColorForStatusLevel(weekStatus)
+        let sessionColor: NSColor = monochromeMode ? .white : getColorForStatusLevel(sessionStatus)
+        let backgroundColor: NSColor = NSColor.white.withAlphaComponent(0.15)
+
+        // Outer ring (Week) - larger radius, thicker stroke
+        let outerRadius: CGFloat = (size - 4) / 2  // 10pt radius
+        let outerStrokeWidth: CGFloat = 3.0
+
+        // Background ring for outer
+        let outerBgPath = NSBezierPath()
+        outerBgPath.appendArc(
+            withCenter: center,
+            radius: outerRadius,
+            startAngle: 0,
+            endAngle: 360,
+            clockwise: false
+        )
+        backgroundColor.setStroke()
+        outerBgPath.lineWidth = outerStrokeWidth
+        outerBgPath.stroke()
+
+        // Week progress ring
+        if weekPercentage > 0 {
+            let weekEndAngle = 90 + (360 * CGFloat(weekPercentage / 100.0))
+            let outerProgressPath = NSBezierPath()
+            outerProgressPath.appendArc(
+                withCenter: center,
+                radius: outerRadius,
+                startAngle: 90,
+                endAngle: weekEndAngle,
+                clockwise: false
+            )
+            weekColor.setStroke()
+            outerProgressPath.lineWidth = outerStrokeWidth
+            outerProgressPath.lineCapStyle = .round
+            outerProgressPath.stroke()
+        }
+
+        // Inner ring (Session) - smaller radius, thinner stroke
+        let innerRadius: CGFloat = outerRadius - 4.5  // 5.5pt radius
+        let innerStrokeWidth: CGFloat = 2.0
+
+        // Background ring for inner
+        let innerBgPath = NSBezierPath()
+        innerBgPath.appendArc(
+            withCenter: center,
+            radius: innerRadius,
+            startAngle: 0,
+            endAngle: 360,
+            clockwise: false
+        )
+        backgroundColor.setStroke()
+        innerBgPath.lineWidth = innerStrokeWidth
+        innerBgPath.stroke()
+
+        // Session progress ring
+        if sessionPercentage > 0 {
+            let sessionEndAngle = 90 + (360 * CGFloat(sessionPercentage / 100.0))
+            let innerProgressPath = NSBezierPath()
+            innerProgressPath.appendArc(
+                withCenter: center,
+                radius: innerRadius,
+                startAngle: 90,
+                endAngle: sessionEndAngle,
+                clockwise: false
+            )
+            sessionColor.setStroke()
+            innerProgressPath.lineWidth = innerStrokeWidth
+            innerProgressPath.lineCapStyle = .round
+            innerProgressPath.stroke()
+        }
+
+        // Profile initial in center
+        let initial = String(profileInitial.prefix(1)).uppercased()
+        let labelAttributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: 8, weight: .bold),
+            .foregroundColor: textColor
+        ]
+        let labelString = initial as NSString
+        let labelSize = labelString.size(withAttributes: labelAttributes)
+        let labelX = center.x - labelSize.width / 2
+        let labelY = center.y - labelSize.height / 2
+        labelString.draw(at: NSPoint(x: labelX, y: labelY), withAttributes: labelAttributes)
+
+        return image
+    }
+
+    /// Creates a concentric icon with profile label below for multi-profile mode
+    /// - Returns: NSImage with concentric circles and profile name label
+    func createConcentricIconWithLabel(
+        sessionPercentage: Double,
+        weekPercentage: Double,
+        sessionStatus: UsageStatusLevel,
+        weekStatus: UsageStatusLevel,
+        profileName: String,
+        monochromeMode: Bool
+    ) -> NSImage {
+        let circleSize: CGFloat = 20
+        let labelHeight: CGFloat = 10
+        let spacing: CGFloat = 1
+        let totalHeight = circleSize + spacing + labelHeight
+        let labelWidth: CGFloat = max(circleSize, CGFloat(profileName.prefix(3).count) * 6 + 4)
+        let totalWidth = max(circleSize, labelWidth)
+
+        let image = NSImage(size: NSSize(width: totalWidth, height: totalHeight))
+
+        image.lockFocus()
+        defer { image.unlockFocus() }
+
+        let circleCenter = NSPoint(x: totalWidth / 2, y: totalHeight - circleSize / 2)
+
+        // Colors
+        let textColor: NSColor = .white
+        let weekColor: NSColor = monochromeMode ? .white : getColorForStatusLevel(weekStatus)
+        let sessionColor: NSColor = monochromeMode ? .white : getColorForStatusLevel(sessionStatus)
+        let backgroundColor: NSColor = NSColor.white.withAlphaComponent(0.15)
+
+        // Outer ring (Week)
+        let outerRadius: CGFloat = (circleSize - 4) / 2
+        let outerStrokeWidth: CGFloat = 2.5
+
+        // Background ring for outer
+        let outerBgPath = NSBezierPath()
+        outerBgPath.appendArc(
+            withCenter: circleCenter,
+            radius: outerRadius,
+            startAngle: 0,
+            endAngle: 360,
+            clockwise: false
+        )
+        backgroundColor.setStroke()
+        outerBgPath.lineWidth = outerStrokeWidth
+        outerBgPath.stroke()
+
+        // Week progress ring
+        if weekPercentage > 0 {
+            let weekEndAngle = 90 + (360 * CGFloat(weekPercentage / 100.0))
+            let outerProgressPath = NSBezierPath()
+            outerProgressPath.appendArc(
+                withCenter: circleCenter,
+                radius: outerRadius,
+                startAngle: 90,
+                endAngle: weekEndAngle,
+                clockwise: false
+            )
+            weekColor.setStroke()
+            outerProgressPath.lineWidth = outerStrokeWidth
+            outerProgressPath.lineCapStyle = .round
+            outerProgressPath.stroke()
+        }
+
+        // Inner ring (Session)
+        let innerRadius: CGFloat = outerRadius - 3.5
+        let innerStrokeWidth: CGFloat = 1.5
+
+        // Background ring for inner
+        let innerBgPath = NSBezierPath()
+        innerBgPath.appendArc(
+            withCenter: circleCenter,
+            radius: innerRadius,
+            startAngle: 0,
+            endAngle: 360,
+            clockwise: false
+        )
+        backgroundColor.setStroke()
+        innerBgPath.lineWidth = innerStrokeWidth
+        innerBgPath.stroke()
+
+        // Session progress ring
+        if sessionPercentage > 0 {
+            let sessionEndAngle = 90 + (360 * CGFloat(sessionPercentage / 100.0))
+            let innerProgressPath = NSBezierPath()
+            innerProgressPath.appendArc(
+                withCenter: circleCenter,
+                radius: innerRadius,
+                startAngle: 90,
+                endAngle: sessionEndAngle,
+                clockwise: false
+            )
+            sessionColor.setStroke()
+            innerProgressPath.lineWidth = innerStrokeWidth
+            innerProgressPath.lineCapStyle = .round
+            innerProgressPath.stroke()
+        }
+
+        // Profile label below the circle (first 3 characters)
+        let label = String(profileName.prefix(3))
+        let labelAttributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: 8, weight: .medium),
+            .foregroundColor: textColor.withAlphaComponent(0.85)
+        ]
+        let labelString = label as NSString
+        let labelSize = labelString.size(withAttributes: labelAttributes)
+        let labelX = (totalWidth - labelSize.width) / 2
+        let labelY: CGFloat = 0
+        labelString.draw(at: NSPoint(x: labelX, y: labelY), withAttributes: labelAttributes)
+
+        return image
+    }
+
+    // MARK: - Multi-Profile Progress Bar Style
+
+    /// Creates a progress bar style icon for multi-profile mode
+    func createMultiProfileProgressBar(
+        sessionPercentage: Double,
+        weekPercentage: Double?,
+        sessionStatus: UsageStatusLevel,
+        weekStatus: UsageStatusLevel,
+        profileName: String?,
+        monochromeMode: Bool
+    ) -> NSImage {
+        let barWidth: CGFloat = 24
+        let barHeight: CGFloat = 4
+        let spacing: CGFloat = 2
+        let labelHeight: CGFloat = profileName != nil ? 10 : 0
+        let hasWeek = weekPercentage != nil
+
+        let totalHeight = barHeight + (hasWeek ? spacing + barHeight : 0) + (profileName != nil ? spacing + labelHeight : 0)
+        let totalWidth = barWidth
+
+        let image = NSImage(size: NSSize(width: totalWidth, height: totalHeight))
+
+        image.lockFocus()
+        defer { image.unlockFocus() }
+
+        let sessionColor: NSColor = monochromeMode ? .white : getColorForStatusLevel(sessionStatus)
+        let weekColor: NSColor = monochromeMode ? .white : getColorForStatusLevel(weekStatus)
+        let backgroundColor: NSColor = NSColor.white.withAlphaComponent(0.2)
+
+        var currentY = totalHeight
+
+        // Session bar (top)
+        currentY -= barHeight
+        let sessionBgRect = NSRect(x: 0, y: currentY, width: barWidth, height: barHeight)
+        backgroundColor.setFill()
+        NSBezierPath(roundedRect: sessionBgRect, xRadius: 2, yRadius: 2).fill()
+
+        let sessionFillWidth = barWidth * CGFloat(sessionPercentage / 100.0)
+        let sessionFillRect = NSRect(x: 0, y: currentY, width: sessionFillWidth, height: barHeight)
+        sessionColor.setFill()
+        NSBezierPath(roundedRect: sessionFillRect, xRadius: 2, yRadius: 2).fill()
+
+        // Week bar (if shown)
+        if let weekPct = weekPercentage {
+            currentY -= (spacing + barHeight)
+            let weekBgRect = NSRect(x: 0, y: currentY, width: barWidth, height: barHeight)
+            backgroundColor.setFill()
+            NSBezierPath(roundedRect: weekBgRect, xRadius: 2, yRadius: 2).fill()
+
+            let weekFillWidth = barWidth * CGFloat(weekPct / 100.0)
+            let weekFillRect = NSRect(x: 0, y: currentY, width: weekFillWidth, height: barHeight)
+            weekColor.setFill()
+            NSBezierPath(roundedRect: weekFillRect, xRadius: 2, yRadius: 2).fill()
+        }
+
+        // Profile label (if shown)
+        if let name = profileName {
+            let label = String(name.prefix(3))
+            let labelAttributes: [NSAttributedString.Key: Any] = [
+                .font: NSFont.systemFont(ofSize: 8, weight: .medium),
+                .foregroundColor: NSColor.white.withAlphaComponent(0.85)
+            ]
+            let labelString = label as NSString
+            let labelSize = labelString.size(withAttributes: labelAttributes)
+            let labelX = (totalWidth - labelSize.width) / 2
+            labelString.draw(at: NSPoint(x: labelX, y: 0), withAttributes: labelAttributes)
+        }
+
+        return image
+    }
+
+    // MARK: - Multi-Profile Compact Dot Style
+
+    /// Creates a minimal dot indicator for multi-profile mode
+    func createCompactDot(
+        percentage: Double,
+        status: UsageStatusLevel,
+        profileInitial: String?,
+        monochromeMode: Bool
+    ) -> NSImage {
+        let dotSize: CGFloat = 10
+        let labelHeight: CGFloat = profileInitial != nil ? 10 : 0
+        let spacing: CGFloat = profileInitial != nil ? 1 : 0
+
+        let totalHeight = dotSize + spacing + labelHeight
+        let totalWidth = max(dotSize, 16)
+
+        let image = NSImage(size: NSSize(width: totalWidth, height: totalHeight))
+
+        image.lockFocus()
+        defer { image.unlockFocus() }
+
+        let dotColor: NSColor = monochromeMode ? .white : getColorForStatusLevel(status)
+
+        // Draw dot
+        let dotRect = NSRect(
+            x: (totalWidth - dotSize) / 2,
+            y: totalHeight - dotSize,
+            width: dotSize,
+            height: dotSize
+        )
+        dotColor.setFill()
+        NSBezierPath(ovalIn: dotRect).fill()
+
+        // Profile initial (if shown)
+        if let initial = profileInitial {
+            let labelAttributes: [NSAttributedString.Key: Any] = [
+                .font: NSFont.systemFont(ofSize: 8, weight: .bold),
+                .foregroundColor: NSColor.white.withAlphaComponent(0.85)
+            ]
+            let labelString = initial.uppercased() as NSString
+            let labelSize = labelString.size(withAttributes: labelAttributes)
+            let labelX = (totalWidth - labelSize.width) / 2
+            labelString.draw(at: NSPoint(x: labelX, y: 0), withAttributes: labelAttributes)
+        }
+
+        return image
+    }
+
     // MARK: - Default App Logo (for profiles without credentials)
 
     /// Creates a default app logo icon for the menu bar when no credentials are configured

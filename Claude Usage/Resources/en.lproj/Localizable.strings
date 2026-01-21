@@ -474,6 +474,23 @@
 "profiles.name_hint" = "If left empty, a fun random name will be generated!";
 
 /* ==================== */
+/* MARK: - Multi-Profile Display */
+/* ==================== */
+"multiprofile.title" = "Multi-Profile Display";
+"multiprofile.subtitle" = "Show multiple profiles in the menu bar";
+"multiprofile.enable_title" = "Show Multiple Profiles";
+"multiprofile.enable_description" = "Display selected profiles as compact icons side-by-side";
+"multiprofile.select_profiles" = "Select profiles to show:";
+"multiprofile.info" = "Each profile shows usage with color indicating status (green/orange/red)";
+"multiprofile.active_badge" = "Active";
+"multiprofile.at_least_one" = "At least one profile must be selected";
+"multiprofile.icon_style" = "Icon Style";
+"multiprofile.show_week" = "Show Week Usage";
+"multiprofile.show_week_description" = "Display weekly usage in addition to session";
+"multiprofile.show_label" = "Show Profile Label";
+"multiprofile.show_label_description" = "Display profile name below the icon";
+
+/* ==================== */
 /* MARK: - General Settings (Profile-Level) */
 /* ==================== */
 "general.title" = "General";

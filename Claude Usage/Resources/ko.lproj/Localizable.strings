@@ -119,6 +119,23 @@
 "profiles.name_hint" = "비워두면 재미있는 무작위 이름이 생성됩니다!";
 
 /* ==================== */
+/* MARK: - Multi-Profile Display */
+/* ==================== */
+"multiprofile.title" = "다중 프로필 표시";
+"multiprofile.subtitle" = "메뉴 바에 여러 프로필 표시";
+"multiprofile.enable_title" = "여러 프로필 표시";
+"multiprofile.enable_description" = "선택한 프로필을 나란히 작은 아이콘으로 표시";
+"multiprofile.select_profiles" = "표시할 프로필 선택:";
+"multiprofile.info" = "각 프로필은 세션(내부 링)과 주간(외부 링)을 프로필 이름과 함께 표시";
+"multiprofile.active_badge" = "활성";
+"multiprofile.at_least_one" = "최소한 하나의 프로필이 선택되어야 합니다";
+"multiprofile.icon_style" = "아이콘 스타일";
+"multiprofile.show_week" = "주간 사용량 표시";
+"multiprofile.show_week_description" = "세션 외에 주간 사용량 표시";
+"multiprofile.show_label" = "프로필 이름 표시";
+"multiprofile.show_label_description" = "아이콘 아래에 프로필 이름 표시";
+
+/* ==================== */
 /* MARK: - General Settings (Profile-Level) */
 /* ==================== */
 "general.title" = "일반";

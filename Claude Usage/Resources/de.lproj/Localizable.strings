@@ -486,6 +486,23 @@
 "profiles.name_hint" = "Wenn leer gelassen, wird ein lustiger zufälliger Name generiert!";
 
 /* ==================== */
+/* MARK: - Multi-Profile Display */
+/* ==================== */
+"multiprofile.title" = "Mehrfach-Profil Anzeige";
+"multiprofile.subtitle" = "Mehrere Profile in der Menüleiste anzeigen";
+"multiprofile.enable_title" = "Mehrere Profile anzeigen";
+"multiprofile.enable_description" = "Ausgewählte Profile als kompakte Symbole nebeneinander anzeigen";
+"multiprofile.select_profiles" = "Profile zur Anzeige auswählen:";
+"multiprofile.info" = "Jedes Profil zeigt Sitzung (innerer Ring) und Woche (äußerer Ring) mit Profilname";
+"multiprofile.active_badge" = "Aktiv";
+"multiprofile.at_least_one" = "Mindestens ein Profil muss ausgewählt sein";
+"multiprofile.icon_style" = "Icon-Stil";
+"multiprofile.show_week" = "Wochennutzung anzeigen";
+"multiprofile.show_week_description" = "Wöchentliche Nutzung zusätzlich zur Sitzung anzeigen";
+"multiprofile.show_label" = "Profilname anzeigen";
+"multiprofile.show_label_description" = "Profilname unter dem Symbol anzeigen";
+
+/* ==================== */
 /* MARK: - General Settings (Profile-Level) */
 /* ==================== */
 "general.title" = "Allgemein";

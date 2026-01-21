@@ -486,6 +486,23 @@
 "profiles.name_hint" = "空白のままにすると、楽しいランダムな名前が生成されます！";
 
 /* ==================== */
+/* MARK: - Multi-Profile Display */
+/* ==================== */
+"multiprofile.title" = "マルチプロファイル表示";
+"multiprofile.subtitle" = "メニューバーに複数のプロファイルを表示";
+"multiprofile.enable_title" = "複数プロファイルを表示";
+"multiprofile.enable_description" = "選択したプロファイルをコンパクトなアイコンとして並べて表示";
+"multiprofile.select_profiles" = "表示するプロファイルを選択：";
+"multiprofile.info" = "各プロファイルはセッション（内側のリング）と週間（外側のリング）をプロファイル名と共に表示";
+"multiprofile.active_badge" = "アクティブ";
+"multiprofile.at_least_one" = "少なくとも1つのプロファイルを選択する必要があります";
+"multiprofile.icon_style" = "アイコンスタイル";
+"multiprofile.show_week" = "週間使用量を表示";
+"multiprofile.show_week_description" = "セッションに加えて週間使用量を表示";
+"multiprofile.show_label" = "プロファイル名を表示";
+"multiprofile.show_label_description" = "アイコンの下にプロファイル名を表示";
+
+/* ==================== */
 /* MARK: - General Settings (Profile-Level) */
 /* ==================== */
 "general.title" = "一般";

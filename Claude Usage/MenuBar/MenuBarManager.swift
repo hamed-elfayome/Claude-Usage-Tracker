@@ -11,6 +11,11 @@ class MenuBarManager: NSObject, ObservableObject {
     @Published private(set) var apiUsage: APIUsage?
     @Published private(set) var isRefreshing: Bool = false
 
+    // Multi-profile mode: track which profile's icon was clicked
+    @Published private(set) var clickedProfileId: UUID?
+    @Published private(set) var clickedProfileUsage: ClaudeUsage?
+    @Published private(set) var clickedProfileAPIUsage: APIUsage?
+
     // Track when refresh was last triggered (for distinguishing user vs auto refresh)
     private var lastRefreshTriggerTime: Date = .distantPast
 
@@ -60,6 +65,9 @@ class MenuBarManager: NSObject, ObservableObject {
     // Observer for credential changes (add, remove, update)
     private var credentialsObserver: NSObjectProtocol?
 
+    // Observer for display mode changes (single/multi profile)
+    private var displayModeObserver: NSObjectProtocol?
+
     // MARK: - Image Caching (CPU Optimization)
     private var cachedImage: NSImage?
     private var cachedImageKey: String = ""
@@ -73,29 +81,37 @@ class MenuBarManager: NSObject, ObservableObject {
         // Observe profile changes - CRITICAL: Set up before anything else
         observeProfileChanges()
 
-        // Setup new multi-metric status bar system with active profile's config
-        let config = profileManager.activeProfile?.iconConfig ?? .default
-        let hasUsageCredentials = profileManager.activeProfile?.hasUsageCredentials ?? false
-
-        // If no usage credentials, create empty config to show default logo
-        let displayConfig: MenuBarIconConfiguration
-        if !hasUsageCredentials {
-            displayConfig = MenuBarIconConfiguration(
-                monochromeMode: config.monochromeMode,
-                showIconNames: config.showIconNames,
-                metrics: config.metrics.map { metric in
-                    var updatedMetric = metric
-                    updatedMetric.isEnabled = false
-                    return updatedMetric
-                }
-            )
-        } else {
-            displayConfig = config
-        }
-
+        // Initialize status bar UI manager
         statusBarUIManager = StatusBarUIManager()
         statusBarUIManager?.delegate = self
-        statusBarUIManager?.setup(target: self, action: #selector(togglePopover), config: displayConfig)
+
+        // Check if we should use multi-profile mode
+        if profileManager.displayMode == .multi {
+            // Multi-profile mode - setup with selected profiles
+            setupMultiProfileMode()
+        } else {
+            // Single profile mode - setup with active profile's config
+            let config = profileManager.activeProfile?.iconConfig ?? .default
+            let hasUsageCredentials = profileManager.activeProfile?.hasUsageCredentials ?? false
+
+            // If no usage credentials, create empty config to show default logo
+            let displayConfig: MenuBarIconConfiguration
+            if !hasUsageCredentials {
+                displayConfig = MenuBarIconConfiguration(
+                    monochromeMode: config.monochromeMode,
+                    showIconNames: config.showIconNames,
+                    metrics: config.metrics.map { metric in
+                        var updatedMetric = metric
+                        updatedMetric.isEnabled = false
+                        return updatedMetric
+                    }
+                )
+            } else {
+                displayConfig = config
+            }
+
+            statusBarUIManager?.setup(target: self, action: #selector(togglePopover), config: displayConfig)
+        }
 
         // Setup popover
         setupPopover()
@@ -164,6 +180,9 @@ class MenuBarManager: NSObject, ObservableObject {
 
         // Observe session key updates
         observeCredentialChanges()
+
+        // Observe display mode changes (single/multi profile)
+        observeDisplayModeChanges()
     }
 
     func cleanup() {
@@ -187,6 +206,10 @@ class MenuBarManager: NSObject, ObservableObject {
         if let credentialsObserver = credentialsObserver {
             NotificationCenter.default.removeObserver(credentialsObserver)
             self.credentialsObserver = nil
+        }
+        if let displayModeObserver = displayModeObserver {
+            NotificationCenter.default.removeObserver(displayModeObserver)
+            self.displayModeObserver = nil
         }
         if let monitor = eventMonitor {
             NSEvent.removeMonitor(monitor)
@@ -377,6 +400,22 @@ class MenuBarManager: NSObject, ObservableObject {
 
         guard let button = clickedButton else { return }
 
+        // In multi-profile mode, determine which profile was clicked
+        if statusBarUIManager?.isInMultiProfileMode == true,
+           let profileId = statusBarUIManager?.profileId(for: button),
+           let profile = profileManager.profiles.first(where: { $0.id == profileId }) {
+            // Set the clicked profile data
+            clickedProfileId = profileId
+            clickedProfileUsage = profile.claudeUsage ?? .empty
+            clickedProfileAPIUsage = profile.apiUsage
+            LoggingService.shared.log("Multi-profile popover: showing data for '\(profile.name)'")
+        } else {
+            // Single profile mode - use active profile
+            clickedProfileId = profileManager.activeProfile?.id
+            clickedProfileUsage = nil  // Will use manager.usage
+            clickedProfileAPIUsage = nil  // Will use manager.apiUsage
+        }
+
         // If there's a detached window, close it
         if let window = detachedWindow {
             window.close()
@@ -392,18 +431,22 @@ class MenuBarManager: NSObject, ObservableObject {
                 if currentPopoverButton === button {
                     // Same button - close the popover
                     closePopover()
-                    currentPopoverButton = nil
                 } else {
-                    // Different button - reposition the popover
+                    // Different button - close current and show at new position
+                    popover.performClose(nil)
+                    stopMonitoringForOutsideClicks()
+                    // Update content view controller for new profile data
+                    popover.contentViewController = createContentViewController()
                     popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
                     currentPopoverButton = button
+                    startMonitoringForOutsideClicks()
                 }
             } else {
                 // Popover not shown - show it
-                // Recreate content if it was moved to a detached window
-                if popover.contentViewController == nil {
-                    popover.contentViewController = createContentViewController()
-                }
+                // Stop any existing monitor first
+                stopMonitoringForOutsideClicks()
+                // Update content view controller for current profile data
+                popover.contentViewController = createContentViewController()
                 popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
                 currentPopoverButton = button
                 startMonitoringForOutsideClicks()
@@ -586,6 +629,79 @@ class MenuBarManager: NSObject, ObservableObject {
                 self.updateMenuBarDisplay(with: newConfig)
             }
         }
+    }
+
+    private func observeDisplayModeChanges() {
+        // Observe display mode changes (single/multi profile)
+        displayModeObserver = NotificationCenter.default.addObserver(
+            forName: .displayModeChanged,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+
+            Task { @MainActor in
+                self.handleDisplayModeChange()
+            }
+        }
+    }
+
+    private func handleDisplayModeChange() {
+        let displayMode = profileManager.displayMode
+
+        LoggingService.shared.log("MenuBarManager: Display mode changed to \(displayMode.rawValue)")
+
+        if displayMode == .multi {
+            // Switch to multi-profile mode
+            setupMultiProfileMode()
+        } else {
+            // Switch back to single profile mode
+            setupSingleProfileMode()
+        }
+    }
+
+    private func setupMultiProfileMode() {
+        let selectedProfiles = profileManager.getSelectedProfiles()
+        let config = profileManager.multiProfileConfig
+
+        statusBarUIManager?.setupMultiProfile(
+            profiles: selectedProfiles,
+            target: self,
+            action: #selector(togglePopover)
+        )
+
+        // Update icons for all selected profiles with the display config
+        statusBarUIManager?.updateMultiProfileButtons(profiles: selectedProfiles, config: config)
+
+        LoggingService.shared.log("MenuBarManager: Multi-profile mode enabled with \(selectedProfiles.count) profiles, style=\(config.iconStyle.rawValue)")
+    }
+
+    private func setupSingleProfileMode() {
+        guard let profile = profileManager.activeProfile else { return }
+
+        let hasUsageCredentials = profile.hasUsageCredentials
+        let config = profile.iconConfig
+
+        // If no usage credentials, create empty config to show default logo
+        let displayConfig: MenuBarIconConfiguration
+        if !hasUsageCredentials {
+            displayConfig = MenuBarIconConfiguration(
+                monochromeMode: config.monochromeMode,
+                showIconNames: config.showIconNames,
+                metrics: config.metrics.map { metric in
+                    var updatedMetric = metric
+                    updatedMetric.isEnabled = false
+                    return updatedMetric
+                }
+            )
+        } else {
+            displayConfig = config
+        }
+
+        statusBarUIManager?.setup(target: self, action: #selector(togglePopover), config: displayConfig)
+        updateAllStatusBarIcons()
+
+        LoggingService.shared.log("MenuBarManager: Single profile mode enabled")
     }
 
     func refreshUsage() {

@@ -15,6 +15,7 @@ class ProfileManager: ObservableObject {
     @Published var profiles: [Profile] = []
     @Published var activeProfile: Profile?
     @Published var displayMode: ProfileDisplayMode = .single
+    @Published var multiProfileConfig: MultiProfileDisplayConfig = .default
     @Published var isSwitchingProfile: Bool = false
 
     private let profileStore = ProfileStore.shared
@@ -51,6 +52,7 @@ class ProfileManager: ObservableObject {
         }
 
         displayMode = profileStore.loadDisplayMode()
+        multiProfileConfig = profileStore.loadMultiProfileConfig()
 
         LoggingService.shared.log("ProfileManager: Loaded \(profiles.count) profile(s), active: \(activeProfile?.name ?? "none")")
     }
@@ -143,6 +145,12 @@ class ProfileManager: ObservableObject {
         displayMode = mode
         profileStore.saveDisplayMode(mode)
         LoggingService.shared.log("Updated display mode to: \(mode.rawValue)")
+    }
+
+    func updateMultiProfileConfig(_ config: MultiProfileDisplayConfig) {
+        multiProfileConfig = config
+        profileStore.saveMultiProfileConfig(config)
+        LoggingService.shared.log("Updated multi-profile config: style=\(config.iconStyle.rawValue), showWeek=\(config.showWeek)")
     }
 
     // MARK: - Profile Activation (Centralized)

@@ -11,11 +11,21 @@ struct PopoverContentView: View {
     @State private var showInsights = false
     @StateObject private var profileManager = ProfileManager.shared
 
+    // Computed properties for multi-profile mode support
+    private var displayUsage: ClaudeUsage {
+        // In multi-profile mode, use the clicked profile's usage
+        manager.clickedProfileUsage ?? manager.usage
+    }
+
+    private var displayAPIUsage: APIUsage? {
+        manager.clickedProfileAPIUsage ?? manager.apiUsage
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             // Smart Header with Status and Profile Switcher
             SmartHeader(
-                usage: manager.usage,
+                usage: displayUsage,
                 status: manager.status,
                 isRefreshing: isRefreshing,
                 onRefresh: {
@@ -33,11 +43,11 @@ struct PopoverContentView: View {
             )
 
             // Intelligent Usage Dashboard
-            SmartUsageDashboard(usage: manager.usage, apiUsage: manager.apiUsage)
+            SmartUsageDashboard(usage: displayUsage, apiUsage: displayAPIUsage)
 
             // Contextual Insights
             if showInsights {
-                ContextualInsights(usage: manager.usage)
+                ContextualInsights(usage: displayUsage)
                     .transition(.asymmetric(
                         insertion: .move(edge: .top).combined(with: .opacity),
                         removal: .move(edge: .top).combined(with: .opacity)
@@ -46,7 +56,7 @@ struct PopoverContentView: View {
 
             // Smart Footer with Actions
             SmartFooter(
-                usage: manager.usage,
+                usage: displayUsage,
                 status: manager.status,
                 showInsights: $showInsights,
                 onPreferences: onPreferences,

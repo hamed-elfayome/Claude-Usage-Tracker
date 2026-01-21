@@ -10,8 +10,15 @@ import Combine
 
 /// Manages multiple menu bar status items for different metrics
 final class StatusBarUIManager {
-    // Dictionary to hold multiple status items keyed by metric type
+    // Dictionary to hold multiple status items keyed by metric type (single profile mode)
     private var statusItems: [MenuBarMetricType: NSStatusItem] = [:]
+
+    // Dictionary to hold status items keyed by profile ID (multi-profile mode)
+    private var multiProfileStatusItems: [UUID: NSStatusItem] = [:]
+
+    // Current display mode
+    private var isMultiProfileMode: Bool = false
+
     private var appearanceObserver: NSKeyValueObservation?
 
     // Icon renderer for creating menu bar images
@@ -120,7 +127,7 @@ final class StatusBarUIManager {
         appearanceObserver?.invalidate()
         appearanceObserver = nil
 
-        // Properly clean up all status items to avoid scene warnings
+        // Clean up single profile status items
         for (_, statusItem) in statusItems {
             // Clear button references first
             if let button = statusItem.button {
@@ -133,7 +140,170 @@ final class StatusBarUIManager {
         }
         statusItems.removeAll()
 
+        // Clean up multi-profile status items
+        for (_, statusItem) in multiProfileStatusItems {
+            if let button = statusItem.button {
+                button.image = nil
+                button.action = nil
+                button.target = nil
+            }
+            NSStatusBar.system.removeStatusItem(statusItem)
+        }
+        multiProfileStatusItems.removeAll()
+
+        isMultiProfileMode = false
+
         LoggingService.shared.logUIEvent("Status bar cleaned up")
+    }
+
+    // MARK: - Multi-Profile Mode
+
+    /// Sets up status bar for multi-profile display mode
+    func setupMultiProfile(profiles: [Profile], target: AnyObject, action: Selector) {
+        // Clean up existing items
+        cleanup()
+
+        isMultiProfileMode = true
+
+        // Filter to only profiles selected for display
+        let selectedProfiles = profiles.filter { $0.isSelectedForDisplay }
+
+        if selectedProfiles.isEmpty {
+            // No profiles selected - show default logo
+            let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+            if let button = statusItem.button {
+                button.action = action
+                button.target = target
+                button.title = ""
+            }
+            // Use a placeholder UUID for default logo
+            multiProfileStatusItems[UUID()] = statusItem
+            LoggingService.shared.logUIEvent("Multi-profile: No profiles selected, showing default logo")
+        } else {
+            // Create one status item per selected profile
+            for profile in selectedProfiles {
+                let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+
+                if let button = statusItem.button {
+                    button.action = action
+                    button.target = target
+                }
+
+                multiProfileStatusItems[profile.id] = statusItem
+            }
+
+            LoggingService.shared.logUIEvent("Multi-profile: Created \(selectedProfiles.count) status items")
+        }
+
+        observeAppearanceChanges()
+    }
+
+    /// Updates all multi-profile status items
+    func updateMultiProfileButtons(profiles: [Profile], config: MultiProfileDisplayConfig) {
+        guard isMultiProfileMode else { return }
+
+        let isDarkMode = NSApp.effectiveAppearance.name == .darkAqua
+
+        for profile in profiles where profile.isSelectedForDisplay {
+            guard let statusItem = multiProfileStatusItems[profile.id],
+                  let button = statusItem.button else {
+                continue
+            }
+
+            // Get usage data for this profile
+            let usage = profile.claudeUsage ?? ClaudeUsage.empty
+            let showRemaining = profile.iconConfig.showRemainingPercentage
+
+            // Calculate percentages
+            let sessionUsed = usage.sessionPercentage
+            let weekUsed = usage.weeklyPercentage
+
+            let sessionDisplay = UsageStatusCalculator.getDisplayPercentage(
+                usedPercentage: sessionUsed,
+                showRemaining: showRemaining
+            )
+            let weekDisplay = UsageStatusCalculator.getDisplayPercentage(
+                usedPercentage: weekUsed,
+                showRemaining: showRemaining
+            )
+
+            let sessionStatus = UsageStatusCalculator.calculateStatus(
+                usedPercentage: sessionUsed,
+                showRemaining: showRemaining
+            )
+            let weekStatus = UsageStatusCalculator.calculateStatus(
+                usedPercentage: weekUsed,
+                showRemaining: showRemaining
+            )
+
+            let monochromeMode = profile.iconConfig.monochromeMode
+
+            // Create icon based on selected style
+            let image: NSImage
+            switch config.iconStyle {
+            case .concentric:
+                if config.showProfileLabel {
+                    image = renderer.createConcentricIconWithLabel(
+                        sessionPercentage: sessionDisplay,
+                        weekPercentage: config.showWeek ? weekDisplay : 0,
+                        sessionStatus: sessionStatus,
+                        weekStatus: weekStatus,
+                        profileName: profile.name,
+                        monochromeMode: monochromeMode
+                    )
+                } else {
+                    image = renderer.createConcentricIcon(
+                        sessionPercentage: sessionDisplay,
+                        weekPercentage: config.showWeek ? weekDisplay : 0,
+                        sessionStatus: sessionStatus,
+                        weekStatus: weekStatus,
+                        profileInitial: String(profile.name.prefix(1)),
+                        monochromeMode: monochromeMode
+                    )
+                }
+            case .progressBar:
+                image = renderer.createMultiProfileProgressBar(
+                    sessionPercentage: sessionDisplay,
+                    weekPercentage: config.showWeek ? weekDisplay : nil,
+                    sessionStatus: sessionStatus,
+                    weekStatus: weekStatus,
+                    profileName: config.showProfileLabel ? profile.name : nil,
+                    monochromeMode: monochromeMode
+                )
+            case .compact:
+                image = renderer.createCompactDot(
+                    percentage: sessionDisplay,
+                    status: sessionStatus,
+                    profileInitial: config.showProfileLabel ? String(profile.name.prefix(1)) : nil,
+                    monochromeMode: monochromeMode
+                )
+            }
+
+            button.image = image
+            button.image?.isTemplate = false
+        }
+    }
+
+    /// Checks if currently in multi-profile mode
+    var isInMultiProfileMode: Bool {
+        return isMultiProfileMode
+    }
+
+    /// Get button for a specific profile (multi-profile mode)
+    func button(for profileId: UUID) -> NSStatusBarButton? {
+        return multiProfileStatusItems[profileId]?.button
+    }
+
+    /// Find which profile ID owns the given button (multi-profile mode)
+    func profileId(for sender: NSStatusBarButton?) -> UUID? {
+        guard let sender = sender else { return nil }
+
+        for (profileId, statusItem) in multiProfileStatusItems {
+            if statusItem.button === sender {
+                return profileId
+            }
+        }
+        return nil
     }
 
     // MARK: - UI Updates

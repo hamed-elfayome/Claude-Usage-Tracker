@@ -467,6 +467,23 @@
 "profiles.name_hint" = "Si se deja vacío, ¡se generará un nombre aleatorio divertido!";
 
 /* ==================== */
+/* MARK: - Multi-Profile Display */
+/* ==================== */
+"multiprofile.title" = "Visualización Multi-Perfil";
+"multiprofile.subtitle" = "Mostrar múltiples perfiles en la barra de menú";
+"multiprofile.enable_title" = "Mostrar Múltiples Perfiles";
+"multiprofile.enable_description" = "Mostrar perfiles seleccionados como iconos compactos lado a lado";
+"multiprofile.select_profiles" = "Seleccionar perfiles para mostrar:";
+"multiprofile.info" = "Cada perfil muestra sesión (anillo interior) y semana (anillo exterior) con nombre del perfil";
+"multiprofile.active_badge" = "Activo";
+"multiprofile.at_least_one" = "Al menos un perfil debe estar seleccionado";
+"multiprofile.icon_style" = "Estilo de Icono";
+"multiprofile.show_week" = "Mostrar Uso Semanal";
+"multiprofile.show_week_description" = "Mostrar uso semanal además de la sesión";
+"multiprofile.show_label" = "Mostrar Nombre del Perfil";
+"multiprofile.show_label_description" = "Mostrar nombre del perfil debajo del icono";
+
+/* ==================== */
 /* MARK: - General Settings (Profile-Level) */
 /* ==================== */
 "general.title" = "General";
