@@ -106,35 +106,39 @@ final class MenuBarIconRenderer {
     ) -> MetricData {
         switch metricType {
         case .session:
+            // Use remaining percentage for display (like Mac battery indicator)
+            let remainingPercentage = usage.remainingPercentage
             return MetricData(
-                percentage: usage.sessionPercentage,
-                displayText: "\(Int(usage.sessionPercentage))%",
+                percentage: remainingPercentage,
+                displayText: "\(Int(remainingPercentage))%",
                 statusLevel: usage.statusLevel,
                 sessionResetTime: usage.sessionResetTime
             )
 
         case .week:
-            let percentage = usage.weeklyPercentage
+            let usedPercentage = usage.weeklyPercentage
+            let remainingPercentage = max(0, 100 - usedPercentage)
             let displayText: String
             if config.weekDisplayMode == .percentage {
-                displayText = "\(Int(percentage))%"
+                displayText = "\(Int(remainingPercentage))%"
             } else {
                 // Token display mode - smart formatting
                 displayText = formatTokenCount(usage.weeklyTokensUsed, usage.weeklyLimit)
             }
 
+            // Status level based on remaining percentage (like Mac battery)
             let statusLevel: UsageStatusLevel
-            switch percentage {
-            case 0..<50:
+            switch remainingPercentage {
+            case 20...:
                 statusLevel = .safe
-            case 50..<80:
+            case 10..<20:
                 statusLevel = .moderate
             default:
                 statusLevel = .critical
             }
 
             return MetricData(
-                percentage: percentage,
+                percentage: remainingPercentage,
                 displayText: displayText,
                 statusLevel: statusLevel,
                 sessionResetTime: nil
@@ -143,14 +147,15 @@ final class MenuBarIconRenderer {
         case .api:
             guard let apiUsage = apiUsage else {
                 return MetricData(
-                    percentage: 0,
+                    percentage: 100,  // 100% remaining when no data
                     displayText: "N/A",
                     statusLevel: .safe,
                     sessionResetTime: nil
                 )
             }
 
-            let percentage = apiUsage.usagePercentage
+            let usedPercentage = apiUsage.usagePercentage
+            let remainingPercentage = max(0, 100 - usedPercentage)
             let displayText: String
             switch config.apiDisplayMode {
             case .remaining:
@@ -161,18 +166,19 @@ final class MenuBarIconRenderer {
                 displayText = "\(apiUsage.formattedUsed)/\(apiUsage.formattedTotal)"
             }
 
+            // Status level based on remaining percentage (like Mac battery)
             let statusLevel: UsageStatusLevel
-            switch percentage {
-            case 0..<50:
+            switch remainingPercentage {
+            case 20...:
                 statusLevel = .safe
-            case 50..<80:
+            case 10..<20:
                 statusLevel = .moderate
             default:
                 statusLevel = .critical
             }
 
             return MetricData(
-                percentage: percentage,
+                percentage: remainingPercentage,
                 displayText: displayText,
                 statusLevel: statusLevel,
                 sessionResetTime: nil

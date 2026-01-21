@@ -3,6 +3,7 @@ import Foundation
 /// Service for managing Claude Code statusline configuration.
 /// This service handles installation, configuration, and management of the statusline feature
 /// for Claude Code terminal integration.
+@MainActor
 class StatuslineService {
     static let shared = StatuslineService()
 
