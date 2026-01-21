@@ -402,10 +402,12 @@
 "appearance.subtitle" = "Personalizza le icone e le metriche della barra dei menu";
 "appearance.global_settings" = "Impostazioni Globali";
 "appearance.menu_bar_metrics" = "Metriche Barra dei Menu";
-"appearance.monochrome_title" = "Monocromatico (Adattivo)";
-"appearance.monochrome_description" = "Rimuovi la codifica a colori e adatta all'aspetto del sistema";
+"appearance.monochrome_title" = "Usa Colori di Sistema";
+"appearance.monochrome_description" = "Utilizza il rendering adattivo di macOS. Le icone si adattano automaticamente alla modalità scura/chiara con i colori di sistema. Quando disattivato, le icone mostrano lo stato codificato a colori (verde/arancione/rosso)";
 "appearance.show_labels_title" = "Mostra Etichette Icone";
 "appearance.show_labels_description" = "Visualizza etichette prefisso (S:, W:, API:) per ogni metrica";
+"appearance.show_remaining_title" = "Mostra Percentuale Rimanente";
+"appearance.show_remaining_description" = "Visualizza la capacità rimanente invece della percentuale utilizzata (come la batteria macOS)";
 
 /* ==================== */
 /* MARK: - Setup Wizard (Additional) */

@@ -74,7 +74,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
     }
 
 
-    @MainActor private func shouldShowSetupWizard() -> Bool {
+    private func shouldShowSetupWizard() -> Bool {
         // FORCE SHOW wizard on very first app launch (one-time)
         // This ensures users see the migration option if they have old data
         if !SharedDataStore.shared.hasShownWizardOnce() {

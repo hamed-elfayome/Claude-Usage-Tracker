@@ -185,11 +185,13 @@ struct MetricIconConfig: Codable, Equatable {
 struct MenuBarIconConfiguration: Codable, Equatable {
     var monochromeMode: Bool
     var showIconNames: Bool
+    var showRemainingPercentage: Bool
     var metrics: [MetricIconConfig]
 
     init(
         monochromeMode: Bool = false,
         showIconNames: Bool = true,
+        showRemainingPercentage: Bool = false,
         metrics: [MetricIconConfig] = [
             .sessionDefault,
             .weekDefault,
@@ -198,7 +200,29 @@ struct MenuBarIconConfiguration: Codable, Equatable {
     ) {
         self.monochromeMode = monochromeMode
         self.showIconNames = showIconNames
+        self.showRemainingPercentage = showRemainingPercentage
         self.metrics = metrics
+    }
+
+    // MARK: - Codable (Custom decoder for backwards compatibility)
+
+    enum CodingKeys: String, CodingKey {
+        case monochromeMode
+        case showIconNames
+        case showRemainingPercentage
+        case metrics
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        monochromeMode = try container.decode(Bool.self, forKey: .monochromeMode)
+        showIconNames = try container.decode(Bool.self, forKey: .showIconNames)
+
+        // New property - provide default value if missing (backwards compatibility)
+        showRemainingPercentage = try container.decodeIfPresent(Bool.self, forKey: .showRemainingPercentage) ?? false
+
+        metrics = try container.decode([MetricIconConfig].self, forKey: .metrics)
     }
 
     /// Get enabled metrics sorted by order

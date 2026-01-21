@@ -9,7 +9,6 @@ import Cocoa
 import Combine
 
 /// Manages multiple menu bar status items for different metrics
-@MainActor
 final class StatusBarUIManager {
     // Dictionary to hold multiple status items keyed by metric type
     private var statusItems: [MenuBarMetricType: NSStatusItem] = [:]
@@ -173,6 +172,7 @@ final class StatusBarUIManager {
             let image = renderer.createImage(
                 for: metricConfig.metricType,
                 config: metricConfig,
+                globalConfig: config,
                 usage: usage,
                 apiUsage: apiUsage,
                 isDarkMode: isDarkMode,
@@ -182,6 +182,7 @@ final class StatusBarUIManager {
             )
 
             button.image = image
+            // Don't use template - we handle colors manually to preserve status colors
             button.image?.isTemplate = false
         }
     }
@@ -209,6 +210,7 @@ final class StatusBarUIManager {
         let image = renderer.createImage(
             for: metricType,
             config: metricConfig,
+            globalConfig: config,
             usage: usage,
             apiUsage: apiUsage,
             isDarkMode: isDarkMode,
@@ -218,6 +220,7 @@ final class StatusBarUIManager {
         )
 
         button.image = image
+        // Don't use template - we handle colors manually to preserve status colors
         button.image?.isTemplate = false
     }
 

@@ -16,6 +16,7 @@ final class MenuBarIconRenderer {
     func createImage(
         for metricType: MenuBarMetricType,
         config: MetricIconConfig,
+        globalConfig: MenuBarIconConfiguration,
         usage: ClaudeUsage,
         apiUsage: APIUsage?,
         isDarkMode: Bool,
@@ -28,7 +29,8 @@ final class MenuBarIconRenderer {
             metricType: metricType,
             config: config,
             usage: usage,
-            apiUsage: apiUsage
+            apiUsage: apiUsage,
+            showRemaining: globalConfig.showRemainingPercentage
         )
 
         // API is ALWAYS text-based (no icon styles)
@@ -36,6 +38,7 @@ final class MenuBarIconRenderer {
             return createAPITextStyle(
                 metricData: metricData,
                 isDarkMode: isDarkMode,
+                monochromeMode: monochromeMode,
                 showIconName: showIconName
             )
         }
@@ -102,43 +105,49 @@ final class MenuBarIconRenderer {
         metricType: MenuBarMetricType,
         config: MetricIconConfig,
         usage: ClaudeUsage,
-        apiUsage: APIUsage?
+        apiUsage: APIUsage?,
+        showRemaining: Bool
     ) -> MetricData {
         switch metricType {
         case .session:
-            // Use remaining percentage for display (like Mac battery indicator)
-            let remainingPercentage = usage.remainingPercentage
+            let usedPercentage = usage.sessionPercentage
+            let displayPercentage = UsageStatusCalculator.getDisplayPercentage(
+                usedPercentage: usedPercentage,
+                showRemaining: showRemaining
+            )
+            let statusLevel = UsageStatusCalculator.calculateStatus(
+                usedPercentage: usedPercentage,
+                showRemaining: showRemaining
+            )
+
             return MetricData(
-                percentage: remainingPercentage,
-                displayText: "\(Int(remainingPercentage))%",
-                statusLevel: usage.statusLevel,
+                percentage: displayPercentage,
+                displayText: "\(Int(displayPercentage))%",
+                statusLevel: statusLevel,
                 sessionResetTime: usage.sessionResetTime
             )
 
         case .week:
             let usedPercentage = usage.weeklyPercentage
-            let remainingPercentage = max(0, 100 - usedPercentage)
+            let displayPercentage = UsageStatusCalculator.getDisplayPercentage(
+                usedPercentage: usedPercentage,
+                showRemaining: showRemaining
+            )
+            let statusLevel = UsageStatusCalculator.calculateStatus(
+                usedPercentage: usedPercentage,
+                showRemaining: showRemaining
+            )
+
             let displayText: String
             if config.weekDisplayMode == .percentage {
-                displayText = "\(Int(remainingPercentage))%"
+                displayText = "\(Int(displayPercentage))%"
             } else {
                 // Token display mode - smart formatting
                 displayText = formatTokenCount(usage.weeklyTokensUsed, usage.weeklyLimit)
             }
 
-            // Status level based on remaining percentage (like Mac battery)
-            let statusLevel: UsageStatusLevel
-            switch remainingPercentage {
-            case 20...:
-                statusLevel = .safe
-            case 10..<20:
-                statusLevel = .moderate
-            default:
-                statusLevel = .critical
-            }
-
             return MetricData(
-                percentage: remainingPercentage,
+                percentage: displayPercentage,
                 displayText: displayText,
                 statusLevel: statusLevel,
                 sessionResetTime: nil
@@ -147,7 +156,7 @@ final class MenuBarIconRenderer {
         case .api:
             guard let apiUsage = apiUsage else {
                 return MetricData(
-                    percentage: 100,  // 100% remaining when no data
+                    percentage: showRemaining ? 100 : 0,  // 100% remaining or 0% used when no data
                     displayText: "N/A",
                     statusLevel: .safe,
                     sessionResetTime: nil
@@ -155,7 +164,15 @@ final class MenuBarIconRenderer {
             }
 
             let usedPercentage = apiUsage.usagePercentage
-            let remainingPercentage = max(0, 100 - usedPercentage)
+            let displayPercentage = UsageStatusCalculator.getDisplayPercentage(
+                usedPercentage: usedPercentage,
+                showRemaining: showRemaining
+            )
+            let statusLevel = UsageStatusCalculator.calculateStatus(
+                usedPercentage: usedPercentage,
+                showRemaining: showRemaining
+            )
+
             let displayText: String
             switch config.apiDisplayMode {
             case .remaining:
@@ -166,19 +183,8 @@ final class MenuBarIconRenderer {
                 displayText = "\(apiUsage.formattedUsed)/\(apiUsage.formattedTotal)"
             }
 
-            // Status level based on remaining percentage (like Mac battery)
-            let statusLevel: UsageStatusLevel
-            switch remainingPercentage {
-            case 20...:
-                statusLevel = .safe
-            case 10..<20:
-                statusLevel = .moderate
-            default:
-                statusLevel = .critical
-            }
-
             return MetricData(
-                percentage: remainingPercentage,
+                percentage: displayPercentage,
                 displayText: displayText,
                 statusLevel: statusLevel,
                 sessionResetTime: nil
@@ -210,11 +216,11 @@ final class MenuBarIconRenderer {
         image.lockFocus()
         defer { image.unlockFocus() }
 
-        let outlineColor: NSColor = isDarkMode ? .white : .black
-        let textColor: NSColor = isDarkMode ? .white : .black
-        let fillColor = monochromeMode
-            ? (isDarkMode ? NSColor.white : NSColor.black)
-            : getColorForStatusLevel(metricData.statusLevel)
+        // Use white for menu bar (menu bar is always dark background on macOS)
+        // Status colors are preserved for the fill
+        let outlineColor: NSColor = .white
+        let textColor: NSColor = .white
+        let fillColor: NSColor = monochromeMode ? .white : getColorForStatusLevel(metricData.statusLevel)
 
         let xOffset: CGFloat = 0
 
@@ -303,13 +309,11 @@ final class MenuBarIconRenderer {
         image.lockFocus()
         defer { image.unlockFocus() }
 
-        let textColor: NSColor = isDarkMode ? .white : .black
-        let fillColor = monochromeMode
-            ? (isDarkMode ? NSColor.white : NSColor.black)
-            : getColorForStatusLevel(metricData.statusLevel)
-        let backgroundColor: NSColor = isDarkMode
-            ? NSColor.white.withAlphaComponent(0.2)
-            : NSColor.black.withAlphaComponent(0.15)
+        // Use white for menu bar (menu bar is always dark background on macOS)
+        // Status colors are preserved for the fill
+        let textColor: NSColor = .white
+        let fillColor: NSColor = monochromeMode ? .white : getColorForStatusLevel(metricData.statusLevel)
+        let backgroundColor: NSColor = NSColor.white.withAlphaComponent(0.2)
 
         var xOffset: CGFloat = 1
 
@@ -383,9 +387,9 @@ final class MenuBarIconRenderer {
         showIconName: Bool
     ) -> NSImage {
         let font = NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .semibold)  // Larger font
-        let fillColor = monochromeMode
-            ? (isDarkMode ? NSColor.white : NSColor.black)
-            : getColorForStatusLevel(metricData.statusLevel)
+
+        // Use white for menu bar text, status colors for fill
+        let fillColor: NSColor = monochromeMode ? .white : getColorForStatusLevel(metricData.statusLevel)
 
         var fullText = ""
 
@@ -429,10 +433,9 @@ final class MenuBarIconRenderer {
         image.lockFocus()
         defer { image.unlockFocus() }
 
-        let textColor: NSColor = isDarkMode ? .white : .black
-        let fillColor = monochromeMode
-            ? (isDarkMode ? NSColor.white : NSColor.black)
-            : getColorForStatusLevel(metricData.statusLevel)
+        // Use white for menu bar text, status colors for fill
+        let textColor: NSColor = .white
+        let fillColor: NSColor = monochromeMode ? .white : getColorForStatusLevel(metricData.statusLevel)
 
         let xOffset: CGFloat = 1
 
@@ -508,10 +511,9 @@ final class MenuBarIconRenderer {
         image.lockFocus()
         defer { image.unlockFocus() }
 
-        let textColor: NSColor = isDarkMode ? .white : .black
-        let fillColor = monochromeMode
-            ? (isDarkMode ? NSColor.white : NSColor.black)
-            : getColorForStatusLevel(metricData.statusLevel)
+        // Use white for menu bar text, status colors for fill
+        let textColor: NSColor = .white
+        let fillColor: NSColor = monochromeMode ? .white : getColorForStatusLevel(metricData.statusLevel)
 
         var xOffset: CGFloat = 1
 
@@ -545,10 +547,13 @@ final class MenuBarIconRenderer {
     private func createAPITextStyle(
         metricData: MetricData,
         isDarkMode: Bool,
+        monochromeMode: Bool,
         showIconName: Bool
     ) -> NSImage {
         let font = NSFont.systemFont(ofSize: 11, weight: .medium)
-        let textColor: NSColor = isDarkMode ? .white : .black
+
+        // Use white for menu bar text
+        let textColor: NSColor = .white
 
         var fullText = ""
 

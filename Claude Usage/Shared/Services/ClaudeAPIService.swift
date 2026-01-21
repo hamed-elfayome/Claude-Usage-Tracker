@@ -1,7 +1,6 @@
 import Foundation
 
 /// Service for fetching usage data directly from Claude's API
-@MainActor
 class ClaudeAPIService: APIServiceProtocol {
     // MARK: - Types
 

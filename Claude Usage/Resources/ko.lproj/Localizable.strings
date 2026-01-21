@@ -154,10 +154,12 @@
 "appearance.global_subtitle" = "메뉴 바 아이콘 동작 사용자 지정";
 "appearance.menu_bar_metrics" = "메뉴 바 메트릭";
 "appearance.metrics_subtitle" = "메뉴 바에 표시할 메트릭 선택";
-"appearance.monochrome_title" = "단색 (적응형)";
-"appearance.monochrome_description" = "색상 코딩 제거 및 시스템 외형에 적응";
+"appearance.monochrome_title" = "시스템 색상 사용";
+"appearance.monochrome_description" = "macOS 적응형 렌더링을 사용합니다. 아이콘이 시스템 색상으로 다크/라이트 모드에 자동으로 적응합니다. 비활성화 시, 아이콘은 색상으로 구분된 상태(녹색/주황색/빨간색)를 표시합니다";
 "appearance.show_labels_title" = "아이콘 레이블 표시";
 "appearance.show_labels_description" = "각 메트릭에 접두사 레이블(S:, W:, API:) 표시";
+"appearance.show_remaining_title" = "남은 용량 퍼센트 표시";
+"appearance.show_remaining_description" = "사용된 퍼센트 대신 남은 용량 표시 (macOS 배터리처럼)";
 "appearance.all_metrics_off_title" = "앱 로고 모드";
 "appearance.all_metrics_off_description" = "모든 메트릭이 꺼져 있습니다. 메뉴 바에 앱 로고가 표시됩니다. 클릭하여 프로필 및 설정에 액세스하세요.";
 "appearance.menu_bar_icons" = "메뉴 바 아이콘";

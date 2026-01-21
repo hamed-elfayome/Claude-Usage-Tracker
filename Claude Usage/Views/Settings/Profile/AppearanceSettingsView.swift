@@ -51,6 +51,18 @@ struct AppearanceSettingsView: View {
                                 }
                             )
                         )
+
+                        SettingToggle(
+                            title: "appearance.show_remaining_title".localized,
+                            description: "appearance.show_remaining_description".localized,
+                            isOn: Binding(
+                                get: { configuration.showRemainingPercentage },
+                                set: { newValue in
+                                    configuration.showRemainingPercentage = newValue
+                                    saveConfiguration()
+                                }
+                            )
+                        )
                     }
                 }
 

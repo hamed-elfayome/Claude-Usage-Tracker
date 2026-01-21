@@ -9,7 +9,6 @@ import Foundation
 
 /// Protocol defining API operations for Claude services
 /// Enables dependency injection and testing with mock API services
-@MainActor
 protocol APIServiceProtocol {
     // MARK: - Session Key Management
     func saveSessionKey(_ key: String, preserveOrgIfUnchanged: Bool) throws

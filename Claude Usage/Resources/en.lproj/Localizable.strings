@@ -418,10 +418,12 @@
 "appearance.subtitle" = "Customize your menu bar icons and metrics";
 "appearance.global_settings" = "Global Settings";
 "appearance.menu_bar_metrics" = "Menu Bar Metrics";
-"appearance.monochrome_title" = "Monochrome (Adaptive)";
-"appearance.monochrome_description" = "Remove color coding and adapt to system appearance";
+"appearance.monochrome_title" = "Use System Colors";
+"appearance.monochrome_description" = "Use macOS adaptive rendering. Icons automatically adapt to dark/light mode with system colors. When off, icons show color-coded status (green/orange/red)";
 "appearance.show_labels_title" = "Show Icon Labels";
 "appearance.show_labels_description" = "Display prefix labels (S:, W:, API:) for each metric";
+"appearance.show_remaining_title" = "Show Remaining Percentage";
+"appearance.show_remaining_description" = "Display remaining capacity instead of used percentage (like macOS battery)";
 
 /* ==================== */
 /* MARK: - Setup Wizard (Additional) */

@@ -441,6 +441,11 @@ struct SmartUsageDashboard: View {
     let apiUsage: APIUsage?
     @StateObject private var profileManager = ProfileManager.shared
 
+    // Get the display mode from active profile's icon config
+    private var showRemainingPercentage: Bool {
+        profileManager.activeProfile?.iconConfig.showRemainingPercentage ?? false
+    }
+
     // Check if API tracking is enabled globally
     private var isAPITrackingEnabled: Bool {
         DataStore.shared.loadAPITrackingEnabled()
@@ -452,7 +457,8 @@ struct SmartUsageDashboard: View {
             SmartUsageCard(
                 title: "menubar.session_usage".localized,
                 subtitle: "menubar.5_hour_window".localized,
-                percentage: usage.sessionPercentage,
+                usedPercentage: usage.sessionPercentage,
+                showRemaining: showRemainingPercentage,
                 resetTime: usage.sessionResetTime,
                 isPrimary: true
             )
@@ -462,7 +468,8 @@ struct SmartUsageDashboard: View {
                 SmartUsageCard(
                     title: "menubar.all_models".localized,
                     subtitle: "menubar.weekly".localized,
-                    percentage: usage.weeklyPercentage,
+                    usedPercentage: usage.weeklyPercentage,
+                    showRemaining: showRemainingPercentage,
                     resetTime: usage.weeklyResetTime,
                     isPrimary: false
                 )
@@ -471,7 +478,8 @@ struct SmartUsageDashboard: View {
                     SmartUsageCard(
                         title: "menubar.opus_usage".localized,
                         subtitle: "menubar.weekly".localized,
-                        percentage: usage.opusWeeklyPercentage,
+                        usedPercentage: usage.opusWeeklyPercentage,
+                        showRemaining: showRemainingPercentage,
                         resetTime: nil,
                         isPrimary: false
                     )
@@ -481,7 +489,8 @@ struct SmartUsageDashboard: View {
                     SmartUsageCard(
                         title: "menubar.sonnet_usage".localized,
                         subtitle: "menubar.weekly".localized,
-                        percentage: usage.sonnetWeeklyPercentage,
+                        usedPercentage: usage.sonnetWeeklyPercentage,
+                        showRemaining: showRemainingPercentage,
                         resetTime: usage.sonnetWeeklyResetTime,
                         isPrimary: false
                     )
@@ -489,11 +498,12 @@ struct SmartUsageDashboard: View {
             }
 
             if let used = usage.costUsed, let limit = usage.costLimit, let currency = usage.costCurrency, limit > 0 {
-                let percentage = (used / limit) * 100.0
+                let usedPercentage = (used / limit) * 100.0
                 SmartUsageCard(
                     title: "menubar.extra_usage".localized,
                     subtitle: String(format: "%.2f / %.2f %@", used / 100.0, limit / 100.0, currency),
-                    percentage: percentage,
+                    usedPercentage: usedPercentage,
+                    showRemaining: showRemainingPercentage,
                     resetTime: nil,
                     isPrimary: false
                 )
@@ -504,7 +514,7 @@ struct SmartUsageDashboard: View {
                let apiUsage = apiUsage,
                let profile = profileManager.activeProfile,
                profile.hasAPIConsole {
-                APIUsageCard(apiUsage: apiUsage)
+                APIUsageCard(apiUsage: apiUsage, showRemaining: showRemainingPercentage)
             }
         }
         .padding(.horizontal, 16)
@@ -516,29 +526,41 @@ struct SmartUsageDashboard: View {
 struct SmartUsageCard: View {
     let title: String
     let subtitle: String
-    let percentage: Double
+    let usedPercentage: Double
+    let showRemaining: Bool
     let resetTime: Date?
     let isPrimary: Bool
 
-    /// Remaining percentage (100 - used percentage)
-    private var remainingPercentage: Double {
-        max(0, 100 - percentage)
+    /// Display percentage based on mode
+    private var displayPercentage: Double {
+        UsageStatusCalculator.getDisplayPercentage(
+            usedPercentage: usedPercentage,
+            showRemaining: showRemaining
+        )
     }
 
-    /// Color based on remaining percentage (like Mac battery indicator)
+    /// Status level based on display mode
+    private var statusLevel: UsageStatusLevel {
+        UsageStatusCalculator.calculateStatus(
+            usedPercentage: usedPercentage,
+            showRemaining: showRemaining
+        )
+    }
+
+    /// Color based on status level
     private var statusColor: Color {
-        switch remainingPercentage {
-        case 20...: return .green       // > 20% remaining: safe
-        case 10..<20: return .orange    // 10-20% remaining: warning
-        default: return .red            // < 10% remaining: critical
+        switch statusLevel {
+        case .safe: return .green
+        case .moderate: return .orange
+        case .critical: return .red
         }
     }
 
     private var statusIcon: String {
-        switch remainingPercentage {
-        case 20...: return "checkmark.circle.fill"
-        case 10..<20: return "exclamationmark.triangle.fill"
-        default: return "xmark.circle.fill"
+        switch statusLevel {
+        case .safe: return "checkmark.circle.fill"
+        case .moderate: return "exclamationmark.triangle.fill"
+        case .critical: return "xmark.circle.fill"
         }
     }
 
@@ -558,19 +580,19 @@ struct SmartUsageCard: View {
 
                 Spacer()
 
-                // Status indicator (shows remaining percentage)
+                // Status indicator
                 HStack(spacing: 4) {
                     Image(systemName: statusIcon)
                         .font(.system(size: isPrimary ? 12 : 10, weight: .medium))
                         .foregroundColor(statusColor)
 
-                    Text("\(Int(remainingPercentage))%")
+                    Text("\(Int(displayPercentage))%")
                         .font(.system(size: isPrimary ? 16 : 14, weight: .bold, design: .monospaced))
                         .foregroundColor(statusColor)
                 }
             }
 
-            // Progress visualization (shows remaining capacity)
+            // Progress visualization
             VStack(spacing: 6) {
                 // Animated progress bar
                 GeometryReader { geometry in
@@ -586,9 +608,9 @@ struct SmartUsageCard: View {
                                     endPoint: .trailing
                                 )
                             )
-                            .frame(width: geometry.size.width * min(remainingPercentage / 100.0, 1.0))
+                            .frame(width: geometry.size.width * min(displayPercentage / 100.0, 1.0))
                             .clipShape(RoundedRectangle(cornerRadius: 4))
-                            .animation(.easeInOut(duration: 0.8), value: remainingPercentage)
+                            .animation(.easeInOut(duration: 0.8), value: displayPercentage)
                     }
                 }
                 .frame(height: 8)
@@ -830,18 +852,30 @@ struct SmartActionButton: View {
 // MARK: - API Usage Card
 struct APIUsageCard: View {
     let apiUsage: APIUsage
+    let showRemaining: Bool
 
-    /// Remaining percentage (100 - used percentage)
-    private var remainingPercentage: Double {
-        max(0, 100 - apiUsage.usagePercentage)
+    /// Display percentage based on mode
+    private var displayPercentage: Double {
+        UsageStatusCalculator.getDisplayPercentage(
+            usedPercentage: apiUsage.usagePercentage,
+            showRemaining: showRemaining
+        )
     }
 
-    /// Color based on remaining percentage (like Mac battery indicator)
+    /// Status level based on display mode
+    private var statusLevel: UsageStatusLevel {
+        UsageStatusCalculator.calculateStatus(
+            usedPercentage: apiUsage.usagePercentage,
+            showRemaining: showRemaining
+        )
+    }
+
+    /// Color based on status level
     private var usageColor: Color {
-        switch remainingPercentage {
-        case 20...: return .green       // > 20% remaining: safe
-        case 10..<20: return .orange    // 10-20% remaining: warning
-        default: return .red            // < 10% remaining: critical
+        switch statusLevel {
+        case .safe: return .green
+        case .moderate: return .orange
+        case .critical: return .red
         }
     }
 
@@ -861,13 +895,13 @@ struct APIUsageCard: View {
 
                 Spacer()
 
-                // Percentage (shows remaining)
-                Text("\(Int(remainingPercentage))%")
+                // Percentage
+                Text("\(Int(displayPercentage))%")
                     .font(.system(size: 16, weight: .bold, design: .monospaced))
                     .foregroundColor(usageColor)
             }
 
-            // Progress Bar (shows remaining capacity)
+            // Progress Bar
             ZStack(alignment: .leading) {
                 // Background
                 RoundedRectangle(cornerRadius: 4)
@@ -877,7 +911,7 @@ struct APIUsageCard: View {
                 RoundedRectangle(cornerRadius: 4)
                     .fill(usageColor)
                     .frame(maxWidth: .infinity)
-                    .scaleEffect(x: remainingPercentage / 100.0, y: 1.0, anchor: .leading)
+                    .scaleEffect(x: displayPercentage / 100.0, y: 1.0, anchor: .leading)
                     .clipShape(RoundedRectangle(cornerRadius: 4))
             }
             .frame(height: 8)

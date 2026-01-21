@@ -388,10 +388,12 @@
 "appearance.subtitle" = "Personnalisez vos icônes et métriques de barre de menus";
 "appearance.global_settings" = "Paramètres Globaux";
 "appearance.menu_bar_metrics" = "Métriques de la Barre de Menus";
-"appearance.monochrome_title" = "Monochrome (Adaptatif)";
-"appearance.monochrome_description" = "Supprime le codage couleur et s'adapte à l'apparence du système";
+"appearance.monochrome_title" = "Utiliser les Couleurs Système";
+"appearance.monochrome_description" = "Utiliser le rendu adaptatif macOS. Les icônes s'adaptent automatiquement au mode sombre/clair avec les couleurs système. Lorsque désactivé, les icônes affichent un statut codé par couleur (vert/orange/rouge)";
 "appearance.show_labels_title" = "Afficher les Étiquettes d'Icônes";
 "appearance.show_labels_description" = "Afficher les étiquettes de préfixe (S:, W:, API:) pour chaque métrique";
+"appearance.show_remaining_title" = "Afficher le Pourcentage Restant";
+"appearance.show_remaining_description" = "Afficher la capacité restante au lieu du pourcentage utilisé (comme la batterie macOS)";
 
 /* Setup Wizard */
 "setup.step_number_1" = "1";

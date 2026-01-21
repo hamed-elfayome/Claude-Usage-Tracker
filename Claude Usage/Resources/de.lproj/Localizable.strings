@@ -404,10 +404,12 @@
 "appearance.subtitle" = "Passen Sie Ihre Menüleisten-Symbole und Metriken an";
 "appearance.global_settings" = "Globale Einstellungen";
 "appearance.menu_bar_metrics" = "Menüleisten-Metriken";
-"appearance.monochrome_title" = "Monochrom (Adaptiv)";
-"appearance.monochrome_description" = "Farbcodierung entfernen und an Systemerscheinungsbild anpassen";
+"appearance.monochrome_title" = "Systemfarben verwenden";
+"appearance.monochrome_description" = "Verwenden Sie macOS adaptive Darstellung. Symbole passen sich automatisch an den Dunkel-/Hellmodus mit Systemfarben an. Wenn deaktiviert, zeigen Symbole farbcodierten Status (grün/orange/rot)";
 "appearance.show_labels_title" = "Symbol-Labels Anzeigen";
 "appearance.show_labels_description" = "Präfix-Labels (S:, W:, API:) für jede Metrik anzeigen";
+"appearance.show_remaining_title" = "Verbleibender Prozentsatz anzeigen";
+"appearance.show_remaining_description" = "Verbleibende Kapazität statt genutzter Prozentsatz anzeigen (wie macOS-Batterie)";
 
 /* ==================== */
 /* MARK: - Setup Wizard (Additional) */

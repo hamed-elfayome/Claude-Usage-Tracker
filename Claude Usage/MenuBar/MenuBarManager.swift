@@ -2,7 +2,6 @@ import Cocoa
 import SwiftUI
 import Combine
 
-@MainActor
 class MenuBarManager: NSObject, ObservableObject {
     private var statusItem: NSStatusItem?  // Legacy - kept for backwards compatibility
     private var statusBarUIManager: StatusBarUIManager?

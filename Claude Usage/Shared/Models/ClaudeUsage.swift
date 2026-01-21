@@ -38,9 +38,12 @@ struct ClaudeUsage: Codable, Equatable {
     }
 
     /// Returns the status level based on remaining percentage (like Mac battery indicator)
+    /// DEPRECATED: Use UsageStatusCalculator.calculateStatus() instead for display-aware logic
+    /// This property remains for backwards compatibility only
     /// - > 20% remaining: safe (green)
     /// - 10-20% remaining: moderate (orange)
     /// - < 10% remaining: critical (red)
+    @available(*, deprecated, message: "Use UsageStatusCalculator.calculateStatus() with showRemaining parameter")
     var statusLevel: UsageStatusLevel {
         switch remainingPercentage {
         case 20...:
@@ -78,9 +81,10 @@ struct ClaudeUsage: Codable, Equatable {
 
 }
 
-/// Usage status level for color coding (based on remaining percentage, like Mac battery)
+/// Usage status level for color coding
+/// Thresholds depend on display mode (used vs remaining percentage)
 enum UsageStatusLevel {
-    case safe       // >20% remaining: Green
-    case moderate   // 10-20% remaining: Orange
-    case critical   // <10% remaining: Red
+    case safe       // Used mode: 0-50% used | Remaining mode: >20% remaining
+    case moderate   // Used mode: 50-80% used | Remaining mode: 10-20% remaining
+    case critical   // Used mode: 80-100% used | Remaining mode: <10% remaining
 }
