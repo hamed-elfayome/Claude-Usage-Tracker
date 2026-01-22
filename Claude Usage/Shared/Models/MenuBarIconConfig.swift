@@ -226,15 +226,37 @@ struct MultiProfileDisplayConfig: Codable, Equatable {
     var iconStyle: MultiProfileIconStyle
     var showWeek: Bool        // If false, only show session
     var showProfileLabel: Bool // Show profile name below icon
+    var useSystemColor: Bool  // If true, use system accent color instead of status colors
 
     init(
         iconStyle: MultiProfileIconStyle = .concentric,
         showWeek: Bool = true,
-        showProfileLabel: Bool = true
+        showProfileLabel: Bool = true,
+        useSystemColor: Bool = false
     ) {
         self.iconStyle = iconStyle
         self.showWeek = showWeek
         self.showProfileLabel = showProfileLabel
+        self.useSystemColor = useSystemColor
+    }
+
+    // MARK: - Codable (Custom decoder for backwards compatibility)
+
+    enum CodingKeys: String, CodingKey {
+        case iconStyle
+        case showWeek
+        case showProfileLabel
+        case useSystemColor
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        iconStyle = try container.decode(MultiProfileIconStyle.self, forKey: .iconStyle)
+        showWeek = try container.decode(Bool.self, forKey: .showWeek)
+        showProfileLabel = try container.decode(Bool.self, forKey: .showProfileLabel)
+        // New property - provide default value if missing (backwards compatibility)
+        useSystemColor = try container.decodeIfPresent(Bool.self, forKey: .useSystemColor) ?? false
     }
 
     static var `default`: MultiProfileDisplayConfig {

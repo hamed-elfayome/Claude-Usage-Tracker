@@ -129,9 +129,13 @@ class ProfileManager: ObservableObject {
     }
 
     func toggleProfileSelection(_ id: UUID) {
-        if let index = profiles.firstIndex(where: { $0.id == id }) {
-            profiles[index].isSelectedForDisplay.toggle()
-            profileStore.saveProfiles(profiles)
+        // Use async to avoid "Publishing changes from within view updates" warning
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            if let index = self.profiles.firstIndex(where: { $0.id == id }) {
+                self.profiles[index].isSelectedForDisplay.toggle()
+                self.profileStore.saveProfiles(self.profiles)
+            }
         }
     }
 
@@ -142,15 +146,21 @@ class ProfileManager: ObservableObject {
     }
 
     func updateDisplayMode(_ mode: ProfileDisplayMode) {
-        displayMode = mode
-        profileStore.saveDisplayMode(mode)
-        LoggingService.shared.log("Updated display mode to: \(mode.rawValue)")
+        // Use async to avoid "Publishing changes from within view updates" warning
+        DispatchQueue.main.async { [weak self] in
+            self?.displayMode = mode
+            self?.profileStore.saveDisplayMode(mode)
+            LoggingService.shared.log("Updated display mode to: \(mode.rawValue)")
+        }
     }
 
     func updateMultiProfileConfig(_ config: MultiProfileDisplayConfig) {
-        multiProfileConfig = config
-        profileStore.saveMultiProfileConfig(config)
-        LoggingService.shared.log("Updated multi-profile config: style=\(config.iconStyle.rawValue), showWeek=\(config.showWeek)")
+        // Use async to avoid "Publishing changes from within view updates" warning
+        DispatchQueue.main.async { [weak self] in
+            self?.multiProfileConfig = config
+            self?.profileStore.saveMultiProfileConfig(config)
+            LoggingService.shared.log("Updated multi-profile config: style=\(config.iconStyle.rawValue), showWeek=\(config.showWeek)")
+        }
     }
 
     // MARK: - Profile Activation (Centralized)

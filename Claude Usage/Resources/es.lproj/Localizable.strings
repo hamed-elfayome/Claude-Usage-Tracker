@@ -397,6 +397,9 @@
 "appearance.show_labels_description" = "Mostrar etiquetas de prefijo (S:, W:, API:) para cada métrica";
 "appearance.show_remaining_title" = "Mostrar Porcentaje Restante";
 "appearance.show_remaining_description" = "Mostrar capacidad restante en lugar del porcentaje usado (como la batería de macOS)";
+"appearance.multiprofile_locked_title" = "Ajustes de Apariencia Bloqueados";
+"appearance.multiprofile_locked_description" = "Estos ajustes están deshabilitados mientras la Visualización Multi-Perfil está activa. Cada perfil usa su propia apariencia en modo multi-perfil.";
+"appearance.disable_multiprofile" = "Desactivar Visualización Multi-Perfil";
 
 /* Setup Wizard */
 "setup.step_number_1" = "1";
@@ -482,6 +485,8 @@
 "multiprofile.show_week_description" = "Mostrar uso semanal además de la sesión";
 "multiprofile.show_label" = "Mostrar Nombre del Perfil";
 "multiprofile.show_label_description" = "Mostrar nombre del perfil debajo del icono";
+"multiprofile.use_system_color" = "Usar Color del Sistema";
+"multiprofile.use_system_color_description" = "Usar el color de acento del Mac en lugar de los colores de estado";
 
 /* ==================== */
 /* MARK: - General Settings (Profile-Level) */

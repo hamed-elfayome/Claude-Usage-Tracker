@@ -367,6 +367,16 @@ class ClaudeAPIService: APIServiceProtocol {
         return selectedOrg.uuid
     }
 
+    /// Fetches usage data for a specific profile using provided credentials
+    /// - Parameters:
+    ///   - sessionKey: The Claude.ai session key
+    ///   - organizationId: The organization ID
+    /// - Returns: ClaudeUsage data for the profile
+    func fetchUsageData(sessionKey: String, organizationId: String) async throws -> ClaudeUsage {
+        let usageData = try await performRequest(endpoint: "/organizations/\(organizationId)/usage", sessionKey: sessionKey)
+        return try parseUsageResponse(usageData)
+    }
+
     /// Fetches real usage data from Claude's API
     func fetchUsageData() async throws -> ClaudeUsage {
         let auth = try getAuthentication()

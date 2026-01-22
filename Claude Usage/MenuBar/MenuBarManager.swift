@@ -283,8 +283,15 @@ class MenuBarManager: NSObject, ObservableObject {
         // 2. Update refresh interval with profile's setting
         restartAutoRefreshWithInterval(profile.refreshInterval)
 
-        // 3. Update menu bar configuration
-        updateMenuBarDisplay(with: profile.iconConfig)
+        // 3. Update menu bar based on current display mode
+        // IMPORTANT: In multi-profile mode, we update all icons, not just switch config
+        if profileManager.displayMode == .multi {
+            // Multi-profile mode - refresh all profile icons
+            setupMultiProfileMode()
+        } else {
+            // Single profile mode - update menu bar configuration
+            updateMenuBarDisplay(with: profile.iconConfig)
+        }
 
         // 4. Recreate popover with new profile data
         recreatePopover()
@@ -318,6 +325,12 @@ class MenuBarManager: NSObject, ObservableObject {
     }
 
     private func updateMenuBarDisplay(with config: MenuBarIconConfiguration) {
+        // Skip if in multi-profile mode - this method is for single profile mode only
+        guard profileManager.displayMode == .single else {
+            LoggingService.shared.log("MenuBarManager: Skipping updateMenuBarDisplay (in multi-profile mode)")
+            return
+        }
+
         // Check if active profile has usage credentials (not just CLI)
         let hasUsageCredentials = profileManager.activeProfile?.hasUsageCredentials ?? false
 
@@ -492,10 +505,21 @@ class MenuBarManager: NSObject, ObservableObject {
 
     /// Updates all enabled status bar icons
     private func updateAllStatusBarIcons() {
-        statusBarUIManager?.updateAllButtons(
-            usage: usage,
-            apiUsage: apiUsage
-        )
+        // Check if in multi-profile mode
+        if profileManager.displayMode == .multi {
+            // Update multi-profile icons using profiles from profileManager
+            let config = profileManager.multiProfileConfig
+            statusBarUIManager?.updateMultiProfileButtons(
+                profiles: profileManager.profiles,
+                config: config
+            )
+        } else {
+            // Single profile mode - use the standard update
+            statusBarUIManager?.updateAllButtons(
+                usage: usage,
+                apiUsage: apiUsage
+            )
+        }
     }
 
     /// Updates a specific metric's status bar icon
@@ -622,11 +646,15 @@ class MenuBarManager: NSObject, ObservableObject {
 
             // Reload configuration from active profile (already on main queue)
             Task { @MainActor in
-                let newConfig = self.profileManager.activeProfile?.iconConfig ?? .default
-
-                // Always use updateMenuBarDisplay which handles credential checks
-                // and will do incremental updates (once implemented)
-                self.updateMenuBarDisplay(with: newConfig)
+                // Handle differently based on display mode
+                if self.profileManager.displayMode == .multi {
+                    // Multi-profile mode - refresh all profile icons
+                    self.setupMultiProfileMode()
+                } else {
+                    // Single profile mode
+                    let newConfig = self.profileManager.activeProfile?.iconConfig ?? .default
+                    self.updateMenuBarDisplay(with: newConfig)
+                }
             }
         }
     }
@@ -671,9 +699,88 @@ class MenuBarManager: NSObject, ObservableObject {
         )
 
         // Update icons for all selected profiles with the display config
-        statusBarUIManager?.updateMultiProfileButtons(profiles: selectedProfiles, config: config)
+        // Use profiles from profileManager to get the latest data
+        statusBarUIManager?.updateMultiProfileButtons(profiles: profileManager.profiles, config: config)
 
         LoggingService.shared.log("MenuBarManager: Multi-profile mode enabled with \(selectedProfiles.count) profiles, style=\(config.iconStyle.rawValue)")
+
+        // Refresh data for all selected profiles that have credentials
+        refreshAllSelectedProfiles()
+    }
+
+    /// Refreshes usage data for all profiles selected for multi-profile display
+    private func refreshAllSelectedProfiles() {
+        let selectedProfiles = profileManager.profiles.filter { $0.isSelectedForDisplay && $0.hasUsageCredentials }
+
+        guard !selectedProfiles.isEmpty else {
+            LoggingService.shared.log("MenuBarManager: No selected profiles with usage credentials to refresh")
+            updateAllStatusBarIcons()
+            return
+        }
+
+        LoggingService.shared.log("MenuBarManager: Refreshing \(selectedProfiles.count) selected profiles for multi-profile mode")
+
+        Task {
+            await MainActor.run {
+                self.isRefreshing = true
+            }
+
+            // Fetch Claude status (same as single profile mode)
+            do {
+                let newStatus = try await statusService.fetchStatus()
+                await MainActor.run {
+                    self.status = newStatus
+                }
+            } catch {
+                let appError = AppError.wrap(error)
+                LoggingService.shared.log("MenuBarManager: Failed to fetch status - [\(appError.code.rawValue)] \(appError.message)")
+            }
+
+            // Fetch usage for each selected profile
+            for profile in selectedProfiles {
+                LoggingService.shared.log("MenuBarManager: Fetching usage for profile '\(profile.name)'")
+                do {
+                    let newUsage = try await fetchUsageForProfile(profile)
+
+                    await MainActor.run {
+                        // Save to profile
+                        self.profileManager.saveClaudeUsage(newUsage, for: profile.id)
+                        LoggingService.shared.log("MenuBarManager: Saved usage for profile '\(profile.name)' - session: \(newUsage.sessionPercentage)%")
+
+                        // If this is the active profile, also update the manager's usage
+                        if profile.id == self.profileManager.activeProfile?.id {
+                            self.usage = newUsage
+                        }
+                    }
+                } catch {
+                    LoggingService.shared.logError("Failed to refresh profile '\(profile.name)': \(error.localizedDescription)")
+                }
+            }
+
+            // Update all icons once after all profiles are refreshed
+            await MainActor.run {
+                let config = self.profileManager.multiProfileConfig
+                self.statusBarUIManager?.updateMultiProfileButtons(
+                    profiles: self.profileManager.profiles,
+                    config: config
+                )
+                self.isRefreshing = false
+            }
+        }
+    }
+
+    /// Fetches usage data for a specific profile using its credentials
+    private func fetchUsageForProfile(_ profile: Profile) async throws -> ClaudeUsage {
+        guard let sessionKey = profile.claudeSessionKey,
+              let orgId = profile.organizationId else {
+            throw AppError(
+                code: .sessionKeyNotFound,
+                message: "Missing credentials for profile '\(profile.name)'",
+                isRecoverable: false
+            )
+        }
+
+        return try await apiService.fetchUsageData(sessionKey: sessionKey, organizationId: orgId)
     }
 
     private func setupSingleProfileMode() {
@@ -705,7 +812,13 @@ class MenuBarManager: NSObject, ObservableObject {
     }
 
     func refreshUsage() {
-        // Check if active profile has any credentials before attempting refresh
+        // In multi-profile mode, refresh ALL selected profiles
+        if profileManager.displayMode == .multi {
+            refreshAllSelectedProfiles()
+            return
+        }
+
+        // Single profile mode - refresh only active profile
         guard let profile = profileManager.activeProfile else {
             LoggingService.shared.log("MenuBarManager.refreshUsage: No active profile")
             return

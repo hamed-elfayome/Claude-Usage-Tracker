@@ -424,6 +424,9 @@
 "appearance.show_labels_description" = "Display prefix labels (S:, W:, API:) for each metric";
 "appearance.show_remaining_title" = "Show Remaining Percentage";
 "appearance.show_remaining_description" = "Display remaining capacity instead of used percentage (like macOS battery)";
+"appearance.multiprofile_locked_title" = "Appearance Settings Locked";
+"appearance.multiprofile_locked_description" = "These settings are disabled while Multi-Profile Display is active. Each profile uses its own appearance in multi-profile mode.";
+"appearance.disable_multiprofile" = "Turn Off Multi-Profile Display";
 
 /* ==================== */
 /* MARK: - Setup Wizard (Additional) */
@@ -489,6 +492,8 @@
 "multiprofile.show_week_description" = "Display weekly usage in addition to session";
 "multiprofile.show_label" = "Show Profile Label";
 "multiprofile.show_label_description" = "Display profile name below the icon";
+"multiprofile.use_system_color" = "Monochrome";
+"multiprofile.use_system_color_description" = "Use white color instead of status colors (green/orange/red)";
 
 /* ==================== */
 /* MARK: - General Settings (Profile-Level) */

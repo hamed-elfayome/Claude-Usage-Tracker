@@ -164,6 +164,21 @@ struct ManageProfilesView: View {
                                 )
                             )
 
+                            // Use System Color Toggle
+                            SettingToggle(
+                                title: "multiprofile.use_system_color".localized,
+                                description: "multiprofile.use_system_color_description".localized,
+                                isOn: Binding(
+                                    get: { profileManager.multiProfileConfig.useSystemColor },
+                                    set: { useSystemColor in
+                                        var config = profileManager.multiProfileConfig
+                                        config.useSystemColor = useSystemColor
+                                        profileManager.updateMultiProfileConfig(config)
+                                        NotificationCenter.default.post(name: .displayModeChanged, object: nil)
+                                    }
+                                )
+                            )
+
                             // Info message
                             HStack(alignment: .top, spacing: 8) {
                                 Image(systemName: "info.circle.fill")

@@ -590,6 +590,7 @@ final class MenuBarIconRenderer {
     ///   - weekStatus: Status level for week (for coloring)
     ///   - profileInitial: Single character to display in center (e.g., "W" for Work)
     ///   - monochromeMode: If true, use white color for all elements
+    ///   - useSystemColor: If true, use system accent color instead of status colors
     /// - Returns: NSImage with concentric circles showing both metrics
     func createConcentricIcon(
         sessionPercentage: Double,
@@ -597,7 +598,8 @@ final class MenuBarIconRenderer {
         sessionStatus: UsageStatusLevel,
         weekStatus: UsageStatusLevel,
         profileInitial: String,
-        monochromeMode: Bool
+        monochromeMode: Bool,
+        useSystemColor: Bool = false
     ) -> NSImage {
         let size: CGFloat = 24
         let image = NSImage(size: NSSize(width: size, height: size))
@@ -609,11 +611,11 @@ final class MenuBarIconRenderer {
 
         // Colors
         let textColor: NSColor = .white
-        let weekColor: NSColor = monochromeMode ? .white : getColorForStatusLevel(weekStatus)
-        let sessionColor: NSColor = monochromeMode ? .white : getColorForStatusLevel(sessionStatus)
+        let sessionColor: NSColor = getColor(for: sessionStatus, monochromeMode: monochromeMode, useSystemColor: useSystemColor)
+        let weekColor: NSColor = getColor(for: weekStatus, monochromeMode: monochromeMode, useSystemColor: useSystemColor)
         let backgroundColor: NSColor = NSColor.white.withAlphaComponent(0.15)
 
-        // Outer ring (Week) - larger radius, thicker stroke
+        // Outer ring (Session) - larger radius, thicker stroke - Session is primary/more important
         let outerRadius: CGFloat = (size - 4) / 2  // 10pt radius
         let outerStrokeWidth: CGFloat = 3.0
 
@@ -630,24 +632,24 @@ final class MenuBarIconRenderer {
         outerBgPath.lineWidth = outerStrokeWidth
         outerBgPath.stroke()
 
-        // Week progress ring
-        if weekPercentage > 0 {
-            let weekEndAngle = 90 + (360 * CGFloat(weekPercentage / 100.0))
+        // Session progress ring (outer - primary metric)
+        if sessionPercentage > 0 {
+            let sessionEndAngle = 90 + (360 * CGFloat(sessionPercentage / 100.0))
             let outerProgressPath = NSBezierPath()
             outerProgressPath.appendArc(
                 withCenter: center,
                 radius: outerRadius,
                 startAngle: 90,
-                endAngle: weekEndAngle,
+                endAngle: sessionEndAngle,
                 clockwise: false
             )
-            weekColor.setStroke()
+            sessionColor.setStroke()
             outerProgressPath.lineWidth = outerStrokeWidth
             outerProgressPath.lineCapStyle = .round
             outerProgressPath.stroke()
         }
 
-        // Inner ring (Session) - smaller radius, thinner stroke
+        // Inner ring (Week) - smaller radius, thinner stroke - Week is secondary
         let innerRadius: CGFloat = outerRadius - 4.5  // 5.5pt radius
         let innerStrokeWidth: CGFloat = 2.0
 
@@ -664,18 +666,18 @@ final class MenuBarIconRenderer {
         innerBgPath.lineWidth = innerStrokeWidth
         innerBgPath.stroke()
 
-        // Session progress ring
-        if sessionPercentage > 0 {
-            let sessionEndAngle = 90 + (360 * CGFloat(sessionPercentage / 100.0))
+        // Week progress ring (inner - secondary metric)
+        if weekPercentage > 0 {
+            let weekEndAngle = 90 + (360 * CGFloat(weekPercentage / 100.0))
             let innerProgressPath = NSBezierPath()
             innerProgressPath.appendArc(
                 withCenter: center,
                 radius: innerRadius,
                 startAngle: 90,
-                endAngle: sessionEndAngle,
+                endAngle: weekEndAngle,
                 clockwise: false
             )
-            sessionColor.setStroke()
+            weekColor.setStroke()
             innerProgressPath.lineWidth = innerStrokeWidth
             innerProgressPath.lineCapStyle = .round
             innerProgressPath.stroke()
@@ -704,7 +706,8 @@ final class MenuBarIconRenderer {
         sessionStatus: UsageStatusLevel,
         weekStatus: UsageStatusLevel,
         profileName: String,
-        monochromeMode: Bool
+        monochromeMode: Bool,
+        useSystemColor: Bool = false
     ) -> NSImage {
         let circleSize: CGFloat = 20
         let labelHeight: CGFloat = 10
@@ -722,11 +725,11 @@ final class MenuBarIconRenderer {
 
         // Colors
         let textColor: NSColor = .white
-        let weekColor: NSColor = monochromeMode ? .white : getColorForStatusLevel(weekStatus)
-        let sessionColor: NSColor = monochromeMode ? .white : getColorForStatusLevel(sessionStatus)
+        let sessionColor: NSColor = getColor(for: sessionStatus, monochromeMode: monochromeMode, useSystemColor: useSystemColor)
+        let weekColor: NSColor = getColor(for: weekStatus, monochromeMode: monochromeMode, useSystemColor: useSystemColor)
         let backgroundColor: NSColor = NSColor.white.withAlphaComponent(0.15)
 
-        // Outer ring (Week)
+        // Outer ring (Session) - Session is primary/more important
         let outerRadius: CGFloat = (circleSize - 4) / 2
         let outerStrokeWidth: CGFloat = 2.5
 
@@ -743,24 +746,24 @@ final class MenuBarIconRenderer {
         outerBgPath.lineWidth = outerStrokeWidth
         outerBgPath.stroke()
 
-        // Week progress ring
-        if weekPercentage > 0 {
-            let weekEndAngle = 90 + (360 * CGFloat(weekPercentage / 100.0))
+        // Session progress ring (outer - primary metric)
+        if sessionPercentage > 0 {
+            let sessionEndAngle = 90 + (360 * CGFloat(sessionPercentage / 100.0))
             let outerProgressPath = NSBezierPath()
             outerProgressPath.appendArc(
                 withCenter: circleCenter,
                 radius: outerRadius,
                 startAngle: 90,
-                endAngle: weekEndAngle,
+                endAngle: sessionEndAngle,
                 clockwise: false
             )
-            weekColor.setStroke()
+            sessionColor.setStroke()
             outerProgressPath.lineWidth = outerStrokeWidth
             outerProgressPath.lineCapStyle = .round
             outerProgressPath.stroke()
         }
 
-        // Inner ring (Session)
+        // Inner ring (Week) - Week is secondary
         let innerRadius: CGFloat = outerRadius - 3.5
         let innerStrokeWidth: CGFloat = 1.5
 
@@ -777,18 +780,18 @@ final class MenuBarIconRenderer {
         innerBgPath.lineWidth = innerStrokeWidth
         innerBgPath.stroke()
 
-        // Session progress ring
-        if sessionPercentage > 0 {
-            let sessionEndAngle = 90 + (360 * CGFloat(sessionPercentage / 100.0))
+        // Week progress ring (inner - secondary metric)
+        if weekPercentage > 0 {
+            let weekEndAngle = 90 + (360 * CGFloat(weekPercentage / 100.0))
             let innerProgressPath = NSBezierPath()
             innerProgressPath.appendArc(
                 withCenter: circleCenter,
                 radius: innerRadius,
                 startAngle: 90,
-                endAngle: sessionEndAngle,
+                endAngle: weekEndAngle,
                 clockwise: false
             )
-            sessionColor.setStroke()
+            weekColor.setStroke()
             innerProgressPath.lineWidth = innerStrokeWidth
             innerProgressPath.lineCapStyle = .round
             innerProgressPath.stroke()
@@ -818,7 +821,8 @@ final class MenuBarIconRenderer {
         sessionStatus: UsageStatusLevel,
         weekStatus: UsageStatusLevel,
         profileName: String?,
-        monochromeMode: Bool
+        monochromeMode: Bool,
+        useSystemColor: Bool = false
     ) -> NSImage {
         let barWidth: CGFloat = 24
         let barHeight: CGFloat = 4
@@ -834,8 +838,8 @@ final class MenuBarIconRenderer {
         image.lockFocus()
         defer { image.unlockFocus() }
 
-        let sessionColor: NSColor = monochromeMode ? .white : getColorForStatusLevel(sessionStatus)
-        let weekColor: NSColor = monochromeMode ? .white : getColorForStatusLevel(weekStatus)
+        let sessionColor: NSColor = getColor(for: sessionStatus, monochromeMode: monochromeMode, useSystemColor: useSystemColor)
+        let weekColor: NSColor = getColor(for: weekStatus, monochromeMode: monochromeMode, useSystemColor: useSystemColor)
         let backgroundColor: NSColor = NSColor.white.withAlphaComponent(0.2)
 
         var currentY = totalHeight
@@ -887,7 +891,8 @@ final class MenuBarIconRenderer {
         percentage: Double,
         status: UsageStatusLevel,
         profileInitial: String?,
-        monochromeMode: Bool
+        monochromeMode: Bool,
+        useSystemColor: Bool = false
     ) -> NSImage {
         let dotSize: CGFloat = 10
         let labelHeight: CGFloat = profileInitial != nil ? 10 : 0
@@ -901,7 +906,7 @@ final class MenuBarIconRenderer {
         image.lockFocus()
         defer { image.unlockFocus() }
 
-        let dotColor: NSColor = monochromeMode ? .white : getColorForStatusLevel(status)
+        let dotColor: NSColor = getColor(for: status, monochromeMode: monochromeMode, useSystemColor: useSystemColor)
 
         // Draw dot
         let dotRect = NSRect(
@@ -981,6 +986,21 @@ final class MenuBarIconRenderer {
             return NSColor.systemOrange
         case .critical:
             return NSColor.systemRed
+        }
+    }
+
+    /// Returns the appropriate color based on mode settings
+    /// - Parameters:
+    ///   - status: The usage status level
+    ///   - monochromeMode: If true, return white (for menu bar icons)
+    ///   - useSystemColor: If true, return white (same as monochrome for consistency)
+    /// - Returns: The color to use for rendering
+    private func getColor(for status: UsageStatusLevel, monochromeMode: Bool, useSystemColor: Bool) -> NSColor {
+        if monochromeMode || useSystemColor {
+            // White works best on the dark menu bar
+            return .white
+        } else {
+            return getColorForStatusLevel(status)
         }
     }
 

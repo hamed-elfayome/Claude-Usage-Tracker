@@ -236,7 +236,9 @@ final class StatusBarUIManager {
                 showRemaining: showRemaining
             )
 
-            let monochromeMode = profile.iconConfig.monochromeMode
+            // Use multi-profile config's useSystemColor as monochrome mode
+            // When useSystemColor is ON, icons will be white (like single-profile monochrome)
+            let useMonochrome = config.useSystemColor
 
             // Create icon based on selected style
             let image: NSImage
@@ -249,7 +251,8 @@ final class StatusBarUIManager {
                         sessionStatus: sessionStatus,
                         weekStatus: weekStatus,
                         profileName: profile.name,
-                        monochromeMode: monochromeMode
+                        monochromeMode: useMonochrome,
+                        useSystemColor: false
                     )
                 } else {
                     image = renderer.createConcentricIcon(
@@ -258,7 +261,8 @@ final class StatusBarUIManager {
                         sessionStatus: sessionStatus,
                         weekStatus: weekStatus,
                         profileInitial: String(profile.name.prefix(1)),
-                        monochromeMode: monochromeMode
+                        monochromeMode: useMonochrome,
+                        useSystemColor: false
                     )
                 }
             case .progressBar:
@@ -268,14 +272,16 @@ final class StatusBarUIManager {
                     sessionStatus: sessionStatus,
                     weekStatus: weekStatus,
                     profileName: config.showProfileLabel ? profile.name : nil,
-                    monochromeMode: monochromeMode
+                    monochromeMode: useMonochrome,
+                    useSystemColor: false
                 )
             case .compact:
                 image = renderer.createCompactDot(
                     percentage: sessionDisplay,
                     status: sessionStatus,
                     profileInitial: config.showProfileLabel ? String(profile.name.prefix(1)) : nil,
-                    monochromeMode: monochromeMode
+                    monochromeMode: useMonochrome,
+                    useSystemColor: false
                 )
             }
 

@@ -424,6 +424,9 @@
 "appearance.show_labels_description" = "各メトリクスのプレフィックスラベル（S:、W:、API:）を表示";
 "appearance.show_remaining_title" = "残り容量のパーセンテージを表示";
 "appearance.show_remaining_description" = "使用済みパーセンテージの代わりに残り容量を表示（macOSバッテリーのように）";
+"appearance.multiprofile_locked_title" = "外観設定がロックされています";
+"appearance.multiprofile_locked_description" = "マルチプロファイル表示がアクティブな間、これらの設定は無効になっています。マルチプロファイルモードでは各プロファイルが独自の外観を使用します。";
+"appearance.disable_multiprofile" = "マルチプロファイル表示をオフにする";
 
 /* ==================== */
 /* MARK: - Setup Wizard (Additional) */
@@ -501,6 +504,8 @@
 "multiprofile.show_week_description" = "セッションに加えて週間使用量を表示";
 "multiprofile.show_label" = "プロファイル名を表示";
 "multiprofile.show_label_description" = "アイコンの下にプロファイル名を表示";
+"multiprofile.use_system_color" = "システムカラーを使用";
+"multiprofile.use_system_color_description" = "ステータス色の代わりにMacのアクセントカラーを使用";
 
 /* ==================== */
 /* MARK: - General Settings (Profile-Level) */
