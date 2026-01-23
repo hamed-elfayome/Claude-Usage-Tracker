@@ -7,6 +7,7 @@
 
 import Foundation
 import Combine
+import WidgetKit
 
 @MainActor
 class ProfileManager: ObservableObject {
@@ -20,6 +21,7 @@ class ProfileManager: ObservableObject {
 
     private let profileStore = ProfileStore.shared
     private let cliSyncService = ClaudeCodeSyncService.shared
+    private let appGroupIdentifier = "group.claude-usage"
 
     private var switchingSemaphore = false
 
@@ -347,6 +349,11 @@ class ProfileManager: ObservableObject {
         // Save to persistent storage
         profileStore.saveProfiles(profiles)
         LoggingService.shared.log("Saved Claude usage for profile: \(profiles[index].name)")
+
+        // Sync to widget if this is the active profile
+        if activeProfile?.id == profileId {
+            syncWidgetData(usage)
+        }
     }
 
     /// Loads Claude usage data for a specific profile
@@ -518,6 +525,39 @@ class ProfileManager: ObservableObject {
             checkOverageLimitEnabled: true,
             notificationSettings: NotificationSettings()
         )
+    }
+
+    // MARK: - Widget Data Sync
+
+    /// Syncs Claude usage data to the widget via App Groups shared storage
+    private func syncWidgetData(_ usage: ClaudeUsage) {
+        guard let containerURL = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: appGroupIdentifier
+        ) else {
+            LoggingService.shared.logError("Widget sync: Failed to access App Groups container")
+            return
+        }
+
+        do {
+            let encoder = JSONEncoder()
+            let data = try encoder.encode(usage)
+
+            // Write to file (primary method for widget)
+            let fileURL = containerURL.appendingPathComponent("claudeUsageData.json")
+            try data.write(to: fileURL)
+
+            // Also write to UserDefaults as backup
+            if let defaults = UserDefaults(suiteName: appGroupIdentifier) {
+                defaults.set(data, forKey: "claudeUsageData")
+            }
+
+            // Refresh widgets
+            WidgetCenter.shared.reloadAllTimelines()
+
+            LoggingService.shared.log("Widget sync: Successfully updated widget data")
+        } catch {
+            LoggingService.shared.logError("Widget sync failed", error: error)
+        }
     }
 
 }
