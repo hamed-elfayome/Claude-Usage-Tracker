@@ -3,7 +3,7 @@ import Foundation
 /// Application-wide constants
 enum Constants {
     // App Group identifier for sharing data between app and widgets
-    static let appGroupIdentifier = "group.com.claudeusagetracker.shared"
+    static let appGroupIdentifier = "group.claude-usage"
 
     // UserDefaults keys
     enum UserDefaultsKeys {
@@ -62,12 +62,16 @@ enum Constants {
     enum ClaudePaths {
         /// Get the REAL user home directory (not sandboxed container)
         static var homeDirectory: URL {
-            // Try to get real home from environment variable
-            if let home = ProcessInfo.processInfo.environment["HOME"] {
-                return URL(fileURLWithPath: home)
+            // Get real home directory using passwd database (works even in sandbox)
+            let pw = getpwuid(getuid())
+            if let home = pw?.pointee.pw_dir {
+                let homePath = String(cString: home)
+                return URL(fileURLWithPath: homePath)
             }
-            // Fallback to FileManager (might be sandboxed)
-            return FileManager.default.homeDirectoryForCurrentUser
+
+            // Fallback: construct from username
+            let username = NSUserName()
+            return URL(fileURLWithPath: "/Users/\(username)")
         }
 
         static var claudeDirectory: URL {

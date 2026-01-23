@@ -450,9 +450,13 @@ class MenuBarManager: NSObject, ObservableObject {
                     stopMonitoringForOutsideClicks()
                     // Update content view controller for new profile data
                     popover.contentViewController = createContentViewController()
-                    popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-                    currentPopoverButton = button
-                    startMonitoringForOutsideClicks()
+                    // Wrap in async to prevent layout recursion warning
+                    DispatchQueue.main.async { [weak self] in
+                        guard let self = self else { return }
+                        popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+                        self.currentPopoverButton = button
+                        self.startMonitoringForOutsideClicks()
+                    }
                 }
             } else {
                 // Popover not shown - show it
@@ -460,9 +464,13 @@ class MenuBarManager: NSObject, ObservableObject {
                 stopMonitoringForOutsideClicks()
                 // Update content view controller for current profile data
                 popover.contentViewController = createContentViewController()
-                popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-                currentPopoverButton = button
-                startMonitoringForOutsideClicks()
+                // Wrap in async to prevent layout recursion warning
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+                    self.currentPopoverButton = button
+                    self.startMonitoringForOutsideClicks()
+                }
             }
         }
     }

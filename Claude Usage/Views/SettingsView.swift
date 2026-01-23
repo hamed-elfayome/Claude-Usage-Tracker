@@ -3,7 +3,7 @@ import UserNotifications
 
 /// Professional, native macOS Settings interface with multi-profile support
 struct SettingsView: View {
-    @State private var selectedSection: SettingsSection = .appearance
+    @State private var selectedSection: SettingsSection = .general
     @StateObject private var profileManager = ProfileManager.shared
 
     var body: some View {
@@ -37,18 +37,20 @@ struct SettingsView: View {
                     CLIAccountView()
 
                 // Profile Settings
-                case .appearance:
-                    AppearanceSettingsView()
                 case .general:
                     GeneralSettingsView()
+                case .menuBar:
+                    MenuBarSettingsView()
+                case .widgets:
+                    WidgetSettingsView()
+                case .claudeCode:
+                    ClaudeCodeView()
 
                 // Shared Settings
                 case .manageProfiles:
                     ManageProfilesView()
                 case .language:
                     LanguageSettingsView()
-                case .claudeCode:
-                    ClaudeCodeView()
                 case .updates:
                     UpdatesSettingsView()
                 case .about:
@@ -198,13 +200,14 @@ enum SettingsSection: String, CaseIterable {
     case cliAccount
 
     // Profile Settings
-    case appearance
     case general
+    case menuBar
+    case widgets
+    case claudeCode
 
     // Shared Settings
     case manageProfiles
     case language
-    case claudeCode
     case updates
     case about
 
@@ -213,8 +216,9 @@ enum SettingsSection: String, CaseIterable {
         case .claudeAI: return "section.claudeai_title".localized
         case .apiConsole: return "section.api_console_title".localized
         case .cliAccount: return "section.cli_account_title".localized
-        case .appearance: return "section.appearance_title".localized
         case .general: return "section.general_title".localized
+        case .menuBar: return "Menu Bar"
+        case .widgets: return "Widgets"
         case .manageProfiles: return "section.manage_profiles_title".localized
         case .language: return "language.title".localized
         case .claudeCode: return "settings.claude_cli".localized
@@ -228,8 +232,9 @@ enum SettingsSection: String, CaseIterable {
         case .claudeAI: return "key.fill"
         case .apiConsole: return "dollarsign.circle.fill"
         case .cliAccount: return "terminal.fill"
-        case .appearance: return "paintbrush.fill"
         case .general: return "gearshape.fill"
+        case .menuBar: return "menubar.rectangle"
+        case .widgets: return "square.grid.2x2.fill"
         case .manageProfiles: return "person.2.fill"
         case .language: return "globe"
         case .claudeCode: return "chevron.left.forwardslash.chevron.right"
@@ -243,8 +248,9 @@ enum SettingsSection: String, CaseIterable {
         case .claudeAI: return "section.claudeai_desc".localized
         case .apiConsole: return "section.api_console_desc".localized
         case .cliAccount: return "section.cli_account_desc".localized
-        case .appearance: return "section.appearance_desc".localized
         case .general: return "section.general_desc".localized
+        case .menuBar: return "Configure menu bar appearance and metrics"
+        case .widgets: return "Customize desktop widget appearance"
         case .manageProfiles: return "section.manage_profiles_desc".localized
         case .language: return "language.subtitle".localized
         case .claudeCode: return "settings.claude_cli.description".localized
@@ -264,7 +270,7 @@ enum SettingsSection: String, CaseIterable {
 
     var isProfileSetting: Bool {
         switch self {
-        case .appearance, .general:
+        case .general, .menuBar, .widgets, .claudeCode:
             return true
         default:
             return false

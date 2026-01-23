@@ -117,16 +117,16 @@ struct SmallWidgetView: View {
     }
 
     private func subtitleText(for metric: WidgetSmallMetric, metricData: MetricDisplayData, usage: WidgetUsageData, format: ExtraUsageDisplayFormat) -> String {
-        // For non-extra metrics, always show reset time (compact for small widget)
+        // For non-extra metrics, always show reset time
         guard metric == .extra else {
-            return WidgetDateFormatter.compactResetTimeString(from: metricData.resetTime)
+            return WidgetDateFormatter.resetTimeString(from: metricData.resetTime)
         }
 
         // For extra usage, customize based on format preference
         switch format {
         case .percentage:
             // Show reset time (percentage already in main display)
-            return WidgetDateFormatter.compactResetTimeString(from: metricData.resetTime)
+            return WidgetDateFormatter.resetTimeString(from: metricData.resetTime)
         case .currency:
             // Show currency amount
             return usage.formattedExtraUsed ?? "$0.00"

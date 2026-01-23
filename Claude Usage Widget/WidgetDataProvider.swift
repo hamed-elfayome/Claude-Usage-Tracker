@@ -199,47 +199,38 @@ enum ExtraUsageDisplayFormat: String {
 
 // MARK: - Widget Date Formatter
 
-/// Helper for formatting dates in widgets - uniform style across all sizes
+/// Helper for formatting dates in widgets (matches menu bar format)
 enum WidgetDateFormatter {
-    /// Formats reset time for all widgets (uniform style)
-    /// - Today: "7:00PM"
-    /// - Tomorrow: "Tomorrow 7:00PM"
-    /// - Later: "Wednesday 7:00PM"
-    static func resetTimeString(from date: Date, prefix: String = "") -> String {
-        let timeString = formatTime(from: date)
-        return prefix.isEmpty ? timeString : "\(prefix)\(timeString)"
+    /// Formats reset time (e.g., "Today, 3:59AM")
+    static func resetTimeString(from date: Date) -> String {
+        return exactTime(from: date)
     }
 
-    /// Formats time as short string for tiles (no prefix) - same format
+    /// Formats time as short string for tiles (no prefix)
     static func shortTimeString(from date: Date) -> String {
-        return formatTime(from: date)
+        return exactTime(from: date)
     }
 
-    /// Compact format - same as regular (uniform across all widgets)
-    static func compactResetTimeString(from date: Date) -> String {
-        return formatTime(from: date)
-    }
-
-    private static func formatTime(from date: Date) -> String {
+    private static func exactTime(from date: Date) -> String {
         let calendar = Calendar.current
         let formatter = DateFormatter()
 
-        // Round to nearest minute to prevent pinballing
+        // Round to nearest minute to prevent pinballing (e.g., 6:59:45 -> 7:00, 6:59:20 -> 6:59)
         let roundedDate = roundToNearestMinute(date, using: calendar)
 
-        formatter.dateFormat = "h:mma"
-        let timeStr = formatter.string(from: roundedDate)
-
         if calendar.isDateInToday(roundedDate) {
-            return timeStr
+            formatter.dateFormat = "'Today,' h:mma"
         } else if calendar.isDateInTomorrow(roundedDate) {
-            return "Tomorrow \(timeStr)"
+            formatter.dateFormat = "'Tomorrow,' h:mma"
         } else {
-            // Use day of week for dates further out
-            formatter.dateFormat = "EEEE"
-            let dayStr = formatter.string(from: roundedDate)
-            return "\(dayStr) \(timeStr)"
+            // Show day name (e.g., "Wednesday, 7:00PM")
+            formatter.dateFormat = "EEEE',' h:mma"
         }
+
+        // Convert am/pm to uppercase AM/PM
+        return formatter.string(from: roundedDate)
+            .replacingOccurrences(of: "am", with: "AM")
+            .replacingOccurrences(of: "pm", with: "PM")
     }
 
     /// Rounds the date to the nearest minute

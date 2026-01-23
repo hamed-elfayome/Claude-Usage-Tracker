@@ -8,6 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		056C52802F017E50007E2A48 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = SPARKLE_PRODUCT_DEP /* Sparkle */; };
+		FCDCC0FF2F23420100E5B9C6 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FCDCC0FE2F23420100E5B9C6 /* WidgetKit.framework */; };
+		FCDCC1012F23420100E5B9C6 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FCDCC1002F23420100E5B9C6 /* SwiftUI.framework */; };
+		FCDCC10C2F23420200E5B9C6 /* Claude Usage WidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = FCDCC0FC2F23420100E5B9C6 /* Claude Usage WidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -18,22 +21,75 @@
 			remoteGlobalIDString = 05CD2CB12EA985A100004C83;
 			remoteInfo = "Claude Usage";
 		};
+		FCDCC10A2F23420200E5B9C6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 05CD2CAA2EA985A100004C83 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FCDCC0FB2F23420100E5B9C6;
+			remoteInfo = "Claude Usage WidgetExtension";
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		FCDCC10D2F23420200E5B9C6 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				FCDCC10C2F23420200E5B9C6 /* Claude Usage WidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		05CD2CB22EA985A100004C83 /* Claude Usage.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Claude Usage.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		05CD2CC02EA985A100004C83 /* Claude UsageTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Claude UsageTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		FCDCC0FC2F23420100E5B9C6 /* Claude Usage WidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "Claude Usage WidgetExtension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		FCDCC0FE2F23420100E5B9C6 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		FCDCC1002F23420100E5B9C6 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		FCDCC1382F23430F00E5B9C6 /* Claude Usage WidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Claude Usage WidgetExtension.entitlements"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		FCDCC1392F23443400E5B9C6 /* Exceptions for "Claude Usage" folder in "Claude Usage" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Resources/Info.plist,
+			);
+			target = 05CD2CB12EA985A100004C83 /* Claude Usage */;
+		};
+		FCDCC13A2F23443800E5B9C6 /* Exceptions for "Claude Usage Widget" folder in "Claude Usage WidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = FCDCC0FB2F23420100E5B9C6 /* Claude Usage WidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		05CD2CB42EA985A100004C83 /* Claude Usage */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				FCDCC1392F23443400E5B9C6 /* Exceptions for "Claude Usage" folder in "Claude Usage" target */,
+			);
 			path = "Claude Usage";
 			sourceTree = "<group>";
 		};
 		05CD2CC12EA985A100004C83 /* Claude UsageTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "Claude UsageTests";
+			sourceTree = "<group>";
+		};
+		FCDCC1022F23420100E5B9C6 /* Claude Usage Widget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				FCDCC13A2F23443800E5B9C6 /* Exceptions for "Claude Usage Widget" folder in "Claude Usage WidgetExtension" target */,
+			);
+			path = "Claude Usage Widget";
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -54,14 +110,26 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		FCDCC0F92F23420100E5B9C6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FCDCC1012F23420100E5B9C6 /* SwiftUI.framework in Frameworks */,
+				FCDCC0FF2F23420100E5B9C6 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		05CD2CA92EA985A100004C83 = {
 			isa = PBXGroup;
 			children = (
+				FCDCC1382F23430F00E5B9C6 /* Claude Usage WidgetExtension.entitlements */,
 				05CD2CB42EA985A100004C83 /* Claude Usage */,
 				05CD2CC12EA985A100004C83 /* Claude UsageTests */,
+				FCDCC1022F23420100E5B9C6 /* Claude Usage Widget */,
+				FCDCC0FD2F23420100E5B9C6 /* Frameworks */,
 				05CD2CB32EA985A100004C83 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -71,8 +139,18 @@
 			children = (
 				05CD2CB22EA985A100004C83 /* Claude Usage.app */,
 				05CD2CC02EA985A100004C83 /* Claude UsageTests.xctest */,
+				FCDCC0FC2F23420100E5B9C6 /* Claude Usage WidgetExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		FCDCC0FD2F23420100E5B9C6 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				FCDCC0FE2F23420100E5B9C6 /* WidgetKit.framework */,
+				FCDCC1002F23420100E5B9C6 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -85,10 +163,12 @@
 				05CD2CAE2EA985A100004C83 /* Sources */,
 				05CD2CAF2EA985A100004C83 /* Frameworks */,
 				05CD2CB02EA985A100004C83 /* Resources */,
+				FCDCC10D2F23420200E5B9C6 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				FCDCC10B2F23420200E5B9C6 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				05CD2CB42EA985A100004C83 /* Claude Usage */,
@@ -124,6 +204,28 @@
 			productReference = 05CD2CC02EA985A100004C83 /* Claude UsageTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		FCDCC0FB2F23420100E5B9C6 /* Claude Usage WidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FCDCC1112F23420200E5B9C6 /* Build configuration list for PBXNativeTarget "Claude Usage WidgetExtension" */;
+			buildPhases = (
+				FCDCC0F82F23420100E5B9C6 /* Sources */,
+				FCDCC0F92F23420100E5B9C6 /* Frameworks */,
+				FCDCC0FA2F23420100E5B9C6 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				FCDCC1022F23420100E5B9C6 /* Claude Usage Widget */,
+			);
+			name = "Claude Usage WidgetExtension";
+			packageProductDependencies = (
+			);
+			productName = "Claude Usage WidgetExtension";
+			productReference = FCDCC0FC2F23420100E5B9C6 /* Claude Usage WidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -131,7 +233,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2600;
+				LastSwiftUpdateCheck = 2620;
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
 					05CD2CB12EA985A100004C83 = {
@@ -140,6 +242,9 @@
 					05CD2CC52EA985A100004C83 = {
 						CreatedOnToolsVersion = 16.0;
 						TestTargetID = 05CD2CB12EA985A100004C83;
+					};
+					FCDCC0FB2F23420100E5B9C6 = {
+						CreatedOnToolsVersion = 26.2;
 					};
 				};
 			};
@@ -169,6 +274,7 @@
 			targets = (
 				05CD2CB12EA985A100004C83 /* Claude Usage */,
 				05CD2CC52EA985A100004C83 /* Claude UsageTests */,
+				FCDCC0FB2F23420100E5B9C6 /* Claude Usage WidgetExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -182,6 +288,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		05CD2CC42EA985A100004C83 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FCDCC0FA2F23420100E5B9C6 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -205,6 +318,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		FCDCC0F82F23420100E5B9C6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -212,6 +332,11 @@
 			isa = PBXTargetDependency;
 			target = 05CD2CB12EA985A100004C83 /* Claude Usage */;
 			targetProxy = 05CD2CC72EA985A100004C83 /* PBXContainerItemProxy */;
+		};
+		FCDCC10B2F23420200E5B9C6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FCDCC0FB2F23420100E5B9C6 /* Claude Usage WidgetExtension */;
+			targetProxy = FCDCC10A2F23420200E5B9C6 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -341,9 +466,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 9;
 				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = 7GSPYYN5X8;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
@@ -391,7 +518,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 9;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = T77ZWDC739;
+				DEVELOPMENT_TEAM = 7GSPYYN5X8;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -484,6 +611,81 @@
 			};
 			name = Release;
 		};
+		FCDCC10E2F23420200E5B9C6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = "Claude Usage WidgetExtension.entitlements";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 9;
+				DEVELOPMENT_TEAM = 7GSPYYN5X8;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Claude Usage Widget/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Claude Usage Widget";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 2.3.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "HamedElfayome.Claude-Usage.Claude-Usage-Widget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		FCDCC10F2F23420200E5B9C6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = "Claude Usage WidgetExtension.entitlements";
+				CODE_SIGN_IDENTITY = "-";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 9;
+				DEVELOPMENT_TEAM = 7GSPYYN5X8;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Claude Usage Widget/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Claude Usage Widget";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MARKETING_VERSION = 2.3.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "HamedElfayome.Claude-Usage.Claude-Usage-Widget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -510,6 +712,15 @@
 			buildConfigurations = (
 				05CD2CC82EA985A100004C83 /* Debug */,
 				05CD2CC92EA985A100004C83 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FCDCC1112F23420200E5B9C6 /* Build configuration list for PBXNativeTarget "Claude Usage WidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FCDCC10E2F23420200E5B9C6 /* Debug */,
+				FCDCC10F2F23420200E5B9C6 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
