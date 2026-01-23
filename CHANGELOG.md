@@ -5,6 +5,153 @@ All notable changes to Claude Usage Tracker will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-01-23
+
+### Major Release - Multi-Profile Menu Bar Display & Enhanced UI
+
+This release introduces a revolutionary multi-profile menu bar display system, allowing you to monitor multiple Claude accounts simultaneously. Combined with intelligent color adaptation, unified usage calculations, and the ability to show remaining vs. used percentages, v2.3.0 transforms how you track usage across all your profiles.
+
+### Added
+
+#### Multi-Profile Menu Bar Display
+- **Simultaneous Multi-Profile Monitoring** - Display multiple profiles at once in the menu bar
+  - New "Multi" display mode shows all profiles side-by-side
+  - Each profile displays with its own configured icon style and settings
+  - Dynamically updates when switching between Single/Multi display modes
+  - Profiles automatically refresh independently based on their refresh intervals
+  - Click any profile icon to open popover for that specific profile
+
+- **Profile Display Mode Toggle** - Switch between display modes easily
+  - **Single Mode**: Shows only the active profile (previous behavior)
+  - **Multi Mode**: Shows all profiles simultaneously in menu bar
+  - Toggle available in Manage Profiles settings
+  - Mode persists across app restarts
+  - Smooth transitions when switching modes
+
+- **Intelligent Profile Icon Management**
+  - Each profile maintains its own status bar button and icon
+  - Independent icon styling per profile (Battery, Progress Bar, Percentage, etc.)
+  - Per-profile monochrome mode settings respected
+  - Automatic cleanup when profiles are deleted
+  - Proper ordering maintained when creating/deleting profiles
+
+#### Remaining vs. Used Percentage Display
+- **Configurable Percentage Display** (contributed by [@eliasyin](https://github.com/eliasyin))
+  - New toggle: "Show remaining percentage instead of used percentage"
+  - Available in Appearance settings per profile
+  - Flips the display logic: 75% used → 25% remaining
+  - Also inverts color coding: green for high remaining, red for low remaining
+  - Applies to all menu bar icon styles
+  - Helps users focus on "budget left" rather than "budget spent"
+
+#### Unified Usage Status Calculation
+- **UsageStatusCalculator** - New centralized utility for consistent usage calculations
+  - Single source of truth for determining usage levels across the app
+  - Handles both "used" and "remaining" percentage modes
+  - Color coding logic (green/orange/red) automatically adapts to display mode
+  - Comprehensive test coverage (UsageStatusCalculatorTests with 10+ test cases)
+  - Used by MenuBarIconRenderer, PopoverContentView, and all icon renderers
+
+#### Enhanced Menu Bar Icon Rendering
+- **Improved Multi-Metric Icon Support**
+  - Support for displaying different metrics per profile (session/weekly/API)
+  - Each profile can show different icon styles for the same metric
+  - Proper spacing and ordering when multiple profiles displayed
+  - Icons automatically update when profile settings change
+
+- **Adaptive Color Handling**
+  - Intelligent color inversion for remaining percentage mode
+  - Colors adapt to both dark/light mode AND percentage display mode
+  - Proper monochrome mode handling in all scenarios
+  - Smooth color transitions when toggling display modes
+
+### Changed
+
+#### MenuBarIconRenderer Architecture
+- **Global Configuration Support** - Extended icon renderer to accept global settings
+  - New `globalConfig: MenuBarIconConfiguration` parameter
+  - Passes `showRemainingPercentage` setting to all icon renderers
+  - Consistent behavior across all 5 icon styles
+  - API text style updated to respect monochrome mode
+
+- **MetricData Structure** - Enhanced data model for icon rendering
+  - Added `showRemaining` parameter to metric data extraction
+  - Properly handles percentage inversion throughout rendering pipeline
+  - Color calculations now context-aware (used vs. remaining)
+
+#### MenuBarManager Enhancements
+- **Multi-Profile Management** - Complete rewrite to support multi-profile display
+  - New `statusBarButtons` dictionary tracks all profile buttons
+  - New `currentPopoverButton` tracks which profile popover is open
+  - `setupMenuBarIcons()` creates buttons for all profiles in Multi mode
+  - `updateAllMenuBarIcons()` refreshes all visible profile icons
+  - `cleanupRemovedProfiles()` removes icons for deleted profiles
+
+- **Profile-Aware Refresh System**
+  - `refreshUsageData()` now accepts optional `forProfile` parameter
+  - Can refresh single profile or all profiles
+  - Each profile uses its own refresh interval
+  - Independent refresh timers per profile
+  - Proper error handling per profile
+
+- **Improved Popover Management**
+  - `togglePopover(for:)` method accepts profile parameter
+  - Only one popover open at a time (closes others when opening new one)
+  - Popover properly positioned relative to the clicked profile icon
+  - Profile context passed to PopoverContentView
+
+#### Profile Store & Manager
+- **Display Mode Persistence** - ProfileStore now saves display mode preference
+  - `saveDisplayMode()` and `loadDisplayMode()` methods
+  - Defaults to `.single` for backward compatibility
+  - Mode syncs across all app instances
+
+- **Profile Manager Observable Updates**
+  - `@Published var displayMode: ProfileDisplayMode` for reactive UI
+  - `toggleDisplayMode()` method for easy switching
+  - UI automatically updates when display mode changes
+
+#### Appearance Settings
+- **New Appearance Options** - Enhanced AppearanceSettingsView
+  - Added "Show Remaining Percentage" toggle
+  - Clear description explaining the feature
+  - Real-time preview updates when toggling
+  - Setting saved per profile
+
+#### Manage Profiles View
+- **Display Mode Selector** - New UI for switching display modes
+  - Visual picker showing Single vs. Multi mode
+  - Descriptive explanations for each mode
+  - Instant switching with live preview
+  - Highlights current mode
+
+### Fixed
+
+#### Icon Rendering Bugs
+- **Color Inversion Edge Cases** - Proper color handling in all scenarios
+  - Fixed monochrome mode not applying to API icons
+  - Fixed color transitions when switching percentage modes
+  - Fixed icon flickering when toggling display modes
+
+#### Multi-Profile Stability
+- **Profile Switching Reliability** - Improved profile change handling
+  - Fixed icons not updating when switching active profile
+  - Fixed popover showing wrong profile data after switch
+  - Fixed refresh timers not respecting per-profile intervals
+  - Fixed memory leaks when creating/deleting profiles rapidly
+
+#### Menu Bar Layout
+- **Icon Spacing and Ordering** - Consistent icon arrangement
+  - Fixed icons appearing in wrong order
+  - Fixed spacing inconsistencies with multiple profiles
+  - Fixed icon overlap on smaller screens
+  - Proper cleanup prevents ghost icons
+
+### Contributors
+- [@eliasyin](https://github.com/eliasyin) - Remaining percentage display feature
+
+---
+
 ## [2.2.3] - 2026-01-18
 
 ### Added
@@ -1312,6 +1459,10 @@ This major release represents a significant milestone for Claude Usage Tracker, 
 - Detailed usage dashboard with countdown timers
 - Support for macOS 14.0+ (Sonoma and later)
 
+[2.3.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v2.2.3...v2.3.0
+[2.2.3]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v2.2.2...v2.2.3
+[2.2.2]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v2.2.1...v2.2.2
+[2.2.1]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v2.1.2...v2.2.0
 [2.1.2]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v2.1.0...v2.1.1
