@@ -21,6 +21,10 @@ struct PopoverContentView: View {
         manager.clickedProfileAPIUsage ?? manager.apiUsage
     }
 
+    private var displayClaudeCodeMetrics: ClaudeCodeMetrics? {
+        manager.clickedProfileClaudeCodeMetrics ?? manager.claudeCodeMetrics
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             // Smart Header with Status and Profile Switcher
@@ -44,7 +48,7 @@ struct PopoverContentView: View {
             )
 
             // Intelligent Usage Dashboard
-            SmartUsageDashboard(usage: displayUsage, apiUsage: displayAPIUsage)
+            SmartUsageDashboard(usage: displayUsage, apiUsage: displayAPIUsage, claudeCodeMetrics: displayClaudeCodeMetrics)
 
             // Contextual Insights
             if showInsights {
@@ -485,6 +489,7 @@ struct SmartHeader: View {
 struct SmartUsageDashboard: View {
     let usage: ClaudeUsage
     let apiUsage: APIUsage?
+    let claudeCodeMetrics: ClaudeCodeMetrics?
     @StateObject private var profileManager = ProfileManager.shared
 
     // Get the display mode from active profile's icon config
@@ -561,6 +566,11 @@ struct SmartUsageDashboard: View {
                let profile = profileManager.activeProfile,
                profile.hasAPIConsole {
                 APIUsageCard(apiUsage: apiUsage, showRemaining: showRemainingPercentage)
+            }
+
+            // Claude Code Team Metrics Card
+            if let metrics = claudeCodeMetrics {
+                ClaudeCodeMetricsCard(metrics: metrics)
             }
         }
         .padding(.horizontal, 16)
@@ -1007,6 +1017,157 @@ struct APIUsageCard: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .strokeBorder(usageColor.opacity(0.2), lineWidth: 1)
+                )
+        )
+    }
+}
+
+// MARK: - Claude Code Metrics Card
+struct ClaudeCodeMetricsCard: View {
+    let metrics: ClaudeCodeMetrics
+
+    var body: some View {
+        VStack(spacing: 12) {
+            // Header with team comparison badge
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 6) {
+                        Text("menubar.claude_code_metrics".localized)
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.primary)
+
+                        // Team comparison badge
+                        if let diff = metrics.costComparedToTeam {
+                            TeamComparisonBadge(
+                                percentageDiff: diff,
+                                rank: metrics.userRankByCost,
+                                totalUsers: metrics.teamTotalUsers
+                            )
+                        }
+                    }
+
+                    Text(metrics.periodDescription)
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                // Total cost with sparkline
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text(metrics.formattedTotalCost)
+                        .font(.system(size: 18, weight: .bold, design: .monospaced))
+                        .foregroundColor(.accentColor)
+
+                    // Mini sparkline
+                    if !metrics.sparklineData.isEmpty {
+                        MiniSparklineView(
+                            data: metrics.sparklineData,
+                            trendDirection: metrics.trendDirection,
+                            lineColor: .accentColor,
+                            height: 16
+                        )
+                        .frame(width: 60)
+                    }
+                }
+            }
+
+            // Budget progress bar (if budget is set)
+            if metrics.hasBudget, let budget = metrics.monthlyBudget {
+                CompactBudgetProgressBar(
+                    currentSpend: metrics.totalCost,
+                    budget: budget
+                )
+            }
+
+            // Model breakdown (if available)
+            if let breakdown = metrics.modelBreakdown, breakdown.totalCost > 0 {
+                ModelBreakdownView(
+                    opusPercentage: breakdown.opusPercentage,
+                    sonnetPercentage: breakdown.sonnetPercentage,
+                    haikuPercentage: breakdown.haikuPercentage,
+                    showLegend: true,
+                    height: 6,
+                    opusCost: breakdown.opusCost,
+                    sonnetCost: breakdown.sonnetCost,
+                    haikuCost: breakdown.haikuCost
+                )
+            }
+
+            // Stats Grid with PR stats
+            HStack(spacing: 0) {
+                // Avg Cost/Day
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("menubar.avg_per_day".localized)
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundColor(.secondary)
+                    Text(metrics.formattedAvgCostPerDay)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.primary)
+                }
+
+                Spacer()
+
+                // Sessions
+                VStack(alignment: .center, spacing: 2) {
+                    Text("menubar.sessions".localized)
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundColor(.secondary)
+                    Text("\(metrics.totalSessions)")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.primary)
+                }
+
+                Spacer()
+
+                // PRs (if available)
+                if metrics.hasPRStats {
+                    VStack(alignment: .center, spacing: 2) {
+                        Text("menubar.prs".localized)
+                            .font(.system(size: 9, weight: .medium))
+                            .foregroundColor(.secondary)
+                        Text(metrics.formattedPRStats)
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(.primary)
+                    }
+
+                    Spacer()
+                }
+
+                // Lines Accepted
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("menubar.lines_accepted".localized)
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundColor(.secondary)
+                    Text(metrics.formattedLinesAccepted)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.primary)
+                }
+            }
+
+            // Last Active
+            if let lastActive = metrics.lastActive {
+                HStack {
+                    Image(systemName: "clock.fill")
+                        .font(.system(size: 8))
+                        .foregroundColor(.secondary)
+
+                    Text("menubar.last_active".localized(with: lastActive.formatted(.relative(presentation: .named))))
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundColor(.secondary)
+
+                    Spacer()
+                }
+            }
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(nsColor: .controlBackgroundColor).opacity(0.4))
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(Color.accentColor.opacity(0.2), lineWidth: 1)
                 )
         )
     }

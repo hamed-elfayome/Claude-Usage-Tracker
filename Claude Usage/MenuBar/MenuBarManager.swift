@@ -9,12 +9,14 @@ class MenuBarManager: NSObject, ObservableObject {
     @Published private(set) var usage: ClaudeUsage = .empty
     @Published private(set) var status: ClaudeStatus = .unknown
     @Published private(set) var apiUsage: APIUsage?
+    @Published private(set) var claudeCodeMetrics: ClaudeCodeMetrics?
     @Published private(set) var isRefreshing: Bool = false
 
     // Multi-profile mode: track which profile's icon was clicked
     @Published private(set) var clickedProfileId: UUID?
     @Published private(set) var clickedProfileUsage: ClaudeUsage?
     @Published private(set) var clickedProfileAPIUsage: APIUsage?
+    @Published private(set) var clickedProfileClaudeCodeMetrics: ClaudeCodeMetrics?
 
     // Track when refresh was last triggered (for distinguishing user vs auto refresh)
     private var lastRefreshTriggerTime: Date = .distantPast
@@ -30,9 +32,6 @@ class MenuBarManager: NSObject, ObservableObject {
 
     // Settings window reference
     private var settingsWindow: NSWindow?
-
-    // GitHub star prompt window reference
-    private var githubPromptWindow: NSWindow?
 
     // Track which button is currently showing the popover
     private weak var currentPopoverButton: NSStatusBarButton?
@@ -278,6 +277,13 @@ class MenuBarManager: NSObject, ObservableObject {
             } else {
                 self.apiUsage = nil
             }
+
+            // Load cached Claude Code metrics from profile
+            if let savedClaudeCodeMetrics = profile.claudeCodeMetrics {
+                self.claudeCodeMetrics = savedClaudeCodeMetrics
+            } else {
+                self.claudeCodeMetrics = nil
+            }
         }
 
         // 2. Update refresh interval with profile's setting
@@ -421,12 +427,14 @@ class MenuBarManager: NSObject, ObservableObject {
             clickedProfileId = profileId
             clickedProfileUsage = profile.claudeUsage ?? .empty
             clickedProfileAPIUsage = profile.apiUsage
+            clickedProfileClaudeCodeMetrics = profile.claudeCodeMetrics
             LoggingService.shared.log("Multi-profile popover: showing data for '\(profile.name)'")
         } else {
             // Single profile mode - use active profile
             clickedProfileId = profileManager.activeProfile?.id
             clickedProfileUsage = nil  // Will use manager.usage
             clickedProfileAPIUsage = nil  // Will use manager.apiUsage
+            clickedProfileClaudeCodeMetrics = nil  // Will use manager.claudeCodeMetrics
         }
 
         // If there's a detached window, close it
@@ -517,7 +525,8 @@ class MenuBarManager: NSObject, ObservableObject {
             // Single profile mode - use the standard update
             statusBarUIManager?.updateAllButtons(
                 usage: usage,
-                apiUsage: apiUsage
+                apiUsage: apiUsage,
+                claudeCodeMetrics: claudeCodeMetrics
             )
         }
     }
@@ -527,7 +536,8 @@ class MenuBarManager: NSObject, ObservableObject {
         statusBarUIManager?.updateButton(
             for: metricType,
             usage: usage,
-            apiUsage: apiUsage
+            apiUsage: apiUsage,
+            claudeCodeMetrics: claudeCodeMetrics
         )
     }
 
@@ -915,12 +925,66 @@ class MenuBarManager: NSObject, ObservableObject {
                 LoggingService.shared.log("MenuBarManager: Failed to fetch status - [\(appError.code.rawValue)] \(appError.message)")
             }
 
-            // Fetch API usage if enabled (using active profile's API credentials)
+            // Fetch Claude Code metrics from platform.claude.com (if credentials exist)
             if let profile = await MainActor.run(body: { self.profileManager.activeProfile }),
                let apiSessionKey = profile.apiSessionKey,
                let orgId = profile.apiOrganizationId {
+
+                // Fetch Claude Code team metrics from platform.claude.com
                 do {
-                    let newAPIUsage = try await apiService.fetchAPIUsageData(organizationId: orgId, apiSessionKey: apiSessionKey)
+                    var metrics = try await apiService.fetchClaudeCodeUserMetrics(
+                        organizationId: orgId,
+                        apiSessionKey: apiSessionKey,
+                        userEmail: profile.claudeCodeUserEmail
+                    )
+
+                    // Fetch usage cost data for sparkline and model breakdown (if workspace and console credentials available)
+                    if let consoleSessionKey = profile.consoleSessionKey,
+                       let consoleOrgId = profile.consoleOrganizationId,
+                       let workspaceId = profile.claudeCodeWorkspaceId {
+                        do {
+                            let dailyCosts = try await apiService.fetchUsageCost(
+                                organizationId: consoleOrgId,
+                                workspaceId: workspaceId,
+                                apiKeyId: profile.claudeCodeApiKeyId,
+                                apiSessionKey: consoleSessionKey,
+                                startDate: metrics.periodStart,
+                                endDate: metrics.periodEnd
+                            )
+                            metrics.dailyCosts = dailyCosts
+                            metrics.modelBreakdown = ModelBreakdownSummary.from(dailyCosts: dailyCosts)
+                            LoggingService.shared.log("MenuBarManager: Fetched \(dailyCosts.count) daily cost entries")
+                        } catch {
+                            LoggingService.shared.log("MenuBarManager: Failed to fetch usage costs - \(error.localizedDescription)")
+                        }
+                    }
+
+                    // Add budget from profile
+                    metrics.monthlyBudget = profile.monthlyBudget
+
+                    await MainActor.run {
+                        self.claudeCodeMetrics = metrics
+                        if let profileId = self.profileManager.activeProfile?.id {
+                            self.profileManager.saveClaudeCodeMetrics(metrics, for: profileId)
+                        }
+                        // Update menu bar icons with new Claude Code metrics
+                        self.updateAllStatusBarIcons()
+                    }
+                    LoggingService.shared.log("MenuBarManager: Fetched Claude Code metrics - \(metrics.formattedTotalCost)")
+                } catch {
+                    // Claude Code metrics failed - log the error
+                    LoggingService.shared.log("MenuBarManager: Failed to fetch Claude Code metrics - \(error.localizedDescription)")
+                }
+            }
+
+            // Fetch API billing data from console.anthropic.com (if credentials exist)
+            if let profile = await MainActor.run(body: { self.profileManager.activeProfile }),
+               let consoleSessionKey = profile.consoleSessionKey,
+               let consoleOrgId = profile.consoleOrganizationId {
+
+                // Fetch legacy API usage (billing/credits) from console.anthropic.com
+                do {
+                    let newAPIUsage = try await apiService.fetchAPIUsageData(organizationId: consoleOrgId, apiSessionKey: consoleSessionKey)
                     await MainActor.run {
                         self.apiUsage = newAPIUsage
 
@@ -929,11 +993,10 @@ class MenuBarManager: NSObject, ObservableObject {
                             self.profileManager.saveAPIUsage(newAPIUsage, for: profileId)
                         }
                     }
+                    LoggingService.shared.log("MenuBarManager: Fetched API billing data")
                 } catch {
-                    // Convert to AppError and log
                     let appError = AppError.wrap(error)
                     ErrorLogger.shared.log(appError, severity: .info)
-
                     LoggingService.shared.log("MenuBarManager: Failed to fetch API usage - [\(appError.code.rawValue)] \(appError.message)")
                 }
             }
@@ -999,93 +1062,6 @@ class MenuBarManager: NSObject, ObservableObject {
         NSApplication.shared.terminate(nil)
     }
 
-    /// Shows the GitHub star prompt window
-    func showGitHubStarPrompt() {
-        // If window already exists, just bring it to front
-        if let existingWindow = githubPromptWindow, existingWindow.isVisible {
-            existingWindow.makeKeyAndOrderFront(nil)
-            NSApp.activate(ignoringOtherApps: true)
-            return
-        }
-
-        // Temporarily show dock icon for the prompt window
-        NSApp.setActivationPolicy(.regular)
-
-        // Create the GitHub star prompt view
-        let promptView = GitHubStarPromptView(
-            onStar: { [weak self] in
-                self?.handleGitHubStarClick()
-            },
-            onMaybeLater: { [weak self] in
-                self?.handleMaybeLaterClick()
-            },
-            onDontAskAgain: { [weak self] in
-                self?.handleDontAskAgainClick()
-            }
-        )
-
-        let hostingController = NSHostingController(rootView: promptView)
-
-        let window = NSWindow(contentViewController: hostingController)
-        window.title = ""
-        window.styleMask = [.titled, .closable, .fullSizeContentView]
-        window.titlebarAppearsTransparent = true
-        window.titleVisibility = .hidden
-        window.setContentSize(NSSize(width: 300, height: 145))
-        window.center()
-        window.isReleasedWhenClosed = false
-        window.isRestorable = false
-        window.level = .floating
-        window.delegate = self
-
-        // Store reference
-        githubPromptWindow = window
-
-        // Mark that we've shown the prompt
-        dataStore.saveLastGitHubStarPromptDate(Date())
-
-        // Show the window
-        window.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
-    }
-
-    private func handleGitHubStarClick() {
-        // Open GitHub repository
-        if let url = URL(string: Constants.githubRepoURL) {
-            NSWorkspace.shared.open(url)
-        }
-
-        // Mark as starred
-        dataStore.saveHasStarredGitHub(true)
-
-        // Close the prompt window
-        githubPromptWindow?.close()
-        githubPromptWindow = nil
-
-        // Hide dock icon
-        NSApp.setActivationPolicy(.accessory)
-    }
-
-    private func handleMaybeLaterClick() {
-        // Just close the window - the prompt will show again after the reminder interval
-        githubPromptWindow?.close()
-        githubPromptWindow = nil
-
-        // Hide dock icon
-        NSApp.setActivationPolicy(.accessory)
-    }
-
-    private func handleDontAskAgainClick() {
-        // Mark to never show again
-        dataStore.saveNeverShowGitHubPrompt(true)
-
-        // Close the prompt window
-        githubPromptWindow?.close()
-        githubPromptWindow = nil
-
-        // Hide dock icon
-        NSApp.setActivationPolicy(.accessory)
-    }
 }
 
 // MARK: - NSPopoverDelegate
@@ -1140,10 +1116,6 @@ extension MenuBarManager: NSWindowDelegate {
             } else if window == detachedWindow {
                 // Clear detached window reference when closed
                 detachedWindow = nil
-            } else if window == githubPromptWindow {
-                // Hide dock icon again when GitHub prompt window closes
-                NSApp.setActivationPolicy(.accessory)
-                githubPromptWindow = nil
             }
         }
     }

@@ -19,6 +19,7 @@ final class MenuBarIconRenderer {
         globalConfig: MenuBarIconConfiguration,
         usage: ClaudeUsage,
         apiUsage: APIUsage?,
+        claudeCodeMetrics: ClaudeCodeMetrics? = nil,
         isDarkMode: Bool,
         monochromeMode: Bool,
         showIconName: Bool,
@@ -30,12 +31,23 @@ final class MenuBarIconRenderer {
             config: config,
             usage: usage,
             apiUsage: apiUsage,
+            claudeCodeMetrics: claudeCodeMetrics,
             showRemaining: globalConfig.showRemainingPercentage
         )
 
         // API is ALWAYS text-based (no icon styles)
         if metricType == .api {
             return createAPITextStyle(
+                metricData: metricData,
+                isDarkMode: isDarkMode,
+                monochromeMode: monochromeMode,
+                showIconName: showIconName
+            )
+        }
+
+        // Claude Code is ALWAYS text-based (shows cost)
+        if metricType == .claudeCode {
+            return createClaudeCodeTextStyle(
                 metricData: metricData,
                 isDarkMode: isDarkMode,
                 monochromeMode: monochromeMode,
@@ -106,6 +118,7 @@ final class MenuBarIconRenderer {
         config: MetricIconConfig,
         usage: ClaudeUsage,
         apiUsage: APIUsage?,
+        claudeCodeMetrics: ClaudeCodeMetrics? = nil,
         showRemaining: Bool
     ) -> MetricData {
         switch metricType {
@@ -185,6 +198,44 @@ final class MenuBarIconRenderer {
 
             return MetricData(
                 percentage: displayPercentage,
+                displayText: displayText,
+                statusLevel: statusLevel,
+                sessionResetTime: nil
+            )
+
+        case .claudeCode:
+            guard let metrics = claudeCodeMetrics else {
+                return MetricData(
+                    percentage: 0,
+                    displayText: "N/A",
+                    statusLevel: .safe,
+                    sessionResetTime: nil
+                )
+            }
+
+            // Claude Code doesn't have a percentage - it's cost-based
+            // We use safe/moderate/critical based on daily average thresholds
+            let statusLevel: UsageStatusLevel
+            if metrics.avgCostPerDay >= 50 {
+                statusLevel = .critical
+            } else if metrics.avgCostPerDay >= 25 {
+                statusLevel = .moderate
+            } else {
+                statusLevel = .safe
+            }
+
+            let displayText: String
+            switch config.claudeCodeDisplayMode {
+            case .totalCost:
+                displayText = metrics.menuBarDisplayText
+            case .avgPerDay:
+                displayText = metrics.menuBarAvgDisplayText
+            case .both:
+                displayText = "\(metrics.menuBarDisplayText) \(metrics.menuBarAvgDisplayText)"
+            }
+
+            return MetricData(
+                percentage: 0,  // Not applicable for cost-based metric
                 displayText: displayText,
                 statusLevel: statusLevel,
                 sessionResetTime: nil
@@ -562,6 +613,46 @@ final class MenuBarIconRenderer {
 
         if showIconName {
             fullText = "API: \(metricData.displayText)"
+        } else {
+            fullText = metricData.displayText
+        }
+
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: textColor
+        ]
+
+        let textSize = fullText.size(withAttributes: attributes)
+        let image = NSImage(size: NSSize(width: textSize.width + 4, height: 18))
+
+        image.lockFocus()
+        defer { image.unlockFocus() }
+
+        let textY = (18 - textSize.height) / 2
+        fullText.draw(at: NSPoint(x: 2, y: textY), withAttributes: attributes)
+
+        return image
+    }
+
+    // MARK: - Claude Code Text Style (Always Text-Based)
+
+    private func createClaudeCodeTextStyle(
+        metricData: MetricData,
+        isDarkMode: Bool,
+        monochromeMode: Bool,
+        showIconName: Bool
+    ) -> NSImage {
+        let font = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .semibold)
+
+        // Use isDarkMode to determine correct foreground color for menu bar
+        let textColor: NSColor = monochromeMode
+            ? menuBarForegroundColor(isDarkMode: isDarkMode)
+            : getColorForStatusLevel(metricData.statusLevel)
+
+        var fullText = ""
+
+        if showIconName {
+            fullText = "CC: \(metricData.displayText)"
         } else {
             fullText = metricData.displayText
         }

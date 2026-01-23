@@ -324,7 +324,8 @@ final class StatusBarUIManager {
     /// Updates all status bar buttons based on current usage data
     func updateAllButtons(
         usage: ClaudeUsage,
-        apiUsage: APIUsage?
+        apiUsage: APIUsage?,
+        claudeCodeMetrics: ClaudeCodeMetrics? = nil
     ) {
         // Get config from active profile
         let profile = ProfileManager.shared.activeProfile
@@ -362,6 +363,7 @@ final class StatusBarUIManager {
                 globalConfig: config,
                 usage: usage,
                 apiUsage: apiUsage,
+                claudeCodeMetrics: claudeCodeMetrics,
                 isDarkMode: menuBarIsDark,
                 monochromeMode: config.monochromeMode,
                 showIconName: config.showIconNames,
@@ -379,7 +381,8 @@ final class StatusBarUIManager {
     func updateButton(
         for metricType: MenuBarMetricType,
         usage: ClaudeUsage,
-        apiUsage: APIUsage?
+        apiUsage: APIUsage?,
+        claudeCodeMetrics: ClaudeCodeMetrics? = nil
     ) {
         guard let statusItem = statusItems[metricType],
               let button = statusItem.button else {
@@ -402,6 +405,7 @@ final class StatusBarUIManager {
             globalConfig: config,
             usage: usage,
             apiUsage: apiUsage,
+            claudeCodeMetrics: claudeCodeMetrics,
             isDarkMode: menuBarIsDark,
             monochromeMode: config.monochromeMode,
             showIconName: config.showIconNames,
