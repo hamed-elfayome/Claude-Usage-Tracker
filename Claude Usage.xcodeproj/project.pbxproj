@@ -6,10 +6,6 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		056C52802F017E50007E2A48 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = SPARKLE_PRODUCT_DEP /* Sparkle */; };
-/* End PBXBuildFile section */
-
 /* Begin PBXContainerItemProxy section */
 		05CD2CC72EA985A100004C83 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -43,7 +39,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				056C52802F017E50007E2A48 /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -95,7 +90,6 @@
 			);
 			name = "Claude Usage";
 			packageProductDependencies = (
-				SPARKLE_PRODUCT_DEP /* Sparkle */,
 			);
 			productName = "Claude Usage";
 			productReference = 05CD2CB22EA985A100004C83 /* Claude Usage.app */;
@@ -160,7 +154,6 @@
 			mainGroup = 05CD2CA92EA985A100004C83;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				SPARKLE_PACKAGE_REF /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 05CD2CB32EA985A100004C83 /* Products */;
@@ -341,12 +334,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Claude Usage/ClaudeUsageTracker.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 9;
 				DEAD_CODE_STRIPPING = YES;
-				ENABLE_APP_SANDBOX = NO;
+				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
+				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "Claude Usage/Resources/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Claude Usage";
@@ -392,7 +386,7 @@
 				CURRENT_PROJECT_VERSION = 9;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = T77ZWDC739;
-				ENABLE_APP_SANDBOX = NO;
+				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
@@ -401,7 +395,7 @@
 				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
 				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
 				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
-				ENABLE_USER_SELECTED_FILES = readonly;
+				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "Claude Usage/Resources/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Claude Usage";
@@ -515,25 +509,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		SPARKLE_PACKAGE_REF /* XCRemoteSwiftPackageReference "Sparkle" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/sparkle-project/Sparkle";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.8.1;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		SPARKLE_PRODUCT_DEP /* Sparkle */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = SPARKLE_PACKAGE_REF /* XCRemoteSwiftPackageReference "Sparkle" */;
-			productName = Sparkle;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 05CD2CAA2EA985A100004C83 /* Project object */;
 }

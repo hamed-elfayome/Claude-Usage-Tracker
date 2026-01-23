@@ -71,6 +71,13 @@
 "menubar.remaining" = "Remaining";
 "menubar.resets_time" = "Resets %@";
 "menubar.click_status" = "Click to open status.claude.com";
+"menubar.claude_code_metrics" = "Claude Code Team";
+"menubar.avg_per_day" = "Avg/Day";
+"menubar.sessions" = "Sessions";
+"menubar.lines_accepted" = "Lines";
+"menubar.last_active" = "Last active %@";
+"menubar.prs" = "PRs";
+"menubar.pr_rate" = "%d%% CC";
 
 /* ==================== */
 /* MARK: - Usage Status */
@@ -196,6 +203,8 @@
 "metric.week_usage.description" = "Weekly token usage (all models)";
 "metric.api_credits" = "API Credits";
 "metric.api_credits.description" = "API Console billing credits";
+"metric.claude_code_cost" = "Claude Code Cost";
+"metric.claude_code_cost.description" = "Monthly team cost from platform.claude.com";
 
 /* ==================== */
 /* MARK: - Display Modes */
@@ -210,6 +219,12 @@
 "display.percentage.description" = "Show as percentage (e.g., 60%)";
 "display.token_count" = "Token Count";
 "display.token_count.description" = "Show token numbers (e.g., 600K/1M)";
+"display.total_cost" = "Total Cost";
+"display.total_cost.description" = "Show total cost for the period";
+"display.avg_per_day" = "Average Per Day";
+"display.avg_per_day.description" = "Show average daily cost";
+"display.both_cost" = "Both";
+"display.both_cost.description" = "Show both total and daily average";
 
 /* ==================== */
 /* MARK: - Notification Messages */
@@ -361,7 +376,10 @@
 "api.enable_billing_description" = "Monitor your API usage, current spend, and remaining prepaid credits";
 "api.label_api_session_key" = "API Session Key";
 "api.placeholder_api_session_key" = "sk-ant-api03-...";
-"api.help_api_session_key" = "Your session key from console.anthropic.com";
+"api.help_api_session_key" = "Your session key from platform.claude.com for Claude Code team metrics";
+"api.label_user_email" = "Your Email (Optional)";
+"api.placeholder_user_email" = "your.email@company.com";
+"api.help_user_email" = "Used to identify your personal metrics in Claude Code team dashboard";
 "api.button_fetch_organizations" = "Fetch Organizations";
 "api.button_fetching" = "Fetching...";
 "api.button_save_configuration" = "Save Configuration";
@@ -701,3 +719,43 @@
 "wizard.migrate_description_short" = "Import your old profiles data from previous app version";
 "wizard.skip_migration" = "Skip";
 "wizard.migration_skipped" = "Skipped";
+
+/* ==================== */
+/* MARK: - Team Comparison */
+/* ==================== */
+"team.rank" = "#%d/%d";
+"team.above_avg" = "+%.0f%%";
+"team.below_avg" = "-%.0f%%";
+"team.vs_team" = "vs team";
+
+/* ==================== */
+/* MARK: - Budget Settings */
+/* ==================== */
+"budget.title" = "Budget Settings";
+"budget.subtitle" = "Set monthly spending limits and alerts";
+"budget.monthly_limit" = "Monthly Budget";
+"budget.monthly_limit_description" = "Set a monthly spending limit for Claude Code usage";
+"budget.alerts" = "Budget Alerts";
+"budget.alerts_description" = "Get notified when spending reaches thresholds";
+"budget.threshold_50" = "50% - Halfway";
+"budget.threshold_75" = "75% - Warning";
+"budget.threshold_90" = "90% - Critical";
+"budget.current_spend" = "Current Spend";
+"budget.remaining" = "Remaining";
+"budget.no_budget_set" = "No budget set";
+
+/* ==================== */
+/* MARK: - Model Names */
+/* ==================== */
+"model.opus" = "Opus";
+"model.sonnet" = "Sonnet";
+"model.haiku" = "Haiku";
+"model.other" = "Other";
+"model.breakdown" = "Model Breakdown";
+
+/* ==================== */
+/* MARK: - Sparkline */
+/* ==================== */
+"sparkline.trend_up" = "Trending up";
+"sparkline.trend_down" = "Trending down";
+"sparkline.trend_stable" = "Stable";
