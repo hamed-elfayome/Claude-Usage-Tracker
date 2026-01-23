@@ -340,6 +340,7 @@
 "claudecode.preview_label" = "ライブプレビュー";
 "claudecode.preview_description" = "Claude CLIでのステータスラインの表示方法";
 "claudecode.component_model" = "モデル名";
+"claudecode.component_context" = "コンテキスト使用率";
 "claudecode.component_directory" = "ディレクトリ名";
 "claudecode.component_branch" = "Gitブランチ";
 "claudecode.component_usage" = "使用統計";

@@ -340,6 +340,7 @@
 "claudecode.preview_label" = "Live Preview";
 "claudecode.preview_description" = "This is how your statusline will appear in Claude CLI";
 "claudecode.component_model" = "Model name";
+"claudecode.component_context" = "Context percentage";
 "claudecode.component_directory" = "Directory name";
 "claudecode.component_branch" = "Git branch";
 "claudecode.component_usage" = "Usage statistics";
