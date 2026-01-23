@@ -202,13 +202,14 @@ final class StatusBarUIManager {
     func updateMultiProfileButtons(profiles: [Profile], config: MultiProfileDisplayConfig) {
         guard isMultiProfileMode else { return }
 
-        let isDarkMode = NSApp.effectiveAppearance.name == .darkAqua
-
         for profile in profiles where profile.isSelectedForDisplay {
             guard let statusItem = multiProfileStatusItems[profile.id],
                   let button = statusItem.button else {
                 continue
             }
+
+            // Get actual menu bar appearance from the button (based on wallpaper, not system mode)
+            let menuBarIsDark = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
 
             // Get usage data for this profile
             let usage = profile.claudeUsage ?? ClaudeUsage.empty
@@ -252,6 +253,7 @@ final class StatusBarUIManager {
                         weekStatus: weekStatus,
                         profileName: profile.name,
                         monochromeMode: useMonochrome,
+                        isDarkMode: menuBarIsDark,
                         useSystemColor: false
                     )
                 } else {
@@ -262,6 +264,7 @@ final class StatusBarUIManager {
                         weekStatus: weekStatus,
                         profileInitial: String(profile.name.prefix(1)),
                         monochromeMode: useMonochrome,
+                        isDarkMode: menuBarIsDark,
                         useSystemColor: false
                     )
                 }
@@ -273,6 +276,7 @@ final class StatusBarUIManager {
                     weekStatus: weekStatus,
                     profileName: config.showProfileLabel ? profile.name : nil,
                     monochromeMode: useMonochrome,
+                    isDarkMode: menuBarIsDark,
                     useSystemColor: false
                 )
             case .compact:
@@ -281,12 +285,15 @@ final class StatusBarUIManager {
                     status: sessionStatus,
                     profileInitial: config.showProfileLabel ? String(profile.name.prefix(1)) : nil,
                     monochromeMode: useMonochrome,
+                    isDarkMode: menuBarIsDark,
                     useSystemColor: false
                 )
             }
 
             button.image = image
-            button.image?.isTemplate = false
+            // Template mode only for monochrome (lets macOS handle color adaptation)
+            // Non-monochrome needs explicit colors for status indicators
+            button.image?.isTemplate = useMonochrome
         }
     }
 
@@ -322,7 +329,6 @@ final class StatusBarUIManager {
         // Get config from active profile
         let profile = ProfileManager.shared.activeProfile
         let config = profile?.iconConfig ?? .default
-        let isDarkMode = NSApp.effectiveAppearance.name == .darkAqua
 
         // Check if we should show default logo (no usage credentials OR no enabled metrics)
         let hasUsageCredentials = profile?.hasUsageCredentials ?? false
@@ -330,9 +336,11 @@ final class StatusBarUIManager {
             // Show default app logo
             if let statusItem = statusItems[.session],  // We use .session as placeholder key
                let button = statusItem.button {
-                let logoImage = renderer.createDefaultAppLogo(isDarkMode: isDarkMode)
+                // Get actual menu bar appearance from the button
+                let menuBarIsDark = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+                let logoImage = renderer.createDefaultAppLogo(isDarkMode: menuBarIsDark)
                 button.image = logoImage
-                button.image?.isTemplate = false
+                button.image?.isTemplate = true  // Let macOS handle the color
             }
             return
         }
@@ -344,6 +352,9 @@ final class StatusBarUIManager {
                 continue
             }
 
+            // Get actual menu bar appearance from the button
+            let menuBarIsDark = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+
             // Create image directly using our renderer
             let image = renderer.createImage(
                 for: metricConfig.metricType,
@@ -351,15 +362,16 @@ final class StatusBarUIManager {
                 globalConfig: config,
                 usage: usage,
                 apiUsage: apiUsage,
-                isDarkMode: isDarkMode,
+                isDarkMode: menuBarIsDark,
                 monochromeMode: config.monochromeMode,
                 showIconName: config.showIconNames,
                 showNextSessionTime: metricConfig.showNextSessionTime
             )
 
             button.image = image
-            // Don't use template - we handle colors manually to preserve status colors
-            button.image?.isTemplate = false
+            // Template mode only for monochrome (lets macOS handle color adaptation)
+            // Non-monochrome needs explicit colors for status indicators
+            button.image?.isTemplate = config.monochromeMode
         }
     }
 
@@ -380,7 +392,8 @@ final class StatusBarUIManager {
             return
         }
 
-        let isDarkMode = NSApp.effectiveAppearance.name == .darkAqua
+        // Get the actual menu bar appearance from the button's effective appearance
+        let menuBarIsDark = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
 
         // Create image directly using our renderer
         let image = renderer.createImage(
@@ -389,15 +402,16 @@ final class StatusBarUIManager {
             globalConfig: config,
             usage: usage,
             apiUsage: apiUsage,
-            isDarkMode: isDarkMode,
+            isDarkMode: menuBarIsDark,
             monochromeMode: config.monochromeMode,
             showIconName: config.showIconNames,
             showNextSessionTime: metricConfig.showNextSessionTime
         )
 
         button.image = image
-        // Don't use template - we handle colors manually to preserve status colors
-        button.image?.isTemplate = false
+        // Template mode only for monochrome (lets macOS handle color adaptation)
+        // Non-monochrome needs explicit colors for status indicators
+        button.image?.isTemplate = config.monochromeMode
     }
 
     /// Get button for a specific metric (used for popover positioning)

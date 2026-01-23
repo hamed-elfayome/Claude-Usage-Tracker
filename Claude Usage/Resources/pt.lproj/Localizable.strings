@@ -402,8 +402,8 @@
 "appearance.subtitle" = "Personalize seus ícones e métricas da barra de menu";
 "appearance.global_settings" = "Configurações Globais";
 "appearance.menu_bar_metrics" = "Métricas da Barra de Menu";
-"appearance.monochrome_title" = "Usar Cores do Sistema";
-"appearance.monochrome_description" = "Use renderização adaptativa do macOS. Os ícones se adaptam automaticamente ao modo escuro/claro com cores do sistema. Quando desativado, os ícones mostram status codificado por cores (verde/laranja/vermelho)";
+"appearance.monochrome_title" = "Monocromático";
+"appearance.monochrome_description" = "Usar cor adaptativa em vez de cores de status (verde/laranja/vermelho)";
 "appearance.show_labels_title" = "Mostrar Rótulos dos Ícones";
 "appearance.show_labels_description" = "Exibir rótulos de prefixo (S:, W:, API:) para cada métrica";
 "appearance.show_remaining_title" = "Mostrar Porcentagem Restante";

@@ -27,6 +27,9 @@ final class AutoStartSessionService {
     private let profileManager: ProfileManager
     private let notificationManager: NotificationManager
 
+    // Track last captured reset time per profile to prevent duplicate auto-starts
+    private var lastCapturedResetTime: [UUID: Date] = [:]
+
     private init() {
         self.apiService = ClaudeAPIService()
         self.profileManager = ProfileManager.shared
@@ -147,11 +150,21 @@ final class AutoStartSessionService {
             // Simple logic (like v1.1.0): If session is at 0%, start it
             // The initialization message will bring usage above 0%, preventing repeated starts
             if currentPercentage == 0.0 {
+                // Check if we recently auto-started and should wait for reset
+                if let lastResetTime = lastCapturedResetTime[profile.id],
+                   Date() < lastResetTime {
+                    let minutesRemaining = Int(lastResetTime.timeIntervalSinceNow / 60)
+                    LoggingService.shared.logDebug("Profile '\(profile.name)': skipping auto-start - \(minutesRemaining)m until session reset")
+                    return
+                }
+
                 LoggingService.shared.logInfo("Session at 0% for profile '\(profile.name)' - triggering auto-start")
 
                 // Auto-start the session
                 await autoStartSession(for: profile)
             } else {
+                // Session is active, clear any tracked reset time since usage endpoint is now showing correct data
+                lastCapturedResetTime.removeValue(forKey: profile.id)
                 LoggingService.shared.logDebug("Profile '\(profile.name)': session at \(currentPercentage)% (active)")
             }
 
@@ -313,12 +326,39 @@ final class AutoStartSessionService {
         return 0.0
     }
 
+    /// Parse the completion response (SSE format) to extract session reset time from messageLimit.windows.5h
+    private func parseCompletionResponseForResetTime(_ data: Data) -> Date? {
+        guard let responseString = String(data: data, encoding: .utf8) else { return nil }
+
+        // The response is SSE format - find the last completion event with messageLimit data
+        let lines = responseString.components(separatedBy: "\n")
+        for line in lines.reversed() {
+            if line.hasPrefix("data: "),
+               let jsonStart = line.index(line.startIndex, offsetBy: 6, limitedBy: line.endIndex),
+               let jsonData = String(line[jsonStart...]).data(using: .utf8),
+               let json = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any],
+               let messageLimit = json["messageLimit"] as? [String: Any],
+               let windows = messageLimit["windows"] as? [String: Any],
+               let fiveH = windows["5h"] as? [String: Any],
+               let resetsAt = fiveH["resets_at"] as? Double {
+                return Date(timeIntervalSince1970: resetsAt)
+            }
+        }
+        return nil
+    }
+
     // MARK: - Auto-Start Session
 
     private func autoStartSession(for profile: Profile) async {
         do {
-            // Call the initialization API for this profile
-            try await sendInitializationMessage(for: profile)
+            // Call the initialization API for this profile and get response data
+            let responseData = try await sendInitializationMessage(for: profile)
+
+            // Capture reset time from response to prevent duplicate auto-starts
+            if let resetTime = parseCompletionResponseForResetTime(responseData) {
+                lastCapturedResetTime[profile.id] = resetTime
+                LoggingService.shared.logInfo("Captured session reset time for '\(profile.name)': \(resetTime)")
+            }
 
             LoggingService.shared.logInfo("Successfully auto-started session for profile '\(profile.name)'")
 
@@ -345,7 +385,7 @@ final class AutoStartSessionService {
         }
     }
 
-    private func sendInitializationMessage(for profile: Profile) async throws {
+    private func sendInitializationMessage(for profile: Profile) async throws -> Data {
         guard let sessionKey = profile.claudeSessionKey,
               let orgId = profile.organizationId else {
             throw AppError(
@@ -401,12 +441,15 @@ final class AutoStartSessionService {
         ]
         messageRequest.httpBody = try JSONSerialization.data(withJSONObject: messageBody)
 
-        let (_, messageResponse) = try await URLSession.shared.data(for: messageRequest)
+        let (messageData, messageResponse) = try await URLSession.shared.data(for: messageRequest)
 
         guard let messageHTTPResponse = messageResponse as? HTTPURLResponse,
               messageHTTPResponse.statusCode == 200 else {
             throw AppError(code: .apiGenericError, message: "Failed to send initialization message", isRecoverable: true)
         }
+
+        // Capture message data before deleting conversation
+        let capturedData = messageData
 
         // Delete the conversation to keep it out of chat history (incognito mode)
         let deleteURL = try URLBuilder(baseURL: Constants.APIEndpoints.claudeBase)
@@ -423,5 +466,7 @@ final class AutoStartSessionService {
         } catch {
             // Silently ignore deletion errors - session is already initialized
         }
+
+        return capturedData
     }
 }

@@ -418,8 +418,8 @@
 "appearance.subtitle" = "メニューバーアイコンとメトリクスをカスタマイズ";
 "appearance.global_settings" = "グローバル設定";
 "appearance.menu_bar_metrics" = "メニューバーメトリクス";
-"appearance.monochrome_title" = "システムカラーを使用";
-"appearance.monochrome_description" = "macOSのアダプティブレンダリングを使用します。アイコンはシステムカラーでダーク/ライトモードに自動的に適応します。オフの場合、アイコンは色分けされたステータス（緑/オレンジ/赤）を表示します";
+"appearance.monochrome_title" = "モノクロ";
+"appearance.monochrome_description" = "ステータスカラー（緑/オレンジ/赤）の代わりにアダプティブカラーを使用";
 "appearance.show_labels_title" = "アイコンラベルを表示";
 "appearance.show_labels_description" = "各メトリクスのプレフィックスラベル（S:、W:、API:）を表示";
 "appearance.show_remaining_title" = "残り容量のパーセンテージを表示";

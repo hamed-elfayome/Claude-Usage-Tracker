@@ -744,7 +744,7 @@ class ClaudeAPIService: APIServiceProtocol {
 
         let messageBody: [String: Any] = [
             "prompt": "Hi",
-            "model": "claude-haiku-4-5-20251001",  // Haiku 4.5 - ensures non-zero usage to prevent duplicate auto-starts
+            "model": "claude-haiku-4-5-20251001",
             "timezone": "UTC"
         ]
         messageRequest.httpBody = try JSONSerialization.data(withJSONObject: messageBody)

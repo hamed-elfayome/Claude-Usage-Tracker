@@ -418,8 +418,8 @@
 "appearance.subtitle" = "Customize your menu bar icons and metrics";
 "appearance.global_settings" = "Global Settings";
 "appearance.menu_bar_metrics" = "Menu Bar Metrics";
-"appearance.monochrome_title" = "Use System Colors";
-"appearance.monochrome_description" = "Use macOS adaptive rendering. Icons automatically adapt to dark/light mode with system colors. When off, icons show color-coded status (green/orange/red)";
+"appearance.monochrome_title" = "Monochrome";
+"appearance.monochrome_description" = "Use adaptive color instead of status colors (green/orange/red)";
 "appearance.show_labels_title" = "Show Icon Labels";
 "appearance.show_labels_description" = "Display prefix labels (S:, W:, API:) for each metric";
 "appearance.show_remaining_title" = "Show Remaining Percentage";

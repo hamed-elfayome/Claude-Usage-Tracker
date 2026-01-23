@@ -216,11 +216,11 @@ final class MenuBarIconRenderer {
         image.lockFocus()
         defer { image.unlockFocus() }
 
-        // Use white for menu bar (menu bar is always dark background on macOS)
-        // Status colors are preserved for the fill
-        let outlineColor: NSColor = .white
-        let textColor: NSColor = .white
-        let fillColor: NSColor = monochromeMode ? .white : getColorForStatusLevel(metricData.statusLevel)
+        // Use isDarkMode to determine correct foreground color for menu bar
+        let foregroundColor = menuBarForegroundColor(isDarkMode: isDarkMode)
+        let outlineColor: NSColor = foregroundColor
+        let textColor: NSColor = foregroundColor
+        let fillColor: NSColor = monochromeMode ? foregroundColor : getColorForStatusLevel(metricData.statusLevel)
 
         let xOffset: CGFloat = 0
 
@@ -309,11 +309,11 @@ final class MenuBarIconRenderer {
         image.lockFocus()
         defer { image.unlockFocus() }
 
-        // Use white for menu bar (menu bar is always dark background on macOS)
-        // Status colors are preserved for the fill
-        let textColor: NSColor = .white
-        let fillColor: NSColor = monochromeMode ? .white : getColorForStatusLevel(metricData.statusLevel)
-        let backgroundColor: NSColor = NSColor.white.withAlphaComponent(0.2)
+        // Use isDarkMode to determine correct foreground color for menu bar
+        let foregroundColor = menuBarForegroundColor(isDarkMode: isDarkMode)
+        let textColor: NSColor = foregroundColor
+        let fillColor: NSColor = monochromeMode ? foregroundColor : getColorForStatusLevel(metricData.statusLevel)
+        let backgroundColor: NSColor = foregroundColor.withAlphaComponent(0.2)
 
         var xOffset: CGFloat = 1
 
@@ -388,8 +388,9 @@ final class MenuBarIconRenderer {
     ) -> NSImage {
         let font = NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .semibold)  // Larger font
 
-        // Use white for menu bar text, status colors for fill
-        let fillColor: NSColor = monochromeMode ? .white : getColorForStatusLevel(metricData.statusLevel)
+        // Use isDarkMode to determine correct foreground color for menu bar
+        let foregroundColor = menuBarForegroundColor(isDarkMode: isDarkMode)
+        let fillColor: NSColor = monochromeMode ? foregroundColor : getColorForStatusLevel(metricData.statusLevel)
 
         var fullText = ""
 
@@ -433,9 +434,10 @@ final class MenuBarIconRenderer {
         image.lockFocus()
         defer { image.unlockFocus() }
 
-        // Use white for menu bar text, status colors for fill
-        let textColor: NSColor = .white
-        let fillColor: NSColor = monochromeMode ? .white : getColorForStatusLevel(metricData.statusLevel)
+        // Use isDarkMode to determine correct foreground color for menu bar
+        let foregroundColor = menuBarForegroundColor(isDarkMode: isDarkMode)
+        let textColor: NSColor = foregroundColor
+        let fillColor: NSColor = monochromeMode ? foregroundColor : getColorForStatusLevel(metricData.statusLevel)
 
         let xOffset: CGFloat = 1
 
@@ -511,9 +513,10 @@ final class MenuBarIconRenderer {
         image.lockFocus()
         defer { image.unlockFocus() }
 
-        // Use white for menu bar text, status colors for fill
-        let textColor: NSColor = .white
-        let fillColor: NSColor = monochromeMode ? .white : getColorForStatusLevel(metricData.statusLevel)
+        // Use isDarkMode to determine correct foreground color for menu bar
+        let foregroundColor = menuBarForegroundColor(isDarkMode: isDarkMode)
+        let textColor: NSColor = foregroundColor
+        let fillColor: NSColor = monochromeMode ? foregroundColor : getColorForStatusLevel(metricData.statusLevel)
 
         var xOffset: CGFloat = 1
 
@@ -552,8 +555,8 @@ final class MenuBarIconRenderer {
     ) -> NSImage {
         let font = NSFont.systemFont(ofSize: 11, weight: .medium)
 
-        // Use white for menu bar text
-        let textColor: NSColor = .white
+        // Use isDarkMode to determine correct foreground color for menu bar
+        let textColor: NSColor = menuBarForegroundColor(isDarkMode: isDarkMode)
 
         var fullText = ""
 
@@ -589,7 +592,8 @@ final class MenuBarIconRenderer {
     ///   - sessionStatus: Status level for session (for coloring)
     ///   - weekStatus: Status level for week (for coloring)
     ///   - profileInitial: Single character to display in center (e.g., "W" for Work)
-    ///   - monochromeMode: If true, use white color for all elements
+    ///   - monochromeMode: If true, use foreground color for all elements
+    ///   - isDarkMode: Whether the menu bar is in dark mode
     ///   - useSystemColor: If true, use system accent color instead of status colors
     /// - Returns: NSImage with concentric circles showing both metrics
     func createConcentricIcon(
@@ -599,6 +603,7 @@ final class MenuBarIconRenderer {
         weekStatus: UsageStatusLevel,
         profileInitial: String,
         monochromeMode: Bool,
+        isDarkMode: Bool,
         useSystemColor: Bool = false
     ) -> NSImage {
         let size: CGFloat = 24
@@ -609,11 +614,12 @@ final class MenuBarIconRenderer {
 
         let center = NSPoint(x: size / 2, y: size / 2)
 
-        // Colors
-        let textColor: NSColor = .white
-        let sessionColor: NSColor = getColor(for: sessionStatus, monochromeMode: monochromeMode, useSystemColor: useSystemColor)
-        let weekColor: NSColor = getColor(for: weekStatus, monochromeMode: monochromeMode, useSystemColor: useSystemColor)
-        let backgroundColor: NSColor = NSColor.white.withAlphaComponent(0.15)
+        // Use isDarkMode to determine correct foreground color for menu bar
+        let foregroundColor = menuBarForegroundColor(isDarkMode: isDarkMode)
+        let textColor: NSColor = foregroundColor
+        let sessionColor: NSColor = getColor(for: sessionStatus, monochromeMode: monochromeMode, useSystemColor: useSystemColor, isDarkMode: isDarkMode)
+        let weekColor: NSColor = getColor(for: weekStatus, monochromeMode: monochromeMode, useSystemColor: useSystemColor, isDarkMode: isDarkMode)
+        let backgroundColor: NSColor = foregroundColor.withAlphaComponent(0.15)
 
         // Outer ring (Session) - larger radius, thicker stroke - Session is primary/more important
         let outerRadius: CGFloat = (size - 4) / 2  // 10pt radius
@@ -707,6 +713,7 @@ final class MenuBarIconRenderer {
         weekStatus: UsageStatusLevel,
         profileName: String,
         monochromeMode: Bool,
+        isDarkMode: Bool,
         useSystemColor: Bool = false
     ) -> NSImage {
         let circleSize: CGFloat = 20
@@ -723,11 +730,12 @@ final class MenuBarIconRenderer {
 
         let circleCenter = NSPoint(x: totalWidth / 2, y: totalHeight - circleSize / 2)
 
-        // Colors
-        let textColor: NSColor = .white
-        let sessionColor: NSColor = getColor(for: sessionStatus, monochromeMode: monochromeMode, useSystemColor: useSystemColor)
-        let weekColor: NSColor = getColor(for: weekStatus, monochromeMode: monochromeMode, useSystemColor: useSystemColor)
-        let backgroundColor: NSColor = NSColor.white.withAlphaComponent(0.15)
+        // Use isDarkMode to determine correct foreground color for menu bar
+        let foregroundColor = menuBarForegroundColor(isDarkMode: isDarkMode)
+        let textColor: NSColor = foregroundColor
+        let sessionColor: NSColor = getColor(for: sessionStatus, monochromeMode: monochromeMode, useSystemColor: useSystemColor, isDarkMode: isDarkMode)
+        let weekColor: NSColor = getColor(for: weekStatus, monochromeMode: monochromeMode, useSystemColor: useSystemColor, isDarkMode: isDarkMode)
+        let backgroundColor: NSColor = foregroundColor.withAlphaComponent(0.15)
 
         // Outer ring (Session) - Session is primary/more important
         let outerRadius: CGFloat = (circleSize - 4) / 2
@@ -822,6 +830,7 @@ final class MenuBarIconRenderer {
         weekStatus: UsageStatusLevel,
         profileName: String?,
         monochromeMode: Bool,
+        isDarkMode: Bool,
         useSystemColor: Bool = false
     ) -> NSImage {
         let barWidth: CGFloat = 24
@@ -838,9 +847,11 @@ final class MenuBarIconRenderer {
         image.lockFocus()
         defer { image.unlockFocus() }
 
-        let sessionColor: NSColor = getColor(for: sessionStatus, monochromeMode: monochromeMode, useSystemColor: useSystemColor)
-        let weekColor: NSColor = getColor(for: weekStatus, monochromeMode: monochromeMode, useSystemColor: useSystemColor)
-        let backgroundColor: NSColor = NSColor.white.withAlphaComponent(0.2)
+        // Use isDarkMode to determine correct foreground color for menu bar
+        let foregroundColor = menuBarForegroundColor(isDarkMode: isDarkMode)
+        let sessionColor: NSColor = getColor(for: sessionStatus, monochromeMode: monochromeMode, useSystemColor: useSystemColor, isDarkMode: isDarkMode)
+        let weekColor: NSColor = getColor(for: weekStatus, monochromeMode: monochromeMode, useSystemColor: useSystemColor, isDarkMode: isDarkMode)
+        let backgroundColor: NSColor = foregroundColor.withAlphaComponent(0.2)
 
         var currentY = totalHeight
 
@@ -873,7 +884,7 @@ final class MenuBarIconRenderer {
             let label = String(name.prefix(3))
             let labelAttributes: [NSAttributedString.Key: Any] = [
                 .font: NSFont.systemFont(ofSize: 8, weight: .medium),
-                .foregroundColor: NSColor.white.withAlphaComponent(0.85)
+                .foregroundColor: foregroundColor.withAlphaComponent(0.85)
             ]
             let labelString = label as NSString
             let labelSize = labelString.size(withAttributes: labelAttributes)
@@ -892,6 +903,7 @@ final class MenuBarIconRenderer {
         status: UsageStatusLevel,
         profileInitial: String?,
         monochromeMode: Bool,
+        isDarkMode: Bool,
         useSystemColor: Bool = false
     ) -> NSImage {
         let dotSize: CGFloat = 10
@@ -906,7 +918,9 @@ final class MenuBarIconRenderer {
         image.lockFocus()
         defer { image.unlockFocus() }
 
-        let dotColor: NSColor = getColor(for: status, monochromeMode: monochromeMode, useSystemColor: useSystemColor)
+        // Use isDarkMode to determine correct foreground color for menu bar
+        let foregroundColor = menuBarForegroundColor(isDarkMode: isDarkMode)
+        let dotColor: NSColor = getColor(for: status, monochromeMode: monochromeMode, useSystemColor: useSystemColor, isDarkMode: isDarkMode)
 
         // Draw dot
         let dotRect = NSRect(
@@ -922,7 +936,7 @@ final class MenuBarIconRenderer {
         if let initial = profileInitial {
             let labelAttributes: [NSAttributedString.Key: Any] = [
                 .font: NSFont.systemFont(ofSize: 8, weight: .bold),
-                .foregroundColor: NSColor.white.withAlphaComponent(0.85)
+                .foregroundColor: foregroundColor.withAlphaComponent(0.85)
             ]
             let labelString = initial.uppercased() as NSString
             let labelSize = labelString.size(withAttributes: labelAttributes)
@@ -960,7 +974,8 @@ final class MenuBarIconRenderer {
         image.lockFocus()
         defer { image.unlockFocus() }
 
-        let color: NSColor = isDarkMode ? .white : .black
+        // Use isDarkMode to determine correct foreground color for menu bar
+        let color: NSColor = menuBarForegroundColor(isDarkMode: isDarkMode)
 
         // Draw a simple circle
         let circlePath = NSBezierPath(ovalIn: NSRect(x: 2, y: 2, width: size - 4, height: size - 4))
@@ -978,6 +993,12 @@ final class MenuBarIconRenderer {
 
     // MARK: - Helper Methods
 
+    /// Returns the appropriate foreground color for menu bar icons based on appearance
+    /// This is needed because NSColor.labelColor doesn't resolve correctly in image drawing contexts
+    private func menuBarForegroundColor(isDarkMode: Bool) -> NSColor {
+        return isDarkMode ? .white : .black
+    }
+
     private func getColorForStatusLevel(_ level: UsageStatusLevel) -> NSColor {
         switch level {
         case .safe:
@@ -992,13 +1013,13 @@ final class MenuBarIconRenderer {
     /// Returns the appropriate color based on mode settings
     /// - Parameters:
     ///   - status: The usage status level
-    ///   - monochromeMode: If true, return white (for menu bar icons)
-    ///   - useSystemColor: If true, return white (same as monochrome for consistency)
+    ///   - monochromeMode: If true, return foreground color based on isDarkMode
+    ///   - useSystemColor: If true, return foreground color (same as monochrome)
+    ///   - isDarkMode: Whether the menu bar is in dark mode
     /// - Returns: The color to use for rendering
-    private func getColor(for status: UsageStatusLevel, monochromeMode: Bool, useSystemColor: Bool) -> NSColor {
+    private func getColor(for status: UsageStatusLevel, monochromeMode: Bool, useSystemColor: Bool, isDarkMode: Bool) -> NSColor {
         if monochromeMode || useSystemColor {
-            // White works best on the dark menu bar
-            return .white
+            return menuBarForegroundColor(isDarkMode: isDarkMode)
         } else {
             return getColorForStatusLevel(status)
         }
