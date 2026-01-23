@@ -181,15 +181,100 @@ struct MetricIconConfig: Codable, Equatable {
     }
 }
 
+/// Icon style for multi-profile display
+enum MultiProfileIconStyle: String, Codable, CaseIterable {
+    case concentric   // Concentric circles (session inner, week outer)
+    case progressBar  // Horizontal progress bars stacked
+    case compact      // Minimal dot indicators
+
+    var displayName: String {
+        switch self {
+        case .concentric:
+            return "Concentric Circles"
+        case .progressBar:
+            return "Progress Bars"
+        case .compact:
+            return "Compact Dots"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .concentric:
+            return "Session inside, week outside ring"
+        case .progressBar:
+            return "Horizontal bars stacked vertically"
+        case .compact:
+            return "Minimal colored dots"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .concentric:
+            return "circle.circle"
+        case .progressBar:
+            return "chart.bar.fill"
+        case .compact:
+            return "circle.fill"
+        }
+    }
+}
+
+/// Configuration for multi-profile display mode
+struct MultiProfileDisplayConfig: Codable, Equatable {
+    var iconStyle: MultiProfileIconStyle
+    var showWeek: Bool        // If false, only show session
+    var showProfileLabel: Bool // Show profile name below icon
+    var useSystemColor: Bool  // If true, use system accent color instead of status colors
+
+    init(
+        iconStyle: MultiProfileIconStyle = .concentric,
+        showWeek: Bool = true,
+        showProfileLabel: Bool = true,
+        useSystemColor: Bool = false
+    ) {
+        self.iconStyle = iconStyle
+        self.showWeek = showWeek
+        self.showProfileLabel = showProfileLabel
+        self.useSystemColor = useSystemColor
+    }
+
+    // MARK: - Codable (Custom decoder for backwards compatibility)
+
+    enum CodingKeys: String, CodingKey {
+        case iconStyle
+        case showWeek
+        case showProfileLabel
+        case useSystemColor
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        iconStyle = try container.decode(MultiProfileIconStyle.self, forKey: .iconStyle)
+        showWeek = try container.decode(Bool.self, forKey: .showWeek)
+        showProfileLabel = try container.decode(Bool.self, forKey: .showProfileLabel)
+        // New property - provide default value if missing (backwards compatibility)
+        useSystemColor = try container.decodeIfPresent(Bool.self, forKey: .useSystemColor) ?? false
+    }
+
+    static var `default`: MultiProfileDisplayConfig {
+        MultiProfileDisplayConfig()
+    }
+}
+
 /// Global menu bar icon configuration
 struct MenuBarIconConfiguration: Codable, Equatable {
     var monochromeMode: Bool
     var showIconNames: Bool
+    var showRemainingPercentage: Bool
     var metrics: [MetricIconConfig]
 
     init(
         monochromeMode: Bool = false,
         showIconNames: Bool = true,
+        showRemainingPercentage: Bool = false,
         metrics: [MetricIconConfig] = [
             .sessionDefault,
             .weekDefault,
@@ -198,7 +283,29 @@ struct MenuBarIconConfiguration: Codable, Equatable {
     ) {
         self.monochromeMode = monochromeMode
         self.showIconNames = showIconNames
+        self.showRemainingPercentage = showRemainingPercentage
         self.metrics = metrics
+    }
+
+    // MARK: - Codable (Custom decoder for backwards compatibility)
+
+    enum CodingKeys: String, CodingKey {
+        case monochromeMode
+        case showIconNames
+        case showRemainingPercentage
+        case metrics
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        monochromeMode = try container.decode(Bool.self, forKey: .monochromeMode)
+        showIconNames = try container.decode(Bool.self, forKey: .showIconNames)
+
+        // New property - provide default value if missing (backwards compatibility)
+        showRemainingPercentage = try container.decodeIfPresent(Bool.self, forKey: .showRemainingPercentage) ?? false
+
+        metrics = try container.decode([MetricIconConfig].self, forKey: .metrics)
     }
 
     /// Get enabled metrics sorted by order

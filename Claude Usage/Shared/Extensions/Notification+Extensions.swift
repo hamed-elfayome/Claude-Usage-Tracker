@@ -16,4 +16,7 @@ extension Notification.Name {
 
     /// Posted when the setup wizard should be shown manually (for testing)
     static let showSetupWizard = Notification.Name("showSetupWizard")
+
+    /// Posted when the display mode changes (single/multi profile)
+    static let displayModeChanged = Notification.Name("displayModeChanged")
 }

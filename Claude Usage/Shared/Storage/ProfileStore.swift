@@ -18,6 +18,7 @@ class ProfileStore {
         static let profiles = "profiles_v3"
         static let activeProfileId = "activeProfileId"
         static let displayMode = "profileDisplayMode"
+        static let multiProfileConfig = "multiProfileDisplayConfig"
     }
 
     init() {
@@ -84,6 +85,29 @@ class ProfileStore {
             return .single
         }
         return mode
+    }
+
+    // MARK: - Multi-Profile Display Config
+
+    func saveMultiProfileConfig(_ config: MultiProfileDisplayConfig) {
+        do {
+            let data = try JSONEncoder().encode(config)
+            defaults.set(data, forKey: Keys.multiProfileConfig)
+        } catch {
+            LoggingService.shared.logStorageError("saveMultiProfileConfig", error: error)
+        }
+    }
+
+    func loadMultiProfileConfig() -> MultiProfileDisplayConfig {
+        guard let data = defaults.data(forKey: Keys.multiProfileConfig) else {
+            return .default
+        }
+        do {
+            return try JSONDecoder().decode(MultiProfileDisplayConfig.self, from: data)
+        } catch {
+            LoggingService.shared.logStorageError("loadMultiProfileConfig", error: error)
+            return .default
+        }
     }
 
     // MARK: - Credential Helpers

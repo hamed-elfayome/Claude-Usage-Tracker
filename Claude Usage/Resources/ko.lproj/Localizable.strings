@@ -119,6 +119,25 @@
 "profiles.name_hint" = "비워두면 재미있는 무작위 이름이 생성됩니다!";
 
 /* ==================== */
+/* MARK: - Multi-Profile Display */
+/* ==================== */
+"multiprofile.title" = "다중 프로필 표시";
+"multiprofile.subtitle" = "메뉴 바에 여러 프로필 표시";
+"multiprofile.enable_title" = "여러 프로필 표시";
+"multiprofile.enable_description" = "선택한 프로필을 나란히 작은 아이콘으로 표시";
+"multiprofile.select_profiles" = "표시할 프로필 선택:";
+"multiprofile.info" = "각 프로필은 세션(내부 링)과 주간(외부 링)을 프로필 이름과 함께 표시";
+"multiprofile.active_badge" = "활성";
+"multiprofile.at_least_one" = "최소한 하나의 프로필이 선택되어야 합니다";
+"multiprofile.icon_style" = "아이콘 스타일";
+"multiprofile.show_week" = "주간 사용량 표시";
+"multiprofile.show_week_description" = "세션 외에 주간 사용량 표시";
+"multiprofile.show_label" = "프로필 이름 표시";
+"multiprofile.show_label_description" = "아이콘 아래에 프로필 이름 표시";
+"multiprofile.use_system_color" = "시스템 색상 사용";
+"multiprofile.use_system_color_description" = "상태 색상 대신 Mac의 강조 색상 사용";
+
+/* ==================== */
 /* MARK: - General Settings (Profile-Level) */
 /* ==================== */
 "general.title" = "일반";
@@ -154,10 +173,15 @@
 "appearance.global_subtitle" = "메뉴 바 아이콘 동작 사용자 지정";
 "appearance.menu_bar_metrics" = "메뉴 바 메트릭";
 "appearance.metrics_subtitle" = "메뉴 바에 표시할 메트릭 선택";
-"appearance.monochrome_title" = "단색 (적응형)";
-"appearance.monochrome_description" = "색상 코딩 제거 및 시스템 외형에 적응";
+"appearance.monochrome_title" = "단색";
+"appearance.monochrome_description" = "상태 색상(녹색/주황색/빨간색) 대신 적응형 색상 사용";
 "appearance.show_labels_title" = "아이콘 레이블 표시";
 "appearance.show_labels_description" = "각 메트릭에 접두사 레이블(S:, W:, API:) 표시";
+"appearance.show_remaining_title" = "남은 용량 퍼센트 표시";
+"appearance.show_remaining_description" = "사용된 퍼센트 대신 남은 용량 표시 (macOS 배터리처럼)";
+"appearance.multiprofile_locked_title" = "모양 설정 잠김";
+"appearance.multiprofile_locked_description" = "다중 프로필 표시가 활성화된 동안 이 설정은 비활성화됩니다. 다중 프로필 모드에서는 각 프로필이 자체 모양을 사용합니다.";
+"appearance.disable_multiprofile" = "다중 프로필 표시 끄기";
 "appearance.all_metrics_off_title" = "앱 로고 모드";
 "appearance.all_metrics_off_description" = "모든 메트릭이 꺼져 있습니다. 메뉴 바에 앱 로고가 표시됩니다. 클릭하여 프로필 및 설정에 액세스하세요.";
 "appearance.menu_bar_icons" = "메뉴 바 아이콘";

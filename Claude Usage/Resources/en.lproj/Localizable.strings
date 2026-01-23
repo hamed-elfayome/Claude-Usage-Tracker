@@ -418,10 +418,15 @@
 "appearance.subtitle" = "Customize your menu bar icons and metrics";
 "appearance.global_settings" = "Global Settings";
 "appearance.menu_bar_metrics" = "Menu Bar Metrics";
-"appearance.monochrome_title" = "Monochrome (Adaptive)";
-"appearance.monochrome_description" = "Remove color coding and adapt to system appearance";
+"appearance.monochrome_title" = "Monochrome";
+"appearance.monochrome_description" = "Use adaptive color instead of status colors (green/orange/red)";
 "appearance.show_labels_title" = "Show Icon Labels";
 "appearance.show_labels_description" = "Display prefix labels (S:, W:, API:) for each metric";
+"appearance.show_remaining_title" = "Show Remaining Percentage";
+"appearance.show_remaining_description" = "Display remaining capacity instead of used percentage (like macOS battery)";
+"appearance.multiprofile_locked_title" = "Appearance Settings Locked";
+"appearance.multiprofile_locked_description" = "These settings are disabled while Multi-Profile Display is active. Each profile uses its own appearance in multi-profile mode.";
+"appearance.disable_multiprofile" = "Turn Off Multi-Profile Display";
 
 /* ==================== */
 /* MARK: - Setup Wizard (Additional) */
@@ -470,6 +475,25 @@
 "profiles.name_label" = "Profile Name (optional)";
 "profiles.name_placeholder" = "Leave empty for random name";
 "profiles.name_hint" = "If left empty, a fun random name will be generated!";
+
+/* ==================== */
+/* MARK: - Multi-Profile Display */
+/* ==================== */
+"multiprofile.title" = "Multi-Profile Display";
+"multiprofile.subtitle" = "Show multiple profiles in the menu bar";
+"multiprofile.enable_title" = "Show Multiple Profiles";
+"multiprofile.enable_description" = "Display selected profiles as compact icons side-by-side";
+"multiprofile.select_profiles" = "Select profiles to show:";
+"multiprofile.info" = "Each profile shows usage with color indicating status (green/orange/red)";
+"multiprofile.active_badge" = "Active";
+"multiprofile.at_least_one" = "At least one profile must be selected";
+"multiprofile.icon_style" = "Icon Style";
+"multiprofile.show_week" = "Show Week Usage";
+"multiprofile.show_week_description" = "Display weekly usage in addition to session";
+"multiprofile.show_label" = "Show Profile Label";
+"multiprofile.show_label_description" = "Display profile name below the icon";
+"multiprofile.use_system_color" = "Monochrome";
+"multiprofile.use_system_color_description" = "Use white color instead of status colors (green/orange/red)";
 
 /* ==================== */
 /* MARK: - General Settings (Profile-Level) */

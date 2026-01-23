@@ -402,10 +402,15 @@
 "appearance.subtitle" = "Personalizza le icone e le metriche della barra dei menu";
 "appearance.global_settings" = "Impostazioni Globali";
 "appearance.menu_bar_metrics" = "Metriche Barra dei Menu";
-"appearance.monochrome_title" = "Monocromatico (Adattivo)";
-"appearance.monochrome_description" = "Rimuovi la codifica a colori e adatta all'aspetto del sistema";
+"appearance.monochrome_title" = "Monocromatico";
+"appearance.monochrome_description" = "Usa colore adattivo invece dei colori di stato (verde/arancione/rosso)";
 "appearance.show_labels_title" = "Mostra Etichette Icone";
 "appearance.show_labels_description" = "Visualizza etichette prefisso (S:, W:, API:) per ogni metrica";
+"appearance.show_remaining_title" = "Mostra Percentuale Rimanente";
+"appearance.show_remaining_description" = "Visualizza la capacità rimanente invece della percentuale utilizzata (come la batteria macOS)";
+"appearance.multiprofile_locked_title" = "Impostazioni Aspetto Bloccate";
+"appearance.multiprofile_locked_description" = "Queste impostazioni sono disabilitate mentre la Visualizzazione Multi-Profilo è attiva. Ogni profilo usa la propria apparenza in modalità multi-profilo.";
+"appearance.disable_multiprofile" = "Disattiva Visualizzazione Multi-Profilo";
 
 /* ==================== */
 /* MARK: - Setup Wizard (Additional) */
@@ -480,6 +485,25 @@
 "profiles.name_label" = "Nome Profilo (opzionale)";
 "profiles.name_placeholder" = "Lascia vuoto per nome casuale";
 "profiles.name_hint" = "Se lasciato vuoto, verrà generato un nome casuale divertente!";
+
+/* ==================== */
+/* MARK: - Multi-Profile Display */
+/* ==================== */
+"multiprofile.title" = "Visualizzazione Multi-Profilo";
+"multiprofile.subtitle" = "Mostra più profili nella barra dei menu";
+"multiprofile.enable_title" = "Mostra Più Profili";
+"multiprofile.enable_description" = "Mostra i profili selezionati come icone compatte affiancate";
+"multiprofile.select_profiles" = "Seleziona i profili da mostrare:";
+"multiprofile.info" = "Ogni profilo mostra sessione (anello interno) e settimana (anello esterno) con il nome del profilo";
+"multiprofile.active_badge" = "Attivo";
+"multiprofile.at_least_one" = "Almeno un profilo deve essere selezionato";
+"multiprofile.icon_style" = "Stile Icona";
+"multiprofile.show_week" = "Mostra Utilizzo Settimanale";
+"multiprofile.show_week_description" = "Mostra l'utilizzo settimanale oltre alla sessione";
+"multiprofile.show_label" = "Mostra Nome Profilo";
+"multiprofile.show_label_description" = "Mostra il nome del profilo sotto l'icona";
+"multiprofile.use_system_color" = "Usa Colore di Sistema";
+"multiprofile.use_system_color_description" = "Usa il colore accento del Mac invece dei colori di stato";
 
 /* ==================== */
 /* MARK: - General Settings (Profile-Level) */

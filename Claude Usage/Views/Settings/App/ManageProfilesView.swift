@@ -44,6 +44,155 @@ struct ManageProfilesView: View {
                     showingCreateProfile = true
                 }
 
+                // Multi-Profile Display Section
+                SettingsSectionCard(
+                    title: "multiprofile.title".localized,
+                    subtitle: "multiprofile.subtitle".localized
+                ) {
+                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.cardPadding) {
+                        // Main toggle
+                        SettingToggle(
+                            title: "multiprofile.enable_title".localized,
+                            description: "multiprofile.enable_description".localized,
+                            badge: .new,
+                            isOn: Binding(
+                                get: { profileManager.displayMode == .multi },
+                                set: { enabled in
+                                    profileManager.updateDisplayMode(enabled ? .multi : .single)
+                                    // Post notification for menu bar to update
+                                    NotificationCenter.default.post(name: .displayModeChanged, object: nil)
+                                }
+                            )
+                        )
+
+                        // Profile selection (visible when multi-profile is ON)
+                        if profileManager.displayMode == .multi {
+                            Divider()
+
+                            VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
+                                Text("multiprofile.select_profiles".localized)
+                                    .font(DesignTokens.Typography.caption)
+                                    .foregroundColor(.secondary)
+
+                                ForEach(profileManager.profiles) { profile in
+                                    ProfileSelectionRow(
+                                        profile: profile,
+                                        isSelected: profile.isSelectedForDisplay,
+                                        isActive: profileManager.activeProfile?.id == profile.id,
+                                        onToggle: {
+                                            // Ensure at least one profile stays selected
+                                            let selectedCount = profileManager.profiles.filter { $0.isSelectedForDisplay }.count
+                                            if profile.isSelectedForDisplay && selectedCount <= 1 {
+                                                // Can't deselect the last one
+                                                return
+                                            }
+                                            profileManager.toggleProfileSelection(profile.id)
+                                            // Post notification for menu bar to update
+                                            NotificationCenter.default.post(name: .displayModeChanged, object: nil)
+                                        }
+                                    )
+                                }
+
+                                // Warning if trying to deselect last profile
+                                if profileManager.profiles.filter({ $0.isSelectedForDisplay }).count == 1 {
+                                    HStack(alignment: .top, spacing: 6) {
+                                        Image(systemName: "exclamationmark.triangle.fill")
+                                            .font(.system(size: 10))
+                                            .foregroundColor(.orange)
+                                        Text("multiprofile.at_least_one".localized)
+                                            .font(.system(size: 10))
+                                            .foregroundColor(.secondary)
+                                    }
+                                    .padding(.top, 4)
+                                }
+                            }
+
+                            Divider()
+                                .padding(.vertical, DesignTokens.Spacing.small)
+
+                            // Icon Style Picker
+                            VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
+                                Text("multiprofile.icon_style".localized)
+                                    .font(DesignTokens.Typography.caption)
+                                    .foregroundColor(.secondary)
+
+                                Picker("", selection: Binding(
+                                    get: { profileManager.multiProfileConfig.iconStyle },
+                                    set: { newStyle in
+                                        var config = profileManager.multiProfileConfig
+                                        config.iconStyle = newStyle
+                                        profileManager.updateMultiProfileConfig(config)
+                                        NotificationCenter.default.post(name: .displayModeChanged, object: nil)
+                                    }
+                                )) {
+                                    ForEach(MultiProfileIconStyle.allCases, id: \.self) { style in
+                                        Text(style.displayName).tag(style)
+                                    }
+                                }
+                                .pickerStyle(.segmented)
+                                .labelsHidden()
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                            // Show Week Toggle
+                            SettingToggle(
+                                title: "multiprofile.show_week".localized,
+                                description: "multiprofile.show_week_description".localized,
+                                isOn: Binding(
+                                    get: { profileManager.multiProfileConfig.showWeek },
+                                    set: { showWeek in
+                                        var config = profileManager.multiProfileConfig
+                                        config.showWeek = showWeek
+                                        profileManager.updateMultiProfileConfig(config)
+                                        NotificationCenter.default.post(name: .displayModeChanged, object: nil)
+                                    }
+                                )
+                            )
+
+                            // Show Profile Label Toggle
+                            SettingToggle(
+                                title: "multiprofile.show_label".localized,
+                                description: "multiprofile.show_label_description".localized,
+                                isOn: Binding(
+                                    get: { profileManager.multiProfileConfig.showProfileLabel },
+                                    set: { showLabel in
+                                        var config = profileManager.multiProfileConfig
+                                        config.showProfileLabel = showLabel
+                                        profileManager.updateMultiProfileConfig(config)
+                                        NotificationCenter.default.post(name: .displayModeChanged, object: nil)
+                                    }
+                                )
+                            )
+
+                            // Use System Color Toggle
+                            SettingToggle(
+                                title: "multiprofile.use_system_color".localized,
+                                description: "multiprofile.use_system_color_description".localized,
+                                isOn: Binding(
+                                    get: { profileManager.multiProfileConfig.useSystemColor },
+                                    set: { useSystemColor in
+                                        var config = profileManager.multiProfileConfig
+                                        config.useSystemColor = useSystemColor
+                                        profileManager.updateMultiProfileConfig(config)
+                                        NotificationCenter.default.post(name: .displayModeChanged, object: nil)
+                                    }
+                                )
+                            )
+
+                            // Info message
+                            HStack(alignment: .top, spacing: 8) {
+                                Image(systemName: "info.circle.fill")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.blue)
+                                Text("multiprofile.info".localized)
+                                    .font(DesignTokens.Typography.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            .padding(.top, DesignTokens.Spacing.small)
+                        }
+                    }
+                }
+
                 // Info Card
                 SettingsContentCard {
                     VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {

@@ -32,12 +32,23 @@ struct ClaudeUsage: Codable, Equatable {
     var lastUpdated: Date
     var userTimezone: TimeZone
 
-    /// Returns the status color based on session percentage
+    /// Remaining percentage (100 - used percentage)
+    var remainingPercentage: Double {
+        max(0, 100 - sessionPercentage)
+    }
+
+    /// Returns the status level based on remaining percentage (like Mac battery indicator)
+    /// DEPRECATED: Use UsageStatusCalculator.calculateStatus() instead for display-aware logic
+    /// This property remains for backwards compatibility only
+    /// - > 20% remaining: safe (green)
+    /// - 10-20% remaining: moderate (orange)
+    /// - < 10% remaining: critical (red)
+    @available(*, deprecated, message: "Use UsageStatusCalculator.calculateStatus() with showRemaining parameter")
     var statusLevel: UsageStatusLevel {
-        switch sessionPercentage {
-        case 0..<50:
+        switch remainingPercentage {
+        case 20...:
             return .safe
-        case 50..<80:
+        case 10..<20:
             return .moderate
         default:
             return .critical
@@ -67,11 +78,13 @@ struct ClaudeUsage: Codable, Equatable {
             userTimezone: .current
         )
     }
+
 }
 
 /// Usage status level for color coding
+/// Thresholds depend on display mode (used vs remaining percentage)
 enum UsageStatusLevel {
-    case safe       // 0-50%: Green
-    case moderate   // 51-80%: Yellow
-    case critical   // 81-100%: Red
+    case safe       // Used mode: 0-50% used | Remaining mode: >20% remaining
+    case moderate   // Used mode: 50-80% used | Remaining mode: 10-20% remaining
+    case critical   // Used mode: 80-100% used | Remaining mode: <10% remaining
 }

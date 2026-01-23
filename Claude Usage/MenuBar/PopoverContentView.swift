@@ -11,11 +11,21 @@ struct PopoverContentView: View {
     @State private var showInsights = false
     @StateObject private var profileManager = ProfileManager.shared
 
+    // Computed properties for multi-profile mode support
+    private var displayUsage: ClaudeUsage {
+        // In multi-profile mode, use the clicked profile's usage
+        manager.clickedProfileUsage ?? manager.usage
+    }
+
+    private var displayAPIUsage: APIUsage? {
+        manager.clickedProfileAPIUsage ?? manager.apiUsage
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             // Smart Header with Status and Profile Switcher
             SmartHeader(
-                usage: manager.usage,
+                usage: displayUsage,
                 status: manager.status,
                 isRefreshing: isRefreshing,
                 onRefresh: {
@@ -29,15 +39,16 @@ struct PopoverContentView: View {
                         }
                     }
                 },
-                onManageProfiles: onPreferences
+                onManageProfiles: onPreferences,
+                clickedProfileId: manager.clickedProfileId
             )
 
             // Intelligent Usage Dashboard
-            SmartUsageDashboard(usage: manager.usage, apiUsage: manager.apiUsage)
+            SmartUsageDashboard(usage: displayUsage, apiUsage: displayAPIUsage)
 
             // Contextual Insights
             if showInsights {
-                ContextualInsights(usage: manager.usage)
+                ContextualInsights(usage: displayUsage)
                     .transition(.asymmetric(
                         insertion: .move(edge: .top).combined(with: .opacity),
                         removal: .move(edge: .top).combined(with: .opacity)
@@ -46,7 +57,7 @@ struct PopoverContentView: View {
 
             // Smart Footer with Actions
             SmartFooter(
-                usage: manager.usage,
+                usage: displayUsage,
                 status: manager.status,
                 showInsights: $showInsights,
                 onPreferences: onPreferences,
@@ -54,12 +65,7 @@ struct PopoverContentView: View {
             )
         }
         .frame(width: 280)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(nsColor: .windowBackgroundColor))
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-        )
-        .shadow(color: .black.opacity(0.15), radius: 25, x: 0, y: 10)
+        .background(.regularMaterial)
     }
 }
 
@@ -348,6 +354,7 @@ struct SmartHeader: View {
     let isRefreshing: Bool
     let onRefresh: () -> Void
     let onManageProfiles: () -> Void
+    var clickedProfileId: UUID? = nil  // Profile ID that was clicked in multi-profile mode
 
     @StateObject private var profileManager = ProfileManager.shared
 
@@ -361,17 +368,57 @@ struct SmartHeader: View {
         }
     }
 
+    /// Check if we're in multi-profile mode
+    private var isMultiProfileMode: Bool {
+        profileManager.displayMode == .multi
+    }
+
+    /// Get the clicked profile (for multi-profile mode)
+    private var clickedProfile: Profile? {
+        guard let id = clickedProfileId else { return nil }
+        return profileManager.profiles.first { $0.id == id }
+    }
+
+    /// Get initials from profile name
+    private func profileInitials(for name: String) -> String {
+        let words = name.split(separator: " ")
+        if words.count >= 2 {
+            return String(words[0].prefix(1) + words[1].prefix(1)).uppercased()
+        } else if let first = words.first {
+            return String(first.prefix(2)).uppercased()
+        }
+        return "?"
+    }
+
     var body: some View {
         HStack(spacing: 12) {
-            // App Logo
+            // App Logo or Profile Initial
             HStack(spacing: 8) {
-                Image("HeaderLogo")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 24, height: 24)
+                if isMultiProfileMode, let profile = clickedProfile {
+                    // Show profile initial in multi-profile mode - clean, minimal style
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(Color(nsColor: .controlBackgroundColor))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .strokeBorder(Color.secondary.opacity(0.2), lineWidth: 1)
+                            )
+                            .frame(width: 24, height: 24)
+
+                        Text(profileInitials(for: profile.name))
+                            .font(.system(size: 10, weight: .semibold, design: .rounded))
+                            .foregroundColor(.secondary)
+                    }
+                } else {
+                    // Show app logo in single-profile mode
+                    Image("HeaderLogo")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 24, height: 24)
+                }
 
                 VStack(alignment: .leading, spacing: 4) {
-                    // Profile Switcher replacing title
+                    // Profile Switcher (always shown)
                     ProfileSwitcherCompact(onManageProfiles: onManageProfiles)
 
                     // Claude Status Badge
@@ -430,7 +477,6 @@ struct SmartHeader: View {
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(nsColor: .controlBackgroundColor).opacity(0.4))
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
         )
     }
 }
@@ -440,6 +486,11 @@ struct SmartUsageDashboard: View {
     let usage: ClaudeUsage
     let apiUsage: APIUsage?
     @StateObject private var profileManager = ProfileManager.shared
+
+    // Get the display mode from active profile's icon config
+    private var showRemainingPercentage: Bool {
+        profileManager.activeProfile?.iconConfig.showRemainingPercentage ?? false
+    }
 
     // Check if API tracking is enabled globally
     private var isAPITrackingEnabled: Bool {
@@ -452,7 +503,8 @@ struct SmartUsageDashboard: View {
             SmartUsageCard(
                 title: "menubar.session_usage".localized,
                 subtitle: "menubar.5_hour_window".localized,
-                percentage: usage.sessionPercentage,
+                usedPercentage: usage.sessionPercentage,
+                showRemaining: showRemainingPercentage,
                 resetTime: usage.sessionResetTime,
                 isPrimary: true
             )
@@ -462,7 +514,8 @@ struct SmartUsageDashboard: View {
                 SmartUsageCard(
                     title: "menubar.all_models".localized,
                     subtitle: "menubar.weekly".localized,
-                    percentage: usage.weeklyPercentage,
+                    usedPercentage: usage.weeklyPercentage,
+                    showRemaining: showRemainingPercentage,
                     resetTime: usage.weeklyResetTime,
                     isPrimary: false
                 )
@@ -471,7 +524,8 @@ struct SmartUsageDashboard: View {
                     SmartUsageCard(
                         title: "menubar.opus_usage".localized,
                         subtitle: "menubar.weekly".localized,
-                        percentage: usage.opusWeeklyPercentage,
+                        usedPercentage: usage.opusWeeklyPercentage,
+                        showRemaining: showRemainingPercentage,
                         resetTime: nil,
                         isPrimary: false
                     )
@@ -481,7 +535,8 @@ struct SmartUsageDashboard: View {
                     SmartUsageCard(
                         title: "menubar.sonnet_usage".localized,
                         subtitle: "menubar.weekly".localized,
-                        percentage: usage.sonnetWeeklyPercentage,
+                        usedPercentage: usage.sonnetWeeklyPercentage,
+                        showRemaining: showRemainingPercentage,
                         resetTime: usage.sonnetWeeklyResetTime,
                         isPrimary: false
                     )
@@ -489,11 +544,12 @@ struct SmartUsageDashboard: View {
             }
 
             if let used = usage.costUsed, let limit = usage.costLimit, let currency = usage.costCurrency, limit > 0 {
-                let percentage = (used / limit) * 100.0
+                let usedPercentage = (used / limit) * 100.0
                 SmartUsageCard(
                     title: "menubar.extra_usage".localized,
                     subtitle: String(format: "%.2f / %.2f %@", used / 100.0, limit / 100.0, currency),
-                    percentage: percentage,
+                    usedPercentage: usedPercentage,
+                    showRemaining: showRemainingPercentage,
                     resetTime: nil,
                     isPrimary: false
                 )
@@ -504,7 +560,7 @@ struct SmartUsageDashboard: View {
                let apiUsage = apiUsage,
                let profile = profileManager.activeProfile,
                profile.hasAPIConsole {
-                APIUsageCard(apiUsage: apiUsage)
+                APIUsageCard(apiUsage: apiUsage, showRemaining: showRemainingPercentage)
             }
         }
         .padding(.horizontal, 16)
@@ -516,23 +572,41 @@ struct SmartUsageDashboard: View {
 struct SmartUsageCard: View {
     let title: String
     let subtitle: String
-    let percentage: Double
+    let usedPercentage: Double
+    let showRemaining: Bool
     let resetTime: Date?
     let isPrimary: Bool
 
+    /// Display percentage based on mode
+    private var displayPercentage: Double {
+        UsageStatusCalculator.getDisplayPercentage(
+            usedPercentage: usedPercentage,
+            showRemaining: showRemaining
+        )
+    }
+
+    /// Status level based on display mode
+    private var statusLevel: UsageStatusLevel {
+        UsageStatusCalculator.calculateStatus(
+            usedPercentage: usedPercentage,
+            showRemaining: showRemaining
+        )
+    }
+
+    /// Color based on status level
     private var statusColor: Color {
-        switch percentage {
-        case 0..<50: return .green
-        case 50..<80: return .orange
-        default: return .red
+        switch statusLevel {
+        case .safe: return .green
+        case .moderate: return .orange
+        case .critical: return .red
         }
     }
 
     private var statusIcon: String {
-        switch percentage {
-        case 0..<50: return "checkmark.circle.fill"
-        case 50..<80: return "exclamationmark.triangle.fill"
-        default: return "xmark.circle.fill"
+        switch statusLevel {
+        case .safe: return "checkmark.circle.fill"
+        case .moderate: return "exclamationmark.triangle.fill"
+        case .critical: return "xmark.circle.fill"
         }
     }
 
@@ -558,7 +632,7 @@ struct SmartUsageCard: View {
                         .font(.system(size: isPrimary ? 12 : 10, weight: .medium))
                         .foregroundColor(statusColor)
 
-                    Text("\(Int(percentage))%")
+                    Text("\(Int(displayPercentage))%")
                         .font(.system(size: isPrimary ? 16 : 14, weight: .bold, design: .monospaced))
                         .foregroundColor(statusColor)
                 }
@@ -580,9 +654,9 @@ struct SmartUsageCard: View {
                                     endPoint: .trailing
                                 )
                             )
-                            .frame(width: geometry.size.width * min(percentage / 100.0, 1.0))
+                            .frame(width: geometry.size.width * min(displayPercentage / 100.0, 1.0))
                             .clipShape(RoundedRectangle(cornerRadius: 4))
-                            .animation(.easeInOut(duration: 0.8), value: percentage)
+                            .animation(.easeInOut(duration: 0.8), value: displayPercentage)
                     }
                 }
                 .frame(height: 8)
@@ -602,7 +676,6 @@ struct SmartUsageCard: View {
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(nsColor: .controlBackgroundColor).opacity(0.4))
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
         )
     }
 }
@@ -824,12 +897,30 @@ struct SmartActionButton: View {
 // MARK: - API Usage Card
 struct APIUsageCard: View {
     let apiUsage: APIUsage
+    let showRemaining: Bool
 
+    /// Display percentage based on mode
+    private var displayPercentage: Double {
+        UsageStatusCalculator.getDisplayPercentage(
+            usedPercentage: apiUsage.usagePercentage,
+            showRemaining: showRemaining
+        )
+    }
+
+    /// Status level based on display mode
+    private var statusLevel: UsageStatusLevel {
+        UsageStatusCalculator.calculateStatus(
+            usedPercentage: apiUsage.usagePercentage,
+            showRemaining: showRemaining
+        )
+    }
+
+    /// Color based on status level
     private var usageColor: Color {
-        switch apiUsage.usagePercentage {
-        case 0..<50: return .green
-        case 50..<80: return .orange
-        default: return .red
+        switch statusLevel {
+        case .safe: return .green
+        case .moderate: return .orange
+        case .critical: return .red
         }
     }
 
@@ -850,7 +941,7 @@ struct APIUsageCard: View {
                 Spacer()
 
                 // Percentage
-                Text("\(Int(apiUsage.usagePercentage))%")
+                Text("\(Int(displayPercentage))%")
                     .font(.system(size: 16, weight: .bold, design: .monospaced))
                     .foregroundColor(usageColor)
             }
@@ -865,7 +956,7 @@ struct APIUsageCard: View {
                 RoundedRectangle(cornerRadius: 4)
                     .fill(usageColor)
                     .frame(maxWidth: .infinity)
-                    .scaleEffect(x: apiUsage.usagePercentage / 100.0, y: 1.0, anchor: .leading)
+                    .scaleEffect(x: displayPercentage / 100.0, y: 1.0, anchor: .leading)
                     .clipShape(RoundedRectangle(cornerRadius: 4))
             }
             .frame(height: 8)

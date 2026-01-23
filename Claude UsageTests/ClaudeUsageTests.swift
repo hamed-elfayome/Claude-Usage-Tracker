@@ -3,38 +3,41 @@ import XCTest
 
 final class ClaudeUsageTests: XCTestCase {
 
-    // MARK: - Status Level Tests
+    // MARK: - Status Level Tests (Deprecated Property - uses remaining-based thresholds)
 
     func testStatusLevelSafe() {
-        let usage = createUsage(sessionPercentage: 0)
+        // statusLevel uses remaining-based thresholds: safe when remaining >= 20%
+        let usage = createUsage(sessionPercentage: 0)  // 100% remaining
         XCTAssertEqual(usage.statusLevel, .safe)
 
-        let usage25 = createUsage(sessionPercentage: 25)
-        XCTAssertEqual(usage25.statusLevel, .safe)
+        let usage25 = createUsage(sessionPercentage: 25)  // 75% remaining
+        XCTAssertEqual(usage.statusLevel, .safe)
 
-        let usage49 = createUsage(sessionPercentage: 49.9)
-        XCTAssertEqual(usage49.statusLevel, .safe)
+        let usage80 = createUsage(sessionPercentage: 80)  // 20% remaining (exact boundary)
+        XCTAssertEqual(usage.statusLevel, .safe)
     }
 
     func testStatusLevelModerate() {
-        let usage50 = createUsage(sessionPercentage: 50)
-        XCTAssertEqual(usage50.statusLevel, .moderate)
+        // statusLevel uses remaining-based thresholds: moderate when 10% <= remaining < 20%
+        let usage81 = createUsage(sessionPercentage: 81)  // 19% remaining
+        XCTAssertEqual(usage81.statusLevel, .moderate)
 
-        let usage65 = createUsage(sessionPercentage: 65)
-        XCTAssertEqual(usage65.statusLevel, .moderate)
+        let usage85 = createUsage(sessionPercentage: 85)  // 15% remaining
+        XCTAssertEqual(usage85.statusLevel, .moderate)
 
-        let usage79 = createUsage(sessionPercentage: 79.9)
-        XCTAssertEqual(usage79.statusLevel, .moderate)
+        let usage90 = createUsage(sessionPercentage: 90)  // 10% remaining (exact boundary)
+        XCTAssertEqual(usage90.statusLevel, .moderate)
     }
 
     func testStatusLevelCritical() {
-        let usage80 = createUsage(sessionPercentage: 80)
-        XCTAssertEqual(usage80.statusLevel, .critical)
+        // statusLevel uses remaining-based thresholds: critical when remaining < 10%
+        let usage91 = createUsage(sessionPercentage: 91)  // 9% remaining
+        XCTAssertEqual(usage91.statusLevel, .critical)
 
-        let usage95 = createUsage(sessionPercentage: 95)
+        let usage95 = createUsage(sessionPercentage: 95)  // 5% remaining
         XCTAssertEqual(usage95.statusLevel, .critical)
 
-        let usage100 = createUsage(sessionPercentage: 100)
+        let usage100 = createUsage(sessionPercentage: 100)  // 0% remaining
         XCTAssertEqual(usage100.statusLevel, .critical)
     }
 

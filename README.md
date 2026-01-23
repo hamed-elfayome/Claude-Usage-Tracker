@@ -9,12 +9,12 @@
   ![Swift](https://img.shields.io/badge/Swift-5.0+-orange?style=flat-square&logo=swift)
   ![SwiftUI](https://img.shields.io/badge/SwiftUI-5.0+-blue?style=flat-square&logo=swift)
   ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
-  ![Version](https://img.shields.io/badge/version-2.2.3-blue?style=flat-square)
+  ![Version](https://img.shields.io/badge/version-2.3.0-blue?style=flat-square)
   ![Languages](https://img.shields.io/badge/languages-8-purple?style=flat-square)
 
   <sub>🇬🇧 English • 🇪🇸 Español • 🇫🇷 Français • 🇩🇪 Deutsch • 🇮🇹 Italiano • 🇵🇹 Português • 🇯🇵 日本語 • 🇰🇷 한국어</sub>
 
-  ### [Download Latest Release (v2.2.3)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
+  ### [Download Latest Release (v2.3.0)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
 
   <sub>macOS 14.0+ (Sonoma) | ~4 MB | Native Swift/SwiftUI | Officially Signed</sub>
 
@@ -30,9 +30,10 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 ### Key Capabilities
 
 - **Multi-Profile Support**: Manage unlimited Claude accounts with isolated credentials and settings
+- **Multi-Profile Display**: Monitor all profiles simultaneously in the menu bar (NEW in v2.3.0)
 - **Claude Code Integration**: Sync CLI accounts and auto-switch credentials when changing profiles
 - **Real-Time Monitoring**: Track session, weekly, and API console usage per profile
-- **Customizable Interface**: 5 icon styles + monochrome mode, per-profile configuration
+- **Customizable Interface**: 5 icon styles + monochrome mode + remaining/used percentage toggle
 - **Smart Automation**: Auto-start sessions (per-profile background service), threshold notifications
 - **Developer Tools**: Terminal statusline integration with automatic profile updates
 - **Privacy-First**: Local storage, no telemetry, no cloud sync
@@ -53,9 +54,13 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 
 ## What's New
 
-- **v2.2.3 - Improved Setup Wizard (2026-01-18)**:
-  - **Smart wizard banners**: Shows Claude Code info when Claude Code exist, migration option for previous versions
+- **v2.3.0 - Multi-Profile Menu Bar Display (2026-01-23)**:
+  - **Multi-profile menu bar display**: Monitor all your Claude accounts simultaneously in the menu bar
+  - **Remaining vs. used percentage**: Choose to display remaining budget instead of used percentage
+  - **Unified usage calculations**: Centralized logic with intelligent color adaptation
+  - **Enhanced icon rendering**: Per-profile icons with independent styling and settings
 
+- **v2.2.3** – Improved setup wizard with smart banners
 - **v2.2.2** – CLI OAuth authentication fallback, simplified auto-start
 - **v2.2.0** – Multi-profile management, CLI integration, Korean language
 - **v2.1.2** – Statusline improvements, organization ID optimization
@@ -226,10 +231,17 @@ After creating the file, launch the app and it will automatically detect the ses
 
 **New in v2.2.0**: Claude Usage Tracker now supports unlimited profiles, allowing you to manage multiple Claude accounts seamlessly with automatic credential switching.
 
+**New in v2.3.0**: Multi-profile menu bar display lets you monitor all your profiles simultaneously!
+
 ### Features
 
 #### Profile Management
 - **Unlimited Profiles**: Create as many profiles as needed for different Claude accounts
+- **Multi-Profile Display**: Show all profiles in the menu bar at once (v2.3.0)
+  - Toggle between Single mode (active profile only) and Multi mode (all profiles)
+  - Each profile displays with its own icon style and settings
+  - Click any profile icon to view its usage details
+  - Independent refresh rates per profile
 - **Fun Auto-Names**: Profiles auto-generate with names like "Quantum Llama", "Sneaky Penguin", "Turbo Sloth"
 - **Custom Names**: Rename profiles to whatever you prefer
 - **Quick Switching**: Switch profiles instantly via popover dropdown or settings sidebar
@@ -394,6 +406,10 @@ Customize menu bar icon per profile:
   - Icon with Bar (Claude icon + progress)
   - Compact (space-efficient)
 - **Monochrome Mode**: Toggle black & white icon style
+- **Percentage Display Mode** (NEW in v2.3.0): Toggle between used/remaining percentage
+  - Show "75% used" or "25% remaining" - your choice
+  - Color coding automatically adapts (green for high remaining, red for low)
+  - Helps focus on budget left rather than budget spent
 - **Live Preview**: See changes in real-time before applying
 
 #### General (Profile Settings)
@@ -411,6 +427,9 @@ Create and manage multiple profiles:
 - **Rename Profiles**: Customize profile names
 - **Delete Profiles**: Remove unused profiles (minimum 1 required)
 - **Profile List**: View all profiles with credential status indicators
+- **Display Mode Toggle** (NEW in v2.3.0): Switch between Single and Multi mode
+  - Single Mode: Show only the active profile in menu bar
+  - Multi Mode: Show all profiles simultaneously in menu bar
 
 #### Language
 Application language preferences:
