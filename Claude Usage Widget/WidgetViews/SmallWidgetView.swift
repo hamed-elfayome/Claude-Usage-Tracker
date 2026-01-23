@@ -15,7 +15,7 @@ struct SmallWidgetView: View {
         if let usage = entry.usage {
             let metricData = getMetricData(for: entry.smallMetric, usage: usage)
 
-            VStack(spacing: 10) {
+            VStack(spacing: 14) {
                 // Circular progress indicator - sized for ~170x170 widget
                 ZStack {
                     Circle()
