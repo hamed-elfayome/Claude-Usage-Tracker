@@ -47,6 +47,8 @@ final class StatusBarUIManager {
                 button.target = target
                 // Set a temporary placeholder - will be updated with actual logo
                 button.title = ""
+            } else {
+                LoggingService.shared.logWarning("Status bar button is nil - screens: \(NSScreen.screens.count)")
             }
 
             // Use a special key to identify the default icon
@@ -60,6 +62,8 @@ final class StatusBarUIManager {
                 if let button = statusItem.button {
                     button.action = action
                     button.target = target
+                } else {
+                    LoggingService.shared.logWarning("Status bar button is nil for \(metricConfig.metricType.displayName) - screens: \(NSScreen.screens.count)")
                 }
 
                 statusItems[metricConfig.metricType] = statusItem
@@ -175,6 +179,8 @@ final class StatusBarUIManager {
                 button.action = action
                 button.target = target
                 button.title = ""
+            } else {
+                LoggingService.shared.logWarning("Multi-profile status bar button is nil - screens: \(NSScreen.screens.count)")
             }
             // Use a placeholder UUID for default logo
             multiProfileStatusItems[UUID()] = statusItem
@@ -187,6 +193,8 @@ final class StatusBarUIManager {
                 if let button = statusItem.button {
                     button.action = action
                     button.target = target
+                } else {
+                    LoggingService.shared.logWarning("Multi-profile status bar button is nil for \(profile.name) - screens: \(NSScreen.screens.count)")
                 }
 
                 multiProfileStatusItems[profile.id] = statusItem
@@ -300,6 +308,23 @@ final class StatusBarUIManager {
     /// Checks if currently in multi-profile mode
     var isInMultiProfileMode: Bool {
         return isMultiProfileMode
+    }
+
+    /// Checks if status bar has at least one valid button (for headless mode detection)
+    var hasValidStatusBar: Bool {
+        // Check single-profile status items
+        for (_, statusItem) in statusItems {
+            if statusItem.button != nil {
+                return true
+            }
+        }
+        // Check multi-profile status items
+        for (_, statusItem) in multiProfileStatusItems {
+            if statusItem.button != nil {
+                return true
+            }
+        }
+        return false
     }
 
     /// Get button for a specific profile (multi-profile mode)

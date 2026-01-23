@@ -68,6 +68,9 @@ class MenuBarManager: NSObject, ObservableObject {
     // Observer for display mode changes (single/multi profile)
     private var displayModeObserver: NSObjectProtocol?
 
+    // Observer for screen/display changes (headless mode support)
+    private var screenObserver: NSObjectProtocol?
+
     // MARK: - Image Caching (CPU Optimization)
     private var cachedImage: NSImage?
     private var cachedImageKey: String = ""
@@ -183,6 +186,9 @@ class MenuBarManager: NSObject, ObservableObject {
 
         // Observe display mode changes (single/multi profile)
         observeDisplayModeChanges()
+
+        // Setup headless mode observer if enabled (for Remote Desktop support)
+        setupHeadlessModeObserver()
     }
 
     func cleanup() {
@@ -210,6 +216,10 @@ class MenuBarManager: NSObject, ObservableObject {
         if let displayModeObserver = displayModeObserver {
             NotificationCenter.default.removeObserver(displayModeObserver)
             self.displayModeObserver = nil
+        }
+        if let screenObserver = screenObserver {
+            NotificationCenter.default.removeObserver(screenObserver)
+            self.screenObserver = nil
         }
         if let monitor = eventMonitor {
             NSEvent.removeMonitor(monitor)
@@ -686,6 +696,39 @@ class MenuBarManager: NSObject, ObservableObject {
             // Switch back to single profile mode
             setupSingleProfileMode()
         }
+    }
+
+    // MARK: - Headless Mode (Remote Desktop Support)
+
+    private func setupHeadlessModeObserver() {
+        // Always observe screen changes to support headless Mac setups (Remote Desktop)
+        LoggingService.shared.log("MenuBarManager: Setting up screen change observer for headless support")
+
+        screenObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.handleScreenChange()
+        }
+    }
+
+    private func handleScreenChange() {
+        // Only proceed if we have screens now
+        guard !NSScreen.screens.isEmpty else { return }
+
+        // Check if status bar needs retry (button is nil means it failed on headless startup)
+        guard let uiManager = statusBarUIManager else { return }
+
+        if !uiManager.hasValidStatusBar {
+            LoggingService.shared.log("MenuBarManager: Headless mode - display connected, retrying status bar setup (screens: \(NSScreen.screens.count))")
+            setup()
+        }
+    }
+
+    /// Returns whether the status bar has at least one valid button
+    func hasValidStatusBar() -> Bool {
+        return statusBarUIManager?.hasValidStatusBar ?? false
     }
 
     private func setupMultiProfileMode() {

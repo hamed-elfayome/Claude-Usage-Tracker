@@ -140,6 +140,7 @@ struct GeneralSettingsView: View {
                             }
                         }
                     }
+
                 }
 
                 Spacer()
