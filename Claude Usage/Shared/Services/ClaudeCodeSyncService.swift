@@ -18,12 +18,15 @@ class ClaudeCodeSyncService {
 
     /// Reads Claude Code credentials from system Keychain using security command
     func readSystemCredentials() throws -> String? {
+        let username = NSUserName()
+        LoggingService.shared.log("ClaudeCodeSync: Reading credentials for user '\(username)'...")
+
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/security")
         process.arguments = [
             "find-generic-password",
             "-s", "Claude Code-credentials",
-            "-a", NSUserName(),
+            "-a", username,
             "-w"  // Print password only
         ]
 
@@ -36,20 +39,24 @@ class ClaudeCodeSyncService {
         process.waitUntilExit()
 
         let exitCode = process.terminationStatus
+        LoggingService.shared.log("ClaudeCodeSync: security command exit code = \(exitCode)")
 
         if exitCode == 0 {
             let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
             guard let value = String(data: outputData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) else {
+                LoggingService.shared.log("ClaudeCodeSync: Failed to decode output as UTF-8")
                 throw ClaudeCodeError.invalidJSON
             }
+            LoggingService.shared.log("ClaudeCodeSync: Successfully read credentials (\(value.count) chars)")
             return value
         } else if exitCode == 44 {
             // Exit code 44 = item not found
+            LoggingService.shared.log("ClaudeCodeSync: No keychain item found (exit 44)")
             return nil
         } else {
             let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
             let errorString = String(data: errorData, encoding: .utf8) ?? "Unknown error"
-            LoggingService.shared.log("Failed to read keychain: \(errorString)")
+            LoggingService.shared.log("ClaudeCodeSync: Failed to read keychain (exit \(exitCode)): \(errorString)")
             throw ClaudeCodeError.keychainReadFailed(status: OSStatus(exitCode))
         }
     }

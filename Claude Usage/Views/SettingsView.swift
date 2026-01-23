@@ -316,17 +316,18 @@ struct ProfileCredentialCardsRow: View {
     @Binding var selectedSection: SettingsSection
     @StateObject private var profileManager = ProfileManager.shared
     @State private var credentials: ProfileCredentials?
+    @State private var hasCLICredentials = false
 
     var body: some View {
         VStack(spacing: 4) {
-            // Claude.ai Card
+            // Claude.ai Card - connected if has session key OR CLI credentials
             Button {
                 selectedSection = .claudeAI
             } label: {
                 CredentialMiniCard(
                     icon: "key.fill",
                     title: "Claude.ai",
-                    isConnected: credentials?.hasClaudeAI ?? false,
+                    isConnected: (credentials?.hasClaudeAI ?? false) || hasCLICredentials,
                     isSelected: selectedSection == .claudeAI
                 )
             }
@@ -360,15 +361,41 @@ struct ProfileCredentialCardsRow: View {
         }
         .onAppear {
             loadCredentials()
+            checkCLICredentials()
         }
         .onChange(of: profileManager.activeProfile?.id) { _, _ in
             loadCredentials()
+            checkCLICredentials()
         }
     }
 
     private func loadCredentials() {
         guard let profile = profileManager.activeProfile else { return }
         credentials = try? ProfileStore.shared.loadProfileCredentials(profile.id)
+    }
+
+    private func checkCLICredentials() {
+        Task {
+            do {
+                // Check profile CLI credentials or system CLI credentials
+                if let profile = profileManager.activeProfile,
+                   let cliJson = profile.cliCredentialsJSON,
+                   !ClaudeCodeSyncService.shared.isTokenExpired(cliJson) {
+                    await MainActor.run { hasCLICredentials = true }
+                    return
+                }
+
+                if let creds = try ClaudeCodeSyncService.shared.readSystemCredentials(),
+                   !ClaudeCodeSyncService.shared.isTokenExpired(creds) {
+                    await MainActor.run { hasCLICredentials = true }
+                    return
+                }
+
+                await MainActor.run { hasCLICredentials = false }
+            } catch {
+                await MainActor.run { hasCLICredentials = false }
+            }
+        }
     }
 }
 
