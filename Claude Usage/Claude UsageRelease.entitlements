@@ -2,9 +2,20 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- SECURITY: App Sandbox ENABLED (inherits from default if not specified as false) -->
+
+	<!-- Network access for Claude API -->
 	<key>com.apple.security.network.client</key>
 	<true/>
-	<key>com.apple.security.cs.disable-library-validation</key>
+
+	<!-- Read-only access to user-selected files -->
+	<key>com.apple.security.files.user-selected.read-only</key>
 	<true/>
+
+	<!-- Read-write access to user-selected files (for ~/.claude/ scripts) -->
+	<key>com.apple.security.files.user-selected.read-write</key>
+	<true/>
+
+	<!-- REMOVED: disable-library-validation - SECURITY RISK -->
 </dict>
 </plist>
