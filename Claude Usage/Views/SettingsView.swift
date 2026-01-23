@@ -41,6 +41,8 @@ struct SettingsView: View {
                     AppearanceSettingsView()
                 case .general:
                     GeneralSettingsView()
+                case .budget:
+                    BudgetSettingsView()
 
                 // Shared Settings
                 case .manageProfiles:
@@ -49,8 +51,6 @@ struct SettingsView: View {
                     LanguageSettingsView()
                 case .claudeCode:
                     ClaudeCodeView()
-                case .updates:
-                    UpdatesSettingsView()
                 case .about:
                     AboutView()
                 }
@@ -200,12 +200,12 @@ enum SettingsSection: String, CaseIterable {
     // Profile Settings
     case appearance
     case general
+    case budget
 
     // Shared Settings
     case manageProfiles
     case language
     case claudeCode
-    case updates
     case about
 
     var title: String {
@@ -215,10 +215,10 @@ enum SettingsSection: String, CaseIterable {
         case .cliAccount: return "section.cli_account_title".localized
         case .appearance: return "section.appearance_title".localized
         case .general: return "section.general_title".localized
+        case .budget: return "budget.title".localized
         case .manageProfiles: return "section.manage_profiles_title".localized
         case .language: return "language.title".localized
         case .claudeCode: return "settings.claude_cli".localized
-        case .updates: return "settings.updates".localized
         case .about: return "settings.about".localized
         }
     }
@@ -230,10 +230,10 @@ enum SettingsSection: String, CaseIterable {
         case .cliAccount: return "terminal.fill"
         case .appearance: return "paintbrush.fill"
         case .general: return "gearshape.fill"
+        case .budget: return "chart.bar.fill"
         case .manageProfiles: return "person.2.fill"
         case .language: return "globe"
         case .claudeCode: return "chevron.left.forwardslash.chevron.right"
-        case .updates: return "arrow.down.circle.fill"
         case .about: return "info.circle.fill"
         }
     }
@@ -245,10 +245,10 @@ enum SettingsSection: String, CaseIterable {
         case .cliAccount: return "section.cli_account_desc".localized
         case .appearance: return "section.appearance_desc".localized
         case .general: return "section.general_desc".localized
+        case .budget: return "budget.subtitle".localized
         case .manageProfiles: return "section.manage_profiles_desc".localized
         case .language: return "language.subtitle".localized
         case .claudeCode: return "settings.claude_cli.description".localized
-        case .updates: return "settings.updates.description".localized
         case .about: return "settings.about.description".localized
         }
     }
@@ -264,7 +264,7 @@ enum SettingsSection: String, CaseIterable {
 
     var isProfileSetting: Bool {
         switch self {
-        case .appearance, .general:
+        case .appearance, .general, .budget:
             return true
         default:
             return false

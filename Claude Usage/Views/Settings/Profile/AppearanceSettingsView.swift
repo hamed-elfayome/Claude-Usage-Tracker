@@ -154,6 +154,20 @@ struct AppearanceSettingsView: View {
                                 onConfigChanged: { saveConfiguration() }
                             )
                         }
+
+                        // Claude Code Cost
+                        if let claudeCodeIndex = configuration.metrics.firstIndex(where: { $0.metricType == .claudeCode }) {
+                            MetricIconCard(
+                                metricType: .claudeCode,
+                                config: Binding(
+                                    get: { configuration.metrics[claudeCodeIndex] },
+                                    set: { newValue in
+                                        configuration.metrics[claudeCodeIndex] = newValue
+                                    }
+                                ),
+                                onConfigChanged: { saveConfiguration() }
+                            )
+                        }
                     }
                 }
                 .disabled(isMultiProfileMode)

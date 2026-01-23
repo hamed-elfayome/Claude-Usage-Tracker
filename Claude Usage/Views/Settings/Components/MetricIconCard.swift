@@ -45,8 +45,8 @@ struct MetricIconCard: View {
             }
 
             if config.isEnabled {
-                // Icon style selector (only for Session and Week, not API)
-                if metricType != .api {
+                // Icon style selector (only for Session and Week, not API or Claude Code)
+                if metricType != .api && metricType != .claudeCode {
                     Divider()
                         .padding(.vertical, Spacing.xs)
 
@@ -81,6 +81,11 @@ struct MetricIconCard: View {
                         .padding(.vertical, Spacing.xs)
 
                     APIDisplayOptions(config: $config, onConfigChanged: onConfigChanged)
+                } else if metricType == .claudeCode {
+                    Divider()
+                        .padding(.vertical, Spacing.xs)
+
+                    ClaudeCodeDisplayOptions(config: $config, onConfigChanged: onConfigChanged)
                 }
             }
         }
@@ -195,6 +200,40 @@ private struct APIDisplayOptions: View {
     }
 }
 
+// MARK: - Claude Code Display Options
+
+private struct ClaudeCodeDisplayOptions: View {
+    @Binding var config: MetricIconConfig
+    let onConfigChanged: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            Text("ui.display_mode".localized)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(.secondary)
+
+            Picker("", selection: Binding(
+                get: { config.claudeCodeDisplayMode },
+                set: { newValue in
+                    config.claudeCodeDisplayMode = newValue
+                    onConfigChanged()
+                }
+            )) {
+                ForEach(ClaudeCodeDisplayMode.allCases, id: \.self) { mode in
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(mode.displayName)
+                        Text(mode.description)
+                            .font(.system(size: 10))
+                            .foregroundColor(.secondary)
+                    }
+                    .tag(mode)
+                }
+            }
+            .pickerStyle(.radioGroup)
+        }
+    }
+}
+
 // MARK: - Previews
 
 #Preview("Session Card - Enabled") {
@@ -227,6 +266,22 @@ private struct APIDisplayOptions: View {
     MetricIconCard(
         metricType: .api,
         config: .constant(.apiDefault),
+        onConfigChanged: {}
+    )
+    .frame(width: 500)
+    .padding()
+}
+
+#Preview("Claude Code Card - Enabled") {
+    MetricIconCard(
+        metricType: .claudeCode,
+        config: .constant(MetricIconConfig(
+            metricType: .claudeCode,
+            isEnabled: true,
+            iconStyle: .percentageOnly,
+            order: 3,
+            claudeCodeDisplayMode: .totalCost
+        )),
         onConfigChanged: {}
     )
     .frame(width: 500)

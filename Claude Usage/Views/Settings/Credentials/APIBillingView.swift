@@ -22,11 +22,13 @@ enum APIWizardStep: Int, Comparable {
 struct APIWizardState {
     var currentStep: APIWizardStep = .enterKey
     var apiSessionKey: String = ""
+    var userEmail: String = ""  // Email to identify user in Claude Code metrics
     var validationState: ValidationState = .idle
     var testedOrganizations: [APIOrganization] = []
     var selectedOrgId: String? = nil
     var originalApiSessionKey: String? = nil
     var originalOrgId: String? = nil
+    var originalUserEmail: String? = nil
 }
 
 /// API Console billing and credits tracking
@@ -200,6 +202,10 @@ struct APIBillingView: View {
             wizardState.originalOrgId = creds.apiOrganizationId
             wizardState.originalApiSessionKey = creds.apiSessionKey
         }
+
+        // Load user email from profile
+        wizardState.originalUserEmail = profile.claudeCodeUserEmail
+        wizardState.userEmail = profile.claudeCodeUserEmail ?? ""
     }
 
     private func loadCurrentCredentials() {
@@ -251,7 +257,7 @@ struct APIEnterKeyStep: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Professional input field
+            // Session Key input field
             VStack(alignment: .leading, spacing: 8) {
                 Text("api.label_api_session_key".localized)
                     .font(.system(size: 12, weight: .medium))
@@ -269,6 +275,28 @@ struct APIEnterKeyStep: View {
                     )
 
                 Text("api.help_api_session_key".localized)
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+            }
+
+            // User Email field (for Claude Code team metrics)
+            VStack(alignment: .leading, spacing: 8) {
+                Text("api.label_user_email".localized)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.secondary)
+
+                TextField("api.placeholder_user_email".localized, text: $wizardState.userEmail)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 12))
+                    .padding(10)
+                    .background(Color(nsColor: .textBackgroundColor))
+                    .cornerRadius(6)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .strokeBorder(Color.secondary.opacity(0.2), lineWidth: 1)
+                    )
+
+                Text("api.help_user_email".localized)
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
             }
@@ -622,6 +650,8 @@ struct APIConfirmStep: View {
                 if var profile = ProfileManager.shared.activeProfile {
                     profile.apiSessionKey = wizardState.apiSessionKey
                     profile.apiOrganizationId = wizardState.selectedOrgId
+                    // Save user email for Claude Code metrics identification
+                    profile.claudeCodeUserEmail = wizardState.userEmail.isEmpty ? nil : wizardState.userEmail
                     ProfileManager.shared.updateProfile(profile)
                     LoggingService.shared.log("APIBillingView: Updated profile model with new credentials")
                 }
@@ -633,7 +663,8 @@ struct APIConfirmStep: View {
                     // Determine which notification to send
                     let keyChanged = apiKeyHasChanged()
                     let orgChanged = wizardState.selectedOrgId != wizardState.originalOrgId
-                    if keyChanged || orgChanged {
+                    let emailChanged = wizardState.userEmail != (wizardState.originalUserEmail ?? "")
+                    if keyChanged || orgChanged || emailChanged {
                         // Post notification to trigger refresh only if credentials actually changed
                         NotificationCenter.default.post(name: .credentialsChanged, object: nil)
                     }
