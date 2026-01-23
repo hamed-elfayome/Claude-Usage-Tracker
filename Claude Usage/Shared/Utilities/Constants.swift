@@ -18,12 +18,6 @@ enum Constants {
         static let statuslineShowUsage = "statuslineShowUsage"
         static let statuslineShowProgressBar = "statuslineShowProgressBar"
 
-        // GitHub star prompt tracking
-        static let firstLaunchDate = "firstLaunchDate"
-        static let lastGitHubStarPromptDate = "lastGitHubStarPromptDate"
-        static let hasStarredGitHub = "hasStarredGitHub"
-        static let neverShowGitHubPrompt = "neverShowGitHubPrompt"
-
         // API usage tracking
         static let apiUsageData = "apiUsageData"
         static let apiTrackingEnabled = "apiTrackingEnabled"
@@ -100,19 +94,11 @@ enum Constants {
         static let critical: Double = 95.0
     }
 
-    // GitHub repository
-    static let githubRepoURL = "https://github.com/hamed-elfayome/Claude-Usage-Tracker"
-
-    // GitHub star prompt timing (in seconds)
-    enum GitHubPromptTiming {
-        static let initialDelay: TimeInterval = 24 * 60 * 60  // 1 day
-        static let reminderInterval: TimeInterval = 10 * 24 * 60 * 60  // 10 days (between 7-14 days)
-    }
-
     // API Endpoints
     enum APIEndpoints {
         static let claudeBase = "https://claude.ai/api"
         static let consoleBase = "https://console.anthropic.com/api"
+        static let platformBase = "https://platform.claude.com/api"
     }
 
     // UI Timing

@@ -12,6 +12,7 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
     case session
     case week
     case api
+    case claudeCode  // Claude Code team cost from platform.claude.com
 
     var id: String { rawValue }
 
@@ -23,6 +24,8 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
             return "Week Usage"
         case .api:
             return "API Credits"
+        case .claudeCode:
+            return "Claude Code Cost"
         }
     }
 
@@ -34,6 +37,8 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
             return "W:"
         case .api:
             return "API:"
+        case .claudeCode:
+            return "CC:"
         }
     }
 
@@ -45,6 +50,8 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
             return "Weekly token usage (all models)"
         case .api:
             return "API Console billing credits"
+        case .claudeCode:
+            return "Claude Code monthly team cost"
         }
     }
 
@@ -56,6 +63,8 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
             return "calendar.badge.clock"
         case .api:
             return "dollarsign.circle.fill"
+        case .claudeCode:
+            return "terminal.fill"
         }
     }
 }
@@ -113,6 +122,35 @@ enum WeekDisplayMode: String, Codable, CaseIterable {
     }
 }
 
+/// Display mode for Claude Code cost
+enum ClaudeCodeDisplayMode: String, Codable, CaseIterable {
+    case totalCost      // Show total cost (e.g., "$534")
+    case avgPerDay      // Show average per day (e.g., "~$23/day")
+    case both           // Show both (e.g., "$534 (~$23/day)")
+
+    var displayName: String {
+        switch self {
+        case .totalCost:
+            return "Total Cost"
+        case .avgPerDay:
+            return "Average Per Day"
+        case .both:
+            return "Both"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .totalCost:
+            return "Show total cost for the period"
+        case .avgPerDay:
+            return "Show average daily cost"
+        case .both:
+            return "Show both total and daily average"
+        }
+    }
+}
+
 /// Configuration for a single metric icon
 struct MetricIconConfig: Codable, Equatable {
     var metricType: MenuBarMetricType
@@ -129,6 +167,9 @@ struct MetricIconConfig: Codable, Equatable {
     /// Session-specific configuration
     var showNextSessionTime: Bool
 
+    /// Claude Code-specific configuration
+    var claudeCodeDisplayMode: ClaudeCodeDisplayMode
+
     init(
         metricType: MenuBarMetricType,
         isEnabled: Bool = false,
@@ -136,7 +177,8 @@ struct MetricIconConfig: Codable, Equatable {
         order: Int = 0,
         weekDisplayMode: WeekDisplayMode = .percentage,
         apiDisplayMode: APIDisplayMode = .remaining,
-        showNextSessionTime: Bool = false
+        showNextSessionTime: Bool = false,
+        claudeCodeDisplayMode: ClaudeCodeDisplayMode = .totalCost
     ) {
         self.metricType = metricType
         self.isEnabled = isEnabled
@@ -145,6 +187,34 @@ struct MetricIconConfig: Codable, Equatable {
         self.weekDisplayMode = weekDisplayMode
         self.apiDisplayMode = apiDisplayMode
         self.showNextSessionTime = showNextSessionTime
+        self.claudeCodeDisplayMode = claudeCodeDisplayMode
+    }
+
+    // MARK: - Codable (Custom decoder for backwards compatibility)
+
+    enum CodingKeys: String, CodingKey {
+        case metricType
+        case isEnabled
+        case iconStyle
+        case order
+        case weekDisplayMode
+        case apiDisplayMode
+        case showNextSessionTime
+        case claudeCodeDisplayMode
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        metricType = try container.decode(MenuBarMetricType.self, forKey: .metricType)
+        isEnabled = try container.decode(Bool.self, forKey: .isEnabled)
+        iconStyle = try container.decode(MenuBarIconStyle.self, forKey: .iconStyle)
+        order = try container.decode(Int.self, forKey: .order)
+        weekDisplayMode = try container.decode(WeekDisplayMode.self, forKey: .weekDisplayMode)
+        apiDisplayMode = try container.decode(APIDisplayMode.self, forKey: .apiDisplayMode)
+        showNextSessionTime = try container.decode(Bool.self, forKey: .showNextSessionTime)
+        // New property - provide default value if missing (backwards compatibility)
+        claudeCodeDisplayMode = try container.decodeIfPresent(ClaudeCodeDisplayMode.self, forKey: .claudeCodeDisplayMode) ?? .totalCost
     }
 
     /// Default config for session (enabled by default)
@@ -177,6 +247,17 @@ struct MetricIconConfig: Codable, Equatable {
             iconStyle: .battery,
             order: 2,
             apiDisplayMode: .remaining
+        )
+    }
+
+    /// Default config for Claude Code (disabled by default)
+    static var claudeCodeDefault: MetricIconConfig {
+        MetricIconConfig(
+            metricType: .claudeCode,
+            isEnabled: false,
+            iconStyle: .percentageOnly,  // Text-based is best for cost display
+            order: 3,
+            claudeCodeDisplayMode: .totalCost
         )
     }
 }
@@ -278,7 +359,8 @@ struct MenuBarIconConfiguration: Codable, Equatable {
         metrics: [MetricIconConfig] = [
             .sessionDefault,
             .weekDefault,
-            .apiDefault
+            .apiDefault,
+            .claudeCodeDefault
         ]
     ) {
         self.monochromeMode = monochromeMode
@@ -305,7 +387,14 @@ struct MenuBarIconConfiguration: Codable, Equatable {
         // New property - provide default value if missing (backwards compatibility)
         showRemainingPercentage = try container.decodeIfPresent(Bool.self, forKey: .showRemainingPercentage) ?? false
 
-        metrics = try container.decode([MetricIconConfig].self, forKey: .metrics)
+        var loadedMetrics = try container.decode([MetricIconConfig].self, forKey: .metrics)
+
+        // Add Claude Code metric if missing (backwards compatibility)
+        if !loadedMetrics.contains(where: { $0.metricType == .claudeCode }) {
+            loadedMetrics.append(.claudeCodeDefault)
+        }
+
+        metrics = loadedMetrics
     }
 
     /// Get enabled metrics sorted by order

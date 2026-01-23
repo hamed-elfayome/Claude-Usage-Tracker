@@ -16,8 +16,15 @@ struct Profile: Codable, Identifiable, Equatable {
     // MARK: - Credentials (stored directly in profile)
     var claudeSessionKey: String?
     var organizationId: String?
+
+    // Platform API credentials (platform.claude.com - for Claude Code team metrics)
     var apiSessionKey: String?
     var apiOrganizationId: String?
+
+    // Console API credentials (console.anthropic.com - for billing/credits tracking)
+    var consoleSessionKey: String?
+    var consoleOrganizationId: String?
+
     var cliCredentialsJSON: String?
 
     // MARK: - CLI Account Sync Metadata
@@ -27,6 +34,17 @@ struct Profile: Codable, Identifiable, Equatable {
     // MARK: - Usage Data (Per-Profile)
     var claudeUsage: ClaudeUsage?
     var apiUsage: APIUsage?
+    var claudeCodeMetrics: ClaudeCodeMetrics?
+
+    // MARK: - Claude Code Team Settings
+    var claudeCodeUserEmail: String?  // Email to identify user in team metrics
+    var claudeCodeWorkspaceId: String?  // Workspace ID for usage_cost API
+    var claudeCodeApiKeyId: String?  // API key ID to filter personal data
+
+    // MARK: - Budget Settings
+    var monthlyBudget: Double?  // Monthly spending budget in USD
+    var budgetAlertThresholds: [Double]  // Alert thresholds (e.g., [50, 75, 90])
+    var budgetAlertsEnabled: Bool  // Whether budget alerts are enabled
 
     // MARK: - Appearance Settings (Per-Profile)
     var iconConfig: MenuBarIconConfiguration
@@ -53,11 +71,20 @@ struct Profile: Codable, Identifiable, Equatable {
         organizationId: String? = nil,
         apiSessionKey: String? = nil,
         apiOrganizationId: String? = nil,
+        consoleSessionKey: String? = nil,
+        consoleOrganizationId: String? = nil,
         cliCredentialsJSON: String? = nil,
         hasCliAccount: Bool = false,
         cliAccountSyncedAt: Date? = nil,
         claudeUsage: ClaudeUsage? = nil,
         apiUsage: APIUsage? = nil,
+        claudeCodeMetrics: ClaudeCodeMetrics? = nil,
+        claudeCodeUserEmail: String? = nil,
+        claudeCodeWorkspaceId: String? = nil,
+        claudeCodeApiKeyId: String? = nil,
+        monthlyBudget: Double? = nil,
+        budgetAlertThresholds: [Double] = [50, 75, 90],
+        budgetAlertsEnabled: Bool = false,
         iconConfig: MenuBarIconConfiguration = .default,
         refreshInterval: TimeInterval = 30.0,
         autoStartSessionEnabled: Bool = false,
@@ -73,11 +100,20 @@ struct Profile: Codable, Identifiable, Equatable {
         self.organizationId = organizationId
         self.apiSessionKey = apiSessionKey
         self.apiOrganizationId = apiOrganizationId
+        self.consoleSessionKey = consoleSessionKey
+        self.consoleOrganizationId = consoleOrganizationId
         self.cliCredentialsJSON = cliCredentialsJSON
         self.hasCliAccount = hasCliAccount
         self.cliAccountSyncedAt = cliAccountSyncedAt
         self.claudeUsage = claudeUsage
         self.apiUsage = apiUsage
+        self.claudeCodeMetrics = claudeCodeMetrics
+        self.claudeCodeUserEmail = claudeCodeUserEmail
+        self.claudeCodeWorkspaceId = claudeCodeWorkspaceId
+        self.claudeCodeApiKeyId = claudeCodeApiKeyId
+        self.monthlyBudget = monthlyBudget
+        self.budgetAlertThresholds = budgetAlertThresholds
+        self.budgetAlertsEnabled = budgetAlertsEnabled
         self.iconConfig = iconConfig
         self.refreshInterval = refreshInterval
         self.autoStartSessionEnabled = autoStartSessionEnabled
@@ -93,13 +129,19 @@ struct Profile: Codable, Identifiable, Equatable {
         claudeSessionKey != nil && organizationId != nil
     }
 
+    /// True if profile has Platform API credentials (platform.claude.com - Claude Code metrics)
     var hasAPIConsole: Bool {
         apiSessionKey != nil && apiOrganizationId != nil
     }
 
+    /// True if profile has Console API credentials (console.anthropic.com - billing/credits)
+    var hasConsoleAPI: Bool {
+        consoleSessionKey != nil && consoleOrganizationId != nil
+    }
+
     /// True if profile has credentials that can fetch usage data (Claude.ai, CLI OAuth, or API Console)
     var hasUsageCredentials: Bool {
-        hasClaudeAI || hasAPIConsole || hasValidCLIOAuth || hasValidSystemCLIOAuth
+        hasClaudeAI || hasAPIConsole || hasConsoleAPI || hasValidCLIOAuth || hasValidSystemCLIOAuth
     }
 
     /// True if profile has CLI OAuth credentials that are not expired
@@ -120,7 +162,7 @@ struct Profile: Codable, Identifiable, Equatable {
     }
 
     var hasAnyCredentials: Bool {
-        hasClaudeAI || hasAPIConsole || cliCredentialsJSON != nil
+        hasClaudeAI || hasAPIConsole || hasConsoleAPI || cliCredentialsJSON != nil
     }
 }
 
@@ -131,14 +173,22 @@ struct ProfileCredentials {
     var organizationId: String?
     var apiSessionKey: String?
     var apiOrganizationId: String?
+    var consoleSessionKey: String?
+    var consoleOrganizationId: String?
     var cliCredentialsJSON: String?
 
     var hasClaudeAI: Bool {
         claudeSessionKey != nil && organizationId != nil
     }
 
+    /// Platform API (platform.claude.com - Claude Code metrics)
     var hasAPIConsole: Bool {
         apiSessionKey != nil && apiOrganizationId != nil
+    }
+
+    /// Console API (console.anthropic.com - billing/credits)
+    var hasConsoleAPI: Bool {
+        consoleSessionKey != nil && consoleOrganizationId != nil
     }
 
     var hasCLI: Bool {
