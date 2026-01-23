@@ -117,6 +117,7 @@ config_file="$HOME/.claude/statusline-config.txt"
 if [ -f "$config_file" ]; then
   source "$config_file"
   show_model=$SHOW_MODEL
+  show_context=$SHOW_CONTEXT
   show_dir=$SHOW_DIRECTORY
   show_branch=$SHOW_BRANCH
   show_usage=$SHOW_USAGE
@@ -124,6 +125,7 @@ if [ -f "$config_file" ]; then
   show_reset=$SHOW_RESET_TIME
 else
   show_model=1
+  show_context=0
   show_dir=1
   show_branch=1
   show_usage=1
@@ -135,6 +137,7 @@ input=$(cat)
 current_dir_path=$(echo "$input" | grep -o '"current_dir":"[^"]*"' | sed 's/"current_dir":"//;s/"$//')
 current_dir=$(basename "$current_dir_path")
 model=$(echo "$input" | grep -o '"display_name":"[^"]*"' | sed 's/"display_name":"//;s/"$//')
+context_pct=$(echo "$input" | grep -o '"used_percentage":[0-9.]*' | head -1 | sed 's/"used_percentage"://')
 BLUE=$'\\033[0;34m'
 GREEN=$'\\033[0;32m'
 GRAY=$'\\033[0;90m'
@@ -170,6 +173,38 @@ fi
 model_text=""
 if [ "$show_model" = "1" ] && [ -n "$model" ]; then
   model_text="${YELLOW}${model}${RESET}"
+fi
+
+context_text=""
+if [ "$show_context" = "1" ] && [ -n "$context_pct" ]; then
+  # Convert to integer for comparison (remove decimal)
+  context_int=${context_pct%.*}
+  [ -z "$context_int" ] && context_int=0
+
+  # Use same 10-level color gradient as usage
+  if [ "$context_int" -le 10 ]; then
+    context_color="$LEVEL_1"
+  elif [ "$context_int" -le 20 ]; then
+    context_color="$LEVEL_2"
+  elif [ "$context_int" -le 30 ]; then
+    context_color="$LEVEL_3"
+  elif [ "$context_int" -le 40 ]; then
+    context_color="$LEVEL_4"
+  elif [ "$context_int" -le 50 ]; then
+    context_color="$LEVEL_5"
+  elif [ "$context_int" -le 60 ]; then
+    context_color="$LEVEL_6"
+  elif [ "$context_int" -le 70 ]; then
+    context_color="$LEVEL_7"
+  elif [ "$context_int" -le 80 ]; then
+    context_color="$LEVEL_8"
+  elif [ "$context_int" -le 90 ]; then
+    context_color="$LEVEL_9"
+  else
+    context_color="$LEVEL_10"
+  fi
+
+  context_text="${context_color}Ctx: ${context_int}%${RESET}"
 fi
 
 usage_text=""
@@ -275,6 +310,12 @@ fi
 if [ -n "$branch_text" ]; then
   [ -n "$output" ] && output="${output}${separator}"
   output="${output}${branch_text}"
+fi
+
+# Then context (before usage)
+if [ -n "$context_text" ]; then
+  [ -n "$output" ] && output="${output}${separator}"
+  output="${output}${context_text}"
 fi
 
 # Finally usage
