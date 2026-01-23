@@ -20,7 +20,8 @@ final class MenuBarIconRenderer {
         usage: ClaudeUsage,
         apiUsage: APIUsage?,
         isDarkMode: Bool,
-        monochromeMode: Bool,
+        colorMode: MenuBarColorMode,
+        singleColorHex: String,
         showIconName: Bool,
         showNextSessionTime: Bool
     ) -> NSImage {
@@ -38,7 +39,8 @@ final class MenuBarIconRenderer {
             return createAPITextStyle(
                 metricData: metricData,
                 isDarkMode: isDarkMode,
-                monochromeMode: monochromeMode,
+                colorMode: colorMode,
+                singleColorHex: singleColorHex,
                 showIconName: showIconName
             )
         }
@@ -50,7 +52,8 @@ final class MenuBarIconRenderer {
                 metricType: metricType,
                 metricData: metricData,
                 isDarkMode: isDarkMode,
-                monochromeMode: monochromeMode,
+                colorMode: colorMode,
+                singleColorHex: singleColorHex,
                 showIconName: showIconName,
                 showNextSessionTime: showNextSessionTime,
                 usage: usage
@@ -60,7 +63,8 @@ final class MenuBarIconRenderer {
                 metricType: metricType,
                 metricData: metricData,
                 isDarkMode: isDarkMode,
-                monochromeMode: monochromeMode,
+                colorMode: colorMode,
+                singleColorHex: singleColorHex,
                 showIconName: showIconName,
                 showNextSessionTime: showNextSessionTime,
                 usage: usage
@@ -70,7 +74,8 @@ final class MenuBarIconRenderer {
                 metricType: metricType,
                 metricData: metricData,
                 isDarkMode: isDarkMode,
-                monochromeMode: monochromeMode,
+                colorMode: colorMode,
+                singleColorHex: singleColorHex,
                 showIconName: showIconName
             )
         case .icon:
@@ -78,7 +83,8 @@ final class MenuBarIconRenderer {
                 metricType: metricType,
                 metricData: metricData,
                 isDarkMode: isDarkMode,
-                monochromeMode: monochromeMode,
+                colorMode: colorMode,
+                singleColorHex: singleColorHex,
                 showIconName: showIconName
             )
         case .compact:
@@ -86,7 +92,8 @@ final class MenuBarIconRenderer {
                 metricType: metricType,
                 metricData: metricData,
                 isDarkMode: isDarkMode,
-                monochromeMode: monochromeMode,
+                colorMode: colorMode,
+                singleColorHex: singleColorHex,
                 showIconName: showIconName
             )
         }
@@ -198,7 +205,8 @@ final class MenuBarIconRenderer {
         metricType: MenuBarMetricType,
         metricData: MetricData,
         isDarkMode: Bool,
-        monochromeMode: Bool,
+        colorMode: MenuBarColorMode,
+        singleColorHex: String,
         showIconName: Bool,
         showNextSessionTime: Bool,
         usage: ClaudeUsage
@@ -220,7 +228,7 @@ final class MenuBarIconRenderer {
         let foregroundColor = menuBarForegroundColor(isDarkMode: isDarkMode)
         let outlineColor: NSColor = foregroundColor
         let textColor: NSColor = foregroundColor
-        let fillColor: NSColor = monochromeMode ? foregroundColor : getColorForStatusLevel(metricData.statusLevel)
+        let fillColor: NSColor = getColorForMode(colorMode, statusLevel: metricData.statusLevel, singleColorHex: singleColorHex, isDarkMode: isDarkMode)
 
         let xOffset: CGFloat = 0
 
@@ -292,7 +300,8 @@ final class MenuBarIconRenderer {
         metricType: MenuBarMetricType,
         metricData: MetricData,
         isDarkMode: Bool,
-        monochromeMode: Bool,
+        colorMode: MenuBarColorMode,
+        singleColorHex: String,
         showIconName: Bool,
         showNextSessionTime: Bool,
         usage: ClaudeUsage
@@ -312,7 +321,7 @@ final class MenuBarIconRenderer {
         // Use isDarkMode to determine correct foreground color for menu bar
         let foregroundColor = menuBarForegroundColor(isDarkMode: isDarkMode)
         let textColor: NSColor = foregroundColor
-        let fillColor: NSColor = monochromeMode ? foregroundColor : getColorForStatusLevel(metricData.statusLevel)
+        let fillColor: NSColor = getColorForMode(colorMode, statusLevel: metricData.statusLevel, singleColorHex: singleColorHex, isDarkMode: isDarkMode)
         let backgroundColor: NSColor = foregroundColor.withAlphaComponent(0.2)
 
         var xOffset: CGFloat = 1
@@ -383,14 +392,12 @@ final class MenuBarIconRenderer {
         metricType: MenuBarMetricType,
         metricData: MetricData,
         isDarkMode: Bool,
-        monochromeMode: Bool,
+        colorMode: MenuBarColorMode,
+        singleColorHex: String,
         showIconName: Bool
     ) -> NSImage {
         let font = NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .semibold)  // Larger font
-
-        // Use isDarkMode to determine correct foreground color for menu bar
-        let foregroundColor = menuBarForegroundColor(isDarkMode: isDarkMode)
-        let fillColor: NSColor = monochromeMode ? foregroundColor : getColorForStatusLevel(metricData.statusLevel)
+        let fillColor: NSColor = getColorForMode(colorMode, statusLevel: metricData.statusLevel, singleColorHex: singleColorHex, isDarkMode: isDarkMode)
 
         var fullText = ""
 
@@ -421,7 +428,8 @@ final class MenuBarIconRenderer {
         metricType: MenuBarMetricType,
         metricData: MetricData,
         isDarkMode: Bool,
-        monochromeMode: Bool,
+        colorMode: MenuBarColorMode,
+        singleColorHex: String,
         showIconName: Bool
     ) -> NSImage {
         // For circle: make it bigger to fit S/W in center
@@ -437,7 +445,7 @@ final class MenuBarIconRenderer {
         // Use isDarkMode to determine correct foreground color for menu bar
         let foregroundColor = menuBarForegroundColor(isDarkMode: isDarkMode)
         let textColor: NSColor = foregroundColor
-        let fillColor: NSColor = monochromeMode ? foregroundColor : getColorForStatusLevel(metricData.statusLevel)
+        let fillColor: NSColor = getColorForMode(colorMode, statusLevel: metricData.statusLevel, singleColorHex: singleColorHex, isDarkMode: isDarkMode)
 
         let xOffset: CGFloat = 1
 
@@ -499,7 +507,8 @@ final class MenuBarIconRenderer {
         metricType: MenuBarMetricType,
         metricData: MetricData,
         isDarkMode: Bool,
-        monochromeMode: Bool,
+        colorMode: MenuBarColorMode,
+        singleColorHex: String,
         showIconName: Bool
     ) -> NSImage {
         let prefixWidth: CGFloat = showIconName ? 16 : 0
@@ -516,7 +525,7 @@ final class MenuBarIconRenderer {
         // Use isDarkMode to determine correct foreground color for menu bar
         let foregroundColor = menuBarForegroundColor(isDarkMode: isDarkMode)
         let textColor: NSColor = foregroundColor
-        let fillColor: NSColor = monochromeMode ? foregroundColor : getColorForStatusLevel(metricData.statusLevel)
+        let fillColor: NSColor = getColorForMode(colorMode, statusLevel: metricData.statusLevel, singleColorHex: singleColorHex, isDarkMode: isDarkMode)
 
         var xOffset: CGFloat = 1
 
@@ -550,7 +559,8 @@ final class MenuBarIconRenderer {
     private func createAPITextStyle(
         metricData: MetricData,
         isDarkMode: Bool,
-        monochromeMode: Bool,
+        colorMode: MenuBarColorMode,
+        singleColorHex: String,
         showIconName: Bool
     ) -> NSImage {
         let font = NSFont.systemFont(ofSize: 11, weight: .medium)
@@ -1007,6 +1017,24 @@ final class MenuBarIconRenderer {
             return NSColor.systemOrange
         case .critical:
             return NSColor.systemRed
+        }
+    }
+
+    /// Returns the appropriate color based on the color mode setting
+    /// - Parameters:
+    ///   - colorMode: The color mode to use
+    ///   - statusLevel: The usage status level (for multi-color mode)
+    ///   - singleColorHex: The custom hex color (for single color mode)
+    ///   - isDarkMode: Whether the menu bar is in dark mode
+    /// - Returns: The color to use for rendering
+    private func getColorForMode(_ colorMode: MenuBarColorMode, statusLevel: UsageStatusLevel, singleColorHex: String, isDarkMode: Bool) -> NSColor {
+        switch colorMode {
+        case .multiColor:
+            return getColorForStatusLevel(statusLevel)
+        case .monochrome:
+            return menuBarForegroundColor(isDarkMode: isDarkMode)
+        case .singleColor:
+            return NSColor(hex: singleColorHex) ?? NSColor.systemBlue
         }
     }
 

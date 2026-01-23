@@ -116,15 +116,7 @@ struct ManageProfilesView: View {
                                     .font(DesignTokens.Typography.caption)
                                     .foregroundColor(.secondary)
 
-                                Picker("", selection: Binding(
-                                    get: { profileManager.multiProfileConfig.iconStyle },
-                                    set: { newStyle in
-                                        var config = profileManager.multiProfileConfig
-                                        config.iconStyle = newStyle
-                                        profileManager.updateMultiProfileConfig(config)
-                                        NotificationCenter.default.post(name: .displayModeChanged, object: nil)
-                                    }
-                                )) {
+                                Picker("", selection: iconStyleBinding) {
                                     ForEach(MultiProfileIconStyle.allCases, id: \.self) { style in
                                         Text(style.displayName).tag(style)
                                     }
@@ -138,45 +130,21 @@ struct ManageProfilesView: View {
                             SettingToggle(
                                 title: "multiprofile.show_week".localized,
                                 description: "multiprofile.show_week_description".localized,
-                                isOn: Binding(
-                                    get: { profileManager.multiProfileConfig.showWeek },
-                                    set: { showWeek in
-                                        var config = profileManager.multiProfileConfig
-                                        config.showWeek = showWeek
-                                        profileManager.updateMultiProfileConfig(config)
-                                        NotificationCenter.default.post(name: .displayModeChanged, object: nil)
-                                    }
-                                )
+                                isOn: showWeekBinding
                             )
 
                             // Show Profile Label Toggle
                             SettingToggle(
                                 title: "multiprofile.show_label".localized,
                                 description: "multiprofile.show_label_description".localized,
-                                isOn: Binding(
-                                    get: { profileManager.multiProfileConfig.showProfileLabel },
-                                    set: { showLabel in
-                                        var config = profileManager.multiProfileConfig
-                                        config.showProfileLabel = showLabel
-                                        profileManager.updateMultiProfileConfig(config)
-                                        NotificationCenter.default.post(name: .displayModeChanged, object: nil)
-                                    }
-                                )
+                                isOn: showProfileLabelBinding
                             )
 
                             // Use System Color Toggle
                             SettingToggle(
                                 title: "multiprofile.use_system_color".localized,
                                 description: "multiprofile.use_system_color_description".localized,
-                                isOn: Binding(
-                                    get: { profileManager.multiProfileConfig.useSystemColor },
-                                    set: { useSystemColor in
-                                        var config = profileManager.multiProfileConfig
-                                        config.useSystemColor = useSystemColor
-                                        profileManager.updateMultiProfileConfig(config)
-                                        NotificationCenter.default.post(name: .displayModeChanged, object: nil)
-                                    }
-                                )
+                                isOn: useSystemColorBinding
                             )
 
                             // Info message
@@ -242,6 +210,56 @@ struct ManageProfilesView: View {
                 }
             )
         }
+    }
+
+    // MARK: - Multi-Profile Config Bindings
+
+    private var iconStyleBinding: Binding<MultiProfileIconStyle> {
+        Binding(
+            get: { self.profileManager.multiProfileConfig.iconStyle },
+            set: { newStyle in
+                var config = self.profileManager.multiProfileConfig
+                config.iconStyle = newStyle
+                self.profileManager.updateMultiProfileConfig(config)
+                NotificationCenter.default.post(name: .displayModeChanged, object: nil)
+            }
+        )
+    }
+
+    private var showWeekBinding: Binding<Bool> {
+        Binding(
+            get: { self.profileManager.multiProfileConfig.showWeek },
+            set: { showWeek in
+                var config = self.profileManager.multiProfileConfig
+                config.showWeek = showWeek
+                self.profileManager.updateMultiProfileConfig(config)
+                NotificationCenter.default.post(name: .displayModeChanged, object: nil)
+            }
+        )
+    }
+
+    private var showProfileLabelBinding: Binding<Bool> {
+        Binding(
+            get: { self.profileManager.multiProfileConfig.showProfileLabel },
+            set: { showLabel in
+                var config = self.profileManager.multiProfileConfig
+                config.showProfileLabel = showLabel
+                self.profileManager.updateMultiProfileConfig(config)
+                NotificationCenter.default.post(name: .displayModeChanged, object: nil)
+            }
+        )
+    }
+
+    private var useSystemColorBinding: Binding<Bool> {
+        Binding(
+            get: { self.profileManager.multiProfileConfig.useSystemColor },
+            set: { useSystemColor in
+                var config = self.profileManager.multiProfileConfig
+                config.useSystemColor = useSystemColor
+                self.profileManager.updateMultiProfileConfig(config)
+                NotificationCenter.default.post(name: .displayModeChanged, object: nil)
+            }
+        )
     }
 
     private func createNewProfile() {

@@ -370,6 +370,9 @@ struct ProfileCredentialCardsRow: View {
         .onChange(of: profileManager.activeProfile?.id) { _, _ in
             loadCredentials()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .credentialsChanged)) { _ in
+            loadCredentials()
+        }
     }
 
     private func loadCredentials() {

@@ -187,6 +187,8 @@ class SharedDataStore {
     func saveSmallWidgetMetric(_ metric: SmallWidgetMetric) {
         defaults.set(metric.rawValue, forKey: Keys.smallWidgetMetric)
         defaults.synchronize()  // Force sync before widget reads
+        // Also write to file for reliable cross-process sync
+        saveWidgetSettingsToFile()
     }
 
     func loadSmallWidgetMetric() -> SmallWidgetMetric {
@@ -200,6 +202,7 @@ class SharedDataStore {
     func saveMediumWidgetLeftMetric(_ metric: SmallWidgetMetric) {
         defaults.set(metric.rawValue, forKey: Keys.mediumWidgetLeftMetric)
         defaults.synchronize()  // Force sync before widget reads
+        saveWidgetSettingsToFile()
     }
 
     func loadMediumWidgetLeftMetric() -> SmallWidgetMetric {
@@ -213,6 +216,7 @@ class SharedDataStore {
     func saveMediumWidgetRightMetric(_ metric: SmallWidgetMetric) {
         defaults.set(metric.rawValue, forKey: Keys.mediumWidgetRightMetric)
         defaults.synchronize()  // Force sync before widget reads
+        saveWidgetSettingsToFile()
     }
 
     func loadMediumWidgetRightMetric() -> SmallWidgetMetric {
@@ -226,6 +230,8 @@ class SharedDataStore {
     func saveWidgetColorMode(_ mode: WidgetColorMode) {
         defaults.set(mode.rawValue, forKey: Keys.widgetColorMode)
         defaults.synchronize()  // Force sync before widget reads
+        // Also write to file for reliable cross-process sync
+        saveWidgetSettingsToFile()
     }
 
     func loadWidgetColorMode() -> WidgetColorMode {
@@ -239,6 +245,8 @@ class SharedDataStore {
     func saveWidgetSingleColorHex(_ hex: String) {
         defaults.set(hex, forKey: Keys.widgetSingleColorHex)
         defaults.synchronize()  // Force sync before widget reads
+        // Also write to file for reliable cross-process sync
+        saveWidgetSettingsToFile()
     }
 
     func loadWidgetSingleColorHex() -> String {
@@ -248,6 +256,8 @@ class SharedDataStore {
     func saveExtraUsageDisplayFormat(_ format: ExtraUsageDisplayFormat) {
         defaults.set(format.rawValue, forKey: Keys.extraUsageDisplayFormat)
         defaults.synchronize()  // Force sync before widget reads
+        // Also write to file for reliable cross-process sync
+        saveWidgetSettingsToFile()
     }
 
     func loadExtraUsageDisplayFormat() -> ExtraUsageDisplayFormat {
@@ -256,6 +266,45 @@ class SharedDataStore {
             return .percentage  // Default to showing percentage
         }
         return format
+    }
+
+    // MARK: - Widget Settings File Storage
+
+    /// Structure for widget settings file (reliable cross-process sync)
+    private struct WidgetSettingsFile: Codable {
+        let colorMode: String
+        let singleColorHex: String
+        let extraUsageFormat: String
+        let smallMetric: String
+        let mediumLeftMetric: String
+        let mediumRightMetric: String
+    }
+
+    /// Saves all widget settings to a file for reliable cross-process sync
+    private func saveWidgetSettingsToFile() {
+        guard let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: Constants.appGroupIdentifier) else {
+            LoggingService.shared.log("SharedDataStore: Cannot save widget settings - no group container")
+            return
+        }
+
+        let settings = WidgetSettingsFile(
+            colorMode: loadWidgetColorMode().rawValue,
+            singleColorHex: loadWidgetSingleColorHex(),
+            extraUsageFormat: loadExtraUsageDisplayFormat().rawValue,
+            smallMetric: loadSmallWidgetMetric().rawValue,
+            mediumLeftMetric: loadMediumWidgetLeftMetric().rawValue,
+            mediumRightMetric: loadMediumWidgetRightMetric().rawValue
+        )
+
+        let encoder = JSONEncoder()
+        do {
+            let data = try encoder.encode(settings)
+            let fileURL = containerURL.appendingPathComponent("widgetSettings.json")
+            try data.write(to: fileURL)
+            LoggingService.shared.log("SharedDataStore: Saved widget settings to file")
+        } catch {
+            LoggingService.shared.log("SharedDataStore: Failed to save widget settings: \(error)")
+        }
     }
 
     // MARK: - Setup State

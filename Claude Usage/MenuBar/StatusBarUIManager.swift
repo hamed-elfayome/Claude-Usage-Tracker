@@ -363,7 +363,8 @@ final class StatusBarUIManager {
                 usage: usage,
                 apiUsage: apiUsage,
                 isDarkMode: menuBarIsDark,
-                monochromeMode: config.monochromeMode,
+                colorMode: config.colorMode,
+                singleColorHex: config.singleColorHex,
                 showIconName: config.showIconNames,
                 showNextSessionTime: metricConfig.showNextSessionTime
             )
@@ -371,7 +372,7 @@ final class StatusBarUIManager {
             button.image = image
             // Template mode only for monochrome (lets macOS handle color adaptation)
             // Non-monochrome needs explicit colors for status indicators
-            button.image?.isTemplate = config.monochromeMode
+            button.image?.isTemplate = config.colorMode == .monochrome
         }
     }
 
@@ -403,7 +404,8 @@ final class StatusBarUIManager {
             usage: usage,
             apiUsage: apiUsage,
             isDarkMode: menuBarIsDark,
-            monochromeMode: config.monochromeMode,
+            colorMode: config.colorMode,
+            singleColorHex: config.singleColorHex,
             showIconName: config.showIconNames,
             showNextSessionTime: metricConfig.showNextSessionTime
         )
@@ -411,7 +413,7 @@ final class StatusBarUIManager {
         button.image = image
         // Template mode only for monochrome (lets macOS handle color adaptation)
         // Non-monochrome needs explicit colors for status indicators
-        button.image?.isTemplate = config.monochromeMode
+        button.image?.isTemplate = config.colorMode == .monochrome
     }
 
     /// Get button for a specific metric (used for popover positioning)

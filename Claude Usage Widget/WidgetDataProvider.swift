@@ -327,6 +327,10 @@ class WidgetDataProvider {
     private let defaults: UserDefaults?
     private let decoder = JSONDecoder()
 
+    /// Cached widget settings from file
+    private var cachedSettings: WidgetSettingsFile?
+    private var settingsLastLoaded: Date?
+
     private init() {
         self.defaults = UserDefaults(suiteName: appGroupIdentifier)
     }
@@ -334,6 +338,50 @@ class WidgetDataProvider {
     /// Gets the Group Container URL
     private var groupContainerURL: URL? {
         FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupIdentifier)
+    }
+
+    // MARK: - Widget Settings File
+
+    /// Structure for widget settings file (must match main app's SharedDataStore)
+    private struct WidgetSettingsFile: Codable {
+        let colorMode: String
+        let singleColorHex: String
+        let extraUsageFormat: String
+        let smallMetric: String
+        let mediumLeftMetric: String
+        let mediumRightMetric: String
+    }
+
+    /// Loads widget settings from file (refreshes cache if stale)
+    private func loadSettingsFromFile() -> WidgetSettingsFile? {
+        // Return cached if loaded recently (within 1 second)
+        if let cached = cachedSettings,
+           let lastLoaded = settingsLastLoaded,
+           Date().timeIntervalSince(lastLoaded) < 1.0 {
+            return cached
+        }
+
+        guard let data = loadFromFile(filename: "widgetSettings.json") else {
+            #if DEBUG
+            print("Widget: No settings file found")
+            #endif
+            return nil
+        }
+
+        do {
+            let settings = try decoder.decode(WidgetSettingsFile.self, from: data)
+            cachedSettings = settings
+            settingsLastLoaded = Date()
+            #if DEBUG
+            print("Widget: Loaded settings from file - colorMode: \(settings.colorMode)")
+            #endif
+            return settings
+        } catch {
+            #if DEBUG
+            print("Widget: Failed to decode settings file: \(error)")
+            #endif
+            return nil
+        }
     }
 
     /// Loads usage data from shared storage
@@ -454,6 +502,13 @@ class WidgetDataProvider {
 
     /// Loads small widget metric preference from shared storage
     func loadSmallWidgetMetric() -> WidgetSmallMetric {
+        // Try file first
+        if let settings = loadSettingsFromFile(),
+           let metric = WidgetSmallMetric(rawValue: settings.smallMetric) {
+            return metric
+        }
+
+        // Fall back to UserDefaults
         guard let defaults = defaults,
               let rawValue = defaults.string(forKey: "smallWidgetMetric"),
               let metric = WidgetSmallMetric(rawValue: rawValue) else {
@@ -464,6 +519,13 @@ class WidgetDataProvider {
 
     /// Loads medium widget left metric preference from shared storage
     func loadMediumWidgetLeftMetric() -> WidgetSmallMetric {
+        // Try file first
+        if let settings = loadSettingsFromFile(),
+           let metric = WidgetSmallMetric(rawValue: settings.mediumLeftMetric) {
+            return metric
+        }
+
+        // Fall back to UserDefaults
         guard let defaults = defaults,
               let rawValue = defaults.string(forKey: "mediumWidgetLeftMetric"),
               let metric = WidgetSmallMetric(rawValue: rawValue) else {
@@ -474,6 +536,13 @@ class WidgetDataProvider {
 
     /// Loads medium widget right metric preference from shared storage
     func loadMediumWidgetRightMetric() -> WidgetSmallMetric {
+        // Try file first
+        if let settings = loadSettingsFromFile(),
+           let metric = WidgetSmallMetric(rawValue: settings.mediumRightMetric) {
+            return metric
+        }
+
+        // Fall back to UserDefaults
         guard let defaults = defaults,
               let rawValue = defaults.string(forKey: "mediumWidgetRightMetric"),
               let metric = WidgetSmallMetric(rawValue: rawValue) else {
@@ -484,21 +553,50 @@ class WidgetDataProvider {
 
     /// Loads widget color mode preference from shared storage
     func loadWidgetColorMode() -> WidgetColorDisplayMode {
+        // Try file first
+        if let settings = loadSettingsFromFile(),
+           let mode = WidgetColorDisplayMode(rawValue: settings.colorMode) {
+            #if DEBUG
+            print("Widget: Using color mode from file: \(mode.rawValue)")
+            #endif
+            return mode
+        }
+
+        // Fall back to UserDefaults
         guard let defaults = defaults,
               let rawValue = defaults.string(forKey: "widgetColorMode"),
               let mode = WidgetColorDisplayMode(rawValue: rawValue) else {
+            #if DEBUG
+            print("Widget: Using default color mode (multiColor)")
+            #endif
             return .multiColor  // Default to threshold-based colors
         }
+        #if DEBUG
+        print("Widget: Using color mode from UserDefaults: \(mode.rawValue)")
+        #endif
         return mode
     }
 
     /// Loads widget single color hex from shared storage
     func loadWidgetSingleColorHex() -> String {
+        // Try file first
+        if let settings = loadSettingsFromFile() {
+            return settings.singleColorHex
+        }
+
+        // Fall back to UserDefaults
         return defaults?.string(forKey: "widgetSingleColorHex") ?? "#00BFFF"  // Default cyan
     }
 
     /// Loads extra usage display format from shared storage
     func loadExtraUsageDisplayFormat() -> ExtraUsageDisplayFormat {
+        // Try file first
+        if let settings = loadSettingsFromFile(),
+           let format = ExtraUsageDisplayFormat(rawValue: settings.extraUsageFormat) {
+            return format
+        }
+
+        // Fall back to UserDefaults
         guard let defaults = defaults,
               let rawValue = defaults.string(forKey: "extraUsageDisplayFormat"),
               let format = ExtraUsageDisplayFormat(rawValue: rawValue) else {

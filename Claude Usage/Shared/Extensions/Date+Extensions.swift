@@ -55,13 +55,16 @@ extension Date {
 
     /// Returns a formatted reset time string (e.g., "Today, 3:59AM" or "Wednesday, 7:00PM")
     func resetTimeString(from now: Date = Date(), timezone: TimeZone = .current) -> String {
+        // Round to nearest minute to prevent display flickering (e.g., 6:59 vs 7:00)
+        let roundedDate = self.roundedToNearestMinute()
+
         let calendar = Calendar.current
         let formatter = DateFormatter()
         formatter.timeZone = timezone
 
-        if calendar.isDateInToday(self) {
+        if calendar.isDateInToday(roundedDate) {
             formatter.dateFormat = "'Today,' h:mma"
-        } else if calendar.isDateInTomorrow(self) {
+        } else if calendar.isDateInTomorrow(roundedDate) {
             formatter.dateFormat = "'Tomorrow,' h:mma"
         } else {
             // Show day name (e.g., "Wednesday, 7:00PM")
@@ -69,7 +72,7 @@ extension Date {
         }
 
         // Convert am/pm to uppercase AM/PM
-        return formatter.string(from: self)
+        return formatter.string(from: roundedDate)
             .replacingOccurrences(of: "am", with: "AM")
             .replacingOccurrences(of: "pm", with: "PM")
     }

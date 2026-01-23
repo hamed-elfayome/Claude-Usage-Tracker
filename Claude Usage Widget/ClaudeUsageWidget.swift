@@ -38,8 +38,7 @@ struct UsageTimelineProvider: TimelineProvider {
             mediumLeftMetric: provider.loadMediumWidgetLeftMetric(),
             mediumRightMetric: provider.loadMediumWidgetRightMetric(),
             colorMode: provider.loadWidgetColorMode(),
-            customColorHex: provider.loadWidgetSingleColorHex(),
-            extraUsageFormat: provider.loadExtraUsageDisplayFormat()
+            customColorHex: provider.loadWidgetSingleColorHex()
         )
         completion(entry)
     }
@@ -55,8 +54,7 @@ struct UsageTimelineProvider: TimelineProvider {
             mediumLeftMetric: provider.loadMediumWidgetLeftMetric(),
             mediumRightMetric: provider.loadMediumWidgetRightMetric(),
             colorMode: provider.loadWidgetColorMode(),
-            customColorHex: provider.loadWidgetSingleColorHex(),
-            extraUsageFormat: provider.loadExtraUsageDisplayFormat()
+            customColorHex: provider.loadWidgetSingleColorHex()
         )
 
         // Refresh every 15 minutes
@@ -75,7 +73,6 @@ struct UsageEntry: TimelineEntry {
     let mediumRightMetric: WidgetSmallMetric
     let colorMode: WidgetColorDisplayMode
     let customColorHex: String
-    let extraUsageFormat: ExtraUsageDisplayFormat
 
     init(
         date: Date,
@@ -85,8 +82,7 @@ struct UsageEntry: TimelineEntry {
         mediumLeftMetric: WidgetSmallMetric = .session,
         mediumRightMetric: WidgetSmallMetric = .weekly,
         colorMode: WidgetColorDisplayMode = .multiColor,
-        customColorHex: String = "#00BFFF",
-        extraUsageFormat: ExtraUsageDisplayFormat = .percentage
+        customColorHex: String = "#00BFFF"
     ) {
         self.date = date
         self.usage = usage
@@ -96,7 +92,6 @@ struct UsageEntry: TimelineEntry {
         self.mediumRightMetric = mediumRightMetric
         self.colorMode = colorMode
         self.customColorHex = customColorHex
-        self.extraUsageFormat = extraUsageFormat
     }
 }
 

@@ -70,9 +70,9 @@ struct LargeWidgetView: View {
                         MetricTile(
                             title: "Extra",
                             percentage: extraPercentage,
-                            subtitle: extraSubtitle(for: usage, format: entry.extraUsageFormat),
+                            subtitle: usage.formattedExtraUsed ?? "$0.00",
                             icon: "dollarsign.circle.fill",
-                                colorMode: entry.colorMode,
+                            colorMode: entry.colorMode,
                             customColorHex: entry.customColorHex
                         )
                     } else {
@@ -101,9 +101,9 @@ struct LargeWidgetView: View {
                         MetricTile(
                             title: "Extra",
                             percentage: extraPercentage,
-                            subtitle: extraSubtitle(for: usage, format: entry.extraUsageFormat),
+                            subtitle: usage.formattedExtraUsed ?? "$0.00",
                             icon: "dollarsign.circle.fill",
-                                colorMode: entry.colorMode,
+                            colorMode: entry.colorMode,
                             customColorHex: entry.customColorHex
                         )
                     } else {
@@ -214,21 +214,6 @@ struct LargeWidgetView: View {
         }
     }
 
-    private func extraSubtitle(for usage: WidgetUsageData, format: ExtraUsageDisplayFormat) -> String {
-        switch format {
-        case .percentage:
-            // Show reset time when format is percentage (since percentage is already in main display)
-            return WidgetDateFormatter.shortTimeString(from: usage.weeklyResetTime)
-        case .currency:
-            // Show currency amount
-            return usage.formattedExtraUsed ?? "$0.00"
-        case .both:
-            // Show both currency and reset time
-            let currency = usage.formattedExtraUsed ?? "$0.00"
-            let resetTime = WidgetDateFormatter.shortTimeString(from: usage.weeklyResetTime)
-            return "\(currency) • \(resetTime)"
-        }
-    }
 }
 
 struct MetricTile: View {

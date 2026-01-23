@@ -42,17 +42,13 @@ struct AppearanceSettingsView: View {
                     subtitle: "appearance.global_subtitle".localized
                 ) {
                     VStack(alignment: .leading, spacing: DesignTokens.Spacing.cardPadding) {
-                        SettingToggle(
-                            title: "appearance.monochrome_title".localized,
-                            description: "appearance.monochrome_description".localized,
-                            isOn: Binding(
-                                get: { configuration.monochromeMode },
-                                set: { newValue in
-                                    configuration.monochromeMode = newValue
-                                    saveConfiguration()
-                                }
-                            )
+                        ColorModeSelector(
+                            colorMode: $configuration.colorMode,
+                            singleColorHex: $configuration.singleColorHex,
+                            onConfigChanged: saveConfiguration
                         )
+
+                        Divider()
 
                         SettingToggle(
                             title: "appearance.show_labels_title".localized,

@@ -98,7 +98,8 @@ class MenuBarManager: NSObject, ObservableObject {
             let displayConfig: MenuBarIconConfiguration
             if !hasUsageCredentials {
                 displayConfig = MenuBarIconConfiguration(
-                    monochromeMode: config.monochromeMode,
+                    colorMode: config.colorMode,
+                    singleColorHex: config.singleColorHex,
                     showIconNames: config.showIconNames,
                     metrics: config.metrics.map { metric in
                         var updatedMetric = metric
@@ -339,7 +340,8 @@ class MenuBarManager: NSObject, ObservableObject {
         if !hasUsageCredentials {
             // Create config with no enabled metrics (will trigger default logo)
             displayConfig = MenuBarIconConfiguration(
-                monochromeMode: config.monochromeMode,
+                colorMode: config.colorMode,
+                singleColorHex: config.singleColorHex,
                 showIconNames: config.showIconNames,
                 metrics: config.metrics.map { metric in
                     var updatedMetric = metric
@@ -801,7 +803,8 @@ class MenuBarManager: NSObject, ObservableObject {
         let displayConfig: MenuBarIconConfiguration
         if !hasUsageCredentials {
             displayConfig = MenuBarIconConfiguration(
-                monochromeMode: config.monochromeMode,
+                colorMode: config.colorMode,
+                singleColorHex: config.singleColorHex,
                 showIconNames: config.showIconNames,
                 metrics: config.metrics.map { metric in
                     var updatedMetric = metric

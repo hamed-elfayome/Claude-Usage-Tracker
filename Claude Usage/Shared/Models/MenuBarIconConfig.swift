@@ -60,6 +60,46 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
     }
 }
 
+/// Color mode for menu bar icons
+enum MenuBarColorMode: String, Codable, CaseIterable {
+    case multiColor = "multiColor"
+    case monochrome = "monochrome"
+    case singleColor = "singleColor"
+
+    var displayName: String {
+        switch self {
+        case .multiColor:
+            return "Multi-Color"
+        case .monochrome:
+            return "Monochrome"
+        case .singleColor:
+            return "Single Color"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .multiColor:
+            return "Green, orange, red based on usage level"
+        case .monochrome:
+            return "Adapts to menu bar appearance"
+        case .singleColor:
+            return "Custom color of your choice"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .multiColor:
+            return "paintpalette.fill"
+        case .monochrome:
+            return "circle.lefthalf.filled"
+        case .singleColor:
+            return "paintbrush.fill"
+        }
+    }
+}
+
 /// Display mode for API usage
 enum APIDisplayMode: String, Codable, CaseIterable {
     case remaining
@@ -266,13 +306,15 @@ struct MultiProfileDisplayConfig: Codable, Equatable {
 
 /// Global menu bar icon configuration
 struct MenuBarIconConfiguration: Codable, Equatable {
-    var monochromeMode: Bool
+    var colorMode: MenuBarColorMode
+    var singleColorHex: String
     var showIconNames: Bool
     var showRemainingPercentage: Bool
     var metrics: [MetricIconConfig]
 
     init(
-        monochromeMode: Bool = false,
+        colorMode: MenuBarColorMode = .multiColor,
+        singleColorHex: String = "#00BFFF",
         showIconNames: Bool = true,
         showRemainingPercentage: Bool = false,
         metrics: [MetricIconConfig] = [
@@ -281,7 +323,8 @@ struct MenuBarIconConfiguration: Codable, Equatable {
             .apiDefault
         ]
     ) {
-        self.monochromeMode = monochromeMode
+        self.colorMode = colorMode
+        self.singleColorHex = singleColorHex
         self.showIconNames = showIconNames
         self.showRemainingPercentage = showRemainingPercentage
         self.metrics = metrics
@@ -290,7 +333,9 @@ struct MenuBarIconConfiguration: Codable, Equatable {
     // MARK: - Codable (Custom decoder for backwards compatibility)
 
     enum CodingKeys: String, CodingKey {
-        case monochromeMode
+        case monochromeMode  // Legacy key for backwards compatibility
+        case colorMode
+        case singleColorHex
         case showIconNames
         case showRemainingPercentage
         case metrics
@@ -299,13 +344,27 @@ struct MenuBarIconConfiguration: Codable, Equatable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
-        monochromeMode = try container.decode(Bool.self, forKey: .monochromeMode)
+        // Handle backwards compatibility: if old monochromeMode exists, convert it
+        if let monochromeMode = try container.decodeIfPresent(Bool.self, forKey: .monochromeMode) {
+            colorMode = monochromeMode ? .monochrome : .multiColor
+        } else {
+            colorMode = try container.decodeIfPresent(MenuBarColorMode.self, forKey: .colorMode) ?? .multiColor
+        }
+
+        singleColorHex = try container.decodeIfPresent(String.self, forKey: .singleColorHex) ?? "#00BFFF"
         showIconNames = try container.decode(Bool.self, forKey: .showIconNames)
-
-        // New property - provide default value if missing (backwards compatibility)
         showRemainingPercentage = try container.decodeIfPresent(Bool.self, forKey: .showRemainingPercentage) ?? false
-
         metrics = try container.decode([MetricIconConfig].self, forKey: .metrics)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(colorMode, forKey: .colorMode)
+        try container.encode(singleColorHex, forKey: .singleColorHex)
+        try container.encode(showIconNames, forKey: .showIconNames)
+        try container.encode(showRemainingPercentage, forKey: .showRemainingPercentage)
+        try container.encode(metrics, forKey: .metrics)
+        // Note: We don't encode monochromeMode anymore - it's only for reading legacy data
     }
 
     /// Get enabled metrics sorted by order

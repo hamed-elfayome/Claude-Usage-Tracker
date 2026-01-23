@@ -34,8 +34,7 @@ struct MediumWidgetView: View {
                         metric: entry.mediumLeftMetric,
                         usage: usage,
                         colorMode: entry.colorMode,
-                        customColorHex: entry.customColorHex,
-                        extraUsageFormat: entry.extraUsageFormat
+                        customColorHex: entry.customColorHex
                     )
 
                     // Right card
@@ -43,8 +42,7 @@ struct MediumWidgetView: View {
                         metric: entry.mediumRightMetric,
                         usage: usage,
                         colorMode: entry.colorMode,
-                        customColorHex: entry.customColorHex,
-                        extraUsageFormat: entry.extraUsageFormat
+                        customColorHex: entry.customColorHex
                     )
                 }
             }
@@ -95,7 +93,6 @@ struct UsageCard: View {
     let usage: WidgetUsageData
     let colorMode: WidgetColorDisplayMode
     let customColorHex: String
-    let extraUsageFormat: ExtraUsageDisplayFormat
 
     private var metricData: MetricDisplayData {
         getMetricData(for: metric, usage: usage)
@@ -132,8 +129,8 @@ struct UsageCard: View {
             }
             .frame(height: WidgetDesign.Spacing.progressHeight)
 
-            // Reset time or extra usage info (based on metric and format)
-            Text(subtitleText(for: metric, metricData: metricData, usage: usage, format: extraUsageFormat))
+            // Reset time or cost (for extra metric)
+            Text(subtitleText(for: metric, metricData: metricData, usage: usage))
                 .font(.system(size: WidgetDesign.Typography.timestamp, weight: .medium))
                 .foregroundColor(secondaryTextColor)
                 .lineLimit(1)
@@ -222,25 +219,12 @@ struct UsageCard: View {
         )
     }
 
-    private func subtitleText(for metric: WidgetSmallMetric, metricData: MetricDisplayData, usage: WidgetUsageData, format: ExtraUsageDisplayFormat) -> String {
-        // For non-extra metrics, always show reset time
-        guard metric == .extra else {
-            return WidgetDateFormatter.resetTimeString(from: metricData.resetTime)
-        }
-
-        // For extra usage, customize based on format preference
-        switch format {
-        case .percentage:
-            // Show reset time (percentage already in main display)
-            return WidgetDateFormatter.resetTimeString(from: metricData.resetTime)
-        case .currency:
-            // Show currency amount
+    private func subtitleText(for metric: WidgetSmallMetric, metricData: MetricDisplayData, usage: WidgetUsageData) -> String {
+        // For extra metric, show cost amount
+        if metric == .extra {
             return usage.formattedExtraUsed ?? "$0.00"
-        case .both:
-            // Show both currency and reset time
-            let currency = usage.formattedExtraUsed ?? "$0.00"
-            let resetTime = WidgetDateFormatter.resetTimeString(from: metricData.resetTime)
-            return "\(currency) • \(resetTime)"
         }
+        // For all other metrics, show reset time
+        return WidgetDateFormatter.resetTimeString(from: metricData.resetTime)
     }
 }

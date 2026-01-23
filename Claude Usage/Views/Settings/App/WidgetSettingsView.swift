@@ -53,7 +53,6 @@ struct WidgetSettingsView: View {
     @State private var selectedSmallMetric: SmallWidgetMetric = SharedDataStore.shared.loadSmallWidgetMetric()
     @State private var selectedColorMode: WidgetColorMode = SharedDataStore.shared.loadWidgetColorMode()
     @State private var singleColor: Color = Color(hex: SharedDataStore.shared.loadWidgetSingleColorHex()) ?? .cyan
-    @State private var extraUsageFormat: ExtraUsageDisplayFormat = SharedDataStore.shared.loadExtraUsageDisplayFormat()
 
     // Medium widget individual metric selection
     @State private var mediumLeftMetric: SmallWidgetMetric = SharedDataStore.shared.loadMediumWidgetLeftMetric()
@@ -71,7 +70,7 @@ struct WidgetSettingsView: View {
                     subtitle: "Customize the appearance and content of your desktop widgets"
                 )
 
-                formatAndColorSection
+                widgetColorsCard
                 smallWidgetSection
                 mediumWidgetSection
                 aboutWidgetsSection
@@ -85,6 +84,10 @@ struct WidgetSettingsView: View {
             if let activeProfile = profileManager.activeProfile {
                 previewUsage = activeProfile.claudeUsage
             }
+
+            // Ensure widget settings file exists for cross-process sync
+            // This saves current settings to file so widget can read them
+            SharedDataStore.shared.saveWidgetColorMode(selectedColorMode)
         }
         .onChange(of: profileManager.activeProfile?.claudeUsage) { _, newUsage in
             // Update preview when usage changes
@@ -93,51 +96,6 @@ struct WidgetSettingsView: View {
     }
 
     // MARK: - View Sections
-
-    private var formatAndColorSection: some View {
-        LazyVGrid(columns: [
-            GridItem(.flexible(), spacing: 16),
-            GridItem(.flexible(), spacing: 16)
-        ], spacing: 16) {
-            extraUsageFormatCard
-            widgetColorsCard
-        }
-    }
-
-    private var extraUsageFormatCard: some View {
-        SettingsSectionCard(
-            title: "Extra Usage Format",
-            subtitle: "Choose how to display cost-based usage"
-        ) {
-            VStack(alignment: .leading, spacing: 4) {
-                ForEach([ExtraUsageDisplayFormat.percentage, .currency, .both], id: \.self) { format in
-                    Button {
-                        extraUsageFormat = format
-                        saveExtraUsageFormat(format)
-                    } label: {
-                        HStack {
-                            Image(systemName: extraUsageFormat == format ? "checkmark.circle.fill" : "circle")
-                                .foregroundColor(extraUsageFormat == format ? .accentColor : .secondary)
-
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(format.displayName)
-                                    .font(.system(size: 13, weight: .medium))
-                                    .foregroundColor(.primary)
-
-                                Text(format.description)
-                                    .font(.system(size: 11))
-                                    .foregroundColor(.secondary)
-                            }
-
-                            Spacer()
-                        }
-                        .padding(.vertical, 6)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
-    }
 
     private var widgetColorsCard: some View {
         SettingsSectionCard(
@@ -360,14 +318,12 @@ struct WidgetSettingsView: View {
 
     private func saveColorMode(_ mode: WidgetColorMode) {
         SharedDataStore.shared.saveWidgetColorMode(mode)
+        // Also save current color when switching to singleColor mode
+        if mode == .singleColor {
+            SharedDataStore.shared.saveWidgetSingleColorHex(singleColor.toHex() ?? "#00BFFF")
+        }
         refreshWidgets()
         LoggingService.shared.log("Widget color mode changed to: \(mode.displayName)")
-    }
-
-    private func saveExtraUsageFormat(_ format: ExtraUsageDisplayFormat) {
-        SharedDataStore.shared.saveExtraUsageDisplayFormat(format)
-        refreshWidgets()
-        LoggingService.shared.log("Extra usage format changed to: \(format.displayName)")
     }
 
     private func iconColorForMode(_ mode: WidgetColorMode) -> Color {
@@ -406,11 +362,15 @@ struct WidgetSettingsView: View {
     }
 
     private func refreshWidgets() {
-        if #available(macOS 14.0, *) {
-            // Small delay to ensure UserDefaults sync propagates across processes
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                WidgetCenter.shared.reloadAllTimelines()
-            }
+        // Force UserDefaults to flush to disk for cross-process sync
+        if let defaults = UserDefaults(suiteName: "group.claude-usage") {
+            defaults.synchronize()
+        }
+
+        // Longer delay to ensure UserDefaults sync propagates across processes
+        // Cross-process UserDefaults can take up to 500ms to sync
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            WidgetCenter.shared.reloadAllTimelines()
         }
     }
 }
