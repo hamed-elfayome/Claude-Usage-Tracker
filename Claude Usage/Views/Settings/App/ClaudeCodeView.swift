@@ -11,6 +11,7 @@ import SwiftUI
 struct ClaudeCodeView: View {
     // Component visibility settings
     @State private var showModel: Bool = SharedDataStore.shared.loadStatuslineShowModel()
+    @State private var showContext: Bool = SharedDataStore.shared.loadStatuslineShowContext()
     @State private var showDirectory: Bool = SharedDataStore.shared.loadStatuslineShowDirectory()
     @State private var showBranch: Bool = SharedDataStore.shared.loadStatuslineShowBranch()
     @State private var showUsage: Bool = SharedDataStore.shared.loadStatuslineShowUsage()
@@ -77,6 +78,9 @@ struct ClaudeCodeView: View {
 
                 VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
                     Toggle("claudecode.component_model".localized, isOn: $showModel)
+                        .font(DesignTokens.Typography.body)
+
+                    Toggle("claudecode.component_context".localized, isOn: $showContext)
                         .font(DesignTokens.Typography.body)
 
                     Toggle("claudecode.component_directory".localized, isOn: $showDirectory)
@@ -173,7 +177,7 @@ struct ClaudeCodeView: View {
     /// Installs scripts, updates config file, and enables statusline in settings.json.
     private func applyConfiguration() {
         // Validate: at least one component must be selected
-        guard showModel || showDirectory || showBranch || showUsage else {
+        guard showModel || showContext || showDirectory || showBranch || showUsage else {
             statusMessage = "claudecode.error_no_components".localized
             isSuccess = false
             return
@@ -188,6 +192,7 @@ struct ClaudeCodeView: View {
 
         // Save user preferences
         SharedDataStore.shared.saveStatuslineShowModel(showModel)
+        SharedDataStore.shared.saveStatuslineShowContext(showContext)
         SharedDataStore.shared.saveStatuslineShowDirectory(showDirectory)
         SharedDataStore.shared.saveStatuslineShowBranch(showBranch)
         SharedDataStore.shared.saveStatuslineShowUsage(showUsage)
@@ -201,6 +206,7 @@ struct ClaudeCodeView: View {
             // Write configuration file
             try StatuslineService.shared.updateConfiguration(
                 showModel: showModel,
+                showContext: showContext,
                 showDirectory: showDirectory,
                 showBranch: showBranch,
                 showUsage: showUsage,
@@ -237,6 +243,10 @@ struct ClaudeCodeView: View {
 
         if showModel {
             parts.append("Opus")  // Example model name
+        }
+
+        if showContext {
+            parts.append("Ctx: 42%")  // Example context percentage
         }
 
         if showDirectory {
