@@ -39,21 +39,6 @@ struct AboutView: View {
                         Text("about.version".localized(with: appVersion))
                             .font(DesignTokens.Typography.caption)
                             .foregroundColor(.secondary)
-
-                        // Check for Updates button
-                        Button(action: {
-                            UpdateManager.shared.checkForUpdates()
-                        }) {
-                            HStack(spacing: 4) {
-                                Image(systemName: "arrow.down.circle")
-                                    .font(.system(size: 10))
-                                Text("about.check_updates".localized)
-                                    .font(.system(size: 11))
-                            }
-                            .foregroundColor(.blue)
-                        }
-                        .buttonStyle(.plain)
-                        .padding(.top, 4)
                     }
                 }
                 .frame(maxWidth: .infinity)
