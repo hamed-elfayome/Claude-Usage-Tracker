@@ -126,6 +126,9 @@ class ProfileManager: ObservableObject {
 
         profiles.removeAll { $0.id == id }
 
+        // Clean up notification tracking for deleted profile (prevents memory leak)
+        NotificationManager.shared.clearTrackingForProfile(id)
+
         // Credentials are deleted automatically with the profile
 
         // Switch to first profile if deleted active
@@ -352,13 +355,28 @@ class ProfileManager: ObservableObject {
         // Update activeProfile reference if it's the same profile
         if activeProfile?.id == profileId {
             activeProfile = profiles[index]
-            // Sync to App Groups for widget access
-            syncUsageToWidgetStorage(usage)
         }
 
         // Save to persistent storage
         profileStore.saveProfiles(profiles)
         LoggingService.shared.log("Saved Claude usage for profile: \(profiles[index].name)")
+
+        // Sync to widget if this profile should be displayed
+        // In single-profile mode: only sync for active profile
+        // In multi-profile mode: sync for any profile selected for display
+        if shouldSyncToWidget(profileId: profileId) {
+            syncUsageToWidgetStorage(usage)
+        }
+    }
+
+    /// Determines if a profile's data should be synced to the widget
+    private func shouldSyncToWidget(profileId: UUID) -> Bool {
+        if displayMode == .single {
+            return activeProfile?.id == profileId
+        } else {
+            // Multi-profile mode: sync if profile is selected for display
+            return profiles.first(where: { $0.id == profileId })?.isSelectedForDisplay ?? false
+        }
     }
 
     /// Syncs usage data to App Groups container for widget access

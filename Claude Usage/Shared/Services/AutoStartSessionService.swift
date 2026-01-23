@@ -147,6 +147,16 @@ final class AutoStartSessionService {
 
             let currentPercentage = usage.sessionPercentage
 
+            // CRITICAL: Notify about usage changes and detect session resets BEFORE auto-start check
+            // This ensures reset detection happens even if AutoStartSessionService detects the reset
+            // before MenuBarManager's refresh cycle
+            notificationManager.checkAndNotify(
+                usage: usage,
+                profileId: profile.id,
+                profileName: profile.name,
+                settings: profile.notificationSettings
+            )
+
             // Simple logic (like v1.1.0): If session is at 0%, start it
             // The initialization message will bring usage above 0%, preventing repeated starts
             if currentPercentage == 0.0 {

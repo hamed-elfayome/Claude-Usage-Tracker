@@ -5,8 +5,9 @@ import UserNotifications
 class NotificationManager: NotificationServiceProtocol {
     static let shared = NotificationManager()
 
-    // Track previous session percentage to detect resets
-    private var previousSessionPercentage: Double = 0.0
+    // Track previous session percentage PER PROFILE to detect resets
+    // Key: Profile UUID, Value: Last known session percentage
+    private var previousSessionPercentageByProfile: [UUID: Double] = [:]
 
     // Track which notifications have been sent to prevent duplicates
     private var sentNotifications: Set<String> = []
@@ -99,16 +100,17 @@ class NotificationManager: NotificationServiceProtocol {
     }
 
     /// Checks usage and sends appropriate alerts (profile-aware)
-    func checkAndNotify(usage: ClaudeUsage, profileName: String, settings: NotificationSettings) {
+    func checkAndNotify(usage: ClaudeUsage, profileId: UUID, profileName: String, settings: NotificationSettings) {
         // Check if notifications are enabled for this profile
         guard settings.enabled else {
             return
         }
 
         let sessionPercentage = usage.sessionPercentage
+        let previousPercentage = previousSessionPercentageByProfile[profileId] ?? 0.0
 
         // Check for session reset (went from >0% to 0%)
-        if previousSessionPercentage > 0.0 && sessionPercentage == 0.0 {
+        if previousPercentage > 0.0 && sessionPercentage == 0.0 {
             sendProfileAlert(
                 profileName: profileName,
                 type: .sessionReset,
@@ -116,11 +118,18 @@ class NotificationManager: NotificationServiceProtocol {
                 resetTime: usage.sessionResetTime
             )
 
-            // Note: Auto-start session is handled per-profile but called from elsewhere
+            // Post notification for other components (MenuBarManager, etc.) to respond
+            NotificationCenter.default.post(
+                name: .sessionDidReset,
+                object: nil,
+                userInfo: ["profileId": profileId, "usage": usage]
+            )
+
+            LoggingService.shared.logInfo("NotificationManager: Session reset detected for profile '\(profileName)'")
         }
 
-        // Update previous percentage for next check
-        previousSessionPercentage = sessionPercentage
+        // Update previous percentage for THIS profile
+        previousSessionPercentageByProfile[profileId] = sessionPercentage
 
         // Clear lower threshold notifications to allow re-notification
         clearLowerThresholdNotifications(currentPercentage: sessionPercentage)
@@ -168,7 +177,9 @@ class NotificationManager: NotificationServiceProtocol {
             threshold95Enabled: true
         )
 
-        checkAndNotify(usage: usage, profileName: "Default", settings: settings)
+        // Use a stable "default" UUID for legacy callers
+        let defaultProfileId = UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
+        checkAndNotify(usage: usage, profileId: defaultProfileId, profileName: "Default", settings: settings)
     }
 
     /// Sends a profile-specific usage alert
@@ -239,6 +250,13 @@ class NotificationManager: NotificationServiceProtocol {
     func clearAllNotifications() {
         UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
         UNUserNotificationCenter.current().removeAllDeliveredNotifications()
+    }
+
+    /// Clears tracking data for a specific profile (call when profile is deleted)
+    /// Prevents memory leak from accumulating deleted profile entries
+    func clearTrackingForProfile(_ profileId: UUID) {
+        previousSessionPercentageByProfile.removeValue(forKey: profileId)
+        LoggingService.shared.logDebug("NotificationManager: Cleared tracking for deleted profile \(profileId)")
     }
 
     /// Clears sent notification tracking for lower percentages
