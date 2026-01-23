@@ -357,6 +357,7 @@ printf "%s\\n" "$output"
 
     func updateConfiguration(
         showModel: Bool,
+        showContext: Bool,
         showDirectory: Bool,
         showBranch: Bool,
         showUsage: Bool,
@@ -368,6 +369,7 @@ printf "%s\\n" "$output"
 
         let config = """
 SHOW_MODEL=\(showModel ? "1" : "0")
+SHOW_CONTEXT=\(showContext ? "1" : "0")
 SHOW_DIRECTORY=\(showDirectory ? "1" : "0")
 SHOW_BRANCH=\(showBranch ? "1" : "0")
 SHOW_USAGE=\(showUsage ? "1" : "0")
