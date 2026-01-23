@@ -378,6 +378,49 @@ class ProfileManager: ObservableObject {
         return profiles.first(where: { $0.id == profileId })?.apiUsage
     }
 
+    /// Saves Claude Code metrics for a specific profile
+    func saveClaudeCodeMetrics(_ metrics: ClaudeCodeMetrics, for profileId: UUID) {
+        guard let index = profiles.firstIndex(where: { $0.id == profileId }) else {
+            LoggingService.shared.logError("saveClaudeCodeMetrics: Profile not found with ID: \(profileId)")
+            return
+        }
+
+        profiles[index].claudeCodeMetrics = metrics
+
+        // Update activeProfile reference if it's the same profile
+        if activeProfile?.id == profileId {
+            activeProfile = profiles[index]
+        }
+
+        // Save to persistent storage
+        profileStore.saveProfiles(profiles)
+        LoggingService.shared.log("Saved Claude Code metrics for profile: \(profiles[index].name)")
+    }
+
+    /// Loads Claude Code metrics for a specific profile
+    func loadClaudeCodeMetrics(for profileId: UUID) -> ClaudeCodeMetrics? {
+        return profiles.first(where: { $0.id == profileId })?.claudeCodeMetrics
+    }
+
+    /// Updates the Claude Code user email for a profile
+    func updateClaudeCodeUserEmail(_ email: String?, for profileId: UUID) {
+        guard let index = profiles.firstIndex(where: { $0.id == profileId }) else {
+            LoggingService.shared.logError("updateClaudeCodeUserEmail: Profile not found with ID: \(profileId)")
+            return
+        }
+
+        profiles[index].claudeCodeUserEmail = email
+
+        // Update activeProfile reference if it's the same profile
+        if activeProfile?.id == profileId {
+            activeProfile = profiles[index]
+        }
+
+        // Save to persistent storage
+        profileStore.saveProfiles(profiles)
+        LoggingService.shared.log("Updated Claude Code user email for profile: \(profiles[index].name)")
+    }
+
     // MARK: - Profile Settings
 
     /// Updates icon configuration for a profile
@@ -462,6 +505,74 @@ class ProfileManager: ObservableObject {
     func updateAPIOrganizationId(_ orgId: String?, for profileId: UUID) {
         if let index = profiles.firstIndex(where: { $0.id == profileId }) {
             profiles[index].apiOrganizationId = orgId
+
+            if activeProfile?.id == profileId {
+                activeProfile = profiles[index]
+            }
+
+            profileStore.saveProfiles(profiles)
+        }
+    }
+
+    /// Updates Claude Code workspace ID for a profile
+    func updateClaudeCodeWorkspaceId(_ workspaceId: String?, for profileId: UUID) {
+        if let index = profiles.firstIndex(where: { $0.id == profileId }) {
+            profiles[index].claudeCodeWorkspaceId = workspaceId
+
+            if activeProfile?.id == profileId {
+                activeProfile = profiles[index]
+            }
+
+            profileStore.saveProfiles(profiles)
+        }
+    }
+
+    /// Updates Claude Code API key ID for a profile
+    func updateClaudeCodeApiKeyId(_ apiKeyId: String?, for profileId: UUID) {
+        if let index = profiles.firstIndex(where: { $0.id == profileId }) {
+            profiles[index].claudeCodeApiKeyId = apiKeyId
+
+            if activeProfile?.id == profileId {
+                activeProfile = profiles[index]
+            }
+
+            profileStore.saveProfiles(profiles)
+        }
+    }
+
+    // MARK: - Budget Settings
+
+    /// Updates monthly budget for a profile
+    func updateMonthlyBudget(_ budget: Double?, for profileId: UUID) {
+        if let index = profiles.firstIndex(where: { $0.id == profileId }) {
+            profiles[index].monthlyBudget = budget
+
+            if activeProfile?.id == profileId {
+                activeProfile = profiles[index]
+            }
+
+            profileStore.saveProfiles(profiles)
+            LoggingService.shared.log("Updated monthly budget for profile: \(profiles[index].name)")
+        }
+    }
+
+    /// Updates budget alert thresholds for a profile
+    func updateBudgetAlertThresholds(_ thresholds: [Double], for profileId: UUID) {
+        if let index = profiles.firstIndex(where: { $0.id == profileId }) {
+            profiles[index].budgetAlertThresholds = thresholds
+
+            if activeProfile?.id == profileId {
+                activeProfile = profiles[index]
+            }
+
+            profileStore.saveProfiles(profiles)
+        }
+    }
+
+    /// Updates budget alerts enabled for a profile
+    func updateBudgetAlertsEnabled(_ enabled: Bool, for profileId: UUID) {
+        if let index = profiles.firstIndex(where: { $0.id == profileId }) {
+            profiles[index].budgetAlertsEnabled = enabled
 
             if activeProfile?.id == profileId {
                 activeProfile = profiles[index]
