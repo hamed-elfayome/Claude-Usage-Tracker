@@ -108,6 +108,34 @@ print("ERROR:NO_SESSION_KEY")
 exit(1)
 """
 
+    /// Fallback script that reads cached usage data when using CLI credentials
+    /// The app writes cached data to ~/.claude/usage-cache.txt
+    private func generateCLIFallbackScript() -> String {
+        return """
+#!/usr/bin/env swift
+
+import Foundation
+
+// Read cached usage from file (written by Claude Usage app)
+let cacheFile = FileManager.default.homeDirectoryForCurrentUser
+    .appendingPathComponent(".claude/usage-cache.txt")
+
+if let contents = try? String(contentsOf: cacheFile, encoding: .utf8) {
+    let lines = contents.components(separatedBy: "\\n")
+    if lines.count >= 2,
+       let utilization = Int(lines[0].trimmingCharacters(in: .whitespaces)) {
+        let resetsAt = lines[1].trimmingCharacters(in: .whitespaces)
+        print("\\(utilization)|\\(resetsAt)")
+        exit(0)
+    }
+}
+
+// Fallback: return unknown usage
+print("~|")
+exit(0)
+"""
+    }
+
     /// Bash script that builds the statusline display.
     /// Installed to ~/.claude/statusline-command.sh and configured in Claude Code settings.json.
     /// Reads user preferences from ~/.claude/statusline-config.txt and displays selected components.
@@ -285,20 +313,73 @@ printf "%s\\n" "$output"
         let swiftScriptContent: String
 
         if injectSessionKey {
-            // Load session key and org ID from active profile
+            // Load credentials from active profile or CLI
             guard let activeProfile = ProfileManager.shared.activeProfile else {
                 throw StatuslineError.noActiveProfile
             }
 
-            guard let sessionKey = activeProfile.claudeSessionKey else {
+            // Try to get session key and org ID - check profile first, then CLI credentials
+            var sessionKey: String?
+            var organizationId: String?
+
+            // Option 1: Use profile's session key if available
+            if let profileKey = activeProfile.claudeSessionKey,
+               let profileOrg = activeProfile.organizationId {
+                sessionKey = profileKey
+                organizationId = profileOrg
+                LoggingService.shared.log("Using profile session key for statusline")
+            }
+            // Option 2: Use CLI credentials if no session key
+            else if let cliJson = activeProfile.cliCredentialsJSON,
+                    !ClaudeCodeSyncService.shared.isTokenExpired(cliJson),
+                    let token = ClaudeCodeSyncService.shared.extractAccessToken(from: cliJson) {
+                // CLI uses OAuth token - we'll use a placeholder since the script needs session key format
+                // For now, skip statusline usage when only CLI credentials are available
+                swiftScriptContent = generateCLIFallbackScript()
+                LoggingService.shared.log("Using CLI credentials - statusline will show cached data")
+
+                try swiftScriptContent.write(to: swiftDestination, atomically: true, encoding: .utf8)
+                try FileManager.default.setAttributes(
+                    [.posixPermissions: 0o755],
+                    ofItemAtPath: swiftDestination.path
+                )
+
+                // Install bash script
+                let bashDestination = claudeDir.appendingPathComponent("statusline-command.sh")
+                try bashScript.write(to: bashDestination, atomically: true, encoding: .utf8)
+                try FileManager.default.setAttributes(
+                    [.posixPermissions: 0o755],
+                    ofItemAtPath: bashDestination.path
+                )
+                return
+            }
+            // Option 3: Try system CLI credentials
+            else if let systemCreds = try? ClaudeCodeSyncService.shared.readSystemCredentials(),
+                    !ClaudeCodeSyncService.shared.isTokenExpired(systemCreds) {
+                swiftScriptContent = generateCLIFallbackScript()
+                LoggingService.shared.log("Using system CLI credentials - statusline will show cached data")
+
+                try swiftScriptContent.write(to: swiftDestination, atomically: true, encoding: .utf8)
+                try FileManager.default.setAttributes(
+                    [.posixPermissions: 0o755],
+                    ofItemAtPath: swiftDestination.path
+                )
+
+                // Install bash script
+                let bashDestination = claudeDir.appendingPathComponent("statusline-command.sh")
+                try bashScript.write(to: bashDestination, atomically: true, encoding: .utf8)
+                try FileManager.default.setAttributes(
+                    [.posixPermissions: 0o755],
+                    ofItemAtPath: bashDestination.path
+                )
+                return
+            }
+
+            guard let finalKey = sessionKey, let finalOrg = organizationId else {
                 throw StatuslineError.sessionKeyNotFound
             }
 
-            guard let organizationId = activeProfile.organizationId else {
-                throw StatuslineError.organizationNotConfigured
-            }
-
-            swiftScriptContent = generateSwiftScript(sessionKey: sessionKey, organizationId: organizationId)
+            swiftScriptContent = generateSwiftScript(sessionKey: finalKey, organizationId: finalOrg)
             LoggingService.shared.log("Injected session key and org ID from profile '\(activeProfile.name)' into statusline")
         } else {
             // Install placeholder script
@@ -426,16 +507,47 @@ SHOW_RESET_TIME=\(showResetTime ? "1" : "0")
         try installScripts(injectSessionKey: true)
     }
 
-    /// Checks if active profile has a valid session key
+    /// Checks if active profile has valid credentials (session key OR CLI credentials)
     func hasValidSessionKey() -> Bool {
-        guard let activeProfile = ProfileManager.shared.activeProfile,
-              let key = activeProfile.claudeSessionKey else {
+        guard let activeProfile = ProfileManager.shared.activeProfile else {
             return false
         }
 
-        // Use professional validator for comprehensive validation
-        let validator = SessionKeyValidator()
-        return validator.isValid(key)
+        // Check for session key first
+        if let key = activeProfile.claudeSessionKey {
+            let validator = SessionKeyValidator()
+            if validator.isValid(key) {
+                return true
+            }
+        }
+
+        // Check for CLI credentials in profile
+        if let cliJson = activeProfile.cliCredentialsJSON,
+           !ClaudeCodeSyncService.shared.isTokenExpired(cliJson) {
+            return true
+        }
+
+        // Check for system CLI credentials as fallback
+        do {
+            if let systemCreds = try ClaudeCodeSyncService.shared.readSystemCredentials(),
+               !ClaudeCodeSyncService.shared.isTokenExpired(systemCreds) {
+                return true
+            }
+        } catch {
+            // Ignore errors, just means no system credentials
+        }
+
+        return false
+    }
+
+    /// Writes usage cache for CLI fallback script to read
+    /// Called by the app when usage data is refreshed
+    func writeUsageCache(utilization: Int, resetsAt: String?) {
+        let cacheFile = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".claude/usage-cache.txt")
+
+        let content = "\(utilization)\n\(resetsAt ?? "")"
+        try? content.write(to: cacheFile, atomically: true, encoding: .utf8)
     }
 }
 
@@ -451,7 +563,7 @@ enum StatuslineError: Error, LocalizedError {
         case .noActiveProfile:
             return "No active profile found. Please create or select a profile first."
         case .sessionKeyNotFound:
-            return "Session key not found in active profile. Please configure your session key first."
+            return "No credentials found. Please configure a session key or log in with Claude Code CLI."
         case .organizationNotConfigured:
             return "Organization not configured in active profile. Please select an organization in the app settings."
         }

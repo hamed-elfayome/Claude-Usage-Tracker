@@ -34,6 +34,7 @@ struct PersonalUsageView: View {
     @StateObject private var profileManager = ProfileManager.shared
     @State private var wizardState = WizardState()
     @State private var currentCredentials: ProfileCredentials?
+    @State private var hasCLICredentials = false
     private let apiService = ClaudeAPIService()
 
     var body: some View {
@@ -48,15 +49,19 @@ struct PersonalUsageView: View {
                 // Professional Status Card
                 HStack(spacing: DesignTokens.Spacing.medium) {
                     Circle()
-                        .fill(currentCredentials?.hasClaudeAI == true ? Color.green : Color.secondary.opacity(0.4))
+                        .fill(isConnected ? Color.green : Color.secondary.opacity(0.4))
                         .frame(width: DesignTokens.StatusDot.standard, height: DesignTokens.StatusDot.standard)
 
                     VStack(alignment: .leading, spacing: DesignTokens.Spacing.extraSmall) {
-                        Text(currentCredentials?.hasClaudeAI == true ? "general.connected".localized : "general.not_connected".localized)
+                        Text(isConnected ? "general.connected".localized : "general.not_connected".localized)
                             .font(DesignTokens.Typography.bodyMedium)
 
                         if let creds = currentCredentials, creds.hasClaudeAI {
                             Text(maskKey(creds.claudeSessionKey ?? ""))
+                                .font(DesignTokens.Typography.captionMono)
+                                .foregroundColor(.secondary)
+                        } else if hasCLICredentials {
+                            Text("Using Claude Code CLI credentials")
                                 .font(DesignTokens.Typography.captionMono)
                                 .foregroundColor(.secondary)
                         }
@@ -171,6 +176,7 @@ struct PersonalUsageView: View {
         .onAppear {
             loadExistingConfiguration()
             loadCurrentCredentials()
+            checkCLICredentials()
         }
         .onChange(of: profileManager.activeProfile?.id) { _, _ in
             // Reload when profile changes
@@ -204,6 +210,26 @@ struct PersonalUsageView: View {
     private func loadCurrentCredentials() {
         guard let profile = profileManager.activeProfile else { return }
         currentCredentials = try? ProfileStore.shared.loadProfileCredentials(profile.id)
+    }
+
+    private func checkCLICredentials() {
+        Task {
+            do {
+                if let creds = try ClaudeCodeSyncService.shared.readSystemCredentials(),
+                   !ClaudeCodeSyncService.shared.isTokenExpired(creds) {
+                    await MainActor.run {
+                        hasCLICredentials = true
+                    }
+                }
+            } catch {
+                // Ignore - no CLI credentials
+            }
+        }
+    }
+
+    /// Returns true if connected via session key OR CLI credentials
+    private var isConnected: Bool {
+        currentCredentials?.hasClaudeAI == true || hasCLICredentials
     }
 
     private func maskKey(_ key: String) -> String {

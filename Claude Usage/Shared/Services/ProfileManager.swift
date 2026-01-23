@@ -342,6 +342,15 @@ class ProfileManager: ObservableObject {
         // Update activeProfile reference if it's the same profile
         if activeProfile?.id == profileId {
             activeProfile = profiles[index]
+
+            // Write to cache file for statusline script (only for active profile)
+            let iso8601Formatter = ISO8601DateFormatter()
+            iso8601Formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            let resetsAtString = iso8601Formatter.string(from: usage.sessionResetTime)
+            StatuslineService.shared.writeUsageCache(
+                utilization: Int(usage.sessionPercentage),
+                resetsAt: resetsAtString
+            )
         }
 
         // Save to persistent storage

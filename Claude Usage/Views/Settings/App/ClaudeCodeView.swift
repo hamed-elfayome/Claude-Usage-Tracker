@@ -148,7 +148,7 @@ struct ClaudeCodeView: View {
                 Text("ui.requirements".localized)
                     .font(DesignTokens.Typography.sectionTitle)
 
-                Text("claudecode.requirement_sessionkey".localized)
+                Text("• Session key or Claude Code CLI credentials configured")
                     .font(DesignTokens.Typography.caption)
                     .foregroundColor(.secondary)
 
@@ -175,9 +175,9 @@ struct ClaudeCodeView: View {
             return
         }
 
-        // Validate: session key must be configured
+        // Validate: credentials must be configured (session key or CLI)
         guard StatuslineService.shared.hasValidSessionKey() else {
-            statusMessage = "claudecode.error_no_sessionkey".localized
+            statusMessage = "No credentials found. Please set up via Setup Wizard or add a session key."
             isSuccess = false
             return
         }
@@ -204,6 +204,17 @@ struct ClaudeCodeView: View {
 
             // Update Claude CLI settings.json
             try StatuslineService.shared.updateClaudeCodeSettings(enabled: true)
+
+            // Write initial cache with current usage data (for CLI fallback script)
+            if let usage = ProfileManager.shared.activeProfile?.claudeUsage {
+                let iso8601Formatter = ISO8601DateFormatter()
+                iso8601Formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                let resetsAtString = iso8601Formatter.string(from: usage.sessionResetTime)
+                StatuslineService.shared.writeUsageCache(
+                    utilization: Int(usage.sessionPercentage),
+                    resetsAt: resetsAtString
+                )
+            }
 
             statusMessage = "claudecode.success_applied".localized
             isSuccess = true
