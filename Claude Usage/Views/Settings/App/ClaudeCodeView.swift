@@ -10,6 +10,7 @@ import SwiftUI
 /// Claude Code statusline integration settings
 struct ClaudeCodeView: View {
     // Component visibility settings
+    @State private var showModel: Bool = SharedDataStore.shared.loadStatuslineShowModel()
     @State private var showDirectory: Bool = SharedDataStore.shared.loadStatuslineShowDirectory()
     @State private var showBranch: Bool = SharedDataStore.shared.loadStatuslineShowBranch()
     @State private var showUsage: Bool = SharedDataStore.shared.loadStatuslineShowUsage()
@@ -75,6 +76,9 @@ struct ClaudeCodeView: View {
                     .font(DesignTokens.Typography.sectionTitle)
 
                 VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
+                    Toggle("claudecode.component_model".localized, isOn: $showModel)
+                        .font(DesignTokens.Typography.body)
+
                     Toggle("claudecode.component_directory".localized, isOn: $showDirectory)
                         .font(DesignTokens.Typography.body)
 
@@ -169,7 +173,7 @@ struct ClaudeCodeView: View {
     /// Installs scripts, updates config file, and enables statusline in settings.json.
     private func applyConfiguration() {
         // Validate: at least one component must be selected
-        guard showDirectory || showBranch || showUsage else {
+        guard showModel || showDirectory || showBranch || showUsage else {
             statusMessage = "claudecode.error_no_components".localized
             isSuccess = false
             return
@@ -183,6 +187,7 @@ struct ClaudeCodeView: View {
         }
 
         // Save user preferences
+        SharedDataStore.shared.saveStatuslineShowModel(showModel)
         SharedDataStore.shared.saveStatuslineShowDirectory(showDirectory)
         SharedDataStore.shared.saveStatuslineShowBranch(showBranch)
         SharedDataStore.shared.saveStatuslineShowUsage(showUsage)
@@ -195,6 +200,7 @@ struct ClaudeCodeView: View {
 
             // Write configuration file
             try StatuslineService.shared.updateConfiguration(
+                showModel: showModel,
                 showDirectory: showDirectory,
                 showBranch: showBranch,
                 showUsage: showUsage,
@@ -228,6 +234,10 @@ struct ClaudeCodeView: View {
     /// Generates a preview of what the statusline will look like based on current selections.
     private func generatePreview() -> String {
         var parts: [String] = []
+
+        if showModel {
+            parts.append("Opus")  // Example model name
+        }
 
         if showDirectory {
             parts.append("claude-usage")
