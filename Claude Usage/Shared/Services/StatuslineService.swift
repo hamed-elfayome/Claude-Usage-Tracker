@@ -339,6 +339,7 @@ printf "%s\\n" "$output"
     // MARK: - Configuration
 
     func updateConfiguration(
+        showModel: Bool,
         showDirectory: Bool,
         showBranch: Bool,
         showUsage: Bool,
@@ -349,6 +350,7 @@ printf "%s\\n" "$output"
             .appendingPathComponent("statusline-config.txt")
 
         let config = """
+SHOW_MODEL=\(showModel ? "1" : "0")
 SHOW_DIRECTORY=\(showDirectory ? "1" : "0")
 SHOW_BRANCH=\(showBranch ? "1" : "0")
 SHOW_USAGE=\(showUsage ? "1" : "0")
