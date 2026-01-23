@@ -75,15 +75,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
 
 
     private func shouldShowSetupWizard() -> Bool {
-        // FORCE SHOW wizard on very first app launch (one-time)
-        // This ensures users see the migration option if they have old data
-        if !SharedDataStore.shared.hasShownWizardOnce() {
-            LoggingService.shared.log("AppDelegate: First launch - forcing wizard to show migration option")
-            return true
-        }
-
-        // After first launch, use normal checks:
-
         // activeProfile will always exist after loadProfiles() is called
         // (ProfileManager creates a default profile if none exist)
         guard let activeProfile = ProfileManager.shared.activeProfile else {
@@ -95,14 +86,22 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             return false
         }
 
-        // Check if valid CLI credentials exist in system Keychain
-        if hasValidSystemCLICredentials() {
-            LoggingService.shared.log("AppDelegate: Found valid CLI credentials, skipping wizard")
-            return false
+        // Check if this is the very first launch (wizard never shown)
+        if !SharedDataStore.shared.hasShownWizardOnce() {
+            // First launch - check for CLI credentials to auto-import
+            // This is the ONLY time we check system Keychain (to avoid repeated prompts)
+            if hasValidSystemCLICredentials() {
+                LoggingService.shared.log("AppDelegate: First launch - found valid CLI credentials, skipping wizard")
+                return false
+            }
+            LoggingService.shared.log("AppDelegate: First launch - showing wizard")
+            return true
         }
 
-        // No credentials found - show wizard
-        return true
+        // Wizard has been shown before, but user has no credentials
+        // Don't show wizard again and don't check Keychain (avoids prompts)
+        // User can manually configure credentials via Settings
+        return false
     }
 
     /// Checks if valid Claude Code CLI credentials exist in system Keychain

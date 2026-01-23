@@ -404,7 +404,10 @@ class ProfileManager: ObservableObject {
         }
 
         do {
-            try FileManager.default.createDirectory(at: groupContainerURL, withIntermediateDirectories: true)
+            // Only create directory if it doesn't exist (avoids repeated file access prompts)
+            if !FileManager.default.fileExists(atPath: groupContainerURL.path) {
+                try FileManager.default.createDirectory(at: groupContainerURL, withIntermediateDirectories: true)
+            }
             let fileURL = groupContainerURL.appendingPathComponent("claudeUsageData.json")
             let data = try encoder.encode(usage)
             try data.write(to: fileURL)
