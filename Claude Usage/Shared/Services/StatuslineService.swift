@@ -116,12 +116,14 @@ exit(1)
 config_file="$HOME/.claude/statusline-config.txt"
 if [ -f "$config_file" ]; then
   source "$config_file"
+  show_model=$SHOW_MODEL
   show_dir=$SHOW_DIRECTORY
   show_branch=$SHOW_BRANCH
   show_usage=$SHOW_USAGE
   show_bar=$SHOW_PROGRESS_BAR
   show_reset=$SHOW_RESET_TIME
 else
+  show_model=1
   show_dir=1
   show_branch=1
   show_usage=1
@@ -132,6 +134,7 @@ fi
 input=$(cat)
 current_dir_path=$(echo "$input" | grep -o '"current_dir":"[^"]*"' | sed 's/"current_dir":"//;s/"$//')
 current_dir=$(basename "$current_dir_path")
+model=$(echo "$input" | grep -o '"display_name":"[^"]*"' | sed 's/"display_name":"//;s/"$//')
 BLUE=$'\\033[0;34m'
 GREEN=$'\\033[0;32m'
 GRAY=$'\\033[0;90m'
@@ -162,6 +165,11 @@ if [ "$show_branch" = "1" ]; then
     branch=$(git branch --show-current 2>/dev/null)
     [ -n "$branch" ] && branch_text="${GREEN}⎇ ${branch}${RESET}"
   fi
+fi
+
+model_text=""
+if [ "$show_model" = "1" ] && [ -n "$model" ]; then
+  model_text="${YELLOW}${model}${RESET}"
 fi
 
 usage_text=""
@@ -254,13 +262,22 @@ fi
 output=""
 separator="${GRAY} │ ${RESET}"
 
-[ -n "$dir_text" ] && output="${dir_text}"
+# Model comes first
+[ -n "$model_text" ] && output="${model_text}"
 
+# Then directory
+if [ -n "$dir_text" ]; then
+  [ -n "$output" ] && output="${output}${separator}"
+  output="${output}${dir_text}"
+fi
+
+# Then branch
 if [ -n "$branch_text" ]; then
   [ -n "$output" ] && output="${output}${separator}"
   output="${output}${branch_text}"
 fi
 
+# Finally usage
 if [ -n "$usage_text" ]; then
   [ -n "$output" ] && output="${output}${separator}"
   output="${output}${usage_text}"
