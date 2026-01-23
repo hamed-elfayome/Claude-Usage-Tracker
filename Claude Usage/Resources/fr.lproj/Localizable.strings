@@ -321,6 +321,7 @@
 "claudecode.subtitle" = "Personnalisez l'affichage de votre ligne d'état du terminal";
 "claudecode.preview_label" = "Aperçu en Direct";
 "claudecode.preview_description" = "Voici comment votre ligne d'état apparaîtra dans Claude CLI";
+"claudecode.component_model" = "Nom du modèle";
 "claudecode.component_directory" = "Nom du répertoire";
 "claudecode.component_branch" = "Branche Git";
 "claudecode.component_usage" = "Statistiques d'utilisation";

@@ -323,6 +323,7 @@
 "claudecode.subtitle" = "Personalize a exibição da linha de status do seu terminal";
 "claudecode.preview_label" = "Visualização ao Vivo";
 "claudecode.preview_description" = "É assim que sua linha de status aparecerá no Claude CLI";
+"claudecode.component_model" = "Nome do modelo";
 "claudecode.component_directory" = "Nome do diretório";
 "claudecode.component_branch" = "Branch do Git";
 "claudecode.component_usage" = "Estatísticas de uso";

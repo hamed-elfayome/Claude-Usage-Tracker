@@ -325,6 +325,7 @@
 "claudecode.subtitle" = "Passen Sie Ihre Terminal-Statuszeilenanzeige an";
 "claudecode.preview_label" = "Live-Vorschau";
 "claudecode.preview_description" = "So wird Ihre Statuszeile in Claude CLI erscheinen";
+"claudecode.component_model" = "Modellname";
 "claudecode.component_directory" = "Verzeichnisname";
 "claudecode.component_branch" = "Git-Branch";
 "claudecode.component_usage" = "Nutzungsstatistiken";
