@@ -23,6 +23,19 @@ class SharedDataStore {
         static let statuslineShowUsage = "statuslineShowUsage"
         static let statuslineShowProgressBar = "statuslineShowProgressBar"
         static let statuslineShowResetTime = "statuslineShowResetTime"
+        static let statuslineUse24HourTime = "statuslineUse24HourTime"
+        static let statuslineShowUsageLabel = "statuslineShowUsageLabel"
+        static let statuslineShowResetLabel = "statuslineShowResetLabel"
+        static let statuslineColorMode = "statuslineColorMode"
+        static let statuslineSingleColorHex = "statuslineSingleColorHex"
+
+        // Widget Settings
+        static let smallWidgetMetric = "smallWidgetMetric"
+        static let mediumWidgetLeftMetric = "mediumWidgetLeftMetric"
+        static let mediumWidgetRightMetric = "mediumWidgetRightMetric"
+        static let widgetColorMode = "widgetColorMode"
+        static let widgetSingleColorHex = "widgetSingleColorHex"
+        static let extraUsageDisplayFormat = "extraUsageDisplayFormat"
 
         // Setup State
         static let hasCompletedSetup = "hasCompletedSetup"
@@ -39,9 +52,14 @@ class SharedDataStore {
     }
 
     init() {
-        // Use standard UserDefaults (app container)
-        self.defaults = UserDefaults.standard
-        LoggingService.shared.log("SharedDataStore: Using standard app container storage")
+        // Use App Groups UserDefaults for sharing data with widgets
+        if let groupDefaults = UserDefaults(suiteName: Constants.appGroupIdentifier) {
+            self.defaults = groupDefaults
+            LoggingService.shared.log("SharedDataStore: Using App Groups shared container")
+        } else {
+            self.defaults = UserDefaults.standard
+            LoggingService.shared.log("SharedDataStore: Fallback to standard app container (App Groups unavailable)")
+        }
     }
 
     // MARK: - Language & Localization
@@ -109,6 +127,184 @@ class SharedDataStore {
             return true
         }
         return defaults.bool(forKey: Keys.statuslineShowResetTime)
+    }
+
+    func saveStatuslineUse24HourTime(_ use24Hour: Bool) {
+        defaults.set(use24Hour, forKey: Keys.statuslineUse24HourTime)
+    }
+
+    func loadStatuslineUse24HourTime() -> Bool {
+        if defaults.object(forKey: Keys.statuslineUse24HourTime) == nil {
+            return false  // Default to 12-hour (matches system default)
+        }
+        return defaults.bool(forKey: Keys.statuslineUse24HourTime)
+    }
+
+    func saveStatuslineShowUsageLabel(_ show: Bool) {
+        defaults.set(show, forKey: Keys.statuslineShowUsageLabel)
+    }
+
+    func loadStatuslineShowUsageLabel() -> Bool {
+        if defaults.object(forKey: Keys.statuslineShowUsageLabel) == nil {
+            return true  // Default to showing labels
+        }
+        return defaults.bool(forKey: Keys.statuslineShowUsageLabel)
+    }
+
+    func saveStatuslineShowResetLabel(_ show: Bool) {
+        defaults.set(show, forKey: Keys.statuslineShowResetLabel)
+    }
+
+    func loadStatuslineShowResetLabel() -> Bool {
+        if defaults.object(forKey: Keys.statuslineShowResetLabel) == nil {
+            return true  // Default to showing labels
+        }
+        return defaults.bool(forKey: Keys.statuslineShowResetLabel)
+    }
+
+    func saveStatuslineColorMode(_ mode: StatuslineColorMode) {
+        defaults.set(mode.rawValue, forKey: Keys.statuslineColorMode)
+    }
+
+    func loadStatuslineColorMode() -> StatuslineColorMode {
+        guard let rawValue = defaults.string(forKey: Keys.statuslineColorMode),
+              let mode = StatuslineColorMode(rawValue: rawValue) else {
+            return .colored  // Default to colored
+        }
+        return mode
+    }
+
+    func saveStatuslineSingleColorHex(_ hex: String) {
+        defaults.set(hex, forKey: Keys.statuslineSingleColorHex)
+    }
+
+    func loadStatuslineSingleColorHex() -> String {
+        return defaults.string(forKey: Keys.statuslineSingleColorHex) ?? "#00BFFF"  // Default cyan
+    }
+
+    // MARK: - Widget Settings
+
+    func saveSmallWidgetMetric(_ metric: SmallWidgetMetric) {
+        defaults.set(metric.rawValue, forKey: Keys.smallWidgetMetric)
+        defaults.synchronize()  // Force sync before widget reads
+        // Also write to file for reliable cross-process sync
+        saveWidgetSettingsToFile()
+    }
+
+    func loadSmallWidgetMetric() -> SmallWidgetMetric {
+        guard let rawValue = defaults.string(forKey: Keys.smallWidgetMetric),
+              let metric = SmallWidgetMetric(rawValue: rawValue) else {
+            return .session  // Default to session
+        }
+        return metric
+    }
+
+    func saveMediumWidgetLeftMetric(_ metric: SmallWidgetMetric) {
+        defaults.set(metric.rawValue, forKey: Keys.mediumWidgetLeftMetric)
+        defaults.synchronize()  // Force sync before widget reads
+        saveWidgetSettingsToFile()
+    }
+
+    func loadMediumWidgetLeftMetric() -> SmallWidgetMetric {
+        guard let rawValue = defaults.string(forKey: Keys.mediumWidgetLeftMetric),
+              let metric = SmallWidgetMetric(rawValue: rawValue) else {
+            return .session  // Default left metric
+        }
+        return metric
+    }
+
+    func saveMediumWidgetRightMetric(_ metric: SmallWidgetMetric) {
+        defaults.set(metric.rawValue, forKey: Keys.mediumWidgetRightMetric)
+        defaults.synchronize()  // Force sync before widget reads
+        saveWidgetSettingsToFile()
+    }
+
+    func loadMediumWidgetRightMetric() -> SmallWidgetMetric {
+        guard let rawValue = defaults.string(forKey: Keys.mediumWidgetRightMetric),
+              let metric = SmallWidgetMetric(rawValue: rawValue) else {
+            return .weekly  // Default right metric
+        }
+        return metric
+    }
+
+    func saveWidgetColorMode(_ mode: WidgetColorMode) {
+        defaults.set(mode.rawValue, forKey: Keys.widgetColorMode)
+        defaults.synchronize()  // Force sync before widget reads
+        // Also write to file for reliable cross-process sync
+        saveWidgetSettingsToFile()
+    }
+
+    func loadWidgetColorMode() -> WidgetColorMode {
+        guard let rawValue = defaults.string(forKey: Keys.widgetColorMode),
+              let mode = WidgetColorMode(rawValue: rawValue) else {
+            return .multiColor  // Default to threshold-based colors
+        }
+        return mode
+    }
+
+    func saveWidgetSingleColorHex(_ hex: String) {
+        defaults.set(hex, forKey: Keys.widgetSingleColorHex)
+        defaults.synchronize()  // Force sync before widget reads
+        // Also write to file for reliable cross-process sync
+        saveWidgetSettingsToFile()
+    }
+
+    func loadWidgetSingleColorHex() -> String {
+        return defaults.string(forKey: Keys.widgetSingleColorHex) ?? "#00BFFF"  // Default cyan
+    }
+
+    func saveExtraUsageDisplayFormat(_ format: ExtraUsageDisplayFormat) {
+        defaults.set(format.rawValue, forKey: Keys.extraUsageDisplayFormat)
+        defaults.synchronize()  // Force sync before widget reads
+        // Also write to file for reliable cross-process sync
+        saveWidgetSettingsToFile()
+    }
+
+    func loadExtraUsageDisplayFormat() -> ExtraUsageDisplayFormat {
+        guard let rawValue = defaults.string(forKey: Keys.extraUsageDisplayFormat),
+              let format = ExtraUsageDisplayFormat(rawValue: rawValue) else {
+            return .percentage  // Default to showing percentage
+        }
+        return format
+    }
+
+    // MARK: - Widget Settings File Storage
+
+    /// Structure for widget settings file (reliable cross-process sync)
+    private struct WidgetSettingsFile: Codable {
+        let colorMode: String
+        let singleColorHex: String
+        let extraUsageFormat: String
+        let smallMetric: String
+        let mediumLeftMetric: String
+        let mediumRightMetric: String
+    }
+
+    /// Saves all widget settings to a file for reliable cross-process sync
+    private func saveWidgetSettingsToFile() {
+        guard let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: Constants.appGroupIdentifier) else {
+            LoggingService.shared.log("SharedDataStore: Cannot save widget settings - no group container")
+            return
+        }
+
+        let settings = WidgetSettingsFile(
+            colorMode: loadWidgetColorMode().rawValue,
+            singleColorHex: loadWidgetSingleColorHex(),
+            extraUsageFormat: loadExtraUsageDisplayFormat().rawValue,
+            smallMetric: loadSmallWidgetMetric().rawValue,
+            mediumLeftMetric: loadMediumWidgetLeftMetric().rawValue,
+            mediumRightMetric: loadMediumWidgetRightMetric().rawValue
+        )
+
+        let encoder = JSONEncoder()
+        do {
+            let data = try encoder.encode(settings)
+            let fileURL = containerURL.appendingPathComponent("widgetSettings.json")
+            try data.write(to: fileURL)
+            LoggingService.shared.log("SharedDataStore: Saved widget settings to file")
+        } catch {
+            LoggingService.shared.log("SharedDataStore: Failed to save widget settings: \(error)")
+        }
     }
 
     // MARK: - Setup State

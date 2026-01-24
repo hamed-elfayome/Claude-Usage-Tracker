@@ -68,6 +68,9 @@ class MenuBarManager: NSObject, ObservableObject {
     // Observer for display mode changes (single/multi profile)
     private var displayModeObserver: NSObjectProtocol?
 
+    // Observer for session reset events
+    private var sessionResetObserver: NSObjectProtocol?
+
     // MARK: - Image Caching (CPU Optimization)
     private var cachedImage: NSImage?
     private var cachedImageKey: String = ""
@@ -98,7 +101,8 @@ class MenuBarManager: NSObject, ObservableObject {
             let displayConfig: MenuBarIconConfiguration
             if !hasUsageCredentials {
                 displayConfig = MenuBarIconConfiguration(
-                    monochromeMode: config.monochromeMode,
+                    colorMode: config.colorMode,
+                    singleColorHex: config.singleColorHex,
                     showIconNames: config.showIconNames,
                     metrics: config.metrics.map { metric in
                         var updatedMetric = metric
@@ -183,6 +187,9 @@ class MenuBarManager: NSObject, ObservableObject {
 
         // Observe display mode changes (single/multi profile)
         observeDisplayModeChanges()
+
+        // Observe session reset events for immediate UI updates
+        observeSessionResetEvents()
     }
 
     func cleanup() {
@@ -210,6 +217,10 @@ class MenuBarManager: NSObject, ObservableObject {
         if let displayModeObserver = displayModeObserver {
             NotificationCenter.default.removeObserver(displayModeObserver)
             self.displayModeObserver = nil
+        }
+        if let sessionResetObserver = sessionResetObserver {
+            NotificationCenter.default.removeObserver(sessionResetObserver)
+            self.sessionResetObserver = nil
         }
         if let monitor = eventMonitor {
             NSEvent.removeMonitor(monitor)
@@ -339,7 +350,8 @@ class MenuBarManager: NSObject, ObservableObject {
         if !hasUsageCredentials {
             // Create config with no enabled metrics (will trigger default logo)
             displayConfig = MenuBarIconConfiguration(
-                monochromeMode: config.monochromeMode,
+                colorMode: config.colorMode,
+                singleColorHex: config.singleColorHex,
                 showIconNames: config.showIconNames,
                 metrics: config.metrics.map { metric in
                     var updatedMetric = metric
@@ -450,9 +462,13 @@ class MenuBarManager: NSObject, ObservableObject {
                     stopMonitoringForOutsideClicks()
                     // Update content view controller for new profile data
                     popover.contentViewController = createContentViewController()
-                    popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-                    currentPopoverButton = button
-                    startMonitoringForOutsideClicks()
+                    // Wrap in async to prevent layout recursion warning
+                    DispatchQueue.main.async { [weak self] in
+                        guard let self = self else { return }
+                        popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+                        self.currentPopoverButton = button
+                        self.startMonitoringForOutsideClicks()
+                    }
                 }
             } else {
                 // Popover not shown - show it
@@ -460,9 +476,13 @@ class MenuBarManager: NSObject, ObservableObject {
                 stopMonitoringForOutsideClicks()
                 // Update content view controller for current profile data
                 popover.contentViewController = createContentViewController()
-                popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-                currentPopoverButton = button
-                startMonitoringForOutsideClicks()
+                // Wrap in async to prevent layout recursion warning
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+                    self.currentPopoverButton = button
+                    self.startMonitoringForOutsideClicks()
+                }
             }
         }
     }
@@ -688,6 +708,43 @@ class MenuBarManager: NSObject, ObservableObject {
         }
     }
 
+    private func observeSessionResetEvents() {
+        // Observe session reset events for immediate UI updates
+        sessionResetObserver = NotificationCenter.default.addObserver(
+            forName: .sessionDidReset,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let self = self else { return }
+
+            // Extract the profile ID and usage from the notification
+            guard let userInfo = notification.userInfo,
+                  let profileId = userInfo["profileId"] as? UUID,
+                  let newUsage = userInfo["usage"] as? ClaudeUsage else {
+                return
+            }
+
+            LoggingService.shared.logInfo("MenuBarManager: Session reset detected for profile \(profileId)")
+
+            // Update UI based on display mode
+            if self.profileManager.displayMode == .single {
+                // Single profile mode - update only if this is the active profile
+                if profileId == self.profileManager.activeProfile?.id {
+                    self.usage = newUsage
+                    self.updateAllStatusBarIcons()
+                }
+            } else {
+                // Multi-profile mode - update all icons since any selected profile may have reset
+                self.updateAllStatusBarIcons()
+            }
+
+            // Recreate popover if it's currently showing to display fresh data
+            if self.popover?.isShown == true {
+                self.recreatePopover()
+            }
+        }
+    }
+
     private func setupMultiProfileMode() {
         let selectedProfiles = profileManager.getSelectedProfiles()
         let config = profileManager.multiProfileConfig
@@ -747,6 +804,15 @@ class MenuBarManager: NSObject, ObservableObject {
                         self.profileManager.saveClaudeUsage(newUsage, for: profile.id)
                         LoggingService.shared.log("MenuBarManager: Saved usage for profile '\(profile.name)' - session: \(newUsage.sessionPercentage)%")
 
+                        // CRITICAL: Check for notifications/resets for EACH profile, not just active
+                        // This ensures reset detection works in multi-profile mode
+                        NotificationManager.shared.checkAndNotify(
+                            usage: newUsage,
+                            profileId: profile.id,
+                            profileName: profile.name,
+                            settings: profile.notificationSettings
+                        )
+
                         // If this is the active profile, also update the manager's usage
                         if profile.id == self.profileManager.activeProfile?.id {
                             self.usage = newUsage
@@ -793,7 +859,8 @@ class MenuBarManager: NSObject, ObservableObject {
         let displayConfig: MenuBarIconConfiguration
         if !hasUsageCredentials {
             displayConfig = MenuBarIconConfiguration(
-                monochromeMode: config.monochromeMode,
+                colorMode: config.colorMode,
+                singleColorHex: config.singleColorHex,
                 showIconNames: config.showIconNames,
                 metrics: config.metrics.map { metric in
                     var updatedMetric = metric
@@ -869,6 +936,7 @@ class MenuBarManager: NSObject, ObservableObject {
                     if let profile = self.profileManager.activeProfile {
                         NotificationManager.shared.checkAndNotify(
                             usage: newUsage,
+                            profileId: profile.id,
                             profileName: profile.name,
                             settings: profile.notificationSettings
                         )

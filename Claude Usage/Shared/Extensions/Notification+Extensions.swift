@@ -19,4 +19,8 @@ extension Notification.Name {
 
     /// Posted when the display mode changes (single/multi profile)
     static let displayModeChanged = Notification.Name("displayModeChanged")
+
+    /// Posted when a session reset is detected (5-hour window expired)
+    /// userInfo contains: ["profileId": UUID, "usage": ClaudeUsage]
+    static let sessionDidReset = Notification.Name("sessionDidReset")
 }

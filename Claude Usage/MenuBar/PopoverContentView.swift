@@ -492,13 +492,22 @@ struct SmartUsageDashboard: View {
         profileManager.activeProfile?.iconConfig.showRemainingPercentage ?? false
     }
 
+    // Get color mode settings from active profile
+    private var colorMode: MenuBarColorMode {
+        profileManager.activeProfile?.iconConfig.colorMode ?? .multiColor
+    }
+
+    private var singleColorHex: String {
+        profileManager.activeProfile?.iconConfig.singleColorHex ?? "#00BFFF"
+    }
+
     // Check if API tracking is enabled globally
     private var isAPITrackingEnabled: Bool {
         DataStore.shared.loadAPITrackingEnabled()
     }
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 10) {
             // Primary Usage Card
             SmartUsageCard(
                 title: "menubar.session_usage".localized,
@@ -506,18 +515,22 @@ struct SmartUsageDashboard: View {
                 usedPercentage: usage.sessionPercentage,
                 showRemaining: showRemainingPercentage,
                 resetTime: usage.sessionResetTime,
-                isPrimary: true
+                isPrimary: true,
+                colorMode: colorMode,
+                singleColorHex: singleColorHex
             )
 
             // Secondary Usage Cards
-            HStack(spacing: 12) {
+            HStack(spacing: 8) {
                 SmartUsageCard(
                     title: "menubar.all_models".localized,
                     subtitle: "menubar.weekly".localized,
                     usedPercentage: usage.weeklyPercentage,
                     showRemaining: showRemainingPercentage,
                     resetTime: usage.weeklyResetTime,
-                    isPrimary: false
+                    isPrimary: false,
+                    colorMode: colorMode,
+                    singleColorHex: singleColorHex
                 )
 
                 if usage.opusWeeklyTokensUsed > 0 {
@@ -526,8 +539,10 @@ struct SmartUsageDashboard: View {
                         subtitle: "menubar.weekly".localized,
                         usedPercentage: usage.opusWeeklyPercentage,
                         showRemaining: showRemainingPercentage,
-                        resetTime: nil,
-                        isPrimary: false
+                        resetTime: usage.weeklyResetTime,
+                        isPrimary: false,
+                        colorMode: colorMode,
+                        singleColorHex: singleColorHex
                     )
                 }
 
@@ -538,7 +553,9 @@ struct SmartUsageDashboard: View {
                         usedPercentage: usage.sonnetWeeklyPercentage,
                         showRemaining: showRemainingPercentage,
                         resetTime: usage.sonnetWeeklyResetTime,
-                        isPrimary: false
+                        isPrimary: false,
+                        colorMode: colorMode,
+                        singleColorHex: singleColorHex
                     )
                 }
             }
@@ -551,7 +568,9 @@ struct SmartUsageDashboard: View {
                     usedPercentage: usedPercentage,
                     showRemaining: showRemainingPercentage,
                     resetTime: nil,
-                    isPrimary: false
+                    isPrimary: false,
+                    colorMode: colorMode,
+                    singleColorHex: singleColorHex
                 )
             }
 
@@ -560,11 +579,16 @@ struct SmartUsageDashboard: View {
                let apiUsage = apiUsage,
                let profile = profileManager.activeProfile,
                profile.hasAPIConsole {
-                APIUsageCard(apiUsage: apiUsage, showRemaining: showRemainingPercentage)
+                APIUsageCard(
+                    apiUsage: apiUsage,
+                    showRemaining: showRemainingPercentage,
+                    colorMode: colorMode,
+                    singleColorHex: singleColorHex
+                )
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
     }
 }
 
@@ -576,6 +600,8 @@ struct SmartUsageCard: View {
     let showRemaining: Bool
     let resetTime: Date?
     let isPrimary: Bool
+    var colorMode: MenuBarColorMode = .multiColor
+    var singleColorHex: String = "#00BFFF"
 
     /// Display percentage based on mode
     private var displayPercentage: Double {
@@ -593,12 +619,19 @@ struct SmartUsageCard: View {
         )
     }
 
-    /// Color based on status level
+    /// Color based on status level and color mode settings
     private var statusColor: Color {
-        switch statusLevel {
-        case .safe: return .green
-        case .moderate: return .orange
-        case .critical: return .red
+        switch colorMode {
+        case .multiColor:
+            switch statusLevel {
+            case .safe: return .green
+            case .moderate: return .orange
+            case .critical: return .red
+            }
+        case .monochrome:
+            return .primary
+        case .singleColor:
+            return Color(hex: singleColorHex) ?? .blue
         }
     }
 
@@ -611,42 +644,45 @@ struct SmartUsageCard: View {
     }
 
     var body: some View {
-        VStack(spacing: isPrimary ? 12 : 8) {
+        VStack(spacing: isPrimary ? 8 : 5) {
             // Header
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(.system(size: isPrimary ? 13 : 11, weight: .semibold))
+                        .font(.system(size: isPrimary ? 14 : 11, weight: .semibold))
                         .foregroundColor(.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
 
                     Text(subtitle)
-                        .font(.system(size: isPrimary ? 10 : 9, weight: .medium))
+                        .font(.system(size: isPrimary ? 11 : 9, weight: .medium))
                         .foregroundColor(.secondary)
+                        .lineLimit(1)
                 }
 
-                Spacer()
+                Spacer(minLength: 4)
 
                 // Status indicator
-                HStack(spacing: 4) {
+                HStack(spacing: 3) {
                     Image(systemName: statusIcon)
-                        .font(.system(size: isPrimary ? 12 : 10, weight: .medium))
+                        .font(.system(size: isPrimary ? 13 : 10, weight: .medium))
                         .foregroundColor(statusColor)
 
                     Text("\(Int(displayPercentage))%")
-                        .font(.system(size: isPrimary ? 16 : 14, weight: .bold, design: .monospaced))
+                        .font(.system(size: isPrimary ? 18 : 13, weight: .bold, design: .monospaced))
                         .foregroundColor(statusColor)
                 }
             }
 
             // Progress visualization
-            VStack(spacing: 6) {
+            VStack(spacing: 4) {
                 // Animated progress bar
                 GeometryReader { geometry in
                     ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 4)
+                        RoundedRectangle(cornerRadius: 3)
                             .fill(Color.secondary.opacity(0.15))
 
-                        RoundedRectangle(cornerRadius: 4)
+                        RoundedRectangle(cornerRadius: 3)
                             .fill(
                                 LinearGradient(
                                     colors: [statusColor, statusColor.opacity(0.8)],
@@ -655,26 +691,28 @@ struct SmartUsageCard: View {
                                 )
                             )
                             .frame(width: geometry.size.width * min(displayPercentage / 100.0, 1.0))
-                            .clipShape(RoundedRectangle(cornerRadius: 4))
+                            .clipShape(RoundedRectangle(cornerRadius: 3))
                             .animation(.easeInOut(duration: 0.8), value: displayPercentage)
                     }
                 }
-                .frame(height: 8)
+                .frame(height: isPrimary ? 8 : 6)
 
                 // Reset time information
                 if let reset = resetTime {
                     HStack {
                         Spacer()
-                        Text("menubar.resets_time".localized(with: reset.resetTimeString()))
-                            .font(.system(size: isPrimary ? 9 : 8, weight: .medium))
+                        Text(reset.resetTimeString())
+                            .font(.system(size: isPrimary ? 10 : 9, weight: .medium))
                             .foregroundColor(.secondary)
+                            .lineLimit(1)
                     }
                 }
             }
         }
-        .padding(isPrimary ? 16 : 12)
+        .padding(isPrimary ? 12 : 10)
+        .frame(minHeight: isPrimary ? nil : 65)
         .background(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: 10)
                 .fill(Color(nsColor: .controlBackgroundColor).opacity(0.4))
         )
     }
@@ -898,6 +936,8 @@ struct SmartActionButton: View {
 struct APIUsageCard: View {
     let apiUsage: APIUsage
     let showRemaining: Bool
+    var colorMode: MenuBarColorMode = .multiColor
+    var singleColorHex: String = "#00BFFF"
 
     /// Display percentage based on mode
     private var displayPercentage: Double {
@@ -915,12 +955,19 @@ struct APIUsageCard: View {
         )
     }
 
-    /// Color based on status level
+    /// Color based on status level and color mode settings
     private var usageColor: Color {
-        switch statusLevel {
-        case .safe: return .green
-        case .moderate: return .orange
-        case .critical: return .red
+        switch colorMode {
+        case .multiColor:
+            switch statusLevel {
+            case .safe: return .green
+            case .moderate: return .orange
+            case .critical: return .red
+            }
+        case .monochrome:
+            return .primary
+        case .singleColor:
+            return Color(hex: singleColorHex) ?? .blue
         }
     }
 

@@ -345,11 +345,11 @@
 "claudecode.component_progressbar" = "Progress bar";
 "claudecode.component_resettime" = "Reset time";
 "claudecode.requirement_sessionkey" = "• Session key configured in Credentials → Claude.ai tab";
-"claudecode.requirement_restart" = "• Restart Claude CLI after applying changes";
+"claudecode.requirement_restart" = "• Changes appear after 1-2 prompts, or restart Claude Code";
 "claudecode.error_no_components" = "Please select at least one component to display";
 "claudecode.error_no_sessionkey" = "Session key not configured. Please set it in the Personal Usage tab first.";
-"claudecode.success_applied" = "Configuration applied! Restart Claude CLI to see changes.";
-"claudecode.success_disabled" = "Statusline disabled. Restart Claude CLI.";
+"claudecode.success_applied" = "Configuration applied! Changes appear after 1-2 prompts.";
+"claudecode.success_disabled" = "Statusline disabled. Changes appear after 1-2 prompts.";
 "claudecode.preview_no_components" = "No components selected";
 
 /* ==================== */
@@ -427,6 +427,7 @@
 "appearance.multiprofile_locked_title" = "Appearance Settings Locked";
 "appearance.multiprofile_locked_description" = "These settings are disabled while Multi-Profile Display is active. Each profile uses its own appearance in multi-profile mode.";
 "appearance.disable_multiprofile" = "Turn Off Multi-Profile Display";
+"appearance.color_mode" = "Color Mode";
 
 /* ==================== */
 /* MARK: - Setup Wizard (Additional) */

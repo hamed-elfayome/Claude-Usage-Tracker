@@ -121,34 +121,95 @@ if [ -f "$config_file" ]; then
   show_usage=$SHOW_USAGE
   show_bar=$SHOW_PROGRESS_BAR
   show_reset=$SHOW_RESET_TIME
+  use_24h=$USE_24_HOUR_TIME
+  show_usage_label=$SHOW_USAGE_LABEL
+  show_reset_label=$SHOW_RESET_LABEL
+  color_mode=$COLOR_MODE
+  single_color=$SINGLE_COLOR
 else
   show_dir=1
   show_branch=1
   show_usage=1
   show_bar=1
   show_reset=1
+  use_24h=0
+  show_usage_label=1
+  show_reset_label=1
+  color_mode="colored"
+  single_color="#00BFFF"
 fi
 
 input=$(cat)
 current_dir_path=$(echo "$input" | grep -o '"current_dir":"[^"]*"' | sed 's/"current_dir":"//;s/"$//')
 current_dir=$(basename "$current_dir_path")
-BLUE=$'\\033[0;34m'
-GREEN=$'\\033[0;32m'
-GRAY=$'\\033[0;90m'
-YELLOW=$'\\033[0;33m'
+
+# Function to convert hex color to ANSI escape code
+hex_to_ansi() {
+  local hex=$1
+  hex=${hex#\\#}
+
+  local r=$((16#${hex:0:2}))
+  local g=$((16#${hex:2:2}))
+  local b=$((16#${hex:4:2}))
+
+  printf '\\033[38;2;%d;%d;%dm' "$r" "$g" "$b"
+}
+
+# Set colors based on mode
 RESET=$'\\033[0m'
 
-# 10-level gradient: dark green → deep red
-LEVEL_1=$'\\033[38;5;22m'   # dark green
-LEVEL_2=$'\\033[38;5;28m'   # soft green
-LEVEL_3=$'\\033[38;5;34m'   # medium green
-LEVEL_4=$'\\033[38;5;100m'  # green-yellowish dark
-LEVEL_5=$'\\033[38;5;142m'  # olive/yellow-green dark
-LEVEL_6=$'\\033[38;5;178m'  # muted yellow
-LEVEL_7=$'\\033[38;5;172m'  # muted yellow-orange
-LEVEL_8=$'\\033[38;5;166m'  # darker orange
-LEVEL_9=$'\\033[38;5;160m'  # dark red
-LEVEL_10=$'\\033[38;5;124m' # deep red
+if [ "$color_mode" = "monochrome" ]; then
+  # Monochrome mode - no colors
+  BLUE=""
+  GREEN=""
+  GRAY=""
+  YELLOW=""
+  LEVEL_1=""
+  LEVEL_2=""
+  LEVEL_3=""
+  LEVEL_4=""
+  LEVEL_5=""
+  LEVEL_6=""
+  LEVEL_7=""
+  LEVEL_8=""
+  LEVEL_9=""
+  LEVEL_10=""
+elif [ "$color_mode" = "singleColor" ]; then
+  # Single color mode - use user's chosen color for everything
+  single_ansi=$(hex_to_ansi "$single_color")
+  BLUE=$single_ansi
+  GREEN=$single_ansi
+  GRAY=$single_ansi
+  YELLOW=$single_ansi
+  LEVEL_1=$single_ansi
+  LEVEL_2=$single_ansi
+  LEVEL_3=$single_ansi
+  LEVEL_4=$single_ansi
+  LEVEL_5=$single_ansi
+  LEVEL_6=$single_ansi
+  LEVEL_7=$single_ansi
+  LEVEL_8=$single_ansi
+  LEVEL_9=$single_ansi
+  LEVEL_10=$single_ansi
+else
+  # Colored mode (default) - use full color palette
+  BLUE=$'\\033[0;34m'
+  GREEN=$'\\033[0;32m'
+  GRAY=$'\\033[0;90m'
+  YELLOW=$'\\033[0;33m'
+
+  # 10-level gradient: dark green → deep red
+  LEVEL_1=$'\\033[38;5;22m'   # dark green
+  LEVEL_2=$'\\033[38;5;28m'   # soft green
+  LEVEL_3=$'\\033[38;5;34m'   # medium green
+  LEVEL_4=$'\\033[38;5;100m'  # green-yellowish dark
+  LEVEL_5=$'\\033[38;5;142m'  # olive/yellow-green dark
+  LEVEL_6=$'\\033[38;5;178m'  # muted yellow
+  LEVEL_7=$'\\033[38;5;172m'  # muted yellow-orange
+  LEVEL_8=$'\\033[38;5;166m'  # darker orange
+  LEVEL_9=$'\\033[38;5;160m'  # dark red
+  LEVEL_10=$'\\033[38;5;124m' # deep red
+fi
 
 # Build components (without separators)
 dir_text=""
@@ -229,25 +290,48 @@ if [ "$show_usage" = "1" ]; then
         epoch=$(date -ju -f "%Y-%m-%dT%H:%M:%S" "$iso_time" "+%s" 2>/dev/null)
 
         if [ -n "$epoch" ]; then
-          # Detect system time format (12h vs 24h) from macOS locale preferences
-          time_format=$(defaults read -g AppleICUForce24HourTime 2>/dev/null)
-          if [ "$time_format" = "1" ]; then
+          # Round to nearest minute to prevent pinballing (e.g., 6:59:45 -> 7:00)
+          seconds_part=$((epoch % 60))
+          if [ "$seconds_part" -ge 30 ]; then
+            epoch=$((epoch + (60 - seconds_part)))
+          else
+            epoch=$((epoch - seconds_part))
+          fi
+
+          # Use user's time format preference from config
+          if [ "$use_24h" = "1" ]; then
             # 24-hour format
             reset_time=$(date -r "$epoch" "+%H:%M" 2>/dev/null)
           else
             # 12-hour format (default)
             reset_time=$(date -r "$epoch" "+%I:%M %p" 2>/dev/null)
           fi
-          [ -n "$reset_time" ] && reset_time_display=$(printf " → Reset: %s" "$reset_time")
+          if [ "$show_reset_label" = "1" ]; then
+            [ -n "$reset_time" ] && reset_time_display=$(printf " → Reset: %s" "$reset_time")
+          else
+            [ -n "$reset_time" ] && reset_time_display=$(printf " → %s" "$reset_time")
+          fi
         fi
       fi
 
-      usage_text="${usage_color}Usage: ${utilization}%${progress_bar}${reset_time_display}${RESET}"
+      if [ "$show_usage_label" = "1" ]; then
+        usage_text="${usage_color}Usage: ${utilization}%${progress_bar}${reset_time_display}${RESET}"
+      else
+        usage_text="${usage_color}${utilization}%${progress_bar}${reset_time_display}${RESET}"
+      fi
     else
-      usage_text="${YELLOW}Usage: ~${RESET}"
+      if [ "$show_usage_label" = "1" ]; then
+        usage_text="${YELLOW}Usage: ~${RESET}"
+      else
+        usage_text="${YELLOW}~${RESET}"
+      fi
     fi
   else
-    usage_text="${YELLOW}Usage: ~${RESET}"
+    if [ "$show_usage_label" = "1" ]; then
+      usage_text="${YELLOW}Usage: ~${RESET}"
+    else
+      usage_text="${YELLOW}~${RESET}"
+    fi
   fi
 fi
 
@@ -319,6 +403,8 @@ printf "%s\\n" "$output"
             [.posixPermissions: 0o755],
             ofItemAtPath: bashDestination.path
         )
+
+        print("[StatuslineService] Bash script installed to: \(bashDestination.path)")
     }
 
     /// Removes the session key from the statusline Swift script
@@ -343,10 +429,25 @@ printf "%s\\n" "$output"
         showBranch: Bool,
         showUsage: Bool,
         showProgressBar: Bool,
-        showResetTime: Bool
+        showResetTime: Bool,
+        use24HourTime: Bool = false,
+        showUsageLabel: Bool = true,
+        showResetLabel: Bool = true,
+        colorMode: StatuslineColorMode = .colored,
+        singleColorHex: String = "#00BFFF"
     ) throws {
         let configPath = Constants.ClaudePaths.claudeDirectory
             .appendingPathComponent("statusline-config.txt")
+
+        let colorModeString: String
+        switch colorMode {
+        case .colored:
+            colorModeString = "colored"
+        case .monochrome:
+            colorModeString = "monochrome"
+        case .singleColor:
+            colorModeString = "singleColor"
+        }
 
         let config = """
 SHOW_DIRECTORY=\(showDirectory ? "1" : "0")
@@ -354,9 +455,18 @@ SHOW_BRANCH=\(showBranch ? "1" : "0")
 SHOW_USAGE=\(showUsage ? "1" : "0")
 SHOW_PROGRESS_BAR=\(showProgressBar ? "1" : "0")
 SHOW_RESET_TIME=\(showResetTime ? "1" : "0")
+USE_24_HOUR_TIME=\(use24HourTime ? "1" : "0")
+SHOW_USAGE_LABEL=\(showUsageLabel ? "1" : "0")
+SHOW_RESET_LABEL=\(showResetLabel ? "1" : "0")
+COLOR_MODE=\(colorModeString)
+SINGLE_COLOR=\(singleColorHex)
 """
 
         try config.write(to: configPath, atomically: true, encoding: .utf8)
+
+        // Debug: Log what was written
+        print("[StatuslineService] Config written to: \(configPath.path)")
+        print("[StatuslineService] Config content:\n\(config)")
     }
 
     /// Enables or disables statusline in Claude Code settings.json

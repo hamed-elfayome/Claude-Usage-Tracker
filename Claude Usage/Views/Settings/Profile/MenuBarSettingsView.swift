@@ -1,45 +1,30 @@
 //
-//  AppearanceSettingsView.swift
-//  Claude Usage - Menu Bar Appearance Settings
+//  MenuBarSettingsView.swift
+//  Claude Usage - Menu Bar Metrics Configuration
 //
-//  Created by Claude Code on 2025-12-27.
+//  Configure which metrics appear in the menu bar
 //
 
 import SwiftUI
 
-/// Menu bar icon appearance and customization with multi-metric support
-struct AppearanceSettingsView: View {
+/// Menu bar metrics configuration
+struct MenuBarSettingsView: View {
     @ObservedObject private var profileManager = ProfileManager.shared
     @State private var configuration: MenuBarIconConfiguration = .default
-    @State private var saveDebounceTimer: Timer?
-
-    private var isMultiProfileMode: Bool {
-        profileManager.displayMode == .multi
-    }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: DesignTokens.Spacing.section) {
                 // Page Header
                 SettingsPageHeader(
-                    title: "appearance.title".localized,
-                    subtitle: "appearance.subtitle".localized
+                    title: "Menu Bar",
+                    subtitle: "Configure which metrics appear in your menu bar"
                 )
 
-                // Multi-profile mode warning
-                if isMultiProfileMode {
-                    MultiProfileModeWarningCard(
-                        onDisableMultiProfile: {
-                            profileManager.updateDisplayMode(.single)
-                            NotificationCenter.default.post(name: .displayModeChanged, object: nil)
-                        }
-                    )
-                }
-
-                // Global Settings
+                // Menu Bar Appearance
                 SettingsSectionCard(
-                    title: "appearance.global_settings".localized,
-                    subtitle: "appearance.global_subtitle".localized
+                    title: "Appearance Style",
+                    subtitle: "Choose appearance settings for the menu bar"
                 ) {
                     VStack(alignment: .leading, spacing: DesignTokens.Spacing.cardPadding) {
                         ColorModeSelector(
@@ -61,27 +46,13 @@ struct AppearanceSettingsView: View {
                                 }
                             )
                         )
-
-                        SettingToggle(
-                            title: "appearance.show_remaining_title".localized,
-                            description: "appearance.show_remaining_description".localized,
-                            isOn: Binding(
-                                get: { configuration.showRemainingPercentage },
-                                set: { newValue in
-                                    configuration.showRemainingPercentage = newValue
-                                    saveConfiguration()
-                                }
-                            )
-                        )
                     }
                 }
-                .disabled(isMultiProfileMode)
-                .opacity(isMultiProfileMode ? 0.5 : 1.0)
 
                 // Metrics Configuration
                 SettingsSectionCard(
-                    title: "appearance.menu_bar_metrics".localized,
-                    subtitle: "appearance.metrics_subtitle".localized
+                    title: "Menu Bar Metrics",
+                    subtitle: "Choose which metrics to display"
                 ) {
                     VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
                         // Info message when all metrics are disabled
@@ -152,8 +123,6 @@ struct AppearanceSettingsView: View {
                         }
                     }
                 }
-                .disabled(isMultiProfileMode)
-                .opacity(isMultiProfileMode ? 0.5 : 1.0)
 
                 Spacer()
             }
@@ -176,12 +145,9 @@ struct AppearanceSettingsView: View {
     // MARK: - Helper Methods
 
     private func saveConfiguration() {
-        // Allow all metrics to be disabled - will show default app logo
-        // No minimum enforcement needed
-
         // Save to active profile
         guard let profileId = profileManager.activeProfile?.id else {
-            LoggingService.shared.logError("Cannot save appearance: no active profile")
+            LoggingService.shared.logError("Cannot save menu bar config: no active profile")
             return
         }
 
@@ -191,68 +157,13 @@ struct AppearanceSettingsView: View {
         NotificationCenter.default.post(name: .menuBarIconConfigChanged, object: nil)
 
         let enabledCount = configuration.metrics.filter { $0.isEnabled }.count
-        LoggingService.shared.log("Saved icon configuration to profile (enabled: \(enabledCount))")
-    }
-}
-
-// MARK: - Multi-Profile Mode Warning Card
-
-struct MultiProfileModeWarningCard: View {
-    let onDisableMultiProfile: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
-            HStack(alignment: .top, spacing: DesignTokens.Spacing.small) {
-                Image(systemName: "lock.fill")
-                    .font(.system(size: 16))
-                    .foregroundColor(.orange)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("appearance.multiprofile_locked_title".localized)
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.primary)
-
-                    Text("appearance.multiprofile_locked_description".localized)
-                        .font(.system(size: 11))
-                        .foregroundColor(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-
-                Spacer()
-            }
-
-            Button(action: onDisableMultiProfile) {
-                HStack(spacing: 6) {
-                    Image(systemName: "arrow.uturn.backward")
-                        .font(.system(size: 10))
-                    Text("appearance.disable_multiprofile".localized)
-                        .font(.system(size: 11, weight: .medium))
-                }
-                .foregroundColor(.orange)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(
-                    RoundedRectangle(cornerRadius: 6)
-                        .stroke(Color.orange, lineWidth: 1)
-                )
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(DesignTokens.Spacing.cardPadding)
-        .background(
-            RoundedRectangle(cornerRadius: DesignTokens.Radius.card)
-                .fill(Color.orange.opacity(0.1))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: DesignTokens.Radius.card)
-                .stroke(Color.orange.opacity(0.3), lineWidth: 1)
-        )
+        LoggingService.shared.log("Saved menu bar configuration to profile (enabled: \(enabledCount))")
     }
 }
 
 // MARK: - Previews
 
 #Preview {
-    AppearanceSettingsView()
+    MenuBarSettingsView()
         .frame(width: 520, height: 600)
 }
