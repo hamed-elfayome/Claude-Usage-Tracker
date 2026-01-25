@@ -137,7 +137,17 @@ input=$(cat)
 current_dir_path=$(echo "$input" | grep -o '"current_dir":"[^"]*"' | sed 's/"current_dir":"//;s/"$//')
 current_dir=$(basename "$current_dir_path")
 model=$(echo "$input" | grep -o '"display_name":"[^"]*"' | sed 's/"display_name":"//;s/"$//')
-context_pct=$(echo "$input" | grep -o '"used_percentage":[0-9.]*' | head -1 | sed 's/"used_percentage"://')
+
+# Extract context window data and calculate percentage
+context_size=$(echo "$input" | grep -o '"context_window_size":[0-9]*' | sed 's/"context_window_size"://')
+input_tokens=$(echo "$input" | grep -o '"total_input_tokens":[0-9]*' | sed 's/"total_input_tokens"://')
+output_tokens=$(echo "$input" | grep -o '"total_output_tokens":[0-9]*' | sed 's/"total_output_tokens"://')
+if [ -n "$context_size" ] && [ "$context_size" -gt 0 ] && [ -n "$input_tokens" ]; then
+  total_tokens=$((input_tokens + output_tokens))
+  context_pct=$((total_tokens * 100 / context_size))
+else
+  context_pct=""
+fi
 BLUE=$'\\033[0;34m'
 GREEN=$'\\033[0;32m'
 GRAY=$'\\033[0;90m'
