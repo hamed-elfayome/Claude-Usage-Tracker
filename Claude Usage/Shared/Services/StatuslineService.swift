@@ -139,12 +139,20 @@ current_dir=$(basename "$current_dir_path")
 model=$(echo "$input" | grep -o '"display_name":"[^"]*"' | sed 's/"display_name":"//;s/"$//')
 
 # Extract context window data and calculate percentage
+# Use cache_read_input_tokens as it represents actual context being used
 context_size=$(echo "$input" | grep -o '"context_window_size":[0-9]*' | sed 's/"context_window_size"://')
-input_tokens=$(echo "$input" | grep -o '"total_input_tokens":[0-9]*' | sed 's/"total_input_tokens"://')
-output_tokens=$(echo "$input" | grep -o '"total_output_tokens":[0-9]*' | sed 's/"total_output_tokens"://')
-if [ -n "$context_size" ] && [ "$context_size" -gt 0 ] && [ -n "$input_tokens" ]; then
-  total_tokens=$((input_tokens + output_tokens))
-  context_pct=$((total_tokens * 100 / context_size))
+cache_read=$(echo "$input" | grep -o '"cache_read_input_tokens":[0-9]*' | sed 's/"cache_read_input_tokens"://')
+cache_create=$(echo "$input" | grep -o '"cache_creation_input_tokens":[0-9]*' | sed 's/"cache_creation_input_tokens"://')
+current_input=$(echo "$input" | grep -o '"current_usage":{[^}]*"input_tokens":[0-9]*' | grep -o '"input_tokens":[0-9]*' | sed 's/"input_tokens"://')
+if [ -n "$context_size" ] && [ "$context_size" -gt 0 ]; then
+  # Current context ≈ cached content + new input
+  cache_read=${cache_read:-0}
+  cache_create=${cache_create:-0}
+  current_input=${current_input:-0}
+  current_context=$((cache_read + cache_create + current_input))
+  context_pct=$((current_context * 100 / context_size))
+  # Cap at 100% for display
+  [ "$context_pct" -gt 100 ] && context_pct=100
 else
   context_pct=""
 fi
