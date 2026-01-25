@@ -90,18 +90,6 @@ final class SharedDataStoreTests: XCTestCase {
         XCTAssertTrue(sharedDataStore.loadStatuslineShowModel())
     }
 
-    func testStatuslineShowContext() {
-        // Test default value (false - unlike other settings)
-        XCTAssertFalse(sharedDataStore.loadStatuslineShowContext())
-
-        // Test save and load
-        sharedDataStore.saveStatuslineShowContext(true)
-        XCTAssertTrue(sharedDataStore.loadStatuslineShowContext())
-
-        sharedDataStore.saveStatuslineShowContext(false)
-        XCTAssertFalse(sharedDataStore.loadStatuslineShowContext())
-    }
-
     // MARK: - Setup Status Tests
 
     func testHasCompletedSetup() {

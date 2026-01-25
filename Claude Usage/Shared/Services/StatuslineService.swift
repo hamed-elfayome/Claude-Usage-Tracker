@@ -117,7 +117,6 @@ config_file="$HOME/.claude/statusline-config.txt"
 if [ -f "$config_file" ]; then
   source "$config_file"
   show_model=$SHOW_MODEL
-  show_context=$SHOW_CONTEXT
   show_dir=$SHOW_DIRECTORY
   show_branch=$SHOW_BRANCH
   show_usage=$SHOW_USAGE
@@ -125,7 +124,6 @@ if [ -f "$config_file" ]; then
   show_reset=$SHOW_RESET_TIME
 else
   show_model=1
-  show_context=0
   show_dir=1
   show_branch=1
   show_usage=1
@@ -138,24 +136,6 @@ current_dir_path=$(echo "$input" | grep -o '"current_dir":"[^"]*"' | sed 's/"cur
 current_dir=$(basename "$current_dir_path")
 model=$(echo "$input" | grep -o '"display_name":"[^"]*"' | sed 's/"display_name":"//;s/"$//')
 
-# Extract context window data and calculate percentage
-# Use cache_read_input_tokens as it represents actual context being used
-context_size=$(echo "$input" | grep -o '"context_window_size":[0-9]*' | sed 's/"context_window_size"://')
-cache_read=$(echo "$input" | grep -o '"cache_read_input_tokens":[0-9]*' | sed 's/"cache_read_input_tokens"://')
-cache_create=$(echo "$input" | grep -o '"cache_creation_input_tokens":[0-9]*' | sed 's/"cache_creation_input_tokens"://')
-current_input=$(echo "$input" | grep -o '"current_usage":{[^}]*"input_tokens":[0-9]*' | grep -o '"input_tokens":[0-9]*' | sed 's/"input_tokens"://')
-if [ -n "$context_size" ] && [ "$context_size" -gt 0 ]; then
-  # Current context ≈ cached content + new input
-  cache_read=${cache_read:-0}
-  cache_create=${cache_create:-0}
-  current_input=${current_input:-0}
-  current_context=$((cache_read + cache_create + current_input))
-  context_pct=$((current_context * 100 / context_size))
-  # Cap at 100% for display
-  [ "$context_pct" -gt 100 ] && context_pct=100
-else
-  context_pct=""
-fi
 BLUE=$'\\033[0;34m'
 GREEN=$'\\033[0;32m'
 GRAY=$'\\033[0;90m'
@@ -191,38 +171,6 @@ fi
 model_text=""
 if [ "$show_model" = "1" ] && [ -n "$model" ]; then
   model_text="${YELLOW}${model}${RESET}"
-fi
-
-context_text=""
-if [ "$show_context" = "1" ] && [ -n "$context_pct" ]; then
-  # Convert to integer for comparison (remove decimal)
-  context_int=${context_pct%.*}
-  [ -z "$context_int" ] && context_int=0
-
-  # Use same 10-level color gradient as usage
-  if [ "$context_int" -le 10 ]; then
-    context_color="$LEVEL_1"
-  elif [ "$context_int" -le 20 ]; then
-    context_color="$LEVEL_2"
-  elif [ "$context_int" -le 30 ]; then
-    context_color="$LEVEL_3"
-  elif [ "$context_int" -le 40 ]; then
-    context_color="$LEVEL_4"
-  elif [ "$context_int" -le 50 ]; then
-    context_color="$LEVEL_5"
-  elif [ "$context_int" -le 60 ]; then
-    context_color="$LEVEL_6"
-  elif [ "$context_int" -le 70 ]; then
-    context_color="$LEVEL_7"
-  elif [ "$context_int" -le 80 ]; then
-    context_color="$LEVEL_8"
-  elif [ "$context_int" -le 90 ]; then
-    context_color="$LEVEL_9"
-  else
-    context_color="$LEVEL_10"
-  fi
-
-  context_text="${context_color}Ctx: ${context_int}%${RESET}"
 fi
 
 usage_text=""
@@ -330,12 +278,6 @@ if [ -n "$branch_text" ]; then
   output="${output}${branch_text}"
 fi
 
-# Then context (before usage)
-if [ -n "$context_text" ]; then
-  [ -n "$output" ] && output="${output}${separator}"
-  output="${output}${context_text}"
-fi
-
 # Finally usage
 if [ -n "$usage_text" ]; then
   [ -n "$output" ] && output="${output}${separator}"
@@ -416,7 +358,6 @@ printf "%s\\n" "$output"
 
     func updateConfiguration(
         showModel: Bool,
-        showContext: Bool,
         showDirectory: Bool,
         showBranch: Bool,
         showUsage: Bool,
@@ -428,7 +369,6 @@ printf "%s\\n" "$output"
 
         let config = """
 SHOW_MODEL=\(showModel ? "1" : "0")
-SHOW_CONTEXT=\(showContext ? "1" : "0")
 SHOW_DIRECTORY=\(showDirectory ? "1" : "0")
 SHOW_BRANCH=\(showBranch ? "1" : "0")
 SHOW_USAGE=\(showUsage ? "1" : "0")

@@ -324,7 +324,6 @@
 "claudecode.preview_label" = "Visualização ao Vivo";
 "claudecode.preview_description" = "É assim que sua linha de status aparecerá no Claude CLI";
 "claudecode.component_model" = "Nome do modelo";
-"claudecode.component_context" = "Porcentagem de contexto";
 "claudecode.component_directory" = "Nome do diretório";
 "claudecode.component_branch" = "Branch do Git";
 "claudecode.component_usage" = "Estatísticas de uso";
