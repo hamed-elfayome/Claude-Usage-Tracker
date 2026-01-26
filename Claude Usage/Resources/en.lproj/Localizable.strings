@@ -701,3 +701,37 @@
 "wizard.migrate_description_short" = "Import your old profiles data from previous app version";
 "wizard.skip_migration" = "Skip";
 "wizard.migration_skipped" = "Skipped";
+
+/* ==================== */
+/* MARK: - Usage History */
+/* ==================== */
+"section.history_title" = "History";
+"section.history_desc" = "View usage history";
+"history.title" = "Usage History";
+"history.subtitle" = "Track your usage over time";
+"history.tab.session" = "Sessions";
+"history.tab.weekly" = "Weekly";
+"history.tab.billing" = "Billing";
+"history.chart.session_title" = "Session Usage History";
+"history.chart.weekly_title" = "Weekly Usage Trend";
+"history.chart.billing_title" = "Monthly API Spend";
+"history.chart.now" = "Now";
+"history.empty.session_title" = "No Session History";
+"history.empty.session_description" = "Session usage will be recorded after each 5-hour reset";
+"history.empty.weekly_title" = "No Weekly History";
+"history.empty.weekly_description" = "Weekly usage will be recorded after each Monday reset";
+"history.empty.billing_title" = "No Billing History";
+"history.empty.billing_description" = "Billing data will be recorded after each monthly reset";
+"history.list.title" = "History Records";
+"history.list.count" = "%d records";
+"history.list.empty" = "No records yet. History will be recorded automatically at each reset.";
+"history.list.more" = "+%d more records";
+"history.export_button" = "Export JSON";
+"history.clear_button" = "Clear";
+"history.no_profile" = "No active profile";
+"history.reset_type.session" = "Session Reset";
+"history.reset_type.weekly" = "Weekly Reset";
+"history.reset_type.billing" = "Billing Cycle";
+"history.label.total" = "Total";
+"history.label.spent" = "Spent";
+"history.label.session" = "Session";

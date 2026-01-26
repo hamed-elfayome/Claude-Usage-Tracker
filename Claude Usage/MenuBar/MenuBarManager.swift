@@ -19,6 +19,11 @@ class MenuBarManager: NSObject, ObservableObject {
     // Track when refresh was last triggered (for distinguishing user vs auto refresh)
     private var lastRefreshTriggerTime: Date = .distantPast
 
+    // Track last known reset times for history recording
+    private var lastKnownSessionResetTime: [UUID: Date] = [:]
+    private var lastKnownWeeklyResetTime: [UUID: Date] = [:]
+    private var lastKnownAPIResetTime: [UUID: Date] = [:]
+
     // Popover for beautiful SwiftUI interface
     private var popover: NSPopover?
 
@@ -739,10 +744,30 @@ class MenuBarManager: NSObject, ObservableObject {
             // Fetch usage for each selected profile
             for profile in selectedProfiles {
                 LoggingService.shared.log("MenuBarManager: Fetching usage for profile '\(profile.name)'")
+
+                // Capture previous usage for reset detection
+                let previousUsage = profile.claudeUsage
+
                 do {
                     let newUsage = try await fetchUsageForProfile(profile)
 
                     await MainActor.run {
+                        // Check for resets before updating usage
+                        self.checkAndRecordSessionReset(
+                            profileId: profile.id,
+                            previousUsage: previousUsage,
+                            newUsage: newUsage
+                        )
+                        self.checkAndRecordWeeklyReset(
+                            profileId: profile.id,
+                            previousUsage: previousUsage,
+                            newUsage: newUsage
+                        )
+
+                        // Record periodic snapshots for history charts
+                        UsageHistoryService.shared.recordSessionPeriodic(for: profile.id, usage: newUsage)
+                        UsageHistoryService.shared.recordWeeklyPeriodic(for: profile.id, usage: newUsage)
+
                         // Save to profile
                         self.profileManager.saveClaudeUsage(newUsage, for: profile.id)
                         LoggingService.shared.log("MenuBarManager: Saved usage for profile '\(profile.name)' - session: \(newUsage.sessionPercentage)%")
@@ -844,6 +869,11 @@ class MenuBarManager: NSObject, ObservableObject {
                 self.isRefreshing = true
             }
 
+            // Capture previous usage BEFORE fetching new data (for reset detection)
+            let previousUsage = await MainActor.run { self.usage }
+            let previousAPIUsage = await MainActor.run { self.apiUsage }
+            let currentProfileId = await MainActor.run { self.profileManager.activeProfile?.id }
+
             // Fetch usage and status in parallel
             async let usageResult = apiService.fetchUsageData()
             async let statusResult = statusService.fetchStatus()
@@ -855,6 +885,24 @@ class MenuBarManager: NSObject, ObservableObject {
                 let newUsage = try await usageResult
 
                 await MainActor.run {
+                    // Check for resets before updating usage
+                    if let profileId = currentProfileId {
+                        self.checkAndRecordSessionReset(
+                            profileId: profileId,
+                            previousUsage: previousUsage,
+                            newUsage: newUsage
+                        )
+                        self.checkAndRecordWeeklyReset(
+                            profileId: profileId,
+                            previousUsage: previousUsage,
+                            newUsage: newUsage
+                        )
+
+                        // Record periodic snapshots for history charts
+                        UsageHistoryService.shared.recordSessionPeriodic(for: profileId, usage: newUsage)
+                        UsageHistoryService.shared.recordWeeklyPeriodic(for: profileId, usage: newUsage)
+                    }
+
                     self.usage = newUsage
 
                     // Save to active profile instead of global DataStore
@@ -922,6 +970,15 @@ class MenuBarManager: NSObject, ObservableObject {
                 do {
                     let newAPIUsage = try await apiService.fetchAPIUsageData(organizationId: orgId, apiSessionKey: apiSessionKey)
                     await MainActor.run {
+                        // Check for billing cycle reset before updating usage
+                        if let profileId = currentProfileId {
+                            self.checkAndRecordBillingCycleReset(
+                                profileId: profileId,
+                                previousUsage: previousAPIUsage,
+                                newUsage: newAPIUsage
+                            )
+                        }
+
                         self.apiUsage = newAPIUsage
 
                         // Save to active profile instead of global DataStore
@@ -953,6 +1010,130 @@ class MenuBarManager: NSObject, ObservableObject {
     /// Shows a brief success notification for user-triggered refreshes
     private func showSuccessNotification() {
         NotificationManager.shared.sendSuccessNotification()
+    }
+
+    // MARK: - Reset Detection for History Recording
+
+    /// Normalizes a date to minute precision for comparison (ignores seconds)
+    private func normalizeToMinute(_ date: Date) -> Date {
+        let calendar = Calendar.current
+        let components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date)
+        return calendar.date(from: components) ?? date
+    }
+
+    /// Checks if a session reset occurred and records a snapshot if so
+    private func checkAndRecordSessionReset(
+        profileId: UUID,
+        previousUsage: ClaudeUsage?,
+        newUsage: ClaudeUsage
+    ) {
+        let lastKnown = lastKnownSessionResetTime[profileId]
+        let newResetTime = normalizeToMinute(newUsage.sessionResetTime)
+
+        // First time seeing this profile - just record the reset time
+        if lastKnown == nil {
+            lastKnownSessionResetTime[profileId] = newResetTime
+            return
+        }
+
+        // Normalize the last known time for comparison
+        let normalizedLastKnown = normalizeToMinute(lastKnown!)
+
+        // Check if reset time changed significantly (indicates a reset occurred)
+        if newResetTime > normalizedLastKnown {
+            // Reset detected! Record snapshot of the previous usage
+            LoggingService.shared.log("History: Session reset detected for profile \(profileId.uuidString.prefix(8)). Old: \(normalizedLastKnown), New: \(newResetTime)")
+            if let prevUsage = previousUsage {
+                Task { @MainActor in
+                    UsageHistoryService.shared.recordSessionReset(
+                        for: profileId,
+                        previousUsage: prevUsage,
+                        resetTime: normalizedLastKnown
+                    )
+                }
+            }
+        }
+
+        // Update the last known reset time
+        lastKnownSessionResetTime[profileId] = newResetTime
+    }
+
+    /// Checks if a weekly reset occurred and records a snapshot if so
+    private func checkAndRecordWeeklyReset(
+        profileId: UUID,
+        previousUsage: ClaudeUsage?,
+        newUsage: ClaudeUsage
+    ) {
+        let lastKnown = lastKnownWeeklyResetTime[profileId]
+        let newResetTime = normalizeToMinute(newUsage.weeklyResetTime)
+
+        // First time seeing this profile - just record the reset time
+        if lastKnown == nil {
+            lastKnownWeeklyResetTime[profileId] = newResetTime
+            LoggingService.shared.log("History: Initial weekly reset time for profile \(profileId.uuidString.prefix(8)): \(newResetTime)")
+            return
+        }
+
+        // Normalize the last known time for comparison
+        let normalizedLastKnown = normalizeToMinute(lastKnown!)
+
+        // Check if reset time changed significantly (indicates a reset occurred)
+        // Only trigger if the new reset time is in the future compared to last known
+        if newResetTime > normalizedLastKnown {
+            // Reset detected! Record snapshot of the previous usage
+            LoggingService.shared.log("History: Weekly reset detected for profile \(profileId.uuidString.prefix(8)). Old: \(normalizedLastKnown), New: \(newResetTime)")
+            if let prevUsage = previousUsage {
+                Task { @MainActor in
+                    UsageHistoryService.shared.recordWeeklyReset(
+                        for: profileId,
+                        previousUsage: prevUsage,
+                        resetTime: normalizedLastKnown  // The reset time that was crossed
+                    )
+                }
+            }
+        }
+
+        // Update the last known reset time
+        lastKnownWeeklyResetTime[profileId] = newResetTime
+    }
+
+    /// Checks if a billing cycle reset occurred and records a snapshot if so
+    private func checkAndRecordBillingCycleReset(
+        profileId: UUID,
+        previousUsage: APIUsage?,
+        newUsage: APIUsage
+    ) {
+        let lastKnown = lastKnownAPIResetTime[profileId]
+        let newResetTime = normalizeToMinute(newUsage.resetsAt)
+
+        // First time seeing this profile - just record the reset time
+        if lastKnown == nil {
+            lastKnownAPIResetTime[profileId] = newResetTime
+            LoggingService.shared.log("History: Initial API reset time for profile \(profileId.uuidString.prefix(8)): \(newResetTime)")
+            return
+        }
+
+        // Normalize the last known time for comparison
+        let normalizedLastKnown = normalizeToMinute(lastKnown!)
+
+        // Check if reset time changed significantly (indicates a reset occurred)
+        // Only trigger if the new reset time is in the future compared to last known
+        if newResetTime > normalizedLastKnown {
+            // Reset detected! Record snapshot of the previous usage
+            LoggingService.shared.log("History: Billing cycle reset detected for profile \(profileId.uuidString.prefix(8)). Old: \(normalizedLastKnown), New: \(newResetTime)")
+            if let prevUsage = previousUsage {
+                Task { @MainActor in
+                    UsageHistoryService.shared.recordBillingCycleReset(
+                        for: profileId,
+                        previousUsage: prevUsage,
+                        resetTime: normalizedLastKnown  // The reset time that was crossed
+                    )
+                }
+            }
+        }
+
+        // Update the last known reset time
+        lastKnownAPIResetTime[profileId] = newResetTime
     }
 
     @objc private func preferencesClicked() {
