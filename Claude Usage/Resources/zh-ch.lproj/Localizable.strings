@@ -1,0 +1,703 @@
+/*
+   Localizable.strings
+   Claude Usage Tracker
+
+   简体中文 (简体中文)
+   Created by Claude Code on 2026-01-27.
+*/
+
+/* ==================== */
+/* MARK: - App Info */
+/* ==================== */
+"app.name" = "Claude Usage Tracker";
+"app.window.main" = "Claude Usage";
+"app.window.settings" = "设置";
+"app.window.github_prompt" = "支持 Claude Usage Tracker";
+
+/* ==================== */
+/* MARK: - Common Actions */
+/* ==================== */
+"common.ok" = "确定";
+"common.cancel" = "取消";
+"common.save" = "保存";
+"common.delete" = "删除";
+"common.done" = "完成";
+"common.close" = "关闭";
+"common.refresh" = "刷新";
+"common.settings" = "设置";
+"common.quit" = "退出";
+"common.validate" = "验证";
+"common.yes" = "是";
+"common.no" = "否";
+
+/* ==================== */
+/* MARK: - Settings Navigation */
+/* ==================== */
+"settings.title" = "设置";
+"settings.personal_usage" = "个人使用";
+"settings.personal_usage.description" = "跟踪您的 Claude.ai 免费套餐使用情况";
+"settings.api_billing" = "API 付费";
+"settings.api_billing.description" = "监控 API Console 付费和积分";
+"settings.general" = "通用";
+"settings.general.description" = "App 行为和偏好";
+"settings.appearance" = "外观";
+"settings.appearance.description" = "菜单栏图标自定义";
+"settings.session_management" = "会话管理";
+"settings.session_management.description" = "自动会话管理";
+"settings.notifications" = "通知";
+"settings.notifications.description" = "使用警报和通知";
+"settings.claude_cli" = "Claude CLI";
+"settings.claude_cli.description" = "Terminal statusline 集成";
+"settings.updates" = "更新";
+"settings.updates.description" = "保持您的应用为最新版本";
+"settings.about" = "关于";
+"settings.about.description" = "应用信息和致谢";
+
+/* ==================== */
+/* MARK: - Menu Bar */
+/* ==================== */
+"menubar.claude_usage" = "Claude 使用情况";
+"menubar.session_usage" = "会话使用量";
+"menubar.weekly_usage" = "每周";
+"menubar.opus_usage" = "Opus";
+"menubar.sonnet_usage" = "Sonnet";
+"menubar.extra_usage" = "额外使用量";
+"menubar.api_credits" = "API 积分";
+"menubar.5_hour_window" = "5小时滚动窗口";
+"menubar.all_models" = "所有模型";
+"menubar.weekly" = "每周";
+"menubar.anthropic_console" = "Anthropic API 控制台";
+"menubar.used" = "已使用";
+"menubar.remaining" = "剩余";
+"menubar.resets_time" = "重置时间 %@";
+"menubar.click_status" = "点击打开 status.claude.com";
+
+/* ==================== */
+/* MARK: - Usage Status */
+/* ==================== */
+"usage.high_session" = "会话使用量过高";
+"usage.high_session.desc" = "考虑休息一下以重置您的会话窗口";
+"usage.weekly_approaching" = "接近每周限制";
+"usage.weekly_approaching.desc" = "您接近每周令牌限制";
+"usage.efficient" = "使用高效";
+"usage.efficient.desc" = "管理令牌消耗做得很好！";
+
+/* ==================== */
+/* MARK: - General Settings */
+/* ==================== */
+"general.launch_at_login" = "登录时启动";
+"general.launch_at_login.description" = "登录 Mac 时自动启动 Claude Usage Tracker";
+"general.refresh_interval" = "刷新间隔";
+"general.refresh_interval.description" = "较短的间隔提供更实时的数据，但可能影响电池寿命";
+"general.check_overage_limit" = "检查额外使用限制";
+"general.check_overage_limit.description" = "获取并显示月度费用和超额限制信息";
+"general.language.title" = "语言";
+"general.language.select" = "选择语言";
+"general.language.restart_note" = "语言更改将在重启应用后生效";
+"general.language.restart_app" = "重启应用以生效";
+
+/* ==================== */
+/* MARK: - Appearance Settings */
+/* ==================== */
+"appearance.menu_bar_icons" = "菜单栏图标";
+"appearance.menu_bar_icons.subtitle" = "自定义菜单栏中显示的指标";
+"appearance.show_icon_names" = "显示图标名称";
+"appearance.show_icon_names.description" = "在图标旁边显示指标标签 (S:, W:, API:)";
+"appearance.monochrome_mode" = "单色（自适应）";
+"appearance.monochrome_mode.description" = "图标自动适应明暗模式";
+"appearance.metric_configuration" = "指标配置";
+"appearance.drag_to_reorder" = "拖拽重新排序图标。禁用的指标将从菜单栏隐藏。";
+
+/* ==================== */
+/* MARK: - Session Management */
+/* ==================== */
+"session.auto_start" = "重置时自动启动会话";
+"session.auto_start.description" = "当您的会话重置为 0% 时自动向 Claude 发送 'Hi'。这使您的会话始终就绪，无需手动干预。";
+"session.enable_auto_start" = "启用自动启动会话";
+"session.beta_badge" = "测试版";
+
+/* ==================== */
+/* MARK: - Notifications Settings */
+/* ==================== */
+"notifications.enable" = "启用通知";
+"notifications.enable.description" = "接近使用限制时接收警报";
+"notifications.alert_thresholds" = "警报阈值";
+"notifications.threshold.warning" = "警告";
+"notifications.threshold.high" = "使用量过高";
+"notifications.threshold.critical" = "严重";
+"notifications.threshold.session_reset" = "会话重置";
+
+/* ==================== */
+/* MARK: - Setup Wizard */
+/* ==================== */
+"setup.welcome.title" = "欢迎使用 Claude Usage Tracker";
+"setup.welcome.subtitle" = "配置您的 API 访问以开始跟踪使用情况";
+"setup.step.get_session_key" = "获取您的会话密钥";
+"setup.step.get_session_key.description" = "您需要从 claude.ai 提取您的会话密钥";
+"setup.step.enter_session_key" = "输入您的会话密钥";
+"setup.open_claude_ai" = "打开 claude.ai";
+"setup.show_instructions" = "显示说明";
+"setup.hide_instructions" = "隐藏";
+"setup.instruction.step1" = "打开开发者工具 (F12 或 Cmd+Option+I)";
+"setup.instruction.step2" = "前往 应用/存储 → Cookies → https://claude.ai";
+"setup.instruction.step3" = "找到 'sessionKey' cookie";
+"setup.instruction.step4" = "双击其值并复制 (Cmd+C)";
+"setup.paste_session_key" = "粘贴您复制的 sessionKey 值";
+"setup.auto_start_session" = "重置时自动启动会话";
+"setup.auto_start_session.description" = "当您的会话重置为 0% 时自动向 Claude 3.5 Haiku 发送 'Hi'。这使您的会话始终就绪，无需手动干预。";
+"setup.enable_auto_start" = "启用自动启动会话";
+"setup.menubar_appearance" = "菜单栏外观";
+"setup.choose_icon_style" = "选择您偏好的图标样式";
+"setup.monochrome_adaptive" = "单色（自适应）";
+"setup.validation.success" = "成功连接到组织";
+
+/* ==================== */
+/* MARK: - About */
+/* ==================== */
+"about.version" = "版本 %@";
+"about.check_updates" = "检查更新";
+"about.created_by" = "创建者";
+"about.contributors" = "贡献者 (%d)";
+"about.contributors_loading" = "贡献者";
+"about.links" = "链接";
+"about.star_github" = "在 GitHub 上标星";
+"about.report_issue" = "报告问题";
+"about.send_feedback" = "发送反馈";
+"about.mit_license" = "MIT 许可证 • 开源";
+"about.copyright" = "© 2025 Hamed Elfayome";
+
+/* ==================== */
+/* MARK: - Updates Settings */
+/* ==================== */
+"settings.updates.title" = "软件更新";
+"settings.updates.current_version" = "当前版本";
+"settings.updates.last_check" = "上次检查";
+"settings.updates.never_checked" = "从未检查";
+"settings.updates.automatic" = "自动更新";
+"settings.updates.automatic.description" = "每天自动检查并下载更新";
+"settings.updates.check_now" = "检查更新";
+"settings.updates.info.title" = "安全更新";
+"settings.updates.info.description" = "所有更新在安装前都经过加密签名和验证";
+
+/* ==================== */
+/* MARK: - Icon Styles */
+/* ==================== */
+"icon_style.battery" = "电池";
+"icon_style.percentage" = "百分比";
+"icon_style.text_only" = "仅文本";
+"icon_style.minimal" = "极简";
+
+/* ==================== */
+/* MARK: - Metric Types */
+/* ==================== */
+"metric.session_usage" = "会话使用量";
+"metric.session_usage.description" = "5小时滚动窗口使用量";
+"metric.week_usage" = "每周使用量";
+"metric.week_usage.description" = "每周令牌使用量（所有模型）";
+"metric.api_credits" = "API 积分";
+"metric.api_credits.description" = "API Console 付费积分";
+
+/* ==================== */
+/* MARK: - Display Modes */
+/* ==================== */
+"display.remaining_credits" = "剩余积分";
+"display.remaining_credits.description" = "仅显示剩余积分";
+"display.used_amount" = "已使用金额";
+"display.used_amount.description" = "仅显示已使用金额";
+"display.both_used_total" = "两者（已使用/总计）";
+"display.both_used_total.description" = "同时显示已使用和总计";
+"display.percentage" = "百分比";
+"display.percentage.description" = "显示为百分比（例如 60%）";
+"display.token_count" = "令牌数量";
+"display.token_count.description" = "显示令牌数量（例如 600K/1M）";
+
+/* ==================== */
+/* MARK: - Notification Messages */
+/* ==================== */
+"notification.session_warning.title" = "会话使用量警告";
+"notification.session_warning.message" = "您已使用 5小时会话限制的 %@。%@";
+"notification.session_critical.title" = "会话使用量严重";
+"notification.session_critical.message" = "您已使用 5小时会话限制的 %@！%@";
+"notification.session_reset.title" = "会话重置";
+"notification.session_reset.message" = "您的会话已重置！您现在有一个全新的 5小时会话可用。";
+"notification.session_auto_started.title" = "会话自动启动";
+"notification.session_auto_started.message" = "新会话已自动初始化。您全新的 5小时会话已就绪！";
+"notification.session_auto_start_failed.title" = "自动启动失败";
+"notification.session_auto_start_failed.message" = "自动启动会话失败。请检查您的凭据。";
+"notification.weekly_warning.title" = "每周使用量警告";
+"notification.weekly_warning.message" = "您已使用每周限制的 %@。%@";
+"notification.weekly_critical.title" = "每周使用量严重";
+"notification.weekly_critical.message" = "您已使用每周限制的 %@！%@";
+"notification.opus_warning.title" = "Opus 使用量警告";
+"notification.opus_warning.message" = "您已使用每周 Opus 限制的 %@。%@";
+"notification.opus_critical.title" = "Opus 使用量严重";
+"notification.opus_critical.message" = "您已使用每周 Opus 限制的 %@！%@";
+"notification.enabled.title" = "通知已启用";
+"notification.enabled.message" = "您现在将在 75%、90% 和 95% 使用阈值时接收警报，以及会话重置通知。";
+
+/* ==================== */
+/* MARK: - Error Messages */
+/* ==================== */
+"error.session_key_not_found" = "未找到会话密钥";
+"error.session_key_not_found.suggestion" = "请在设置中配置您的 Claude 会话密钥";
+"error.session_key_invalid" = "无效的会话密钥";
+"error.session_key_invalid.suggestion" = "请检查您的会话密钥格式。它应该以 'sk-ant-' 开头";
+"error.network_unavailable" = "无网络连接";
+"error.network_unavailable.suggestion" = "请检查您的网络连接并重试";
+"error.network_timeout" = "请求超时";
+"error.network_timeout.suggestion" = "请重试。如果问题持续存在，请检查 Claude 的状态 status.claude.com";
+"error.api_unauthorized" = "未授权访问";
+"error.api_unauthorized.suggestion" = "您的会话密钥可能已过期。请在设置中更新它";
+"error.api_server_error" = "服务器错误";
+"error.api_server_error.suggestion" = "服务器遇到错误。请稍后重试";
+"error.api_rate_limited" = "超出速率限制";
+"error.api_rate_limited.suggestion" = "请稍等片刻后重试";
+
+/* ==================== */
+/* MARK: - Validation Messages */
+/* ==================== */
+"validation.session_key_too_short" = "会话密钥过短";
+"validation.session_key_too_long" = "会话密钥过长";
+"validation.invalid_prefix" = "无效的会话密钥前缀";
+"validation.invalid_characters" = "会话密钥包含无效字符";
+"validation.invalid_format" = "无效的会话密钥格式";
+"validation.contains_whitespace" = "会话密钥包含空白字符";
+
+/* ==================== */
+/* MARK: - GitHub Star Prompt */
+/* ==================== */
+"github.enjoy_app" = "喜欢 Claude Usage Tracker 吗？";
+"github.star_description" = "如果这个应用对您有帮助，请在 GitHub 上给它标星！这有助于其他人发现项目并激励持续开发。";
+"github.star_button" = "在 GitHub 上标星";
+"github.maybe_later" = "稍后再说";
+"github.never_show" = "不再显示";
+
+/* ==================== */
+/* MARK: - API Settings */
+/* ==================== */
+"api.enable_tracking" = "启用 API 跟踪";
+"api.enable_tracking.description" = "跟踪您的 Anthropic API Console 积分和支出";
+"api.session_key_placeholder" = "sk-ant-api03-...";
+"api.configure" = "配置 API 跟踪";
+"api.configure.description" = "监控您的 Anthropic Console API 使用情况和积分";
+"api.instructions" = "要跟踪 API 使用情况，您需要提供您的 API 会话密钥：";
+"api.instruction_step1" = "登录 console.anthropic.com";
+"api.instruction_step2" = "打开开发者工具 (F12 或 Cmd+Option+I)";
+"api.instruction_step3" = "前往 应用 → Cookies → https://console.anthropic.com";
+"api.instruction_step4" = "找到 'sessionKey' 并复制其值";
+
+/* ==================== */
+/* MARK: - Personal Usage */
+/* ==================== */
+"personal.configure" = "配置个人使用";
+"personal.configure.description" = "跟踪您在 claude.ai 上的免费套餐使用情况";
+"personal.status" = "状态";
+"personal.session_key" = "会话密钥";
+"personal.session_key.configured" = "已配置";
+"personal.session_key.not_configured" = "未配置";
+"personal.reconfigure" = "重新配置";
+"personal.remove" = "移除会话密钥";
+
+/* ==================== */
+/* MARK: - Claude Code (CLI) */
+/* ==================== */
+"claudecode.title" = "Claude CLI 集成";
+"claudecode.description" = "在您的终端状态行中显示使用信息";
+"claudecode.coming_soon" = "即将推出";
+"claudecode.features_description" = "与 Claude Code CLI 的终端状态行显示集成将在未来更新中推出。";
+
+/* ==================== */
+/* MARK: - Additional UI Labels */
+/* ==================== */
+"ui.app_behavior" = "应用行为";
+"ui.usage_tracking" = "使用跟踪";
+"ui.global_settings" = "全局设置";
+"ui.menu_bar_metrics" = "菜单栏指标";
+"ui.quick_actions" = "快速操作";
+"ui.how_it_works" = "工作原理";
+"ui.display_components" = "显示组件";
+"ui.requirements" = "要求";
+"ui.live_preview" = "实时预览";
+"ui.updates_realtime" = "实时更新";
+"ui.organization" = "组织";
+"ui.icon_style" = "图标样式";
+"ui.display_mode" = "显示模式";
+"ui.at_least_one_metric" = "至少必须启用一个指标";
+
+/* ==================== */
+/* MARK: - Session Management (Additional) */
+/* ==================== */
+"session.subtitle" = "自动会话初始化和维护";
+"session.auto_description_line1" = "• 检测您的会话何时重置为 0%";
+"session.auto_description_line2" = "• 向 Claude 3.5 Haiku 发送 'Hi'（最便宜的模型）";
+"session.auto_description_line3" = "• 使用不会出现在您历史记录中的临时聊天";
+"session.auto_description_line4" = "• 新的 5小时会话立即准备就绪";
+
+/* ==================== */
+/* MARK: - Claude CLI (Additional) */
+/* ==================== */
+"claudecode.subtitle" = "自定义您的终端状态行显示";
+"claudecode.preview_label" = "实时预览";
+"claudecode.preview_description" = "这是您的状态行在 Claude CLI 中的显示方式";
+"claudecode.component_directory" = "目录名称";
+"claudecode.component_branch" = "Git 分支";
+"claudecode.component_usage" = "使用统计";
+"claudecode.component_progressbar" = "进度条";
+"claudecode.component_resettime" = "重置时间";
+"claudecode.requirement_sessionkey" = "• 在凭据 → Claude.ai 标签页中配置了会话密钥";
+"claudecode.requirement_restart" = "• 应用更改后重启 Claude CLI";
+"claudecode.error_no_components" = "请至少选择一个要显示的组件";
+"claudecode.error_no_sessionkey" = "会话密钥未配置。请先在个人使用标签页中设置。";
+"claudecode.success_applied" = "配置已应用！重启 Claude CLI 查看更改。";
+"claudecode.success_disabled" = "状态行已禁用。重启 Claude CLI。";
+"claudecode.preview_no_components" = "未选择组件";
+
+/* ==================== */
+/* MARK: - API Billing (Additional) */
+/* ==================== */
+"api.title" = "API 付费";
+"api.subtitle" = "监控 API 使用情况和支出";
+"api.enable_billing_tracking" = "启用 API 付费跟踪";
+"api.enable_billing_description" = "监控您的 API 使用情况、当前支出和剩余预付积分";
+"api.label_api_session_key" = "API 会话密钥";
+"api.placeholder_api_session_key" = "sk-ant-api03-...";
+"api.help_api_session_key" = "您来自 console.anthropic.com 的会话密钥";
+"api.button_fetch_organizations" = "获取组织";
+"api.button_fetching" = "获取中...";
+"api.button_save_configuration" = "保存配置";
+"api.success_organizations_found" = "找到 %d 个组织";
+"api.error_fetch_failed" = "获取组织失败：%@";
+"api.success_configuration_saved" = "API 配置保存成功";
+
+/* ==================== */
+/* MARK: - Personal Usage (Additional) */
+/* ==================== */
+"personal.title" = "个人使用";
+"personal.subtitle" = "跟踪您的 Claude.ai 使用情况和会话";
+"personal.label_session_key" = "会话密钥";
+"personal.placeholder_session_key" = "sk-ant-sid-...";
+"personal.help_session_key" = "粘贴您从 claude.ai DevTools 获取的 sessionKey cookie";
+"personal.button_test_connection" = "测试连接";
+"personal.button_save_and_continue" = "保存并继续";
+"personal.button_remove_key" = "移除密钥";
+"personal.success_connected" = "成功连接到组织";
+"personal.confirm_remove_title" = "移除会话密钥？";
+"personal.confirm_remove_message" = "这将停止跟踪您的个人使用情况。";
+
+/* ==================== */
+/* MARK: - Error Presenter */
+/* ==================== */
+"error.code_label" = "错误代码：";
+"error.what_to_do" = "如何处理：";
+"error.occurred_at" = "发生时间：%@";
+
+/* ==================== */
+/* MARK: - General Settings (Additional) */
+/* ==================== */
+"general.slider_realtime" = "实时更新";
+"general.slider_frequent" = "频繁更新";
+"general.slider_balanced" = "平衡模式";
+"general.slider_efficient" = "节能高效";
+"general.slider_battery_saver" = "电池保护";
+"general.slider_fast" = "快速";
+"general.slider_balanced_label" = "平衡";
+"general.slider_battery_saver_label" = "电池保护";
+"general.available_languages" = "可用语言 (%d)";
+
+/* ==================== */
+/* MARK: - Badges */
+/* ==================== */
+"badge.new" = "新功能";
+"badge.beta" = "测试版";
+"badge.pro" = "专业版";
+
+/* ==================== */
+/* MARK: - Appearance (Additional) */
+/* ==================== */
+"appearance.title" = "菜单栏外观";
+"appearance.subtitle" = "自定义您的菜单栏图标和指标";
+"appearance.global_settings" = "全局设置";
+"appearance.menu_bar_metrics" = "菜单栏指标";
+"appearance.monochrome_title" = "单色";
+"appearance.monochrome_description" = "使用自适应颜色而不是状态颜色（绿色/橙色/红色）";
+"appearance.show_labels_title" = "显示图标标签";
+"appearance.show_labels_description" = "为每个指标显示前缀标签（S:, W:, API:）";
+"appearance.show_remaining_title" = "显示剩余百分比";
+"appearance.show_remaining_description" = "显示剩余容量而不是已使用百分比（类似 macOS 电池）";
+"appearance.multiprofile_locked_title" = "外观设置已锁定";
+"appearance.multiprofile_locked_description" = "当多配置文件显示处于活动状态时，这些设置被禁用。在多配置文件模式下，每个配置文件使用自己的外观。";
+"appearance.disable_multiprofile" = "关闭多配置文件显示";
+
+/* ==================== */
+/* MARK: - Setup Wizard (Additional) */
+/* ==================== */
+"setup.step_number_1" = "1";
+"setup.step_number_2" = "2";
+"setup.step_title_get_key" = "获取您的会话密钥";
+"setup.step_title_enter_key" = "输入您的会话密钥";
+"setup.step_description_get_key" = "您需要从 claude.ai 提取您的会话密钥";
+"setup.button_open_claude" = "打开 claude.ai";
+"setup.paste_instruction" = "粘贴您复制的 sessionKey 值";
+
+/* ==================== */
+/* MARK: - Component Preview */
+/* ==================== */
+"preview.sample_text_claude" = "Claude";
+"preview.sample_percentage" = "60%";
+"preview.sample_card_content" = "卡片内容放在这里";
+"preview.sample_more_content" = "更多内容";
+"preview.sample_update_every" = "更新间隔：";
+"preview.sample_5_minutes" = "5 分钟";
+
+/* ==================== */
+/* MARK: - Manage Profiles */
+/* ==================== */
+"profiles.title" = "管理配置文件";
+"profiles.subtitle" = "创建和管理多个 Claude 账户";
+"profiles.create_new" = "创建新配置文件";
+"profiles.about_title" = "关于配置文件";
+"profiles.about_description" = "每个配置文件都有自己的：";
+"profiles.about_credentials" = "Claude.ai 凭据";
+"profiles.about_api" = "API Console 凭据";
+"profiles.about_cli" = "CLI 账户同步";
+"profiles.about_appearance" = "菜单栏外观";
+"profiles.about_notifications" = "通知设置";
+"profiles.about_refresh" = "刷新间隔";
+"profiles.active_badge" = "活动";
+"profiles.created" = "已创建";
+"profiles.cli_synced" = "CLI 已同步";
+"profiles.rename" = "重命名配置文件";
+"profiles.activate" = "激活配置文件";
+"profiles.delete" = "删除配置文件";
+"profiles.delete_title" = "删除配置文件";
+"profiles.delete_confirm" = "您确定要删除 \"%@\" 吗？这将移除所有相关的凭据和设置。";
+"profiles.create_title" = "创建新配置文件";
+"profiles.name_label" = "配置文件名称（可选）";
+"profiles.name_placeholder" = "留空以使用随机名称";
+"profiles.name_hint" = "如果留空，将生成一个有趣的随机名称！";
+
+/* ==================== */
+/* MARK: - Multi-Profile Display */
+/* ==================== */
+"multiprofile.title" = "多配置文件显示";
+"multiprofile.subtitle" = "在菜单栏中显示多个配置文件";
+"multiprofile.enable_title" = "显示多个配置文件";
+"multiprofile.enable_description" = "将选定的配置文件并排显示为紧凑图标";
+"multiprofile.select_profiles" = "选择要显示的配置文件：";
+"multiprofile.info" = "每个配置文件显示使用情况，颜色表示状态（绿色/橙色/红色）";
+"multiprofile.active_badge" = "活动";
+"multiprofile.at_least_one" = "至少必须选择一个配置文件";
+"multiprofile.icon_style" = "图标样式";
+"multiprofile.show_week" = "显示每周使用量";
+"multiprofile.show_week_description" = "除了会话使用量外，还显示每周使用量";
+"multiprofile.show_label" = "显示配置文件标签";
+"multiprofile.show_label_description" = "在图标下方显示配置文件名称";
+"multiprofile.use_system_color" = "单色";
+"multiprofile.use_system_color_description" = "使用白色而不是状态颜色（绿色/橙色/红色）";
+
+/* ==================== */
+/* MARK: - General Settings (Profile-Level) */
+/* ==================== */
+"general.title" = "通用";
+"general.subtitle" = "刷新间隔、自动启动和通知";
+"general.refresh_title" = "刷新间隔";
+"general.refresh_subtitle" = "检查使用更新的频率";
+"general.refresh_seconds" = "%d 秒";
+"general.refresh_min" = "10秒";
+"general.refresh_max" = "300秒";
+"general.autostart_title" = "自动启动会话";
+"general.autostart_subtitle" = "需要时自动启动新会话";
+"general.autostart_toggle" = "自动启动新会话";
+"general.autostart_description" = "会话重置时自动发送消息";
+"general.autostart_requirement" = "• 在凭据 → Claude.ai 标签页中配置了会话密钥";
+"general.notifications_title" = "通知";
+"general.notifications_subtitle" = "获取使用里程碑通知";
+"general.connected" = "已连接";
+"general.not_connected" = "未连接";
+
+/* ==================== */
+/* MARK: - Updates Settings */
+/* ==================== */
+"updates.version_info" = "版本信息";
+"updates.update_preferences" = "更新偏好设置";
+"updates.version_label" = "v%@ (%@)";
+
+/* ==================== */
+/* MARK: - Appearance (Additional) */
+/* ==================== */
+"appearance.global_subtitle" = "自定义菜单栏图标行为";
+"appearance.metrics_subtitle" = "选择要在菜单栏中显示的指标";
+"appearance.all_metrics_off_title" = "应用徽标模式";
+"appearance.all_metrics_off_description" = "所有指标都已关闭。应用徽标将显示在菜单栏中。点击它以访问配置文件和设置。";
+
+/* ==================== */
+/* MARK: - Metric Card */
+/* ==================== */
+"metric.show_countdown" = "显示到下次会话的时间";
+"metric.countdown_description" = "在图标中显示剩余时间（例如 →2H）";
+
+/* ==================== */
+/* MARK: - Personal Usage (Additional) */
+/* ==================== */
+"personal.configuration_title" = "配置";
+"personal.status_connected" = "已连接";
+"personal.status_not_connected" = "未连接";
+
+/* ==================== */
+/* MARK: - Language Settings */
+/* ==================== */
+"language.title" = "语言";
+"language.subtitle" = "选择您偏好的语言";
+"language.select_language" = "选择语言";
+"language.available" = "可用语言";
+"language.restart_required" = "需要重启";
+"language.restart_message" = "应用需要重启以使语言更改生效。";
+"language.restart_now" = "立即重启";
+"language.restart_later" = "稍后";
+
+/* ==================== */
+/* MARK: - Common Actions (Additional) */
+/* ==================== */
+"common.create" = "创建";
+"common.rename" = "重命名";
+"common.activate" = "激活";
+"common.connected" = "已连接";
+"common.not_connected" = "未连接";
+"common.back" = "返回";
+"common.next" = "下一步";
+"common.remove" = "移除";
+"common.switch" = "切换";
+
+/* ==================== */
+/* MARK: - Popover/Menu Bar */
+/* ==================== */
+"popover.manage_profiles" = "管理配置文件";
+"popover.no_profile" = "无配置文件";
+"popover.profiles_count" = "%d 个配置文件";
+"popover.profile_count_singular" = "1 个配置文件";
+
+/* ==================== */
+/* MARK: - Setup Wizard */
+/* ==================== */
+"setup.step.enter_session_key" = "输入密钥";
+"wizard.test_connection" = "测试连接";
+"wizard.select_org_title" = "您要跟踪哪个组织？";
+"wizard.select_org_subtitle" = "选择用于使用监控的 Claude 组织";
+"wizard.config_summary" = "配置摘要";
+"wizard.session_key" = "会话密钥";
+"wizard.api_session_key" = "API 会话密钥";
+"wizard.organization" = "组织";
+"wizard.organization_id" = "ID：%@";
+"wizard.select_organization" = "选择组织";
+"wizard.choose_organization" = "选择要跟踪的组织";
+"wizard.review_config" = "审查配置";
+"wizard.confirm_settings" = "保存前确认您的设置";
+"wizard.key_will_update" = "会话密钥将被更新";
+"wizard.api_key_will_update" = "API 会话密钥将被更新";
+
+/* ==================== */
+/* MARK: - CLI Account */
+/* ==================== */
+"cli.access_token" = "访问令牌";
+"cli.subscription" = "订阅";
+"cli.scopes" = "作用域";
+"cli.sync_instructions" = "点击下方的'从 Claude Code 同步'来导入您的凭据";
+"cli.about_title" = "关于 CLI 账户同步";
+"cli.benefits" = "好处：";
+"cli.tracking_note" = "注意：使用跟踪使用 Claude.ai 凭据。CLI 凭据仅用于账户切换。";
+
+/* ==================== */
+/* MARK: - Settings Sections (Titles & Descriptions) */
+/* ==================== */
+"section.credentials" = "凭据";
+"section.active_profile" = "活动配置文件";
+"section.settings" = "设置";
+"section.app" = "应用";
+
+"section.claudeai_title" = "Claude.ai";
+"section.claudeai_desc" = "Claude.ai 凭据";
+"section.api_console_title" = "API 控制台";
+"section.api_console_desc" = "API 控制台凭据";
+"section.cli_account_title" = "CLI 账户";
+"section.cli_account_desc" = "CLI 账户同步";
+"section.appearance_title" = "外观";
+"section.appearance_desc" = "菜单栏外观";
+"section.general_title" = "通用";
+"section.general_desc" = "通用设置";
+"section.manage_profiles_title" = "管理配置文件";
+"section.manage_profiles_desc" = "管理配置文件";
+
+/* ==================== */
+/* MARK: - Creator Info */
+/* ==================== */
+"creator.name" = "Hamed Elfayome";
+"creator.username" = "@hamed-elfayome";
+
+/* ==================== */
+/* MARK: - Wizard Steps & Actions */
+/* ==================== */
+"wizard.enter_key" = "输入密钥";
+"wizard.select_org" = "选择组织";
+"wizard.confirm" = "确认";
+"wizard.testing" = "测试中...";
+"wizard.test_connection" = "测试连接";
+"wizard.fetching" = "获取中...";
+"wizard.fetch_organizations" = "获取组织";
+"wizard.saving" = "保存中...";
+"wizard.save_configuration" = "保存配置";
+
+/* ==================== */
+/* MARK: - CLI Account Sync */
+/* ==================== */
+"cli.title" = "CLI 账户";
+"cli.subtitle" = "同步您的 Claude Code 登录账户";
+"cli.synced" = "CLI 账户已同步";
+"cli.not_synced" = "未同步";
+"cli.account_details" = "账户详情";
+"cli.credentials_synced" = "您同步的 CLI 凭据";
+"cli.no_credentials" = "尚未同步凭据";
+"cli.resync" = "重新同步";
+"cli.sync_from_code" = "从 Claude Code 同步";
+"cli.benefit_1" = "使用配置文件自动切换 Claude Code 登录";
+"cli.benefit_2" = "保持 CLI 和应用账户同步";
+"cli.benefit_3" = "配置文件切换时自动刷新凭据";
+
+/* ==================== */
+/* MARK: - Additional Keys */
+/* ==================== */
+"api.single_organization" = "找到单个组织并自动选择";
+"api.remove_title" = "移除凭据";
+"api.remove_subtitle" = "从此配置文件中永久删除您的 API 控制台会话密钥";
+"claudecode.button_apply" = "应用";
+"claudecode.button_reset" = "重置";
+"error.generic" = "错误：%@";
+"personal.button_saving" = "保存中...";
+"personal.button_setup_wizard" = "设置向导";
+"personal.button_open_claude" = "打开 claude.ai";
+"personal.success_key_saved" = "会话密钥保存成功";
+"personal.remove_title" = "移除凭据";
+"personal.remove_subtitle" = "从此配置文件中永久删除您的 Claude.ai 会话密钥";
+"about.run_setup_wizard" = "运行设置向导";
+
+/* ==================== */
+/* MARK: - Migration & Reset */
+/* ==================== */
+"wizard.migrate_old_data" = "有旧应用数据吗？";
+"wizard.migrate_description" = "如果您安装了以前的版本，请点击下方导入您的旧配置文件和设置。这将请求系统权限来访问数据。";
+"wizard.migrate_button" = "迁移";
+"wizard.migration_success" = "✅ 成功迁移了 %d 个项目";
+"wizard.migration_failed" = "⚠️ 迁移失败：%@";
+"about.reset_app_data" = "重置应用数据";
+"about.reset_confirmation_title" = "重置所有应用数据？";
+"about.reset_confirm" = "重置";
+"about.reset_confirmation_message" = "这将永久删除所有配置文件、凭据和设置。应用将退出，您需要重新设置。此操作无法撤销。";
+"wizard.migration_skipped" = "迁移已跳过。如果需要，您可以稍后手动同步旧数据。";
+"wizard.skip_migration" = "跳过";
+
+/* Claude Code Info */
+"wizard.claude_code_info_title" = "使用 Claude Code？";
+"wizard.claude_code_info_description" = "使用跟踪将正常工作，但没有会话密钥，CLI 状态行和自动启动会话将无法工作";
+"wizard.claude_code_skip_setup" = "跳过设置";
+"wizard.migrate_description_short" = "从以前的应用版本导入您的旧配置文件数据";
+"wizard.skip_migration" = "跳过";
+"wizard.migration_skipped" = "已跳过";
