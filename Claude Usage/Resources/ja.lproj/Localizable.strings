@@ -714,3 +714,33 @@
 "wizard.migrate_description_short" = "以前のアプリバージョンから古いプロファイルデータをインポート";
 "wizard.skip_migration" = "スキップ";
 "wizard.migration_skipped" = "スキップしました";
+
+// History
+"history.title" = "使用履歴";
+"history.subtitle" = "時間経過に伴う使用状況を追跡";
+"history.tab.session" = "セッション";
+"history.tab.weekly" = "週間";
+"history.tab.billing" = "請求";
+"history.chart.session_title" = "セッション使用履歴";
+"history.chart.weekly_title" = "週間使用トレンド";
+"history.chart.billing_title" = "月間API支出";
+"history.chart.now" = "現在";
+"history.empty.session_title" = "セッション履歴なし";
+"history.empty.session_description" = "5時間ごとのリセット後にセッション使用状況が記録されます";
+"history.empty.weekly_title" = "週間履歴なし";
+"history.empty.weekly_description" = "毎週月曜日のリセット後に週間使用状況が記録されます";
+"history.empty.billing_title" = "請求履歴なし";
+"history.empty.billing_description" = "毎月のリセット後に請求データが記録されます";
+"history.list.title" = "履歴レコード";
+"history.list.count" = "%d件のレコード";
+"history.list.empty" = "まだレコードがありません。リセットごとに自動的に履歴が記録されます。";
+"history.list.more" = "+%d件のレコード";
+"history.export_button" = "エクスポート";
+"history.clear_button" = "クリア";
+"history.no_profile" = "アクティブなプロファイルがありません";
+"history.reset_type.session" = "セッションリセット";
+"history.reset_type.weekly" = "週間リセット";
+"history.reset_type.billing" = "請求サイクル";
+"history.label.total" = "合計";
+"history.label.spent" = "使用済み";
+"history.label.session" = "セッション";

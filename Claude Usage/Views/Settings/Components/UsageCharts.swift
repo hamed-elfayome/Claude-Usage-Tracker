@@ -31,9 +31,16 @@ struct TimeSlot: Identifiable, Equatable {
     }
 }
 
+/// Chart style enum
+enum ChartStyle: String, CaseIterable {
+    case line = "Line"
+    case bar = "Bars"
+}
+
 /// Chart displaying session usage history (5-hour window, 10-min intervals = 30 slots)
 struct SessionUsageChart: View {
     let snapshots: [UsageSnapshot]
+    let chartStyle: ChartStyle
 
     /// Time window offset in hours (0 = current time centered)
     @State private var timeOffset: Double = 0
@@ -44,8 +51,9 @@ struct SessionUsageChart: View {
     private let slotInterval: TimeInterval = 10 * 60  // 10 minutes
     private let windowDuration: TimeInterval = 5 * 60 * 60  // 5 hours
 
-    init(snapshots: [UsageSnapshot]) {
+    init(snapshots: [UsageSnapshot], chartStyle: ChartStyle = .line) {
         self.snapshots = snapshots
+        self.chartStyle = chartStyle
     }
 
     /// Generate time slots for the current window
@@ -64,7 +72,7 @@ struct SessionUsageChart: View {
 
     /// Find the recorded percentage for a given time slot
     private func findPercentage(for time: Date) -> Double? {
-        let tolerance = slotInterval / 2  // ±5 minutes
+        let tolerance = slotInterval  // Full slot interval to guarantee finding nearby data
         return snapshots.first { snapshot in
             abs(snapshot.timestamp.timeIntervalSince(time)) <= tolerance
         }?.sessionPercentage
@@ -146,13 +154,31 @@ struct SessionUsageChart: View {
             }
 
             Chart(timeSlots) { slot in
-                BarMark(
-                    x: .value("Time", slot.time, unit: .minute),
-                    y: .value("Usage", clampedPercentage(slot.percentage)),
-                    width: .fixed(8)
-                )
-                .foregroundStyle(slot.percentage != nil ? barColor(for: slot.percentage!) : Color.gray.opacity(0.2))
-                .cornerRadius(2)
+                if chartStyle == .bar {
+                    BarMark(
+                        x: .value("Time", slot.time, unit: .minute),
+                        y: .value("Usage", clampedPercentage(slot.percentage)),
+                        width: .fixed(8)
+                    )
+                    .foregroundStyle(slot.percentage.map { barColor(for: $0) } ?? Color.gray.opacity(0.2))
+                    .cornerRadius(2)
+                } else {
+                    LineMark(
+                        x: .value("Time", slot.time, unit: .minute),
+                        y: .value("Usage", clampedPercentage(slot.percentage))
+                    )
+                    .foregroundStyle(slot.percentage.map { barColor(for: $0) } ?? Color.gray.opacity(0.2))
+                    .interpolationMethod(.catmullRom)
+                    .lineStyle(StrokeStyle(lineWidth: 2))
+
+                    if slot.percentage != nil {
+                        PointMark(
+                            x: .value("Time", slot.time, unit: .minute),
+                            y: .value("Usage", clampedPercentage(slot.percentage))
+                        )
+                        .foregroundStyle(slot.percentage.map { barColor(for: $0) } ?? Color.gray.opacity(0.2))
+                    }
+                }
             }
             .chartYScale(domain: 0...100)
             .chartPlotStyle { plotArea in
@@ -206,6 +232,7 @@ struct SessionUsageChart: View {
 /// Chart displaying weekly usage history (24-hour window, 2-hour intervals = 12 slots)
 struct WeeklyUsageChart: View {
     let snapshots: [UsageSnapshot]
+    let chartStyle: ChartStyle
 
     /// Time window offset in hours (0 = current time centered)
     @State private var timeOffset: Double = 0
@@ -216,8 +243,9 @@ struct WeeklyUsageChart: View {
     private let slotInterval: TimeInterval = 2 * 60 * 60  // 2 hours
     private let windowDuration: TimeInterval = 24 * 60 * 60  // 24 hours
 
-    init(snapshots: [UsageSnapshot]) {
+    init(snapshots: [UsageSnapshot], chartStyle: ChartStyle = .line) {
         self.snapshots = snapshots
+        self.chartStyle = chartStyle
     }
 
     /// Generate time slots for the current window
@@ -236,7 +264,7 @@ struct WeeklyUsageChart: View {
 
     /// Find the recorded percentage for a given time slot
     private func findPercentage(for time: Date) -> Double? {
-        let tolerance = slotInterval / 2  // ±1 hour
+        let tolerance = slotInterval  // Full slot interval to guarantee finding nearby data
         return snapshots.first { snapshot in
             abs(snapshot.timestamp.timeIntervalSince(time)) <= tolerance
         }?.weeklyPercentage
@@ -319,13 +347,31 @@ struct WeeklyUsageChart: View {
 
             // Chart container
             Chart(timeSlots) { slot in
-                BarMark(
-                    x: .value("Time", slot.time, unit: .hour),
-                    y: .value("Usage", clampedPercentage(slot.percentage)),
-                    width: .fixed(20)
-                )
-                .foregroundStyle(slot.percentage != nil ? barColor(for: slot.percentage!) : Color.gray.opacity(0.2))
-                .cornerRadius(3)
+                if chartStyle == .bar {
+                    BarMark(
+                        x: .value("Time", slot.time, unit: .hour),
+                        y: .value("Usage", clampedPercentage(slot.percentage)),
+                        width: .fixed(20)
+                    )
+                    .foregroundStyle(slot.percentage.map { barColor(for: $0) } ?? Color.gray.opacity(0.2))
+                    .cornerRadius(3)
+                } else {
+                    LineMark(
+                        x: .value("Time", slot.time, unit: .hour),
+                        y: .value("Usage", clampedPercentage(slot.percentage))
+                    )
+                    .foregroundStyle(slot.percentage.map { barColor(for: $0) } ?? Color.gray.opacity(0.2))
+                    .interpolationMethod(.catmullRom)
+                    .lineStyle(StrokeStyle(lineWidth: 2))
+
+                    if slot.percentage != nil {
+                        PointMark(
+                            x: .value("Time", slot.time, unit: .hour),
+                            y: .value("Usage", clampedPercentage(slot.percentage))
+                        )
+                        .foregroundStyle(slot.percentage.map { barColor(for: $0) } ?? Color.gray.opacity(0.2))
+                    }
+                }
             }
             .chartYScale(domain: 0...100)
             .chartPlotStyle { plotArea in
@@ -379,10 +425,12 @@ struct WeeklyUsageChart: View {
 /// Chart displaying billing cycle history
 struct BillingCycleChart: View {
     let snapshots: [UsageSnapshot]
+    let chartStyle: ChartStyle
     let maxItems: Int
 
-    init(snapshots: [UsageSnapshot], maxItems: Int = 12) {
+    init(snapshots: [UsageSnapshot], chartStyle: ChartStyle = .line, maxItems: Int = 12) {
         self.snapshots = snapshots
+        self.chartStyle = chartStyle
         self.maxItems = maxItems
     }
 
@@ -408,32 +456,40 @@ struct BillingCycleChart: View {
                 Chart(chartData) { snapshot in
                     let spendAmount = Double(snapshot.apiSpendCents ?? 0) / 100.0
 
-                    LineMark(
-                        x: .value("Date", snapshot.shortDateString),
-                        y: .value("Spend", spendAmount)
-                    )
-                    .foregroundStyle(Color.accentColor)
-                    .interpolationMethod(.catmullRom)
-
-                    AreaMark(
-                        x: .value("Date", snapshot.shortDateString),
-                        y: .value("Spend", spendAmount)
-                    )
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [Color.accentColor.opacity(0.3), Color.accentColor.opacity(0.05)],
-                            startPoint: .top,
-                            endPoint: .bottom
+                    if chartStyle == .bar {
+                        BarMark(
+                            x: .value("Date", snapshot.shortDateString),
+                            y: .value("Spend", spendAmount)
                         )
-                    )
-                    .interpolationMethod(.catmullRom)
+                        .foregroundStyle(Color.accentColor)
+                    } else {
+                        LineMark(
+                            x: .value("Date", snapshot.shortDateString),
+                            y: .value("Spend", spendAmount)
+                        )
+                        .foregroundStyle(Color.accentColor)
+                        .interpolationMethod(.catmullRom)
 
-                    PointMark(
-                        x: .value("Date", snapshot.shortDateString),
-                        y: .value("Spend", spendAmount)
-                    )
-                    .foregroundStyle(Color.accentColor)
-                    .symbolSize(30)
+                        AreaMark(
+                            x: .value("Date", snapshot.shortDateString),
+                            y: .value("Spend", spendAmount)
+                        )
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [Color.accentColor.opacity(0.3), Color.accentColor.opacity(0.05)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .interpolationMethod(.catmullRom)
+
+                        PointMark(
+                            x: .value("Date", snapshot.shortDateString),
+                            y: .value("Spend", spendAmount)
+                        )
+                        .foregroundStyle(Color.accentColor)
+                        .symbolSize(30)
+                    }
                 }
                 .chartYScale(domain: 0...maxSpend * 1.1)
                 .chartYAxis {

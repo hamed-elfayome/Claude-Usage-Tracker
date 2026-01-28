@@ -219,4 +219,39 @@ struct UsageHistoryData: Codable, Equatable {
         let filtered = UsageHistoryData(snapshots: snapshots(for: resetType))
         return filtered.exportToJSON()
     }
+
+    /// Export to CSV format
+    func exportToCSV() -> String {
+        var csv = "Timestamp,Reset Type,Session %,Session Tokens,Weekly %,Weekly Tokens,Opus %,Sonnet %,API Spend,Currency\n"
+
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+
+        for snapshot in snapshots.sorted(by: { $0.timestamp > $1.timestamp }) {
+            let timestamp = dateFormatter.string(from: snapshot.timestamp)
+            let resetType = snapshot.resetType.rawValue
+
+            let sessionPct = snapshot.sessionPercentage.map { String(format: "%.1f", $0) } ?? ""
+            let sessionTokens = snapshot.sessionTokensUsed.map { String($0) } ?? ""
+
+            let weeklyPct = snapshot.weeklyPercentage.map { String(format: "%.1f", $0) } ?? ""
+            let weeklyTokens = snapshot.weeklyTokensUsed.map { String($0) } ?? ""
+
+            let opusPct = snapshot.opusWeeklyPercentage.map { String(format: "%.1f", $0) } ?? ""
+            let sonnetPct = snapshot.sonnetWeeklyPercentage.map { String(format: "%.1f", $0) } ?? ""
+
+            let apiSpend = snapshot.apiSpendCents.map { String(Double($0) / 100.0) } ?? ""
+            let currency = snapshot.apiCurrency ?? ""
+
+            csv += "\(timestamp),\(resetType),\(sessionPct),\(sessionTokens),\(weeklyPct),\(weeklyTokens),\(opusPct),\(sonnetPct),\(apiSpend),\(currency)\n"
+        }
+
+        return csv
+    }
+
+    /// Export specific reset type to CSV
+    func exportToCSV(for resetType: ResetType) -> String {
+        let filtered = UsageHistoryData(snapshots: snapshots(for: resetType))
+        return filtered.exportToCSV()
+    }
 }

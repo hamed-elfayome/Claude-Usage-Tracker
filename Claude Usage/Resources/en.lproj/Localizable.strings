@@ -729,7 +729,7 @@
 "history.list.count" = "%d records";
 "history.list.empty" = "No records yet. History will be recorded automatically at each reset.";
 "history.list.more" = "+%d more records";
-"history.export_button" = "Export JSON";
+"history.export_button" = "Export";
 "history.clear_button" = "Clear";
 "history.no_profile" = "No active profile";
 "history.reset_type.session" = "Session Reset";

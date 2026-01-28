@@ -695,3 +695,33 @@
 "wizard.migrate_description_short" = "Importar datos de perfiles antiguos de la versión anterior de la aplicación";
 "wizard.skip_migration" = "Omitir";
 "wizard.migration_skipped" = "Omitido";
+
+// History
+"history.title" = "Historial de Uso";
+"history.subtitle" = "Rastrea tu uso a lo largo del tiempo";
+"history.tab.session" = "Sesiones";
+"history.tab.weekly" = "Semanal";
+"history.tab.billing" = "Facturación";
+"history.chart.session_title" = "Historial de Uso de Sesión";
+"history.chart.weekly_title" = "Tendencia de Uso Semanal";
+"history.chart.billing_title" = "Gasto Mensual de API";
+"history.chart.now" = "Ahora";
+"history.empty.session_title" = "Sin Historial de Sesión";
+"history.empty.session_description" = "El uso de sesión se registrará después de cada reinicio de 5 horas";
+"history.empty.weekly_title" = "Sin Historial Semanal";
+"history.empty.weekly_description" = "El uso semanal se registrará después de cada reinicio del lunes";
+"history.empty.billing_title" = "Sin Historial de Facturación";
+"history.empty.billing_description" = "Los datos de facturación se registrarán después de cada reinicio mensual";
+"history.list.title" = "Registros de Historial";
+"history.list.count" = "%d registros";
+"history.list.empty" = "Aún no hay registros. El historial se registrará automáticamente en cada reinicio.";
+"history.list.more" = "+%d registros más";
+"history.export_button" = "Exportar";
+"history.clear_button" = "Borrar";
+"history.no_profile" = "Sin perfil activo";
+"history.reset_type.session" = "Reinicio de Sesión";
+"history.reset_type.weekly" = "Reinicio Semanal";
+"history.reset_type.billing" = "Ciclo de Facturación";
+"history.label.total" = "Total";
+"history.label.spent" = "Gastado";
+"history.label.session" = "Sesión";

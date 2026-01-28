@@ -774,3 +774,33 @@
 "wizard.migrate_description_short" = "이전 앱 버전에서 이전 프로필 데이터 가져오기";
 "wizard.skip_migration" = "건너뛰기";
 "wizard.migration_skipped" = "건너뜀";
+
+// History
+"history.title" = "사용 기록";
+"history.subtitle" = "시간 경과에 따른 사용량 추적";
+"history.tab.session" = "세션";
+"history.tab.weekly" = "주간";
+"history.tab.billing" = "청구";
+"history.chart.session_title" = "세션 사용 기록";
+"history.chart.weekly_title" = "주간 사용 추세";
+"history.chart.billing_title" = "월간 API 지출";
+"history.chart.now" = "지금";
+"history.empty.session_title" = "세션 기록 없음";
+"history.empty.session_description" = "5시간마다 재설정 후 세션 사용량이 기록됩니다";
+"history.empty.weekly_title" = "주간 기록 없음";
+"history.empty.weekly_description" = "매주 월요일 재설정 후 주간 사용량이 기록됩니다";
+"history.empty.billing_title" = "청구 기록 없음";
+"history.empty.billing_description" = "매월 재설정 후 청구 데이터가 기록됩니다";
+"history.list.title" = "기록 레코드";
+"history.list.count" = "%d개 레코드";
+"history.list.empty" = "아직 레코드가 없습니다. 재설정마다 자동으로 기록됩니다.";
+"history.list.more" = "+%d개 레코드 더보기";
+"history.export_button" = "내보내기";
+"history.clear_button" = "지우기";
+"history.no_profile" = "활성 프로필 없음";
+"history.reset_type.session" = "세션 재설정";
+"history.reset_type.weekly" = "주간 재설정";
+"history.reset_type.billing" = "청구 주기";
+"history.label.total" = "전체";
+"history.label.spent" = "사용됨";
+"history.label.session" = "세션";

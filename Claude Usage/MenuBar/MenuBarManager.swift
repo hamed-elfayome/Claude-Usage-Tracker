@@ -24,6 +24,9 @@ class MenuBarManager: NSObject, ObservableObject {
     private var lastKnownWeeklyResetTime: [UUID: Date] = [:]
     private var lastKnownAPIResetTime: [UUID: Date] = [:]
 
+    // Track if a reset was just recorded to prevent duplicate periodic snapshots
+    private var resetJustRecorded: [UUID: (session: Bool, weekly: Bool)] = [:]
+
     // Popover for beautiful SwiftUI interface
     private var popover: NSPopover?
 
@@ -235,6 +238,20 @@ class MenuBarManager: NSObject, ObservableObject {
         statusItem = nil
         statusBarUIManager?.cleanup()
         statusBarUIManager = nil
+
+        // Clean up history tracking dictionaries to prevent memory leaks
+        lastKnownSessionResetTime.removeAll()
+        lastKnownWeeklyResetTime.removeAll()
+        lastKnownAPIResetTime.removeAll()
+        resetJustRecorded.removeAll()
+    }
+
+    /// Cleans up tracking data for a specific profile (called when profile is deleted)
+    func cleanupProfile(_ profileId: UUID) {
+        lastKnownSessionResetTime.removeValue(forKey: profileId)
+        lastKnownWeeklyResetTime.removeValue(forKey: profileId)
+        lastKnownAPIResetTime.removeValue(forKey: profileId)
+        resetJustRecorded.removeValue(forKey: profileId)
     }
 
     // MARK: - Profile Observation
@@ -807,9 +824,19 @@ class MenuBarManager: NSObject, ObservableObject {
                             newUsage: newUsage
                         )
 
-                        // Record periodic snapshots for history charts
-                        UsageHistoryService.shared.recordSessionPeriodic(for: profile.id, usage: newUsage)
-                        UsageHistoryService.shared.recordWeeklyPeriodic(for: profile.id, usage: newUsage)
+                        // Record periodic snapshots for history charts (skip if reset just occurred)
+                        let flags = self.resetJustRecorded[profile.id] ?? (session: false, weekly: false)
+
+                        if !flags.session {
+                            UsageHistoryService.shared.recordSessionPeriodic(for: profile.id, usage: newUsage)
+                        }
+
+                        if !flags.weekly {
+                            UsageHistoryService.shared.recordWeeklyPeriodic(for: profile.id, usage: newUsage)
+                        }
+
+                        // Clear reset flags for next cycle
+                        self.resetJustRecorded[profile.id] = (session: false, weekly: false)
 
                         // Save to profile
                         self.profileManager.saveClaudeUsage(newUsage, for: profile.id)
@@ -1082,8 +1109,9 @@ class MenuBarManager: NSObject, ObservableObject {
         // Normalize the last known time for comparison
         let normalizedLastKnown = normalizeToMinute(lastKnown!)
 
-        // Check if reset time changed significantly (indicates a reset occurred)
-        if newResetTime > normalizedLastKnown {
+        // Check if reset time changed (indicates a reset occurred)
+        // Use != instead of > to handle clock changes and backward time jumps
+        if newResetTime != normalizedLastKnown {
             // Reset detected! Record snapshot of the previous usage
             LoggingService.shared.log("History: Session reset detected for profile \(profileId.uuidString.prefix(8)). Old: \(normalizedLastKnown), New: \(newResetTime)")
             if let prevUsage = previousUsage {
@@ -1091,10 +1119,15 @@ class MenuBarManager: NSObject, ObservableObject {
                     UsageHistoryService.shared.recordSessionReset(
                         for: profileId,
                         previousUsage: prevUsage,
-                        resetTime: normalizedLastKnown
+                        resetTime: prevUsage.sessionResetTime  // Use original reset time, not normalized
                     )
                 }
             }
+
+            // Mark that session reset was just recorded to prevent duplicate periodic snapshot
+            var flags = resetJustRecorded[profileId] ?? (session: false, weekly: false)
+            flags.session = true
+            resetJustRecorded[profileId] = flags
         }
 
         // Update the last known reset time
@@ -1120,9 +1153,9 @@ class MenuBarManager: NSObject, ObservableObject {
         // Normalize the last known time for comparison
         let normalizedLastKnown = normalizeToMinute(lastKnown!)
 
-        // Check if reset time changed significantly (indicates a reset occurred)
-        // Only trigger if the new reset time is in the future compared to last known
-        if newResetTime > normalizedLastKnown {
+        // Check if reset time changed (indicates a reset occurred)
+        // Use != instead of > to handle clock changes and backward time jumps
+        if newResetTime != normalizedLastKnown {
             // Reset detected! Record snapshot of the previous usage
             LoggingService.shared.log("History: Weekly reset detected for profile \(profileId.uuidString.prefix(8)). Old: \(normalizedLastKnown), New: \(newResetTime)")
             if let prevUsage = previousUsage {
@@ -1130,10 +1163,15 @@ class MenuBarManager: NSObject, ObservableObject {
                     UsageHistoryService.shared.recordWeeklyReset(
                         for: profileId,
                         previousUsage: prevUsage,
-                        resetTime: normalizedLastKnown  // The reset time that was crossed
+                        resetTime: prevUsage.weeklyResetTime  // Use original reset time, not normalized
                     )
                 }
             }
+
+            // Mark that weekly reset was just recorded to prevent duplicate periodic snapshot
+            var flags = resetJustRecorded[profileId] ?? (session: false, weekly: false)
+            flags.weekly = true
+            resetJustRecorded[profileId] = flags
         }
 
         // Update the last known reset time
@@ -1159,9 +1197,9 @@ class MenuBarManager: NSObject, ObservableObject {
         // Normalize the last known time for comparison
         let normalizedLastKnown = normalizeToMinute(lastKnown!)
 
-        // Check if reset time changed significantly (indicates a reset occurred)
-        // Only trigger if the new reset time is in the future compared to last known
-        if newResetTime > normalizedLastKnown {
+        // Check if reset time changed (indicates a reset occurred)
+        // Use != instead of > to handle clock changes and backward time jumps
+        if newResetTime != normalizedLastKnown {
             // Reset detected! Record snapshot of the previous usage
             LoggingService.shared.log("History: Billing cycle reset detected for profile \(profileId.uuidString.prefix(8)). Old: \(normalizedLastKnown), New: \(newResetTime)")
             if let prevUsage = previousUsage {
@@ -1169,7 +1207,7 @@ class MenuBarManager: NSObject, ObservableObject {
                     UsageHistoryService.shared.recordBillingCycleReset(
                         for: profileId,
                         previousUsage: prevUsage,
-                        resetTime: normalizedLastKnown  // The reset time that was crossed
+                        resetTime: prevUsage.resetsAt  // Use original reset time, not normalized
                     )
                 }
             }

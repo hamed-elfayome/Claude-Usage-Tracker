@@ -52,25 +52,51 @@ struct UsageHistoryView: View {
     @StateObject private var profileManager = ProfileManager.shared
     @State private var selectedChartType: HistoryChartType = .sessionResets
     @State private var historyData: UsageHistoryData = UsageHistoryData()
+    @State private var selectedDateRange: DateRangePreset = .last7Days
+    @State private var chartStyle: ChartStyle = .line
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 16) {
                 // Page Header
                 SettingsPageHeader(
                     title: "history.title".localized,
                     subtitle: "history.subtitle".localized
                 )
 
-                if let profile = profileManager.activeProfile {
+                if let _ = profileManager.activeProfile {
                     // Chart Type Picker
                     Picker("", selection: $selectedChartType) {
                         ForEach(HistoryChartType.allCases, id: \.self) { type in
-                            Label(type.localizedName, systemImage: type.icon)
+                            Text(type.localizedName)
                                 .tag(type)
                         }
                     }
                     .pickerStyle(.segmented)
+
+                    // Chart Controls (Date Range + Style)
+                    HStack(spacing: 12) {
+                        Picker("", selection: $selectedDateRange) {
+                            Text("24h").tag(DateRangePreset.today)
+                            Text("7d").tag(DateRangePreset.last7Days)
+                            Text("30d").tag(DateRangePreset.last30Days)
+                        }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
+
+                        Spacer()
+
+                        Picker("", selection: $chartStyle) {
+                            Image(systemName: "chart.line.uptrend.xyaxis")
+                                .tag(ChartStyle.line)
+                            Image(systemName: "chart.bar.fill")
+                                .tag(ChartStyle.bar)
+                        }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
+                        .fixedSize()
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
                     // Chart Section
                     chartSection
@@ -91,7 +117,7 @@ struct UsageHistoryView: View {
         .onAppear {
             loadHistory()
         }
-        .onChange(of: profileManager.activeProfile?.id) { _ in
+        .onChange(of: profileManager.activeProfile?.id) {
             loadHistory()
         }
     }
@@ -100,13 +126,15 @@ struct UsageHistoryView: View {
 
     @ViewBuilder
     private var chartSection: some View {
+        let filteredSnapshots = currentSnapshots
+
         switch selectedChartType {
         case .sessionResets:
-            SessionUsageChart(snapshots: historyData.sessionSnapshots)
+            SessionUsageChart(snapshots: filteredSnapshots, chartStyle: chartStyle)
         case .weeklyResets:
-            WeeklyUsageChart(snapshots: historyData.weeklySnapshots)
+            WeeklyUsageChart(snapshots: filteredSnapshots, chartStyle: chartStyle)
         case .billingCycles:
-            BillingCycleChart(snapshots: historyData.billingCycleSnapshots)
+            BillingCycleChart(snapshots: filteredSnapshots, chartStyle: chartStyle)
         }
     }
 
@@ -165,14 +193,19 @@ struct UsageHistoryView: View {
     }
 
     private var currentSnapshots: [UsageSnapshot] {
+        let baseSnapshots: [UsageSnapshot]
         switch selectedChartType {
         case .sessionResets:
-            return historyData.sessionSnapshots
+            baseSnapshots = historyData.sessionSnapshots
         case .weeklyResets:
-            return historyData.weeklySnapshots
+            baseSnapshots = historyData.weeklySnapshots
         case .billingCycles:
-            return historyData.billingCycleSnapshots
+            baseSnapshots = historyData.billingCycleSnapshots
         }
+
+        // Apply date range filter
+        let dateRange = DateRangeSelection(preset: selectedDateRange)
+        return dateRange.snapshots(from: UsageHistoryData(snapshots: baseSnapshots))
     }
 
     @ViewBuilder
@@ -196,8 +229,15 @@ struct UsageHistoryView: View {
     @ViewBuilder
     private var actionButtons: some View {
         HStack(spacing: 12) {
-            // Export Button
-            Button(action: exportHistory) {
+            // Export Button with format options
+            Menu {
+                Button("Export as JSON") {
+                    exportHistory(format: .json)
+                }
+                Button("Export as CSV") {
+                    exportHistory(format: .csv)
+                }
+            } label: {
                 HStack(spacing: 4) {
                     Image(systemName: "square.and.arrow.up")
                         .font(.system(size: 11))
@@ -205,7 +245,8 @@ struct UsageHistoryView: View {
                         .font(.system(size: 12))
                 }
             }
-            .buttonStyle(.bordered)
+            .menuStyle(.borderlessButton)
+            .frame(height: 28)
 
             Spacer()
 
@@ -248,9 +289,8 @@ struct UsageHistoryView: View {
             return
         }
 
-        Task { @MainActor in
-            historyData = UsageHistoryService.shared.loadHistory(for: profileId)
-        }
+        // No need for Task wrapper since we're already on MainActor in SwiftUI views
+        historyData = UsageHistoryService.shared.loadHistory(for: profileId)
     }
 
     private func clearCurrentHistory() {
@@ -262,12 +302,14 @@ struct UsageHistoryView: View {
         }
     }
 
-    private func exportHistory() {
+    private func exportHistory(format: UsageHistoryService.ExportFormat = .json) {
         guard let profileId = profileManager.activeProfile?.id else { return }
 
-        Task { @MainActor in
-            UsageHistoryService.shared.exportToFile(for: profileId, resetType: selectedChartType.resetType)
-        }
+        UsageHistoryService.shared.exportToFile(
+            for: profileId,
+            resetType: selectedChartType.resetType,
+            format: format
+        )
     }
 }
 

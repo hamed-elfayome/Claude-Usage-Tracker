@@ -712,3 +712,33 @@
 "wizard.migrate_description_short" = "Importa i tuoi vecchi dati dei profili dalla versione precedente dell'app";
 "wizard.skip_migration" = "Salta";
 "wizard.migration_skipped" = "Saltato";
+
+// History
+"history.title" = "Cronologia Utilizzo";
+"history.subtitle" = "Traccia il tuo utilizzo nel tempo";
+"history.tab.session" = "Sessioni";
+"history.tab.weekly" = "Settimanale";
+"history.tab.billing" = "Fatturazione";
+"history.chart.session_title" = "Cronologia Utilizzo Sessione";
+"history.chart.weekly_title" = "Tendenza Utilizzo Settimanale";
+"history.chart.billing_title" = "Spesa API Mensile";
+"history.chart.now" = "Ora";
+"history.empty.session_title" = "Nessuna Cronologia Sessione";
+"history.empty.session_description" = "L'utilizzo della sessione verrà registrato dopo ogni reset di 5 ore";
+"history.empty.weekly_title" = "Nessuna Cronologia Settimanale";
+"history.empty.weekly_description" = "L'utilizzo settimanale verrà registrato dopo ogni reset del lunedì";
+"history.empty.billing_title" = "Nessuna Cronologia Fatturazione";
+"history.empty.billing_description" = "I dati di fatturazione verranno registrati dopo ogni reset mensile";
+"history.list.title" = "Registri Cronologia";
+"history.list.count" = "%d registri";
+"history.list.empty" = "Nessun registro ancora. La cronologia verrà registrata automaticamente ad ogni reset.";
+"history.list.more" = "+%d registri in più";
+"history.export_button" = "Esporta";
+"history.clear_button" = "Cancella";
+"history.no_profile" = "Nessun profilo attivo";
+"history.reset_type.session" = "Reset Sessione";
+"history.reset_type.weekly" = "Reset Settimanale";
+"history.reset_type.billing" = "Ciclo di Fatturazione";
+"history.label.total" = "Totale";
+"history.label.spent" = "Speso";
+"history.label.session" = "Sessione";

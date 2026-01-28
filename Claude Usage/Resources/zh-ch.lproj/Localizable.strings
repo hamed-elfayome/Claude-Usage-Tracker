@@ -704,3 +704,33 @@
 "wizard.migrate_description_short" = "从以前的应用版本导入您的旧配置文件数据";
 "wizard.skip_migration" = "跳过";
 "wizard.migration_skipped" = "已跳过";
+
+// History
+"history.title" = "使用历史";
+"history.subtitle" = "跟踪您的使用情况";
+"history.tab.session" = "会话";
+"history.tab.weekly" = "每周";
+"history.tab.billing" = "账单";
+"history.chart.session_title" = "会话使用历史";
+"history.chart.weekly_title" = "每周使用趋势";
+"history.chart.billing_title" = "每月API支出";
+"history.chart.now" = "现在";
+"history.empty.session_title" = "无会话历史";
+"history.empty.session_description" = "每5小时重置后将记录会话使用情况";
+"history.empty.weekly_title" = "无每周历史";
+"history.empty.weekly_description" = "每周一重置后将记录每周使用情况";
+"history.empty.billing_title" = "无账单历史";
+"history.empty.billing_description" = "每月重置后将记录账单数据";
+"history.list.title" = "历史记录";
+"history.list.count" = "%d条记录";
+"history.list.empty" = "暂无记录。每次重置时将自动记录历史。";
+"history.list.more" = "还有%d条记录";
+"history.export_button" = "导出";
+"history.clear_button" = "清除";
+"history.no_profile" = "无活动配置文件";
+"history.reset_type.session" = "会话重置";
+"history.reset_type.weekly" = "每周重置";
+"history.reset_type.billing" = "账单周期";
+"history.label.total" = "总计";
+"history.label.spent" = "已用";
+"history.label.session" = "会话";

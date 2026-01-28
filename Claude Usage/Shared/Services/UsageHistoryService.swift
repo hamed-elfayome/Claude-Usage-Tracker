@@ -20,6 +20,8 @@ class UsageHistoryService {
 
     /// Key prefix for profile-specific history storage
     private let historyKeyPrefix = "usageHistory_"
+    private let lastSessionRecordTimePrefix = "lastSessionRecordTime_"
+    private let lastWeeklyRecordTimePrefix = "lastWeeklyRecordTime_"
 
     /// Maximum snapshots to keep per type (to prevent excessive data)
     private let maxSessionSnapshots = 1000   // ~7 days at 10-min intervals
@@ -29,12 +31,30 @@ class UsageHistoryService {
     private let sessionRecordingInterval: TimeInterval = 10 * 60  // 10 minutes
     private let weeklyRecordingInterval: TimeInterval = 2 * 60 * 60  // 2 hours
 
-    /// Track last recording time per profile
-    private var lastSessionRecordTime: [UUID: Date] = [:]
-    private var lastWeeklyRecordTime: [UUID: Date] = [:]
-
     private init() {
         self.defaults = UserDefaults.standard
+    }
+
+    // MARK: - Persistent Timestamp Tracking
+
+    /// Gets the last session recording time for a profile (persisted)
+    private func getLastSessionRecordTime(for profileId: UUID) -> Date? {
+        return defaults.object(forKey: "\(lastSessionRecordTimePrefix)\(profileId.uuidString)") as? Date
+    }
+
+    /// Sets the last session recording time for a profile (persisted)
+    private func setLastSessionRecordTime(_ date: Date, for profileId: UUID) {
+        defaults.set(date, forKey: "\(lastSessionRecordTimePrefix)\(profileId.uuidString)")
+    }
+
+    /// Gets the last weekly recording time for a profile (persisted)
+    private func getLastWeeklyRecordTime(for profileId: UUID) -> Date? {
+        return defaults.object(forKey: "\(lastWeeklyRecordTimePrefix)\(profileId.uuidString)") as? Date
+    }
+
+    /// Sets the last weekly recording time for a profile (persisted)
+    private func setLastWeeklyRecordTime(_ date: Date, for profileId: UUID) {
+        defaults.set(date, forKey: "\(lastWeeklyRecordTimePrefix)\(profileId.uuidString)")
     }
 
     // MARK: - Storage Key
@@ -134,7 +154,7 @@ class UsageHistoryService {
             return
         }
 
-        // Only record if there was actual spend
+        // Only record if there was actual spend (keep original logic)
         guard usage.currentSpendCents > 0 else {
             LoggingService.shared.logInfo("recordBillingCycleReset: Skipping snapshot - no spend to record")
             return
@@ -155,8 +175,8 @@ class UsageHistoryService {
     func recordSessionPeriodic(for profileId: UUID, usage: ClaudeUsage) {
         let now = Date()
 
-        // Check if enough time has passed since last recording
-        if let lastRecord = lastSessionRecordTime[profileId] {
+        // Check if enough time has passed since last recording (using persisted timestamp)
+        if let lastRecord = getLastSessionRecordTime(for: profileId) {
             let elapsed = now.timeIntervalSince(lastRecord)
             if elapsed < sessionRecordingInterval {
                 return  // Not enough time passed
@@ -184,7 +204,7 @@ class UsageHistoryService {
         }
 
         saveHistory(history, for: profileId)
-        lastSessionRecordTime[profileId] = now
+        setLastSessionRecordTime(now, for: profileId)
         LoggingService.shared.logInfo("Recorded periodic session snapshot: \(usage.sessionPercentage)%")
     }
 
@@ -192,8 +212,8 @@ class UsageHistoryService {
     func recordWeeklyPeriodic(for profileId: UUID, usage: ClaudeUsage) {
         let now = Date()
 
-        // Check if enough time has passed since last recording
-        if let lastRecord = lastWeeklyRecordTime[profileId] {
+        // Check if enough time has passed since last recording (using persisted timestamp)
+        if let lastRecord = getLastWeeklyRecordTime(for: profileId) {
             let elapsed = now.timeIntervalSince(lastRecord)
             if elapsed < weeklyRecordingInterval {
                 return  // Not enough time passed
@@ -225,7 +245,7 @@ class UsageHistoryService {
         }
 
         saveHistory(history, for: profileId)
-        lastWeeklyRecordTime[profileId] = now
+        setLastWeeklyRecordTime(now, for: profileId)
         LoggingService.shared.logInfo("Recorded periodic weekly snapshot: \(usage.weeklyPercentage)%")
     }
 
@@ -253,25 +273,37 @@ class UsageHistoryService {
 
     // MARK: - Export
 
-    /// Exports history to JSON and saves to file
-    func exportToFile(for profileId: UUID, resetType: ResetType? = nil) {
+    /// Exports history to file in specified format
+    func exportToFile(for profileId: UUID, resetType: ResetType? = nil, format: ExportFormat = .json) {
         let history = loadHistory(for: profileId)
-        let jsonString: String?
+        let content: String
+        let fileExtension: String
 
-        if let type = resetType {
-            jsonString = history.exportToJSON(for: type)
-        } else {
-            jsonString = history.exportToJSON()
+        switch format {
+        case .json:
+            if let type = resetType {
+                content = history.exportToJSON(for: type) ?? ""
+            } else {
+                content = history.exportToJSON() ?? ""
+            }
+            fileExtension = "json"
+
+        case .csv:
+            if let type = resetType {
+                content = history.exportToCSV(for: type)
+            } else {
+                content = history.exportToCSV()
+            }
+            fileExtension = "csv"
         }
 
-        guard let json = jsonString else {
-            LoggingService.shared.logError("Failed to export history to JSON")
+        guard !content.isEmpty else {
+            LoggingService.shared.logError("Failed to export history")
             return
         }
 
         // Create save panel
         let savePanel = NSSavePanel()
-        savePanel.allowedContentTypes = [.json]
         savePanel.canCreateDirectories = true
 
         let dateFormatter = DateFormatter()
@@ -279,12 +311,12 @@ class UsageHistoryService {
         let dateStr = dateFormatter.string(from: Date())
 
         let typeSuffix = resetType?.rawValue ?? "all"
-        savePanel.nameFieldStringValue = "claude-usage-history-\(typeSuffix)-\(dateStr).json"
+        savePanel.nameFieldStringValue = "claude-usage-history-\(typeSuffix)-\(dateStr).\(fileExtension)"
 
         savePanel.begin { response in
             if response == .OK, let url = savePanel.url {
                 do {
-                    try json.write(to: url, atomically: true, encoding: .utf8)
+                    try content.write(to: url, atomically: true, encoding: .utf8)
                     LoggingService.shared.logInfo("Exported history to \(url.path)")
                 } catch {
                     LoggingService.shared.logError("Failed to save export file: \(error.localizedDescription)")
@@ -293,11 +325,19 @@ class UsageHistoryService {
         }
     }
 
+    enum ExportFormat {
+        case json
+        case csv
+    }
+
     // MARK: - Cleanup
 
     /// Deletes all history for a profile
     func deleteHistory(for profileId: UUID) {
         defaults.removeObject(forKey: storageKey(for: profileId))
+        // Also delete persisted timestamps
+        defaults.removeObject(forKey: "\(lastSessionRecordTimePrefix)\(profileId.uuidString)")
+        defaults.removeObject(forKey: "\(lastWeeklyRecordTimePrefix)\(profileId.uuidString)")
         LoggingService.shared.logInfo("Deleted usage history for profile \(profileId.uuidString.prefix(8))")
     }
 
