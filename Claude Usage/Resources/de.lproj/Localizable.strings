@@ -328,6 +328,8 @@
 "claudecode.component_model" = "Modellname";
 "claudecode.component_directory" = "Verzeichnisname";
 "claudecode.component_branch" = "Git-Branch";
+"claudecode.component_context" = "Kontextfenster";
+"claudecode.component_context_tokens" = "Als Tokens anzeigen (statt %)";
 "claudecode.component_usage" = "Nutzungsstatistiken";
 "claudecode.component_progressbar" = "Fortschrittsbalken";
 "claudecode.component_resettime" = "Zurücksetzungszeit";

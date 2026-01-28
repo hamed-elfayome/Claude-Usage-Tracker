@@ -326,6 +326,8 @@
 "claudecode.component_model" = "Nome do modelo";
 "claudecode.component_directory" = "Nome do diretório";
 "claudecode.component_branch" = "Branch do Git";
+"claudecode.component_context" = "Janela de contexto";
+"claudecode.component_context_tokens" = "Mostrar como tokens (em vez de %)";
 "claudecode.component_usage" = "Estatísticas de uso";
 "claudecode.component_progressbar" = "Barra de progresso";
 "claudecode.component_resettime" = "Hora de reinício";

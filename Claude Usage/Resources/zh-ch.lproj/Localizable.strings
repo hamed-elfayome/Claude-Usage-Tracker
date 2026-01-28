@@ -339,8 +339,11 @@
 "claudecode.subtitle" = "自定义您的终端状态行显示";
 "claudecode.preview_label" = "实时预览";
 "claudecode.preview_description" = "这是您的状态行在 Claude CLI 中的显示方式";
+"claudecode.component_model" = "模型名称";
 "claudecode.component_directory" = "目录名称";
 "claudecode.component_branch" = "Git 分支";
+"claudecode.component_context" = "上下文窗口";
+"claudecode.component_context_tokens" = "显示为令牌（而不是 %）";
 "claudecode.component_usage" = "使用统计";
 "claudecode.component_progressbar" = "进度条";
 "claudecode.component_resettime" = "重置时间";

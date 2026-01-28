@@ -342,6 +342,8 @@
 "claudecode.component_model" = "モデル名";
 "claudecode.component_directory" = "ディレクトリ名";
 "claudecode.component_branch" = "Gitブランチ";
+"claudecode.component_context" = "コンテキストウィンドウ";
+"claudecode.component_context_tokens" = "トークンで表示（%の代わり）";
 "claudecode.component_usage" = "使用統計";
 "claudecode.component_progressbar" = "プログレスバー";
 "claudecode.component_resettime" = "リセット時刻";

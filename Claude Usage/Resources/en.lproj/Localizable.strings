@@ -342,6 +342,8 @@
 "claudecode.component_model" = "Model name";
 "claudecode.component_directory" = "Directory name";
 "claudecode.component_branch" = "Git branch";
+"claudecode.component_context" = "Context window";
+"claudecode.component_context_tokens" = "Show as tokens (instead of %)";
 "claudecode.component_usage" = "Usage statistics";
 "claudecode.component_progressbar" = "Progress bar";
 "claudecode.component_resettime" = "Reset time";

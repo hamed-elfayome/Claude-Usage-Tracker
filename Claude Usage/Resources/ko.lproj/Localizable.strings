@@ -471,6 +471,7 @@
 "claudecode.preview_description" = "Claude CLI에서 상태 표시줄이 표시되는 방법입니다";
 "claudecode.component_model" = "모델 이름";
 "claudecode.component_context" = "컨텍스트 사용률";
+"claudecode.component_context_tokens" = "토큰으로 표시 (% 대신)";
 "claudecode.component_directory" = "디렉토리 이름";
 "claudecode.component_branch" = "Git 브랜치";
 "claudecode.component_usage" = "사용 통계";
