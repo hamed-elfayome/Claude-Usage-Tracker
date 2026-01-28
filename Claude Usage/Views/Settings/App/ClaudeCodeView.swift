@@ -10,8 +10,11 @@ import SwiftUI
 /// Claude Code statusline integration settings
 struct ClaudeCodeView: View {
     // Component visibility settings
+    @State private var showModel: Bool = SharedDataStore.shared.loadStatuslineShowModel()
     @State private var showDirectory: Bool = SharedDataStore.shared.loadStatuslineShowDirectory()
     @State private var showBranch: Bool = SharedDataStore.shared.loadStatuslineShowBranch()
+    @State private var showContext: Bool = SharedDataStore.shared.loadStatuslineShowContext()
+    @State private var contextAsTokens: Bool = SharedDataStore.shared.loadStatuslineContextAsTokens()
     @State private var showUsage: Bool = SharedDataStore.shared.loadStatuslineShowUsage()
     @State private var showProgressBar: Bool = SharedDataStore.shared.loadStatuslineShowProgressBar()
     @State private var showResetTime: Bool = SharedDataStore.shared.loadStatuslineShowResetTime()
@@ -80,6 +83,21 @@ struct ClaudeCodeView: View {
 
                     Toggle("claudecode.component_branch".localized, isOn: $showBranch)
                         .font(DesignTokens.Typography.body)
+
+                    Toggle("claudecode.component_model".localized, isOn: $showModel)
+                        .font(DesignTokens.Typography.body)
+
+                    Toggle("claudecode.component_context".localized, isOn: $showContext)
+                        .font(DesignTokens.Typography.body)
+
+                    if showContext {
+                        HStack(spacing: 0) {
+                            Spacer().frame(width: 20)
+                            Toggle("claudecode.component_context_tokens".localized, isOn: $contextAsTokens)
+                                .font(DesignTokens.Typography.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
 
                     Toggle("claudecode.component_usage".localized, isOn: $showUsage)
                         .font(DesignTokens.Typography.body)
@@ -169,7 +187,7 @@ struct ClaudeCodeView: View {
     /// Installs scripts, updates config file, and enables statusline in settings.json.
     private func applyConfiguration() {
         // Validate: at least one component must be selected
-        guard showDirectory || showBranch || showUsage else {
+        guard showModel || showDirectory || showBranch || showContext || showUsage else {
             statusMessage = "claudecode.error_no_components".localized
             isSuccess = false
             return
@@ -183,8 +201,11 @@ struct ClaudeCodeView: View {
         }
 
         // Save user preferences
+        SharedDataStore.shared.saveStatuslineShowModel(showModel)
         SharedDataStore.shared.saveStatuslineShowDirectory(showDirectory)
         SharedDataStore.shared.saveStatuslineShowBranch(showBranch)
+        SharedDataStore.shared.saveStatuslineShowContext(showContext)
+        SharedDataStore.shared.saveStatuslineContextAsTokens(contextAsTokens)
         SharedDataStore.shared.saveStatuslineShowUsage(showUsage)
         SharedDataStore.shared.saveStatuslineShowProgressBar(showProgressBar)
         SharedDataStore.shared.saveStatuslineShowResetTime(showResetTime)
@@ -195,8 +216,11 @@ struct ClaudeCodeView: View {
 
             // Write configuration file
             try StatuslineService.shared.updateConfiguration(
+                showModel: showModel,
                 showDirectory: showDirectory,
                 showBranch: showBranch,
+                showContext: showContext,
+                contextAsTokens: contextAsTokens,
                 showUsage: showUsage,
                 showProgressBar: showProgressBar,
                 showResetTime: showResetTime
@@ -229,12 +253,25 @@ struct ClaudeCodeView: View {
     private func generatePreview() -> String {
         var parts: [String] = []
 
+        // New order: Directory → Branch → Model → Context → Usage
         if showDirectory {
             parts.append("claude-usage")
         }
 
         if showBranch {
             parts.append("⎇ main")
+        }
+
+        if showModel {
+            parts.append("Opus")  // Example model name
+        }
+
+        if showContext {
+            if contextAsTokens {
+                parts.append("Ctx: 96K")
+            } else {
+                parts.append("Ctx: 48%")
+            }
         }
 
         if showUsage {

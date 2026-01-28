@@ -325,8 +325,11 @@
 "claudecode.subtitle" = "Passen Sie Ihre Terminal-Statuszeilenanzeige an";
 "claudecode.preview_label" = "Live-Vorschau";
 "claudecode.preview_description" = "So wird Ihre Statuszeile in Claude CLI erscheinen";
+"claudecode.component_model" = "Modellname";
 "claudecode.component_directory" = "Verzeichnisname";
 "claudecode.component_branch" = "Git-Branch";
+"claudecode.component_context" = "Kontextfenster";
+"claudecode.component_context_tokens" = "Als Tokens anzeigen (statt %)";
 "claudecode.component_usage" = "Nutzungsstatistiken";
 "claudecode.component_progressbar" = "Fortschrittsbalken";
 "claudecode.component_resettime" = "Zurücksetzungszeit";
@@ -711,3 +714,33 @@
 "wizard.migrate_description_short" = "Importieren Sie Ihre alten Profildaten aus der vorherigen App-Version";
 "wizard.skip_migration" = "Überspringen";
 "wizard.migration_skipped" = "Übersprungen";
+
+// History
+"history.title" = "Nutzungsverlauf";
+"history.subtitle" = "Verfolgen Sie Ihre Nutzung im Zeitverlauf";
+"history.tab.session" = "Sitzungen";
+"history.tab.weekly" = "Wöchentlich";
+"history.tab.billing" = "Abrechnung";
+"history.chart.session_title" = "Sitzungsnutzungsverlauf";
+"history.chart.weekly_title" = "Wöchentlicher Nutzungstrend";
+"history.chart.billing_title" = "Monatliche API-Ausgaben";
+"history.chart.now" = "Jetzt";
+"history.empty.session_title" = "Kein Sitzungsverlauf";
+"history.empty.session_description" = "Sitzungsnutzung wird nach jedem 5-Stunden-Reset aufgezeichnet";
+"history.empty.weekly_title" = "Kein wöchentlicher Verlauf";
+"history.empty.weekly_description" = "Wöchentliche Nutzung wird nach jedem Montag-Reset aufgezeichnet";
+"history.empty.billing_title" = "Kein Abrechnungsverlauf";
+"history.empty.billing_description" = "Abrechnungsdaten werden nach jedem monatlichen Reset aufgezeichnet";
+"history.list.title" = "Verlaufsdatensätze";
+"history.list.count" = "%d Datensätze";
+"history.list.empty" = "Noch keine Datensätze. Der Verlauf wird bei jedem Reset automatisch aufgezeichnet.";
+"history.list.more" = "+%d weitere Datensätze";
+"history.export_button" = "Exportieren";
+"history.clear_button" = "Löschen";
+"history.no_profile" = "Kein aktives Profil";
+"history.reset_type.session" = "Sitzungs-Reset";
+"history.reset_type.weekly" = "Wöchentlicher Reset";
+"history.reset_type.billing" = "Abrechnungszyklus";
+"history.label.total" = "Gesamt";
+"history.label.spent" = "Ausgegeben";
+"history.label.session" = "Sitzung";

@@ -63,6 +63,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
                 self?.menuBarManager?.showGitHubStarPrompt()
             }
         }
+
+        // Headless support: delayed retry for Remote Desktop scenarios
+        // If status bar failed to initialize (headless Mac), retry after a delay when displays connect
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
+            guard let self = self else { return }
+
+            // Only retry if we have screens now but status bar failed
+            if !NSScreen.screens.isEmpty && self.menuBarManager?.hasValidStatusBar() == false {
+                LoggingService.shared.log("AppDelegate: Delayed retry of status bar setup (headless support)")
+                self.menuBarManager?.setup()
+            }
+        }
     }
 
     private func requestNotificationPermissions() {

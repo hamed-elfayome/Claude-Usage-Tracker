@@ -78,6 +78,18 @@ final class SharedDataStoreTests: XCTestCase {
         XCTAssertTrue(sharedDataStore.loadStatuslineShowResetTime())
     }
 
+    func testStatuslineShowModel() {
+        // Test default value (true)
+        XCTAssertTrue(sharedDataStore.loadStatuslineShowModel())
+
+        // Test save and load
+        sharedDataStore.saveStatuslineShowModel(false)
+        XCTAssertFalse(sharedDataStore.loadStatuslineShowModel())
+
+        sharedDataStore.saveStatuslineShowModel(true)
+        XCTAssertTrue(sharedDataStore.loadStatuslineShowModel())
+    }
+
     // MARK: - Setup Status Tests
 
     func testHasCompletedSetup() {

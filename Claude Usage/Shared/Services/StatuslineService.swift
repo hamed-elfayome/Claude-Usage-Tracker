@@ -116,14 +116,20 @@ exit(1)
 config_file="$HOME/.claude/statusline-config.txt"
 if [ -f "$config_file" ]; then
   source "$config_file"
+  show_model=$SHOW_MODEL
   show_dir=$SHOW_DIRECTORY
   show_branch=$SHOW_BRANCH
+  show_context=$SHOW_CONTEXT
+  context_as_tokens=$CONTEXT_AS_TOKENS
   show_usage=$SHOW_USAGE
   show_bar=$SHOW_PROGRESS_BAR
   show_reset=$SHOW_RESET_TIME
 else
+  show_model=1
   show_dir=1
   show_branch=1
+  show_context=1
+  context_as_tokens=0
   show_usage=1
   show_bar=1
   show_reset=1
@@ -132,10 +138,13 @@ fi
 input=$(cat)
 current_dir_path=$(echo "$input" | grep -o '"current_dir":"[^"]*"' | sed 's/"current_dir":"//;s/"$//')
 current_dir=$(basename "$current_dir_path")
+model=$(echo "$input" | grep -o '"display_name":"[^"]*"' | sed 's/"display_name":"//;s/"$//')
+
 BLUE=$'\\033[0;34m'
 GREEN=$'\\033[0;32m'
 GRAY=$'\\033[0;90m'
 YELLOW=$'\\033[0;33m'
+CYAN=$'\\033[0;36m'
 RESET=$'\\033[0m'
 
 # 10-level gradient: dark green → deep red
@@ -161,6 +170,53 @@ if [ "$show_branch" = "1" ]; then
   if git rev-parse --git-dir > /dev/null 2>&1; then
     branch=$(git branch --show-current 2>/dev/null)
     [ -n "$branch" ] && branch_text="${GREEN}⎇ ${branch}${RESET}"
+  fi
+fi
+
+model_text=""
+if [ "$show_model" = "1" ] && [ -n "$model" ]; then
+  model_text="${YELLOW}${model}${RESET}"
+fi
+
+# Context percentage calculation from current_usage tokens
+context_text=""
+if [ "$show_context" = "1" ]; then
+  input_tokens=$(echo "$input" | grep -o '"input_tokens":[0-9]*' | head -1 | sed 's/"input_tokens"://')
+  cache_create=$(echo "$input" | grep -o '"cache_creation_input_tokens":[0-9]*' | sed 's/"cache_creation_input_tokens"://')
+  cache_read=$(echo "$input" | grep -o '"cache_read_input_tokens":[0-9]*' | sed 's/"cache_read_input_tokens"://')
+  context_size=$(echo "$input" | grep -o '"context_window_size":[0-9]*' | sed 's/"context_window_size"://')
+
+  [ -z "$input_tokens" ] && input_tokens=0
+  [ -z "$cache_create" ] && cache_create=0
+  [ -z "$cache_read" ] && cache_read=0
+
+  if [ -n "$context_size" ] && [ "$context_size" -gt 0 ]; then
+    current_tokens=$((input_tokens + cache_create + cache_read))
+    context_pct=$((current_tokens * 100 / context_size))
+
+    # Determine color based on percentage
+    if [ "$context_pct" -le 50 ]; then
+      context_color="$CYAN"
+    elif [ "$context_pct" -le 75 ]; then
+      context_color="$YELLOW"
+    else
+      context_color="$LEVEL_9"
+    fi
+
+    # Integer percentage for display
+    context_int=$context_pct
+
+    # Display as tokens or percentage
+    if [ "$context_as_tokens" = "1" ]; then
+      if [ "$current_tokens" -ge 1000 ]; then
+        tokens_k=$((current_tokens / 1000))
+        context_text="${context_color}Ctx: ${tokens_k}K${RESET}"
+      else
+        context_text="${context_color}Ctx: ${current_tokens}${RESET}"
+      fi
+    else
+      context_text="${context_color}Ctx: ${context_int}%${RESET}"
+    fi
   fi
 fi
 
@@ -254,13 +310,29 @@ fi
 output=""
 separator="${GRAY} │ ${RESET}"
 
+# New order: Directory → Branch → Model → Context → Usage
+# Directory comes first
 [ -n "$dir_text" ] && output="${dir_text}"
 
+# Then branch
 if [ -n "$branch_text" ]; then
   [ -n "$output" ] && output="${output}${separator}"
   output="${output}${branch_text}"
 fi
 
+# Then model
+if [ -n "$model_text" ]; then
+  [ -n "$output" ] && output="${output}${separator}"
+  output="${output}${model_text}"
+fi
+
+# Then context
+if [ -n "$context_text" ]; then
+  [ -n "$output" ] && output="${output}${separator}"
+  output="${output}${context_text}"
+fi
+
+# Finally usage
 if [ -n "$usage_text" ]; then
   [ -n "$output" ] && output="${output}${separator}"
   output="${output}${usage_text}"
@@ -339,8 +411,11 @@ printf "%s\\n" "$output"
     // MARK: - Configuration
 
     func updateConfiguration(
+        showModel: Bool,
         showDirectory: Bool,
         showBranch: Bool,
+        showContext: Bool,
+        contextAsTokens: Bool,
         showUsage: Bool,
         showProgressBar: Bool,
         showResetTime: Bool
@@ -349,8 +424,11 @@ printf "%s\\n" "$output"
             .appendingPathComponent("statusline-config.txt")
 
         let config = """
+SHOW_MODEL=\(showModel ? "1" : "0")
 SHOW_DIRECTORY=\(showDirectory ? "1" : "0")
 SHOW_BRANCH=\(showBranch ? "1" : "0")
+SHOW_CONTEXT=\(showContext ? "1" : "0")
+CONTEXT_AS_TOKENS=\(contextAsTokens ? "1" : "0")
 SHOW_USAGE=\(showUsage ? "1" : "0")
 SHOW_PROGRESS_BAR=\(showProgressBar ? "1" : "0")
 SHOW_RESET_TIME=\(showResetTime ? "1" : "0")

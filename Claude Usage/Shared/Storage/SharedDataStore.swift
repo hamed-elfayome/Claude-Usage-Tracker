@@ -18,8 +18,11 @@ class SharedDataStore {
         static let languageCode = "selectedLanguageCode"
 
         // Statusline Configuration
+        static let statuslineShowModel = "statuslineShowModel"
         static let statuslineShowDirectory = "statuslineShowDirectory"
         static let statuslineShowBranch = "statuslineShowBranch"
+        static let statuslineShowContext = "statuslineShowContext"
+        static let statuslineContextAsTokens = "statuslineContextAsTokens"
         static let statuslineShowUsage = "statuslineShowUsage"
         static let statuslineShowProgressBar = "statuslineShowProgressBar"
         static let statuslineShowResetTime = "statuslineShowResetTime"
@@ -55,6 +58,17 @@ class SharedDataStore {
     }
 
     // MARK: - Statusline Configuration
+
+    func saveStatuslineShowModel(_ show: Bool) {
+        defaults.set(show, forKey: Keys.statuslineShowModel)
+    }
+
+    func loadStatuslineShowModel() -> Bool {
+        if defaults.object(forKey: Keys.statuslineShowModel) == nil {
+            return true  // Default to true (checked)
+        }
+        return defaults.bool(forKey: Keys.statuslineShowModel)
+    }
 
     func saveStatuslineShowDirectory(_ show: Bool) {
         defaults.set(show, forKey: Keys.statuslineShowDirectory)
@@ -109,6 +123,28 @@ class SharedDataStore {
             return true
         }
         return defaults.bool(forKey: Keys.statuslineShowResetTime)
+    }
+
+    func saveStatuslineShowContext(_ show: Bool) {
+        defaults.set(show, forKey: Keys.statuslineShowContext)
+    }
+
+    func loadStatuslineShowContext() -> Bool {
+        if defaults.object(forKey: Keys.statuslineShowContext) == nil {
+            return true  // Default to true (checked)
+        }
+        return defaults.bool(forKey: Keys.statuslineShowContext)
+    }
+
+    func saveStatuslineContextAsTokens(_ asTokens: Bool) {
+        defaults.set(asTokens, forKey: Keys.statuslineContextAsTokens)
+    }
+
+    func loadStatuslineContextAsTokens() -> Bool {
+        if defaults.object(forKey: Keys.statuslineContextAsTokens) == nil {
+            return false  // Default to false (percentage)
+        }
+        return defaults.bool(forKey: Keys.statuslineContextAsTokens)
     }
 
     // MARK: - Setup State
