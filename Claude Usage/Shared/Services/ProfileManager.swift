@@ -111,6 +111,9 @@ class ProfileManager: ObservableObject {
 
         let profileName = profiles.first(where: { $0.id == id })?.name ?? "unknown"
 
+        // Clean up usage history for this profile
+        UsageHistoryService.shared.deleteHistory(for: id)
+
         profiles.removeAll { $0.id == id }
 
         // Credentials are deleted automatically with the profile
