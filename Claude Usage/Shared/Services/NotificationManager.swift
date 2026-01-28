@@ -9,19 +9,39 @@ class NotificationManager: NotificationServiceProtocol {
     private var previousSessionPercentage: Double = 0.0
 
     // Track which notifications have been sent to prevent duplicates
-    private var sentNotifications: Set<String> = []
+    // Persisted to UserDefaults to survive app restarts
+    private var sentNotifications: Set<String> {
+        get {
+            Set(UserDefaults.standard.array(forKey: "sentNotifications") as? [String] ?? [])
+        }
+        set {
+            UserDefaults.standard.set(Array(newValue), forKey: "sentNotifications")
+        }
+    }
 
     private init() {}
 
-    /// Sends a notification when approaching usage limits
+    /// Sends a notification when approaching usage limits (legacy method)
     func sendUsageAlert(type: AlertType, percentage: Double, resetTime: Date?) {
         // Check if notifications are enabled in preferences
         guard DataStore.shared.loadNotificationsEnabled() else {
             return
         }
 
-        // Create unique identifier for this notification
-        let identifier = "\(type.rawValue)_\(Int(percentage))"
+        // Map percentage to threshold level to prevent duplicate notifications
+        let thresholdLevel: Int
+        if percentage >= 95 {
+            thresholdLevel = 95
+        } else if percentage >= 90 {
+            thresholdLevel = 90
+        } else if percentage >= 75 {
+            thresholdLevel = 75
+        } else {
+            return // Below all thresholds
+        }
+
+        // Create unique identifier based on threshold level, not actual percentage
+        let identifier = "\(type.rawValue)_\(thresholdLevel)"
 
         // Check if we've already sent this notification
         guard !sentNotifications.contains(identifier) else {
@@ -43,7 +63,9 @@ class NotificationManager: NotificationServiceProtocol {
         UNUserNotificationCenter.current().add(request) { [weak self] error in
             if error == nil {
                 // Mark this notification as sent
-                self?.sentNotifications.insert(identifier)
+                var updated = self?.sentNotifications ?? []
+                updated.insert(identifier)
+                self?.sentNotifications = updated
             }
         }
     }
@@ -109,6 +131,9 @@ class NotificationManager: NotificationServiceProtocol {
 
         // Check for session reset (went from >0% to 0%)
         if previousSessionPercentage > 0.0 && sessionPercentage == 0.0 {
+            // Clear all sent notifications for this profile to allow re-notification in new session
+            sentNotifications = sentNotifications.filter { !$0.hasPrefix(profileName) }
+
             sendProfileAlert(
                 profileName: profileName,
                 type: .sessionReset,
@@ -121,9 +146,6 @@ class NotificationManager: NotificationServiceProtocol {
 
         // Update previous percentage for next check
         previousSessionPercentage = sessionPercentage
-
-        // Clear lower threshold notifications to allow re-notification
-        clearLowerThresholdNotifications(currentPercentage: sessionPercentage)
 
         // 95% threshold
         if sessionPercentage >= 95 && settings.threshold95Enabled {
@@ -173,8 +195,22 @@ class NotificationManager: NotificationServiceProtocol {
 
     /// Sends a profile-specific usage alert
     private func sendProfileAlert(profileName: String, type: AlertType, percentage: Double, resetTime: Date?) {
-        // Create unique identifier for this notification
-        let identifier = "\(profileName)_\(type.rawValue)_\(Int(percentage))"
+        // Map percentage to threshold level to prevent duplicate notifications
+        // at every percentage point (e.g., 81%, 82%, 83%)
+        let thresholdLevel: Int
+        if percentage >= 95 {
+            thresholdLevel = 95
+        } else if percentage >= 90 {
+            thresholdLevel = 90
+        } else if percentage >= 75 {
+            thresholdLevel = 75
+        } else {
+            return // Below all thresholds, no notification needed
+        }
+
+        // Create unique identifier based on threshold level, not actual percentage
+        // This ensures we only notify once per threshold crossing
+        let identifier = "\(profileName)_\(type.rawValue)_\(thresholdLevel)"
 
         // Check if we've already sent this notification
         guard !sentNotifications.contains(identifier) else {
@@ -196,7 +232,9 @@ class NotificationManager: NotificationServiceProtocol {
         UNUserNotificationCenter.current().add(request) { [weak self] error in
             if error == nil {
                 // Mark this notification as sent
-                self?.sentNotifications.insert(identifier)
+                var updated = self?.sentNotifications ?? []
+                updated.insert(identifier)
+                self?.sentNotifications = updated
             }
         }
     }
@@ -239,21 +277,6 @@ class NotificationManager: NotificationServiceProtocol {
     func clearAllNotifications() {
         UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
         UNUserNotificationCenter.current().removeAllDeliveredNotifications()
-    }
-
-    /// Clears sent notification tracking for lower percentages
-    /// This allows re-notification if usage goes back up
-    private func clearLowerThresholdNotifications(currentPercentage: Double) {
-        // Remove notifications for percentages lower than current
-        sentNotifications = sentNotifications.filter { identifier in
-            // Extract percentage from identifier (format: "type_percentage")
-            let components = identifier.components(separatedBy: "_")
-            guard components.count >= 2,
-                  let percentage = Double(components.last ?? "0") else {
-                return true // Keep if we can't parse
-            }
-            return percentage >= currentPercentage
-        }
     }
 }
 
