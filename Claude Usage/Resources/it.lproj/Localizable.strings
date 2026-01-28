@@ -323,6 +323,7 @@
 "claudecode.subtitle" = "Personalizza la visualizzazione della barra di stato del terminale";
 "claudecode.preview_label" = "Anteprima dal Vivo";
 "claudecode.preview_description" = "Così apparirà la tua barra di stato in Claude CLI";
+"claudecode.component_model" = "Nome del modello";
 "claudecode.component_directory" = "Nome directory";
 "claudecode.component_branch" = "Branch Git";
 "claudecode.component_usage" = "Statistiche utilizzo";

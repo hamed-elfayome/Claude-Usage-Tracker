@@ -18,6 +18,7 @@ class SharedDataStore {
         static let languageCode = "selectedLanguageCode"
 
         // Statusline Configuration
+        static let statuslineShowModel = "statuslineShowModel"
         static let statuslineShowDirectory = "statuslineShowDirectory"
         static let statuslineShowBranch = "statuslineShowBranch"
         static let statuslineShowUsage = "statuslineShowUsage"
@@ -55,6 +56,17 @@ class SharedDataStore {
     }
 
     // MARK: - Statusline Configuration
+
+    func saveStatuslineShowModel(_ show: Bool) {
+        defaults.set(show, forKey: Keys.statuslineShowModel)
+    }
+
+    func loadStatuslineShowModel() -> Bool {
+        if defaults.object(forKey: Keys.statuslineShowModel) == nil {
+            return true  // Default to true (checked)
+        }
+        return defaults.bool(forKey: Keys.statuslineShowModel)
+    }
 
     func saveStatuslineShowDirectory(_ show: Bool) {
         defaults.set(show, forKey: Keys.statuslineShowDirectory)
