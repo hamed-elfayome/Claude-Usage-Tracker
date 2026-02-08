@@ -357,7 +357,12 @@ class MenuBarManager: NSObject, ObservableObject {
             config: displayConfig
         )
 
-        updateAllStatusBarIcons()
+        // Defer icon update to the next run loop iteration so that NSStatusBar
+        // can finalize layout for any newly created status items and their
+        // buttons adopt the correct effectiveAppearance before we render icons.
+        DispatchQueue.main.async { [weak self] in
+            self?.updateAllStatusBarIcons()
+        }
     }
 
     private func restartAutoRefreshWithInterval(_ interval: TimeInterval) {
