@@ -235,10 +235,10 @@ class NotificationManager: NotificationServiceProtocol {
         }
     }
 
-    /// Sends a notification when auto-rotating to a different profile
+    /// Sends a notification when auto-rotating to a different profile.
+    /// Always fires regardless of per-profile notification settings, since rotation
+    /// is a system-level event the user should always know about.
     func sendProfileRotatedNotification(fromProfile: String, toProfile: String) {
-        guard DataStore.shared.loadNotificationsEnabled() else { return }
-
         let content = UNMutableNotificationContent()
         content.title = AlertType.profileRotated.title
         content.body = String(format: "notification.profile_rotated.message".localized, fromProfile, toProfile)

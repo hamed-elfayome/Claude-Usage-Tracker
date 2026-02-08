@@ -765,6 +765,7 @@ class MenuBarManager: NSObject, ObservableObject {
                     config: config
                 )
                 self.isRefreshing = false
+                self.evaluateAutoRotation()
             }
         }
     }

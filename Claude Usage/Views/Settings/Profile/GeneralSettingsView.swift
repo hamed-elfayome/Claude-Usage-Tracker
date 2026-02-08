@@ -137,7 +137,7 @@ struct GeneralSettingsView: View {
                                                     .font(DesignTokens.Typography.body)
 
                                                 if let tier = other.accountTier {
-                                                    Text(tier.rawValue.uppercased())
+                                                    Text(tier.displayName.uppercased())
                                                         .font(.system(size: 9, weight: .bold))
                                                         .foregroundColor(.white)
                                                         .padding(.horizontal, 6)
