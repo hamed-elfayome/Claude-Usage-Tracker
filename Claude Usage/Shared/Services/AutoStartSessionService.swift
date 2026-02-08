@@ -350,27 +350,10 @@ final class AutoStartSessionService {
     // MARK: - Auto-Start Session
 
     private func autoStartSession(for profile: Profile) async {
+        // Step 1: Send initialization message
+        let responseData: Data
         do {
-            // Call the initialization API for this profile and get response data
-            let responseData = try await sendInitializationMessage(for: profile)
-
-            // Capture reset time from response to prevent duplicate auto-starts
-            if let resetTime = parseCompletionResponseForResetTime(responseData) {
-                lastCapturedResetTime[profile.id] = resetTime
-                LoggingService.shared.logInfo("Captured session reset time for '\(profile.name)': \(resetTime)")
-            }
-
-            LoggingService.shared.logInfo("Successfully auto-started session for profile '\(profile.name)'")
-
-            // Send success notification
-            await MainActor.run {
-                notificationManager.sendAutoStartNotification(
-                    profileName: profile.name,
-                    success: true,
-                    error: nil
-                )
-            }
-
+            responseData = try await sendInitializationMessage(for: profile)
         } catch {
             LoggingService.shared.logError("Failed to auto-start session for profile '\(profile.name)': \(error.localizedDescription)")
 
@@ -380,6 +363,60 @@ final class AutoStartSessionService {
                     profileName: profile.name,
                     success: false,
                     error: error.localizedDescription
+                )
+            }
+            return
+        }
+
+        // Parse reset time from response (defer storing until session is verified)
+        let parsedResetTime = parseCompletionResponseForResetTime(responseData)
+
+        // Step 2: Verify session actually started by fetching fresh usage data
+        do {
+            let updatedUsage = try await fetchUsageForProfile(profile)
+
+            if updatedUsage.sessionPercentage > 0 {
+                // Session confirmed - store reset time to prevent duplicate auto-starts
+                if let resetTime = parsedResetTime {
+                    lastCapturedResetTime[profile.id] = resetTime
+                    LoggingService.shared.logInfo("Captured session reset time for '\(profile.name)': \(resetTime)")
+                }
+
+                LoggingService.shared.logInfo("Successfully auto-started session for profile '\(profile.name)' - usage at \(updatedUsage.sessionPercentage)%")
+
+                // Send success notification
+                await MainActor.run {
+                    notificationManager.sendAutoStartNotification(
+                        profileName: profile.name,
+                        success: true,
+                        error: nil
+                    )
+                }
+            } else {
+                // API succeeded but session still at 0% - don't store reset time so we retry next cycle
+                LoggingService.shared.logError("Auto-start for profile '\(profile.name)': API succeeded but session still at 0%")
+
+                await MainActor.run {
+                    notificationManager.sendAutoStartNotification(
+                        profileName: profile.name,
+                        success: false,
+                        error: "Session failed to initialize"
+                    )
+                }
+            }
+        } catch {
+            // Verification fetch failed but initialization succeeded - store reset time optimistically
+            LoggingService.shared.logError("Auto-start for profile '\(profile.name)': session started but verification failed: \(error.localizedDescription)")
+
+            if let resetTime = parsedResetTime {
+                lastCapturedResetTime[profile.id] = resetTime
+            }
+
+            await MainActor.run {
+                notificationManager.sendAutoStartNotification(
+                    profileName: profile.name,
+                    success: true,
+                    error: nil
                 )
             }
         }
