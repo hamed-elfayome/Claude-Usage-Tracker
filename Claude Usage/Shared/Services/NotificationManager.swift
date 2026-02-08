@@ -235,6 +235,30 @@ class NotificationManager: NotificationServiceProtocol {
         }
     }
 
+    /// Sends a notification when auto-rotating to a different profile
+    func sendProfileRotatedNotification(fromProfile: String, toProfile: String) {
+        guard DataStore.shared.loadNotificationsEnabled() else { return }
+
+        let content = UNMutableNotificationContent()
+        content.title = AlertType.profileRotated.title
+        content.body = String(format: "notification.profile_rotated.message".localized, fromProfile, toProfile)
+        content.sound = .default
+        content.categoryIdentifier = "INFO_ALERT"
+
+        let identifier = "profile_rotated_\(Date().timeIntervalSince1970)"
+        let request = UNNotificationRequest(
+            identifier: identifier,
+            content: content,
+            trigger: nil
+        )
+
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                LoggingService.shared.logError("Failed to send profile rotation notification: \(error)")
+            }
+        }
+    }
+
     /// Clears all pending notifications
     func clearAllNotifications() {
         UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
@@ -271,6 +295,7 @@ extension NotificationManager {
         case weeklyCritical = "weekly_critical"
         case opusWarning = "opus_warning"
         case opusCritical = "opus_critical"
+        case profileRotated = "profile_rotated"
         case notificationsEnabled = "notifications_enabled"
 
         var title: String {
@@ -295,6 +320,8 @@ extension NotificationManager {
                 return "notification.opus_warning.title".localized
             case .opusCritical:
                 return "notification.opus_critical.title".localized
+            case .profileRotated:
+                return "notification.profile_rotated.title".localized
             case .notificationsEnabled:
                 return "notification.enabled.title".localized
             }
@@ -325,6 +352,8 @@ extension NotificationManager {
                 return "notification.opus_warning.message".localized(with: percentStr, resetStr)
             case .opusCritical:
                 return "notification.opus_critical.message".localized(with: percentStr, resetStr)
+            case .profileRotated:
+                return "notification.profile_rotated.message".localized
             case .notificationsEnabled:
                 return "notification.enabled.message".localized
             }

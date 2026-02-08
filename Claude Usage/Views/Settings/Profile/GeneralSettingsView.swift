@@ -98,6 +98,73 @@ struct GeneralSettingsView: View {
                         }
                     }
 
+                    // Auto-Rotate Profiles
+                    if profileManager.profiles.filter({ $0.hasSessionCredentials }).count >= 2 {
+                        SettingsSectionCard(
+                            title: "general.autorotate_title".localized,
+                            subtitle: "general.autorotate_subtitle".localized
+                        ) {
+                            VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
+                                SettingToggle(
+                                    title: "general.autorotate_toggle".localized,
+                                    description: "general.autorotate_description".localized,
+                                    badge: .new,
+                                    isOn: Binding(
+                                        get: { profile.autoRotateEnabled },
+                                        set: { newValue in
+                                            var updated = profile
+                                            updated.autoRotateEnabled = newValue
+                                            profileManager.updateProfile(updated)
+                                        }
+                                    )
+                                )
+
+                                if profile.autoRotateEnabled {
+                                    Divider()
+
+                                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
+                                        Text("general.autorotate_profiles".localized)
+                                            .font(DesignTokens.Typography.caption)
+                                            .foregroundColor(.secondary)
+
+                                        ForEach(profileManager.profiles.filter({ $0.id != profile.id && $0.hasSessionCredentials })) { other in
+                                            HStack(spacing: DesignTokens.Spacing.small) {
+                                                Image(systemName: other.autoRotateEnabled ? "checkmark.circle.fill" : "circle")
+                                                    .font(.system(size: 14))
+                                                    .foregroundColor(other.autoRotateEnabled ? .green : .secondary)
+
+                                                Text(other.name)
+                                                    .font(DesignTokens.Typography.body)
+
+                                                if let tier = other.accountTier {
+                                                    Text(tier.rawValue.uppercased())
+                                                        .font(.system(size: 9, weight: .bold))
+                                                        .foregroundColor(.white)
+                                                        .padding(.horizontal, 6)
+                                                        .padding(.vertical, 2)
+                                                        .background(Capsule().fill(Color.accentColor.opacity(0.7)))
+                                                }
+
+                                                Spacer()
+
+                                                Toggle("", isOn: Binding(
+                                                    get: { other.autoRotateEnabled },
+                                                    set: { newValue in
+                                                        var updated = other
+                                                        updated.autoRotateEnabled = newValue
+                                                        profileManager.updateProfile(updated)
+                                                    }
+                                                ))
+                                                .labelsHidden()
+                                                .toggleStyle(.switch)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     // Notifications
                     SettingsSectionCard(
                         title: "general.notifications_title".localized,
