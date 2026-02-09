@@ -135,9 +135,9 @@ final class AutoStartSessionService {
     }
 
     private func checkProfile(_ profile: Profile) async {
-        // Skip if profile doesn't have Claude.ai credentials
-        guard profile.hasClaudeAI else {
-            LoggingService.shared.logDebug("Skipping profile '\(profile.name)' - no Claude.ai credentials")
+        // Skip if profile doesn't have any usage credentials
+        guard profile.hasClaudeAI || profile.hasValidCLIOAuth else {
+            LoggingService.shared.logDebug("Skipping profile '\(profile.name)' - no usage credentials")
             return
         }
 
@@ -150,6 +150,12 @@ final class AutoStartSessionService {
             // Simple logic (like v1.1.0): If session is at 0%, start it
             // The initialization message will bring usage above 0%, preventing repeated starts
             if currentPercentage == 0.0 {
+                // Auto-start requires Claude.ai session credentials (cookie-based web API)
+                guard profile.hasClaudeAI else {
+                    LoggingService.shared.logDebug("Profile '\(profile.name)': session at 0% but no Claude.ai credentials for auto-start")
+                    return
+                }
+
                 // Check if we recently auto-started and should wait for reset
                 if let lastResetTime = lastCapturedResetTime[profile.id],
                    Date() < lastResetTime {
@@ -186,17 +192,31 @@ final class AutoStartSessionService {
     }
 
     private func fetchUsageData(for profile: Profile) async throws -> ClaudeUsage {
-        // Get credentials from the specific profile
-        guard let sessionKey = profile.claudeSessionKey,
-              let orgId = profile.organizationId else {
-            throw AppError(
-                code: .sessionKeyNotFound,
-                message: "Missing credentials for profile '\(profile.name)'",
-                isRecoverable: false
-            )
+        // Try cookie-based claude.ai session first
+        if let sessionKey = profile.claudeSessionKey,
+           let orgId = profile.organizationId {
+            do {
+                return try await fetchUsageViaCookie(sessionKey: sessionKey, orgId: orgId)
+            } catch {
+                LoggingService.shared.logError("Cookie-session fetch failed for profile '\(profile.name)', trying OAuth fallback: \(error.localizedDescription)")
+            }
         }
 
-        // Build URL
+        // Fall back to saved CLI OAuth token
+        if let cliJSON = profile.cliCredentialsJSON,
+           !ClaudeCodeSyncService.shared.isTokenExpired(cliJSON),
+           let accessToken = ClaudeCodeSyncService.shared.extractAccessToken(from: cliJSON) {
+            return try await apiService.fetchUsageData(oauthAccessToken: accessToken)
+        }
+
+        throw AppError(
+            code: .sessionKeyNotFound,
+            message: "Missing credentials for profile '\(profile.name)'",
+            isRecoverable: false
+        )
+    }
+
+    private func fetchUsageViaCookie(sessionKey: String, orgId: String) async throws -> ClaudeUsage {
         let url = try URLBuilder(baseURL: Constants.APIEndpoints.claudeBase)
             .appendingPath("/organizations/\(orgId)/usage")
             .build()
@@ -221,7 +241,6 @@ final class AutoStartSessionService {
             )
         }
 
-        // Parse usage response
         return try parseUsageResponse(data)
     }
 
