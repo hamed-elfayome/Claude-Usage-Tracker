@@ -771,16 +771,28 @@ class MenuBarManager: NSObject, ObservableObject {
 
     /// Fetches usage data for a specific profile using its credentials
     private func fetchUsageForProfile(_ profile: Profile) async throws -> ClaudeUsage {
-        guard let sessionKey = profile.claudeSessionKey,
-              let orgId = profile.organizationId else {
-            throw AppError(
-                code: .sessionKeyNotFound,
-                message: "Missing credentials for profile '\(profile.name)'",
-                isRecoverable: false
-            )
+        // Try cookie-based claude.ai session first
+        if let sessionKey = profile.claudeSessionKey,
+           let orgId = profile.organizationId {
+            do {
+                return try await apiService.fetchUsageData(sessionKey: sessionKey, organizationId: orgId)
+            } catch {
+                LoggingService.shared.logError("Cookie-session fetch failed for profile '\(profile.name)', trying OAuth fallback: \(error.localizedDescription)")
+            }
         }
 
-        return try await apiService.fetchUsageData(sessionKey: sessionKey, organizationId: orgId)
+        // Fall back to saved CLI OAuth token
+        if let cliJSON = profile.cliCredentialsJSON,
+           !ClaudeCodeSyncService.shared.isTokenExpired(cliJSON),
+           let accessToken = ClaudeCodeSyncService.shared.extractAccessToken(from: cliJSON) {
+            return try await apiService.fetchUsageData(oauthAccessToken: accessToken)
+        }
+
+        throw AppError(
+            code: .sessionKeyNotFound,
+            message: "Missing credentials for profile '\(profile.name)'",
+            isRecoverable: false
+        )
     }
 
     private func setupSingleProfileMode() {

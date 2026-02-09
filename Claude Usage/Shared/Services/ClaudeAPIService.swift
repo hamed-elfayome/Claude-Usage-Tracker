@@ -377,6 +377,90 @@ class ClaudeAPIService: APIServiceProtocol {
         return try parseUsageResponse(usageData)
     }
 
+    /// Fetches usage data using a CLI OAuth access token
+    /// - Parameter oauthAccessToken: The OAuth Bearer token
+    /// - Returns: ClaudeUsage data
+    func fetchUsageData(oauthAccessToken: String) async throws -> ClaudeUsage {
+        LoggingService.shared.log("ClaudeAPIService: Fetching usage via OAuth endpoint (explicit token)")
+
+        guard let url = URL(string: "https://api.anthropic.com/api/oauth/usage") else {
+            throw AppError(
+                code: .urlMalformed,
+                message: "Invalid OAuth usage endpoint",
+                isRecoverable: false
+            )
+        }
+
+        var request = buildAuthenticatedRequest(url: url, auth: .cliOAuth(oauthAccessToken))
+        request.httpMethod = "GET"
+        request.timeoutInterval = 30
+
+        let (data, response): (Data, URLResponse)
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch {
+            LoggingService.shared.logAPIError("/api/oauth/usage", error: error)
+            throw AppError(
+                code: .networkGenericError,
+                message: "Failed to connect to Claude API",
+                technicalDetails: "Endpoint: /api/oauth/usage\nError: \(error.localizedDescription)",
+                underlyingError: error,
+                isRecoverable: true,
+                recoverySuggestion: "Please check your internet connection and try again"
+            )
+        }
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw AppError(
+                code: .apiInvalidResponse,
+                message: "Invalid response from OAuth endpoint",
+                isRecoverable: true
+            )
+        }
+
+        switch httpResponse.statusCode {
+        case 200:
+            return try parseUsageResponse(data)
+
+        case 401, 403:
+            let responsePreview = String(data: data, encoding: .utf8)?.prefix(200) ?? "Unable to read response"
+            throw AppError(
+                code: .apiUnauthorized,
+                message: "OAuth authentication failed",
+                technicalDetails: "Status: \(httpResponse.statusCode)\nResponse: \(responsePreview)",
+                isRecoverable: true,
+                recoverySuggestion: "Please re-sync your CLI account in Settings"
+            )
+
+        case 429:
+            throw AppError(
+                code: .apiRateLimited,
+                message: "Rate limited by Claude API",
+                isRecoverable: true,
+                recoverySuggestion: "Please wait a few minutes before trying again"
+            )
+
+        case 500...599:
+            let responsePreview = String(data: data, encoding: .utf8)?.prefix(200) ?? "Unable to read response"
+            throw AppError(
+                code: .apiServerError,
+                message: "Claude API server error",
+                technicalDetails: "Status: \(httpResponse.statusCode)\nResponse: \(responsePreview)",
+                isRecoverable: true,
+                recoverySuggestion: "Please try again later"
+            )
+
+        default:
+            let responsePreview = String(data: data, encoding: .utf8)?.prefix(200) ?? "Unable to read response"
+            throw AppError(
+                code: .apiGenericError,
+                message: "Unexpected API response",
+                technicalDetails: "Status: \(httpResponse.statusCode)\nResponse: \(responsePreview)",
+                isRecoverable: true
+            )
+        }
+    }
+
     /// Fetches real usage data from Claude's API
     func fetchUsageData() async throws -> ClaudeUsage {
         let auth = try getAuthentication()
