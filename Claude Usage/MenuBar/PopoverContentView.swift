@@ -690,15 +690,10 @@ struct SmartUsageCard: View {
 
                         // Time elapsed marker
                         if let fraction = timeMarkerFraction {
-                            let barWidth = geometry.size.width
-                            let barHeight = geometry.size.height
-                            RoundedRectangle(cornerRadius: 0.5)
-                                .fill(Color.primary.opacity(0.45))
-                                .frame(width: 1.5, height: barHeight)
-                                .position(
-                                    x: min(max(barWidth * fraction, 0.75), barWidth - 0.75),
-                                    y: barHeight / 2
-                                )
+                            Rectangle()
+                                .fill(Color(nsColor: .secondaryLabelColor))
+                                .frame(width: 1)
+                                .offset(x: round(geometry.size.width * fraction))
                         }
                     }
                 }
