@@ -328,10 +328,12 @@
 "claudecode.component_usage" = "Estatísticas de uso";
 "claudecode.component_progressbar" = "Barra de progresso";
 "claudecode.component_resettime" = "Hora de reinício";
-"claudecode.requirement_sessionkey" = "• Chave de sessão configurada em Credenciais → aba Claude.ai";
+"claudecode.component_profile" = "Nome do perfil ativo";
+"claudecode.requirement_credentials" = "• Credenciais configuradas (chave de sessão ou Claude CLI OAuth)";
 "claudecode.requirement_restart" = "• Reiniciar Claude CLI após aplicar as alterações";
 "claudecode.error_no_components" = "Por favor, selecione pelo menos um componente para exibir";
 "claudecode.error_no_sessionkey" = "Chave de sessão não configurada. Por favor, configure-a primeiro na aba Uso Pessoal.";
+"claudecode.error_no_credentials" = "Nenhuma credencial configurada. Configure uma chave de sessão ou sincronize uma conta CLI.";
 "claudecode.success_applied" = "Configuração aplicada! Reinicie o Claude CLI para ver as alterações.";
 "claudecode.success_disabled" = "Linha de status desabilitada. Reinicie o Claude CLI.";
 "claudecode.preview_no_components" = "Nenhum componente selecionado";

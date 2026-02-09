@@ -12,78 +12,170 @@ class StatuslineService {
 
     /// Swift script that fetches Claude usage data from the API.
     /// Installed to ~/.claude/fetch-claude-usage.swift and executed by the bash statusline script.
-    /// The session key and organization ID are injected into this script when statusline is enabled.
-    private func generateSwiftScript(sessionKey: String, organizationId: String) -> String {
+    /// Reads CLI credentials from system keychain at runtime to detect the active CLI account.
+    /// Falls back to cookie auth from the app's active profile when keychain is unavailable.
+    private func generateSwiftScript(
+        profileLookup: [String: String],
+        appActiveProfileName: String?,
+        fallbackSessionKey: String?,
+        fallbackOrganizationId: String?
+    ) -> String {
+        // Build the profile lookup dictionary literal
+        let lookupEntries = profileLookup.map { key, value in
+            let escapedKey = key.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
+            let escapedValue = value.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
+            return "    \"\(escapedKey)\": \"\(escapedValue)\""
+        }.joined(separator: ",\n")
+        let lookupLiteral = profileLookup.isEmpty ? "[:]" : "[\n\(lookupEntries)\n]"
+
+        let appProfileLine = if let name = appActiveProfileName {
+            "let appActiveProfileName: String? = \"\(name.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\""))\""
+        } else {
+            "let appActiveProfileName: String? = nil"
+        }
+
+        let sessionKeyLine = if let key = fallbackSessionKey {
+            "let fallbackSessionKey: String? = \"\(key)\""
+        } else {
+            "let fallbackSessionKey: String? = nil"
+        }
+
+        let orgIdLine = if let orgId = fallbackOrganizationId {
+            "let fallbackOrgId: String? = \"\(orgId)\""
+        } else {
+            "let fallbackOrgId: String? = nil"
+        }
+
         return """
 #!/usr/bin/env swift
 
 import Foundation
-func readSessionKey() -> String? {
-    // Session key injected from Keychain by Claude Usage app
-    let injectedKey = "\(sessionKey)"
-    let trimmedKey = injectedKey.trimmingCharacters(in: .whitespacesAndNewlines)
-    return trimmedKey.isEmpty ? nil : trimmedKey
+
+// Profile lookup: refresh token -> profile name
+let profileLookup: [String: String] = \(lookupLiteral)
+\(appProfileLine)
+\(sessionKeyLine)
+\(orgIdLine)
+
+// MARK: - Keychain Reading
+
+func readKeychainCredentials() -> (accessToken: String, refreshToken: String)? {
+    let process = Process()
+    process.executableURL = URL(fileURLWithPath: "/usr/bin/security")
+    process.arguments = ["find-generic-password", "-s", "Claude Code-credentials", "-a", NSUserName(), "-w"]
+    let pipe = Pipe()
+    let errPipe = Pipe()
+    process.standardOutput = pipe
+    process.standardError = errPipe
+    do {
+        try process.run()
+        process.waitUntilExit()
+    } catch { return nil }
+    guard process.terminationStatus == 0 else { return nil }
+    guard let raw = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)?
+        .trimmingCharacters(in: .whitespacesAndNewlines),
+          let data = raw.data(using: .utf8),
+          let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+          let oauth = json["claudeAiOauth"] as? [String: Any],
+          let accessToken = oauth["accessToken"] as? String,
+          let refreshToken = oauth["refreshToken"] as? String else { return nil }
+    // Check expiry (expiresAt may be seconds or milliseconds)
+    if let expiresAt = oauth["expiresAt"] as? TimeInterval {
+        let expirySec = expiresAt > 1e12 ? expiresAt / 1000.0 : expiresAt
+        if Date().timeIntervalSince1970 > expirySec { return nil }
+    }
+    return (accessToken, refreshToken)
 }
-func readOrganizationId() -> String? {
-    // Organization ID injected from settings by Claude Usage app
-    let injectedOrgId = "\(organizationId)"
-    let trimmedOrgId = injectedOrgId.trimmingCharacters(in: .whitespacesAndNewlines)
-    return trimmedOrgId.isEmpty ? nil : trimmedOrgId
-}
-func fetchUsageData(sessionKey: String, orgId: String) async throws -> (utilization: Int, resetsAt: String?) {
-    // Build URL safely - validate orgId doesn't contain path traversal
+
+// MARK: - API Calls
+
+func fetchViaCookie(sessionKey: String, orgId: String) async throws -> (utilization: Int, resetsAt: String?) {
     guard !orgId.contains(".."), !orgId.contains("/") else {
         throw NSError(domain: "ClaudeAPI", code: 5, userInfo: [NSLocalizedDescriptionKey: "Invalid organization ID"])
     }
-
     guard let url = URL(string: "https://claude.ai/api/organizations/\\(orgId)/usage") else {
         throw NSError(domain: "ClaudeAPI", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
     }
-
     var request = URLRequest(url: url)
     request.setValue("sessionKey=\\(sessionKey)", forHTTPHeaderField: "Cookie")
     request.setValue("application/json", forHTTPHeaderField: "Accept")
     request.httpMethod = "GET"
+    return try await performRequest(request)
+}
 
+func fetchViaOAuth(accessToken: String) async throws -> (utilization: Int, resetsAt: String?) {
+    guard let url = URL(string: "https://api.anthropic.com/api/oauth/usage") else {
+        throw NSError(domain: "ClaudeAPI", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
+    }
+    var request = URLRequest(url: url)
+    request.setValue("Bearer \\(accessToken)", forHTTPHeaderField: "Authorization")
+    request.setValue("oauth-2025-04-20", forHTTPHeaderField: "anthropic-beta")
+    request.setValue("application/json", forHTTPHeaderField: "Accept")
+    request.httpMethod = "GET"
+    return try await performRequest(request)
+}
+
+func performRequest(_ request: URLRequest) async throws -> (utilization: Int, resetsAt: String?) {
     let (data, response) = try await URLSession.shared.data(for: request)
-
-    guard let httpResponse = response as? HTTPURLResponse,
-          httpResponse.statusCode == 200 else {
+    guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
         throw NSError(domain: "ClaudeAPI", code: 3, userInfo: [NSLocalizedDescriptionKey: "Failed to fetch usage"])
     }
-
     if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
        let fiveHour = json["five_hour"] as? [String: Any],
        let utilization = fiveHour["utilization"] as? Int {
         let resetsAt = fiveHour["resets_at"] as? String
         return (utilization, resetsAt)
     }
-
     throw NSError(domain: "ClaudeAPI", code: 4, userInfo: [NSLocalizedDescriptionKey: "Invalid response format"])
 }
 
-// Main execution
-// Use Task to run async code, RunLoop keeps script alive until exit() is called
+// MARK: - Main
+
 Task {
-    guard let sessionKey = readSessionKey() else {
-        print("ERROR:NO_SESSION_KEY")
-        exit(1)
-    }
-
-    guard let orgId = readOrganizationId() else {
-        print("ERROR:NO_ORG_CONFIGURED")
-        exit(1)
-    }
-
     do {
-        let (utilization, resetsAt) = try await fetchUsageData(sessionKey: sessionKey, orgId: orgId)
+        let result: (utilization: Int, resetsAt: String?)
+        var resolvedProfileName: String? = nil
+        var pendingRestart = false
 
-        // Output format: UTILIZATION|RESETS_AT
-        if let resets = resetsAt {
-            print("\\(utilization)|\\(resets)")
+        // Try keychain first (live CLI credentials)
+        if let keychainCreds = readKeychainCredentials() {
+            let cliProfileName = profileLookup[keychainCreds.refreshToken]
+
+            do {
+                result = try await fetchViaOAuth(accessToken: keychainCreds.accessToken)
+            } catch {
+                // OAuth failed (expired token, etc.) - try cookie fallback
+                if let sk = fallbackSessionKey, let oid = fallbackOrgId {
+                    result = try await fetchViaCookie(sessionKey: sk, orgId: oid)
+                } else {
+                    throw error
+                }
+            }
+
+            if let appName = appActiveProfileName {
+                if let cliName = cliProfileName, cliName != appName {
+                    // CLI is on a known different profile
+                    resolvedProfileName = appName
+                    pendingRestart = true
+                } else {
+                    // CLI matches app, or token not in lookup (rotated/re-login)
+                    resolvedProfileName = cliProfileName ?? appName
+                }
+            } else {
+                resolvedProfileName = nil
+            }
+        } else if let sk = fallbackSessionKey, let oid = fallbackOrgId {
+            // No keychain (CLI logged out) - fall back to cookie auth
+            result = try await fetchViaCookie(sessionKey: sk, orgId: oid)
+            resolvedProfileName = appActiveProfileName
         } else {
-            print("\\(utilization)|")
+            print("ERROR:NO_CREDENTIALS")
+            exit(1)
         }
+
+        let prefix = resolvedProfileName ?? ""
+        let hint = pendingRestart ? "pending restart" : ""
+        print("\\(prefix)|\\(result.utilization)|\\(result.resetsAt ?? "")|\\(hint)")
         exit(0)
     } catch {
         print("ERROR:\\(error.localizedDescription)")
@@ -91,7 +183,6 @@ Task {
     }
 }
 
-// Keep script alive while async Task executes
 RunLoop.main.run()
 """
     }
@@ -121,12 +212,14 @@ if [ -f "$config_file" ]; then
   show_usage=$SHOW_USAGE
   show_bar=$SHOW_PROGRESS_BAR
   show_reset=$SHOW_RESET_TIME
+  show_profile=${SHOW_PROFILE:-1}
 else
   show_dir=1
   show_branch=1
   show_usage=1
   show_bar=1
   show_reset=1
+  show_profile=1
 fi
 
 input=$(cat)
@@ -169,8 +262,10 @@ if [ "$show_usage" = "1" ]; then
   swift_result=$(swift "$HOME/.claude/fetch-claude-usage.swift" 2>/dev/null)
 
   if [ $? -eq 0 ] && [ -n "$swift_result" ]; then
-    utilization=$(echo "$swift_result" | cut -d'|' -f1)
-    resets_at=$(echo "$swift_result" | cut -d'|' -f2)
+    profile_name=$(echo "$swift_result" | cut -d'|' -f1)
+    utilization=$(echo "$swift_result" | cut -d'|' -f2)
+    resets_at=$(echo "$swift_result" | cut -d'|' -f3)
+    hint=$(echo "$swift_result" | cut -d'|' -f4)
 
     if [ -n "$utilization" ] && [ "$utilization" != "ERROR" ]; then
       if [ "$utilization" -le 10 ]; then
@@ -251,6 +346,47 @@ if [ "$show_usage" = "1" ]; then
   fi
 fi
 
+profile_text=""
+if [ "$show_profile" = "1" ] && [ -n "$profile_name" ]; then
+  CYAN=$'\\033[0;36m'
+  BLINK=$'\\033[5m'
+
+  # Check for app-driven profile switch (sentinel file)
+  sentinel="$HOME/.claude/.statusline-profile-switch"
+  if [ -z "$hint" ] && [ -f "$sentinel" ]; then
+    sentinel_mtime=$(stat -f %m "$sentinel" 2>/dev/null)
+    # Walk up process tree to find the claude process ($PPID is an intermediary shell)
+    cli_pid=""
+    cur=$PPID
+    for _ in 1 2 3 4 5; do
+      cname=$(ps -o comm= -p "$cur" 2>/dev/null | xargs basename 2>/dev/null)
+      if [ "$cname" = "claude" ]; then
+        cli_pid=$cur
+        break
+      fi
+      cur=$(ps -o ppid= -p "$cur" 2>/dev/null | tr -d ' ')
+      [ -z "$cur" ] || [ "$cur" = "1" ] && break
+    done
+    if [ -n "$cli_pid" ]; then
+      cli_start=$(ps -o lstart= -p "$cli_pid" 2>/dev/null)
+      cli_epoch=$(date -j -f "%a %b %d %T %Y" "$cli_start" "+%s" 2>/dev/null)
+      if [ -n "$sentinel_mtime" ] && [ -n "$cli_epoch" ]; then
+        if [ "$cli_epoch" -lt "$sentinel_mtime" ]; then
+          hint="pending restart"
+        else
+          rm -f "$sentinel"
+        fi
+      fi
+    fi
+  fi
+
+  if [ -n "$hint" ]; then
+    profile_text="${CYAN}${profile_name} ${BLINK}${GRAY}(${hint})${RESET}"
+  else
+    profile_text="${CYAN}${profile_name}${RESET}"
+  fi
+fi
+
 output=""
 separator="${GRAY} │ ${RESET}"
 
@@ -259,6 +395,11 @@ separator="${GRAY} │ ${RESET}"
 if [ -n "$branch_text" ]; then
   [ -n "$output" ] && output="${output}${separator}"
   output="${output}${branch_text}"
+fi
+
+if [ -n "$profile_text" ]; then
+  [ -n "$output" ] && output="${output}${separator}"
+  output="${output}${profile_text}"
 fi
 
 if [ -n "$usage_text" ]; then
@@ -271,8 +412,8 @@ printf "%s\\n" "$output"
 
     // MARK: - Installation
 
-    /// Installs statusline scripts with session key injection from active profile
-    /// - Parameter injectSessionKey: If true, injects the session key from active profile into the Swift script
+    /// Installs statusline scripts with credential injection from active profile
+    /// - Parameter injectSessionKey: If true, injects credentials and profile lookup into the Swift script
     func installScripts(injectSessionKey: Bool = false) throws {
         let claudeDir = Constants.ClaudePaths.claudeDirectory
 
@@ -280,26 +421,44 @@ printf "%s\\n" "$output"
             try FileManager.default.createDirectory(at: claudeDir, withIntermediateDirectories: true)
         }
 
-        // Install Swift script (with or without session key)
+        // Install Swift script (with or without credentials)
         let swiftDestination = claudeDir.appendingPathComponent("fetch-claude-usage.swift")
         let swiftScriptContent: String
 
         if injectSessionKey {
-            // Load session key and org ID from active profile
             guard let activeProfile = ProfileManager.shared.activeProfile else {
                 throw StatuslineError.noActiveProfile
             }
 
-            guard let sessionKey = activeProfile.claudeSessionKey else {
-                throw StatuslineError.sessionKeyNotFound
+            let allProfiles = ProfileManager.shared.profiles
+            let hasMultipleProfiles = allProfiles.count > 1
+
+            // Build refresh token -> profile name lookup from all profiles
+            var profileLookup: [String: String] = [:]
+            if hasMultipleProfiles {
+                for profile in allProfiles {
+                    if let cliJSON = profile.cliCredentialsJSON,
+                       let refreshToken = ClaudeCodeSyncService.shared.extractRefreshToken(from: cliJSON) {
+                        profileLookup[refreshToken] = profile.name
+                    }
+                }
             }
 
-            guard let organizationId = activeProfile.organizationId else {
-                throw StatuslineError.organizationNotConfigured
-            }
+            let appActiveProfileName = hasMultipleProfiles ? activeProfile.name : nil
 
-            swiftScriptContent = generateSwiftScript(sessionKey: sessionKey, organizationId: organizationId)
-            LoggingService.shared.log("Injected session key and org ID from profile '\(activeProfile.name)' into statusline")
+            // Cookie credentials from active profile as fallback
+            let fallbackSessionKey = activeProfile.claudeSessionKey
+            let fallbackOrganizationId = activeProfile.organizationId
+
+            // The script reads the keychain at runtime for live credentials,
+            // so we always install even if stored profile tokens are expired.
+            swiftScriptContent = generateSwiftScript(
+                profileLookup: profileLookup,
+                appActiveProfileName: appActiveProfileName,
+                fallbackSessionKey: fallbackSessionKey,
+                fallbackOrganizationId: fallbackOrganizationId
+            )
+            LoggingService.shared.log("Injected credentials from profile '\(activeProfile.name)' into statusline with \(profileLookup.count) profile lookup entries")
         } else {
             // Install placeholder script
             swiftScriptContent = placeholderSwiftScript
@@ -343,7 +502,8 @@ printf "%s\\n" "$output"
         showBranch: Bool,
         showUsage: Bool,
         showProgressBar: Bool,
-        showResetTime: Bool
+        showResetTime: Bool,
+        showProfile: Bool
     ) throws {
         let configPath = Constants.ClaudePaths.claudeDirectory
             .appendingPathComponent("statusline-config.txt")
@@ -354,6 +514,7 @@ SHOW_BRANCH=\(showBranch ? "1" : "0")
 SHOW_USAGE=\(showUsage ? "1" : "0")
 SHOW_PROGRESS_BAR=\(showProgressBar ? "1" : "0")
 SHOW_RESET_TIME=\(showResetTime ? "1" : "0")
+SHOW_PROFILE=\(showProfile ? "1" : "0")
 """
 
         try config.write(to: configPath, atomically: true, encoding: .utf8)
@@ -426,16 +587,56 @@ SHOW_RESET_TIME=\(showResetTime ? "1" : "0")
         try installScripts(injectSessionKey: true)
     }
 
-    /// Checks if active profile has a valid session key
-    func hasValidSessionKey() -> Bool {
-        guard let activeProfile = ProfileManager.shared.activeProfile,
-              let key = activeProfile.claudeSessionKey else {
+    // MARK: - Profile Switch Sentinel
+
+    private var sentinelPath: URL {
+        Constants.ClaudePaths.claudeDirectory.appendingPathComponent(".statusline-profile-switch")
+    }
+
+    /// Writes a sentinel file to signal that a profile switch occurred.
+    /// The bash statusline script uses this + CLI process start time to detect pending restarts.
+    func writePendingRestartSentinel() {
+        let path = sentinelPath
+        let fm = FileManager.default
+
+        // Ensure directory exists
+        let dir = path.deletingLastPathComponent()
+        if !fm.fileExists(atPath: dir.path) {
+            try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        }
+
+        // Write (or overwrite) sentinel with current timestamp
+        fm.createFile(atPath: path.path, contents: nil)
+        LoggingService.shared.log("Wrote statusline profile-switch sentinel")
+    }
+
+    /// Removes the sentinel file (e.g. when statusline is disabled).
+    func clearPendingRestartSentinel() {
+        try? FileManager.default.removeItem(at: sentinelPath)
+    }
+
+    /// Checks if active profile has valid credentials (session key or CLI OAuth)
+    func hasValidCredentials() -> Bool {
+        guard let activeProfile = ProfileManager.shared.activeProfile else {
             return false
         }
 
-        // Use professional validator for comprehensive validation
-        let validator = SessionKeyValidator()
-        return validator.isValid(key)
+        // Cookie-based session
+        if let key = activeProfile.claudeSessionKey {
+            let validator = SessionKeyValidator()
+            if validator.isValid(key) && activeProfile.organizationId != nil {
+                return true
+            }
+        }
+
+        // CLI OAuth token
+        if let cliJSON = activeProfile.cliCredentialsJSON,
+           !ClaudeCodeSyncService.shared.isTokenExpired(cliJSON),
+           ClaudeCodeSyncService.shared.extractAccessToken(from: cliJSON) != nil {
+            return true
+        }
+
+        return false
     }
 }
 
@@ -445,6 +646,7 @@ enum StatuslineError: Error, LocalizedError {
     case noActiveProfile
     case sessionKeyNotFound
     case organizationNotConfigured
+    case noCredentials
 
     var errorDescription: String? {
         switch self {
@@ -454,6 +656,8 @@ enum StatuslineError: Error, LocalizedError {
             return "Session key not found in active profile. Please configure your session key first."
         case .organizationNotConfigured:
             return "Organization not configured in active profile. Please select an organization in the app settings."
+        case .noCredentials:
+            return "No credentials available. Please configure a Claude.ai session key or sync a CLI account."
         }
     }
 }

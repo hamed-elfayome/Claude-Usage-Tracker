@@ -176,6 +176,16 @@ class ClaudeCodeSyncService {
         return token
     }
 
+    func extractRefreshToken(from jsonData: String) -> String? {
+        guard let data = jsonData.data(using: .utf8),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let oauth = json["claudeAiOauth"] as? [String: Any],
+              let token = oauth["refreshToken"] as? String else {
+            return nil
+        }
+        return token
+    }
+
     func extractSubscriptionInfo(from jsonData: String) -> (type: String, scopes: [String])? {
         guard let data = jsonData.data(using: .utf8),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -197,7 +207,9 @@ class ClaudeCodeSyncService {
               let expiresAt = oauth["expiresAt"] as? TimeInterval else {
             return nil
         }
-        return Date(timeIntervalSince1970: expiresAt)
+        // expiresAt may be in seconds or milliseconds; normalize to seconds
+        let expirySec = expiresAt > 1e12 ? expiresAt / 1000.0 : expiresAt
+        return Date(timeIntervalSince1970: expirySec)
     }
 
     /// Checks if the OAuth token in the credentials JSON is expired
