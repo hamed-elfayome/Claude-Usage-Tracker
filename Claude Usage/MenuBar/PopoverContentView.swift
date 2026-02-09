@@ -682,7 +682,7 @@ struct SmartUsageCard: View {
                         // Time elapsed marker
                         if let fraction = timeMarkerFraction {
                             Rectangle()
-                                .fill(Color.primary.opacity(0.45))
+                                .fill(Color(nsColor: .secondaryLabelColor))
                                 .frame(width: 1)
                                 .offset(x: round(geometry.size.width * fraction))
                         }
