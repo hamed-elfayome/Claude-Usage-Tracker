@@ -15,6 +15,7 @@ struct ClaudeCodeView: View {
     @State private var showUsage: Bool = SharedDataStore.shared.loadStatuslineShowUsage()
     @State private var showProgressBar: Bool = SharedDataStore.shared.loadStatuslineShowProgressBar()
     @State private var showResetTime: Bool = SharedDataStore.shared.loadStatuslineShowResetTime()
+    @State private var showProfile: Bool = SharedDataStore.shared.loadStatuslineShowProfile()
 
     // Status feedback
     @State private var statusMessage: String?
@@ -80,6 +81,11 @@ struct ClaudeCodeView: View {
 
                     Toggle("claudecode.component_branch".localized, isOn: $showBranch)
                         .font(DesignTokens.Typography.body)
+
+                    if ProfileManager.shared.profiles.count > 1 {
+                        Toggle("claudecode.component_profile".localized, isOn: $showProfile)
+                            .font(DesignTokens.Typography.body)
+                    }
 
                     Toggle("claudecode.component_usage".localized, isOn: $showUsage)
                         .font(DesignTokens.Typography.body)
@@ -148,7 +154,7 @@ struct ClaudeCodeView: View {
                 Text("ui.requirements".localized)
                     .font(DesignTokens.Typography.sectionTitle)
 
-                Text("claudecode.requirement_sessionkey".localized)
+                Text("claudecode.requirement_credentials".localized)
                     .font(DesignTokens.Typography.caption)
                     .foregroundColor(.secondary)
 
@@ -175,9 +181,9 @@ struct ClaudeCodeView: View {
             return
         }
 
-        // Validate: session key must be configured
-        guard StatuslineService.shared.hasValidSessionKey() else {
-            statusMessage = "claudecode.error_no_sessionkey".localized
+        // Validate: credentials must be configured (session key or CLI OAuth)
+        guard StatuslineService.shared.hasValidCredentials() else {
+            statusMessage = "claudecode.error_no_credentials".localized
             isSuccess = false
             return
         }
@@ -188,6 +194,7 @@ struct ClaudeCodeView: View {
         SharedDataStore.shared.saveStatuslineShowUsage(showUsage)
         SharedDataStore.shared.saveStatuslineShowProgressBar(showProgressBar)
         SharedDataStore.shared.saveStatuslineShowResetTime(showResetTime)
+        SharedDataStore.shared.saveStatuslineShowProfile(showProfile)
 
         do {
             // Install scripts to ~/.claude/
@@ -199,7 +206,8 @@ struct ClaudeCodeView: View {
                 showBranch: showBranch,
                 showUsage: showUsage,
                 showProgressBar: showProgressBar,
-                showResetTime: showResetTime
+                showResetTime: showResetTime,
+                showProfile: showProfile
             )
 
             // Update Claude CLI settings.json
@@ -235,6 +243,12 @@ struct ClaudeCodeView: View {
 
         if showBranch {
             parts.append("⎇ main")
+        }
+
+        if showProfile && ProfileManager.shared.profiles.count > 1 {
+            if let name = ProfileManager.shared.activeProfile?.name {
+                parts.append(name)
+            }
         }
 
         if showUsage {

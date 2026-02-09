@@ -215,6 +215,8 @@ class ProfileManager: ObservableObject {
         if updatedProfile.cliCredentialsJSON != nil {
             do {
                 try cliSyncService.applyProfileCredentials(updatedProfile.id)
+                // Signal running CLI sessions that a profile switch occurred
+                StatuslineService.shared.writePendingRestartSentinel()
                 LoggingService.shared.log("✓ Applied CLI credentials for: \(updatedProfile.name)")
             } catch {
                 LoggingService.shared.logError("Failed to apply CLI credentials (non-fatal)", error: error)
@@ -235,14 +237,14 @@ class ProfileManager: ObservableObject {
         profileStore.saveActiveProfileId(id)
         profileStore.saveProfiles(profiles)
 
-        // Update statusline script if the new profile has credentials
-        if updated.claudeSessionKey != nil && updated.organizationId != nil {
-            do {
-                try StatuslineService.shared.updateScriptsIfInstalled()
-                LoggingService.shared.log("✓ Updated statusline for profile: \(updated.name)")
-            } catch {
-                LoggingService.shared.logError("Failed to update statusline (non-fatal)", error: error)
-            }
+        // Always update statusline scripts on profile switch so appActiveProfileName stays current.
+        // The script reads the keychain at runtime for credentials, so the active profile
+        // doesn't need valid embedded credentials.
+        do {
+            try StatuslineService.shared.updateScriptsIfInstalled()
+            LoggingService.shared.log("✓ Updated statusline for profile: \(updated.name)")
+        } catch {
+            LoggingService.shared.logError("Failed to update statusline (non-fatal)", error: error)
         }
 
         switchingSemaphore = false

@@ -326,10 +326,12 @@
 "claudecode.component_usage" = "Statistiques d'utilisation";
 "claudecode.component_progressbar" = "Barre de progression";
 "claudecode.component_resettime" = "Heure de réinitialisation";
-"claudecode.requirement_sessionkey" = "• Clé de session configurée dans Identifiants → onglet Claude.ai";
+"claudecode.component_profile" = "Nom du profil actif";
+"claudecode.requirement_credentials" = "• Identifiants configurés (clé de session ou Claude CLI OAuth)";
 "claudecode.requirement_restart" = "• Redémarrez Claude CLI après l'application des modifications";
 "claudecode.error_no_components" = "Veuillez sélectionner au moins un composant à afficher";
 "claudecode.error_no_sessionkey" = "Clé de session non configurée. Veuillez d'abord la définir dans l'onglet Utilisation Personnelle.";
+"claudecode.error_no_credentials" = "Aucun identifiant configuré. Veuillez configurer une clé de session ou synchroniser un compte CLI.";
 "claudecode.success_applied" = "Configuration appliquée ! Redémarrez Claude CLI pour voir les modifications.";
 "claudecode.success_disabled" = "Ligne d'état désactivée. Redémarrez Claude CLI.";
 "claudecode.preview_no_components" = "Aucun composant sélectionné";
