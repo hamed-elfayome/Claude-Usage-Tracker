@@ -474,10 +474,12 @@
 "claudecode.component_usage" = "사용 통계";
 "claudecode.component_progressbar" = "진행률 표시줄";
 "claudecode.component_resettime" = "리셋 시간";
-"claudecode.requirement_sessionkey" = "• 자격 증명 → Claude.ai 탭에서 세션 키 구성됨";
+"claudecode.component_profile" = "활성 프로필 이름";
+"claudecode.requirement_credentials" = "• 자격 증명 구성됨 (세션 키 또는 Claude CLI OAuth)";
 "claudecode.requirement_restart" = "• 변경사항 적용 후 Claude CLI 재시작";
 "claudecode.error_no_components" = "표시할 구성요소를 하나 이상 선택하세요";
 "claudecode.error_no_sessionkey" = "세션 키가 구성되지 않았습니다. 먼저 개인 사용량 탭에서 설정하세요.";
+"claudecode.error_no_credentials" = "자격 증명이 구성되지 않았습니다. 세션 키를 설정하거나 CLI 계정을 동기화하세요.";
 "claudecode.success_applied" = "구성이 적용되었습니다! 변경사항을 보려면 Claude CLI를 재시작하세요.";
 "claudecode.success_disabled" = "상태 표시줄이 비활성화되었습니다. Claude CLI를 재시작하세요.";
 "claudecode.preview_no_components" = "선택된 구성요소 없음";

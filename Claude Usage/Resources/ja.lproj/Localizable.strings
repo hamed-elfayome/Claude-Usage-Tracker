@@ -344,10 +344,12 @@
 "claudecode.component_usage" = "使用統計";
 "claudecode.component_progressbar" = "プログレスバー";
 "claudecode.component_resettime" = "リセット時刻";
-"claudecode.requirement_sessionkey" = "• 認証情報 → Claude.aiタブでセッションキーが構成されている";
+"claudecode.component_profile" = "アクティブプロファイル名";
+"claudecode.requirement_credentials" = "• 認証情報が構成されている（セッションキーまたはClaude CLI OAuth）";
 "claudecode.requirement_restart" = "• 変更適用後にClaude CLIを再起動";
 "claudecode.error_no_components" = "表示する少なくとも1つのコンポーネントを選択してください";
 "claudecode.error_no_sessionkey" = "セッションキーが構成されていません。最初に個人使用タブで設定してください。";
+"claudecode.error_no_credentials" = "認証情報が構成されていません。セッションキーを設定するか、CLIアカウントを同期してください。";
 "claudecode.success_applied" = "構成が適用されました！変更を確認するにはClaude CLIを再起動してください。";
 "claudecode.success_disabled" = "ステータスラインが無効になりました。Claude CLIを再起動してください。";
 "claudecode.preview_no_components" = "コンポーネントが選択されていません";
