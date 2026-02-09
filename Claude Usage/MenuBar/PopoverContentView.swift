@@ -677,18 +677,14 @@ struct SmartUsageCard: View {
                             .frame(width: geometry.size.width * min(displayPercentage / 100.0, 1.0))
                             .clipShape(RoundedRectangle(cornerRadius: 4))
                             .animation(.easeInOut(duration: 0.8), value: displayPercentage)
-
+                    }
+                    .overlay(alignment: .leading) {
                         // Time elapsed marker
                         if let fraction = timeMarkerFraction {
-                            let barWidth = geometry.size.width
-                            let barHeight = geometry.size.height
-                            RoundedRectangle(cornerRadius: 0.5)
+                            Rectangle()
                                 .fill(Color.primary.opacity(0.45))
-                                .frame(width: 1.5, height: barHeight)
-                                .position(
-                                    x: min(max(barWidth * fraction, 0.75), barWidth - 0.75),
-                                    y: barHeight / 2
-                                )
+                                .frame(width: 1)
+                                .offset(x: round(geometry.size.width * fraction))
                         }
                     }
                 }
