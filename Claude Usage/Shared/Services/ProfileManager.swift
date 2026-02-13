@@ -349,6 +349,19 @@ class ProfileManager: ObservableObject {
         LoggingService.shared.log("Saved Claude usage for profile: \(profiles[index].name)")
     }
 
+    func clearClaudeUsage(for profileId: UUID) {
+        guard let index = profiles.firstIndex(where: { $0.id == profileId }) else { return }
+
+        profiles[index].claudeUsage = nil
+
+        if activeProfile?.id == profileId {
+            activeProfile = profiles[index]
+        }
+
+        profileStore.saveProfiles(profiles)
+        LoggingService.shared.log("Cleared stale usage for profile: \(profiles[index].name)")
+    }
+
     /// Loads Claude usage data for a specific profile
     func loadClaudeUsage(for profileId: UUID) -> ClaudeUsage? {
         return profiles.first(where: { $0.id == profileId })?.claudeUsage
