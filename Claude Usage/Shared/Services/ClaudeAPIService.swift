@@ -373,8 +373,36 @@ class ClaudeAPIService: APIServiceProtocol {
     ///   - organizationId: The organization ID
     /// - Returns: ClaudeUsage data for the profile
     func fetchUsageData(sessionKey: String, organizationId: String) async throws -> ClaudeUsage {
-        let usageData = try await performRequest(endpoint: "/organizations/\(organizationId)/usage", sessionKey: sessionKey)
-        return try parseUsageResponse(usageData)
+        async let usageDataTask = performRequest(endpoint: "/organizations/\(organizationId)/usage", sessionKey: sessionKey)
+
+        // Fetch overage spend limit if enabled
+        let checkOverage = ProfileManager.shared.activeProfile?.checkOverageLimitEnabled ?? true
+        async let overageDataTask: Data? = checkOverage ? performRequest(endpoint: "/organizations/\(organizationId)/overage_spend_limit", sessionKey: sessionKey) : nil
+        async let overageCreditTask: Data? = checkOverage ? performRequest(endpoint: "/organizations/\(organizationId)/overage_credit_grant", sessionKey: sessionKey) : nil
+
+        let usageData = try await usageDataTask
+        var claudeUsage = try parseUsageResponse(usageData)
+
+        if checkOverage,
+           let data = try? await overageDataTask,
+           let overage = try? JSONDecoder().decode(OverageSpendLimitResponse.self, from: data),
+           overage.isEnabled == true {
+            claudeUsage.costUsed = overage.usedCredits
+            claudeUsage.costLimit = overage.monthlyCreditLimit
+            claudeUsage.costCurrency = overage.currency
+        }
+
+        // Fetch overage credit grant (prepaid balance)
+        if checkOverage,
+           let data = try? await overageCreditTask,
+           let creditGrant = try? JSONDecoder().decode(OverageCreditGrantResponse.self, from: data),
+           creditGrant.granted == true {
+            // Convert minor units (cents) to major units (dollars/euros)
+            claudeUsage.overageBalance = Double(creditGrant.amountMinorUnits) / 100.0
+            claudeUsage.overageBalanceCurrency = creditGrant.currency
+        }
+
+        return claudeUsage
     }
 
     /// Fetches real usage data from Claude's API
@@ -391,6 +419,7 @@ class ClaudeAPIService: APIServiceProtocol {
             // Use active profile's checkOverageLimitEnabled setting
             let checkOverage = ProfileManager.shared.activeProfile?.checkOverageLimitEnabled ?? true
             async let overageDataTask: Data? = checkOverage ? performRequest(endpoint: "/organizations/\(orgId)/overage_spend_limit", sessionKey: sessionKey) : nil
+            async let overageCreditTask: Data? = checkOverage ? performRequest(endpoint: "/organizations/\(orgId)/overage_credit_grant", sessionKey: sessionKey) : nil
 
             let usageData = try await usageDataTask
             var claudeUsage = try parseUsageResponse(usageData)
@@ -402,6 +431,16 @@ class ClaudeAPIService: APIServiceProtocol {
                 claudeUsage.costUsed = overage.usedCredits
                 claudeUsage.costLimit = overage.monthlyCreditLimit
                 claudeUsage.costCurrency = overage.currency
+            }
+
+            // Fetch overage credit grant (prepaid balance)
+            if checkOverage,
+               let data = try? await overageCreditTask,
+               let creditGrant = try? JSONDecoder().decode(OverageCreditGrantResponse.self, from: data),
+               creditGrant.granted == true {
+                // Convert minor units (cents) to major units (dollars/euros)
+                claudeUsage.overageBalance = Double(creditGrant.amountMinorUnits) / 100.0
+                claudeUsage.overageBalanceCurrency = creditGrant.currency
             }
 
             return claudeUsage
@@ -636,6 +675,8 @@ class ClaudeAPIService: APIServiceProtocol {
                 costUsed: nil,
                 costLimit: nil,
                 costCurrency: nil,
+                overageBalance: nil,
+                overageBalanceCurrency: nil,
                 lastUpdated: Date(),
                 userTimezone: .current
             )
