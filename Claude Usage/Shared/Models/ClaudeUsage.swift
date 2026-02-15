@@ -28,6 +28,10 @@ struct ClaudeUsage: Codable, Equatable {
     var costLimit: Double?
     var costCurrency: String?
 
+    // Overage credit grant (prepaid balance)
+    var overageBalance: Double?
+    var overageBalanceCurrency: String?
+
     // Metadata
     var lastUpdated: Date
     var userTimezone: TimeZone
@@ -74,6 +78,8 @@ struct ClaudeUsage: Codable, Equatable {
             costUsed: nil,
             costLimit: nil,
             costCurrency: nil,
+            overageBalance: nil,
+            overageBalanceCurrency: nil,
             lastUpdated: Date(),
             userTimezone: .current
         )

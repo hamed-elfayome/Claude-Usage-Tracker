@@ -497,6 +497,15 @@ struct SmartUsageDashboard: View {
         DataStore.shared.loadAPITrackingEnabled()
     }
 
+    // Build subtitle for extra usage with optional balance
+    private func buildExtraUsageSubtitle(used: Double, limit: Double, currency: String, balance: Double?, balanceCurrency: String?) -> String {
+        var subtitle = String(format: "%.2f / %.2f %@", used / 100.0, limit / 100.0, currency)
+        if let balance = balance, let balanceCurrency = balanceCurrency {
+            subtitle += String(format: " • Balance: %.2f %@", balance, balanceCurrency)
+        }
+        return subtitle
+    }
+
     var body: some View {
         VStack(spacing: 16) {
             // Primary Usage Card
@@ -545,9 +554,10 @@ struct SmartUsageDashboard: View {
 
             if let used = usage.costUsed, let limit = usage.costLimit, let currency = usage.costCurrency, limit > 0 {
                 let usedPercentage = (used / limit) * 100.0
+
                 SmartUsageCard(
                     title: "menubar.extra_usage".localized,
-                    subtitle: String(format: "%.2f / %.2f %@", used / 100.0, limit / 100.0, currency),
+                    subtitle: buildExtraUsageSubtitle(used: used, limit: limit, currency: currency, balance: usage.overageBalance, balanceCurrency: usage.overageBalanceCurrency),
                     usedPercentage: usedPercentage,
                     showRemaining: showRemainingPercentage,
                     resetTime: nil,

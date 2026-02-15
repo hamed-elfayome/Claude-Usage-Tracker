@@ -73,6 +73,22 @@ extension ClaudeAPIService {
         }
     }
 
+    struct OverageCreditGrantResponse: Codable {
+        let available: Bool
+        let eligible: Bool
+        let granted: Bool
+        let amountMinorUnits: Int
+        let currency: String
+
+        enum CodingKeys: String, CodingKey {
+            case available
+            case eligible
+            case granted
+            case amountMinorUnits = "amount_minor_units"
+            case currency
+        }
+    }
+
     struct ConsoleOrganization: Codable {
         let id: Int
         let uuid: String
