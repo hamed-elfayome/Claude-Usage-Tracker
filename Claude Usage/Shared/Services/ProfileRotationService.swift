@@ -30,12 +30,14 @@ class ProfileRotationService {
 
         guard active.autoRotateEnabled else { return nil }
 
-        // Check if active profile's session is above the rotation threshold
+        // Check if active profile needs rotation: session above threshold OR weekly limit hit
         guard let activeUsage = active.claudeUsage else {
             LoggingService.shared.log("AutoRotation: Active profile '\(active.name)' has no usage data")
             return nil
         }
-        guard activeUsage.sessionPercentage >= Constants.AutoRotation.sessionThreshold else { return nil }
+        let sessionExhausted = activeUsage.sessionPercentage >= Constants.AutoRotation.sessionThreshold
+        let weeklyExhausted = activeUsage.weeklyPercentage >= 100.0
+        guard sessionExhausted || weeklyExhausted else { return nil }
 
         // Cooldown: don't rotate too frequently
         let elapsed = Date().timeIntervalSince(lastRotationTime)
@@ -79,17 +81,21 @@ class ProfileRotationService {
 
     // MARK: - Capacity Calculation
 
-    /// Calculates effective remaining capacity: remaining_session% x tier_weight
-    /// Weekly usage applies a small continuous penalty (up to 5% reduction)
+    /// Calculates effective remaining capacity: remaining_session% x tier_weight x weekly_factor
+    /// At 100% weekly usage the account is hard-capped, so capacity drops to zero.
     func effectiveCapacity(for profile: Profile) -> Double {
         guard let usage = profile.claudeUsage else { return 0 }
+
+        // Weekly limit at 100% means the account is capped regardless of session headroom
+        let weeklyPct = min(max(0, usage.weeklyPercentage), 100.0)
+        if weeklyPct >= 100.0 { return 0 }
 
         let remainingSession = max(0, 100.0 - usage.sessionPercentage)
         let tierWeight = (profile.accountTier ?? .pro).weight
         let baseCapacity = remainingSession * tierWeight
 
-        // Penalize high weekly usage slightly (max 5% reduction of base capacity)
-        let weeklyFactor = 1.0 - (min(max(0, usage.weeklyPercentage), 100.0) / 100.0) * 0.05
+        // Scale down linearly as weekly usage climbs — at 80%+ weekly the penalty is significant
+        let weeklyFactor = 1.0 - (weeklyPct / 100.0)
         return max(0, baseCapacity * weeklyFactor)
     }
 }
