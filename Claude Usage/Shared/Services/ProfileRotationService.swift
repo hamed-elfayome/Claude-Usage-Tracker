@@ -26,9 +26,15 @@ class ProfileRotationService {
 
         // Need at least 2 rotation-eligible profiles (opted in + have session credentials)
         let candidates = profileManager.profiles.filter { $0.autoRotateEnabled && $0.hasSessionCredentials }
-        guard candidates.count >= 2 else { return nil }
+        guard candidates.count >= 2 else {
+            LoggingService.shared.log("AutoRotation: Only \(candidates.count) eligible candidate(s), need 2+")
+            return nil
+        }
 
-        guard active.autoRotateEnabled else { return nil }
+        guard active.autoRotateEnabled else {
+            LoggingService.shared.log("AutoRotation: Active profile '\(active.name)' has autoRotate disabled")
+            return nil
+        }
 
         // Check if active profile needs rotation: session above threshold OR weekly limit hit
         guard let activeUsage = active.claudeUsage else {
@@ -36,7 +42,8 @@ class ProfileRotationService {
             return nil
         }
         let sessionExhausted = activeUsage.sessionPercentage >= Constants.AutoRotation.sessionThreshold
-        let weeklyExhausted = activeUsage.weeklyPercentage >= 100.0
+        let weeklyExhausted = activeUsage.weeklyPercentage >= 99.0
+        LoggingService.shared.log("AutoRotation: '\(active.name)' session=\(activeUsage.sessionPercentage)% weekly=\(activeUsage.weeklyPercentage)% sessionExhausted=\(sessionExhausted) weeklyExhausted=\(weeklyExhausted)")
         guard sessionExhausted || weeklyExhausted else { return nil }
 
         // Cooldown: don't rotate too frequently
@@ -50,8 +57,13 @@ class ProfileRotationService {
 
         // Log candidates without usage data, then find the one with highest effective capacity
         let otherCandidates = candidates.filter { $0.id != active.id }
-        for candidate in otherCandidates where candidate.claudeUsage == nil {
-            LoggingService.shared.log("AutoRotation: Skipping '\(candidate.name)' (no usage data)")
+        for candidate in otherCandidates {
+            if let usage = candidate.claudeUsage {
+                let cap = effectiveCapacity(for: candidate)
+                LoggingService.shared.log("AutoRotation: Candidate '\(candidate.name)' session=\(usage.sessionPercentage)% weekly=\(usage.weeklyPercentage)% capacity=\(cap)")
+            } else {
+                LoggingService.shared.log("AutoRotation: Skipping '\(candidate.name)' (no usage data)")
+            }
         }
 
         let bestCandidate = otherCandidates
@@ -71,6 +83,8 @@ class ProfileRotationService {
             ? bestCapacity / activeCapacity >= Constants.AutoRotation.hysteresisMultiplier
             : bestCapacity > 0
 
+        LoggingService.shared.log("AutoRotation: activeCapacity=\(activeCapacity) bestCapacity=\(bestCapacity) target='\(target.name)' meetsThreshold=\(meetsThreshold)")
+
         return meetsThreshold ? target.id : nil
     }
 
@@ -82,19 +96,19 @@ class ProfileRotationService {
     // MARK: - Capacity Calculation
 
     /// Calculates effective remaining capacity: remaining_session% x tier_weight x weekly_factor
-    /// At 100% weekly usage the account is hard-capped, so capacity drops to zero.
+    /// Weekly usage >= 99% treats the profile as fully exhausted (capacity 0).
     func effectiveCapacity(for profile: Profile) -> Double {
         guard let usage = profile.claudeUsage else { return 0 }
 
-        // Weekly limit at 100% means the account is capped regardless of session headroom
+        // Weekly limit nearly hit means the account is effectively capped
         let weeklyPct = min(max(0, usage.weeklyPercentage), 100.0)
-        if weeklyPct >= 100.0 { return 0 }
+        if weeklyPct >= 99.0 { return 0 }
 
         let remainingSession = max(0, 100.0 - usage.sessionPercentage)
         let tierWeight = (profile.accountTier ?? .pro).weight
         let baseCapacity = remainingSession * tierWeight
 
-        // Scale down linearly as weekly usage climbs — at 80%+ weekly the penalty is significant
+        // Scale down linearly as weekly usage climbs
         let weeklyFactor = 1.0 - (weeklyPct / 100.0)
         return max(0, baseCapacity * weeklyFactor)
     }
