@@ -100,6 +100,16 @@ enum Constants {
         static let critical: Double = 95.0
     }
 
+    // Auto-rotation thresholds
+    enum AutoRotation {
+        /// Session usage percentage above which rotation is considered
+        static let sessionThreshold: Double = 80.0
+        /// Candidate must have at least this multiple of the active profile's effective capacity
+        static let hysteresisMultiplier: Double = 2.0
+        /// Minimum seconds between rotations
+        static let cooldownInterval: TimeInterval = 60
+    }
+
     // GitHub repository
     static let githubRepoURL = "https://github.com/hamed-elfayome/Claude-Usage-Tracker"
 

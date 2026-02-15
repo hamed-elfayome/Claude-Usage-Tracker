@@ -288,7 +288,7 @@ class ClaudeAPIService: APIServiceProtocol {
                     // Log all available organizations for debugging
                     LoggingService.shared.logInfo("Found \(organizations.count) organization(s):")
                     for (index, org) in organizations.enumerated() {
-                        LoggingService.shared.logInfo("  [\(index)] \(org.name) (ID: \(org.uuid))")
+                        LoggingService.shared.logInfo("  [\(index)] \(org.name) (ID: \(org.uuid)) capabilities: \(org.capabilities)")
                     }
 
                     return organizations

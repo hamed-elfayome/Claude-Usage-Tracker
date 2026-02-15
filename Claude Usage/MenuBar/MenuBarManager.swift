@@ -765,6 +765,7 @@ class MenuBarManager: NSObject, ObservableObject {
                     config: config
                 )
                 self.isRefreshing = false
+                self.evaluateAutoRotation()
             }
         }
     }
@@ -938,6 +939,13 @@ class MenuBarManager: NSObject, ObservableObject {
                 }
             }
 
+            // Evaluate auto-rotation after every refresh cycle.
+            // Even if the fetch failed, cached usage data may show the profile is exhausted
+            // (e.g. 100% weekly with an expired token that can't refresh).
+            await MainActor.run {
+                self.evaluateAutoRotation()
+            }
+
             // Clear loading state
             await MainActor.run {
                 self.isRefreshing = false
@@ -946,6 +954,37 @@ class MenuBarManager: NSObject, ObservableObject {
                 if usageSuccess && abs(self.lastRefreshTriggerTime.timeIntervalSinceNow) < 5 {
                     self.showSuccessNotification()
                 }
+            }
+        }
+    }
+
+    /// Evaluates whether the active profile should be auto-rotated to another profile
+    private func evaluateAutoRotation() {
+        let rotationService = ProfileRotationService.shared
+
+        guard let targetId = rotationService.evaluateRotation() else { return }
+        guard let fromProfile = profileManager.activeProfile,
+              let toProfile = profileManager.profiles.first(where: { $0.id == targetId }) else {
+            LoggingService.shared.logError("MenuBarManager: Auto-rotation target not found after evaluation")
+            return
+        }
+
+        LoggingService.shared.log("MenuBarManager: Auto-rotating from '\(fromProfile.name)' to '\(toProfile.name)'")
+
+        let fromName = fromProfile.name
+        let toName = toProfile.name
+
+        Task { @MainActor in
+            await profileManager.activateProfile(targetId)
+
+            if self.profileManager.activeProfile?.id == targetId {
+                rotationService.recordRotation()
+                NotificationManager.shared.sendProfileRotatedNotification(
+                    fromProfile: fromName,
+                    toProfile: toName
+                )
+            } else {
+                LoggingService.shared.logError("MenuBarManager: Auto-rotation to '\(toName)' failed, still on '\(self.profileManager.activeProfile?.name ?? "unknown")'")
             }
         }
     }

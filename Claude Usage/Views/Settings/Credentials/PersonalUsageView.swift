@@ -653,6 +653,12 @@ struct ConfirmStep: View {
                 if var profile = ProfileManager.shared.activeProfile {
                     profile.claudeSessionKey = wizardState.sessionKey
                     profile.organizationId = wizardState.selectedOrgId
+
+                    // Cache account tier from organization capabilities
+                    if let selectedOrg = wizardState.testedOrganizations.first(where: { $0.uuid == wizardState.selectedOrgId }) {
+                        profile.accountTier = AccountTier.from(capabilities: selectedOrg.capabilities)
+                    }
+
                     ProfileManager.shared.updateProfile(profile)
                     LoggingService.shared.log("PersonalUsageView: Updated profile model with new credentials")
                 }

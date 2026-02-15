@@ -129,6 +129,13 @@ class ClaudeCodeSyncService {
         }
 
         profiles[index].cliCredentialsJSON = jsonData
+
+        // Refine account tier from CLI subscriptionType when available
+        if let subInfo = extractSubscriptionInfo(from: jsonData),
+           let cliTier = AccountTier.from(subscriptionType: subInfo.type) {
+            profiles[index].accountTier = cliTier
+        }
+
         ProfileStore.shared.saveProfiles(profiles)
 
         LoggingService.shared.log("Synced CLI credentials to profile: \(profileId)")
@@ -231,6 +238,13 @@ class ClaudeCodeSyncService {
 
         profiles[index].cliCredentialsJSON = freshJSON
         profiles[index].cliAccountSyncedAt = Date()  // Update sync timestamp
+
+        // Refine account tier from CLI subscriptionType when available
+        if let subInfo = extractSubscriptionInfo(from: freshJSON),
+           let cliTier = AccountTier.from(subscriptionType: subInfo.type) {
+            profiles[index].accountTier = cliTier
+        }
+
         ProfileStore.shared.saveProfiles(profiles)
 
         LoggingService.shared.log("✓ Re-synced CLI credentials from system and updated timestamp")

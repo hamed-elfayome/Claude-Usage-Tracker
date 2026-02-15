@@ -232,6 +232,8 @@
 "notification.opus_warning.message" = "週次Opus制限の%@を使用しました。%@";
 "notification.opus_critical.title" = "Opus使用量クリティカル";
 "notification.opus_critical.message" = "週次Opus制限の%@を使用しました！%@";
+"notification.profile_rotated.title" = "Profile Auto-Rotated";
+"notification.profile_rotated.message" = "Switched from %@ to %@ due to session capacity";
 "notification.enabled.title" = "通知が有効になりました";
 "notification.enabled.message" = "使用率75%、90%、95%の閾値とセッションリセット通知を受信します。";
 
@@ -522,6 +524,11 @@
 "general.autostart_toggle" = "新しいセッションを自動開始";
 "general.autostart_description" = "セッションがリセットされたときに自動的にメッセージを送信";
 "general.autostart_requirement" = "• 認証情報 → Claude.aiタブでセッションキーが構成されている";
+"general.autorotate_title" = "Auto-Rotate Profiles";
+"general.autorotate_subtitle" = "Automatically switch profiles when session capacity runs low";
+"general.autorotate_toggle" = "Auto-Rotate This Profile";
+"general.autorotate_description" = "Switch to another profile when session usage exceeds 80%";
+"general.autorotate_profiles" = "Eligible profiles for rotation:";
 "general.notifications_title" = "通知";
 "general.notifications_subtitle" = "使用状況のマイルストーンについて通知を受け取る";
 "general.connected" = "接続済み";

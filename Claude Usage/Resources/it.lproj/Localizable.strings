@@ -216,6 +216,8 @@
 "notification.opus_warning.message" = "Hai utilizzato %@ del limite settimanale Opus. %@";
 "notification.opus_critical.title" = "Utilizzo Opus Critico";
 "notification.opus_critical.message" = "Hai utilizzato %@ del limite settimanale Opus! %@";
+"notification.profile_rotated.title" = "Profile Auto-Rotated";
+"notification.profile_rotated.message" = "Switched from %@ to %@ due to session capacity";
 "notification.enabled.title" = "Notifiche Abilitate";
 "notification.enabled.message" = "Ora riceverai avvisi al 75%, 90% e 95% delle soglie di utilizzo, più notifiche di ripristino sessione.";
 
@@ -520,6 +522,11 @@
 "general.autostart_toggle" = "Avvio Automatico Nuova Sessione";
 "general.autostart_description" = "Invia automaticamente un messaggio quando la sessione si resetta";
 "general.autostart_requirement" = "• Chiave di sessione configurata in Credenziali → scheda Claude.ai";
+"general.autorotate_title" = "Auto-Rotate Profiles";
+"general.autorotate_subtitle" = "Automatically switch profiles when session capacity runs low";
+"general.autorotate_toggle" = "Auto-Rotate This Profile";
+"general.autorotate_description" = "Switch to another profile when session usage exceeds 80%";
+"general.autorotate_profiles" = "Eligible profiles for rotation:";
 "general.notifications_title" = "Notifiche";
 "general.notifications_subtitle" = "Ricevi notifiche sulle tappe di utilizzo";
 "general.connected" = "Connesso";

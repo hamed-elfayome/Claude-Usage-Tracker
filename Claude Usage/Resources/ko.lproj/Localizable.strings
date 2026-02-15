@@ -152,6 +152,11 @@
 "general.autostart_toggle" = "새 세션 자동 시작";
 "general.autostart_description" = "세션 재설정 시 자동으로 메시지 전송";
 "general.autostart_requirement" = "• 자격 증명 → Claude.ai 탭에서 세션 키 구성됨";
+"general.autorotate_title" = "Auto-Rotate Profiles";
+"general.autorotate_subtitle" = "Automatically switch profiles when session capacity runs low";
+"general.autorotate_toggle" = "Auto-Rotate This Profile";
+"general.autorotate_description" = "Switch to another profile when session usage exceeds 80%";
+"general.autorotate_profiles" = "Eligible profiles for rotation:";
 "general.notifications_title" = "알림";
 "general.notifications_subtitle" = "사용량 마일스톤 알림 받기";
 "general.connected" = "연결됨";
@@ -558,6 +563,8 @@
 "notification.opus_warning.message" = "주간 Opus 한도의 %@를 사용했습니다. %@";
 "notification.opus_critical.title" = "Opus 사용량 위험";
 "notification.opus_critical.message" = "주간 Opus 한도의 %@를 사용했습니다! %@";
+"notification.profile_rotated.title" = "Profile Auto-Rotated";
+"notification.profile_rotated.message" = "Switched from %@ to %@ due to session capacity";
 "notification.enabled.title" = "알림 활성화됨";
 "notification.enabled.message" = "이제 75%, 90%, 95% 사용 임계값과 세션 리셋 알림을 받게 됩니다.";
 
