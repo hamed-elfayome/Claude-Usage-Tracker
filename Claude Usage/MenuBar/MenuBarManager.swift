@@ -753,7 +753,17 @@ class MenuBarManager: NSObject, ObservableObject {
                         }
                     }
                 } catch {
-                    LoggingService.shared.logError("Failed to refresh profile '\(profile.name)': \(error.localizedDescription)")
+                    let appError = AppError.wrap(error)
+                    LoggingService.shared.logError("Failed to refresh profile '\(profile.name)': \(appError.message)")
+
+                    // If the error is auth-related (expired/revoked token), clear stale usage
+                    // so the UI doesn't show outdated data (e.g. 100% when actually 0%).
+                    if appError.code == .apiUnauthorized || appError.code == .sessionKeyNotFound {
+                        await MainActor.run {
+                            self.profileManager.clearClaudeUsage(for: profile.id)
+                            LoggingService.shared.log("MenuBarManager: Cleared stale usage for profile '\(profile.name)' (credentials invalid)")
+                        }
+                    }
                 }
             }
 
@@ -771,16 +781,49 @@ class MenuBarManager: NSObject, ObservableObject {
 
     /// Fetches usage data for a specific profile using its credentials
     private func fetchUsageForProfile(_ profile: Profile) async throws -> ClaudeUsage {
-        guard let sessionKey = profile.claudeSessionKey,
-              let orgId = profile.organizationId else {
-            throw AppError(
-                code: .sessionKeyNotFound,
-                message: "Missing credentials for profile '\(profile.name)'",
-                isRecoverable: false
-            )
+        let syncService = ClaudeCodeSyncService.shared
+
+        // Try cookie-based claude.ai session first
+        if let sessionKey = profile.claudeSessionKey,
+           let orgId = profile.organizationId {
+            LoggingService.shared.log("Profile '\(profile.name)': Attempting cookie-session fetch (orgId: \(orgId.prefix(8))...)")
+            do {
+                let usage = try await apiService.fetchUsageData(sessionKey: sessionKey, organizationId: orgId)
+                LoggingService.shared.log("Profile '\(profile.name)': Cookie fetch OK — session \(usage.sessionPercentage)%")
+                return usage
+            } catch {
+                LoggingService.shared.logError("Profile '\(profile.name)': Cookie-session fetch failed, trying OAuth fallback: \(error.localizedDescription)")
+            }
         }
 
-        return try await apiService.fetchUsageData(sessionKey: sessionKey, organizationId: orgId)
+        // Fall back to saved CLI OAuth token
+        if let cliJSON = profile.cliCredentialsJSON {
+            let isExpired = syncService.isTokenExpired(cliJSON)
+            let refreshPrefix = syncService.extractRefreshToken(from: cliJSON).map { String($0.prefix(8)) } ?? "nil"
+            if isExpired {
+                LoggingService.shared.log("Profile '\(profile.name)': CLI OAuth token expired (refresh: \(refreshPrefix)...), skipping")
+            } else if let accessToken = syncService.extractAccessToken(from: cliJSON) {
+                LoggingService.shared.log("Profile '\(profile.name)': Attempting OAuth fetch (refresh: \(refreshPrefix)..., token: \(accessToken.prefix(8))...)")
+                do {
+                    let usage = try await apiService.fetchUsageData(oauthAccessToken: accessToken)
+                    LoggingService.shared.log("Profile '\(profile.name)': OAuth fetch OK — session \(usage.sessionPercentage)%")
+                    return usage
+                } catch {
+                    // OAuth call failed (likely 401 from expired/revoked token).
+                    // Throw a specific error so the caller can clear stale usage data.
+                    LoggingService.shared.logError("Profile '\(profile.name)': OAuth fetch failed (refresh: \(refreshPrefix)...): \(error.localizedDescription)")
+                    throw error
+                }
+            }
+        } else {
+            LoggingService.shared.log("Profile '\(profile.name)': No CLI credentials stored")
+        }
+
+        throw AppError(
+            code: .sessionKeyNotFound,
+            message: "Missing credentials for profile '\(profile.name)'",
+            isRecoverable: false
+        )
     }
 
     private func setupSingleProfileMode() {

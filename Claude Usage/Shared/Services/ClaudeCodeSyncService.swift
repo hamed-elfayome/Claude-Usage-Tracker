@@ -176,6 +176,16 @@ class ClaudeCodeSyncService {
         return token
     }
 
+    func extractRefreshToken(from jsonData: String) -> String? {
+        guard let data = jsonData.data(using: .utf8),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let oauth = json["claudeAiOauth"] as? [String: Any],
+              let token = oauth["refreshToken"] as? String else {
+            return nil
+        }
+        return token
+    }
+
     func extractSubscriptionInfo(from jsonData: String) -> (type: String, scopes: [String])? {
         guard let data = jsonData.data(using: .utf8),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -197,7 +207,9 @@ class ClaudeCodeSyncService {
               let expiresAt = oauth["expiresAt"] as? TimeInterval else {
             return nil
         }
-        return Date(timeIntervalSince1970: expiresAt)
+        // expiresAt may be in seconds or milliseconds; normalize to seconds
+        let expirySec = expiresAt > 1e12 ? expiresAt / 1000.0 : expiresAt
+        return Date(timeIntervalSince1970: expirySec)
     }
 
     /// Checks if the OAuth token in the credentials JSON is expired
@@ -211,29 +223,55 @@ class ClaudeCodeSyncService {
 
     // MARK: - Auto Re-sync Before Switching
 
-    /// Re-syncs credentials from system Keychain before profile switching
-    /// This ensures we always have the latest CLI login when switching profiles
+    /// Re-syncs credentials from system Keychain before profile switching.
+    /// Only updates the profile if the keychain credentials actually belong to it
+    /// (matched by refresh token) to prevent cross-contamination.
     func resyncBeforeSwitching(for profileId: UUID) throws {
         LoggingService.shared.log("Re-syncing CLI credentials before profile switch: \(profileId)")
 
         // Read fresh credentials from system (if user is logged in)
         guard let freshJSON = try readSystemCredentials() else {
-            // No credentials in system - user not logged into CLI anymore
             LoggingService.shared.log("No system credentials found - skipping re-sync")
             return
         }
 
-        // Update profile's stored credentials with fresh ones
         var profiles = ProfileStore.shared.loadProfiles()
         guard let index = profiles.firstIndex(where: { $0.id == profileId }) else {
             return
         }
 
+        let profile = profiles[index]
+
+        // Verify the keychain credentials belong to this profile by comparing refresh tokens.
+        // Refresh tokens are stable across access-token rotations, so they reliably identify accounts.
+        if let storedJSON = profile.cliCredentialsJSON,
+           let storedRefresh = extractRefreshToken(from: storedJSON),
+           let freshRefresh = extractRefreshToken(from: freshJSON) {
+            if storedRefresh != freshRefresh {
+                // Keychain has a different account's credentials — do NOT overwrite this profile.
+                // Instead, try to find the profile that actually owns these credentials and update that one.
+                LoggingService.shared.log("⚠️ Keychain refresh token doesn't match profile '\(profile.name)' — skipping re-sync to prevent cross-contamination")
+                if let ownerIndex = profiles.firstIndex(where: {
+                    if let json = $0.cliCredentialsJSON, let rt = extractRefreshToken(from: json) {
+                        return rt == freshRefresh
+                    }
+                    return false
+                }) {
+                    profiles[ownerIndex].cliCredentialsJSON = freshJSON
+                    profiles[ownerIndex].cliAccountSyncedAt = Date()
+                    ProfileStore.shared.saveProfiles(profiles)
+                    LoggingService.shared.log("✓ Re-synced keychain credentials to actual owner profile '\(profiles[ownerIndex].name)' instead")
+                }
+                return
+            }
+        }
+
+        // Refresh tokens match (or profile has no stored creds yet) — safe to update
         profiles[index].cliCredentialsJSON = freshJSON
-        profiles[index].cliAccountSyncedAt = Date()  // Update sync timestamp
+        profiles[index].cliAccountSyncedAt = Date()
         ProfileStore.shared.saveProfiles(profiles)
 
-        LoggingService.shared.log("✓ Re-synced CLI credentials from system and updated timestamp")
+        LoggingService.shared.log("✓ Re-synced CLI credentials for profile '\(profile.name)'")
     }
 }
 

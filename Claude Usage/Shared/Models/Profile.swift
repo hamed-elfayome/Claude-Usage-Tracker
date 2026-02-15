@@ -99,28 +99,27 @@ struct Profile: Codable, Identifiable, Equatable {
 
     /// True if profile has credentials that can fetch usage data (Claude.ai, CLI OAuth, or API Console)
     var hasUsageCredentials: Bool {
-        hasClaudeAI || hasAPIConsole || hasValidCLIOAuth || hasValidSystemCLIOAuth
+        hasClaudeAI || hasAPIConsole || hasCLIOAuth
+    }
+
+    /// True if profile has CLI OAuth credentials stored (may need refresh)
+    var hasCLIOAuth: Bool {
+        cliCredentialsJSON != nil
     }
 
     /// True if profile has CLI OAuth credentials that are not expired
     var hasValidCLIOAuth: Bool {
         guard let cliJSON = cliCredentialsJSON else { return false }
-        // Check if not expired
         return !ClaudeCodeSyncService.shared.isTokenExpired(cliJSON)
     }
 
-    /// True if system Keychain has valid CLI OAuth credentials (fallback)
-    var hasValidSystemCLIOAuth: Bool {
-        guard let systemCredentials = try? ClaudeCodeSyncService.shared.readSystemCredentials() else {
-            return false
-        }
-        // Check if not expired and has valid access token
-        return !ClaudeCodeSyncService.shared.isTokenExpired(systemCredentials) &&
-               ClaudeCodeSyncService.shared.extractAccessToken(from: systemCredentials) != nil
+    var hasAnyCredentials: Bool {
+        hasClaudeAI || hasAPIConsole || hasCLIOAuth
     }
 
-    var hasAnyCredentials: Bool {
-        hasClaudeAI || hasAPIConsole || cliCredentialsJSON != nil
+    /// True if profile can provide session usage data (required for auto-rotation)
+    var hasSessionCredentials: Bool {
+        hasClaudeAI || hasCLIOAuth
     }
 }
 
