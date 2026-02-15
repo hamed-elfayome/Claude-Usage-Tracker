@@ -939,11 +939,11 @@ class MenuBarManager: NSObject, ObservableObject {
                 }
             }
 
-            // Evaluate auto-rotation after successful usage fetch
-            if usageSuccess {
-                await MainActor.run {
-                    self.evaluateAutoRotation()
-                }
+            // Evaluate auto-rotation after every refresh cycle.
+            // Even if the fetch failed, cached usage data may show the profile is exhausted
+            // (e.g. 100% weekly with an expired token that can't refresh).
+            await MainActor.run {
+                self.evaluateAutoRotation()
             }
 
             // Clear loading state
