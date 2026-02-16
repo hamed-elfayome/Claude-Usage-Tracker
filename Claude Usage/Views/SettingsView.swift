@@ -404,6 +404,7 @@ struct CredentialMiniCard: View {
             RoundedRectangle(cornerRadius: 4)
                 .fill(isSelected ? SettingsColors.primary : Color.clear)
         )
+        .contentShape(Rectangle())
         .padding(.horizontal, 4)
         .padding(.vertical, 1)
     }
@@ -435,6 +436,7 @@ struct SettingMiniButton: View {
             RoundedRectangle(cornerRadius: 4)
                 .fill(isSelected ? SettingsColors.primary : Color.clear)
         )
+        .contentShape(Rectangle())
         .padding(.horizontal, 4)
         .padding(.vertical, 1)
     }
