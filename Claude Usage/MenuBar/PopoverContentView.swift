@@ -555,9 +555,8 @@ struct SmartUsageDashboard: View {
                 )
             }
 
-            // API Usage Card (only if tracking is enabled AND profile has credentials)
-            if isAPITrackingEnabled,
-               let apiUsage = apiUsage,
+            // API Usage Card (only if profile has API Console credentials)
+            if let apiUsage = apiUsage,
                let profile = profileManager.activeProfile,
                profile.hasAPIConsole {
                 APIUsageCard(apiUsage: apiUsage, showRemaining: showRemainingPercentage)

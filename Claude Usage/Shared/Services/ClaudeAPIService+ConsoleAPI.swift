@@ -98,7 +98,7 @@ extension ClaudeAPIService {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd"
 
-        let url = try URLBuilder(baseURL: Constants.APIEndpoints.platformBase)
+        let url = try URLBuilder(baseURL: consoleBaseURL)
             .appendingPathComponents(["/organizations", organizationId, "/workspaces/default/usage_cost"])
             .addingQueryParameter(name: "starting_on", value: dateFormatter.string(from: startOfMonth))
             .addingQueryParameter(name: "ending_before", value: dateFormatter.string(from: tomorrow))
