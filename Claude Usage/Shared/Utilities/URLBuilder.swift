@@ -174,6 +174,14 @@ extension URLBuilder {
         return endpoint.isEmpty ? builder : try builder.appendingPath(endpoint)
     }
 
+    /// Create a builder for Platform API endpoints (platform.claude.com)
+    /// - Parameter endpoint: The API endpoint path
+    /// - Returns: A configured URLBuilder
+    static func platformAPI(endpoint: String = "") throws -> URLBuilder {
+        let builder = try URLBuilder(baseURL: "https://platform.claude.com/api")
+        return endpoint.isEmpty ? builder : try builder.appendingPath(endpoint)
+    }
+
     /// Create a builder for Claude Status endpoints
     /// - Parameter endpoint: The API endpoint path
     /// - Returns: A configured URLBuilder

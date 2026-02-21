@@ -561,6 +561,11 @@ struct SmartUsageDashboard: View {
                let profile = profileManager.activeProfile,
                profile.hasAPIConsole {
                 APIUsageCard(apiUsage: apiUsage, showRemaining: showRemainingPercentage)
+
+                // API Cost Card (only if cost data is available)
+                if let costCents = apiUsage.apiTokenCostCents, costCents > 0 {
+                    APICostCard(apiUsage: apiUsage)
+                }
             }
         }
         .padding(.horizontal, 16)
@@ -891,6 +896,68 @@ struct SmartActionButton: View {
                 isHovered = hovering
             }
         }
+    }
+}
+
+// MARK: - API Cost Card
+struct APICostCard: View {
+    let apiUsage: APIUsage
+
+    var body: some View {
+        VStack(spacing: 10) {
+            // Header
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("menubar.api_cost".localized)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.primary)
+
+                    Text("menubar.this_month".localized)
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                // Total cost
+                if let formatted = apiUsage.formattedAPICost {
+                    Text(formatted)
+                        .font(.system(size: 16, weight: .bold, design: .monospaced))
+                        .foregroundColor(.primary)
+                }
+            }
+
+            // Model breakdown
+            let models = apiUsage.sortedModelCosts
+            if !models.isEmpty {
+                VStack(spacing: 4) {
+                    ForEach(models, id: \.model) { item in
+                        HStack {
+                            Text(item.model)
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundColor(.secondary)
+                                .lineLimit(1)
+
+                            Spacer()
+
+                            Text(item.cost)
+                                .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+            }
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(nsColor: .controlBackgroundColor).opacity(0.4))
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(Color.secondary.opacity(0.15), lineWidth: 1)
+                )
+        )
     }
 }
 

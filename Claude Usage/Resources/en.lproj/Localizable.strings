@@ -71,6 +71,9 @@
 "menubar.remaining" = "Remaining";
 "menubar.resets_time" = "Resets %@";
 "menubar.click_status" = "Click to open status.claude.com";
+"menubar.api_cost" = "API Cost";
+"menubar.this_month" = "This month";
+"menubar.total" = "Total";
 
 /* ==================== */
 /* MARK: - Usage Status */

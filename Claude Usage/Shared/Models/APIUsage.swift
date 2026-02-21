@@ -12,6 +12,8 @@ struct APIUsage: Codable, Equatable {
     let resetsAt: Date
     let prepaidCreditsCents: Int
     let currency: String
+    let apiTokenCostCents: Double?
+    let apiCostByModel: [String: Double]?
 
     var usedAmount: Double {
         Double(currentSpendCents) / 100.0
@@ -42,6 +44,18 @@ struct APIUsage: Codable, Equatable {
         formatCurrency(totalCredits)
     }
 
+    var formattedAPICost: String? {
+        guard let cents = apiTokenCostCents else { return nil }
+        return formatCurrency(cents / 100.0)
+    }
+
+    var sortedModelCosts: [(model: String, cost: String)] {
+        guard let costs = apiCostByModel else { return [] }
+        return costs
+            .sorted { $0.value > $1.value }
+            .map { (model: $0.key, cost: formatCurrency($0.value / 100.0)) }
+    }
+
     private func formatCurrency(_ amount: Double) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
@@ -55,7 +69,9 @@ struct APIUsage: Codable, Equatable {
         lhs.currentSpendCents == rhs.currentSpendCents &&
         lhs.prepaidCreditsCents == rhs.prepaidCreditsCents &&
         lhs.currency == rhs.currency &&
-        lhs.resetsAt == rhs.resetsAt
+        lhs.resetsAt == rhs.resetsAt &&
+        lhs.apiTokenCostCents == rhs.apiTokenCostCents &&
+        lhs.apiCostByModel == rhs.apiCostByModel
     }
 }
 
