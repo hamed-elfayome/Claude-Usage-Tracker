@@ -56,6 +56,11 @@ enum Constants {
 
         // Localization
         static let appLanguage = "appLanguage"
+
+        // OTel Collection
+        static let otelCollectionEnabled = "otelCollectionEnabled"
+        static let otelPort = "otelPort"
+        static let otelRetentionDays = "otelRetentionDays"
     }
 
     // Claude Code paths
@@ -127,6 +132,18 @@ enum Constants {
     enum WindowSizes {
         static let settingsWindow = NSSize(width: 720, height: 600)
         static let popoverSize = NSSize(width: 320, height: 600)
+    }
+
+    // OTel Configuration
+    enum OTel {
+        static let defaultPort: UInt16 = 4318
+        static let defaultRetentionDays: Int = 30
+        static let databaseFilename = "otel_events.db"
+        static let databaseDirectory: URL = {
+            let home = ClaudePaths.homeDirectory
+            return home.appendingPathComponent(".claude-usage-tracker")
+        }()
+        static let maxRequestBodySize = 10 * 1024 * 1024  // 10MB
     }
 
     // GitHub Repository Info

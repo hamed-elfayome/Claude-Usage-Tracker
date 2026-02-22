@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		056C52802F017E50007E2A48 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = SPARKLE_PRODUCT_DEP /* Sparkle */; };
+		0A1B2C3D4E5F60718293A4CC /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 0A1B2C3D4E5F60718293A4BC /* libsqlite3.tbd */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -21,6 +22,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0A1B2C3D4E5F60718293A4BC /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
 		05CD2CB22EA985A100004C83 /* Claude Usage.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Claude Usage.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		05CD2CC02EA985A100004C83 /* Claude UsageTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Claude UsageTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -44,6 +46,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				056C52802F017E50007E2A48 /* Sparkle in Frameworks */,
+				0A1B2C3D4E5F60718293A4CC /* libsqlite3.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -62,6 +65,7 @@
 			children = (
 				05CD2CB42EA985A100004C83 /* Claude Usage */,
 				05CD2CC12EA985A100004C83 /* Claude UsageTests */,
+				0A1B2C3D4E5F60718293A4D7 /* Frameworks */,
 				05CD2CB32EA985A100004C83 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -73,6 +77,14 @@
 				05CD2CC02EA985A100004C83 /* Claude UsageTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		0A1B2C3D4E5F60718293A4D7 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				0A1B2C3D4E5F60718293A4BC /* libsqlite3.tbd */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

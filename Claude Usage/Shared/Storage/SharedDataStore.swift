@@ -36,6 +36,11 @@ class SharedDataStore {
 
         // Debug Settings
         static let debugAPILoggingEnabled = "debugAPILoggingEnabled"
+
+        // OTel Collection
+        static let otelCollectionEnabled = "otelCollectionEnabled"
+        static let otelPort = "otelPort"
+        static let otelRetentionDays = "otelRetentionDays"
     }
 
     init() {
@@ -223,6 +228,34 @@ class SharedDataStore {
 
     func loadDebugAPILoggingEnabled() -> Bool {
         return defaults.bool(forKey: Keys.debugAPILoggingEnabled)
+    }
+
+    // MARK: - OTel Collection Settings
+
+    func saveOTelCollectionEnabled(_ enabled: Bool) {
+        defaults.set(enabled, forKey: Keys.otelCollectionEnabled)
+    }
+
+    func loadOTelCollectionEnabled() -> Bool {
+        return defaults.bool(forKey: Keys.otelCollectionEnabled)
+    }
+
+    func saveOTelPort(_ port: Int) {
+        defaults.set(port, forKey: Keys.otelPort)
+    }
+
+    func loadOTelPort() -> Int {
+        let port = defaults.integer(forKey: Keys.otelPort)
+        return port > 0 ? port : Int(Constants.OTel.defaultPort)
+    }
+
+    func saveOTelRetentionDays(_ days: Int) {
+        defaults.set(days, forKey: Keys.otelRetentionDays)
+    }
+
+    func loadOTelRetentionDays() -> Int {
+        let days = defaults.integer(forKey: Keys.otelRetentionDays)
+        return days > 0 ? days : Constants.OTel.defaultRetentionDays
     }
 
     // MARK: - Testing Helpers

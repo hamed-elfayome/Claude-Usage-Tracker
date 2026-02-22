@@ -172,6 +172,11 @@ class MenuBarManager: NSObject, ObservableObject {
         // Start auto-start session service (5-minute cycle for all profiles)
         autoStartService.start()
 
+        // Start OTel collection if enabled
+        if SharedDataStore.shared.loadOTelCollectionEnabled() {
+            OTelManager.shared.startCollection()
+        }
+
         // Observe appearance changes
         observeAppearanceChanges()
 
@@ -190,6 +195,7 @@ class MenuBarManager: NSObject, ObservableObject {
         refreshTimer = nil
         networkMonitor.stopMonitoring()
         autoStartService.stop()
+        OTelManager.shared.stopCollection()
         cancellables.removeAll()  // Clean up Combine subscriptions
         refreshIntervalObserver?.invalidate()
         refreshIntervalObserver = nil
