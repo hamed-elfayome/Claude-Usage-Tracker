@@ -663,17 +663,26 @@ struct ConfirmStep: View {
     }
 
     private func saveConfiguration() {
-        guard let profileId = ProfileManager.shared.activeProfile?.id else { return }
+        LoggingService.shared.log("PersonalUsageView: saveConfiguration() called")
 
+        guard let profileId = ProfileManager.shared.activeProfile?.id else {
+            LoggingService.shared.logError("PersonalUsageView: No active profile, aborting save")
+            return
+        }
+
+        LoggingService.shared.log("PersonalUsageView: Saving credentials for profile \(profileId)")
         isSaving = true
 
         Task {
             do {
                 // Save to profile-specific Keychain
+                LoggingService.shared.log("PersonalUsageView: Loading existing credentials from Keychain")
                 var creds = try ProfileStore.shared.loadProfileCredentials(profileId)
                 creds.claudeSessionKey = wizardState.sessionKey
                 creds.organizationId = wizardState.selectedOrgId
+                LoggingService.shared.log("PersonalUsageView: Saving credentials to Keychain")
                 try ProfileStore.shared.saveProfileCredentials(profileId, credentials: creds)
+                LoggingService.shared.log("PersonalUsageView: Keychain save succeeded")
 
                 // Also update the Profile model with the new credentials
                 if var profile = ProfileManager.shared.activeProfile {

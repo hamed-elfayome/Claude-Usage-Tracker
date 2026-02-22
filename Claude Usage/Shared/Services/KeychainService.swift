@@ -173,6 +173,7 @@ class KeychainService {
             throw KeychainError.invalidData
         }
 
+        // Try to update existing item first
         let updateQuery: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -190,22 +191,13 @@ class KeychainService {
         }
 
         if updateStatus == errSecItemNotFound {
-            var accessControlError: Unmanaged<CFError>?
-            guard let accessControl = SecAccessControlCreateWithFlags(
-                kCFAllocatorDefault,
-                kSecAttrAccessibleWhenUnlocked,
-                [],
-                &accessControlError
-            ) else {
-                throw KeychainError.saveFailed(status: errSecParam)
-            }
-
+            // Use kSecAttrAccessible directly (compatible with unsigned builds)
             let addQuery: [String: Any] = [
                 kSecClass as String: kSecClassGenericPassword,
                 kSecAttrService as String: service,
                 kSecAttrAccount as String: account,
                 kSecValueData as String: data,
-                kSecAttrAccessControl as String: accessControl,
+                kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlocked,
                 kSecAttrSynchronizable as String: false
             ]
 
