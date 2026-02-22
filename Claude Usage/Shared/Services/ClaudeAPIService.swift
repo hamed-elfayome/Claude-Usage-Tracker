@@ -18,6 +18,15 @@ class ClaudeAPIService: APIServiceProtocol {
     let baseURL = Constants.APIEndpoints.claudeBase
     let consoleBaseURL = Constants.APIEndpoints.consoleBase
 
+    /// Sanitizes a credential value for safe use in HTTP headers.
+    /// Removes CR/LF characters that could enable header injection attacks.
+    private static func sanitizeForHeader(_ value: String) -> String {
+        return value
+            .replacingOccurrences(of: "\r\n", with: "")
+            .replacingOccurrences(of: "\r", with: "")
+            .replacingOccurrences(of: "\n", with: "")
+    }
+
     // MARK: - Initialization
 
     init(sessionKeyPath: URL? = nil, sessionKeyValidator: SessionKeyValidator = SessionKeyValidator()) {
@@ -133,19 +142,22 @@ class ClaudeAPIService: APIServiceProtocol {
         switch auth {
         case .claudeAISession(let sessionKey):
             // Existing claude.ai authentication
-            request.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
+            let safeKey = Self.sanitizeForHeader(sessionKey)
+            request.setValue("sessionKey=\(safeKey)", forHTTPHeaderField: "Cookie")
             request.setValue("application/json", forHTTPHeaderField: "Accept")
 
         case .cliOAuth(let accessToken):
             // CLI OAuth authentication (requires specific headers)
-            request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+            let safeToken = Self.sanitizeForHeader(accessToken)
+            request.setValue("Bearer \(safeToken)", forHTTPHeaderField: "Authorization")
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             request.setValue("claude-code/2.1.5", forHTTPHeaderField: "User-Agent")
             request.setValue("oauth-2025-04-20", forHTTPHeaderField: "anthropic-beta")
 
         case .consoleAPISession(let apiKey):
             // Console API authentication
-            request.setValue("sessionKey=\(apiKey)", forHTTPHeaderField: "Cookie")
+            let safeKey = Self.sanitizeForHeader(apiKey)
+            request.setValue("sessionKey=\(safeKey)", forHTTPHeaderField: "Cookie")
             request.setValue("application/json", forHTTPHeaderField: "Accept")
         }
 
@@ -240,7 +252,8 @@ class ClaudeAPIService: APIServiceProtocol {
             }
 
             var request = URLRequest(url: url)
-            request.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
+            let safeKey = Self.sanitizeForHeader(sessionKey)
+            request.setValue("sessionKey=\(safeKey)", forHTTPHeaderField: "Cookie")
             request.setValue("application/json", forHTTPHeaderField: "Accept")
             request.httpMethod = "GET"
             request.timeoutInterval = 30
@@ -464,7 +477,8 @@ class ClaudeAPIService: APIServiceProtocol {
             .build()
 
         var request = URLRequest(url: url)
-        request.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
+        let safeKey = Self.sanitizeForHeader(sessionKey)
+        request.setValue("sessionKey=\(safeKey)", forHTTPHeaderField: "Cookie")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.httpMethod = "GET"
         request.timeoutInterval = 30
@@ -698,6 +712,7 @@ class ClaudeAPIService: APIServiceProtocol {
     /// Creates a temporary conversation that is deleted after initialization to avoid cluttering chat history
     func sendInitializationMessage() async throws {
         let sessionKey = try readSessionKey()
+        let safeSessionKey = Self.sanitizeForHeader(sessionKey)
         let orgId = try await fetchOrganizationId(sessionKey: sessionKey)
 
         // Create a new conversation
@@ -706,7 +721,7 @@ class ClaudeAPIService: APIServiceProtocol {
             .build()
 
         var conversationRequest = URLRequest(url: conversationURL)
-        conversationRequest.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
+        conversationRequest.setValue("sessionKey=\(safeSessionKey)", forHTTPHeaderField: "Cookie")
         conversationRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         conversationRequest.httpMethod = "POST"
 
@@ -738,7 +753,7 @@ class ClaudeAPIService: APIServiceProtocol {
             .build()
 
         var messageRequest = URLRequest(url: messageURL)
-        messageRequest.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
+        messageRequest.setValue("sessionKey=\(safeSessionKey)", forHTTPHeaderField: "Cookie")
         messageRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         messageRequest.httpMethod = "POST"
 
@@ -765,7 +780,7 @@ class ClaudeAPIService: APIServiceProtocol {
             .build()
 
         var deleteRequest = URLRequest(url: deleteURL)
-        deleteRequest.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
+        deleteRequest.setValue("sessionKey=\(safeSessionKey)", forHTTPHeaderField: "Cookie")
         deleteRequest.httpMethod = "DELETE"
 
         // Attempt to delete, but don't fail if deletion fails

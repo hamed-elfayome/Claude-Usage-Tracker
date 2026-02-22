@@ -78,12 +78,33 @@ struct AppError: Error, LocalizedError, CustomStringConvertible {
     var description: String {
         var desc = "[\(code.rawValue)] \(message)"
         if let details = technicalDetails {
-            desc += "\nDetails: \(details)"
+            desc += "\nDetails: \(Self.redactCredentials(in: details))"
         }
         if let underlying = underlyingError {
             desc += "\nUnderlying: \(underlying.localizedDescription)"
         }
         return desc
+    }
+
+    // MARK: - Credential Redaction
+
+    /// Redacts known credential patterns from strings to prevent leaking sensitive data in logs.
+    /// Matches session keys (sk-ant-...), Bearer tokens, sessionKey cookie values, and access tokens.
+    private static func redactCredentials(in text: String) -> String {
+        var result = text
+        // Redact session keys (sk-ant-...)
+        let sessionKeyPattern = try! NSRegularExpression(pattern: "sk-ant-[a-zA-Z0-9\\-_]{4,}", options: [])
+        result = sessionKeyPattern.stringByReplacingMatches(in: result, range: NSRange(result.startIndex..., in: result), withTemplate: "sk-ant-[REDACTED]")
+        // Redact Bearer tokens
+        let bearerPattern = try! NSRegularExpression(pattern: "Bearer\\s+[a-zA-Z0-9\\-_\\.]{8,}", options: [])
+        result = bearerPattern.stringByReplacingMatches(in: result, range: NSRange(result.startIndex..., in: result), withTemplate: "Bearer [REDACTED]")
+        // Redact sessionKey= cookie values
+        let cookiePattern = try! NSRegularExpression(pattern: "sessionKey=[a-zA-Z0-9\\-_\\.]{4,}", options: [])
+        result = cookiePattern.stringByReplacingMatches(in: result, range: NSRange(result.startIndex..., in: result), withTemplate: "sessionKey=[REDACTED]")
+        // Redact accessToken values in JSON
+        let accessTokenPattern = try! NSRegularExpression(pattern: "\"accessToken\"\\s*:\\s*\"[^\"]+\"", options: [])
+        result = accessTokenPattern.stringByReplacingMatches(in: result, range: NSRange(result.startIndex..., in: result), withTemplate: "\"accessToken\":\"[REDACTED]\"")
+        return result
     }
 
     // MARK: - Support Information
@@ -98,7 +119,7 @@ struct AppError: Error, LocalizedError, CustomStringConvertible {
         """
 
         if let details = technicalDetails {
-            report += "\nTechnical Details: \(details)"
+            report += "\nTechnical Details: \(Self.redactCredentials(in: details))"
         }
 
         if let suggestion = recoverySuggestion {
