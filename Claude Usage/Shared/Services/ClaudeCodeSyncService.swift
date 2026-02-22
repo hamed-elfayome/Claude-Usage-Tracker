@@ -122,14 +122,10 @@ class ClaudeCodeSyncService {
             throw ClaudeCodeError.invalidJSON
         }
 
-        // Save to profile directly
-        var profiles = ProfileStore.shared.loadProfiles()
-        guard let index = profiles.firstIndex(where: { $0.id == profileId }) else {
-            throw ClaudeCodeError.noProfileCredentials
-        }
-
-        profiles[index].cliCredentialsJSON = jsonData
-        ProfileStore.shared.saveProfiles(profiles)
+        // Save to profile via Keychain-backed credential store
+        var creds = try ProfileStore.shared.loadProfileCredentials(profileId)
+        creds.cliCredentialsJSON = jsonData
+        try ProfileStore.shared.saveProfileCredentials(profileId, credentials: creds)
 
         LoggingService.shared.log("Synced CLI credentials to profile: \(profileId)")
     }
@@ -153,13 +149,10 @@ class ClaudeCodeSyncService {
 
     /// Removes CLI credentials from profile (doesn't affect system)
     func removeFromProfile(_ profileId: UUID) throws {
-        var profiles = ProfileStore.shared.loadProfiles()
-        guard let index = profiles.firstIndex(where: { $0.id == profileId }) else {
-            throw ClaudeCodeError.noProfileCredentials
-        }
-
-        profiles[index].cliCredentialsJSON = nil
-        ProfileStore.shared.saveProfiles(profiles)
+        // Clear cliCredentialsJSON in the Keychain-backed credential store
+        var creds = try ProfileStore.shared.loadProfileCredentials(profileId)
+        creds.cliCredentialsJSON = nil
+        try ProfileStore.shared.saveProfileCredentials(profileId, credentials: creds)
 
         LoggingService.shared.log("Removed CLI credentials from profile: \(profileId)")
     }
@@ -223,15 +216,17 @@ class ClaudeCodeSyncService {
             return
         }
 
-        // Update profile's stored credentials with fresh ones
-        var profiles = ProfileStore.shared.loadProfiles()
-        guard let index = profiles.firstIndex(where: { $0.id == profileId }) else {
-            return
-        }
+        // Update profile's stored credentials via Keychain-backed store
+        var creds = try ProfileStore.shared.loadProfileCredentials(profileId)
+        creds.cliCredentialsJSON = freshJSON
+        try ProfileStore.shared.saveProfileCredentials(profileId, credentials: creds)
 
-        profiles[index].cliCredentialsJSON = freshJSON
-        profiles[index].cliAccountSyncedAt = Date()  // Update sync timestamp
-        ProfileStore.shared.saveProfiles(profiles)
+        // Update sync timestamp in profile metadata
+        var profiles = ProfileStore.shared.loadProfiles()
+        if let index = profiles.firstIndex(where: { $0.id == profileId }) {
+            profiles[index].cliAccountSyncedAt = Date()
+            ProfileStore.shared.saveProfiles(profiles)
+        }
 
         LoggingService.shared.log("✓ Re-synced CLI credentials from system and updated timestamp")
     }

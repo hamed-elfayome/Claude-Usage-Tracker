@@ -126,9 +126,74 @@ class KeychainMigrationService {
         }
     }
 
+    // MARK: - Profile Credential Migration
+
+    private let profileCredentialMigrationKey = "keychainMigration_profileCredentials_v1"
+
+    /// Migrates profile credentials from UserDefaults (plaintext JSON) to Keychain.
+    /// This reads the raw profiles_v3 blob via JSONSerialization to access credential
+    /// fields that are no longer included in Profile's CodingKeys.
+    func migrateProfileCredentialsIfNeeded() {
+        if UserDefaults.standard.bool(forKey: profileCredentialMigrationKey) {
+            return
+        }
+
+        LoggingService.shared.log("Starting profile credential migration to Keychain")
+
+        guard let data = UserDefaults.standard.data(forKey: "profiles_v3") else {
+            // No profiles to migrate
+            UserDefaults.standard.set(true, forKey: profileCredentialMigrationKey)
+            return
+        }
+
+        // Decode as raw JSON to access credential fields that CodingKeys now excludes
+        guard let profilesArray = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
+            UserDefaults.standard.set(true, forKey: profileCredentialMigrationKey)
+            return
+        }
+
+        let keychain = KeychainService.shared
+        var migratedCount = 0
+        var failureCount = 0
+
+        for profileDict in profilesArray {
+            guard let idString = profileDict["id"] as? String else { continue }
+            let account = idString
+
+            for field in ProfileKeychainKey.allFields {
+                if let value = profileDict[field] as? String, !value.isEmpty {
+                    let service = ProfileKeychainKey.service(for: field)
+                    do {
+                        try keychain.save(value, service: service, account: account)
+                        migratedCount += 1
+                    } catch {
+                        LoggingService.shared.logError("Failed to migrate \(field) for profile \(idString): \(error)")
+                        failureCount += 1
+                    }
+                }
+            }
+        }
+
+        if failureCount > 0 {
+            // Don't mark complete or strip credentials if any migration failed
+            LoggingService.shared.logError("Profile credential migration incomplete: \(failureCount) failure(s)")
+            return
+        }
+
+        // Re-save profiles to strip credentials from UserDefaults.
+        // The updated CodingKeys in Profile will exclude credential fields on encode.
+        let profileStore = ProfileStore.shared
+        let profiles = profileStore.loadProfiles()
+        profileStore.saveProfiles(profiles)
+
+        UserDefaults.standard.set(true, forKey: profileCredentialMigrationKey)
+        LoggingService.shared.log("Profile credential migration complete: migrated \(migratedCount) credential(s)")
+    }
+
     /// Resets the migration flag (for testing purposes)
     func resetMigrationForTesting() {
         UserDefaults.standard.removeObject(forKey: migrationCompletedKey)
-        LoggingService.shared.log("Reset Keychain migration flag for testing")
+        UserDefaults.standard.removeObject(forKey: profileCredentialMigrationKey)
+        LoggingService.shared.log("Reset Keychain migration flags for testing")
     }
 }

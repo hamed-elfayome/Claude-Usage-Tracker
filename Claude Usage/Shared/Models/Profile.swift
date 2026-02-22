@@ -13,7 +13,7 @@ struct Profile: Codable, Identifiable, Equatable {
     let id: UUID
     var name: String
 
-    // MARK: - Credentials (stored directly in profile)
+    // MARK: - Credentials (stored in Keychain, NOT serialized to UserDefaults)
     var claudeSessionKey: String?
     var organizationId: String?
     var apiSessionKey: String?
@@ -45,6 +45,46 @@ struct Profile: Codable, Identifiable, Equatable {
     // MARK: - Metadata
     var createdAt: Date
     var lastUsedAt: Date
+
+    // MARK: - Codable (credentials excluded from serialization)
+
+    /// Credentials are intentionally excluded from CodingKeys so they are never
+    /// written to UserDefaults. They are stored in the macOS Keychain and hydrated
+    /// into these in-memory properties at load time by ProfileStore.
+    private enum CodingKeys: String, CodingKey {
+        case id, name
+        case hasCliAccount, cliAccountSyncedAt
+        case claudeUsage, apiUsage
+        case iconConfig
+        case refreshInterval, autoStartSessionEnabled, checkOverageLimitEnabled
+        case notificationSettings
+        case isSelectedForDisplay
+        case createdAt, lastUsedAt
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        // Credentials are NOT decoded — they are loaded from Keychain separately
+        claudeSessionKey = nil
+        organizationId = nil
+        apiSessionKey = nil
+        apiOrganizationId = nil
+        cliCredentialsJSON = nil
+        hasCliAccount = try container.decodeIfPresent(Bool.self, forKey: .hasCliAccount) ?? false
+        cliAccountSyncedAt = try container.decodeIfPresent(Date.self, forKey: .cliAccountSyncedAt)
+        claudeUsage = try container.decodeIfPresent(ClaudeUsage.self, forKey: .claudeUsage)
+        apiUsage = try container.decodeIfPresent(APIUsage.self, forKey: .apiUsage)
+        iconConfig = try container.decodeIfPresent(MenuBarIconConfiguration.self, forKey: .iconConfig) ?? .default
+        refreshInterval = try container.decodeIfPresent(TimeInterval.self, forKey: .refreshInterval) ?? 30.0
+        autoStartSessionEnabled = try container.decodeIfPresent(Bool.self, forKey: .autoStartSessionEnabled) ?? false
+        checkOverageLimitEnabled = try container.decodeIfPresent(Bool.self, forKey: .checkOverageLimitEnabled) ?? true
+        notificationSettings = try container.decodeIfPresent(NotificationSettings.self, forKey: .notificationSettings) ?? NotificationSettings()
+        isSelectedForDisplay = try container.decodeIfPresent(Bool.self, forKey: .isSelectedForDisplay) ?? true
+        createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date()
+        lastUsedAt = try container.decodeIfPresent(Date.self, forKey: .lastUsedAt) ?? Date()
+    }
 
     init(
         id: UUID = UUID(),
