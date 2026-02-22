@@ -12,26 +12,45 @@ class StatuslineService {
 
     /// Swift script that fetches Claude usage data from the API.
     /// Installed to ~/.claude/fetch-claude-usage.swift and executed by the bash statusline script.
-    /// The session key and organization ID are injected into this script when statusline is enabled.
-    private func generateSwiftScript(sessionKey: String, organizationId: String) -> String {
+    /// Credentials are read from the macOS Keychain at runtime (never embedded in the script).
+    private func generateSwiftScript(profileId: UUID) -> String {
         return """
 #!/usr/bin/env swift
 
 import Foundation
+import Security
+
+func readFromKeychain(service: String, account: String) -> String? {
+    let query: [String: Any] = [
+        kSecClass as String: kSecClassGenericPassword,
+        kSecAttrService as String: service,
+        kSecAttrAccount as String: account,
+        kSecReturnData as String: true,
+        kSecMatchLimit as String: kSecMatchLimitOne
+    ]
+    var result: AnyObject?
+    let status = SecItemCopyMatching(query as CFDictionary, &result)
+    guard status == errSecSuccess,
+          let data = result as? Data,
+          let value = String(data: data, encoding: .utf8) else {
+        return nil
+    }
+    return value
+}
+
 func readSessionKey() -> String? {
-    // Session key injected from Keychain by Claude Usage app
-    let injectedKey = "\(sessionKey)"
-    let trimmedKey = injectedKey.trimmingCharacters(in: .whitespacesAndNewlines)
-    return trimmedKey.isEmpty ? nil : trimmedKey
+    return readFromKeychain(
+        service: "com.claudeusagetracker.profile.claudeSessionKey",
+        account: "\(profileId.uuidString)"
+    )
 }
 func readOrganizationId() -> String? {
-    // Organization ID injected from settings by Claude Usage app
-    let injectedOrgId = "\(organizationId)"
-    let trimmedOrgId = injectedOrgId.trimmingCharacters(in: .whitespacesAndNewlines)
-    return trimmedOrgId.isEmpty ? nil : trimmedOrgId
+    return readFromKeychain(
+        service: "com.claudeusagetracker.profile.organizationId",
+        account: "\(profileId.uuidString)"
+    )
 }
 func fetchUsageData(sessionKey: String, orgId: String) async throws -> (utilization: Int, resetsAt: String?) {
-    // Build URL safely - validate orgId doesn't contain path traversal
     guard !orgId.contains(".."), !orgId.contains("/") else {
         throw NSError(domain: "ClaudeAPI", code: 5, userInfo: [NSLocalizedDescriptionKey: "Invalid organization ID"])
     }
@@ -62,8 +81,6 @@ func fetchUsageData(sessionKey: String, orgId: String) async throws -> (utilizat
     throw NSError(domain: "ClaudeAPI", code: 4, userInfo: [NSLocalizedDescriptionKey: "Invalid response format"])
 }
 
-// Main execution
-// Use Task to run async code, RunLoop keeps script alive until exit() is called
 Task {
     guard let sessionKey = readSessionKey() else {
         print("ERROR:NO_SESSION_KEY")
@@ -78,7 +95,6 @@ Task {
     do {
         let (utilization, resetsAt) = try await fetchUsageData(sessionKey: sessionKey, orgId: orgId)
 
-        // Output format: UTILIZATION|RESETS_AT
         if let resets = resetsAt {
             print("\\(utilization)|\\(resets)")
         } else {
@@ -91,7 +107,6 @@ Task {
     }
 }
 
-// Keep script alive while async Task executes
 RunLoop.main.run()
 """
     }
@@ -299,8 +314,8 @@ printf "%s\\n" "$output"
 
     // MARK: - Installation
 
-    /// Installs statusline scripts with session key injection from active profile
-    /// - Parameter injectSessionKey: If true, injects the session key from active profile into the Swift script
+    /// Installs statusline scripts with Keychain-based credential access from active profile
+    /// - Parameter injectSessionKey: If true, configures the Swift script to read credentials from Keychain for the active profile
     func installScripts(injectSessionKey: Bool = false) throws {
         let claudeDir = Constants.ClaudePaths.claudeDirectory
 
@@ -308,79 +323,35 @@ printf "%s\\n" "$output"
             try FileManager.default.createDirectory(at: claudeDir, withIntermediateDirectories: true)
         }
 
-        // Install Swift script (with or without session key)
+        // Install Swift script (with or without Keychain access)
         let swiftDestination = claudeDir.appendingPathComponent("fetch-claude-usage.swift")
         let swiftScriptContent: String
 
         if injectSessionKey {
-            // Load credentials from active profile or CLI
             guard let activeProfile = ProfileManager.shared.activeProfile else {
                 throw StatuslineError.noActiveProfile
             }
 
-            // Try to get session key and org ID - check profile first, then CLI credentials
-            var sessionKey: String?
-            var organizationId: String?
-
-            // Option 1: Use profile's session key if available
-            if let profileKey = activeProfile.claudeSessionKey,
-               let profileOrg = activeProfile.organizationId {
-                sessionKey = profileKey
-                organizationId = profileOrg
-                LoggingService.shared.log("Using profile session key for statusline")
+            // Option 1: Use Keychain-backed session key (read at runtime, never embedded)
+            if activeProfile.claudeSessionKey != nil,
+               activeProfile.organizationId != nil {
+                swiftScriptContent = generateSwiftScript(profileId: activeProfile.id)
+                LoggingService.shared.log("Configured statusline to read credentials from Keychain for profile '\(activeProfile.name)'")
             }
-            // Option 2: Use CLI credentials if no session key
-            else if let cliJson = activeProfile.cliCredentialsJSON,
-                    !ClaudeCodeSyncService.shared.isTokenExpired(cliJson),
-                    let token = ClaudeCodeSyncService.shared.extractAccessToken(from: cliJson) {
-                // CLI uses OAuth token - we'll use a placeholder since the script needs session key format
-                // For now, skip statusline usage when only CLI credentials are available
+            // Option 2: CLI-only users — use cached usage data
+            else if activeProfile.cliCredentialsJSON != nil {
                 swiftScriptContent = generateCLIFallbackScript()
-                LoggingService.shared.log("Using CLI credentials - statusline will show cached data")
-
-                try swiftScriptContent.write(to: swiftDestination, atomically: true, encoding: .utf8)
-                try FileManager.default.setAttributes(
-                    [.posixPermissions: 0o755],
-                    ofItemAtPath: swiftDestination.path
-                )
-
-                // Install bash script
-                let bashDestination = claudeDir.appendingPathComponent("statusline-command.sh")
-                try bashScript.write(to: bashDestination, atomically: true, encoding: .utf8)
-                try FileManager.default.setAttributes(
-                    [.posixPermissions: 0o755],
-                    ofItemAtPath: bashDestination.path
-                )
-                return
+                LoggingService.shared.log("Using CLI credentials — statusline will show cached data")
             }
-            // Option 3: Try system CLI credentials
+            // Option 3: System CLI credentials fallback
             else if let systemCreds = try? ClaudeCodeSyncService.shared.readSystemCredentials(),
                     !ClaudeCodeSyncService.shared.isTokenExpired(systemCreds) {
                 swiftScriptContent = generateCLIFallbackScript()
-                LoggingService.shared.log("Using system CLI credentials - statusline will show cached data")
-
-                try swiftScriptContent.write(to: swiftDestination, atomically: true, encoding: .utf8)
-                try FileManager.default.setAttributes(
-                    [.posixPermissions: 0o755],
-                    ofItemAtPath: swiftDestination.path
-                )
-
-                // Install bash script
-                let bashDestination = claudeDir.appendingPathComponent("statusline-command.sh")
-                try bashScript.write(to: bashDestination, atomically: true, encoding: .utf8)
-                try FileManager.default.setAttributes(
-                    [.posixPermissions: 0o755],
-                    ofItemAtPath: bashDestination.path
-                )
-                return
+                LoggingService.shared.log("Using system CLI credentials — statusline will show cached data")
             }
-
-            guard let finalKey = sessionKey, let finalOrg = organizationId else {
+            else {
                 throw StatuslineError.sessionKeyNotFound
             }
-
-            swiftScriptContent = generateSwiftScript(sessionKey: finalKey, organizationId: finalOrg)
-            LoggingService.shared.log("Injected session key and org ID from profile '\(activeProfile.name)' into statusline")
         } else {
             // Install placeholder script
             swiftScriptContent = placeholderSwiftScript
@@ -389,7 +360,7 @@ printf "%s\\n" "$output"
 
         try swiftScriptContent.write(to: swiftDestination, atomically: true, encoding: .utf8)
         try FileManager.default.setAttributes(
-            [.posixPermissions: 0o755],
+            [.posixPermissions: 0o700],
             ofItemAtPath: swiftDestination.path
         )
 
@@ -397,12 +368,12 @@ printf "%s\\n" "$output"
         let bashDestination = claudeDir.appendingPathComponent("statusline-command.sh")
         try bashScript.write(to: bashDestination, atomically: true, encoding: .utf8)
         try FileManager.default.setAttributes(
-            [.posixPermissions: 0o755],
+            [.posixPermissions: 0o700],
             ofItemAtPath: bashDestination.path
         )
     }
 
-    /// Removes the session key from the statusline Swift script
+    /// Replaces the statusline Swift script with a placeholder (no credential access)
     func removeSessionKeyFromScript() throws {
         let swiftDestination = Constants.ClaudePaths.claudeDirectory
             .appendingPathComponent("fetch-claude-usage.swift")
@@ -410,11 +381,11 @@ printf "%s\\n" "$output"
         // Replace with placeholder script that returns error
         try placeholderSwiftScript.write(to: swiftDestination, atomically: true, encoding: .utf8)
         try FileManager.default.setAttributes(
-            [.posixPermissions: 0o755],
+            [.posixPermissions: 0o700],
             ofItemAtPath: swiftDestination.path
         )
 
-        LoggingService.shared.log("Removed session key from statusline Swift script")
+        LoggingService.shared.log("Replaced statusline Swift script with placeholder")
     }
 
     // MARK: - Configuration

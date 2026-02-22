@@ -54,7 +54,17 @@ class ProfileStore {
         }
 
         do {
-            let profiles = try JSONDecoder().decode([Profile].self, from: data)
+            var profiles = try JSONDecoder().decode([Profile].self, from: data)
+            // Hydrate credential fields from Keychain (they are excluded from Codable)
+            for i in profiles.indices {
+                if let creds = try? loadProfileCredentials(profiles[i].id) {
+                    profiles[i].claudeSessionKey = creds.claudeSessionKey
+                    profiles[i].organizationId = creds.organizationId
+                    profiles[i].apiSessionKey = creds.apiSessionKey
+                    profiles[i].apiOrganizationId = creds.apiOrganizationId
+                    profiles[i].cliCredentialsJSON = creds.cliCredentialsJSON
+                }
+            }
             LoggingService.shared.log("ProfileStore: Loaded \(profiles.count) profiles from storage")
             return profiles
         } catch {
@@ -110,36 +120,57 @@ class ProfileStore {
         }
     }
 
-    // MARK: - Credential Helpers
+    // MARK: - Credential Helpers (Keychain-backed)
 
+    /// Saves profile credentials to the macOS Keychain.
+    /// Each credential field is stored as a separate Keychain item keyed by profile UUID.
     func saveProfileCredentials(_ profileId: UUID, credentials: ProfileCredentials) throws {
-        var profiles = loadProfiles()
-        guard let index = profiles.firstIndex(where: { $0.id == profileId }) else {
-            throw NSError(domain: "ProfileStore", code: 404, userInfo: [NSLocalizedDescriptionKey: "Profile not found"])
+        let account = profileId.uuidString
+
+        let fieldValues: [(String, String?)] = [
+            ("claudeSessionKey", credentials.claudeSessionKey),
+            ("organizationId", credentials.organizationId),
+            ("apiSessionKey", credentials.apiSessionKey),
+            ("apiOrganizationId", credentials.apiOrganizationId),
+            ("cliCredentialsJSON", credentials.cliCredentialsJSON),
+        ]
+
+        for (field, value) in fieldValues {
+            let service = ProfileKeychainKey.service(for: field)
+            if let value = value {
+                try keychainService.save(value, service: service, account: account)
+            } else {
+                try keychainService.delete(service: service, account: account)
+            }
         }
-
-        // Update credentials directly in profile
-        profiles[index].claudeSessionKey = credentials.claudeSessionKey
-        profiles[index].organizationId = credentials.organizationId
-        profiles[index].apiSessionKey = credentials.apiSessionKey
-        profiles[index].apiOrganizationId = credentials.apiOrganizationId
-        profiles[index].cliCredentialsJSON = credentials.cliCredentialsJSON
-
-        saveProfiles(profiles)
     }
 
+    /// Loads profile credentials from the macOS Keychain.
     func loadProfileCredentials(_ profileId: UUID) throws -> ProfileCredentials {
-        let profiles = loadProfiles()
-        guard let profile = profiles.first(where: { $0.id == profileId }) else {
-            throw NSError(domain: "ProfileStore", code: 404, userInfo: [NSLocalizedDescriptionKey: "Profile not found"])
-        }
+        let account = profileId.uuidString
 
         return ProfileCredentials(
-            claudeSessionKey: profile.claudeSessionKey,
-            organizationId: profile.organizationId,
-            apiSessionKey: profile.apiSessionKey,
-            apiOrganizationId: profile.apiOrganizationId,
-            cliCredentialsJSON: profile.cliCredentialsJSON
+            claudeSessionKey: try keychainService.load(
+                service: ProfileKeychainKey.service(for: "claudeSessionKey"), account: account),
+            organizationId: try keychainService.load(
+                service: ProfileKeychainKey.service(for: "organizationId"), account: account),
+            apiSessionKey: try keychainService.load(
+                service: ProfileKeychainKey.service(for: "apiSessionKey"), account: account),
+            apiOrganizationId: try keychainService.load(
+                service: ProfileKeychainKey.service(for: "apiOrganizationId"), account: account),
+            cliCredentialsJSON: try keychainService.load(
+                service: ProfileKeychainKey.service(for: "cliCredentialsJSON"), account: account)
         )
+    }
+
+    /// Deletes all Keychain credentials for a profile.
+    /// Call this when a profile is deleted to avoid orphaned Keychain entries.
+    func deleteProfileCredentials(_ profileId: UUID) {
+        let account = profileId.uuidString
+        for field in ProfileKeychainKey.allFields {
+            let service = ProfileKeychainKey.service(for: field)
+            try? keychainService.delete(service: service, account: account)
+        }
+        LoggingService.shared.log("ProfileStore: Deleted Keychain credentials for profile \(profileId)")
     }
 }

@@ -164,6 +164,120 @@ class KeychainService {
         return status == errSecSuccess
     }
 
+    // MARK: - Per-Profile Methods
+
+    /// Saves a string value to the Keychain with custom service/account identifiers.
+    /// Used for per-profile credential storage where the account is the profile UUID.
+    func save(_ value: String, service: String, account: String) throws {
+        guard let data = value.data(using: .utf8) else {
+            throw KeychainError.invalidData
+        }
+
+        let updateQuery: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account
+        ]
+
+        let attributes: [String: Any] = [
+            kSecValueData as String: data
+        ]
+
+        let updateStatus = SecItemUpdate(updateQuery as CFDictionary, attributes as CFDictionary)
+
+        if updateStatus == errSecSuccess {
+            return
+        }
+
+        if updateStatus == errSecItemNotFound {
+            var accessControlError: Unmanaged<CFError>?
+            guard let accessControl = SecAccessControlCreateWithFlags(
+                kCFAllocatorDefault,
+                kSecAttrAccessibleWhenUnlocked,
+                [],
+                &accessControlError
+            ) else {
+                throw KeychainError.saveFailed(status: errSecParam)
+            }
+
+            let addQuery: [String: Any] = [
+                kSecClass as String: kSecClassGenericPassword,
+                kSecAttrService as String: service,
+                kSecAttrAccount as String: account,
+                kSecValueData as String: data,
+                kSecAttrAccessControl as String: accessControl,
+                kSecAttrSynchronizable as String: false
+            ]
+
+            let addStatus = SecItemAdd(addQuery as CFDictionary, nil)
+            guard addStatus == errSecSuccess else {
+                throw KeychainError.saveFailed(status: addStatus)
+            }
+        } else {
+            throw KeychainError.saveFailed(status: updateStatus)
+        }
+    }
+
+    /// Loads a string value from the Keychain with custom service/account identifiers.
+    func load(service: String, account: String) throws -> String? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+
+        if status == errSecSuccess {
+            guard let data = result as? Data,
+                  let value = String(data: data, encoding: .utf8) else {
+                throw KeychainError.invalidData
+            }
+            return value
+        } else if status == errSecItemNotFound {
+            return nil
+        } else {
+            throw KeychainError.loadFailed(status: status)
+        }
+    }
+
+    /// Deletes a value from the Keychain with custom service/account identifiers.
+    func delete(service: String, account: String) throws {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account
+        ]
+
+        let status = SecItemDelete(query as CFDictionary)
+        if status != errSecSuccess && status != errSecItemNotFound {
+            throw KeychainError.deleteFailed(status: status)
+        }
+    }
+
+}
+
+// MARK: - Profile Keychain Keys
+
+/// Generates Keychain identifiers for per-profile credential storage.
+/// Each credential type is stored as a separate Keychain item, keyed by profile UUID.
+enum ProfileKeychainKey {
+    static let servicePrefix = "com.claudeusagetracker.profile"
+
+    /// All credential field names that are stored in the Keychain
+    static let allFields = [
+        "claudeSessionKey", "organizationId",
+        "apiSessionKey", "apiOrganizationId",
+        "cliCredentialsJSON"
+    ]
+
+    /// Returns the Keychain service identifier for a given credential type
+    static func service(for credentialType: String) -> String {
+        return "\(servicePrefix).\(credentialType)"
+    }
 }
 
 // MARK: - KeychainError

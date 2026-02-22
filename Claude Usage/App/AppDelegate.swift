@@ -18,6 +18,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         // Hide dock icon (menu bar app only)
         NSApp.setActivationPolicy(.accessory)
 
+        // Migrate profile credentials from UserDefaults to Keychain (one-time)
+        KeychainMigrationService.shared.migrateProfileCredentialsIfNeeded()
+
         // Load profiles into ProfileManager (synchronously)
         ProfileManager.shared.loadProfiles()
 
