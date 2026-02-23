@@ -336,7 +336,7 @@ class DataStore: StorageProvider {
         }
     }
 
-    /// Loads API session key from Keychain (with fallback to UserDefaults for migration)
+    /// Loads API session key from Keychain (with one-time migration from UserDefaults)
     func loadAPISessionKey() -> String? {
         do {
             // Try to load from Keychain first
@@ -357,8 +357,8 @@ class DataStore: StorageProvider {
             return nil
         } catch {
             LoggingService.shared.logStorageError("loadAPISessionKey", error: error)
-            // Fallback to UserDefaults on error
-            return defaults.string(forKey: Constants.UserDefaultsKeys.apiSessionKey)
+            // Do NOT fall back to UserDefaults - surface the error instead
+            return nil
         }
     }
 

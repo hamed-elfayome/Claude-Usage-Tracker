@@ -185,6 +185,15 @@ final class AutoStartSessionService {
         return usage
     }
 
+    /// Sanitizes a credential value for safe use in HTTP headers.
+    /// Removes CR/LF characters that could enable header injection attacks.
+    private static func sanitizeForHeader(_ value: String) -> String {
+        return value
+            .replacingOccurrences(of: "\r\n", with: "")
+            .replacingOccurrences(of: "\r", with: "")
+            .replacingOccurrences(of: "\n", with: "")
+    }
+
     private func fetchUsageData(for profile: Profile) async throws -> ClaudeUsage {
         // Get credentials from the specific profile
         guard let sessionKey = profile.claudeSessionKey,
@@ -202,7 +211,8 @@ final class AutoStartSessionService {
             .build()
 
         var request = URLRequest(url: url)
-        request.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
+        let safeKey = Self.sanitizeForHeader(sessionKey)
+        request.setValue("sessionKey=\(safeKey)", forHTTPHeaderField: "Cookie")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.httpMethod = "GET"
         request.timeoutInterval = 30
@@ -395,13 +405,15 @@ final class AutoStartSessionService {
             )
         }
 
+        let safeSessionKey = Self.sanitizeForHeader(sessionKey)
+
         // Create a new conversation
         let conversationURL = try URLBuilder(baseURL: Constants.APIEndpoints.claudeBase)
             .appendingPathComponents(["/organizations", orgId, "/chat_conversations"])
             .build()
 
         var conversationRequest = URLRequest(url: conversationURL)
-        conversationRequest.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
+        conversationRequest.setValue("sessionKey=\(safeSessionKey)", forHTTPHeaderField: "Cookie")
         conversationRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         conversationRequest.httpMethod = "POST"
 
@@ -430,7 +442,7 @@ final class AutoStartSessionService {
             .build()
 
         var messageRequest = URLRequest(url: messageURL)
-        messageRequest.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
+        messageRequest.setValue("sessionKey=\(safeSessionKey)", forHTTPHeaderField: "Cookie")
         messageRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         messageRequest.httpMethod = "POST"
 
@@ -457,7 +469,7 @@ final class AutoStartSessionService {
             .build()
 
         var deleteRequest = URLRequest(url: deleteURL)
-        deleteRequest.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
+        deleteRequest.setValue("sessionKey=\(safeSessionKey)", forHTTPHeaderField: "Cookie")
         deleteRequest.httpMethod = "DELETE"
 
         // Attempt to delete, but don't fail if deletion fails

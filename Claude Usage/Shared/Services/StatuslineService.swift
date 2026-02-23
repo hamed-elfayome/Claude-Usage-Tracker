@@ -10,10 +10,32 @@ class StatuslineService {
 
     // MARK: - Embedded Scripts
 
+    // MARK: - Input Validation
+
+    /// Strict allowlist pattern for values interpolated into generated scripts.
+    /// Only allows alphanumeric characters, hyphens, and underscores.
+    private static let strictAllowlistPattern = try! NSRegularExpression(pattern: "^[a-zA-Z0-9\\-_]+$")
+
+    /// Validates that a value is safe for interpolation into a generated script.
+    /// Uses a strict allowlist: only alphanumeric characters, hyphens, and underscores are allowed.
+    /// - Parameter value: The string to validate
+    /// - Parameter name: The name of the field (for error messages)
+    /// - Throws: StatuslineError.unsafeInputValue if validation fails
+    private func validateForScriptInjection(_ value: String, name: String) throws {
+        let range = NSRange(value.startIndex..., in: value)
+        guard StatuslineService.strictAllowlistPattern.firstMatch(in: value, range: range) != nil else {
+            throw StatuslineError.unsafeInputValue(name: name)
+        }
+    }
+
     /// Swift script that fetches Claude usage data from the API.
     /// Installed to ~/.claude/fetch-claude-usage.swift and executed by the bash statusline script.
     /// The session key and organization ID are injected into this script when statusline is enabled.
-    private func generateSwiftScript(sessionKey: String, organizationId: String) -> String {
+    private func generateSwiftScript(sessionKey: String, organizationId: String) throws -> String {
+        // Validate inputs against strict allowlist before interpolation
+        try validateForScriptInjection(sessionKey, name: "sessionKey")
+        try validateForScriptInjection(organizationId, name: "organizationId")
+
         return """
 #!/usr/bin/env swift
 
@@ -298,7 +320,7 @@ printf "%s\\n" "$output"
                 throw StatuslineError.organizationNotConfigured
             }
 
-            swiftScriptContent = generateSwiftScript(sessionKey: sessionKey, organizationId: organizationId)
+            swiftScriptContent = try generateSwiftScript(sessionKey: sessionKey, organizationId: organizationId)
             LoggingService.shared.log("Injected session key and org ID from profile '\(activeProfile.name)' into statusline")
         } else {
             // Install placeholder script
@@ -308,7 +330,7 @@ printf "%s\\n" "$output"
 
         try swiftScriptContent.write(to: swiftDestination, atomically: true, encoding: .utf8)
         try FileManager.default.setAttributes(
-            [.posixPermissions: 0o755],
+            [.posixPermissions: 0o700],
             ofItemAtPath: swiftDestination.path
         )
 
@@ -316,7 +338,7 @@ printf "%s\\n" "$output"
         let bashDestination = claudeDir.appendingPathComponent("statusline-command.sh")
         try bashScript.write(to: bashDestination, atomically: true, encoding: .utf8)
         try FileManager.default.setAttributes(
-            [.posixPermissions: 0o755],
+            [.posixPermissions: 0o700],
             ofItemAtPath: bashDestination.path
         )
     }
@@ -329,7 +351,7 @@ printf "%s\\n" "$output"
         // Replace with placeholder script that returns error
         try placeholderSwiftScript.write(to: swiftDestination, atomically: true, encoding: .utf8)
         try FileManager.default.setAttributes(
-            [.posixPermissions: 0o755],
+            [.posixPermissions: 0o700],
             ofItemAtPath: swiftDestination.path
         )
 
@@ -445,6 +467,7 @@ enum StatuslineError: Error, LocalizedError {
     case noActiveProfile
     case sessionKeyNotFound
     case organizationNotConfigured
+    case unsafeInputValue(name: String)
 
     var errorDescription: String? {
         switch self {
@@ -454,6 +477,8 @@ enum StatuslineError: Error, LocalizedError {
             return "Session key not found in active profile. Please configure your session key first."
         case .organizationNotConfigured:
             return "Organization not configured in active profile. Please select an organization in the app settings."
+        case .unsafeInputValue(let name):
+            return "The \(name) contains characters not allowed for script generation. Only alphanumeric characters, hyphens, and underscores are permitted."
         }
     }
 }

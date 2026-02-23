@@ -49,6 +49,10 @@ struct SettingsView: View {
                     LanguageSettingsView()
                 case .claudeCode:
                     ClaudeCodeView()
+                case .requestLogs:
+                    RequestLogsView()
+                case .otelSettings:
+                    OTelSettingsView()
                 case .updates:
                     UpdatesSettingsView()
                 case .about:
@@ -205,6 +209,8 @@ enum SettingsSection: String, CaseIterable {
     case manageProfiles
     case language
     case claudeCode
+    case requestLogs
+    case otelSettings
     case updates
     case about
 
@@ -218,6 +224,8 @@ enum SettingsSection: String, CaseIterable {
         case .manageProfiles: return "section.manage_profiles_title".localized
         case .language: return "language.title".localized
         case .claudeCode: return "settings.claude_cli".localized
+        case .requestLogs: return "Request Logs"
+        case .otelSettings: return "OTel Settings"
         case .updates: return "settings.updates".localized
         case .about: return "settings.about".localized
         }
@@ -233,6 +241,8 @@ enum SettingsSection: String, CaseIterable {
         case .manageProfiles: return "person.2.fill"
         case .language: return "globe"
         case .claudeCode: return "chevron.left.forwardslash.chevron.right"
+        case .requestLogs: return "list.bullet.rectangle.fill"
+        case .otelSettings: return "antenna.radiowaves.left.and.right"
         case .updates: return "arrow.down.circle.fill"
         case .about: return "info.circle.fill"
         }
@@ -248,6 +258,8 @@ enum SettingsSection: String, CaseIterable {
         case .manageProfiles: return "section.manage_profiles_desc".localized
         case .language: return "language.subtitle".localized
         case .claudeCode: return "settings.claude_cli.description".localized
+        case .requestLogs: return "Per-request API cost and token logs"
+        case .otelSettings: return "Configure OpenTelemetry collection"
         case .updates: return "settings.updates.description".localized
         case .about: return "settings.about.description".localized
         }

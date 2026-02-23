@@ -16,95 +16,81 @@ class ClaudeCodeSyncService {
 
     // MARK: - System Keychain Access
 
-    /// Reads Claude Code credentials from system Keychain using security command
+    private let systemKeychainService = "Claude Code-credentials"
+
+    /// Reads Claude Code credentials from system Keychain using Security framework APIs
     func readSystemCredentials() throws -> String? {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/security")
-        process.arguments = [
-            "find-generic-password",
-            "-s", "Claude Code-credentials",
-            "-a", NSUserName(),
-            "-w"  // Print password only
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: systemKeychainService,
+            kSecAttrAccount as String: NSUserName(),
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
         ]
 
-        let outputPipe = Pipe()
-        let errorPipe = Pipe()
-        process.standardOutput = outputPipe
-        process.standardError = errorPipe
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
 
-        try process.run()
-        process.waitUntilExit()
-
-        let exitCode = process.terminationStatus
-
-        if exitCode == 0 {
-            let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
-            guard let value = String(data: outputData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) else {
+        if status == errSecSuccess {
+            guard let data = result as? Data,
+                  let value = String(data: data, encoding: .utf8) else {
                 throw ClaudeCodeError.invalidJSON
             }
-            return value
-        } else if exitCode == 44 {
-            // Exit code 44 = item not found
+            return value.trimmingCharacters(in: .whitespacesAndNewlines)
+        } else if status == errSecItemNotFound {
             return nil
         } else {
-            let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
-            let errorString = String(data: errorData, encoding: .utf8) ?? "Unknown error"
-            LoggingService.shared.log("Failed to read keychain: \(errorString)")
-            throw ClaudeCodeError.keychainReadFailed(status: OSStatus(exitCode))
+            LoggingService.shared.log("Failed to read keychain (status: \(status))")
+            throw ClaudeCodeError.keychainReadFailed(status: status)
         }
     }
 
-    /// Writes Claude Code credentials to system Keychain using security command
+    /// Writes Claude Code credentials to system Keychain using Security framework APIs
     func writeSystemCredentials(_ jsonData: String) throws {
-        LoggingService.shared.log("Writing credentials to keychain using security command")
+        LoggingService.shared.log("Writing credentials to keychain using Security framework")
 
-        // First, delete existing item
-        let deleteProcess = Process()
-        deleteProcess.executableURL = URL(fileURLWithPath: "/usr/bin/security")
-        deleteProcess.arguments = [
-            "delete-generic-password",
-            "-s", "Claude Code-credentials",
-            "-a", NSUserName()
-        ]
-
-        try deleteProcess.run()
-        deleteProcess.waitUntilExit()
-
-        let deleteExitCode = deleteProcess.terminationStatus
-        if deleteExitCode == 0 {
-            LoggingService.shared.log("Deleted existing keychain item")
-        } else {
-            LoggingService.shared.log("No existing keychain item to delete (or delete failed with code \(deleteExitCode))")
+        guard let data = jsonData.data(using: .utf8) else {
+            throw ClaudeCodeError.invalidJSON
         }
 
-        // Add new item using security command
-        let addProcess = Process()
-        addProcess.executableURL = URL(fileURLWithPath: "/usr/bin/security")
-        addProcess.arguments = [
-            "add-generic-password",
-            "-s", "Claude Code-credentials",
-            "-a", NSUserName(),
-            "-w", jsonData,
-            "-U"  // Update if exists
+        // First, try to update existing item
+        let updateQuery: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: systemKeychainService,
+            kSecAttrAccount as String: NSUserName()
         ]
 
-        let outputPipe = Pipe()
-        let errorPipe = Pipe()
-        addProcess.standardOutput = outputPipe
-        addProcess.standardError = errorPipe
+        let attributes: [String: Any] = [
+            kSecValueData as String: data
+        ]
 
-        try addProcess.run()
-        addProcess.waitUntilExit()
+        let updateStatus = SecItemUpdate(updateQuery as CFDictionary, attributes as CFDictionary)
 
-        let exitCode = addProcess.terminationStatus
+        if updateStatus == errSecSuccess {
+            LoggingService.shared.log("Updated Claude Code system credentials successfully")
+            return
+        }
 
-        if exitCode == 0 {
-            LoggingService.shared.log("✅ Added Claude Code system credentials successfully using security command")
+        // If update fails because item doesn't exist, add new item
+        if updateStatus == errSecItemNotFound {
+            let addQuery: [String: Any] = [
+                kSecClass as String: kSecClassGenericPassword,
+                kSecAttrService as String: systemKeychainService,
+                kSecAttrAccount as String: NSUserName(),
+                kSecValueData as String: data,
+                kSecAttrSynchronizable as String: false
+            ]
+
+            let addStatus = SecItemAdd(addQuery as CFDictionary, nil)
+
+            if addStatus == errSecSuccess {
+                LoggingService.shared.log("Added Claude Code system credentials successfully")
+                return
+            } else {
+                throw ClaudeCodeError.keychainWriteFailed(status: addStatus)
+            }
         } else {
-            let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
-            let errorString = String(data: errorData, encoding: .utf8) ?? "Unknown error"
-            LoggingService.shared.log("❌ Failed to add credentials: \(errorString)")
-            throw ClaudeCodeError.keychainWriteFailed(status: OSStatus(exitCode))
+            throw ClaudeCodeError.keychainWriteFailed(status: updateStatus)
         }
     }
 
