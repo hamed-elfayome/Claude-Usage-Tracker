@@ -126,7 +126,7 @@ struct ManageProfilesView: View {
                                     }
                                 )) {
                                     ForEach(MultiProfileIconStyle.allCases, id: \.self) { style in
-                                        Text(style.displayName).tag(style)
+                                        Text(style.shortNameKey.localized).tag(style)
                                     }
                                 }
                                 .pickerStyle(.segmented)

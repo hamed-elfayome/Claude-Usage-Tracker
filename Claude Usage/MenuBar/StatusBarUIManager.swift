@@ -296,6 +296,17 @@ final class StatusBarUIManager {
                     isDarkMode: menuBarIsDark,
                     useSystemColor: false
                 )
+            case .percentage:
+                image = renderer.createMultiProfilePercentage(
+                    sessionPercentage: sessionDisplay,
+                    weekPercentage: config.showWeek ? weekDisplay : nil,
+                    sessionStatus: sessionStatus,
+                    weekStatus: weekStatus,
+                    profileName: config.showProfileLabel ? profile.name : nil,
+                    monochromeMode: useMonochrome,
+                    isDarkMode: menuBarIsDark,
+                    useSystemColor: false
+                )
             }
 
             button.image = image

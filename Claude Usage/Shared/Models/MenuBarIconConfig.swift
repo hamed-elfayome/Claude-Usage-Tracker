@@ -186,6 +186,7 @@ enum MultiProfileIconStyle: String, Codable, CaseIterable {
     case concentric   // Concentric circles (session inner, week outer)
     case progressBar  // Horizontal progress bars stacked
     case compact      // Minimal dot indicators
+    case percentage   // Percentage text (e.g. "30 · 4")
 
     var displayName: String {
         switch self {
@@ -195,6 +196,22 @@ enum MultiProfileIconStyle: String, Codable, CaseIterable {
             return "Progress Bars"
         case .compact:
             return "Compact Dots"
+        case .percentage:
+            return "Percentage"
+        }
+    }
+
+    /// Localization key for short segmented picker label
+    var shortNameKey: String {
+        switch self {
+        case .concentric:
+            return "multiprofile.style_circles"
+        case .progressBar:
+            return "multiprofile.style_bars"
+        case .compact:
+            return "multiprofile.style_dots"
+        case .percentage:
+            return "multiprofile.style_percent"
         }
     }
 
@@ -206,6 +223,8 @@ enum MultiProfileIconStyle: String, Codable, CaseIterable {
             return "Horizontal bars stacked vertically"
         case .compact:
             return "Minimal colored dots"
+        case .percentage:
+            return "Session and week as colored numbers"
         }
     }
 
@@ -217,6 +236,8 @@ enum MultiProfileIconStyle: String, Codable, CaseIterable {
             return "chart.bar.fill"
         case .compact:
             return "circle.fill"
+        case .percentage:
+            return "percent"
         }
     }
 }

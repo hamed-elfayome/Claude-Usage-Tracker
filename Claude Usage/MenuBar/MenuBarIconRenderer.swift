@@ -991,6 +991,82 @@ final class MenuBarIconRenderer {
         return image
     }
 
+    // MARK: - Multi-Profile Percentage Style
+
+    /// Creates a percentage text icon for multi-profile mode
+    /// Format: "30 · 4" (session · week) with status colors, optional profile label below
+    func createMultiProfilePercentage(
+        sessionPercentage: Double,
+        weekPercentage: Double?,
+        sessionStatus: UsageStatusLevel,
+        weekStatus: UsageStatusLevel,
+        profileName: String?,
+        monochromeMode: Bool,
+        isDarkMode: Bool,
+        useSystemColor: Bool = false
+    ) -> NSImage {
+        let font = NSFont.monospacedDigitSystemFont(ofSize: 9, weight: .semibold)
+        let foregroundColor = menuBarForegroundColor(isDarkMode: isDarkMode)
+        let separatorColor = foregroundColor.withAlphaComponent(0.4)
+
+        let sessionColor: NSColor = getColor(for: sessionStatus, monochromeMode: monochromeMode, useSystemColor: useSystemColor, isDarkMode: isDarkMode)
+        let weekColor: NSColor = getColor(for: weekStatus, monochromeMode: monochromeMode, useSystemColor: useSystemColor, isDarkMode: isDarkMode)
+
+        // Build the attributed string
+        let attributed = NSMutableAttributedString()
+
+        // Session number
+        let sessionText = "\(Int(sessionPercentage))"
+        attributed.append(NSAttributedString(string: sessionText, attributes: [
+            .font: font,
+            .foregroundColor: sessionColor
+        ]))
+
+        // Separator and week number (if shown)
+        if let weekPct = weekPercentage {
+            attributed.append(NSAttributedString(string: " · ", attributes: [
+                .font: font,
+                .foregroundColor: separatorColor
+            ]))
+            let weekText = "\(Int(weekPct))"
+            attributed.append(NSAttributedString(string: weekText, attributes: [
+                .font: font,
+                .foregroundColor: weekColor
+            ]))
+        }
+
+        let textSize = attributed.size()
+        let labelHeight: CGFloat = profileName != nil ? 10 : 0
+        let labelSpacing: CGFloat = profileName != nil ? 1 : 0
+        let totalWidth = max(textSize.width + 2, profileName != nil ? CGFloat(String(profileName!.prefix(3)).count) * 6 + 4 : 0)
+        let totalHeight = textSize.height + labelSpacing + labelHeight
+
+        let image = NSImage(size: NSSize(width: totalWidth, height: totalHeight))
+
+        image.lockFocus()
+        defer { image.unlockFocus() }
+
+        // Draw percentage text at top, centered
+        let textX = (totalWidth - textSize.width) / 2
+        let textY = totalHeight - textSize.height
+        attributed.draw(at: NSPoint(x: textX, y: textY))
+
+        // Profile label below (if shown)
+        if let name = profileName {
+            let label = String(name.prefix(3))
+            let labelAttributes: [NSAttributedString.Key: Any] = [
+                .font: NSFont.systemFont(ofSize: 8, weight: .medium),
+                .foregroundColor: foregroundColor.withAlphaComponent(0.85)
+            ]
+            let labelString = label as NSString
+            let labelSize = labelString.size(withAttributes: labelAttributes)
+            let labelX = (totalWidth - labelSize.width) / 2
+            labelString.draw(at: NSPoint(x: labelX, y: 0), withAttributes: labelAttributes)
+        }
+
+        return image
+    }
+
     // MARK: - Helper Methods
 
     /// Returns the appropriate foreground color for menu bar icons based on appearance
