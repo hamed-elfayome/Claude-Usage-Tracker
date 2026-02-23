@@ -637,6 +637,12 @@
 "section.general_desc" = "Configurações gerais";
 "section.manage_profiles_title" = "Gerenciar Perfis";
 "section.manage_profiles_desc" = "Gerenciar perfis";
+"section.history_title" = "Histórico";
+"section.history_desc" = "Ver histórico de uso";
+"section.support_title" = "Suporte";
+"section.support_desc" = "Apoiar o desenvolvimento do projeto";
+"section.debug_title" = "Ferramentas de Depuração";
+"section.debug_desc" = "Registro de rede e diagnósticos";
 
 /* ==================== */
 /* MARK: - Creator Info */
@@ -742,3 +748,61 @@
 "history.label.total" = "Total";
 "history.label.spent" = "Gasto";
 "history.label.session" = "Sessão";
+"history.time_scale.5_hours" = "5 Horas";
+"history.time_scale.24_hours" = "24 Horas";
+"history.time_scale.7_days" = "7 Dias";
+"history.time_scale.30_days" = "30 Dias";
+"history.chart.session_usage" = "Uso de Sessão";
+"history.chart.weekly_usage" = "Uso Semanal";
+"history.chart.api_billing" = "Faturamento da API";
+"history.chart.no_data" = "Sem dados no intervalo selecionado";
+"history.export.title" = "Exportar Dados";
+"history.export.json" = "Exportar como JSON";
+"history.export.csv" = "Exportar como CSV";
+"history.chart.now" = "Agora";
+"support.title" = "Apoiar o Projeto";
+"support.subtitle" = "Claude Usage Tracker é gratuito e de código aberto";
+"support.all_features_free" = "Todos os Recursos São Gratuitos";
+"support.all_features_desc" = "Cada recurso neste aplicativo é completamente gratuito. Sem níveis premium, sem paywalls, sem assinaturas.";
+"support.open_source" = "Código Aberto";
+"support.open_source_desc" = "O código-fonte está disponível publicamente no GitHub. Você pode inspecionar, modificar e contribuir para o projeto.";
+"support.no_tracking" = "Sem Rastreamento";
+"support.no_tracking_desc" = "Sua privacidade importa. Sem análises, sem telemetria, sem coleta de dados. Tudo fica no seu Mac.";
+"support.message" = "Se você achar este aplicativo útil, considere apoiar seu desenvolvimento";
+"support.buy_coffee" = "Pague-me um Café";
+"support.footer" = "Seu apoio ajuda a manter este projeto vivo e crescendo";
+"support.also_support" = "Você também pode apoiar";
+"support.star_github" = "Dando Estrela no GitHub";
+"debug.title" = "Ferramentas de Depuração";
+"debug.subtitle" = "Registrar solicitações de rede para solução de problemas e diagnósticos";
+"debug.network_logger" = "Registrador de Solicitações de Rede";
+"debug.network_logger_desc" = "Capturar todas as solicitações de API com informações detalhadas";
+"debug.logging_duration" = "Duração do Registro";
+"debug.logging_active" = "Registro Ativo";
+"debug.logging_inactive" = "Registro Inativo";
+"debug.stops_in" = "Para em %@";
+"debug.start_logging" = "Iniciar Registro";
+"debug.stop_logging" = "Parar Registro";
+"debug.clear_logs" = "Limpar Logs";
+"debug.clear_all_logs" = "Limpar Todos os Logs?";
+"debug.clear_logs_message" = "Isso excluirá permanentemente todas as solicitações de rede registradas.";
+"debug.captured_requests" = "Solicitações Capturadas";
+"debug.requests_logged" = "%d solicitações registradas";
+"debug.no_requests" = "Nenhuma solicitação registrada ainda";
+"debug.request_details" = "Detalhes da Solicitação";
+"debug.basic_information" = "Informações Básicas";
+"debug.request_body" = "Corpo da Solicitação";
+"debug.response_preview" = "Visualização da Resposta";
+"debug.full_size" = "Tamanho completo: %@";
+"debug.error" = "Erro";
+"debug.url" = "URL";
+"debug.method" = "Método";
+"debug.status_code" = "Código de Status";
+"debug.duration" = "Duração";
+"debug.timestamp" = "Carimbo de Data/Hora";
+"debug.duration_seconds" = "%.3f segundos";
+
+/* ==================== */
+/* MARK: - Combined Usage Chart */
+/* ==================== */
+"history.chart.usage_overview" = "Visão geral de uso";

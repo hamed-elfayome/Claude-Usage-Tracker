@@ -1365,14 +1365,23 @@ extension MenuBarManager: NSPopoverDelegate {
         // This prevents the popover from losing its content
         let newContentViewController = createContentViewController()
 
-        let window = NSWindow(contentViewController: newContentViewController)
-        window.title = "app.window.main".localized
-        window.styleMask = [.titled, .closable]  // Close-only, minimal and clean
+        let window = NSPanel(
+            contentRect: NSRect(x: 0, y: 0, width: 320, height: 600),
+            styleMask: [.titled, .closable, .fullSizeContentView, .nonactivatingPanel, .hudWindow],
+            backing: .buffered,
+            defer: false
+        )
+        window.contentViewController = newContentViewController
+        window.title = ""
+        window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
+        window.isMovableByWindowBackground = true
         window.setContentSize(NSSize(width: 320, height: 600))
         window.isReleasedWhenClosed = false
-        window.level = .floating  // Keep it above other windows
-        window.isRestorable = false  // Don't persist across app restarts
+        window.level = .floating
+        window.isRestorable = false
         window.delegate = self
+        window.backgroundColor = .clear
 
         // Store reference to the detached window
         detachedWindow = window

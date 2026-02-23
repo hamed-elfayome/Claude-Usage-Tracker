@@ -22,19 +22,19 @@ struct DebugNetworkLogView: View {
             VStack(alignment: .leading, spacing: DesignTokens.Spacing.section) {
                 // Header
                 SettingsPageHeader(
-                    title: "Debug Tools",
-                    subtitle: "Log network requests for troubleshooting and diagnostics"
+                    title: "debug.title".localized,
+                    subtitle: "debug.subtitle".localized
                 )
 
                 // Controls Card
                 SettingsSectionCard(
-                    title: "Network Request Logger",
-                    subtitle: "Capture all API requests with detailed information"
+                    title: "debug.network_logger".localized,
+                    subtitle: "debug.network_logger_desc".localized
                 ) {
                     VStack(alignment: .leading, spacing: DesignTokens.Spacing.cardPadding) {
                         // Duration Picker
                         VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
-                            Text("Logging Duration")
+                            Text("debug.logging_duration".localized)
                                 .font(DesignTokens.Typography.bodyMedium)
 
                             Picker("", selection: $selectedDuration) {
@@ -57,18 +57,18 @@ struct DebugNetworkLogView: View {
 
                             if loggerService.session.isActive {
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text("Logging Active")
+                                    Text("debug.logging_active".localized)
                                         .font(DesignTokens.Typography.bodyMedium)
                                         .foregroundColor(.green)
 
                                     if let remaining = loggerService.remainingTime {
-                                        Text("Stops in \(formatTimeRemaining(remaining))")
+                                        Text(String(format: "debug.stops_in".localized, formatTimeRemaining(remaining)))
                                             .font(DesignTokens.Typography.caption)
                                             .foregroundColor(.secondary)
                                     }
                                 }
                             } else {
-                                Text("Logging Inactive")
+                                Text("debug.logging_inactive".localized)
                                     .font(DesignTokens.Typography.bodyMedium)
                                     .foregroundColor(.secondary)
                             }
@@ -82,7 +82,7 @@ struct DebugNetworkLogView: View {
                         HStack(spacing: DesignTokens.Spacing.medium) {
                             if loggerService.session.isActive {
                                 SettingsButton(
-                                    title: "Stop Logging",
+                                    title: "debug.stop_logging".localized,
                                     icon: "stop.fill",
                                     style: .destructive
                                 ) {
@@ -90,7 +90,7 @@ struct DebugNetworkLogView: View {
                                 }
                             } else {
                                 SettingsButton(
-                                    title: "Start Logging",
+                                    title: "debug.start_logging".localized,
                                     icon: "play.fill",
                                     style: .primary
                                 ) {
@@ -99,7 +99,7 @@ struct DebugNetworkLogView: View {
                             }
 
                             SettingsButton(
-                                title: "Clear Logs",
+                                title: "debug.clear_logs".localized,
                                 icon: "trash"
                             ) {
                                 showClearConfirmation = true
@@ -108,22 +108,22 @@ struct DebugNetworkLogView: View {
                         }
                     }
                 }
-                .alert("Clear All Logs?", isPresented: $showClearConfirmation) {
-                    Button("Cancel", role: .cancel) { }
-                    Button("Clear", role: .destructive) {
+                .alert("debug.clear_all_logs".localized, isPresented: $showClearConfirmation) {
+                    Button("common.cancel".localized, role: .cancel) { }
+                    Button("debug.clear_logs".localized, role: .destructive) {
                         loggerService.clearLogs()
                     }
                 } message: {
-                    Text("This will permanently delete all logged network requests.")
+                    Text("debug.clear_logs_message".localized)
                 }
 
                 // Logs List Card
                 SettingsSectionCard(
-                    title: "Captured Requests",
-                    subtitle: "\(loggerService.session.logs.count) requests logged"
+                    title: "debug.captured_requests".localized,
+                    subtitle: String(format: "debug.requests_logged".localized, loggerService.session.logs.count)
                 ) {
                     if loggerService.session.logs.isEmpty {
-                        Text("No requests logged yet")
+                        Text("debug.no_requests".localized)
                             .font(DesignTokens.Typography.body)
                             .foregroundColor(.secondary)
                             .frame(maxWidth: .infinity, alignment: .center)
@@ -272,7 +272,7 @@ struct NetworkLogDetailView: View {
         VStack(spacing: 0) {
             // Header
             HStack {
-                Text("Request Details")
+                Text("debug.request_details".localized)
                     .font(.system(size: 16, weight: .semibold))
 
                 Spacer()
@@ -292,21 +292,21 @@ struct NetworkLogDetailView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     // Basic Info
-                    DetailSection(title: "Basic Information") {
-                        DetailRow(label: "URL", value: log.url)
-                        DetailRow(label: "Method", value: log.method)
+                    DetailSection(title: "debug.basic_information".localized) {
+                        DetailRow(label: "debug.url".localized, value: log.url)
+                        DetailRow(label: "debug.method".localized, value: log.method)
                         if let status = log.statusCode {
-                            DetailRow(label: "Status Code", value: "\(status)")
+                            DetailRow(label: "debug.status_code".localized, value: "\(status)")
                         }
                         if let duration = log.duration {
-                            DetailRow(label: "Duration", value: String(format: "%.3f seconds", duration))
+                            DetailRow(label: "debug.duration".localized, value: String(format: "debug.duration_seconds".localized, duration))
                         }
-                        DetailRow(label: "Timestamp", value: formatFullTimestamp(log.timestamp))
+                        DetailRow(label: "debug.timestamp".localized, value: formatFullTimestamp(log.timestamp))
                     }
 
                     // Request Body
                     if let requestBody = log.requestBody {
-                        DetailSection(title: "Request Body") {
+                        DetailSection(title: "debug.request_body".localized) {
                             Text(requestBody)
                                 .font(.system(size: 11, design: .monospaced))
                                 .textSelection(.enabled)
@@ -319,10 +319,10 @@ struct NetworkLogDetailView: View {
 
                     // Response Preview
                     if let response = log.responsePreview {
-                        DetailSection(title: "Response (Preview)") {
+                        DetailSection(title: "debug.response_preview".localized) {
                             VStack(alignment: .leading, spacing: 8) {
                                 if let size = log.fullResponseSize {
-                                    Text("Full size: \(ByteCountFormatter.string(fromByteCount: Int64(size), countStyle: .file))")
+                                    Text(String(format: "debug.full_size".localized, ByteCountFormatter.string(fromByteCount: Int64(size), countStyle: .file)))
                                         .font(DesignTokens.Typography.caption)
                                         .foregroundColor(.secondary)
                                 }
@@ -340,7 +340,7 @@ struct NetworkLogDetailView: View {
 
                     // Error
                     if let error = log.errorMessage {
-                        DetailSection(title: "Error") {
+                        DetailSection(title: "debug.error".localized) {
                             Text(error)
                                 .font(.system(size: 11, design: .monospaced))
                                 .foregroundColor(.red)

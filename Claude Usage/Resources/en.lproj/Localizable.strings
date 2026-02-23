@@ -710,6 +710,10 @@
 /* ==================== */
 "section.history_title" = "History";
 "section.history_desc" = "View usage history";
+"section.support_title" = "Support";
+"section.support_desc" = "Support the project development";
+"section.debug_title" = "Debug Tools";
+"section.debug_desc" = "Network logging and diagnostics";
 "history.title" = "Usage History";
 "history.subtitle" = "Track your usage over time";
 "history.tab.session" = "Sessions";
@@ -738,3 +742,69 @@
 "history.label.total" = "Total";
 "history.label.spent" = "Spent";
 "history.label.session" = "Session";
+"history.time_scale.5_hours" = "5 Hours";
+"history.time_scale.24_hours" = "24 Hours";
+"history.time_scale.7_days" = "7 Days";
+"history.time_scale.30_days" = "30 Days";
+"history.chart.session_usage" = "Session Usage";
+"history.chart.weekly_usage" = "Weekly Usage";
+"history.chart.api_billing" = "API Billing";
+"history.chart.no_data" = "No data in selected range";
+"history.export.title" = "Export Data";
+"history.export.json" = "Export as JSON";
+"history.export.csv" = "Export as CSV";
+"history.chart.now" = "Now";
+
+/* ==================== */
+/* MARK: - Support View */
+/* ==================== */
+"support.title" = "Support the Project";
+"support.subtitle" = "Claude Usage Tracker is free and open source";
+"support.all_features_free" = "All Features Are Free";
+"support.all_features_desc" = "Every feature in this app is completely free to use. No premium tiers, no paywalls, no subscriptions.";
+"support.open_source" = "Open Source";
+"support.open_source_desc" = "The source code is publicly available on GitHub. You can inspect, modify, and contribute to the project.";
+"support.no_tracking" = "No Tracking";
+"support.no_tracking_desc" = "Your privacy matters. No analytics, no telemetry, no data collection. Everything stays on your Mac.";
+"support.message" = "If you find this app useful, consider supporting its development";
+"support.buy_coffee" = "Buy Me a Coffee";
+"support.footer" = "Your support helps keep this project alive and growing";
+"support.also_support" = "You can also support by";
+"support.star_github" = "Starring on GitHub";
+
+/* ==================== */
+/* MARK: - Debug View */
+/* ==================== */
+"debug.title" = "Debug Tools";
+"debug.subtitle" = "Log network requests for troubleshooting and diagnostics";
+"debug.network_logger" = "Network Request Logger";
+"debug.network_logger_desc" = "Capture all API requests with detailed information";
+"debug.logging_duration" = "Logging Duration";
+"debug.logging_active" = "Logging Active";
+"debug.logging_inactive" = "Logging Inactive";
+"debug.stops_in" = "Stops in %@";
+"debug.start_logging" = "Start Logging";
+"debug.stop_logging" = "Stop Logging";
+"debug.clear_logs" = "Clear Logs";
+"debug.clear_all_logs" = "Clear All Logs?";
+"debug.clear_logs_message" = "This will permanently delete all logged network requests.";
+"debug.captured_requests" = "Captured Requests";
+"debug.requests_logged" = "%d requests logged";
+"debug.no_requests" = "No requests logged yet";
+"debug.request_details" = "Request Details";
+"debug.basic_information" = "Basic Information";
+"debug.request_body" = "Request Body";
+"debug.response_preview" = "Response (Preview)";
+"debug.full_size" = "Full size: %@";
+"debug.error" = "Error";
+"debug.url" = "URL";
+"debug.method" = "Method";
+"debug.status_code" = "Status Code";
+"debug.duration" = "Duration";
+"debug.timestamp" = "Timestamp";
+"debug.duration_seconds" = "%.3f seconds";
+
+/* ==================== */
+/* MARK: - Combined Usage Chart */
+/* ==================== */
+"history.chart.usage_overview" = "Usage Overview";

@@ -25,6 +25,9 @@ struct DateRangeSelection: Equatable {
         let calendar = Calendar.current
 
         switch preset {
+        case .last5Hours:
+            self.startDate = now.addingTimeInterval(-5 * 3600)
+            self.endDate = now
         case .today:
             // Last 24 hours (not since midnight)
             self.startDate = now.addingTimeInterval(-24 * 3600)
@@ -40,6 +43,10 @@ struct DateRangeSelection: Equatable {
             self.endDate = now
         case .thisMonth:
             self.startDate = calendar.date(from: calendar.dateComponents([.year, .month], from: now)) ?? now
+            self.endDate = now
+        case .allTime:
+            // Show all available history (go back 1 year to catch all stored data)
+            self.startDate = now.addingTimeInterval(-365 * 24 * 3600)
             self.endDate = now
         case .custom:
             self.startDate = now.addingTimeInterval(-7 * 24 * 3600)
@@ -82,11 +89,13 @@ struct DateRangeSelection: Equatable {
 
 /// Date range preset options
 enum DateRangePreset: String, CaseIterable, Hashable {
+    case last5Hours = "Last 5 Hours"
     case today = "Today"
     case last7Days = "Last 7 Days"
     case last30Days = "Last 30 Days"
     case thisWeek = "This Week"
     case thisMonth = "This Month"
+    case allTime = "All Time"
     case custom = "Custom"
 
     var displayName: String {

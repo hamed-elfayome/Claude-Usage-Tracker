@@ -304,6 +304,12 @@
 "section.general_desc" = "일반 설정";
 "section.manage_profiles_title" = "프로필 관리";
 "section.manage_profiles_desc" = "프로필 관리";
+"section.history_title" = "기록";
+"section.history_desc" = "사용 기록 보기";
+"section.support_title" = "지원";
+"section.support_desc" = "프로젝트 개발 지원";
+"section.debug_title" = "디버그 도구";
+"section.debug_desc" = "네트워크 로깅 및 진단";
 
 /* ==================== */
 /* MARK: - Creator Info */
@@ -804,3 +810,61 @@
 "history.label.total" = "전체";
 "history.label.spent" = "사용됨";
 "history.label.session" = "세션";
+"history.time_scale.5_hours" = "5시간";
+"history.time_scale.24_hours" = "24시간";
+"history.time_scale.7_days" = "7일";
+"history.time_scale.30_days" = "30일";
+"history.chart.session_usage" = "세션 사용량";
+"history.chart.weekly_usage" = "주간 사용량";
+"history.chart.api_billing" = "API 청구";
+"history.chart.no_data" = "선택한 범위에 데이터 없음";
+"history.export.title" = "데이터 내보내기";
+"history.export.json" = "JSON으로 내보내기";
+"history.export.csv" = "CSV로 내보내기";
+"history.chart.now" = "지금";
+"support.title" = "프로젝트 지원";
+"support.subtitle" = "Claude 사용량 추적기는 무료이며 오픈 소스입니다";
+"support.all_features_free" = "모든 기능이 무료";
+"support.all_features_desc" = "이 앱의 모든 기능은 완전히 무료입니다. 프리미엄 계층, 유료 장벽, 구독이 없습니다.";
+"support.open_source" = "오픈 소스";
+"support.open_source_desc" = "소스 코드는 GitHub에서 공개적으로 사용 가능합니다. 검사하고, 수정하고, 프로젝트에 기여할 수 있습니다.";
+"support.no_tracking" = "추적 없음";
+"support.no_tracking_desc" = "귀하의 개인 정보는 중요합니다. 분석, 원격 측정, 데이터 수집이 없습니다. 모든 것이 Mac에 남아 있습니다.";
+"support.message" = "이 앱이 유용하다고 생각하시면 개발을 지원해 주세요";
+"support.buy_coffee" = "커피 사주기";
+"support.footer" = "귀하의 지원은 이 프로젝트를 계속 유지하고 성장시키는 데 도움이 됩니다";
+"support.also_support" = "다음 방법으로도 지원할 수 있습니다";
+"support.star_github" = "GitHub에서 스타 주기";
+"debug.title" = "디버그 도구";
+"debug.subtitle" = "문제 해결 및 진단을 위한 네트워크 요청 로그";
+"debug.network_logger" = "네트워크 요청 로거";
+"debug.network_logger_desc" = "자세한 정보가 포함된 모든 API 요청 캡처";
+"debug.logging_duration" = "로깅 기간";
+"debug.logging_active" = "로깅 활성";
+"debug.logging_inactive" = "로깅 비활성";
+"debug.stops_in" = "%@에 중지";
+"debug.start_logging" = "로깅 시작";
+"debug.stop_logging" = "로깅 중지";
+"debug.clear_logs" = "로그 지우기";
+"debug.clear_all_logs" = "모든 로그를 지우시겠습니까?";
+"debug.clear_logs_message" = "기록된 모든 네트워크 요청이 영구적으로 삭제됩니다.";
+"debug.captured_requests" = "캡처된 요청";
+"debug.requests_logged" = "%d개 요청 기록됨";
+"debug.no_requests" = "아직 기록된 요청 없음";
+"debug.request_details" = "요청 세부정보";
+"debug.basic_information" = "기본 정보";
+"debug.request_body" = "요청 본문";
+"debug.response_preview" = "응답 미리보기";
+"debug.full_size" = "전체 크기: %@";
+"debug.error" = "오류";
+"debug.url" = "URL";
+"debug.method" = "메서드";
+"debug.status_code" = "상태 코드";
+"debug.duration" = "기간";
+"debug.timestamp" = "타임스탬프";
+"debug.duration_seconds" = "%.3f초";
+
+/* ==================== */
+/* MARK: - Combined Usage Chart */
+/* ==================== */
+"history.chart.usage_overview" = "사용량 개요";

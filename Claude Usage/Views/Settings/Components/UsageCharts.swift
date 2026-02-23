@@ -37,65 +37,28 @@ enum ChartStyle: String, CaseIterable {
     case bar = "Bars"
 }
 
-/// Chart displaying session usage history (5-hour window, 10-min intervals = 30 slots)
+/// Chart displaying session usage history (plots all data in selected range)
 struct SessionUsageChart: View {
     let snapshots: [UsageSnapshot]
     let chartStyle: ChartStyle
 
-    /// Time window offset in hours (0 = current time centered)
-    @State private var timeOffset: Double = 0
     /// Selected time for showing details
-    @State private var selectedTime: Date?
-
-    private let slotCount = 30           // 30 slots
-    private let slotInterval: TimeInterval = 10 * 60  // 10 minutes
-    private let windowDuration: TimeInterval = 5 * 60 * 60  // 5 hours
+    @State private var selectedSnapshot: UsageSnapshot?
 
     init(snapshots: [UsageSnapshot], chartStyle: ChartStyle = .line) {
         self.snapshots = snapshots
         self.chartStyle = chartStyle
     }
 
-    /// Generate time slots for the current window
-    private var timeSlots: [TimeSlot] {
-        let now = Date()
-        let offsetSeconds = timeOffset * 3600  // Convert hours to seconds
-        let centerTime = now.addingTimeInterval(offsetSeconds)
-        let startTime = centerTime.addingTimeInterval(-windowDuration / 2)
-
-        return (0..<slotCount).map { index in
-            let slotTime = startTime.addingTimeInterval(Double(index) * slotInterval)
-            let percentage = findPercentage(for: slotTime)
-            return TimeSlot(time: slotTime, percentage: percentage)
-        }
-    }
-
-    /// Find the recorded percentage for a given time slot
-    private func findPercentage(for time: Date) -> Double? {
-        let tolerance = slotInterval  // Full slot interval to guarantee finding nearby data
-        return snapshots.first { snapshot in
-            abs(snapshot.timestamp.timeIntervalSince(time)) <= tolerance
-        }?.sessionPercentage
-    }
-
-    /// Snap cursor time to nearest slot and return info only if data exists
+    /// Get info for selected snapshot
     private var selectedSlotInfo: (time: String, percentage: String)? {
-        guard let cursorTime = selectedTime else { return nil }
-
-        // Find the nearest slot time
-        let slots = timeSlots
-        guard let nearestSlot = slots.min(by: {
-            abs($0.time.timeIntervalSince(cursorTime)) < abs($1.time.timeIntervalSince(cursorTime))
-        }) else { return nil }
-
-        // Only show info if this slot has data
-        guard let pct = nearestSlot.percentage else { return nil }
+        guard let snapshot = selectedSnapshot else { return nil }
 
         let formatter = DateFormatter()
         formatter.dateFormat = "MM/dd HH:mm"
-        let timeStr = formatter.string(from: nearestSlot.time)
+        let timeStr = formatter.string(from: snapshot.timestamp)
 
-        return (timeStr, String(format: "%.1f%%", pct))
+        return (timeStr, String(format: "%.1f%%", snapshot.sessionPercentage ?? 0))
     }
 
     /// Clamp percentage to 0-100 range
@@ -106,13 +69,13 @@ struct SessionUsageChart: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Title with time range and selected info
+            // Title with selected info
             HStack {
                 Text("history.chart.session_title".localized)
                     .font(.system(size: 13, weight: .medium))
                     .foregroundColor(.secondary)
 
-                // Show selected slot info (only when hovering over a bar with data)
+                // Show selected snapshot info (only when hovering over a data point)
                 if let info = selectedSlotInfo {
                     Spacer()
                     HStack(spacing: 4) {
@@ -128,56 +91,25 @@ struct SessionUsageChart: View {
                     .background(Color.secondary.opacity(0.1))
                     .cornerRadius(4)
                 }
-
-                Spacer()
-                // Navigation buttons
-                HStack(spacing: 8) {
-                    Button(action: { timeOffset -= 2.5 }) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 10))
-                    }
-                    .buttonStyle(.plain)
-
-                    Button(action: { timeOffset = 0 }) {
-                        Text("history.chart.now".localized)
-                            .font(.system(size: 10))
-                    }
-                    .buttonStyle(.plain)
-
-                    Button(action: { timeOffset += 2.5 }) {
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 10))
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(timeOffset >= 0)
-                }
             }
 
-            Chart(timeSlots) { slot in
+            Chart(snapshots) { snapshot in
                 if chartStyle == .bar {
                     BarMark(
-                        x: .value("Time", slot.time, unit: .minute),
-                        y: .value("Usage", clampedPercentage(slot.percentage)),
+                        x: .value("Time", snapshot.timestamp, unit: .minute),
+                        y: .value("Usage", clampedPercentage(snapshot.sessionPercentage)),
                         width: .fixed(8)
                     )
-                    .foregroundStyle(slot.percentage.map { barColor(for: $0) } ?? Color.gray.opacity(0.2))
+                    .foregroundStyle(snapshot.sessionPercentage.map { barColor(for: $0) } ?? Color.gray.opacity(0.2))
                     .cornerRadius(2)
                 } else {
-                    LineMark(
-                        x: .value("Time", slot.time, unit: .minute),
-                        y: .value("Usage", clampedPercentage(slot.percentage))
+                    // Only show points, no connecting lines (to avoid misleading gaps)
+                    PointMark(
+                        x: .value("Time", snapshot.timestamp, unit: .minute),
+                        y: .value("Usage", clampedPercentage(snapshot.sessionPercentage))
                     )
-                    .foregroundStyle(slot.percentage.map { barColor(for: $0) } ?? Color.gray.opacity(0.2))
-                    .interpolationMethod(.catmullRom)
-                    .lineStyle(StrokeStyle(lineWidth: 2))
-
-                    if slot.percentage != nil {
-                        PointMark(
-                            x: .value("Time", slot.time, unit: .minute),
-                            y: .value("Usage", clampedPercentage(slot.percentage))
-                        )
-                        .foregroundStyle(slot.percentage.map { barColor(for: $0) } ?? Color.gray.opacity(0.2))
-                    }
+                    .foregroundStyle(snapshot.sessionPercentage.map { barColor(for: $0) } ?? Color.gray.opacity(0.2))
+                    .symbolSize(60)
                 }
             }
             .chartYScale(domain: 0...100)
@@ -198,13 +130,12 @@ struct SessionUsageChart: View {
                 }
             }
             .chartXAxis {
-                AxisMarks(values: .stride(by: .hour)) { value in
+                AxisMarks(values: .automatic) { value in
                     AxisGridLine()
-                    AxisValueLabel(format: .dateTime.hour(.defaultDigits(amPM: .omitted)).minute())
+                    AxisValueLabel(format: .dateTime.month(.abbreviated).day().hour(.defaultDigits(amPM: .omitted)))
                         .font(.system(size: 8))
                 }
             }
-            .chartXSelection(value: $selectedTime)
             .frame(height: 140)
             .padding(.leading, 4)
         }
@@ -229,65 +160,28 @@ struct SessionUsageChart: View {
     }
 }
 
-/// Chart displaying weekly usage history (24-hour window, 2-hour intervals = 12 slots)
+/// Chart displaying weekly usage history (plots all data in selected range)
 struct WeeklyUsageChart: View {
     let snapshots: [UsageSnapshot]
     let chartStyle: ChartStyle
 
-    /// Time window offset in hours (0 = current time centered)
-    @State private var timeOffset: Double = 0
-    /// Selected time for showing details
-    @State private var selectedTime: Date?
-
-    private let slotCount = 12           // 12 slots
-    private let slotInterval: TimeInterval = 2 * 60 * 60  // 2 hours
-    private let windowDuration: TimeInterval = 24 * 60 * 60  // 24 hours
+    /// Selected snapshot for showing details
+    @State private var selectedSnapshot: UsageSnapshot?
 
     init(snapshots: [UsageSnapshot], chartStyle: ChartStyle = .line) {
         self.snapshots = snapshots
         self.chartStyle = chartStyle
     }
 
-    /// Generate time slots for the current window
-    private var timeSlots: [TimeSlot] {
-        let now = Date()
-        let offsetSeconds = timeOffset * 3600  // Convert hours to seconds
-        let centerTime = now.addingTimeInterval(offsetSeconds)
-        let startTime = centerTime.addingTimeInterval(-windowDuration / 2)
-
-        return (0..<slotCount).map { index in
-            let slotTime = startTime.addingTimeInterval(Double(index) * slotInterval)
-            let percentage = findPercentage(for: slotTime)
-            return TimeSlot(time: slotTime, percentage: percentage)
-        }
-    }
-
-    /// Find the recorded percentage for a given time slot
-    private func findPercentage(for time: Date) -> Double? {
-        let tolerance = slotInterval  // Full slot interval to guarantee finding nearby data
-        return snapshots.first { snapshot in
-            abs(snapshot.timestamp.timeIntervalSince(time)) <= tolerance
-        }?.weeklyPercentage
-    }
-
-    /// Snap cursor time to nearest slot and return info only if data exists
+    /// Get info for selected snapshot
     private var selectedSlotInfo: (time: String, percentage: String)? {
-        guard let cursorTime = selectedTime else { return nil }
-
-        // Find the nearest slot time
-        let slots = timeSlots
-        guard let nearestSlot = slots.min(by: {
-            abs($0.time.timeIntervalSince(cursorTime)) < abs($1.time.timeIntervalSince(cursorTime))
-        }) else { return nil }
-
-        // Only show info if this slot has data
-        guard let pct = nearestSlot.percentage else { return nil }
+        guard let snapshot = selectedSnapshot else { return nil }
 
         let formatter = DateFormatter()
         formatter.dateFormat = "MM/dd HH:mm"
-        let timeStr = formatter.string(from: nearestSlot.time)
+        let timeStr = formatter.string(from: snapshot.timestamp)
 
-        return (timeStr, String(format: "%.1f%%", pct))
+        return (timeStr, String(format: "%.1f%%", snapshot.weeklyPercentage ?? 0))
     }
 
     /// Clamp percentage to 0-100 range
@@ -298,13 +192,13 @@ struct WeeklyUsageChart: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Title with navigation
+            // Title with selected info
             HStack {
                 Text("history.chart.weekly_title".localized)
                     .font(.system(size: 13, weight: .medium))
                     .foregroundColor(.secondary)
 
-                // Show selected slot info (only when hovering over a bar with data)
+                // Show selected snapshot info (only when hovering over a data point)
                 if let info = selectedSlotInfo {
                     Spacer()
                     HStack(spacing: 4) {
@@ -320,57 +214,26 @@ struct WeeklyUsageChart: View {
                     .background(Color.secondary.opacity(0.1))
                     .cornerRadius(4)
                 }
-
-                Spacer()
-                // Navigation buttons
-                HStack(spacing: 8) {
-                    Button(action: { timeOffset -= 12 }) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 10))
-                    }
-                    .buttonStyle(.plain)
-
-                    Button(action: { timeOffset = 0 }) {
-                        Text("history.chart.now".localized)
-                            .font(.system(size: 10))
-                    }
-                    .buttonStyle(.plain)
-
-                    Button(action: { timeOffset += 12 }) {
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 10))
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(timeOffset >= 0)
-                }
             }
 
             // Chart container
-            Chart(timeSlots) { slot in
+            Chart(snapshots) { snapshot in
                 if chartStyle == .bar {
                     BarMark(
-                        x: .value("Time", slot.time, unit: .hour),
-                        y: .value("Usage", clampedPercentage(slot.percentage)),
+                        x: .value("Time", snapshot.timestamp, unit: .hour),
+                        y: .value("Usage", clampedPercentage(snapshot.weeklyPercentage)),
                         width: .fixed(20)
                     )
-                    .foregroundStyle(slot.percentage.map { barColor(for: $0) } ?? Color.gray.opacity(0.2))
+                    .foregroundStyle(snapshot.weeklyPercentage.map { barColor(for: $0) } ?? Color.gray.opacity(0.2))
                     .cornerRadius(3)
                 } else {
-                    LineMark(
-                        x: .value("Time", slot.time, unit: .hour),
-                        y: .value("Usage", clampedPercentage(slot.percentage))
+                    // Only show points, no connecting lines (to avoid misleading gaps)
+                    PointMark(
+                        x: .value("Time", snapshot.timestamp, unit: .hour),
+                        y: .value("Usage", clampedPercentage(snapshot.weeklyPercentage))
                     )
-                    .foregroundStyle(slot.percentage.map { barColor(for: $0) } ?? Color.gray.opacity(0.2))
-                    .interpolationMethod(.catmullRom)
-                    .lineStyle(StrokeStyle(lineWidth: 2))
-
-                    if slot.percentage != nil {
-                        PointMark(
-                            x: .value("Time", slot.time, unit: .hour),
-                            y: .value("Usage", clampedPercentage(slot.percentage))
-                        )
-                        .foregroundStyle(slot.percentage.map { barColor(for: $0) } ?? Color.gray.opacity(0.2))
-                    }
+                    .foregroundStyle(snapshot.weeklyPercentage.map { barColor(for: $0) } ?? Color.gray.opacity(0.2))
+                    .symbolSize(80)
                 }
             }
             .chartYScale(domain: 0...100)
@@ -391,13 +254,12 @@ struct WeeklyUsageChart: View {
                 }
             }
             .chartXAxis {
-                AxisMarks(values: .stride(by: .hour, count: 4)) { value in
+                AxisMarks(values: .automatic) { value in
                     AxisGridLine()
-                    AxisValueLabel(format: .dateTime.month(.defaultDigits).day().hour(.defaultDigits(amPM: .omitted)))
+                    AxisValueLabel(format: .dateTime.month(.abbreviated).day().hour(.defaultDigits(amPM: .omitted)))
                         .font(.system(size: 8))
                 }
             }
-            .chartXSelection(value: $selectedTime)
             .frame(height: 140)
             .padding(.leading, 4)
         }

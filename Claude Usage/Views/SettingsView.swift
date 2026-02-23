@@ -53,6 +53,8 @@ struct SettingsView: View {
                     ClaudeCodeView()
                 case .updates:
                     UpdatesSettingsView()
+                case .support:
+                    SupportView()
                 case .debug:
                     DebugNetworkLogView()
                 case .about:
@@ -211,6 +213,7 @@ enum SettingsSection: String, CaseIterable {
     case language
     case claudeCode
     case updates
+    case support
     case debug
     case about
 
@@ -226,7 +229,8 @@ enum SettingsSection: String, CaseIterable {
         case .language: return "language.title".localized
         case .claudeCode: return "settings.claude_cli".localized
         case .updates: return "settings.updates".localized
-        case .debug: return "Debug Tools"
+        case .support: return "section.support_title".localized
+        case .debug: return "section.debug_title".localized
         case .about: return "settings.about".localized
         }
     }
@@ -243,6 +247,7 @@ enum SettingsSection: String, CaseIterable {
         case .language: return "globe"
         case .claudeCode: return "chevron.left.forwardslash.chevron.right"
         case .updates: return "arrow.down.circle.fill"
+        case .support: return "heart.fill"
         case .debug: return "ladybug.fill"
         case .about: return "info.circle.fill"
         }
@@ -260,7 +265,8 @@ enum SettingsSection: String, CaseIterable {
         case .language: return "language.subtitle".localized
         case .claudeCode: return "settings.claude_cli.description".localized
         case .updates: return "settings.updates.description".localized
-        case .debug: return "Network logging and diagnostics"
+        case .support: return "section.support_desc".localized
+        case .debug: return "section.debug_desc".localized
         case .about: return "settings.about.description".localized
         }
     }

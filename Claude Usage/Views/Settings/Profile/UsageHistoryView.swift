@@ -6,43 +6,21 @@
 //
 
 import SwiftUI
+import Charts
 
-/// Chart type selector for history view
-enum HistoryChartType: String, CaseIterable {
-    case sessionResets = "session"
-    case weeklyResets = "weekly"
-    case billingCycles = "billing"
+/// Time scale options for charts
+enum ChartTimeScale: Double, CaseIterable {
+    case hours5 = 5
+    case hours24 = 24
+    case days7 = 168      // 7 * 24
+    case days30 = 720     // 30 * 24
 
-    var localizedName: String {
+    var label: String {
         switch self {
-        case .sessionResets:
-            return "history.tab.session".localized
-        case .weeklyResets:
-            return "history.tab.weekly".localized
-        case .billingCycles:
-            return "history.tab.billing".localized
-        }
-    }
-
-    var icon: String {
-        switch self {
-        case .sessionResets:
-            return "clock.arrow.circlepath"
-        case .weeklyResets:
-            return "calendar.badge.clock"
-        case .billingCycles:
-            return "creditcard"
-        }
-    }
-
-    var resetType: ResetType {
-        switch self {
-        case .sessionResets:
-            return .sessionReset
-        case .weeklyResets:
-            return .weeklyReset
-        case .billingCycles:
-            return .billingCycle
+        case .hours5: return "5h"
+        case .hours24: return "24h"
+        case .days7: return "7d"
+        case .days30: return "30d"
         }
     }
 }
@@ -50,62 +28,49 @@ enum HistoryChartType: String, CaseIterable {
 /// Usage history view showing charts and historical data
 struct UsageHistoryView: View {
     @StateObject private var profileManager = ProfileManager.shared
-    @State private var selectedChartType: HistoryChartType = .sessionResets
     @State private var historyData: UsageHistoryData = UsageHistoryData()
-    @State private var selectedDateRange: DateRangePreset = .last7Days
-    @State private var chartStyle: ChartStyle = .line
+    @State private var selectedTimeScale: ChartTimeScale = .hours24
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                // Page Header
-                SettingsPageHeader(
-                    title: "history.title".localized,
-                    subtitle: "history.subtitle".localized
-                )
+            VStack(alignment: .leading, spacing: 20) {
+                // Page Header with time scale dropdown
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("history.title".localized)
+                            .font(.system(size: 20, weight: .semibold))
+                        Text("history.subtitle".localized)
+                            .font(.system(size: 12))
+                            .foregroundColor(.secondary)
+                    }
+
+                    Spacer()
+
+                    // Time scale dropdown
+                    Picker("", selection: $selectedTimeScale) {
+                        Text("history.time_scale.5_hours".localized).tag(ChartTimeScale.hours5)
+                        Text("history.time_scale.24_hours".localized).tag(ChartTimeScale.hours24)
+                        Text("history.time_scale.7_days".localized).tag(ChartTimeScale.days7)
+                        Text("history.time_scale.30_days".localized).tag(ChartTimeScale.days30)
+                    }
+                    .pickerStyle(.menu)
+                    .frame(width: 110)
+                }
 
                 if let _ = profileManager.activeProfile {
-                    // Chart Type Picker
-                    Picker("", selection: $selectedChartType) {
-                        ForEach(HistoryChartType.allCases, id: \.self) { type in
-                            Text(type.localizedName)
-                                .tag(type)
-                        }
-                    }
-                    .pickerStyle(.segmented)
+                    // Combined Usage Chart (session + weekly)
+                    CombinedUsageChart(
+                        sessionSnapshots: historyData.sessionSnapshots,
+                        weeklySnapshots: historyData.weeklySnapshots,
+                        timeScale: $selectedTimeScale
+                    )
 
-                    // Chart Controls (Date Range + Style)
-                    HStack(spacing: 12) {
-                        Picker("", selection: $selectedDateRange) {
-                            Text("24h").tag(DateRangePreset.today)
-                            Text("7d").tag(DateRangePreset.last7Days)
-                            Text("30d").tag(DateRangePreset.last30Days)
-                        }
-                        .pickerStyle(.segmented)
-                        .labelsHidden()
+                    // Billing Section
+                    billingSection
 
-                        Spacer()
+                    // Export Button
+                    exportSection
 
-                        Picker("", selection: $chartStyle) {
-                            Image(systemName: "chart.line.uptrend.xyaxis")
-                                .tag(ChartStyle.line)
-                            Image(systemName: "chart.bar.fill")
-                                .tag(ChartStyle.bar)
-                        }
-                        .pickerStyle(.segmented)
-                        .labelsHidden()
-                        .fixedSize()
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                    // Chart Section
-                    chartSection
-
-                    // History List Section
-                    historyListSection
-
-                    // Action Buttons
-                    actionButtons
                 } else {
                     noProfileView
                 }
@@ -122,148 +87,45 @@ struct UsageHistoryView: View {
         }
     }
 
-    // MARK: - Chart Section
+    // MARK: - Billing Section
 
     @ViewBuilder
-    private var chartSection: some View {
-        let filteredSnapshots = currentSnapshots
-
-        switch selectedChartType {
-        case .sessionResets:
-            SessionUsageChart(snapshots: filteredSnapshots, chartStyle: chartStyle)
-        case .weeklyResets:
-            WeeklyUsageChart(snapshots: filteredSnapshots, chartStyle: chartStyle)
-        case .billingCycles:
-            BillingCycleChart(snapshots: filteredSnapshots, chartStyle: chartStyle)
-        }
-    }
-
-    // MARK: - History List Section
-
-    @ViewBuilder
-    private var historyListSection: some View {
-        let snapshots = currentSnapshots
-
+    private var billingSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("history.list.title".localized)
+            // Section header
+            HStack(spacing: 6) {
+                Image(systemName: "creditcard")
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
+                Text("history.chart.api_billing".localized)
                     .font(.system(size: 13, weight: .medium))
                     .foregroundColor(.secondary)
                 Spacer()
-                Text(String(format: "history.list.count".localized, snapshots.count))
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
             }
 
-            if snapshots.isEmpty {
-                emptyListView
+            // Chart
+            if historyData.billingCycleSnapshots.isEmpty {
+                emptyChartView
             } else {
-                // Scrollable list with fixed height
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach(Array(snapshots.prefix(50).enumerated()), id: \.element.id) { index, snapshot in
-                            SnapshotRow(snapshot: snapshot)
-
-                            if index < min(snapshots.count - 1, 49) {
-                                Divider()
-                            }
-                        }
-
-                        if snapshots.count > 50 {
-                            HStack {
-                                Text(String(format: "history.list.more".localized, snapshots.count - 50))
-                                    .font(.system(size: 11))
-                                    .foregroundColor(.secondary)
-                                Spacer()
-                            }
-                            .padding(.top, 8)
-                        }
-                    }
-                    .padding(12)
-                }
-                .frame(height: 200)
-                .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
-                .cornerRadius(8)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.secondary.opacity(0.15), lineWidth: 1)
-                )
+                BillingCycleChart(snapshots: historyData.billingCycleSnapshots, chartStyle: .bar)
             }
         }
     }
 
-    private var currentSnapshots: [UsageSnapshot] {
-        let baseSnapshots: [UsageSnapshot]
-        switch selectedChartType {
-        case .sessionResets:
-            baseSnapshots = historyData.sessionSnapshots
-        case .weeklyResets:
-            baseSnapshots = historyData.weeklySnapshots
-        case .billingCycles:
-            baseSnapshots = historyData.billingCycleSnapshots
-        }
-
-        // Apply date range filter
-        let dateRange = DateRangeSelection(preset: selectedDateRange)
-        return dateRange.snapshots(from: UsageHistoryData(snapshots: baseSnapshots))
-    }
+    // MARK: - Empty State
 
     @ViewBuilder
-    private var emptyListView: some View {
-        VStack(spacing: 8) {
-            Image(systemName: "clock.arrow.circlepath")
-                .font(.system(size: 24))
-                .foregroundColor(.secondary.opacity(0.5))
-
-            Text("history.list.empty".localized)
+    private var emptyChartView: some View {
+        HStack {
+            Spacer()
+            Text("history.chart.no_data".localized)
                 .font(.system(size: 12))
                 .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: 100)
-        .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
-        .cornerRadius(8)
-    }
-
-    @ViewBuilder
-    private var actionButtons: some View {
-        HStack(spacing: 12) {
-            // Export Button with format options
-            Menu {
-                Button("Export as JSON") {
-                    exportHistory(format: .json)
-                }
-                Button("Export as CSV") {
-                    exportHistory(format: .csv)
-                }
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: "square.and.arrow.up")
-                        .font(.system(size: 11))
-                    Text("history.export_button".localized)
-                        .font(.system(size: 12))
-                }
-            }
-            .menuStyle(.borderlessButton)
-            .frame(height: 28)
-
             Spacer()
-
-            // Clear Button
-            if !currentSnapshots.isEmpty {
-                Button(action: clearCurrentHistory) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "trash")
-                            .font(.system(size: 11))
-                        Text("history.clear_button".localized)
-                            .font(.system(size: 12))
-                    }
-                    .foregroundColor(.red)
-                }
-                .buttonStyle(.plain)
-            }
         }
+        .frame(height: 100)
+        .background(Color(nsColor: .controlBackgroundColor).opacity(0.3))
+        .cornerRadius(8)
     }
 
     @ViewBuilder
@@ -281,6 +143,34 @@ struct UsageHistoryView: View {
         .padding(.vertical, 60)
     }
 
+    // MARK: - Export Section
+
+    @ViewBuilder
+    private var exportSection: some View {
+        HStack {
+            Spacer()
+
+            Menu {
+                Button(action: { exportHistory(format: .json) }) {
+                    Label("history.export.json".localized, systemImage: "doc.text")
+                }
+                Button(action: { exportHistory(format: .csv) }) {
+                    Label("history.export.csv".localized, systemImage: "tablecells")
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.system(size: 12))
+                    Text("history.export.title".localized)
+                        .font(.system(size: 12))
+                }
+                .foregroundColor(.accentColor)
+            }
+            .menuStyle(.borderlessButton)
+        }
+        .padding(.top, 8)
+    }
+
     // MARK: - Actions
 
     private func loadHistory() {
@@ -289,27 +179,474 @@ struct UsageHistoryView: View {
             return
         }
 
-        // No need for Task wrapper since we're already on MainActor in SwiftUI views
         historyData = UsageHistoryService.shared.loadHistory(for: profileId)
     }
 
-    private func clearCurrentHistory() {
-        guard let profileId = profileManager.activeProfile?.id else { return }
-
-        Task { @MainActor in
-            UsageHistoryService.shared.clearHistory(for: profileId, resetType: selectedChartType.resetType)
-            loadHistory()
-        }
-    }
-
-    private func exportHistory(format: UsageHistoryService.ExportFormat = .json) {
+    private func exportHistory(format: UsageHistoryService.ExportFormat) {
         guard let profileId = profileManager.activeProfile?.id else { return }
 
         UsageHistoryService.shared.exportToFile(
             for: profileId,
-            resetType: selectedChartType.resetType,
             format: format
         )
+    }
+}
+
+// MARK: - Simple Usage Chart with Scroll
+
+struct SimpleUsageChart: View {
+    let title: String
+    let snapshots: [UsageSnapshot]
+    let valueKeyPath: KeyPath<UsageSnapshot, Double?>
+    @Binding var timeScale: ChartTimeScale
+
+    /// Time offset in hours (0 = now, negative = past)
+    @State private var timeOffset: Double = 0
+
+    /// Window duration from selected scale
+    private var windowHours: Double {
+        timeScale.rawValue
+    }
+
+    private var visibleRange: (start: Date, end: Date) {
+        let now = Date()
+        let end = now.addingTimeInterval(timeOffset * 3600)
+        let start = end.addingTimeInterval(-windowHours * 3600)
+        return (start, end)
+    }
+
+    private var visibleSnapshots: [UsageSnapshot] {
+        let range = visibleRange
+        return snapshots.filter { $0.timestamp >= range.start && $0.timestamp <= range.end }
+    }
+
+    private var canGoForward: Bool {
+        timeOffset < 0
+    }
+
+    private var canGoBack: Bool {
+        guard let oldest = snapshots.last else { return false }
+        let range = visibleRange
+        return oldest.timestamp < range.start
+    }
+
+    /// Step size for navigation (half the window)
+    private var stepHours: Double {
+        windowHours / 2
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Title row
+            HStack {
+                Text(title)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.secondary)
+                Spacer()
+            }
+            .padding(.horizontal, 12)
+            .padding(.top, 10)
+            .padding(.bottom, 4)
+
+            // Chart
+            Chart(visibleSnapshots) { snapshot in
+                if let value = snapshot[keyPath: valueKeyPath] {
+                    AreaMark(
+                        x: .value("Time", snapshot.timestamp),
+                        y: .value("Usage", min(max(value, 0), 100))
+                    )
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [Color.accentColor.opacity(0.4), Color.accentColor.opacity(0.1)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .interpolationMethod(.stepEnd)
+
+                    LineMark(
+                        x: .value("Time", snapshot.timestamp),
+                        y: .value("Usage", min(max(value, 0), 100))
+                    )
+                    .foregroundStyle(Color.accentColor)
+                    .interpolationMethod(.stepEnd)
+                    .lineStyle(StrokeStyle(lineWidth: 2))
+                }
+            }
+            .chartXScale(domain: visibleRange.start...visibleRange.end)
+            .chartYScale(domain: 0...100)
+            .chartYAxis {
+                AxisMarks(position: .leading, values: [0, 50, 100]) { value in
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4]))
+                        .foregroundStyle(Color.secondary.opacity(0.3))
+                    AxisValueLabel {
+                        if let intValue = value.as(Int.self) {
+                            Text("\(intValue)%")
+                                .font(.system(size: 9))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+            }
+            .chartXAxis {
+                AxisMarks(values: .automatic) { _ in
+                    AxisGridLine()
+                    AxisValueLabel(format: xAxisFormat)
+                        .font(.system(size: 9))
+                }
+            }
+            .frame(height: 130)
+            .padding(12)
+
+            // Bottom bar: navigation
+            HStack(spacing: 12) {
+                Button(action: { withAnimation(.easeInOut(duration: 0.2)) { timeOffset -= stepHours } }) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 11, weight: .medium))
+                }
+                .buttonStyle(.plain)
+                .disabled(!canGoBack)
+                .opacity(canGoBack ? 1 : 0.3)
+
+                Spacer()
+
+                // Time range label
+                Text(timeRangeLabel)
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+
+                Spacer()
+
+                Button(action: { withAnimation(.easeInOut(duration: 0.2)) { timeOffset = 0 } }) {
+                    Text("history.chart.now".localized)
+                        .font(.system(size: 10, weight: .medium))
+                }
+                .buttonStyle(.plain)
+                .disabled(timeOffset == 0)
+                .opacity(timeOffset == 0 ? 0.3 : 1)
+
+                Button(action: { withAnimation(.easeInOut(duration: 0.2)) { timeOffset += stepHours } }) {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 11, weight: .medium))
+                }
+                .buttonStyle(.plain)
+                .disabled(!canGoForward)
+                .opacity(canGoForward ? 1 : 0.3)
+            }
+            .padding(.horizontal, 12)
+            .padding(.bottom, 10)
+        }
+        .background(Color(nsColor: .controlBackgroundColor).opacity(0.3))
+        .cornerRadius(8)
+        .onChange(of: timeScale) {
+            // Reset to now when scale changes
+            timeOffset = 0
+        }
+    }
+
+    private var timeRangeLabel: String {
+        let range = visibleRange
+        let formatter = DateFormatter()
+        switch timeScale {
+        case .hours5, .hours24:
+            formatter.dateFormat = "MMM d, HH:mm"
+        case .days7, .days30:
+            formatter.dateFormat = "MMM d"
+        }
+        return "\(formatter.string(from: range.start)) – \(formatter.string(from: range.end))"
+    }
+
+    private var xAxisFormat: Date.FormatStyle {
+        switch timeScale {
+        case .hours5, .hours24:
+            return .dateTime.hour().minute()
+        case .days7:
+            return .dateTime.weekday(.abbreviated).hour()
+        case .days30:
+            return .dateTime.month(.abbreviated).day()
+        }
+    }
+}
+
+// MARK: - Combined Usage Chart
+
+/// Identifies which data series a chart point belongs to
+enum UsageSeries: String, CaseIterable {
+    case session
+    case weekly
+
+    var color: Color {
+        switch self {
+        case .session: return .accentColor
+        case .weekly: return .indigo
+        }
+    }
+
+    var lineStyle: StrokeStyle {
+        switch self {
+        case .session: return StrokeStyle(lineWidth: 2)
+        case .weekly: return StrokeStyle(lineWidth: 2, dash: [6, 4])
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .session: return "history.chart.session_usage".localized
+        case .weekly: return "history.chart.weekly_usage".localized
+        }
+    }
+}
+
+/// A single data point for the combined chart
+struct ChartDataPoint: Identifiable {
+    let id = UUID()
+    let timestamp: Date
+    let percentage: Double
+    let series: UsageSeries
+}
+
+/// Combined chart overlaying session and weekly usage on one shared axis
+struct CombinedUsageChart: View {
+    let sessionSnapshots: [UsageSnapshot]
+    let weeklySnapshots: [UsageSnapshot]
+    @Binding var timeScale: ChartTimeScale
+
+    @State private var timeOffset: Double = 0
+
+    private var windowHours: Double {
+        timeScale.rawValue
+    }
+
+    private var visibleRange: (start: Date, end: Date) {
+        let now = Date()
+        let end = now.addingTimeInterval(timeOffset * 3600)
+        let start = end.addingTimeInterval(-windowHours * 3600)
+        return (start, end)
+    }
+
+    private var chartDataPoints: [ChartDataPoint] {
+        let range = visibleRange
+        let sessionPoints = sessionSnapshots
+            .filter { $0.timestamp >= range.start && $0.timestamp <= range.end }
+            .compactMap { snapshot -> ChartDataPoint? in
+                guard let value = snapshot.sessionPercentage else { return nil }
+                return ChartDataPoint(timestamp: snapshot.timestamp, percentage: min(max(value, 0), 100), series: .session)
+            }
+        let weeklyPoints = weeklySnapshots
+            .filter { $0.timestamp >= range.start && $0.timestamp <= range.end }
+            .compactMap { snapshot -> ChartDataPoint? in
+                guard let value = snapshot.weeklyPercentage else { return nil }
+                return ChartDataPoint(timestamp: snapshot.timestamp, percentage: min(max(value, 0), 100), series: .weekly)
+            }
+        return sessionPoints + weeklyPoints
+    }
+
+    private var hasAnyData: Bool {
+        !chartDataPoints.isEmpty
+    }
+
+    private var canGoForward: Bool {
+        timeOffset < 0
+    }
+
+    private var canGoBack: Bool {
+        let allSnapshots = sessionSnapshots + weeklySnapshots
+        guard let oldest = allSnapshots.map(\.timestamp).min() else { return false }
+        return oldest < visibleRange.start
+    }
+
+    private var stepHours: Double {
+        windowHours / 2
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Title row with inline legend
+            HStack {
+                HStack(spacing: 6) {
+                    Image(systemName: "chart.xyaxis.line")
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                    Text("history.chart.usage_overview".localized)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                // Inline legend
+                HStack(spacing: 12) {
+                    legendItem(series: .session)
+                    legendItem(series: .weekly)
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.top, 10)
+            .padding(.bottom, 4)
+
+            if hasAnyData {
+                // Chart
+                Chart(chartDataPoints) { point in
+                    if point.series == .session {
+                        AreaMark(
+                            x: .value("Time", point.timestamp),
+                            y: .value("Usage", point.percentage)
+                        )
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [Color.accentColor.opacity(0.3), Color.accentColor.opacity(0.05)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .interpolationMethod(.stepEnd)
+                    }
+
+                    LineMark(
+                        x: .value("Time", point.timestamp),
+                        y: .value("Usage", point.percentage),
+                        series: .value("Series", point.series.rawValue)
+                    )
+                    .foregroundStyle(point.series.color)
+                    .interpolationMethod(.stepEnd)
+                    .lineStyle(point.series.lineStyle)
+                }
+                .chartXScale(domain: visibleRange.start...visibleRange.end)
+                .chartYScale(domain: 0...100)
+                .chartYAxis {
+                    AxisMarks(position: .leading, values: [0, 25, 50, 75, 100]) { value in
+                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4]))
+                            .foregroundStyle(Color.secondary.opacity(0.3))
+                        AxisValueLabel {
+                            if let intValue = value.as(Int.self) {
+                                Text("\(intValue)%")
+                                    .font(.system(size: 9))
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                }
+                .chartXAxis {
+                    AxisMarks(values: .automatic) { _ in
+                        AxisGridLine()
+                        AxisValueLabel(format: xAxisFormat)
+                            .font(.system(size: 9))
+                    }
+                }
+                .frame(height: 160)
+                .padding(12)
+            } else {
+                // Empty state
+                HStack {
+                    Spacer()
+                    Text("history.chart.no_data".localized)
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                    Spacer()
+                }
+                .frame(height: 160)
+            }
+
+            // Bottom bar: navigation
+            HStack(spacing: 12) {
+                Button(action: { withAnimation(.easeInOut(duration: 0.2)) { timeOffset -= stepHours } }) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 11, weight: .medium))
+                }
+                .buttonStyle(.plain)
+                .disabled(!canGoBack)
+                .opacity(canGoBack ? 1 : 0.3)
+
+                Spacer()
+
+                Text(timeRangeLabel)
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+
+                Spacer()
+
+                Button(action: { withAnimation(.easeInOut(duration: 0.2)) { timeOffset = 0 } }) {
+                    Text("history.chart.now".localized)
+                        .font(.system(size: 10, weight: .medium))
+                }
+                .buttonStyle(.plain)
+                .disabled(timeOffset == 0)
+                .opacity(timeOffset == 0 ? 0.3 : 1)
+
+                Button(action: { withAnimation(.easeInOut(duration: 0.2)) { timeOffset += stepHours } }) {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 11, weight: .medium))
+                }
+                .buttonStyle(.plain)
+                .disabled(!canGoForward)
+                .opacity(canGoForward ? 1 : 0.3)
+            }
+            .padding(.horizontal, 12)
+            .padding(.bottom, 10)
+        }
+        .background(Color(nsColor: .controlBackgroundColor).opacity(0.3))
+        .cornerRadius(8)
+        .onChange(of: timeScale) {
+            timeOffset = 0
+        }
+    }
+
+    // MARK: - Helpers
+
+    @ViewBuilder
+    private func legendItem(series: UsageSeries) -> some View {
+        HStack(spacing: 4) {
+            // Line sample
+            ZStack {
+                if series == .session {
+                    Rectangle()
+                        .fill(series.color.opacity(0.2))
+                        .frame(width: 16, height: 8)
+                }
+                Rectangle()
+                    .fill(series.color)
+                    .frame(width: 16, height: series == .weekly ? 1.5 : 2)
+                    .overlay {
+                        if series == .weekly {
+                            // Dashed appearance
+                            HStack(spacing: 2) {
+                                ForEach(0..<3, id: \.self) { _ in
+                                    Rectangle()
+                                        .fill(Color(nsColor: .controlBackgroundColor))
+                                        .frame(width: 2, height: 1.5)
+                                }
+                            }
+                        }
+                    }
+            }
+
+            Text(series.label)
+                .font(.system(size: 9))
+                .foregroundColor(.secondary)
+        }
+    }
+
+    private var timeRangeLabel: String {
+        let range = visibleRange
+        let formatter = DateFormatter()
+        switch timeScale {
+        case .hours5, .hours24:
+            formatter.dateFormat = "MMM d, HH:mm"
+        case .days7, .days30:
+            formatter.dateFormat = "MMM d"
+        }
+        return "\(formatter.string(from: range.start)) – \(formatter.string(from: range.end))"
+    }
+
+    private var xAxisFormat: Date.FormatStyle {
+        switch timeScale {
+        case .hours5, .hours24:
+            return .dateTime.hour().minute()
+        case .days7:
+            return .dateTime.weekday(.abbreviated).hour()
+        case .days30:
+            return .dateTime.month(.abbreviated).day()
+        }
     }
 }
 
