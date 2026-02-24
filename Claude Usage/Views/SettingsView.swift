@@ -65,7 +65,7 @@ struct SettingsView: View {
             }
             .frame(minWidth: 500, maxWidth: .infinity)
         }
-        .frame(width: 720, height: 580)
+        .frame(width: 720, height: 680)
     }
 }
 

@@ -125,7 +125,7 @@ enum Constants {
 
     // Window Sizes
     enum WindowSizes {
-        static let settingsWindow = NSSize(width: 720, height: 600)
+        static let settingsWindow = NSSize(width: 720, height: 700)
         static let popoverSize = NSSize(width: 320, height: 600)
     }
 
