@@ -808,3 +808,25 @@
 /* MARK: - Combined Usage Chart */
 /* ==================== */
 "history.chart.usage_overview" = "使用状況の概要";
+
+/* ==================== */
+/* MARK: - Keyboard Shortcuts */
+/* ==================== */
+"section.shortcuts_title" = "ショートカット";
+"section.shortcuts_desc" = "キーボードショートカットを設定";
+"shortcuts.title" = "キーボードショートカット";
+"shortcuts.subtitle" = "よく使う操作にグローバルホットキーを設定";
+"shortcuts.open_popover" = "ポップオーバーの切替";
+"shortcuts.open_popover_desc" = "使用状況パネルの表示/非表示";
+"shortcuts.refresh" = "使用状況を更新";
+"shortcuts.refresh_desc" = "最新の使用状況データを取得";
+"shortcuts.open_settings" = "設定を開く";
+"shortcuts.open_settings_desc" = "設定ウィンドウを開く";
+"shortcuts.next_profile" = "次のプロファイル";
+"shortcuts.next_profile_desc" = "次のプロファイルに切り替え";
+"shortcuts.record" = "クリックして記録";
+"shortcuts.recording" = "ショートカットを押してください...";
+"shortcuts.clear" = "クリア";
+"shortcuts.none" = "なし";
+"shortcuts.info_title" = "グローバルショートカット";
+"shortcuts.info_desc" = "ショートカットはどのアプリからでも使用できます。各ショートカットには修飾キー（Command、Option、Control、Shift）が1つ以上必要です。システムショートカットとの競合にご注意ください。";

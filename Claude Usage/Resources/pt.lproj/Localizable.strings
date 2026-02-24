@@ -806,3 +806,25 @@
 /* MARK: - Combined Usage Chart */
 /* ==================== */
 "history.chart.usage_overview" = "Visão geral de uso";
+
+/* ==================== */
+/* MARK: - Keyboard Shortcuts */
+/* ==================== */
+"section.shortcuts_title" = "Atalhos";
+"section.shortcuts_desc" = "Configurar atalhos de teclado";
+"shortcuts.title" = "Atalhos de Teclado";
+"shortcuts.subtitle" = "Defina teclas de atalho globais para ações comuns";
+"shortcuts.open_popover" = "Alternar painel";
+"shortcuts.open_popover_desc" = "Mostrar ou ocultar o painel de uso";
+"shortcuts.refresh" = "Atualizar uso";
+"shortcuts.refresh_desc" = "Obter os dados de uso mais recentes";
+"shortcuts.open_settings" = "Abrir configurações";
+"shortcuts.open_settings_desc" = "Abrir a janela de configurações";
+"shortcuts.next_profile" = "Próximo perfil";
+"shortcuts.next_profile_desc" = "Mudar para o próximo perfil";
+"shortcuts.record" = "Clique para gravar";
+"shortcuts.recording" = "Pressione um atalho...";
+"shortcuts.clear" = "Limpar";
+"shortcuts.none" = "Nenhum";
+"shortcuts.info_title" = "Atalhos globais";
+"shortcuts.info_desc" = "Os atalhos funcionam em qualquer aplicativo. Cada atalho deve incluir pelo menos uma tecla modificadora (Command, Option, Control ou Shift). Evite conflitos com atalhos do sistema.";

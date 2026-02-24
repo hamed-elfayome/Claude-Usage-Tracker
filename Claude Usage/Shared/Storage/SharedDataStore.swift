@@ -39,6 +39,12 @@ class SharedDataStore {
 
         // Debug Settings
         static let debugAPILoggingEnabled = "debugAPILoggingEnabled"
+
+        // Keyboard Shortcuts
+        static let shortcutTogglePopover = "shortcutTogglePopover"
+        static let shortcutRefresh = "shortcutRefresh"
+        static let shortcutOpenSettings = "shortcutOpenSettings"
+        static let shortcutNextProfile = "shortcutNextProfile"
     }
 
     init() {
@@ -259,6 +265,34 @@ class SharedDataStore {
 
     func loadDebugAPILoggingEnabled() -> Bool {
         return defaults.bool(forKey: Keys.debugAPILoggingEnabled)
+    }
+
+    // MARK: - Keyboard Shortcuts
+
+    private func shortcutKey(for action: ShortcutAction) -> String {
+        switch action {
+        case .togglePopover: return Keys.shortcutTogglePopover
+        case .refresh: return Keys.shortcutRefresh
+        case .openSettings: return Keys.shortcutOpenSettings
+        case .nextProfile: return Keys.shortcutNextProfile
+        }
+    }
+
+    func saveShortcut(_ combo: KeyCombo?, for action: ShortcutAction) {
+        let key = shortcutKey(for: action)
+        if let combo = combo {
+            if let data = try? JSONEncoder().encode(combo) {
+                defaults.set(data, forKey: key)
+            }
+        } else {
+            defaults.removeObject(forKey: key)
+        }
+    }
+
+    func loadShortcut(for action: ShortcutAction) -> KeyCombo? {
+        let key = shortcutKey(for: action)
+        guard let data = defaults.data(forKey: key) else { return nil }
+        return try? JSONDecoder().decode(KeyCombo.self, from: data)
     }
 
     // MARK: - Testing Helpers

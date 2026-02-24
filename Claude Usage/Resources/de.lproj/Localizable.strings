@@ -808,3 +808,25 @@
 /* MARK: - Combined Usage Chart */
 /* ==================== */
 "history.chart.usage_overview" = "Nutzungsübersicht";
+
+/* ==================== */
+/* MARK: - Keyboard Shortcuts */
+/* ==================== */
+"section.shortcuts_title" = "Kurzbefehle";
+"section.shortcuts_desc" = "Tastaturkurzbefehle konfigurieren";
+"shortcuts.title" = "Tastaturkurzbefehle";
+"shortcuts.subtitle" = "Globale Tastenkombinationen für häufige Aktionen festlegen";
+"shortcuts.open_popover" = "Panel ein-/ausblenden";
+"shortcuts.open_popover_desc" = "Nutzungspanel anzeigen oder ausblenden";
+"shortcuts.refresh" = "Nutzung aktualisieren";
+"shortcuts.refresh_desc" = "Neueste Nutzungsdaten abrufen";
+"shortcuts.open_settings" = "Einstellungen öffnen";
+"shortcuts.open_settings_desc" = "Das Einstellungsfenster öffnen";
+"shortcuts.next_profile" = "Nächstes Profil";
+"shortcuts.next_profile_desc" = "Zum nächsten Profil wechseln";
+"shortcuts.record" = "Klicken zum Aufnehmen";
+"shortcuts.recording" = "Tastenkombination drücken...";
+"shortcuts.clear" = "Löschen";
+"shortcuts.none" = "Keine";
+"shortcuts.info_title" = "Globale Kurzbefehle";
+"shortcuts.info_desc" = "Kurzbefehle funktionieren aus jeder Anwendung. Jeder Kurzbefehl muss mindestens eine Modifikatortaste enthalten (Befehl, Option, Steuerung oder Umschalt). Konflikte mit Systemkurzbefehlen vermeiden.";

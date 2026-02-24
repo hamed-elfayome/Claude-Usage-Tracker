@@ -786,3 +786,25 @@
 /* MARK: - Combined Usage Chart */
 /* ==================== */
 "history.chart.usage_overview" = "Aperçu d'utilisation";
+
+/* ==================== */
+/* MARK: - Keyboard Shortcuts */
+/* ==================== */
+"section.shortcuts_title" = "Raccourcis";
+"section.shortcuts_desc" = "Configurer les raccourcis clavier";
+"shortcuts.title" = "Raccourcis Clavier";
+"shortcuts.subtitle" = "Définir des raccourcis globaux pour les actions courantes";
+"shortcuts.open_popover" = "Afficher/Masquer le panneau";
+"shortcuts.open_popover_desc" = "Afficher ou masquer le panneau d'utilisation";
+"shortcuts.refresh" = "Actualiser l'utilisation";
+"shortcuts.refresh_desc" = "Récupérer les dernières données d'utilisation";
+"shortcuts.open_settings" = "Ouvrir les réglages";
+"shortcuts.open_settings_desc" = "Ouvrir la fenêtre des réglages";
+"shortcuts.next_profile" = "Profil suivant";
+"shortcuts.next_profile_desc" = "Passer au profil suivant";
+"shortcuts.record" = "Cliquer pour enregistrer";
+"shortcuts.recording" = "Appuyez sur un raccourci...";
+"shortcuts.clear" = "Effacer";
+"shortcuts.none" = "Aucun";
+"shortcuts.info_title" = "Raccourcis globaux";
+"shortcuts.info_desc" = "Les raccourcis fonctionnent depuis n'importe quelle application. Chaque raccourci doit inclure au moins une touche de modification (Commande, Option, Contrôle ou Majuscule). Évitez les conflits avec les raccourcis système.";

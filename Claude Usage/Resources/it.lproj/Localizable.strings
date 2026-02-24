@@ -806,3 +806,25 @@
 /* MARK: - Combined Usage Chart */
 /* ==================== */
 "history.chart.usage_overview" = "Panoramica utilizzo";
+
+/* ==================== */
+/* MARK: - Keyboard Shortcuts */
+/* ==================== */
+"section.shortcuts_title" = "Scorciatoie";
+"section.shortcuts_desc" = "Configura le scorciatoie da tastiera";
+"shortcuts.title" = "Scorciatoie da Tastiera";
+"shortcuts.subtitle" = "Imposta tasti rapidi globali per le azioni comuni";
+"shortcuts.open_popover" = "Mostra/Nascondi pannello";
+"shortcuts.open_popover_desc" = "Mostra o nascondi il pannello di utilizzo";
+"shortcuts.refresh" = "Aggiorna utilizzo";
+"shortcuts.refresh_desc" = "Recupera i dati di utilizzo più recenti";
+"shortcuts.open_settings" = "Apri impostazioni";
+"shortcuts.open_settings_desc" = "Apri la finestra delle impostazioni";
+"shortcuts.next_profile" = "Profilo successivo";
+"shortcuts.next_profile_desc" = "Passa al profilo successivo";
+"shortcuts.record" = "Clicca per registrare";
+"shortcuts.recording" = "Premi una scorciatoia...";
+"shortcuts.clear" = "Cancella";
+"shortcuts.none" = "Nessuna";
+"shortcuts.info_title" = "Scorciatoie globali";
+"shortcuts.info_desc" = "Le scorciatoie funzionano da qualsiasi applicazione. Ogni scorciatoia deve includere almeno un tasto modificatore (Comando, Opzione, Controllo o Maiuscolo). Evita conflitti con le scorciatoie di sistema.";

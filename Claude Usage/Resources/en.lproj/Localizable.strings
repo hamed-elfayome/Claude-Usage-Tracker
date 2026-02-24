@@ -812,3 +812,25 @@
 /* MARK: - Combined Usage Chart */
 /* ==================== */
 "history.chart.usage_overview" = "Usage Overview";
+
+/* ==================== */
+/* MARK: - Keyboard Shortcuts */
+/* ==================== */
+"section.shortcuts_title" = "Shortcuts";
+"section.shortcuts_desc" = "Configure keyboard shortcuts";
+"shortcuts.title" = "Keyboard Shortcuts";
+"shortcuts.subtitle" = "Set global hotkeys for common actions";
+"shortcuts.open_popover" = "Toggle Popover";
+"shortcuts.open_popover_desc" = "Show or hide the usage popover";
+"shortcuts.refresh" = "Refresh Usage";
+"shortcuts.refresh_desc" = "Fetch latest usage data";
+"shortcuts.open_settings" = "Open Settings";
+"shortcuts.open_settings_desc" = "Open the settings window";
+"shortcuts.next_profile" = "Next Profile";
+"shortcuts.next_profile_desc" = "Switch to the next profile";
+"shortcuts.record" = "Click to record";
+"shortcuts.recording" = "Press shortcut...";
+"shortcuts.clear" = "Clear";
+"shortcuts.none" = "None";
+"shortcuts.info_title" = "Global Shortcuts";
+"shortcuts.info_desc" = "Shortcuts work from any application. Each shortcut must include at least one modifier key (Command, Option, Control, or Shift). Avoid conflicts with system shortcuts.";

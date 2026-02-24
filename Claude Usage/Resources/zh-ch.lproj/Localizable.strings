@@ -798,3 +798,25 @@
 /* MARK: - Combined Usage Chart */
 /* ==================== */
 "history.chart.usage_overview" = "使用概览";
+
+/* ==================== */
+/* MARK: - Keyboard Shortcuts */
+/* ==================== */
+"section.shortcuts_title" = "快捷键";
+"section.shortcuts_desc" = "配置键盘快捷键";
+"shortcuts.title" = "键盘快捷键";
+"shortcuts.subtitle" = "为常用操作设置全局快捷键";
+"shortcuts.open_popover" = "切换弹出面板";
+"shortcuts.open_popover_desc" = "显示或隐藏使用量面板";
+"shortcuts.refresh" = "刷新使用量";
+"shortcuts.refresh_desc" = "获取最新使用量数据";
+"shortcuts.open_settings" = "打开设置";
+"shortcuts.open_settings_desc" = "打开设置窗口";
+"shortcuts.next_profile" = "下一个配置";
+"shortcuts.next_profile_desc" = "切换到下一个配置";
+"shortcuts.record" = "点击录制";
+"shortcuts.recording" = "请按快捷键...";
+"shortcuts.clear" = "清除";
+"shortcuts.none" = "无";
+"shortcuts.info_title" = "全局快捷键";
+"shortcuts.info_desc" = "快捷键可在任何应用中使用。每个快捷键必须包含至少一个修饰键（Command、Option、Control 或 Shift）。请避免与系统快捷键冲突。";

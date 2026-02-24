@@ -197,9 +197,30 @@ class MenuBarManager: NSObject, ObservableObject {
 
         // Setup headless mode observer if enabled (for Remote Desktop support)
         setupHeadlessModeObserver()
+
+        // Setup global keyboard shortcuts
+        setupShortcuts()
+    }
+
+    private func setupShortcuts() {
+        let shortcutManager = ShortcutManager.shared
+        shortcutManager.onTogglePopover = { [weak self] in
+            self?.togglePopover(nil)
+        }
+        shortcutManager.onRefresh = { [weak self] in
+            self?.refreshUsage()
+        }
+        shortcutManager.onOpenSettings = { [weak self] in
+            self?.preferencesClicked()
+        }
+        shortcutManager.onNextProfile = { [weak self] in
+            self?.switchToNextProfile()
+        }
+        shortcutManager.startListening()
     }
 
     func cleanup() {
+        ShortcutManager.shared.stopListening()
         refreshTimer?.invalidate()
         refreshTimer = nil
         networkMonitor.stopMonitoring()
@@ -438,8 +459,13 @@ class MenuBarManager: NSObject, ObservableObject {
         let clickedButton: NSStatusBarButton?
         if let button = sender as? NSStatusBarButton {
             clickedButton = button
+        } else if statusBarUIManager?.isInMultiProfileMode == true,
+                  let activeId = profileManager.activeProfile?.id,
+                  let activeButton = statusBarUIManager?.button(for: activeId) {
+            // Multi-profile mode: use the active profile's button
+            clickedButton = activeButton
         } else {
-            // Fallback to primary button for backwards compatibility
+            // Single profile mode: fallback to primary button
             clickedButton = statusBarUIManager?.primaryButton
         }
 
@@ -1254,6 +1280,22 @@ class MenuBarManager: NSObject, ObservableObject {
             // Show the window
             window.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
+        }
+    }
+
+    private func switchToNextProfile() {
+        let profiles = profileManager.profiles
+        guard profiles.count > 1,
+              let currentId = profileManager.activeProfile?.id,
+              let currentIndex = profiles.firstIndex(where: { $0.id == currentId }) else {
+            return
+        }
+
+        let nextIndex = (profiles.index(after: currentIndex)) % profiles.count
+        let nextProfile = profiles[nextIndex]
+
+        Task {
+            await profileManager.activateProfile(nextProfile.id)
         }
     }
 

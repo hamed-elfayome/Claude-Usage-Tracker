@@ -868,3 +868,25 @@
 /* MARK: - Combined Usage Chart */
 /* ==================== */
 "history.chart.usage_overview" = "사용량 개요";
+
+/* ==================== */
+/* MARK: - Keyboard Shortcuts */
+/* ==================== */
+"section.shortcuts_title" = "단축키";
+"section.shortcuts_desc" = "키보드 단축키 설정";
+"shortcuts.title" = "키보드 단축키";
+"shortcuts.subtitle" = "자주 사용하는 작업에 글로벌 단축키 설정";
+"shortcuts.open_popover" = "팝오버 전환";
+"shortcuts.open_popover_desc" = "사용량 패널 표시/숨기기";
+"shortcuts.refresh" = "사용량 새로고침";
+"shortcuts.refresh_desc" = "최신 사용량 데이터 가져오기";
+"shortcuts.open_settings" = "설정 열기";
+"shortcuts.open_settings_desc" = "설정 창 열기";
+"shortcuts.next_profile" = "다음 프로필";
+"shortcuts.next_profile_desc" = "다음 프로필로 전환";
+"shortcuts.record" = "클릭하여 기록";
+"shortcuts.recording" = "단축키를 누르세요...";
+"shortcuts.clear" = "지우기";
+"shortcuts.none" = "없음";
+"shortcuts.info_title" = "글로벌 단축키";
+"shortcuts.info_desc" = "단축키는 모든 앱에서 작동합니다. 각 단축키에는 최소 하나의 보조 키(Command, Option, Control 또는 Shift)가 포함되어야 합니다. 시스템 단축키와의 충돌을 피하세요.";

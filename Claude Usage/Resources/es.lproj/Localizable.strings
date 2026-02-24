@@ -789,3 +789,25 @@
 /* MARK: - Combined Usage Chart */
 /* ==================== */
 "history.chart.usage_overview" = "Resumen de uso";
+
+/* ==================== */
+/* MARK: - Keyboard Shortcuts */
+/* ==================== */
+"section.shortcuts_title" = "Atajos";
+"section.shortcuts_desc" = "Configurar atajos de teclado";
+"shortcuts.title" = "Atajos de Teclado";
+"shortcuts.subtitle" = "Configura teclas rápidas globales para acciones comunes";
+"shortcuts.open_popover" = "Mostrar/Ocultar Panel";
+"shortcuts.open_popover_desc" = "Mostrar u ocultar el panel de uso";
+"shortcuts.refresh" = "Actualizar Uso";
+"shortcuts.refresh_desc" = "Obtener los datos de uso más recientes";
+"shortcuts.open_settings" = "Abrir Ajustes";
+"shortcuts.open_settings_desc" = "Abrir la ventana de ajustes";
+"shortcuts.next_profile" = "Siguiente Perfil";
+"shortcuts.next_profile_desc" = "Cambiar al siguiente perfil";
+"shortcuts.record" = "Clic para grabar";
+"shortcuts.recording" = "Presiona un atajo...";
+"shortcuts.clear" = "Borrar";
+"shortcuts.none" = "Ninguno";
+"shortcuts.info_title" = "Atajos Globales";
+"shortcuts.info_desc" = "Los atajos funcionan desde cualquier aplicación. Cada atajo debe incluir al menos una tecla modificadora (Comando, Opción, Control o Mayúsculas). Evita conflictos con atajos del sistema.";
