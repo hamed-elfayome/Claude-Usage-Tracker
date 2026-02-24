@@ -861,3 +861,26 @@
 "mobile.privacy_note" = "No personal data is collected. This only registers your interest.";
 "mobile.error_title" = "Request Failed";
 "mobile.error_message" = "Could not register your interest. Please check your internet connection and try again.";
+
+/* ==================== */
+/* MARK: - Feedback Prompt */
+/* ==================== */
+"feedback.title" = "Help Us Improve";
+"feedback.subtitle" = "Your feedback shapes the future of this app";
+"feedback.name_placeholder" = "Name";
+"feedback.title_label" = "Role";
+"feedback.contact_placeholder" = "Email";
+"feedback.message_placeholder" = "Tell us anything — feedback, ideas, feature requests...";
+"feedback.submit" = "Submit";
+"feedback.submitting" = "Sending...";
+"feedback.remind_later" = "Remind Me Later";
+"feedback.never_show" = "Don't Ask Again";
+"feedback.thanks" = "Thanks for your feedback!";
+"feedback.error_title" = "Submission Failed";
+"feedback.error_message" = "Could not send your feedback. Please try again later.";
+"feedback.role_developer" = "Developer";
+"feedback.role_designer" = "Designer";
+"feedback.role_manager" = "Manager";
+"feedback.role_student" = "Student";
+"feedback.role_researcher" = "Researcher";
+"feedback.role_other" = "Other";

@@ -857,3 +857,26 @@
 "mobile.privacy_note" = "個人データは収集されません。興味の登録のみです。";
 "mobile.error_title" = "リクエスト失敗";
 "mobile.error_message" = "興味を登録できませんでした。インターネット接続を確認して再度お試しください。";
+
+/* ==================== */
+/* MARK: - Feedback Prompt */
+/* ==================== */
+"feedback.title" = "改善にご協力ください";
+"feedback.subtitle" = "あなたのフィードバックがこのアプリの未来を作ります";
+"feedback.name_placeholder" = "名前";
+"feedback.title_label" = "役割";
+"feedback.contact_placeholder" = "メールアドレス";
+"feedback.message_placeholder" = "何でもお聞かせください — 感想、アイデア、機能リクエスト...";
+"feedback.submit" = "送信";
+"feedback.submitting" = "送信中...";
+"feedback.remind_later" = "後で通知";
+"feedback.never_show" = "今後表示しない";
+"feedback.thanks" = "フィードバックありがとうございます！";
+"feedback.error_title" = "送信失敗";
+"feedback.error_message" = "フィードバックを送信できませんでした。後でもう一度お試しください。";
+"feedback.role_developer" = "開発者";
+"feedback.role_designer" = "デザイナー";
+"feedback.role_manager" = "マネージャー";
+"feedback.role_student" = "学生";
+"feedback.role_researcher" = "研究者";
+"feedback.role_other" = "その他";

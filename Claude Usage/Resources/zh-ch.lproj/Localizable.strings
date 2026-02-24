@@ -847,3 +847,26 @@
 "mobile.privacy_note" = "不收集任何个人数据。这仅记录您的兴趣。";
 "mobile.error_title" = "请求失败";
 "mobile.error_message" = "无法注册您的兴趣。请检查您的网络连接并重试。";
+
+/* ==================== */
+/* MARK: - Feedback Prompt */
+/* ==================== */
+"feedback.title" = "帮助我们改进";
+"feedback.subtitle" = "您的反馈塑造了这款应用的未来";
+"feedback.name_placeholder" = "姓名";
+"feedback.title_label" = "角色";
+"feedback.contact_placeholder" = "邮箱";
+"feedback.message_placeholder" = "告诉我们任何事情 — 反馈、想法、功能建议...";
+"feedback.submit" = "提交";
+"feedback.submitting" = "提交中...";
+"feedback.remind_later" = "稍后提醒";
+"feedback.never_show" = "不再询问";
+"feedback.thanks" = "感谢您的反馈！";
+"feedback.error_title" = "提交失败";
+"feedback.error_message" = "无法发送您的反馈。请稍后重试。";
+"feedback.role_developer" = "开发者";
+"feedback.role_designer" = "设计师";
+"feedback.role_manager" = "经理";
+"feedback.role_student" = "学生";
+"feedback.role_researcher" = "研究员";
+"feedback.role_other" = "其他";

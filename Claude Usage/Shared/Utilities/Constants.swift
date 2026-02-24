@@ -109,6 +109,12 @@ enum Constants {
         static let reminderInterval: TimeInterval = 10 * 24 * 60 * 60  // 10 days (between 7-14 days)
     }
 
+    // Feedback prompt timing (in seconds)
+    enum FeedbackPromptTiming {
+        static let initialDelay: TimeInterval = 7 * 24 * 60 * 60  // 7 days
+        static let reminderInterval: TimeInterval = 7 * 24 * 60 * 60  // 7 days
+    }
+
     // API Endpoints
     enum APIEndpoints {
         static let claudeBase = "https://claude.ai/api"

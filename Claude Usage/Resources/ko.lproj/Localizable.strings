@@ -917,3 +917,26 @@
 "mobile.privacy_note" = "개인 데이터는 수집되지 않습니다. 관심 등록만 합니다.";
 "mobile.error_title" = "요청 실패";
 "mobile.error_message" = "관심을 등록할 수 없습니다. 인터넷 연결을 확인하고 다시 시도해 주세요.";
+
+/* ==================== */
+/* MARK: - Feedback Prompt */
+/* ==================== */
+"feedback.title" = "개선에 도움을 주세요";
+"feedback.subtitle" = "여러분의 피드백이 이 앱의 미래를 만듭니다";
+"feedback.name_placeholder" = "이름";
+"feedback.title_label" = "역할";
+"feedback.contact_placeholder" = "이메일";
+"feedback.message_placeholder" = "무엇이든 알려주세요 — 의견, 아이디어, 기능 요청...";
+"feedback.submit" = "제출";
+"feedback.submitting" = "전송 중...";
+"feedback.remind_later" = "나중에 알려주기";
+"feedback.never_show" = "다시 묻지 않기";
+"feedback.thanks" = "피드백 감사합니다!";
+"feedback.error_title" = "전송 실패";
+"feedback.error_message" = "피드백을 전송할 수 없습니다. 나중에 다시 시도해 주세요.";
+"feedback.role_developer" = "개발자";
+"feedback.role_designer" = "디자이너";
+"feedback.role_manager" = "매니저";
+"feedback.role_student" = "학생";
+"feedback.role_researcher" = "연구원";
+"feedback.role_other" = "기타";

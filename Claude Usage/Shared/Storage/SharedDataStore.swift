@@ -37,6 +37,11 @@ class SharedDataStore {
         static let hasStarredGitHub = "hasStarredGitHub"
         static let neverShowGitHubPrompt = "neverShowGitHubPrompt"
 
+        // Feedback Prompt Tracking
+        static let lastFeedbackPromptDate = "lastFeedbackPromptDate"
+        static let hasSubmittedFeedback = "hasSubmittedFeedback"
+        static let neverShowFeedbackPrompt = "neverShowFeedbackPrompt"
+
         // Debug Settings
         static let debugAPILoggingEnabled = "debugAPILoggingEnabled"
 
@@ -258,6 +263,58 @@ class SharedDataStore {
         // Has been shown before - check if enough time has passed for a reminder
         let timeSinceLastPrompt = now.timeIntervalSince(lastPrompt)
         return timeSinceLastPrompt >= Constants.GitHubPromptTiming.reminderInterval
+    }
+
+    // MARK: - Feedback Prompt Tracking
+
+    func saveLastFeedbackPromptDate(_ date: Date) {
+        defaults.set(date, forKey: Keys.lastFeedbackPromptDate)
+    }
+
+    func loadLastFeedbackPromptDate() -> Date? {
+        return defaults.object(forKey: Keys.lastFeedbackPromptDate) as? Date
+    }
+
+    func saveHasSubmittedFeedback(_ submitted: Bool) {
+        defaults.set(submitted, forKey: Keys.hasSubmittedFeedback)
+    }
+
+    func loadHasSubmittedFeedback() -> Bool {
+        return defaults.bool(forKey: Keys.hasSubmittedFeedback)
+    }
+
+    func saveNeverShowFeedbackPrompt(_ neverShow: Bool) {
+        defaults.set(neverShow, forKey: Keys.neverShowFeedbackPrompt)
+    }
+
+    func loadNeverShowFeedbackPrompt() -> Bool {
+        return defaults.bool(forKey: Keys.neverShowFeedbackPrompt)
+    }
+
+    func shouldShowFeedbackPrompt() -> Bool {
+        if loadNeverShowFeedbackPrompt() { return false }
+        if loadHasSubmittedFeedback() { return false }
+
+        guard let firstLaunch = loadFirstLaunchDate() else { return false }
+
+        let now = Date()
+        let timeSinceFirstLaunch = now.timeIntervalSince(firstLaunch)
+        if timeSinceFirstLaunch < Constants.FeedbackPromptTiming.initialDelay {
+            return false
+        }
+
+        guard let lastPrompt = loadLastFeedbackPromptDate() else {
+            return true
+        }
+
+        let timeSinceLastPrompt = now.timeIntervalSince(lastPrompt)
+        return timeSinceLastPrompt >= Constants.FeedbackPromptTiming.reminderInterval
+    }
+
+    func resetFeedbackPromptForTesting() {
+        defaults.removeObject(forKey: Keys.lastFeedbackPromptDate)
+        defaults.removeObject(forKey: Keys.hasSubmittedFeedback)
+        defaults.removeObject(forKey: Keys.neverShowFeedbackPrompt)
     }
 
     // MARK: - Debug Settings

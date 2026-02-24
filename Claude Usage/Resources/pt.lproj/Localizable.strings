@@ -855,3 +855,26 @@
 "mobile.privacy_note" = "Nenhum dado pessoal é coletado. Isso apenas registra seu interesse.";
 "mobile.error_title" = "Falha na solicitação";
 "mobile.error_message" = "Não foi possível registrar seu interesse. Verifique sua conexão com a internet e tente novamente.";
+
+/* ==================== */
+/* MARK: - Feedback Prompt */
+/* ==================== */
+"feedback.title" = "Ajude-nos a Melhorar";
+"feedback.subtitle" = "Seu feedback molda o futuro deste app";
+"feedback.name_placeholder" = "Nome";
+"feedback.title_label" = "Função";
+"feedback.contact_placeholder" = "Email";
+"feedback.message_placeholder" = "Conte-nos qualquer coisa — opiniões, ideias, sugestões...";
+"feedback.submit" = "Enviar";
+"feedback.submitting" = "Enviando...";
+"feedback.remind_later" = "Lembrar Depois";
+"feedback.never_show" = "Não Perguntar Mais";
+"feedback.thanks" = "Obrigado pelo seu feedback!";
+"feedback.error_title" = "Falha no Envio";
+"feedback.error_message" = "Não foi possível enviar seu feedback. Tente novamente mais tarde.";
+"feedback.role_developer" = "Desenvolvedor";
+"feedback.role_designer" = "Designer";
+"feedback.role_manager" = "Gerente";
+"feedback.role_student" = "Estudante";
+"feedback.role_researcher" = "Pesquisador";
+"feedback.role_other" = "Outro";

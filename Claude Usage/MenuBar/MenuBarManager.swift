@@ -42,6 +42,9 @@ class MenuBarManager: NSObject, ObservableObject {
     // GitHub star prompt window reference
     private var githubPromptWindow: NSWindow?
 
+    // Feedback prompt window reference
+    private var feedbackWindow: NSWindow?
+
     // Track which button is currently showing the popover
     private weak var currentPopoverButton: NSStatusBarButton?
 
@@ -1478,6 +1481,63 @@ class MenuBarManager: NSObject, ObservableObject {
         githubPromptWindow = nil
 
         // Hide dock icon
+        NSApp.setActivationPolicy(.accessory)
+    }
+
+    // MARK: - Feedback Prompt
+
+    /// Shows the feedback collection prompt window
+    func showFeedbackPrompt() {
+        if let existingWindow = feedbackWindow, existingWindow.isVisible {
+            existingWindow.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
+        NSApp.setActivationPolicy(.regular)
+
+        let promptView = FeedbackPromptView(
+            onSubmit: { [weak self] _, _, _, _ in
+                SharedDataStore.shared.saveHasSubmittedFeedback(true)
+                // Close after a brief delay to show the thanks state
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    self?.closeFeedbackWindow()
+                }
+            },
+            onRemindLater: { [weak self] in
+                SharedDataStore.shared.saveLastFeedbackPromptDate(Date())
+                self?.closeFeedbackWindow()
+            },
+            onDontAskAgain: { [weak self] in
+                SharedDataStore.shared.saveNeverShowFeedbackPrompt(true)
+                self?.closeFeedbackWindow()
+            }
+        )
+
+        let hostingController = NSHostingController(rootView: promptView)
+
+        let window = NSWindow(contentViewController: hostingController)
+        window.title = ""
+        window.styleMask = [.titled, .closable, .fullSizeContentView]
+        window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
+        window.setContentSize(NSSize(width: 380, height: 420))
+        window.center()
+        window.isReleasedWhenClosed = false
+        window.isRestorable = false
+        window.level = .floating
+        window.delegate = self
+
+        feedbackWindow = window
+        SharedDataStore.shared.saveLastFeedbackPromptDate(Date())
+
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    private func closeFeedbackWindow() {
+        feedbackWindow?.close()
+        feedbackWindow = nil
         NSApp.setActivationPolicy(.accessory)
     }
 }
