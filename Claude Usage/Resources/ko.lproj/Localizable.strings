@@ -900,3 +900,20 @@
 "shortcuts.none" = "없음";
 "shortcuts.info_title" = "글로벌 단축키";
 "shortcuts.info_desc" = "단축키는 모든 앱에서 작동합니다. 각 단축키에는 최소 하나의 보조 키(Command, Option, Control 또는 Shift)가 포함되어야 합니다. 시스템 단축키와의 충돌을 피하세요.";
+
+/* ==================== */
+/* MARK: - Mobile App (Coming Soon) */
+/* ==================== */
+"section.mobile_app_title" = "모바일 앱";
+"section.mobile_app_desc" = "모바일 앱 곧 출시";
+"mobile.title" = "모바일 앱";
+"mobile.subtitle" = "이동 중에도 Claude 사용량을 확인하세요";
+"mobile.coming_soon_badge" = "곧 출시";
+"mobile.cta_message" = "관심이 있으신가요? 알려주시면 준비되면 알려드리겠습니다.";
+"mobile.notify_me" = "알려주세요";
+"mobile.submitting" = "제출 중...";
+"mobile.notified" = "목록에 등록되었습니다!";
+"mobile.notified_desc" = "모바일 앱이 출시되면 알려드리겠습니다.";
+"mobile.privacy_note" = "개인 데이터는 수집되지 않습니다. 관심 등록만 합니다.";
+"mobile.error_title" = "요청 실패";
+"mobile.error_message" = "관심을 등록할 수 없습니다. 인터넷 연결을 확인하고 다시 시도해 주세요.";

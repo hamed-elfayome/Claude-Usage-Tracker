@@ -57,6 +57,8 @@ struct SettingsView: View {
                     UpdatesSettingsView()
                 case .support:
                     SupportView()
+                case .mobileApp:
+                    MobileAppView()
                 case .debug:
                     DebugNetworkLogView()
                 case .about:
@@ -217,6 +219,7 @@ enum SettingsSection: String, CaseIterable {
     case shortcuts
     case updates
     case support
+    case mobileApp
     case debug
     case about
 
@@ -234,6 +237,7 @@ enum SettingsSection: String, CaseIterable {
         case .shortcuts: return "section.shortcuts_title".localized
         case .updates: return "settings.updates".localized
         case .support: return "section.support_title".localized
+        case .mobileApp: return "section.mobile_app_title".localized
         case .debug: return "section.debug_title".localized
         case .about: return "settings.about".localized
         }
@@ -253,6 +257,7 @@ enum SettingsSection: String, CaseIterable {
         case .shortcuts: return "keyboard"
         case .updates: return "arrow.down.circle.fill"
         case .support: return "heart.fill"
+        case .mobileApp: return "iphone"
         case .debug: return "ladybug.fill"
         case .about: return "info.circle.fill"
         }
@@ -272,6 +277,7 @@ enum SettingsSection: String, CaseIterable {
         case .shortcuts: return "section.shortcuts_desc".localized
         case .updates: return "settings.updates.description".localized
         case .support: return "section.support_desc".localized
+        case .mobileApp: return "section.mobile_app_desc".localized
         case .debug: return "section.debug_desc".localized
         case .about: return "settings.about.description".localized
         }

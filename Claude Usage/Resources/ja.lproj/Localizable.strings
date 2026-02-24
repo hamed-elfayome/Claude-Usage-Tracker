@@ -840,3 +840,20 @@
 "shortcuts.none" = "なし";
 "shortcuts.info_title" = "グローバルショートカット";
 "shortcuts.info_desc" = "ショートカットはどのアプリからでも使用できます。各ショートカットには修飾キー（Command、Option、Control、Shift）が1つ以上必要です。システムショートカットとの競合にご注意ください。";
+
+/* ==================== */
+/* MARK: - Mobile App (Coming Soon) */
+/* ==================== */
+"section.mobile_app_title" = "モバイルアプリ";
+"section.mobile_app_desc" = "モバイルアプリ近日公開";
+"mobile.title" = "モバイルアプリ";
+"mobile.subtitle" = "外出先でClaudeの使用状況を確認";
+"mobile.coming_soon_badge" = "近日公開";
+"mobile.cta_message" = "興味がありますか？お知らせください。準備ができたら通知します。";
+"mobile.notify_me" = "通知する";
+"mobile.submitting" = "送信中...";
+"mobile.notified" = "リストに登録されました！";
+"mobile.notified_desc" = "モバイルアプリが利用可能になったらお知らせします。";
+"mobile.privacy_note" = "個人データは収集されません。興味の登録のみです。";
+"mobile.error_title" = "リクエスト失敗";
+"mobile.error_message" = "興味を登録できませんでした。インターネット接続を確認して再度お試しください。";

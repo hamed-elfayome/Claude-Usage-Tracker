@@ -818,3 +818,20 @@
 "shortcuts.none" = "Aucun";
 "shortcuts.info_title" = "Raccourcis globaux";
 "shortcuts.info_desc" = "Les raccourcis fonctionnent depuis n'importe quelle application. Chaque raccourci doit inclure au moins une touche de modification (Commande, Option, Contrôle ou Majuscule). Évitez les conflits avec les raccourcis système.";
+
+/* ==================== */
+/* MARK: - Mobile App (Coming Soon) */
+/* ==================== */
+"section.mobile_app_title" = "App Mobile";
+"section.mobile_app_desc" = "App mobile bientôt disponible";
+"mobile.title" = "App Mobile";
+"mobile.subtitle" = "Suivez votre utilisation de Claude en déplacement";
+"mobile.coming_soon_badge" = "BIENTÔT DISPONIBLE";
+"mobile.cta_message" = "Intéressé ? Faites-le nous savoir et nous vous préviendrons quand ce sera prêt.";
+"mobile.notify_me" = "Me notifier";
+"mobile.submitting" = "Envoi...";
+"mobile.notified" = "Vous êtes sur la liste !";
+"mobile.notified_desc" = "Nous vous informerons quand l'app mobile sera disponible.";
+"mobile.privacy_note" = "Aucune donnée personnelle n'est collectée. Cela enregistre uniquement votre intérêt.";
+"mobile.error_title" = "Échec de la requête";
+"mobile.error_message" = "Impossible d'enregistrer votre intérêt. Vérifiez votre connexion internet et réessayez.";

@@ -830,3 +830,20 @@
 "shortcuts.none" = "无";
 "shortcuts.info_title" = "全局快捷键";
 "shortcuts.info_desc" = "快捷键可在任何应用中使用。每个快捷键必须包含至少一个修饰键（Command、Option、Control 或 Shift）。请避免与系统快捷键冲突。";
+
+/* ==================== */
+/* MARK: - Mobile App (Coming Soon) */
+/* ==================== */
+"section.mobile_app_title" = "移动应用";
+"section.mobile_app_desc" = "移动应用即将推出";
+"mobile.title" = "移动应用";
+"mobile.subtitle" = "随时随地追踪您的Claude使用情况";
+"mobile.coming_soon_badge" = "即将推出";
+"mobile.cta_message" = "感兴趣吗？告诉我们，准备好后我们会通知您。";
+"mobile.notify_me" = "通知我";
+"mobile.submitting" = "提交中...";
+"mobile.notified" = "您已在列表中！";
+"mobile.notified_desc" = "移动应用可用时我们会通知您。";
+"mobile.privacy_note" = "不收集任何个人数据。这仅记录您的兴趣。";
+"mobile.error_title" = "请求失败";
+"mobile.error_message" = "无法注册您的兴趣。请检查您的网络连接并重试。";

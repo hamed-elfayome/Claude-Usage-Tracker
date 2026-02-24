@@ -844,3 +844,20 @@
 "shortcuts.none" = "None";
 "shortcuts.info_title" = "Global Shortcuts";
 "shortcuts.info_desc" = "Shortcuts work from any application. Each shortcut must include at least one modifier key (Command, Option, Control, or Shift). Avoid conflicts with system shortcuts.";
+
+/* ==================== */
+/* MARK: - Mobile App (Coming Soon) */
+/* ==================== */
+"section.mobile_app_title" = "Mobile App";
+"section.mobile_app_desc" = "Mobile app coming soon";
+"mobile.title" = "Mobile App";
+"mobile.subtitle" = "Track your Claude usage on the go";
+"mobile.coming_soon_badge" = "COMING SOON";
+"mobile.cta_message" = "Interested? Let us know and we'll notify you when it's ready.";
+"mobile.notify_me" = "Notify Me";
+"mobile.submitting" = "Submitting...";
+"mobile.notified" = "You're on the list!";
+"mobile.notified_desc" = "We'll let you know when the mobile app is available.";
+"mobile.privacy_note" = "No personal data is collected. This only registers your interest.";
+"mobile.error_title" = "Request Failed";
+"mobile.error_message" = "Could not register your interest. Please check your internet connection and try again.";

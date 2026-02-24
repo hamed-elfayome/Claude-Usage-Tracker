@@ -821,3 +821,20 @@
 "shortcuts.none" = "Ninguno";
 "shortcuts.info_title" = "Atajos Globales";
 "shortcuts.info_desc" = "Los atajos funcionan desde cualquier aplicación. Cada atajo debe incluir al menos una tecla modificadora (Comando, Opción, Control o Mayúsculas). Evita conflictos con atajos del sistema.";
+
+/* ==================== */
+/* MARK: - Mobile App (Coming Soon) */
+/* ==================== */
+"section.mobile_app_title" = "App Móvil";
+"section.mobile_app_desc" = "App móvil próximamente";
+"mobile.title" = "App Móvil";
+"mobile.subtitle" = "Controla tu uso de Claude donde estés";
+"mobile.coming_soon_badge" = "PRÓXIMAMENTE";
+"mobile.cta_message" = "¿Te interesa? Haznos saber y te notificaremos cuando esté listo.";
+"mobile.notify_me" = "Notifícame";
+"mobile.submitting" = "Enviando...";
+"mobile.notified" = "¡Estás en la lista!";
+"mobile.notified_desc" = "Te avisaremos cuando la app móvil esté disponible.";
+"mobile.privacy_note" = "No se recopilan datos personales. Solo registra tu interés.";
+"mobile.error_title" = "Solicitud fallida";
+"mobile.error_message" = "No se pudo registrar tu interés. Verifica tu conexión a internet e intenta de nuevo.";

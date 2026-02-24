@@ -840,3 +840,20 @@
 "shortcuts.none" = "Keine";
 "shortcuts.info_title" = "Globale Kurzbefehle";
 "shortcuts.info_desc" = "Kurzbefehle funktionieren aus jeder Anwendung. Jeder Kurzbefehl muss mindestens eine Modifikatortaste enthalten (Befehl, Option, Steuerung oder Umschalt). Konflikte mit Systemkurzbefehlen vermeiden.";
+
+/* ==================== */
+/* MARK: - Mobile App (Coming Soon) */
+/* ==================== */
+"section.mobile_app_title" = "Mobile App";
+"section.mobile_app_desc" = "Mobile App kommt bald";
+"mobile.title" = "Mobile App";
+"mobile.subtitle" = "Verfolge deine Claude-Nutzung unterwegs";
+"mobile.coming_soon_badge" = "DEMNÄCHST";
+"mobile.cta_message" = "Interessiert? Lass es uns wissen und wir benachrichtigen dich, wenn es fertig ist.";
+"mobile.notify_me" = "Benachrichtige mich";
+"mobile.submitting" = "Wird gesendet...";
+"mobile.notified" = "Du bist auf der Liste!";
+"mobile.notified_desc" = "Wir informieren dich, wenn die Mobile App verfügbar ist.";
+"mobile.privacy_note" = "Es werden keine persönlichen Daten erhoben. Dies registriert nur dein Interesse.";
+"mobile.error_title" = "Anfrage fehlgeschlagen";
+"mobile.error_message" = "Dein Interesse konnte nicht registriert werden. Bitte überprüfe deine Internetverbindung und versuche es erneut.";
