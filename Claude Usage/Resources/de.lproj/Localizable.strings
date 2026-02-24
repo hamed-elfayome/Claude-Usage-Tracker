@@ -220,6 +220,16 @@
 "notification.opus_critical.message" = "Sie haben %@ Ihres wöchentlichen Opus-Limits verwendet! %@";
 "notification.enabled.title" = "Benachrichtigungen Aktiviert";
 "notification.enabled.message" = "Sie erhalten jetzt Warnungen bei Nutzungsschwellen von 75%, 90% und 95%, sowie Sitzungszurücksetzungsbenachrichtigungen.";
+"notification.profile_auto_switched.title" = "Profil automatisch gewechselt";
+"notification.profile_auto_switched.message" = "%@ → %@ wegen erreichtem Sitzungslimit";
+
+/* ==================== */
+/* MARK: - Auto-Switch Profile */
+/* ==================== */
+"auto_switch.title" = "Automatischer Profilwechsel";
+"auto_switch.subtitle" = "Automatisch wechseln wenn das Sitzungslimit erreicht ist";
+"auto_switch.enable_title" = "Automatischen Wechsel aktivieren";
+"auto_switch.enable_description" = "Wenn das aktive Profil 100% Sitzungsnutzung erreicht, automatisch zum nächsten verfügbaren Profil wechseln";
 
 /* ==================== */
 /* MARK: - Error Messages */

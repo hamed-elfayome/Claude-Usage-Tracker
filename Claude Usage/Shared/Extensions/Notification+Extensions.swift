@@ -19,4 +19,7 @@ extension Notification.Name {
 
     /// Posted when the display mode changes (single/multi profile)
     static let displayModeChanged = Notification.Name("displayModeChanged")
+
+    /// Posted when auto-switch profile is triggered (for UI reactivity)
+    static let autoSwitchProfileTriggered = Notification.Name("autoSwitchProfileTriggered")
 }

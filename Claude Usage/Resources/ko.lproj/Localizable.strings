@@ -569,6 +569,16 @@
 "notification.opus_critical.message" = "주간 Opus 한도의 %@를 사용했습니다! %@";
 "notification.enabled.title" = "알림 활성화됨";
 "notification.enabled.message" = "이제 75%, 90%, 95% 사용 임계값과 세션 리셋 알림을 받게 됩니다.";
+"notification.profile_auto_switched.title" = "프로필 자동 전환됨";
+"notification.profile_auto_switched.message" = "%@ → %@ 세션 한도 도달로 인해";
+
+/* ==================== */
+/* MARK: - Auto-Switch Profile */
+/* ==================== */
+"auto_switch.title" = "프로필 자동 전환";
+"auto_switch.subtitle" = "세션 한도에 도달하면 자동으로 전환";
+"auto_switch.enable_title" = "자동 전환 활성화";
+"auto_switch.enable_description" = "활성 프로필의 세션 사용량이 100%에 도달하면 다음 사용 가능한 프로필로 자동 전환합니다";
 
 /* ==================== */
 /* MARK: - Claude CLI Statusline */

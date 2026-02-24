@@ -234,6 +234,16 @@
 "notification.opus_critical.message" = "You've used %@ of your weekly Opus limit! %@";
 "notification.enabled.title" = "Notifications Enabled";
 "notification.enabled.message" = "You will now receive alerts at 75%, 90%, and 95% usage thresholds, plus session reset notifications.";
+"notification.profile_auto_switched.title" = "Profile Auto-Switched";
+"notification.profile_auto_switched.message" = "%@ → %@ due to session limit reached";
+
+/* ==================== */
+/* MARK: - Auto-Switch Profile */
+/* ==================== */
+"auto_switch.title" = "Auto-Switch Profile";
+"auto_switch.subtitle" = "Automatically switch when session limit is reached";
+"auto_switch.enable_title" = "Enable Auto-Switch";
+"auto_switch.enable_description" = "When the active profile hits 100% session usage, automatically switch to the next available profile";
 
 /* ==================== */
 /* MARK: - Error Messages */

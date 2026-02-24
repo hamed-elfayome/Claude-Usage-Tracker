@@ -58,6 +58,9 @@ class MenuBarManager: NSObject, ObservableObject {
     // Track if we've handled the first profile switch (to allow returning to initial profile)
     private var hasHandledFirstProfileSwitch = false
 
+    // Track which profiles have already triggered auto-switch (prevents repeated firing)
+    private var autoSwitchedProfileIds: Set<UUID> = []
+
     // Observer for refresh interval changes
     private var refreshIntervalObserver: NSKeyValueObservation?
 
@@ -273,6 +276,7 @@ class MenuBarManager: NSObject, ObservableObject {
         lastKnownWeeklyResetTime.removeValue(forKey: profileId)
         lastKnownAPIResetTime.removeValue(forKey: profileId)
         resetJustRecorded.removeValue(forKey: profileId)
+        autoSwitchedProfileIds.remove(profileId)
     }
 
     // MARK: - Profile Observation
@@ -886,6 +890,12 @@ class MenuBarManager: NSObject, ObservableObject {
                     config: config
                 )
                 self.isRefreshing = false
+
+                // Check auto-switch for the active profile
+                if let activeProfile = self.profileManager.activeProfile,
+                   let activeUsage = activeProfile.claudeUsage {
+                    self.checkAutoSwitchIfNeeded(usage: activeUsage, currentProfile: activeProfile)
+                }
             }
         }
     }
@@ -1016,6 +1026,9 @@ class MenuBarManager: NSObject, ObservableObject {
                             profileName: profile.name,
                             settings: profile.notificationSettings
                         )
+
+                        // Check if auto-switch should trigger
+                        self.checkAutoSwitchIfNeeded(usage: newUsage, currentProfile: profile)
                     }
                 }
 
@@ -1106,6 +1119,83 @@ class MenuBarManager: NSObject, ObservableObject {
     /// Shows a brief success notification for user-triggered refreshes
     private func showSuccessNotification() {
         NotificationManager.shared.sendSuccessNotification()
+    }
+
+    // MARK: - Auto-Switch Profile on Session Limit
+
+    /// Checks if the current profile hit 100% and switches to the next available one
+    private func checkAutoSwitchIfNeeded(usage: ClaudeUsage, currentProfile: Profile) {
+        // Guard: feature must be enabled
+        guard SharedDataStore.shared.loadAutoSwitchProfileEnabled() else { return }
+
+        // Guard: need more than 1 profile
+        let profiles = profileManager.profiles
+        guard profiles.count > 1 else { return }
+
+        let profileId = currentProfile.id
+
+        // If usage dropped below 100%, clear the flag (session reset)
+        if usage.sessionPercentage < 100.0 {
+            autoSwitchedProfileIds.remove(profileId)
+            return
+        }
+
+        // Guard: usage must be >= 100%
+        guard usage.sessionPercentage >= 100.0 else { return }
+
+        // Guard: don't re-trigger for this profile
+        guard !autoSwitchedProfileIds.contains(profileId) else { return }
+
+        // Mark as triggered
+        autoSwitchedProfileIds.insert(profileId)
+
+        // Find the next available profile
+        guard let nextProfile = findNextAvailableProfile(after: currentProfile) else {
+            LoggingService.shared.log("AutoSwitch: All profiles at 100% or unavailable, staying on '\(currentProfile.name)'")
+            return
+        }
+
+        LoggingService.shared.log("AutoSwitch: Switching from '\(currentProfile.name)' to '\(nextProfile.name)'")
+
+        // Activate the next profile
+        let fromName = currentProfile.name
+        let toName = nextProfile.name
+        Task {
+            await profileManager.activateProfile(nextProfile.id)
+
+            await MainActor.run {
+                // Send notification
+                NotificationManager.shared.sendAutoSwitchNotification(fromProfile: fromName, toProfile: toName)
+
+                // Post notification for UI reactivity
+                NotificationCenter.default.post(name: .autoSwitchProfileTriggered, object: nil)
+            }
+        }
+    }
+
+    /// Finds the next profile with available session capacity, wrapping around
+    private func findNextAvailableProfile(after currentProfile: Profile) -> Profile? {
+        let profiles = profileManager.profiles
+        guard let currentIndex = profiles.firstIndex(where: { $0.id == currentProfile.id }) else { return nil }
+
+        let count = profiles.count
+        for offset in 1..<count {
+            let index = (currentIndex + offset) % count
+            let candidate = profiles[index]
+
+            // Must have usage credentials
+            guard candidate.hasUsageCredentials else { continue }
+
+            // If no saved usage data, treat as available
+            guard let candidateUsage = candidate.claudeUsage else { return candidate }
+
+            // Must be below 100%
+            if candidateUsage.sessionPercentage < 100.0 {
+                return candidate
+            }
+        }
+
+        return nil
     }
 
     // MARK: - Reset Detection for History Recording

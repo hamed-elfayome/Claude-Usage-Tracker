@@ -193,6 +193,24 @@ struct ManageProfilesView: View {
                     }
                 }
 
+                // Auto-Switch Profile Section
+                SettingsSectionCard(
+                    title: "auto_switch.title".localized,
+                    subtitle: "auto_switch.subtitle".localized
+                ) {
+                    SettingToggle(
+                        title: "auto_switch.enable_title".localized,
+                        description: "auto_switch.enable_description".localized,
+                        badge: .new,
+                        isOn: Binding(
+                            get: { SharedDataStore.shared.loadAutoSwitchProfileEnabled() },
+                            set: { enabled in
+                                SharedDataStore.shared.saveAutoSwitchProfileEnabled(enabled)
+                            }
+                        )
+                    )
+                }
+
                 // Info Card
                 SettingsContentCard {
                     VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {

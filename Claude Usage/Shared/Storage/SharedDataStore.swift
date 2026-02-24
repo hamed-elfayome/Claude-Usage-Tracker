@@ -45,6 +45,9 @@ class SharedDataStore {
         static let shortcutRefresh = "shortcutRefresh"
         static let shortcutOpenSettings = "shortcutOpenSettings"
         static let shortcutNextProfile = "shortcutNextProfile"
+
+        // Auto-Switch Profile
+        static let autoSwitchProfileEnabled = "autoSwitchProfileEnabled"
     }
 
     init() {
@@ -293,6 +296,16 @@ class SharedDataStore {
         let key = shortcutKey(for: action)
         guard let data = defaults.data(forKey: key) else { return nil }
         return try? JSONDecoder().decode(KeyCombo.self, from: data)
+    }
+
+    // MARK: - Auto-Switch Profile
+
+    func saveAutoSwitchProfileEnabled(_ enabled: Bool) {
+        defaults.set(enabled, forKey: Keys.autoSwitchProfileEnabled)
+    }
+
+    func loadAutoSwitchProfileEnabled() -> Bool {
+        return defaults.bool(forKey: Keys.autoSwitchProfileEnabled)
     }
 
     // MARK: - Testing Helpers

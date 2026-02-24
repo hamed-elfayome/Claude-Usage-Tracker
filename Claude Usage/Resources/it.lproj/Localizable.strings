@@ -218,6 +218,16 @@
 "notification.opus_critical.message" = "Hai utilizzato %@ del limite settimanale Opus! %@";
 "notification.enabled.title" = "Notifiche Abilitate";
 "notification.enabled.message" = "Ora riceverai avvisi al 75%, 90% e 95% delle soglie di utilizzo, più notifiche di ripristino sessione.";
+"notification.profile_auto_switched.title" = "Profilo cambiato automaticamente";
+"notification.profile_auto_switched.message" = "%@ → %@ per limite di sessione raggiunto";
+
+/* ==================== */
+/* MARK: - Auto-Switch Profile */
+/* ==================== */
+"auto_switch.title" = "Cambio automatico profilo";
+"auto_switch.subtitle" = "Cambia automaticamente quando il limite di sessione viene raggiunto";
+"auto_switch.enable_title" = "Attiva cambio automatico";
+"auto_switch.enable_description" = "Quando il profilo attivo raggiunge il 100% di utilizzo della sessione, passare automaticamente al profilo disponibile successivo";
 
 /* ==================== */
 /* MARK: - Error Messages */

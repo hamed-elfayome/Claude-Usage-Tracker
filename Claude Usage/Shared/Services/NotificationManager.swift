@@ -273,6 +273,28 @@ class NotificationManager: NotificationServiceProtocol {
         }
     }
 
+    /// Sends a notification when auto-switching profiles due to session limit
+    func sendAutoSwitchNotification(fromProfile: String, toProfile: String) {
+        let content = UNMutableNotificationContent()
+        content.title = "notification.profile_auto_switched.title".localized
+        content.body = "notification.profile_auto_switched.message".localized(with: fromProfile, toProfile)
+        content.sound = .default
+        content.categoryIdentifier = "INFO_ALERT"
+
+        let identifier = "auto_switch_\(Date().timeIntervalSince1970)"
+        let request = UNNotificationRequest(
+            identifier: identifier,
+            content: content,
+            trigger: nil
+        )
+
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                LoggingService.shared.logError("Failed to send auto-switch notification: \(error)")
+            }
+        }
+    }
+
     /// Clears all pending notifications
     func clearAllNotifications() {
         UNUserNotificationCenter.current().removeAllPendingNotificationRequests()

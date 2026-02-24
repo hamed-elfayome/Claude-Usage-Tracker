@@ -234,6 +234,16 @@
 "notification.opus_critical.message" = "週次Opus制限の%@を使用しました！%@";
 "notification.enabled.title" = "通知が有効になりました";
 "notification.enabled.message" = "使用率75%、90%、95%の閾値とセッションリセット通知を受信します。";
+"notification.profile_auto_switched.title" = "プロファイルが自動切り替えされました";
+"notification.profile_auto_switched.message" = "%@ → %@ セッション制限に達したため";
+
+/* ==================== */
+/* MARK: - Auto-Switch Profile */
+/* ==================== */
+"auto_switch.title" = "プロファイル自動切り替え";
+"auto_switch.subtitle" = "セッション制限に達した時に自動で切り替え";
+"auto_switch.enable_title" = "自動切り替えを有効にする";
+"auto_switch.enable_description" = "アクティブなプロファイルのセッション使用率が100%に達した場合、次に利用可能なプロファイルに自動的に切り替えます";
 
 /* ==================== */
 /* MARK: - Error Messages */

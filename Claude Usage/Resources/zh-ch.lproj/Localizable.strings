@@ -234,6 +234,16 @@
 "notification.opus_critical.message" = "您已使用每周 Opus 限制的 %@！%@";
 "notification.enabled.title" = "通知已启用";
 "notification.enabled.message" = "您现在将在 75%、90% 和 95% 使用阈值时接收警报，以及会话重置通知。";
+"notification.profile_auto_switched.title" = "配置文件已自动切换";
+"notification.profile_auto_switched.message" = "%@ → %@ 因会话限制已达到";
+
+/* ==================== */
+/* MARK: - Auto-Switch Profile */
+/* ==================== */
+"auto_switch.title" = "自动切换配置文件";
+"auto_switch.subtitle" = "当会话限制达到时自动切换";
+"auto_switch.enable_title" = "启用自动切换";
+"auto_switch.enable_description" = "当活动配置文件的会话使用率达到100%时，自动切换到下一个可用的配置文件";
 
 /* ==================== */
 /* MARK: - Error Messages */

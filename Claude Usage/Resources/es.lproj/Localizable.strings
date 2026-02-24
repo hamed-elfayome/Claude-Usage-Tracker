@@ -155,6 +155,16 @@
 "notification.opus_critical.message" = "¡Has usado %@ de tu límite semanal de Opus! %@";
 "notification.enabled.title" = "Notificaciones Habilitadas";
 "notification.enabled.message" = "Ahora recibirás alertas en los umbrales de uso del 75%, 90% y 95%, además de notificaciones de reinicio de sesión.";
+"notification.profile_auto_switched.title" = "Perfil cambiado automáticamente";
+"notification.profile_auto_switched.message" = "%@ → %@ por límite de sesión alcanzado";
+
+/* ==================== */
+/* MARK: - Auto-Switch Profile */
+/* ==================== */
+"auto_switch.title" = "Cambio automático de perfil";
+"auto_switch.subtitle" = "Cambiar automáticamente cuando se alcanza el límite de sesión";
+"auto_switch.enable_title" = "Activar cambio automático";
+"auto_switch.enable_description" = "Cuando el perfil activo alcanza el 100% de uso de sesión, cambiar automáticamente al siguiente perfil disponible";
 
 /* ==================== */
 /* MARK: - Error Messages */
