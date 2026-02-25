@@ -20,7 +20,7 @@ class ClaudeAPIService: APIServiceProtocol {
 
     /// Sanitizes a credential value for safe use in HTTP headers.
     /// Removes CR/LF characters that could enable header injection attacks.
-    private static func sanitizeForHeader(_ value: String) -> String {
+    static func sanitizeForHeader(_ value: String) -> String {
         return value
             .replacingOccurrences(of: "\r\n", with: "")
             .replacingOccurrences(of: "\r", with: "")

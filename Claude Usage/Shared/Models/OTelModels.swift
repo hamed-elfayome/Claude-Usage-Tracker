@@ -47,17 +47,17 @@ struct OTLPKeyValue: Codable {
     let value: OTLPAnyValue?
 }
 
-/// OTLP AnyValue union type — handles stringValue, intValue (as String), doubleValue, boolValue
+/// OTLP AnyValue union type — handles stringValue, intValue (string or number), doubleValue, boolValue
 struct OTLPAnyValue: Codable {
     let stringValue: String?
-    let intValue: String?      // OTLP encodes int64 as string
+    let intValue: IntOrString?  // OTLP spec says string, but Claude Code sends as number
     let doubleValue: Double?
     let boolValue: Bool?
 
     /// Extract as String
     var asString: String? {
         if let s = stringValue { return s }
-        if let i = intValue { return i }
+        if let i = intValue { return i.stringValue }
         if let d = doubleValue { return String(d) }
         if let b = boolValue { return String(b) }
         return nil
@@ -66,14 +66,14 @@ struct OTLPAnyValue: Codable {
     /// Extract as Double
     var asDouble: Double? {
         if let d = doubleValue { return d }
-        if let i = intValue { return Double(i) }
+        if let i = intValue { return Double(i.stringValue) }
         if let s = stringValue { return Double(s) }
         return nil
     }
 
     /// Extract as Int
     var asInt: Int? {
-        if let i = intValue { return Int(i) }
+        if let i = intValue { return Int(i.stringValue) }
         if let d = doubleValue { return Int(d) }
         if let s = stringValue { return Int(s) }
         return nil
@@ -84,6 +84,29 @@ struct OTLPAnyValue: Codable {
         if let b = boolValue { return b }
         if let s = stringValue { return s == "true" }
         return nil
+    }
+}
+
+/// Wrapper that decodes either a JSON string or a JSON number into a string
+struct IntOrString: Codable {
+    let stringValue: String
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        if let s = try? container.decode(String.self) {
+            stringValue = s
+        } else if let i = try? container.decode(Int64.self) {
+            stringValue = String(i)
+        } else if let d = try? container.decode(Double.self) {
+            stringValue = String(Int64(d))
+        } else {
+            stringValue = "0"
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(stringValue)
     }
 }
 
