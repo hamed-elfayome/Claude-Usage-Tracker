@@ -80,9 +80,9 @@ extension ClaudeAPIService {
     }
 
     struct UsageCostResponse: Codable {
-        let costs: [String: [UsageCostEntry]]
-        let webSearchCosts: [String: [UsageCostEntry]]
-        let codeExecutionCosts: [String: [UsageCostEntry]]
+        let costs: [String: [UsageCostEntry]]?
+        let webSearchCosts: [String: [UsageCostEntry]]?
+        let codeExecutionCosts: [String: [UsageCostEntry]]?
 
         enum CodingKeys: String, CodingKey {
             case costs
@@ -92,12 +92,12 @@ extension ClaudeAPIService {
     }
 
     struct UsageCostEntry: Codable {
-        let workspaceId: String
-        let keyId: String
-        let modelName: String
-        let total: Double
-        let tokenType: String
-        let usageType: String
+        let workspaceId: String?
+        let keyId: String?
+        let modelName: String?
+        let total: Double?
+        let tokenType: String?
+        let usageType: String?
 
         enum CodingKeys: String, CodingKey {
             case workspaceId = "workspace_id"
@@ -107,6 +107,20 @@ extension ClaudeAPIService {
             case tokenType = "token_type"
             case usageType = "usage_type"
         }
+
+        var safeKeyId: String { keyId ?? "unknown" }
+        var safeModelName: String { modelName ?? "Unknown" }
+        var safeTotal: Double { total ?? 0 }
+    }
+
+    struct APIKeyInfo: Codable {
+        let id: String
+        let name: String
+        let status: String
+    }
+
+    struct APIKeysResponse: Codable {
+        let data: [APIKeyInfo]
     }
 
     enum APIError: Error, LocalizedError {

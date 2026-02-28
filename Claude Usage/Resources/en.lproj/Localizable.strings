@@ -74,6 +74,9 @@
 "menubar.api_cost" = "API Cost";
 "menubar.this_month" = "This month";
 "menubar.total" = "Total";
+"menubar.cost_source.cli" = "CLI";
+"menubar.cost_source.api" = "API";
+"menubar.cost_source.unknown" = "Other";
 
 /* ==================== */
 /* MARK: - Usage Status */

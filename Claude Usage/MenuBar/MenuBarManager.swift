@@ -761,6 +761,22 @@ class MenuBarManager: NSObject, ObservableObject {
                 } catch {
                     LoggingService.shared.logError("Failed to refresh profile '\(profile.name)': \(error.localizedDescription)")
                 }
+
+                // Fetch API usage independently (doesn't require Claude.ai credentials)
+                if let apiSessionKey = profile.apiSessionKey,
+                   let orgId = profile.apiOrganizationId {
+                    do {
+                        let newAPIUsage = try await apiService.fetchAPIUsageData(organizationId: orgId, apiSessionKey: apiSessionKey)
+                        await MainActor.run {
+                            self.profileManager.saveAPIUsage(newAPIUsage, for: profile.id)
+                            if profile.id == self.profileManager.activeProfile?.id {
+                                self.apiUsage = newAPIUsage
+                            }
+                        }
+                    } catch {
+                        LoggingService.shared.logAPIError("fetchAPIUsageData (multi-profile)", error: error)
+                    }
+                }
             }
 
             // Update all icons once after all profiles are refreshed
