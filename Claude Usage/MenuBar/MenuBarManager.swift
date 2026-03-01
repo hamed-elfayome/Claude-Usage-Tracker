@@ -183,6 +183,9 @@ class MenuBarManager: NSObject, ObservableObject {
 
         // Observe display mode changes (single/multi profile)
         observeDisplayModeChanges()
+
+        // Observe refresh interval changes
+        observeRefreshIntervalChanges()
     }
 
     func cleanup() {
@@ -369,9 +372,12 @@ class MenuBarManager: NSObject, ObservableObject {
         refreshTimer?.invalidate()
         refreshTimer = nil
 
-        refreshTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+        let timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             self?.refreshUsage()
         }
+        // Add to common run loop modes to ensure timer fires during UI interactions
+        RunLoop.current.add(timer, forMode: .common)
+        refreshTimer = timer
 
         LoggingService.shared.log("Updated refresh interval to \(interval)s")
     }
@@ -547,9 +553,12 @@ class MenuBarManager: NSObject, ObservableObject {
 
     private func startAutoRefresh() {
         let interval = profileManager.activeProfile?.refreshInterval ?? 30.0
-        refreshTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+        let timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             self?.refreshUsage()
         }
+        // Add to common run loop modes to ensure timer fires during UI interactions
+        RunLoop.current.add(timer, forMode: .common)
+        refreshTimer = timer
         LoggingService.shared.log("Started auto-refresh with interval: \(interval)s")
     }
 

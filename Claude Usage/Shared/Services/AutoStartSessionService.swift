@@ -50,6 +50,8 @@ final class AutoStartSessionService {
             }
         }
         timer.tolerance = 30 // Allow up to 30 seconds of drift for energy efficiency
+        // Add to common run loop modes to ensure timer fires during UI interactions
+        RunLoop.current.add(timer, forMode: .common)
         checkTimer = timer
 
         // Register for wake/sleep notifications

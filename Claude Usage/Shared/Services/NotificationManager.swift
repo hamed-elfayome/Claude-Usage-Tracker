@@ -5,8 +5,9 @@ import UserNotifications
 class NotificationManager: NotificationServiceProtocol {
     static let shared = NotificationManager()
 
-    // Track previous session percentage to detect resets
-    private var previousSessionPercentage: Double = 0.0
+    // Track previous session percentage PER PROFILE to detect resets
+    // Key: profile name, Value: previous session percentage
+    private var previousSessionPercentages: [String: Double] = [:]
 
     // Track which notifications have been sent to prevent duplicates
     private var sentNotifications: Set<String> = []
@@ -106,6 +107,7 @@ class NotificationManager: NotificationServiceProtocol {
         }
 
         let sessionPercentage = usage.sessionPercentage
+        let previousSessionPercentage = previousSessionPercentages[profileName] ?? 0.0
 
         // Check for session reset (went from >0% to 0%)
         if previousSessionPercentage > 0.0 && sessionPercentage == 0.0 {
@@ -119,11 +121,11 @@ class NotificationManager: NotificationServiceProtocol {
             // Note: Auto-start session is handled per-profile but called from elsewhere
         }
 
-        // Update previous percentage for next check
-        previousSessionPercentage = sessionPercentage
+        // Update previous percentage for this profile
+        previousSessionPercentages[profileName] = sessionPercentage
 
         // Clear lower threshold notifications to allow re-notification
-        clearLowerThresholdNotifications(currentPercentage: sessionPercentage)
+        clearLowerThresholdNotifications(currentPercentage: sessionPercentage, profileName: profileName)
 
         // 95% threshold
         if sessionPercentage >= 95 && settings.threshold95Enabled {
@@ -241,12 +243,17 @@ class NotificationManager: NotificationServiceProtocol {
         UNUserNotificationCenter.current().removeAllDeliveredNotifications()
     }
 
-    /// Clears sent notification tracking for lower percentages
+    /// Clears sent notification tracking for lower percentages for a specific profile
     /// This allows re-notification if usage goes back up
-    private func clearLowerThresholdNotifications(currentPercentage: Double) {
-        // Remove notifications for percentages lower than current
+    private func clearLowerThresholdNotifications(currentPercentage: Double, profileName: String) {
+        // Remove notifications for this profile that are at percentages lower than current
         sentNotifications = sentNotifications.filter { identifier in
-            // Extract percentage from identifier (format: "type_percentage")
+            // Check if this notification belongs to this profile (format: "profileName_type_percentage")
+            guard identifier.hasPrefix("\(profileName)_") else {
+                return true // Keep notifications from other profiles
+            }
+
+            // Extract percentage from identifier
             let components = identifier.components(separatedBy: "_")
             guard components.count >= 2,
                   let percentage = Double(components.last ?? "0") else {
