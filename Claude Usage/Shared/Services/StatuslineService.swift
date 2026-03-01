@@ -57,12 +57,89 @@ let profileLookup: [String: String] = \(lookupLiteral)
 \(sessionKeyLine)
 \(orgIdLine)
 
+// MARK: - Keychain Service Name Discovery
+
+/// Resolves the actual keychain service name.
+/// Claude Code v2.1.52+ uses "Claude Code-credentials-HASH" instead of "Claude Code-credentials".
+func resolveServiceName() -> String {
+    let legacy = "Claude Code-credentials"
+    let username = NSUserName()
+
+    // Try legacy name first (fast path)
+    let checkProcess = Process()
+    checkProcess.executableURL = URL(fileURLWithPath: "/usr/bin/security")
+    checkProcess.arguments = ["find-generic-password", "-s", legacy, "-a", username]
+    let devNull = Pipe()
+    checkProcess.standardOutput = devNull
+    checkProcess.standardError = devNull
+    do {
+        try checkProcess.run()
+        checkProcess.waitUntilExit()
+    } catch { return legacy }
+    if checkProcess.terminationStatus == 0 { return legacy }
+
+    // Prefix search: look for "Claude Code-credentials-*" via security dump-keychain
+    let dumpProcess = Process()
+    dumpProcess.executableURL = URL(fileURLWithPath: "/usr/bin/security")
+    dumpProcess.arguments = ["dump-keychain"]
+    let dumpPipe = Pipe()
+    let dumpErr = Pipe()
+    dumpProcess.standardOutput = dumpPipe
+    dumpProcess.standardError = dumpErr
+    do {
+        try dumpProcess.run()
+        dumpProcess.waitUntilExit()
+    } catch { return legacy }
+    guard dumpProcess.terminationStatus == 0 else { return legacy }
+
+    let output = String(data: dumpPipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+    let prefix = "Claude Code-credentials-"
+    for line in output.components(separatedBy: "\\n") {
+        let trimmed = line.trimmingCharacters(in: .whitespaces)
+        if trimmed.hasPrefix("\\"svce\\""), trimmed.contains(prefix) {
+            if let startRange = trimmed.range(of: "=\\""),
+               let endRange = trimmed.range(of: "\\"", range: trimmed.index(after: startRange.upperBound)..<trimmed.endIndex) {
+                let serviceName = String(trimmed[startRange.upperBound..<endRange.lowerBound])
+                if serviceName.hasPrefix(prefix) {
+                    return serviceName
+                }
+            }
+        }
+    }
+    return legacy
+}
+
+// MARK: - JSON Validation & File Fallback
+
+func isValidJSON(_ string: String) -> Bool {
+    guard let data = string.data(using: .utf8) else { return false }
+    return (try? JSONSerialization.jsonObject(with: data)) != nil
+}
+
+func readCredentialsFromFile() -> String? {
+    let homeDir = FileManager.default.homeDirectoryForCurrentUser
+    let candidates = [
+        homeDir.appendingPathComponent(".claude/.credentials.json"),
+        homeDir.appendingPathComponent(".claude/credentials.json")
+    ]
+    for path in candidates {
+        guard FileManager.default.fileExists(atPath: path.path) else { continue }
+        if let content = try? String(contentsOf: path, encoding: .utf8)
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+           isValidJSON(content) {
+            return content
+        }
+    }
+    return nil
+}
+
 // MARK: - Keychain Reading
 
 func readKeychainCredentials() -> (accessToken: String, refreshToken: String)? {
+    let serviceName = resolveServiceName()
     let process = Process()
     process.executableURL = URL(fileURLWithPath: "/usr/bin/security")
-    process.arguments = ["find-generic-password", "-s", "Claude Code-credentials", "-a", NSUserName(), "-w"]
+    process.arguments = ["find-generic-password", "-s", serviceName, "-a", NSUserName(), "-w"]
     let pipe = Pipe()
     let errPipe = Pipe()
     process.standardOutput = pipe
@@ -71,10 +148,22 @@ func readKeychainCredentials() -> (accessToken: String, refreshToken: String)? {
         try process.run()
         process.waitUntilExit()
     } catch { return nil }
-    guard process.terminationStatus == 0 else { return nil }
-    guard let raw = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)?
-        .trimmingCharacters(in: .whitespacesAndNewlines),
-          let data = raw.data(using: .utf8),
+
+    var raw: String? = nil
+    if process.terminationStatus == 0 {
+        raw = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    // Validate JSON and fall back to file if truncated or missing
+    if let rawValue = raw, !isValidJSON(rawValue) {
+        raw = readCredentialsFromFile()
+    } else if raw == nil {
+        raw = readCredentialsFromFile()
+    }
+
+    guard let jsonString = raw,
+          let data = jsonString.data(using: .utf8),
           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
           let oauth = json["claudeAiOauth"] as? [String: Any],
           let accessToken = oauth["accessToken"] as? String,
@@ -637,6 +726,22 @@ SHOW_PROFILE=\(showProfile ? "1" : "0")
         }
 
         return false
+    }
+
+    // MARK: - Usage Cache
+
+    /// Writes a usage cache file so the CLI statusline bash script can display
+    /// data immediately without waiting for the Swift fetch script to finish.
+    func writeUsageCache(utilization: Int, resetsAt: String) {
+        let cachePath = Constants.ClaudePaths.claudeDirectory
+            .appendingPathComponent(".statusline-usage-cache")
+
+        let content = "\(utilization)|\(resetsAt)"
+        do {
+            try content.write(to: cachePath, atomically: true, encoding: .utf8)
+        } catch {
+            LoggingService.shared.log("StatuslineService: Failed to write usage cache: \(error.localizedDescription)")
+        }
     }
 }
 

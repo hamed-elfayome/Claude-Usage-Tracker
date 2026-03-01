@@ -44,7 +44,7 @@ struct PopoverContentView: View {
             )
 
             // Intelligent Usage Dashboard
-            SmartUsageDashboard(usage: displayUsage, apiUsage: displayAPIUsage)
+            SmartUsageDashboard(usage: displayUsage, apiUsage: displayAPIUsage, hasCredentialError: manager.hasCredentialError)
 
             // Contextual Insights
             if showInsights {
@@ -485,6 +485,7 @@ struct SmartHeader: View {
 struct SmartUsageDashboard: View {
     let usage: ClaudeUsage
     let apiUsage: APIUsage?
+    var hasCredentialError: Bool = false
     @StateObject private var profileManager = ProfileManager.shared
 
     // Get the display mode from active profile's icon config
@@ -506,8 +507,60 @@ struct SmartUsageDashboard: View {
         return subtitle
     }
 
+    /// How many minutes ago the data was last updated
+    private var minutesSinceUpdate: Int {
+        Int(Date().timeIntervalSince(usage.lastUpdated) / 60)
+    }
+
+    /// Whether the data is considered stale (>5 minutes old)
+    private var isStale: Bool {
+        minutesSinceUpdate > 5
+    }
+
+    /// Formatted "Updated Xm ago" string
+    private var lastUpdatedText: String {
+        let minutes = minutesSinceUpdate
+        if minutes < 1 {
+            return "popover.updated_just_now".localized
+        } else if minutes < 60 {
+            return String(format: "popover.updated_minutes_ago".localized, minutes)
+        } else {
+            let hours = minutes / 60
+            return String(format: "popover.updated_hours_ago".localized, hours)
+        }
+    }
+
     var body: some View {
         VStack(spacing: 16) {
+            // Credential error warning
+            if hasCredentialError {
+                HStack(spacing: 6) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.orange)
+
+                    Text("popover.credentials_expired".localized)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.orange)
+
+                    Spacer()
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.orange.opacity(0.1))
+                )
+            }
+
+            // Last updated timestamp
+            HStack {
+                Spacer()
+                Text(lastUpdatedText)
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundColor(isStale ? .orange : .secondary.opacity(0.6))
+            }
+
             // Primary Usage Card
             SmartUsageCard(
                 title: "menubar.session_usage".localized,

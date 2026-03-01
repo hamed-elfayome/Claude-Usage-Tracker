@@ -713,3 +713,9 @@
 "wizard.migrate_description_short" = "以前のアプリバージョンから古いプロファイルデータをインポート";
 "wizard.skip_migration" = "スキップ";
 "wizard.migration_skipped" = "スキップしました";
+
+/* Stale Data & Credentials */
+"popover.updated_just_now" = "たった今更新";
+"popover.updated_minutes_ago" = "%d分前に更新";
+"popover.updated_hours_ago" = "%d時間前に更新";
+"popover.credentials_expired" = "認証情報の期限切れ";

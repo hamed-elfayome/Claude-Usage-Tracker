@@ -12,21 +12,140 @@ import Security
 class ClaudeCodeSyncService {
     static let shared = ClaudeCodeSyncService()
 
+    /// Cached keychain service name (discovered once per session)
+    private var cachedServiceName: String?
+
     private init() {}
+
+    // MARK: - Service Name Discovery
+
+    /// Legacy service name used by Claude Code < v2.1.52
+    private static let legacyServiceName = "Claude Code-credentials"
+
+    /// Resolves the actual keychain service name for Claude Code credentials.
+    /// Claude Code v2.1.52+ uses "Claude Code-credentials-HASH" instead of "Claude Code-credentials".
+    /// Tries exact legacy match first, then falls back to prefix search via `security dump-keychain`.
+    /// Result is cached for the session lifetime.
+    func resolveServiceName() -> String {
+        if let cached = cachedServiceName {
+            return cached
+        }
+
+        let username = NSUserName()
+
+        // Try legacy name first (fast path)
+        if keychainItemExists(service: Self.legacyServiceName, account: username) {
+            LoggingService.shared.log("ClaudeCodeSync: Found legacy keychain service name")
+            cachedServiceName = Self.legacyServiceName
+            return Self.legacyServiceName
+        }
+
+        // Prefix search: look for "Claude Code-credentials-*" via security dump-keychain
+        if let hashedName = findHashedServiceName() {
+            LoggingService.shared.log("ClaudeCodeSync: Found hashed keychain service name: \(hashedName)")
+            cachedServiceName = hashedName
+            return hashedName
+        }
+
+        // Nothing found — default to legacy name (will produce exit 44 on read, which is handled)
+        LoggingService.shared.log("ClaudeCodeSync: No keychain entry found, defaulting to legacy service name")
+        cachedServiceName = Self.legacyServiceName
+        return Self.legacyServiceName
+    }
+
+    /// Checks if a keychain item exists for the given service and account
+    private func keychainItemExists(service: String, account: String) -> Bool {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/security")
+        process.arguments = ["find-generic-password", "-s", service, "-a", account]
+        let devNull = Pipe()
+        process.standardOutput = devNull
+        process.standardError = devNull
+        do {
+            try process.run()
+            process.waitUntilExit()
+        } catch { return false }
+        return process.terminationStatus == 0
+    }
+
+    /// Searches keychain for service names matching "Claude Code-credentials-*"
+    private func findHashedServiceName() -> String? {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/security")
+        process.arguments = ["dump-keychain"]
+        let pipe = Pipe()
+        let errPipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = errPipe
+        do {
+            try process.run()
+            process.waitUntilExit()
+        } catch { return nil }
+        guard process.terminationStatus == 0 else { return nil }
+
+        let output = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+        // Parse "svce"<blob>="Claude Code-credentials-XXXX" entries
+        let prefix = "Claude Code-credentials-"
+        for line in output.components(separatedBy: "\n") {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            // Match lines like: "svce"<blob>="Claude Code-credentials-abc123"
+            if trimmed.hasPrefix("\"svce\""), trimmed.contains(prefix) {
+                if let startRange = trimmed.range(of: "=\""),
+                   let endRange = trimmed.range(of: "\"", range: trimmed.index(after: startRange.upperBound)..<trimmed.endIndex) {
+                    let serviceName = String(trimmed[startRange.upperBound..<endRange.lowerBound])
+                    if serviceName.hasPrefix(prefix) {
+                        return serviceName
+                    }
+                }
+            }
+        }
+        return nil
+    }
+
+    /// Invalidates the cached service name (e.g. after CLI re-login)
+    func invalidateServiceNameCache() {
+        cachedServiceName = nil
+    }
 
     // MARK: - System Keychain Access
 
     /// Reads Claude Code credentials from system Keychain using security command
     func readSystemCredentials() throws -> String? {
         let username = NSUserName()
-        LoggingService.shared.log("ClaudeCodeSync: Reading credentials for user '\(username)'...")
+        let serviceName = resolveServiceName()
+        LoggingService.shared.log("ClaudeCodeSync: Reading credentials for user '\(username)' (service: '\(serviceName)')...")
 
+        let keychainValue = try readKeychainItem(service: serviceName, account: username)
+
+        // If keychain returned data, validate JSON integrity (may be truncated at ~2KB)
+        if let value = keychainValue, !isValidJSON(value) {
+            LoggingService.shared.log("ClaudeCodeSync: Keychain JSON appears truncated (\(value.count) chars), trying file fallback")
+            if let fileValue = readCredentialsFromFile() {
+                LoggingService.shared.log("ClaudeCodeSync: Successfully read credentials from file fallback (\(fileValue.count) chars)")
+                return fileValue
+            }
+            LoggingService.shared.log("ClaudeCodeSync: File fallback also failed, returning truncated keychain data")
+        }
+
+        // If keychain had nothing at all, also try file fallback
+        if keychainValue == nil {
+            if let fileValue = readCredentialsFromFile() {
+                LoggingService.shared.log("ClaudeCodeSync: No keychain item, but found credentials in file fallback (\(fileValue.count) chars)")
+                return fileValue
+            }
+        }
+
+        return keychainValue
+    }
+
+    /// Low-level keychain read for a specific service/account pair
+    private func readKeychainItem(service: String, account: String) throws -> String? {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/security")
         process.arguments = [
             "find-generic-password",
-            "-s", "Claude Code-credentials",
-            "-a", username,
+            "-s", service,
+            "-a", account,
             "-w"  // Print password only
         ]
 
@@ -61,16 +180,51 @@ class ClaudeCodeSyncService {
         }
     }
 
+    // MARK: - JSON Validation & File Fallback
+
+    /// Checks whether a string is valid, parseable JSON
+    func isValidJSON(_ string: String) -> Bool {
+        guard let data = string.data(using: .utf8) else { return false }
+        return (try? JSONSerialization.jsonObject(with: data)) != nil
+    }
+
+    /// Reads credentials from the Claude CLI credentials file on disk.
+    /// Claude Code stores credentials at ~/.claude/.credentials.json (or ~/.claude/credentials.json).
+    /// This serves as a fallback when the keychain entry is truncated or missing.
+    func readCredentialsFromFile() -> String? {
+        let homeDir = FileManager.default.homeDirectoryForCurrentUser
+        let candidates = [
+            homeDir.appendingPathComponent(".claude/.credentials.json"),
+            homeDir.appendingPathComponent(".claude/credentials.json")
+        ]
+
+        for path in candidates {
+            guard FileManager.default.fileExists(atPath: path.path) else { continue }
+            do {
+                let content = try String(contentsOf: path, encoding: .utf8)
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                if isValidJSON(content) {
+                    return content
+                }
+                LoggingService.shared.log("ClaudeCodeSync: File at \(path.lastPathComponent) exists but contains invalid JSON")
+            } catch {
+                LoggingService.shared.log("ClaudeCodeSync: Failed to read \(path.lastPathComponent): \(error.localizedDescription)")
+            }
+        }
+        return nil
+    }
+
     /// Writes Claude Code credentials to system Keychain using security command
     func writeSystemCredentials(_ jsonData: String) throws {
-        LoggingService.shared.log("Writing credentials to keychain using security command")
+        let serviceName = resolveServiceName()
+        LoggingService.shared.log("Writing credentials to keychain using security command (service: '\(serviceName)')")
 
         // First, delete existing item
         let deleteProcess = Process()
         deleteProcess.executableURL = URL(fileURLWithPath: "/usr/bin/security")
         deleteProcess.arguments = [
             "delete-generic-password",
-            "-s", "Claude Code-credentials",
+            "-s", serviceName,
             "-a", NSUserName()
         ]
 
@@ -89,7 +243,7 @@ class ClaudeCodeSyncService {
         addProcess.executableURL = URL(fileURLWithPath: "/usr/bin/security")
         addProcess.arguments = [
             "add-generic-password",
-            "-s", "Claude Code-credentials",
+            "-s", serviceName,
             "-a", NSUserName(),
             "-w", jsonData,
             "-U"  // Update if exists

@@ -703,3 +703,11 @@
 "wizard.migrate_description_short" = "Import your old profiles data from previous app version";
 "wizard.skip_migration" = "Skip";
 "wizard.migration_skipped" = "Skipped";
+
+/* ==================== */
+/* MARK: - Stale Data & Credentials */
+/* ==================== */
+"popover.updated_just_now" = "Updated just now";
+"popover.updated_minutes_ago" = "Updated %dm ago";
+"popover.updated_hours_ago" = "Updated %dh ago";
+"popover.credentials_expired" = "Credentials expired";

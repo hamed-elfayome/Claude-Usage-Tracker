@@ -713,3 +713,9 @@
 "wizard.migrate_description_short" = "Importieren Sie Ihre alten Profildaten aus der vorherigen App-Version";
 "wizard.skip_migration" = "Überspringen";
 "wizard.migration_skipped" = "Übersprungen";
+
+/* Stale Data & Credentials */
+"popover.updated_just_now" = "Gerade aktualisiert";
+"popover.updated_minutes_ago" = "Vor %d Min. aktualisiert";
+"popover.updated_hours_ago" = "Vor %d Std. aktualisiert";
+"popover.credentials_expired" = "Zugangsdaten abgelaufen";

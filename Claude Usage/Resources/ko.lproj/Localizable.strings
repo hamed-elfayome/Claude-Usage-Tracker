@@ -773,3 +773,9 @@
 "wizard.migrate_description_short" = "이전 앱 버전에서 이전 프로필 데이터 가져오기";
 "wizard.skip_migration" = "건너뛰기";
 "wizard.migration_skipped" = "건너뜀";
+
+/* Stale Data & Credentials */
+"popover.updated_just_now" = "방금 업데이트됨";
+"popover.updated_minutes_ago" = "%d분 전 업데이트됨";
+"popover.updated_hours_ago" = "%d시간 전 업데이트됨";
+"popover.credentials_expired" = "자격 증명 만료됨";

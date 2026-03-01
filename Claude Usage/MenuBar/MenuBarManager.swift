@@ -10,6 +10,7 @@ class MenuBarManager: NSObject, ObservableObject {
     @Published private(set) var status: ClaudeStatus = .unknown
     @Published private(set) var apiUsage: APIUsage?
     @Published private(set) var isRefreshing: Bool = false
+    @Published var hasCredentialError: Bool = false
 
     // Multi-profile mode: track which profile's icon was clicked
     @Published private(set) var clickedProfileId: UUID?
@@ -936,6 +937,10 @@ class MenuBarManager: NSObject, ObservableObject {
                 ErrorRecovery.shared.recordSuccess(for: .api)
                 usageSuccess = true
 
+                await MainActor.run {
+                    self.hasCredentialError = false
+                }
+
             } catch {
                 // Convert to AppError and log
                 let appError = AppError.wrap(error)
@@ -944,10 +949,20 @@ class MenuBarManager: NSObject, ObservableObject {
                 // Record failure for circuit breaker
                 ErrorRecovery.shared.recordFailure(for: .api)
 
-                // Show error to user if this was triggered by session key update
                 await MainActor.run {
-                    // Check if this refresh was triggered within last 5 seconds
-                    // (indicates user-initiated action like saving session key)
+                    // If auth-related error, clear stale usage and flag credential error
+                    // (mirrors the multi-profile logic that already does this)
+                    if appError.code == .apiUnauthorized || appError.code == .sessionKeyNotFound {
+                        self.hasCredentialError = true
+                        if let profileId = self.profileManager.activeProfile?.id {
+                            self.profileManager.clearClaudeUsage(for: profileId)
+                            self.usage = .empty
+                            self.updateAllStatusBarIcons()
+                            LoggingService.shared.log("MenuBarManager: Cleared stale usage for active profile (credentials invalid)")
+                        }
+                    }
+
+                    // Show error to user if this was triggered by session key update
                     if abs(self.lastRefreshTriggerTime.timeIntervalSinceNow) < 5 {
                         ErrorPresenter.shared.showAlert(for: appError)
                     } else {
