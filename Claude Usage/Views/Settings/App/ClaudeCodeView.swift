@@ -70,59 +70,32 @@ struct ClaudeCodeView: View {
                     .fill(DesignTokens.Colors.cardBackground)
             )
 
-            // Components - Simple and clean
-            VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
-                Text("ui.display_components".localized)
-                    .font(DesignTokens.Typography.sectionTitle)
-
+            // Components
+            SettingsSectionCard(title: "ui.display_components".localized) {
                 VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
-                    Toggle("claudecode.component_directory".localized, isOn: $showDirectory)
-                        .font(DesignTokens.Typography.body)
-
-                    Toggle("claudecode.component_branch".localized, isOn: $showBranch)
-                        .font(DesignTokens.Typography.body)
+                    SettingToggle(title: "claudecode.component_directory".localized, isOn: $showDirectory)
+                    SettingToggle(title: "claudecode.component_branch".localized, isOn: $showBranch)
 
                     if ProfileManager.shared.profiles.count > 1 {
-                        Toggle("claudecode.component_profile".localized, isOn: $showProfile)
-                            .font(DesignTokens.Typography.body)
+                        SettingToggle(title: "claudecode.component_profile".localized, isOn: $showProfile)
                     }
 
-                    Toggle("claudecode.component_usage".localized, isOn: $showUsage)
-                        .font(DesignTokens.Typography.body)
+                    SettingToggle(title: "claudecode.component_usage".localized, isOn: $showUsage)
 
                     if showUsage {
-                        HStack(spacing: 0) {
-                            Spacer().frame(width: 20)
-                            Toggle("claudecode.component_progressbar".localized, isOn: $showProgressBar)
-                                .font(DesignTokens.Typography.caption)
-                                .foregroundColor(.secondary)
+                        VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
+                            SettingToggle(title: "claudecode.component_progressbar".localized, isOn: $showProgressBar)
+                            SettingToggle(title: "claudecode.component_resettime".localized, isOn: $showResetTime)
                         }
-
-                        HStack(spacing: 0) {
-                            Spacer().frame(width: 20)
-                            Toggle("claudecode.component_resettime".localized, isOn: $showResetTime)
-                                .font(DesignTokens.Typography.caption)
-                                .foregroundColor(.secondary)
-                        }
+                        .padding(.leading, DesignTokens.Spacing.cardPadding)
                     }
                 }
             }
 
-            // Action buttons - compact
+            // Action buttons
             HStack(spacing: DesignTokens.Spacing.iconText) {
-                Button(action: applyConfiguration) {
-                    Text("claudecode.button_apply".localized)
-                        .font(DesignTokens.Typography.body)
-                        .frame(minWidth: 70)
-                }
-                .buttonStyle(.borderedProminent)
-
-                Button(action: resetConfiguration) {
-                    Text("claudecode.button_reset".localized)
-                        .font(DesignTokens.Typography.body)
-                        .frame(minWidth: 70)
-                }
-                .buttonStyle(.bordered)
+                SettingsButton.primary(title: "claudecode.button_apply".localized, icon: "checkmark", action: applyConfiguration)
+                SettingsButton(title: "claudecode.button_reset".localized, icon: "arrow.counterclockwise", action: resetConfiguration)
             }
 
             // Status message
@@ -214,13 +187,16 @@ struct ClaudeCodeView: View {
             try StatuslineService.shared.updateClaudeCodeSettings(enabled: true)
 
             // Write initial cache with current usage data (for CLI fallback script)
-            if let usage = ProfileManager.shared.activeProfile?.claudeUsage {
+            if let profile = ProfileManager.shared.activeProfile,
+               let usage = profile.claudeUsage {
                 let iso8601Formatter = ISO8601DateFormatter()
                 iso8601Formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
                 let resetsAtString = iso8601Formatter.string(from: usage.sessionResetTime)
+                let profileName = ProfileManager.shared.profiles.count > 1 ? profile.name : nil
                 StatuslineService.shared.writeUsageCache(
                     utilization: Int(usage.sessionPercentage),
-                    resetsAt: resetsAtString
+                    resetsAt: resetsAtString,
+                    profileName: profileName
                 )
             }
 

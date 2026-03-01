@@ -97,10 +97,10 @@ struct ManageProfilesView: View {
                                 if profileManager.profiles.filter({ $0.isSelectedForDisplay }).count == 1 {
                                     HStack(alignment: .top, spacing: 6) {
                                         Image(systemName: "exclamationmark.triangle.fill")
-                                            .font(.system(size: 10))
-                                            .foregroundColor(.orange)
+                                            .font(.system(size: DesignTokens.Icons.tiny))
+                                            .foregroundColor(DesignTokens.Colors.warning)
                                         Text("multiprofile.at_least_one".localized)
-                                            .font(.system(size: 10))
+                                            .font(DesignTokens.Typography.tiny)
                                             .foregroundColor(.secondary)
                                     }
                                     .padding(.top, 4)
@@ -182,8 +182,8 @@ struct ManageProfilesView: View {
                             // Info message
                             HStack(alignment: .top, spacing: 8) {
                                 Image(systemName: "info.circle.fill")
-                                    .font(.system(size: 11))
-                                    .foregroundColor(.blue)
+                                    .font(.system(size: DesignTokens.Icons.small))
+                                    .foregroundColor(DesignTokens.Colors.accent)
                                 Text("multiprofile.info".localized)
                                     .font(DesignTokens.Typography.caption)
                                     .foregroundColor(.secondary)
@@ -224,8 +224,8 @@ struct ManageProfilesView: View {
 
                 if let error = errorMessage {
                     Text(error)
-                        .foregroundColor(.red)
-                        .font(.system(size: 11))
+                        .foregroundColor(DesignTokens.Colors.error)
+                        .font(DesignTokens.Typography.caption)
                 }
             }
             .padding()
@@ -275,9 +275,9 @@ struct ProfileRow: View {
                     })
                     .textFieldStyle(.roundedBorder)
                 } else {
-                    HStack(spacing: 8) {
+                    HStack(spacing: DesignTokens.Spacing.small) {
                         Text(profile.name)
-                            .font(.system(size: 14, weight: .medium))
+                            .font(DesignTokens.Typography.sectionTitle)
 
                         if profileManager.activeProfile?.id == profile.id {
                             Text("profiles.active_badge".localized)
@@ -286,13 +286,13 @@ struct ProfileRow: View {
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
                                 .background(Color.accentColor)
-                                .cornerRadius(4)
+                                .cornerRadius(DesignTokens.Radius.tiny)
                         }
                     }
                 }
 
                 Text(profileInfo)
-                    .font(.system(size: 10))
+                    .font(DesignTokens.Typography.tiny)
                     .foregroundColor(.secondary)
             }
 
@@ -307,7 +307,7 @@ struct ProfileRow: View {
                         isEditing = true
                     }) {
                         Image(systemName: "pencil")
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Typography.body)
                     }
                     .buttonStyle(.plain)
                     .help("profiles.rename".localized)
@@ -320,7 +320,7 @@ struct ProfileRow: View {
                             }
                         }) {
                             Image(systemName: "checkmark.circle")
-                                .font(.system(size: 12))
+                                .font(DesignTokens.Typography.body)
                         }
                         .buttonStyle(.plain)
                         .help("profiles.activate".localized)
@@ -332,7 +332,7 @@ struct ProfileRow: View {
                             showingDeleteConfirmation = true
                         }) {
                             Image(systemName: "trash")
-                                .font(.system(size: 12))
+                                .font(DesignTokens.Typography.body)
                                 .foregroundColor(.red)
                         }
                         .buttonStyle(.plain)
@@ -344,7 +344,7 @@ struct ProfileRow: View {
                         saveProfileName()
                     }) {
                         Image(systemName: "checkmark")
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Typography.body)
                             .foregroundColor(.green)
                     }
                     .buttonStyle(.plain)
@@ -354,7 +354,7 @@ struct ProfileRow: View {
                         isEditing = false
                     }) {
                         Image(systemName: "xmark")
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Typography.body)
                             .foregroundColor(.red)
                     }
                     .buttonStyle(.plain)
@@ -411,18 +411,18 @@ struct CreateProfileSheet: View {
     var body: some View {
         VStack(spacing: 20) {
             Text("profiles.create_title".localized)
-                .font(.system(size: 18, weight: .semibold))
+                .font(DesignTokens.Typography.pageTitle)
 
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
                 Text("profiles.name_label".localized)
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Typography.body)
                     .foregroundColor(.secondary)
 
                 TextField("profiles.name_placeholder".localized, text: $profileName)
                     .textFieldStyle(.roundedBorder)
 
                 Text("profiles.name_hint".localized)
-                    .font(.system(size: 10))
+                    .font(DesignTokens.Typography.tiny)
                     .foregroundColor(.secondary)
             }
 

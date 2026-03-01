@@ -14,20 +14,20 @@ struct MetricIconCard: View {
     let onConfigChanged: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.md) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
             // Header with enable toggle
-            HStack {
+            HStack(spacing: DesignTokens.Spacing.iconText) {
                 Image(systemName: metricType.icon)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(SettingsColors.primary)
-                    .frame(width: 20)
+                    .font(.system(size: DesignTokens.Icons.standard, weight: .medium))
+                    .foregroundColor(DesignTokens.Colors.accent)
+                    .frame(width: DesignTokens.Spacing.iconFrame)
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.extraSmall) {
                     Text(metricType.displayName)
-                        .font(Typography.sectionHeader)
+                        .font(DesignTokens.Typography.sectionTitle)
 
                     Text(metricType.description)
-                        .font(.system(size: 10))
+                        .font(DesignTokens.Typography.tiny)
                         .foregroundColor(.secondary)
                 }
 
@@ -48,11 +48,12 @@ struct MetricIconCard: View {
                 // Icon style selector (only for Session and Week, not API)
                 if metricType != .api {
                     Divider()
-                        .padding(.vertical, Spacing.xs)
+                        .padding(.vertical, DesignTokens.Spacing.extraSmall)
 
-                    VStack(alignment: .leading, spacing: Spacing.sm) {
+                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
                         Text("ui.icon_style".localized)
-                            .font(.system(size: 11, weight: .medium))
+                            .font(DesignTokens.Typography.caption)
+                            .fontWeight(.medium)
                             .foregroundColor(.secondary)
 
                         IconStylePicker(selectedStyle: Binding(
@@ -65,34 +66,52 @@ struct MetricIconCard: View {
                     }
                 }
 
+                // Progress direction (for session and week circular styles)
+                if metricType != .api {
+                    Divider()
+                        .padding(.vertical, DesignTokens.Spacing.extraSmall)
+
+                    SettingToggle(
+                        title: "appearance.clockwise_title".localized,
+                        description: "appearance.clockwise_description".localized,
+                        isOn: Binding(
+                            get: { config.clockwiseProgress },
+                            set: { newValue in
+                                config.clockwiseProgress = newValue
+                                onConfigChanged()
+                            }
+                        )
+                    )
+                }
+
                 // Metric-specific options
                 if metricType == .session && (config.iconStyle == .battery || config.iconStyle == .progressBar) {
                     Divider()
-                        .padding(.vertical, Spacing.xs)
+                        .padding(.vertical, DesignTokens.Spacing.extraSmall)
 
                     SessionDisplayOptions(config: $config, onConfigChanged: onConfigChanged)
                 } else if metricType == .week && config.iconStyle == .percentageOnly {
                     Divider()
-                        .padding(.vertical, Spacing.xs)
+                        .padding(.vertical, DesignTokens.Spacing.extraSmall)
 
                     WeekDisplayOptions(config: $config, onConfigChanged: onConfigChanged)
                 } else if metricType == .api {
                     Divider()
-                        .padding(.vertical, Spacing.xs)
+                        .padding(.vertical, DesignTokens.Spacing.extraSmall)
 
                     APIDisplayOptions(config: $config, onConfigChanged: onConfigChanged)
                 }
             }
         }
-        .padding(Spacing.md)
+        .padding(DesignTokens.Spacing.cardPadding)
         .background(
-            RoundedRectangle(cornerRadius: Spacing.radiusMedium)
-                .fill(Color(nsColor: .controlBackgroundColor))
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.card)
+                .fill(DesignTokens.Colors.cardBackground)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: Spacing.radiusMedium)
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.card)
                 .strokeBorder(
-                    config.isEnabled ? SettingsColors.success.opacity(0.3) : Color.gray.opacity(0.2),
+                    config.isEnabled ? DesignTokens.Colors.success.opacity(0.3) : DesignTokens.Colors.cardBorder,
                     lineWidth: 1
                 )
         )
@@ -106,24 +125,17 @@ private struct SessionDisplayOptions: View {
     let onConfigChanged: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.sm) {
-            Toggle(isOn: Binding(
+        SettingToggle(
+            title: "metric.show_countdown".localized,
+            description: "metric.countdown_description".localized,
+            isOn: Binding(
                 get: { config.showNextSessionTime },
                 set: { newValue in
                     config.showNextSessionTime = newValue
                     onConfigChanged()
                 }
-            )) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("metric.show_countdown".localized)
-                        .font(.system(size: 11, weight: .medium))
-                    Text("metric.countdown_description".localized)
-                        .font(.system(size: 10))
-                        .foregroundColor(.secondary)
-                }
-            }
-            .toggleStyle(.switch)
-        }
+            )
+        )
     }
 }
 
@@ -134,9 +146,10 @@ private struct WeekDisplayOptions: View {
     let onConfigChanged: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.sm) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
             Text("ui.display_mode".localized)
-                .font(.system(size: 11, weight: .medium))
+                .font(DesignTokens.Typography.caption)
+                .fontWeight(.medium)
                 .foregroundColor(.secondary)
 
             Picker("", selection: Binding(
@@ -147,10 +160,10 @@ private struct WeekDisplayOptions: View {
                 }
             )) {
                 ForEach(WeekDisplayMode.allCases, id: \.self) { mode in
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.extraSmall) {
                         Text(mode.displayName)
                         Text(mode.description)
-                            .font(.system(size: 10))
+                            .font(DesignTokens.Typography.tiny)
                             .foregroundColor(.secondary)
                     }
                     .tag(mode)
@@ -168,9 +181,10 @@ private struct APIDisplayOptions: View {
     let onConfigChanged: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.sm) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
             Text("ui.display_mode".localized)
-                .font(.system(size: 11, weight: .medium))
+                .font(DesignTokens.Typography.caption)
+                .fontWeight(.medium)
                 .foregroundColor(.secondary)
 
             Picker("", selection: Binding(
@@ -181,10 +195,10 @@ private struct APIDisplayOptions: View {
                 }
             )) {
                 ForEach(APIDisplayMode.allCases, id: \.self) { mode in
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.extraSmall) {
                         Text(mode.displayName)
                         Text(mode.description)
-                            .font(.system(size: 10))
+                            .font(DesignTokens.Typography.tiny)
                             .foregroundColor(.secondary)
                     }
                     .tag(mode)

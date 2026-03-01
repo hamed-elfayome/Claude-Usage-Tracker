@@ -350,9 +350,11 @@ class ProfileManager: ObservableObject {
             let iso8601Formatter = ISO8601DateFormatter()
             iso8601Formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
             let resetsAtString = iso8601Formatter.string(from: usage.sessionResetTime)
+            let profileName = profiles.count > 1 ? profiles[index].name : nil
             StatuslineService.shared.writeUsageCache(
                 utilization: Int(usage.sessionPercentage),
-                resetsAt: resetsAtString
+                resetsAt: resetsAtString,
+                profileName: profileName
             )
         }
 

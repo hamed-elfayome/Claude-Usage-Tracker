@@ -121,10 +121,14 @@
 /* ==================== */
 "notifications.enable" = "通知を有効にする";
 "notifications.enable.description" = "使用制限に近づいたときにアラートを受信";
+"notifications.sound" = "通知音";
+"notifications.sound.default" = "デフォルト";
+"notifications.sound.none" = "なし（サイレント）";
 "notifications.alert_thresholds" = "アラート閾値";
 "notifications.threshold.warning" = "警告";
 "notifications.threshold.high" = "使用量が多い";
 "notifications.threshold.critical" = "クリティカル";
+"notifications.threshold.info" = "情報";
 "notifications.threshold.session_reset" = "セッションリセット";
 
 /* ==================== */
@@ -160,6 +164,7 @@
 "about.contributors" = "貢献者（%d人）";
 "about.contributors_loading" = "貢献者";
 "about.links" = "リンク";
+"about.actions" = "アクション";
 "about.star_github" = "GitHubでスター";
 "about.report_issue" = "問題を報告";
 "about.send_feedback" = "フィードバックを送信";
@@ -418,6 +423,7 @@
 /* ==================== */
 "appearance.title" = "メニューバーの外観";
 "appearance.subtitle" = "メニューバーアイコンとメトリクスをカスタマイズ";
+"appearance.display_section" = "表示";
 "appearance.global_settings" = "グローバル設定";
 "appearance.menu_bar_metrics" = "メニューバーメトリクス";
 "appearance.monochrome_title" = "モノクロ";
@@ -426,6 +432,8 @@
 "appearance.show_labels_description" = "各メトリクスのプレフィックスラベル（S:、W:、API:）を表示";
 "appearance.show_remaining_title" = "残り容量のパーセンテージを表示";
 "appearance.show_remaining_description" = "使用済みパーセンテージの代わりに残り容量を表示（macOSバッテリーのように）";
+"appearance.clockwise_title" = "時計回りの進行";
+"appearance.clockwise_description" = "進行アークを反時計回りではなく時計回りに表示";
 "appearance.multiprofile_locked_title" = "外観設定がロックされています";
 "appearance.multiprofile_locked_description" = "マルチプロファイル表示がアクティブな間、これらの設定は無効になっています。マルチプロファイルモードでは各プロファイルが独自の外観を使用します。";
 "appearance.disable_multiprofile" = "マルチプロファイル表示をオフにする";
@@ -514,6 +522,7 @@
 /* ==================== */
 "general.title" = "一般";
 "general.subtitle" = "更新間隔、自動開始、通知";
+"general.behavior_section" = "動作";
 "general.refresh_title" = "更新間隔";
 "general.refresh_subtitle" = "使用状況の更新を確認する頻度";
 "general.refresh_seconds" = "%d秒";
@@ -524,6 +533,11 @@
 "general.autostart_toggle" = "新しいセッションを自動開始";
 "general.autostart_description" = "セッションがリセットされたときに自動的にメッセージを送信";
 "general.autostart_requirement" = "• 認証情報 → Claude.aiタブでセッションキーが構成されている";
+"general.autorotate_title" = "プロファイル自動切替";
+"general.autorotate_subtitle" = "使用率が最も低いプロファイルに自動的に切り替え";
+"general.autorotate_toggle" = "自動切替を有効にする";
+"general.autorotate_description" = "しきい値を超えた場合、使用率が最も低いプロファイルに切り替え";
+"general.autorotate_threshold" = "使用率が次を超えたら切替:";
 "general.notifications_title" = "通知";
 "general.notifications_subtitle" = "使用状況のマイルストーンについて通知を受け取る";
 "general.connected" = "接続済み";
@@ -719,3 +733,4 @@
 "popover.updated_minutes_ago" = "%d分前に更新";
 "popover.updated_hours_ago" = "%d時間前に更新";
 "popover.credentials_expired" = "認証情報の期限切れ";
+"popover.refresh_failures" = "更新が%d回失敗しました";

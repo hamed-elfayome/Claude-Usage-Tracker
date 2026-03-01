@@ -142,6 +142,7 @@
 /* ==================== */
 "general.title" = "일반";
 "general.subtitle" = "새로고침 간격, 자동 시작, 알림";
+"general.behavior_section" = "동작";
 "general.refresh_title" = "새로고침 간격";
 "general.refresh_subtitle" = "사용량 업데이트 확인 주기";
 "general.refresh_seconds" = "%d초";
@@ -152,6 +153,11 @@
 "general.autostart_toggle" = "새 세션 자동 시작";
 "general.autostart_description" = "세션 재설정 시 자동으로 메시지 전송";
 "general.autostart_requirement" = "• 자격 증명 → Claude.ai 탭에서 세션 키 구성됨";
+"general.autorotate_title" = "프로필 자동 전환";
+"general.autorotate_subtitle" = "사용량이 가장 낮은 프로필로 자동 전환";
+"general.autorotate_toggle" = "자동 전환 활성화";
+"general.autorotate_description" = "임계값을 초과하면 사용량이 가장 낮은 프로필로 전환";
+"general.autorotate_threshold" = "사용량이 다음을 초과하면 전환:";
 "general.notifications_title" = "알림";
 "general.notifications_subtitle" = "사용량 마일스톤 알림 받기";
 "general.connected" = "연결됨";
@@ -169,6 +175,7 @@
 /* ==================== */
 "appearance.title" = "외형";
 "appearance.subtitle" = "메뉴 바 사용자 지정";
+"appearance.display_section" = "디스플레이";
 "appearance.global_settings" = "전역 설정";
 "appearance.global_subtitle" = "메뉴 바 아이콘 동작 사용자 지정";
 "appearance.menu_bar_metrics" = "메뉴 바 메트릭";
@@ -179,6 +186,8 @@
 "appearance.show_labels_description" = "각 메트릭에 접두사 레이블(S:, W:, API:) 표시";
 "appearance.show_remaining_title" = "남은 용량 퍼센트 표시";
 "appearance.show_remaining_description" = "사용된 퍼센트 대신 남은 용량 표시 (macOS 배터리처럼)";
+"appearance.clockwise_title" = "시계 방향 진행";
+"appearance.clockwise_description" = "진행 아크를 반시계 방향 대신 시계 방향으로 채우기";
 "appearance.multiprofile_locked_title" = "모양 설정 잠김";
 "appearance.multiprofile_locked_description" = "다중 프로필 표시가 활성화된 동안 이 설정은 비활성화됩니다. 다중 프로필 모드에서는 각 프로필이 자체 모양을 사용합니다.";
 "appearance.disable_multiprofile" = "다중 프로필 표시 끄기";
@@ -493,6 +502,7 @@
 "about.contributors" = "기여자 (%d명)";
 "about.contributors_loading" = "기여자";
 "about.links" = "링크";
+"about.actions" = "작업";
 "about.star_github" = "GitHub에서 스타 주기";
 "about.report_issue" = "이슈 신고";
 "about.send_feedback" = "피드백 보내기";
@@ -652,10 +662,14 @@
 /* ==================== */
 "notifications.enable" = "알림 활성화";
 "notifications.enable.description" = "사용량 한도 접근 시 알림 받기";
+"notifications.sound" = "알림 소리";
+"notifications.sound.default" = "기본";
+"notifications.sound.none" = "없음 (무음)";
 "notifications.alert_thresholds" = "알림 임계값";
 "notifications.threshold.warning" = "경고";
 "notifications.threshold.high" = "높은 사용량";
 "notifications.threshold.critical" = "위험";
+"notifications.threshold.info" = "정보";
 "notifications.threshold.session_reset" = "세션 리셋";
 
 /* ==================== */
@@ -779,3 +793,4 @@
 "popover.updated_minutes_ago" = "%d분 전 업데이트됨";
 "popover.updated_hours_ago" = "%d시간 전 업데이트됨";
 "popover.credentials_expired" = "자격 증명 만료됨";
+"popover.refresh_failures" = "새로고침 %d회 실패";

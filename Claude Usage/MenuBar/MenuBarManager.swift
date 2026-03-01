@@ -11,6 +11,8 @@ class MenuBarManager: NSObject, ObservableObject {
     @Published private(set) var apiUsage: APIUsage?
     @Published private(set) var isRefreshing: Bool = false
     @Published var hasCredentialError: Bool = false
+    @Published var consecutiveRefreshFailures: Int = 0
+    @Published var lastRefreshError: String?
 
     // Multi-profile mode: track which profile's icon was clicked
     @Published private(set) var clickedProfileId: UUID?
@@ -25,6 +27,10 @@ class MenuBarManager: NSObject, ObservableObject {
 
     // Event monitor for closing popover on outside click
     private var eventMonitor: Any?
+
+    // Global keyboard shortcut monitor
+    private var globalKeyMonitor: Any?
+    private var localKeyMonitor: Any?
 
     // Detached window reference (when popover is detached)
     private var detachedWindow: NSWindow?
@@ -187,6 +193,9 @@ class MenuBarManager: NSObject, ObservableObject {
 
         // Observe refresh interval changes
         observeRefreshIntervalChanges()
+
+        // Register global keyboard shortcut (Ctrl+Shift+C)
+        registerGlobalShortcut()
     }
 
     func cleanup() {
@@ -194,7 +203,15 @@ class MenuBarManager: NSObject, ObservableObject {
         refreshTimer = nil
         networkMonitor.stopMonitoring()
         autoStartService.stop()
-        cancellables.removeAll()  // Clean up Combine subscriptions
+        cancellables.removeAll()
+        if let globalKeyMonitor = globalKeyMonitor {
+            NSEvent.removeMonitor(globalKeyMonitor)
+            self.globalKeyMonitor = nil
+        }
+        if let localKeyMonitor = localKeyMonitor {
+            NSEvent.removeMonitor(localKeyMonitor)
+            self.localKeyMonitor = nil
+        }
         refreshIntervalObserver?.invalidate()
         refreshIntervalObserver = nil
         appearanceObserver?.invalidate()
@@ -439,6 +456,13 @@ class MenuBarManager: NSObject, ObservableObject {
             clickedProfileId = profileManager.activeProfile?.id
             clickedProfileUsage = nil  // Will use manager.usage
             clickedProfileAPIUsage = nil  // Will use manager.apiUsage
+        }
+
+        // Trigger refresh if data is stale (>30s since last refresh)
+        let timeSinceRefresh = Date().timeIntervalSince(lastRefreshTriggerTime)
+        if timeSinceRefresh > 30 {
+            lastRefreshTriggerTime = Date()
+            refreshUsage()
         }
 
         // If there's a detached window, close it
@@ -939,7 +963,12 @@ class MenuBarManager: NSObject, ObservableObject {
 
                 await MainActor.run {
                     self.hasCredentialError = false
+                    self.consecutiveRefreshFailures = 0
+                    self.lastRefreshError = nil
                 }
+
+                // Check auto-rotate after successful refresh
+                await checkAutoRotate()
 
             } catch {
                 // Convert to AppError and log
@@ -950,6 +979,9 @@ class MenuBarManager: NSObject, ObservableObject {
                 ErrorRecovery.shared.recordFailure(for: .api)
 
                 await MainActor.run {
+                    self.consecutiveRefreshFailures += 1
+                    self.lastRefreshError = appError.message
+
                     // If auth-related error, clear stale usage and flag credential error
                     // (mirrors the multi-profile logic that already does this)
                     if appError.code == .apiUnauthorized || appError.code == .sessionKeyNotFound {
@@ -967,7 +999,7 @@ class MenuBarManager: NSObject, ObservableObject {
                         ErrorPresenter.shared.showAlert(for: appError)
                     } else {
                         // Background refresh - just log
-                        LoggingService.shared.logError("MenuBarManager: Failed to fetch usage - [\(appError.code.rawValue)] \(appError.message)")
+                        LoggingService.shared.logError("MenuBarManager: Failed to fetch usage (\(self.consecutiveRefreshFailures)x) - [\(appError.code.rawValue)] \(appError.message)")
                     }
                 }
             }
@@ -1069,6 +1101,86 @@ class MenuBarManager: NSObject, ObservableObject {
 
     @objc private func quitClicked() {
         NSApplication.shared.terminate(nil)
+    }
+
+    // MARK: - Global Keyboard Shortcut
+
+    /// Registers a global keyboard shortcut (Ctrl+Shift+C) to toggle the popover
+    private func registerGlobalShortcut() {
+        // Global monitor catches events when the app is not focused
+        globalKeyMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            self?.handleShortcutEvent(event)
+        }
+
+        // Local monitor catches events when the app is focused
+        localKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            if self?.handleShortcutEvent(event) == true {
+                return nil // Consume the event
+            }
+            return event
+        }
+    }
+
+    /// Returns true if the event matched the shortcut and was handled
+    @discardableResult
+    private func handleShortcutEvent(_ event: NSEvent) -> Bool {
+        // Ctrl+Shift+C (keyCode 8 = C)
+        let requiredFlags: NSEvent.ModifierFlags = [.control, .shift]
+        guard event.modifierFlags.contains(requiredFlags),
+              event.keyCode == 8 else { // 8 = C
+            return false
+        }
+
+        DispatchQueue.main.async { [weak self] in
+            self?.togglePopover(nil)
+        }
+        return true
+    }
+
+    // MARK: - Auto-Rotate Profiles
+
+    /// Checks if the active profile's usage exceeds its auto-rotate threshold.
+    /// If so, switches to the profile with the lowest session usage.
+    private func checkAutoRotate() async {
+        guard let activeProfile = await MainActor.run(body: { self.profileManager.activeProfile }) else { return }
+        guard activeProfile.autoRotateEnabled else { return }
+        guard profileManager.profiles.count > 1 else { return }
+
+        let currentUsage = await MainActor.run(body: { self.usage.sessionPercentage })
+        let threshold = Double(activeProfile.autoRotateThreshold)
+
+        guard currentUsage >= threshold else { return }
+
+        // Find the profile with the lowest session usage (that has credentials)
+        let candidates = profileManager.profiles.filter {
+            $0.id != activeProfile.id && $0.hasSessionCredentials
+        }
+
+        guard !candidates.isEmpty else {
+            LoggingService.shared.log("Auto-rotate: No other profiles with credentials available")
+            return
+        }
+
+        // Pick the one with the lowest session usage
+        let best = candidates.min(by: {
+            ($0.claudeUsage?.sessionPercentage ?? 0) < ($1.claudeUsage?.sessionPercentage ?? 0)
+        })
+
+        guard let target = best else { return }
+
+        // Only switch if the target has lower usage
+        let targetUsage = target.claudeUsage?.sessionPercentage ?? 0
+        guard targetUsage < currentUsage else {
+            LoggingService.shared.log("Auto-rotate: No profile with lower usage found")
+            return
+        }
+
+        LoggingService.shared.log("Auto-rotate: Switching from '\(activeProfile.name)' (\(Int(currentUsage))%) to '\(target.name)' (\(Int(targetUsage))%)")
+
+        await profileManager.activateProfile(target.id)
+
+        // Notify the user
+        NotificationManager.shared.sendSimpleAlert(type: .sessionAutoStarted)
     }
 
     /// Shows the GitHub star prompt window

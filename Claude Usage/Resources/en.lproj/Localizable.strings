@@ -121,10 +121,14 @@
 /* ==================== */
 "notifications.enable" = "Enable notifications";
 "notifications.enable.description" = "Receive alerts when approaching usage limits";
+"notifications.sound" = "Notification Sound";
+"notifications.sound.default" = "Default";
+"notifications.sound.none" = "None (Silent)";
 "notifications.alert_thresholds" = "Alert Thresholds";
 "notifications.threshold.warning" = "Warning";
 "notifications.threshold.high" = "High Usage";
 "notifications.threshold.critical" = "Critical";
+"notifications.threshold.info" = "Info";
 "notifications.threshold.session_reset" = "Session Reset";
 
 /* ==================== */
@@ -160,6 +164,7 @@
 "about.contributors" = "Contributors (%d)";
 "about.contributors_loading" = "Contributors";
 "about.links" = "Links";
+"about.actions" = "Actions";
 "about.star_github" = "Star on GitHub";
 "about.report_issue" = "Report Issue";
 "about.send_feedback" = "Send Feedback";
@@ -418,6 +423,7 @@
 /* ==================== */
 "appearance.title" = "Menu Bar Appearance";
 "appearance.subtitle" = "Customize your menu bar icons and metrics";
+"appearance.display_section" = "Display";
 "appearance.global_settings" = "Global Settings";
 "appearance.menu_bar_metrics" = "Menu Bar Metrics";
 "appearance.monochrome_title" = "Monochrome";
@@ -426,6 +432,8 @@
 "appearance.show_labels_description" = "Display prefix labels (S:, W:, API:) for each metric";
 "appearance.show_remaining_title" = "Show Remaining Percentage";
 "appearance.show_remaining_description" = "Display remaining capacity instead of used percentage (like macOS battery)";
+"appearance.clockwise_title" = "Clockwise Progress";
+"appearance.clockwise_description" = "Fill progress arc clockwise instead of counterclockwise";
 "appearance.multiprofile_locked_title" = "Appearance Settings Locked";
 "appearance.multiprofile_locked_description" = "These settings are disabled while Multi-Profile Display is active. Each profile uses its own appearance in multi-profile mode.";
 "appearance.disable_multiprofile" = "Turn Off Multi-Profile Display";
@@ -502,6 +510,7 @@
 /* ==================== */
 "general.title" = "General";
 "general.subtitle" = "Refresh interval, auto-start, and notifications";
+"general.behavior_section" = "Behavior";
 "general.refresh_title" = "Refresh Interval";
 "general.refresh_subtitle" = "How often to check for usage updates";
 "general.refresh_seconds" = "%d seconds";
@@ -512,6 +521,11 @@
 "general.autostart_toggle" = "Auto-Start New Session";
 "general.autostart_description" = "Automatically send a message when session resets";
 "general.autostart_requirement" = "• Session key configured in Credentials → Claude.ai tab";
+"general.autorotate_title" = "Auto-Rotate Profiles";
+"general.autorotate_subtitle" = "Automatically switch to lowest usage profile";
+"general.autorotate_toggle" = "Enable Auto-Rotate";
+"general.autorotate_description" = "Switch to the profile with lowest usage when threshold is exceeded";
+"general.autorotate_threshold" = "Switch when usage exceeds:";
 "general.notifications_title" = "Notifications";
 "general.notifications_subtitle" = "Get notified about usage milestones";
 "general.connected" = "Connected";
@@ -711,3 +725,4 @@
 "popover.updated_minutes_ago" = "Updated %dm ago";
 "popover.updated_hours_ago" = "Updated %dh ago";
 "popover.credentials_expired" = "Credentials expired";
+"popover.refresh_failures" = "Refresh failed %d times";

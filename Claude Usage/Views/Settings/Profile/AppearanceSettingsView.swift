@@ -2,7 +2,7 @@
 //  AppearanceSettingsView.swift
 //  Claude Usage - Menu Bar Appearance Settings
 //
-//  Created by Claude Code on 2025-12-27.
+//  Flat section layout (Display) + card (Metrics)
 //
 
 import SwiftUI
@@ -36,53 +36,55 @@ struct AppearanceSettingsView: View {
                     )
                 }
 
-                // Global Settings
-                SettingsSectionCard(
-                    title: "appearance.global_settings".localized,
-                    subtitle: "appearance.global_subtitle".localized
-                ) {
-                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.cardPadding) {
-                        SettingToggle(
-                            title: "appearance.monochrome_title".localized,
-                            description: "appearance.monochrome_description".localized,
-                            isOn: Binding(
-                                get: { configuration.monochromeMode },
-                                set: { newValue in
-                                    configuration.monochromeMode = newValue
-                                    saveConfiguration()
-                                }
-                            )
-                        )
+                // MARK: - Display Section (flat, no card)
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
+                    Text("appearance.display_section".localized)
+                        .font(DesignTokens.Typography.sectionTitle)
 
-                        SettingToggle(
-                            title: "appearance.show_labels_title".localized,
-                            description: "appearance.show_labels_description".localized,
-                            isOn: Binding(
-                                get: { configuration.showIconNames },
-                                set: { newValue in
-                                    configuration.showIconNames = newValue
-                                    saveConfiguration()
-                                }
-                            )
+                    SettingToggle(
+                        title: "appearance.monochrome_title".localized,
+                        description: "appearance.monochrome_description".localized,
+                        isOn: Binding(
+                            get: { configuration.monochromeMode },
+                            set: { newValue in
+                                configuration.monochromeMode = newValue
+                                saveConfiguration()
+                            }
                         )
+                    )
 
-                        SettingToggle(
-                            title: "appearance.show_remaining_title".localized,
-                            description: "appearance.show_remaining_description".localized,
-                            isOn: Binding(
-                                get: { configuration.showRemainingPercentage },
-                                set: { newValue in
-                                    configuration.showRemainingPercentage = newValue
-                                    saveConfiguration()
-                                }
-                            )
+                    Divider()
+
+                    SettingToggle(
+                        title: "appearance.show_labels_title".localized,
+                        description: "appearance.show_labels_description".localized,
+                        isOn: Binding(
+                            get: { configuration.showIconNames },
+                            set: { newValue in
+                                configuration.showIconNames = newValue
+                                saveConfiguration()
+                            }
                         )
-                    }
+                    )
+
+                    Divider()
+
+                    SettingToggle(
+                        title: "appearance.show_remaining_title".localized,
+                        description: "appearance.show_remaining_description".localized,
+                        isOn: Binding(
+                            get: { configuration.showRemainingPercentage },
+                            set: { newValue in
+                                configuration.showRemainingPercentage = newValue
+                                saveConfiguration()
+                            }
+                        )
+                    )
                 }
                 .disabled(isMultiProfileMode)
                 .opacity(isMultiProfileMode ? 0.5 : 1.0)
 
-                // Metrics Configuration
+                // MARK: - Metrics Configuration (keep card — visually complex)
                 SettingsSectionCard(
                     title: "appearance.menu_bar_metrics".localized,
                     subtitle: "appearance.metrics_subtitle".localized
@@ -90,26 +92,26 @@ struct AppearanceSettingsView: View {
                     VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
                         // Info message when all metrics are disabled
                         if configuration.metrics.filter({ $0.isEnabled }).isEmpty {
-                            HStack(alignment: .top, spacing: 8) {
+                            HStack(alignment: .top, spacing: DesignTokens.Spacing.small) {
                                 Image(systemName: "info.circle.fill")
-                                    .font(.system(size: 12))
-                                    .foregroundColor(.blue)
+                                    .font(.system(size: DesignTokens.Icons.small))
+                                    .foregroundColor(DesignTokens.Colors.accent)
 
-                                VStack(alignment: .leading, spacing: 4) {
+                                VStack(alignment: .leading, spacing: DesignTokens.Spacing.extraSmall) {
                                     Text("appearance.all_metrics_off_title".localized)
-                                        .font(.system(size: 11, weight: .semibold))
-                                        .foregroundColor(.primary)
+                                        .font(DesignTokens.Typography.caption)
+                                        .fontWeight(.semibold)
 
                                     Text("appearance.all_metrics_off_description".localized)
-                                        .font(.system(size: 10))
+                                        .font(DesignTokens.Typography.tiny)
                                         .foregroundColor(.secondary)
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
                             }
-                            .padding(DesignTokens.Spacing.small)
+                            .padding(DesignTokens.Spacing.medium)
                             .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(Color.blue.opacity(0.1))
+                                RoundedRectangle(cornerRadius: DesignTokens.Radius.card)
+                                    .fill(DesignTokens.Colors.accent.opacity(0.1))
                             )
                         }
 
@@ -208,16 +210,16 @@ struct MultiProfileModeWarningCard: View {
         VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
             HStack(alignment: .top, spacing: DesignTokens.Spacing.small) {
                 Image(systemName: "lock.fill")
-                    .font(.system(size: 16))
-                    .foregroundColor(.orange)
+                    .font(.system(size: DesignTokens.Icons.standard))
+                    .foregroundColor(DesignTokens.Colors.warning)
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.extraSmall) {
                     Text("appearance.multiprofile_locked_title".localized)
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.primary)
+                        .font(DesignTokens.Typography.body)
+                        .fontWeight(.semibold)
 
                     Text("appearance.multiprofile_locked_description".localized)
-                        .font(.system(size: 11))
+                        .font(DesignTokens.Typography.caption)
                         .foregroundColor(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -226,18 +228,19 @@ struct MultiProfileModeWarningCard: View {
             }
 
             Button(action: onDisableMultiProfile) {
-                HStack(spacing: 6) {
+                HStack(spacing: DesignTokens.Spacing.small) {
                     Image(systemName: "arrow.uturn.backward")
-                        .font(.system(size: 10))
+                        .font(.system(size: DesignTokens.Icons.tiny))
                     Text("appearance.disable_multiprofile".localized)
-                        .font(.system(size: 11, weight: .medium))
+                        .font(DesignTokens.Typography.caption)
+                        .fontWeight(.medium)
                 }
-                .foregroundColor(.orange)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
+                .foregroundColor(DesignTokens.Colors.warning)
+                .padding(.horizontal, DesignTokens.Spacing.medium)
+                .padding(.vertical, DesignTokens.Spacing.small)
                 .background(
-                    RoundedRectangle(cornerRadius: 6)
-                        .stroke(Color.orange, lineWidth: 1)
+                    RoundedRectangle(cornerRadius: DesignTokens.Radius.small)
+                        .stroke(DesignTokens.Colors.warning, lineWidth: 1)
                 )
             }
             .buttonStyle(.plain)
@@ -245,11 +248,11 @@ struct MultiProfileModeWarningCard: View {
         .padding(DesignTokens.Spacing.cardPadding)
         .background(
             RoundedRectangle(cornerRadius: DesignTokens.Radius.card)
-                .fill(Color.orange.opacity(0.1))
+                .fill(DesignTokens.Colors.warning.opacity(0.1))
         )
         .overlay(
             RoundedRectangle(cornerRadius: DesignTokens.Radius.card)
-                .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+                .stroke(DesignTokens.Colors.warning.opacity(0.3), lineWidth: 1)
         )
     }
 }

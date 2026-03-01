@@ -192,10 +192,10 @@ class ClaudeCodeSyncService {
     /// Claude Code stores credentials at ~/.claude/.credentials.json (or ~/.claude/credentials.json).
     /// This serves as a fallback when the keychain entry is truncated or missing.
     func readCredentialsFromFile() -> String? {
-        let homeDir = FileManager.default.homeDirectoryForCurrentUser
+        let claudeDir = Constants.ClaudePaths.claudeDirectory
         let candidates = [
-            homeDir.appendingPathComponent(".claude/.credentials.json"),
-            homeDir.appendingPathComponent(".claude/credentials.json")
+            claudeDir.appendingPathComponent(".credentials.json"),
+            claudeDir.appendingPathComponent("credentials.json")
         ]
 
         for path in candidates {

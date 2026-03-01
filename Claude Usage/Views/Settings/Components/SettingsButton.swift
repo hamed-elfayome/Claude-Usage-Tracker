@@ -80,24 +80,24 @@ struct SettingsButton: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: Spacing.iconTextSpacing) {
+            HStack(spacing: DesignTokens.Spacing.iconText) {
                 if let icon = icon {
                     Image(systemName: icon)
-                        .font(.system(size: 12))
+                        .font(.system(size: DesignTokens.Icons.small))
                 }
 
                 Text(title)
-                    .font(Typography.body)
+                    .font(DesignTokens.Typography.body)
             }
-            .padding(.horizontal, Spacing.md)
-            .padding(.vertical, Spacing.sm)
+            .padding(.horizontal, DesignTokens.Spacing.medium)
+            .padding(.vertical, DesignTokens.Spacing.small)
             .frame(maxWidth: style == .primary ? .infinity : nil)
             .background(
-                RoundedRectangle(cornerRadius: Spacing.radiusMedium)
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.small)
                     .fill(style.hoverBackgroundColor(isHovered: isHovered))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: Spacing.radiusMedium)
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.small)
                     .strokeBorder(style.borderColor, lineWidth: 0.5)
             )
             .foregroundColor(style.foregroundColor)
@@ -152,92 +152,12 @@ extension SettingsButton {
 
 // MARK: - Previews
 
-#Preview("Primary Button") {
-    VStack(spacing: Spacing.md) {
-        SettingsButton.primary(title: "Save Changes") {
-            print("Save")
-        }
-
-        SettingsButton.primary(title: "Connect", icon: "link") {
-            print("Connect")
-        }
-    }
-    .padding()
-}
-
-#Preview("Secondary Button") {
-    VStack(spacing: Spacing.md) {
-        SettingsButton(title: "Cancel") {
-            print("Cancel")
-        }
-
-        SettingsButton(title: "Refresh", icon: "arrow.clockwise") {
-            print("Refresh")
-        }
-    }
-    .padding()
-}
-
-#Preview("Destructive Button") {
-    VStack(spacing: Spacing.md) {
-        SettingsButton.destructive(title: "Delete Account") {
-            print("Delete")
-        }
-
-        SettingsButton.destructive(title: "Remove", icon: "trash") {
-            print("Remove")
-        }
-    }
-    .padding()
-}
-
-#Preview("Subtle Button") {
-    VStack(spacing: Spacing.md) {
-        SettingsButton.subtle(title: "Learn More") {
-            print("Learn more")
-        }
-
-        SettingsButton.subtle(title: "Documentation", icon: "book") {
-            print("Docs")
-        }
-    }
-    .padding()
-}
-
-#Preview("Button Row") {
-    HStack(spacing: Spacing.buttonRowSpacing) {
-        SettingsButton(title: "Cancel") {
-            print("Cancel")
-        }
-
-        SettingsButton.primary(title: "Save", icon: "checkmark") {
-            print("Save")
-        }
-    }
-    .padding()
-}
-
-#Preview("All Styles") {
-    VStack(spacing: Spacing.cardSpacing) {
-        SettingsCard(title: "Button Styles") {
-            VStack(spacing: Spacing.md) {
-                SettingsButton.primary(title: "Primary Button", icon: "star.fill") {
-                    print("Primary")
-                }
-
-                SettingsButton(title: "Secondary Button", icon: "circle") {
-                    print("Secondary")
-                }
-
-                SettingsButton.destructive(title: "Destructive Button", icon: "trash") {
-                    print("Destructive")
-                }
-
-                SettingsButton.subtle(title: "Subtle Button", icon: "info.circle") {
-                    print("Subtle")
-                }
-            }
-        }
+#Preview("Buttons") {
+    VStack(spacing: DesignTokens.Spacing.medium) {
+        SettingsButton.primary(title: "Save Changes") { }
+        SettingsButton(title: "Cancel") { }
+        SettingsButton.destructive(title: "Delete", icon: "trash") { }
+        SettingsButton.subtle(title: "Learn More") { }
     }
     .padding()
 }

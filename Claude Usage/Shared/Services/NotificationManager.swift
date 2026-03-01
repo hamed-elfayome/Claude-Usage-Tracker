@@ -115,7 +115,8 @@ class NotificationManager: NotificationServiceProtocol {
                 profileName: profileName,
                 type: .sessionReset,
                 percentage: sessionPercentage,
-                resetTime: usage.sessionResetTime
+                resetTime: usage.sessionResetTime,
+                settings: settings
             )
 
             // Note: Auto-start session is handled per-profile but called from elsewhere
@@ -127,32 +128,19 @@ class NotificationManager: NotificationServiceProtocol {
         // Clear lower threshold notifications to allow re-notification
         clearLowerThresholdNotifications(currentPercentage: sessionPercentage, profileName: profileName)
 
-        // 95% threshold
-        if sessionPercentage >= 95 && settings.threshold95Enabled {
-            sendProfileAlert(
-                profileName: profileName,
-                type: .sessionCritical,
-                percentage: sessionPercentage,
-                resetTime: usage.sessionResetTime
-            )
-        }
-        // 90% threshold
-        else if sessionPercentage >= 90 && settings.threshold90Enabled {
-            sendProfileAlert(
-                profileName: profileName,
-                type: .sessionWarning,
-                percentage: sessionPercentage,
-                resetTime: usage.sessionResetTime
-            )
-        }
-        // 75% threshold
-        else if sessionPercentage >= 75 && settings.threshold75Enabled {
-            sendProfileAlert(
-                profileName: profileName,
-                type: .sessionInfo,
-                percentage: sessionPercentage,
-                resetTime: usage.sessionResetTime
-            )
+        // Check custom thresholds (highest first, only trigger the highest matching one)
+        for threshold in settings.sortedThresholds {
+            if sessionPercentage >= Double(threshold) {
+                let alertType = AlertType.forThreshold(threshold)
+                sendProfileAlert(
+                    profileName: profileName,
+                    type: alertType,
+                    percentage: sessionPercentage,
+                    resetTime: usage.sessionResetTime,
+                    settings: settings
+                )
+                break // Only fire the highest matching threshold
+            }
         }
     }
 
@@ -174,7 +162,7 @@ class NotificationManager: NotificationServiceProtocol {
     }
 
     /// Sends a profile-specific usage alert
-    private func sendProfileAlert(profileName: String, type: AlertType, percentage: Double, resetTime: Date?) {
+    private func sendProfileAlert(profileName: String, type: AlertType, percentage: Double, resetTime: Date?, settings: NotificationSettings? = nil) {
         // Create unique identifier for this notification
         let identifier = "\(profileName)_\(type.rawValue)_\(Int(percentage))"
 
@@ -186,7 +174,11 @@ class NotificationManager: NotificationServiceProtocol {
         let content = UNMutableNotificationContent()
         content.title = "\(profileName) - \(type.title)"
         content.body = type.message(percentage: percentage, resetTime: resetTime)
-        content.sound = .default
+        if let settings = settings, !settings.isSoundDisabled {
+            content.sound = settings.notificationSound
+        } else if settings == nil {
+            content.sound = .default
+        }
         content.categoryIdentifier = "USAGE_ALERT"
 
         let request = UNNotificationRequest(
@@ -279,6 +271,18 @@ extension NotificationManager {
         case opusWarning = "opus_warning"
         case opusCritical = "opus_critical"
         case notificationsEnabled = "notifications_enabled"
+        case customThreshold = "custom_threshold"
+
+        /// Map a percentage threshold to an alert type
+        static func forThreshold(_ percentage: Int) -> AlertType {
+            if percentage >= 95 {
+                return .sessionCritical
+            } else if percentage >= 90 {
+                return .sessionWarning
+            } else {
+                return .sessionInfo
+            }
+        }
 
         var title: String {
             switch self {
@@ -304,6 +308,8 @@ extension NotificationManager {
                 return "notification.opus_critical.title".localized
             case .notificationsEnabled:
                 return "notification.enabled.title".localized
+            case .customThreshold:
+                return "Usage Alert"
             }
         }
 
@@ -334,6 +340,8 @@ extension NotificationManager {
                 return "notification.opus_critical.message".localized(with: percentStr, resetStr)
             case .notificationsEnabled:
                 return "notification.enabled.message".localized
+            case .customThreshold:
+                return "You've used \(percentStr) of your session limit. \(resetStr)"
             }
         }
     }

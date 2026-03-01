@@ -68,7 +68,7 @@ struct LanguageSettingsView: View {
 
                 Spacer()
             }
-            .padding(28)
+            .padding()
         }
         .alert("language.restart_required".localized, isPresented: $showRestartAlert) {
             Button("language.restart_now".localized, role: .destructive) {

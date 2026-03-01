@@ -101,10 +101,14 @@
 /* ==================== */
 "notifications.enable" = "Habilitar notificaciones";
 "notifications.enable.description" = "Recibir alertas al acercarse a los límites de uso";
+"notifications.sound" = "Sonido de notificación";
+"notifications.sound.default" = "Predeterminado";
+"notifications.sound.none" = "Sin sonido (Silencioso)";
 "notifications.alert_thresholds" = "Umbrales de Alerta";
 "notifications.threshold.warning" = "Advertencia";
 "notifications.threshold.high" = "Uso Alto";
 "notifications.threshold.critical" = "Crítico";
+"notifications.threshold.info" = "Info";
 "notifications.threshold.session_reset" = "Reinicio de Sesión";
 
 /* ==================== */
@@ -126,6 +130,7 @@
 "about.contributors" = "Colaboradores (%d)";
 "about.contributors_loading" = "Colaboradores";
 "about.links" = "Enlaces";
+"about.actions" = "Acciones";
 "about.star_github" = "Dar Estrella en GitHub";
 "about.report_issue" = "Reportar Problema";
 "about.send_feedback" = "Enviar Comentarios";
@@ -391,6 +396,7 @@
 /* Appearance */
 "appearance.title" = "Apariencia de Barra de Menú";
 "appearance.subtitle" = "Personaliza tus íconos y métricas de barra de menú";
+"appearance.display_section" = "Pantalla";
 "appearance.global_settings" = "Configuración Global";
 "appearance.menu_bar_metrics" = "Métricas de Barra de Menú";
 "appearance.monochrome_title" = "Monocromo";
@@ -399,6 +405,8 @@
 "appearance.show_labels_description" = "Mostrar etiquetas de prefijo (S:, W:, API:) para cada métrica";
 "appearance.show_remaining_title" = "Mostrar Porcentaje Restante";
 "appearance.show_remaining_description" = "Mostrar capacidad restante en lugar del porcentaje usado (como la batería de macOS)";
+"appearance.clockwise_title" = "Progreso en sentido horario";
+"appearance.clockwise_description" = "Llenar el arco de progreso en sentido horario en lugar de antihorario";
 "appearance.multiprofile_locked_title" = "Ajustes de Apariencia Bloqueados";
 "appearance.multiprofile_locked_description" = "Estos ajustes están deshabilitados mientras la Visualización Multi-Perfil está activa. Cada perfil usa su propia apariencia en modo multi-perfil.";
 "appearance.disable_multiprofile" = "Desactivar Visualización Multi-Perfil";
@@ -495,6 +503,7 @@
 /* ==================== */
 "general.title" = "General";
 "general.subtitle" = "Intervalo de actualización, inicio automático y notificaciones";
+"general.behavior_section" = "Comportamiento";
 "general.refresh_title" = "Intervalo de Actualización";
 "general.refresh_subtitle" = "Con qué frecuencia verificar las actualizaciones de uso";
 "general.refresh_seconds" = "%d segundos";
@@ -505,6 +514,11 @@
 "general.autostart_toggle" = "Inicio Automático de Nueva Sesión";
 "general.autostart_description" = "Enviar automáticamente un mensaje cuando se reinicie la sesión";
 "general.autostart_requirement" = "• Clave de sesión configurada en Credenciales → pestaña Claude.ai";
+"general.autorotate_title" = "Rotación automática de perfiles";
+"general.autorotate_subtitle" = "Cambiar automáticamente al perfil con menor uso";
+"general.autorotate_toggle" = "Activar rotación automática";
+"general.autorotate_description" = "Cambiar al perfil con menor uso cuando se supere el umbral";
+"general.autorotate_threshold" = "Cambiar cuando el uso supere:";
 "general.notifications_title" = "Notificaciones";
 "general.notifications_subtitle" = "Recibir notificaciones sobre hitos de uso";
 "general.connected" = "Conectado";
@@ -700,3 +714,4 @@
 "popover.updated_minutes_ago" = "Actualizado hace %dm";
 "popover.updated_hours_ago" = "Actualizado hace %dh";
 "popover.credentials_expired" = "Credenciales caducadas";
+"popover.refresh_failures" = "Actualización fallida %d veces";

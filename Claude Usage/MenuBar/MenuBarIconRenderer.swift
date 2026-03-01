@@ -10,6 +10,9 @@ import Cocoa
 /// Handles rendering of individual metric icons for the menu bar
 final class MenuBarIconRenderer {
 
+    /// Current clockwise setting, updated per render call
+    private var useClockwise: Bool = false
+
     // MARK: - Public Methods
 
     /// Creates an image for a specific metric
@@ -24,6 +27,9 @@ final class MenuBarIconRenderer {
         showIconName: Bool,
         showNextSessionTime: Bool
     ) -> NSImage {
+        // Set clockwise direction from config
+        useClockwise = config.clockwiseProgress
+
         // Get the metric value and percentage
         let metricData = getMetricData(
             metricType: metricType,
@@ -456,7 +462,7 @@ final class MenuBarIconRenderer {
             radius: radius,
             startAngle: 0,
             endAngle: 360,
-            clockwise: false
+            clockwise: useClockwise
         )
         textColor.withAlphaComponent(0.15).setStroke()
         bgArcPath.lineWidth = 3.0
@@ -471,7 +477,7 @@ final class MenuBarIconRenderer {
                 radius: radius,
                 startAngle: startAngle,
                 endAngle: endAngle,
-                clockwise: false
+                clockwise: useClockwise
             )
             fillColor.setStroke()
             arcPath.lineWidth = 3.0
@@ -632,7 +638,7 @@ final class MenuBarIconRenderer {
             radius: outerRadius,
             startAngle: 0,
             endAngle: 360,
-            clockwise: false
+            clockwise: useClockwise
         )
         backgroundColor.setStroke()
         outerBgPath.lineWidth = outerStrokeWidth
@@ -647,7 +653,7 @@ final class MenuBarIconRenderer {
                 radius: outerRadius,
                 startAngle: 90,
                 endAngle: sessionEndAngle,
-                clockwise: false
+                clockwise: useClockwise
             )
             sessionColor.setStroke()
             outerProgressPath.lineWidth = outerStrokeWidth
@@ -666,7 +672,7 @@ final class MenuBarIconRenderer {
             radius: innerRadius,
             startAngle: 0,
             endAngle: 360,
-            clockwise: false
+            clockwise: useClockwise
         )
         backgroundColor.setStroke()
         innerBgPath.lineWidth = innerStrokeWidth
@@ -681,7 +687,7 @@ final class MenuBarIconRenderer {
                 radius: innerRadius,
                 startAngle: 90,
                 endAngle: weekEndAngle,
-                clockwise: false
+                clockwise: useClockwise
             )
             weekColor.setStroke()
             innerProgressPath.lineWidth = innerStrokeWidth
@@ -748,7 +754,7 @@ final class MenuBarIconRenderer {
             radius: outerRadius,
             startAngle: 0,
             endAngle: 360,
-            clockwise: false
+            clockwise: useClockwise
         )
         backgroundColor.setStroke()
         outerBgPath.lineWidth = outerStrokeWidth
@@ -763,7 +769,7 @@ final class MenuBarIconRenderer {
                 radius: outerRadius,
                 startAngle: 90,
                 endAngle: sessionEndAngle,
-                clockwise: false
+                clockwise: useClockwise
             )
             sessionColor.setStroke()
             outerProgressPath.lineWidth = outerStrokeWidth
@@ -782,7 +788,7 @@ final class MenuBarIconRenderer {
             radius: innerRadius,
             startAngle: 0,
             endAngle: 360,
-            clockwise: false
+            clockwise: useClockwise
         )
         backgroundColor.setStroke()
         innerBgPath.lineWidth = innerStrokeWidth
@@ -797,7 +803,7 @@ final class MenuBarIconRenderer {
                 radius: innerRadius,
                 startAngle: 90,
                 endAngle: weekEndAngle,
-                clockwise: false
+                clockwise: useClockwise
             )
             weekColor.setStroke()
             innerProgressPath.lineWidth = innerStrokeWidth

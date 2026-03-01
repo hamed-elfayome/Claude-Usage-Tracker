@@ -39,6 +39,10 @@ struct Profile: Codable, Identifiable, Equatable {
     // MARK: - Notification Settings (Per-Profile)
     var notificationSettings: NotificationSettings
 
+    // MARK: - Auto-Rotate Settings
+    var autoRotateEnabled: Bool
+    var autoRotateThreshold: Int  // Percentage (e.g., 80) at which to switch profiles
+
     // MARK: - Display Configuration
     var isSelectedForDisplay: Bool  // For multi-profile menu bar mode
 
@@ -58,6 +62,7 @@ struct Profile: Codable, Identifiable, Equatable {
         case iconConfig
         case refreshInterval, autoStartSessionEnabled, checkOverageLimitEnabled
         case notificationSettings
+        case autoRotateEnabled, autoRotateThreshold
         case isSelectedForDisplay
         case createdAt, lastUsedAt
     }
@@ -81,6 +86,8 @@ struct Profile: Codable, Identifiable, Equatable {
         autoStartSessionEnabled = try container.decodeIfPresent(Bool.self, forKey: .autoStartSessionEnabled) ?? false
         checkOverageLimitEnabled = try container.decodeIfPresent(Bool.self, forKey: .checkOverageLimitEnabled) ?? true
         notificationSettings = try container.decodeIfPresent(NotificationSettings.self, forKey: .notificationSettings) ?? NotificationSettings()
+        autoRotateEnabled = try container.decodeIfPresent(Bool.self, forKey: .autoRotateEnabled) ?? false
+        autoRotateThreshold = try container.decodeIfPresent(Int.self, forKey: .autoRotateThreshold) ?? 80
         isSelectedForDisplay = try container.decodeIfPresent(Bool.self, forKey: .isSelectedForDisplay) ?? true
         createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date()
         lastUsedAt = try container.decodeIfPresent(Date.self, forKey: .lastUsedAt) ?? Date()
@@ -103,6 +110,8 @@ struct Profile: Codable, Identifiable, Equatable {
         autoStartSessionEnabled: Bool = false,
         checkOverageLimitEnabled: Bool = true,
         notificationSettings: NotificationSettings = NotificationSettings(),
+        autoRotateEnabled: Bool = false,
+        autoRotateThreshold: Int = 80,
         isSelectedForDisplay: Bool = true,
         createdAt: Date = Date(),
         lastUsedAt: Date = Date()
@@ -123,6 +132,8 @@ struct Profile: Codable, Identifiable, Equatable {
         self.autoStartSessionEnabled = autoStartSessionEnabled
         self.checkOverageLimitEnabled = checkOverageLimitEnabled
         self.notificationSettings = notificationSettings
+        self.autoRotateEnabled = autoRotateEnabled
+        self.autoRotateThreshold = autoRotateThreshold
         self.isSelectedForDisplay = isSelectedForDisplay
         self.createdAt = createdAt
         self.lastUsedAt = lastUsedAt

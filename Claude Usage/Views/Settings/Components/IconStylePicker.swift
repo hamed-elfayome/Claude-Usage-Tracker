@@ -39,19 +39,19 @@ private struct IconStyleCard: View {
     let action: () -> Void
 
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: DesignTokens.Spacing.small) {
             // Clickable icon area
             Button(action: action) {
                 IconPreviewLarge(style: style)
                     .frame(width: cardWidth, height: 50)
                     .background(
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill(isSelected ? SettingsColors.success.opacity(0.1) : Color.clear)
+                        RoundedRectangle(cornerRadius: DesignTokens.Radius.small)
+                            .fill(isSelected ? DesignTokens.Colors.success.opacity(0.1) : Color.clear)
                     )
                     .overlay(
-                        RoundedRectangle(cornerRadius: 6)
+                        RoundedRectangle(cornerRadius: DesignTokens.Radius.small)
                             .strokeBorder(
-                                isSelected ? SettingsColors.success : Color.gray.opacity(0.2),
+                                isSelected ? DesignTokens.Colors.success : DesignTokens.Colors.cardBorder,
                                 lineWidth: isSelected ? 2 : 1
                             )
                     )
@@ -61,7 +61,8 @@ private struct IconStyleCard: View {
 
             // Name - outside border
             Text(style.displayName)
-                .font(.system(size: 9, weight: .medium))
+                .font(DesignTokens.Typography.tiny)
+                .fontWeight(.medium)
                 .foregroundColor(isSelected ? .primary : .secondary)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
@@ -94,7 +95,8 @@ private struct IconPreviewLarge: View {
                             }
                         )
                     Text("Claude")
-                        .font(.system(size: 9, weight: .medium))
+                        .font(DesignTokens.Typography.tiny)
+                        .fontWeight(.medium)
                         .foregroundColor(.secondary)
                 }
 
@@ -112,7 +114,7 @@ private struct IconPreviewLarge: View {
 
             case .percentageOnly:
                 Text("60%")
-                    .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                    .font(.system(size: DesignTokens.Icons.standard, weight: .semibold, design: .monospaced))
                     .foregroundColor(.green)
 
             case .icon:

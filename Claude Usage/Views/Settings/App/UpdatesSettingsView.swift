@@ -95,34 +95,14 @@ struct UpdatesSettingsView: View {
                     Text("updates.update_preferences".localized)
                         .font(DesignTokens.Typography.sectionTitle)
 
-                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
-                        HStack {
-                            HStack(spacing: DesignTokens.Spacing.iconText) {
-                                Image(systemName: "arrow.triangle.2.circlepath")
-                                    .font(.system(size: DesignTokens.Icons.standard))
-                                    .foregroundColor(.accentColor)
-                                    .frame(width: DesignTokens.Spacing.iconFrame)
-                                Text("settings.updates.automatic".localized)
-                                    .font(DesignTokens.Typography.body)
-                            }
-                            Spacer()
-                            Toggle("", isOn: $autoUpdateEnabled)
-                                .labelsHidden()
-                                .onChange(of: autoUpdateEnabled) { _, newValue in
-                                    updateManager.setAutomaticChecksEnabled(newValue)
-                                }
-                        }
-
-                        Text("settings.updates.automatic.description".localized)
-                            .font(DesignTokens.Typography.caption)
-                            .foregroundColor(.secondary)
-                            .padding(.leading, 32)
-                    }
-                    .padding(DesignTokens.Spacing.medium)
-                    .background(
-                        RoundedRectangle(cornerRadius: DesignTokens.Radius.small)
-                            .fill(DesignTokens.Colors.cardBackground)
+                    SettingToggle(
+                        title: "settings.updates.automatic".localized,
+                        description: "settings.updates.automatic.description".localized,
+                        isOn: $autoUpdateEnabled
                     )
+                    .onChange(of: autoUpdateEnabled) { _, newValue in
+                        updateManager.setAutomaticChecksEnabled(newValue)
+                    }
                 }
 
                 // Check Now Button
@@ -161,7 +141,7 @@ struct UpdatesSettingsView: View {
 
                 Spacer()
             }
-            .padding(28)
+            .padding()
         }
         .onAppear {
             autoUpdateEnabled = updateManager.automaticChecksEnabled

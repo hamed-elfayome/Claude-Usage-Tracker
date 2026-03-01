@@ -71,7 +71,11 @@ enum Constants {
         }
 
         static var claudeDirectory: URL {
-            homeDirectory.appendingPathComponent(".claude")
+            // Respect CLAUDE_CONFIG_DIR environment variable if set
+            if let configDir = ProcessInfo.processInfo.environment["CLAUDE_CONFIG_DIR"] {
+                return URL(fileURLWithPath: configDir)
+            }
+            return homeDirectory.appendingPathComponent(".claude")
         }
 
         static var projectsDirectory: URL {

@@ -129,6 +129,9 @@ struct MetricIconConfig: Codable, Equatable {
     /// Session-specific configuration
     var showNextSessionTime: Bool
 
+    /// Progress direction (false = clockwise on screen, true = counterclockwise)
+    var clockwiseProgress: Bool
+
     init(
         metricType: MenuBarMetricType,
         isEnabled: Bool = false,
@@ -136,7 +139,8 @@ struct MetricIconConfig: Codable, Equatable {
         order: Int = 0,
         weekDisplayMode: WeekDisplayMode = .percentage,
         apiDisplayMode: APIDisplayMode = .remaining,
-        showNextSessionTime: Bool = false
+        showNextSessionTime: Bool = false,
+        clockwiseProgress: Bool = false
     ) {
         self.metricType = metricType
         self.isEnabled = isEnabled
@@ -145,6 +149,27 @@ struct MetricIconConfig: Codable, Equatable {
         self.weekDisplayMode = weekDisplayMode
         self.apiDisplayMode = apiDisplayMode
         self.showNextSessionTime = showNextSessionTime
+        self.clockwiseProgress = clockwiseProgress
+    }
+
+    // MARK: - Codable (Custom decoder for backwards compatibility)
+
+    enum CodingKeys: String, CodingKey {
+        case metricType, isEnabled, iconStyle, order
+        case weekDisplayMode, apiDisplayMode
+        case showNextSessionTime, clockwiseProgress
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        metricType = try container.decode(MenuBarMetricType.self, forKey: .metricType)
+        isEnabled = try container.decode(Bool.self, forKey: .isEnabled)
+        iconStyle = try container.decode(MenuBarIconStyle.self, forKey: .iconStyle)
+        order = try container.decode(Int.self, forKey: .order)
+        weekDisplayMode = try container.decodeIfPresent(WeekDisplayMode.self, forKey: .weekDisplayMode) ?? .percentage
+        apiDisplayMode = try container.decodeIfPresent(APIDisplayMode.self, forKey: .apiDisplayMode) ?? .remaining
+        showNextSessionTime = try container.decodeIfPresent(Bool.self, forKey: .showNextSessionTime) ?? false
+        clockwiseProgress = try container.decodeIfPresent(Bool.self, forKey: .clockwiseProgress) ?? false
     }
 
     /// Default config for session (enabled by default)

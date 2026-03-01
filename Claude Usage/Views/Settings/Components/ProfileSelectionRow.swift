@@ -19,7 +19,7 @@ struct ProfileSelectionRow: View {
             HStack(spacing: DesignTokens.Spacing.small) {
                 // Checkbox
                 Image(systemName: isSelected ? "checkmark.square.fill" : "square")
-                    .font(.system(size: 14))
+                    .font(.system(size: DesignTokens.Icons.standard))
                     .foregroundColor(isSelected ? .accentColor : .secondary)
 
                 // Profile name (truncated)

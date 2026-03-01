@@ -254,14 +254,15 @@ struct APIEnterKeyStep: View {
             // Professional input field
             VStack(alignment: .leading, spacing: 8) {
                 Text("api.label_api_session_key".localized)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(DesignTokens.Typography.body)
+                    .fontWeight(.medium)
                     .foregroundColor(.secondary)
 
                 TextField("api.placeholder_api_session_key".localized, text: $wizardState.apiSessionKey)
                     .textFieldStyle(.plain)
-                    .font(.system(size: 12, design: .monospaced))
+                    .font(DesignTokens.Typography.monospaced)
                     .padding(10)
-                    .background(Color(nsColor: .textBackgroundColor))
+                    .background(DesignTokens.Colors.inputBackground)
                     .cornerRadius(6)
                     .overlay(
                         RoundedRectangle(cornerRadius: 6)
@@ -269,7 +270,7 @@ struct APIEnterKeyStep: View {
                     )
 
                 Text("api.help_api_session_key".localized)
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Typography.caption)
                     .foregroundColor(.secondary)
             }
 
@@ -278,9 +279,9 @@ struct APIEnterKeyStep: View {
                 HStack(spacing: 8) {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundColor(.green)
-                        .font(.system(size: 14))
+                        .font(.system(size: DesignTokens.Icons.standard))
                     Text(message)
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Typography.body)
                         .foregroundColor(.secondary)
                 }
                 .padding(10)
@@ -291,9 +292,9 @@ struct APIEnterKeyStep: View {
                 HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundColor(.red)
-                        .font(.system(size: 14))
+                        .font(.system(size: DesignTokens.Icons.standard))
                     Text(message)
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Typography.body)
                         .foregroundColor(.red)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -315,10 +316,10 @@ struct APIEnterKeyStep: View {
                                 .frame(width: 12, height: 12)
                         } else {
                             Image(systemName: "building.2")
-                                .font(.system(size: 12))
+                                .font(DesignTokens.Typography.body)
                         }
                         Text(wizardState.validationState == .validating ? "wizard.fetching".localized : "wizard.fetch_organizations".localized)
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Typography.body)
                     }
                 }
                 .buttonStyle(.borderedProminent)
@@ -362,9 +363,9 @@ struct APISelectOrgStep: View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("wizard.select_organization".localized)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(DesignTokens.Typography.bodyMedium)
                 Text("wizard.choose_organization".localized)
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Typography.body)
                     .foregroundColor(.secondary)
             }
 
@@ -397,10 +398,10 @@ struct APISelectOrgStep: View {
 
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(org.name)
-                                    .font(.system(size: 13, weight: .medium))
+                                    .font(DesignTokens.Typography.bodyMedium)
                                     .foregroundColor(.primary)
                                 Text(org.id)
-                                    .font(.system(size: 11, design: .monospaced))
+                                    .font(DesignTokens.Typography.monospacedSmall)
                                     .foregroundColor(.secondary)
                                     .lineLimit(1)
                             }
@@ -409,7 +410,8 @@ struct APISelectOrgStep: View {
 
                             if wizardState.selectedOrgId == org.id {
                                 Image(systemName: "checkmark")
-                                    .font(.system(size: 12, weight: .semibold))
+                                    .font(DesignTokens.Typography.body)
+                                    .fontWeight(.semibold)
                                     .foregroundColor(.accentColor)
                             }
                         }
@@ -425,7 +427,7 @@ struct APISelectOrgStep: View {
                                 .strokeBorder(
                                     wizardState.selectedOrgId == org.id
                                         ? Color.accentColor.opacity(0.3)
-                                        : Color.secondary.opacity(0.15),
+                                        : DesignTokens.Colors.cardBorder,
                                     lineWidth: 1
                                 )
                         )
@@ -443,9 +445,9 @@ struct APISelectOrgStep: View {
                 }) {
                     HStack(spacing: 6) {
                         Image(systemName: "chevron.left")
-                            .font(.system(size: 11))
+                            .font(DesignTokens.Typography.caption)
                         Text("common.back".localized)
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Typography.body)
                     }
                 }
                 .buttonStyle(.bordered)
@@ -460,9 +462,9 @@ struct APISelectOrgStep: View {
                 }) {
                     HStack(spacing: 6) {
                         Text("common.next".localized)
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Typography.body)
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 11))
+                            .font(DesignTokens.Typography.caption)
                     }
                 }
                 .buttonStyle(.borderedProminent)
@@ -491,9 +493,9 @@ struct APIConfirmStep: View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("wizard.review_config".localized)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(DesignTokens.Typography.bodyMedium)
                 Text("wizard.confirm_settings".localized)
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Typography.body)
                     .foregroundColor(.secondary)
             }
 
@@ -501,16 +503,17 @@ struct APIConfirmStep: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 10) {
                     Image(systemName: "key")
-                        .font(.system(size: 14))
+                        .font(.system(size: DesignTokens.Icons.standard))
                         .foregroundColor(.accentColor)
                         .frame(width: 20)
 
                     VStack(alignment: .leading, spacing: 3) {
                         Text("wizard.api_session_key".localized)
-                            .font(.system(size: 11, weight: .medium))
+                            .font(DesignTokens.Typography.caption)
+                            .fontWeight(.medium)
                             .foregroundColor(.secondary)
                         Text(maskSessionKey(wizardState.apiSessionKey))
-                            .font(.system(size: 12, design: .monospaced))
+                            .font(DesignTokens.Typography.monospaced)
                             .foregroundColor(.primary)
                     }
                 }
@@ -520,19 +523,21 @@ struct APIConfirmStep: View {
 
                     HStack(spacing: 10) {
                         Image(systemName: "building.2")
-                            .font(.system(size: 14))
+                            .font(.system(size: DesignTokens.Icons.standard))
                             .foregroundColor(.accentColor)
                             .frame(width: 20)
 
                         VStack(alignment: .leading, spacing: 3) {
                             Text("wizard.organization".localized)
-                                .font(.system(size: 11, weight: .medium))
+                                .font(DesignTokens.Typography.caption)
+                                .fontWeight(.medium)
                                 .foregroundColor(.secondary)
                             Text(selectedOrg.name)
-                                .font(.system(size: 12, weight: .medium))
+                                .font(DesignTokens.Typography.body)
+                                .fontWeight(.medium)
                                 .foregroundColor(.primary)
                             Text(selectedOrg.id)
-                                .font(.system(size: 11, design: .monospaced))
+                                .font(DesignTokens.Typography.monospacedSmall)
                                 .foregroundColor(.secondary)
                         }
                     }
@@ -543,20 +548,20 @@ struct APIConfirmStep: View {
 
                     HStack(spacing: 8) {
                         Image(systemName: "exclamationmark.triangle")
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Typography.body)
                             .foregroundColor(.orange)
                         Text("wizard.api_key_will_update".localized)
-                            .font(.system(size: 11))
+                            .font(DesignTokens.Typography.caption)
                             .foregroundColor(.secondary)
                     }
                 }
             }
             .padding(12)
-            .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+            .background(DesignTokens.Colors.cardBackground)
             .cornerRadius(6)
             .overlay(
                 RoundedRectangle(cornerRadius: 6)
-                    .strokeBorder(Color.secondary.opacity(0.15), lineWidth: 1)
+                    .strokeBorder(DesignTokens.Colors.cardBorder, lineWidth: 1)
             )
 
             // Navigation buttons
@@ -568,9 +573,9 @@ struct APIConfirmStep: View {
                 }) {
                     HStack(spacing: 6) {
                         Image(systemName: "chevron.left")
-                            .font(.system(size: 11))
+                            .font(DesignTokens.Typography.caption)
                         Text("common.back".localized)
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Typography.body)
                     }
                 }
                 .buttonStyle(.bordered)
@@ -587,10 +592,10 @@ struct APIConfirmStep: View {
                                 .frame(width: 12, height: 12)
                         } else {
                             Image(systemName: "checkmark.circle")
-                                .font(.system(size: 12))
+                                .font(DesignTokens.Typography.body)
                         }
                         Text(isSaving ? "wizard.saving".localized : "wizard.save_configuration".localized)
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Typography.body)
                     }
                 }
                 .buttonStyle(.borderedProminent)

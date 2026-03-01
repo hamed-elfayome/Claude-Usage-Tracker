@@ -44,7 +44,13 @@ struct PopoverContentView: View {
             )
 
             // Intelligent Usage Dashboard
-            SmartUsageDashboard(usage: displayUsage, apiUsage: displayAPIUsage, hasCredentialError: manager.hasCredentialError)
+            SmartUsageDashboard(
+                usage: displayUsage,
+                apiUsage: displayAPIUsage,
+                hasCredentialError: manager.hasCredentialError,
+                consecutiveFailures: manager.consecutiveRefreshFailures,
+                lastErrorMessage: manager.lastRefreshError
+            )
 
             // Contextual Insights
             if showInsights {
@@ -486,6 +492,8 @@ struct SmartUsageDashboard: View {
     let usage: ClaudeUsage
     let apiUsage: APIUsage?
     var hasCredentialError: Bool = false
+    var consecutiveFailures: Int = 0
+    var lastErrorMessage: String?
     @StateObject private var profileManager = ProfileManager.shared
 
     // Get the display mode from active profile's icon config
@@ -550,6 +558,34 @@ struct SmartUsageDashboard: View {
                 .background(
                     RoundedRectangle(cornerRadius: 8)
                         .fill(Color.orange.opacity(0.1))
+                )
+            } else if consecutiveFailures >= 3 {
+                // Repeated refresh failure warning (non-auth errors)
+                HStack(spacing: 6) {
+                    Image(systemName: "wifi.exclamationmark")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.yellow)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(String(format: "popover.refresh_failures".localized, consecutiveFailures))
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(.yellow)
+
+                        if let error = lastErrorMessage {
+                            Text(error)
+                                .font(.system(size: 10))
+                                .foregroundColor(.secondary)
+                                .lineLimit(1)
+                        }
+                    }
+
+                    Spacer()
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.yellow.opacity(0.1))
                 )
             }
 

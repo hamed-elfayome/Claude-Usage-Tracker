@@ -118,7 +118,8 @@ struct PersonalUsageView: View {
                                                 .foregroundColor(.white)
                                         } else {
                                             Text("\(step)")
-                                                .font(.system(size: 11, weight: .medium))
+                                                .font(DesignTokens.Typography.caption)
+                                .fontWeight(.medium)
                                                 .foregroundColor(isCurrent ? .white : .secondary)
                                         }
                                     }
@@ -282,14 +283,15 @@ struct EnterKeyStep: View {
             // Professional input field
             VStack(alignment: .leading, spacing: 8) {
                 Text("personal.label_session_key".localized)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(DesignTokens.Typography.body)
+                    .fontWeight(.medium)
                     .foregroundColor(.secondary)
 
                 TextField("sk-ant-sid01-...", text: $wizardState.sessionKey)
                     .textFieldStyle(.plain)
-                    .font(.system(size: 12, design: .monospaced))
+                    .font(DesignTokens.Typography.monospaced)
                     .padding(10)
-                    .background(Color(nsColor: .textBackgroundColor))
+                    .background(DesignTokens.Colors.inputBackground)
                     .cornerRadius(6)
                     .overlay(
                         RoundedRectangle(cornerRadius: 6)
@@ -297,7 +299,7 @@ struct EnterKeyStep: View {
                     )
 
                 Text("personal.help_session_key".localized)
-                    .font(.system(size: 11))
+                    .font(DesignTokens.Typography.caption)
                     .foregroundColor(.secondary)
             }
 
@@ -306,9 +308,9 @@ struct EnterKeyStep: View {
                 HStack(spacing: 8) {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundColor(.green)
-                        .font(.system(size: 14))
+                        .font(.system(size: DesignTokens.Icons.standard))
                     Text(message)
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Typography.body)
                         .foregroundColor(.secondary)
                 }
                 .padding(10)
@@ -319,9 +321,9 @@ struct EnterKeyStep: View {
                 HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundColor(.red)
-                        .font(.system(size: 14))
+                        .font(.system(size: DesignTokens.Icons.standard))
                     Text(message)
-                        .font(.system(size: 12))
+                        .font(DesignTokens.Typography.body)
                         .foregroundColor(.red)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -340,9 +342,9 @@ struct EnterKeyStep: View {
                 }) {
                     HStack(spacing: 6) {
                         Image(systemName: "safari")
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Typography.body)
                         Text("personal.button_open_claude".localized)
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Typography.body)
                     }
                 }
                 .buttonStyle(.bordered)
@@ -358,10 +360,10 @@ struct EnterKeyStep: View {
                                 .frame(width: 12, height: 12)
                         } else {
                             Image(systemName: "checkmark.circle")
-                                .font(.system(size: 12))
+                                .font(DesignTokens.Typography.body)
                         }
                         Text(wizardState.validationState == .validating ? "wizard.testing".localized : "wizard.test_connection".localized)
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Typography.body)
                     }
                 }
                 .buttonStyle(.borderedProminent)
@@ -419,9 +421,9 @@ struct SelectOrgStep: View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("wizard.select_organization".localized)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(DesignTokens.Typography.bodyMedium)
                 Text("wizard.choose_organization".localized)
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Typography.body)
                     .foregroundColor(.secondary)
             }
 
@@ -454,10 +456,10 @@ struct SelectOrgStep: View {
 
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(org.name)
-                                    .font(.system(size: 13, weight: .medium))
+                                    .font(DesignTokens.Typography.bodyMedium)
                                     .foregroundColor(.primary)
                                 Text(org.uuid)
-                                    .font(.system(size: 11, design: .monospaced))
+                                    .font(DesignTokens.Typography.monospacedSmall)
                                     .foregroundColor(.secondary)
                                     .lineLimit(1)
                             }
@@ -466,7 +468,8 @@ struct SelectOrgStep: View {
 
                             if wizardState.selectedOrgId == org.uuid {
                                 Image(systemName: "checkmark")
-                                    .font(.system(size: 12, weight: .semibold))
+                                    .font(DesignTokens.Typography.body)
+                                    .fontWeight(.semibold)
                                     .foregroundColor(.accentColor)
                             }
                         }
@@ -482,7 +485,7 @@ struct SelectOrgStep: View {
                                 .strokeBorder(
                                     wizardState.selectedOrgId == org.uuid
                                         ? Color.accentColor.opacity(0.3)
-                                        : Color.secondary.opacity(0.15),
+                                        : DesignTokens.Colors.cardBorder,
                                     lineWidth: 1
                                 )
                         )
@@ -500,9 +503,9 @@ struct SelectOrgStep: View {
                 }) {
                     HStack(spacing: 6) {
                         Image(systemName: "chevron.left")
-                            .font(.system(size: 11))
+                            .font(DesignTokens.Typography.caption)
                         Text("common.back".localized)
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Typography.body)
                     }
                 }
                 .buttonStyle(.bordered)
@@ -517,9 +520,9 @@ struct SelectOrgStep: View {
                 }) {
                     HStack(spacing: 6) {
                         Text("common.next".localized)
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Typography.body)
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 11))
+                            .font(DesignTokens.Typography.caption)
                     }
                 }
                 .buttonStyle(.borderedProminent)
@@ -548,9 +551,9 @@ struct ConfirmStep: View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("wizard.review_config".localized)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(DesignTokens.Typography.bodyMedium)
                 Text("wizard.confirm_settings".localized)
-                    .font(.system(size: 12))
+                    .font(DesignTokens.Typography.body)
                     .foregroundColor(.secondary)
             }
 
@@ -558,16 +561,17 @@ struct ConfirmStep: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 10) {
                     Image(systemName: "key")
-                        .font(.system(size: 14))
+                        .font(.system(size: DesignTokens.Icons.standard))
                         .foregroundColor(.accentColor)
                         .frame(width: 20)
 
                     VStack(alignment: .leading, spacing: 3) {
                         Text("wizard.session_key".localized)
-                            .font(.system(size: 11, weight: .medium))
+                            .font(DesignTokens.Typography.caption)
+                                .fontWeight(.medium)
                             .foregroundColor(.secondary)
                         Text(maskSessionKey(wizardState.sessionKey))
-                            .font(.system(size: 12, design: .monospaced))
+                            .font(DesignTokens.Typography.monospaced)
                             .foregroundColor(.primary)
                     }
                 }
@@ -577,19 +581,21 @@ struct ConfirmStep: View {
 
                     HStack(spacing: 10) {
                         Image(systemName: "building.2")
-                            .font(.system(size: 14))
+                            .font(.system(size: DesignTokens.Icons.standard))
                             .foregroundColor(.accentColor)
                             .frame(width: 20)
 
                         VStack(alignment: .leading, spacing: 3) {
                             Text("wizard.organization".localized)
-                                .font(.system(size: 11, weight: .medium))
+                                .font(DesignTokens.Typography.caption)
+                                .fontWeight(.medium)
                                 .foregroundColor(.secondary)
                             Text(selectedOrg.name)
-                                .font(.system(size: 12, weight: .medium))
+                                .font(DesignTokens.Typography.body)
+                                .fontWeight(.medium)
                                 .foregroundColor(.primary)
                             Text(selectedOrg.uuid)
-                                .font(.system(size: 11, design: .monospaced))
+                                .font(DesignTokens.Typography.monospacedSmall)
                                 .foregroundColor(.secondary)
                         }
                     }
@@ -600,20 +606,20 @@ struct ConfirmStep: View {
 
                     HStack(spacing: 8) {
                         Image(systemName: "exclamationmark.triangle")
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Typography.body)
                             .foregroundColor(.orange)
                         Text("wizard.key_will_update".localized)
-                            .font(.system(size: 11))
+                            .font(DesignTokens.Typography.caption)
                             .foregroundColor(.secondary)
                     }
                 }
             }
             .padding(12)
-            .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+            .background(DesignTokens.Colors.cardBackground)
             .cornerRadius(6)
             .overlay(
                 RoundedRectangle(cornerRadius: 6)
-                    .strokeBorder(Color.secondary.opacity(0.15), lineWidth: 1)
+                    .strokeBorder(DesignTokens.Colors.cardBorder, lineWidth: 1)
             )
 
             // Navigation buttons
@@ -625,9 +631,9 @@ struct ConfirmStep: View {
                 }) {
                     HStack(spacing: 6) {
                         Image(systemName: "chevron.left")
-                            .font(.system(size: 11))
+                            .font(DesignTokens.Typography.caption)
                         Text("common.back".localized)
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Typography.body)
                     }
                 }
                 .buttonStyle(.bordered)
@@ -644,10 +650,10 @@ struct ConfirmStep: View {
                                 .frame(width: 12, height: 12)
                         } else {
                             Image(systemName: "checkmark.circle")
-                                .font(.system(size: 12))
+                                .font(DesignTokens.Typography.body)
                         }
                         Text(isSaving ? "wizard.saving".localized : "wizard.save_configuration".localized)
-                            .font(.system(size: 12))
+                            .font(DesignTokens.Typography.body)
                     }
                 }
                 .buttonStyle(.borderedProminent)

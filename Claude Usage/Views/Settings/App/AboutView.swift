@@ -117,19 +117,16 @@ struct AboutView: View {
                 }
 
                 // Links
-                VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
-                    Text("about.links".localized)
-                        .font(DesignTokens.Typography.sectionTitle)
-
+                SettingsSectionCard(title: "about.links".localized) {
                     VStack(spacing: DesignTokens.Spacing.small) {
                         LinkButton(title: "about.star_github".localized, icon: "star.fill") {
-                            if let url = URL(string: "https://github.com/hamed-elfayome/Claude-Usage-Tracker") {
+                            if let url = URL(string: "https://github.com/novastate/Claude-Tracker") {
                                 NSWorkspace.shared.open(url)
                             }
                         }
 
                         LinkButton(title: "about.report_issue".localized, icon: "exclamationmark.triangle") {
-                            if let url = URL(string: "https://github.com/hamed-elfayome/Claude-Usage-Tracker/issues") {
+                            if let url = URL(string: "https://github.com/novastate/Claude-Tracker/issues") {
                                 NSWorkspace.shared.open(url)
                             }
                         }
@@ -139,17 +136,22 @@ struct AboutView: View {
                                 NSWorkspace.shared.open(url)
                             }
                         }
+                    }
+                }
 
-                        Divider()
-
+                // Actions
+                SettingsSectionCard(title: "about.actions".localized) {
+                    VStack(spacing: DesignTokens.Spacing.small) {
                         LinkButton(title: "about.run_setup_wizard".localized, icon: "wand.and.stars") {
                             LoggingService.shared.log("AboutView: Setup Wizard button clicked - posting notification")
                             NotificationCenter.default.post(name: .showSetupWizard, object: nil)
                         }
 
-                        LinkButton(title: "about.reset_app_data".localized, icon: "trash") {
-                            showResetConfirmation = true
-                        }
+                        SettingsButton.destructive(
+                            title: "about.reset_app_data".localized,
+                            icon: "trash",
+                            action: { showResetConfirmation = true }
+                        )
                     }
                 }
                 .alert("about.reset_confirmation_title".localized, isPresented: $showResetConfirmation) {
@@ -176,7 +178,7 @@ struct AboutView: View {
 
                 Spacer()
             }
-            .padding(28)
+            .padding()
         }
         .onAppear {
             if contributors.isEmpty && !isLoadingContributors {

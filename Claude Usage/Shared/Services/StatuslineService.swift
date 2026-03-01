@@ -117,10 +117,15 @@ func isValidJSON(_ string: String) -> Bool {
 }
 
 func readCredentialsFromFile() -> String? {
-    let homeDir = FileManager.default.homeDirectoryForCurrentUser
+    let claudeDir: URL
+    if let configDir = ProcessInfo.processInfo.environment["CLAUDE_CONFIG_DIR"] {
+        claudeDir = URL(fileURLWithPath: configDir)
+    } else {
+        claudeDir = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".claude")
+    }
     let candidates = [
-        homeDir.appendingPathComponent(".claude/.credentials.json"),
-        homeDir.appendingPathComponent(".claude/credentials.json")
+        claudeDir.appendingPathComponent(".credentials.json"),
+        claudeDir.appendingPathComponent("credentials.json")
     ]
     for path in candidates {
         guard FileManager.default.fileExists(atPath: path.path) else { continue }
@@ -348,88 +353,111 @@ fi
 
 usage_text=""
 if [ "$show_usage" = "1" ]; then
-  swift_result=$(swift "$HOME/.claude/fetch-claude-usage.swift" 2>/dev/null)
+  # Try app-written cache first (instant), fall back to Swift script (slow)
+  cache_file="$HOME/.claude/.statusline-usage-cache"
+  use_cache=0
+  profile_name=""
+  utilization=""
+  resets_at=""
+  hint=""
 
-  if [ $? -eq 0 ] && [ -n "$swift_result" ]; then
-    profile_name=$(echo "$swift_result" | cut -d'|' -f1)
-    utilization=$(echo "$swift_result" | cut -d'|' -f2)
-    resets_at=$(echo "$swift_result" | cut -d'|' -f3)
-    hint=$(echo "$swift_result" | cut -d'|' -f4)
-
-    if [ -n "$utilization" ] && [ "$utilization" != "ERROR" ]; then
-      if [ "$utilization" -le 10 ]; then
-        usage_color="$LEVEL_1"
-      elif [ "$utilization" -le 20 ]; then
-        usage_color="$LEVEL_2"
-      elif [ "$utilization" -le 30 ]; then
-        usage_color="$LEVEL_3"
-      elif [ "$utilization" -le 40 ]; then
-        usage_color="$LEVEL_4"
-      elif [ "$utilization" -le 50 ]; then
-        usage_color="$LEVEL_5"
-      elif [ "$utilization" -le 60 ]; then
-        usage_color="$LEVEL_6"
-      elif [ "$utilization" -le 70 ]; then
-        usage_color="$LEVEL_7"
-      elif [ "$utilization" -le 80 ]; then
-        usage_color="$LEVEL_8"
-      elif [ "$utilization" -le 90 ]; then
-        usage_color="$LEVEL_9"
-      else
-        usage_color="$LEVEL_10"
-      fi
-
-      if [ "$show_bar" = "1" ]; then
-        if [ "$utilization" -eq 0 ]; then
-          filled_blocks=0
-        elif [ "$utilization" -eq 100 ]; then
-          filled_blocks=10
-        else
-          filled_blocks=$(( (utilization * 10 + 50) / 100 ))
-        fi
-        [ "$filled_blocks" -lt 0 ] && filled_blocks=0
-        [ "$filled_blocks" -gt 10 ] && filled_blocks=10
-        empty_blocks=$((10 - filled_blocks))
-
-        # Build progress bar safely without seq
-        progress_bar=" "
-        i=0
-        while [ $i -lt $filled_blocks ]; do
-          progress_bar="${progress_bar}▓"
-          i=$((i + 1))
-        done
-        i=0
-        while [ $i -lt $empty_blocks ]; do
-          progress_bar="${progress_bar}░"
-          i=$((i + 1))
-        done
-      else
-        progress_bar=""
-      fi
-
-      reset_time_display=""
-      if [ "$show_reset" = "1" ] && [ -n "$resets_at" ] && [ "$resets_at" != "null" ]; then
-        iso_time=$(echo "$resets_at" | sed 's/\\.[0-9]*Z$//')
-        epoch=$(date -ju -f "%Y-%m-%dT%H:%M:%S" "$iso_time" "+%s" 2>/dev/null)
-
-        if [ -n "$epoch" ]; then
-          # Detect system time format (12h vs 24h) from macOS locale preferences
-          time_format=$(defaults read -g AppleICUForce24HourTime 2>/dev/null)
-          if [ "$time_format" = "1" ]; then
-            # 24-hour format
-            reset_time=$(date -r "$epoch" "+%H:%M" 2>/dev/null)
-          else
-            # 12-hour format (default)
-            reset_time=$(date -r "$epoch" "+%I:%M %p" 2>/dev/null)
-          fi
-          [ -n "$reset_time" ] && reset_time_display=$(printf " → Reset: %s" "$reset_time")
-        fi
-      fi
-
-      usage_text="${usage_color}Usage: ${utilization}%${progress_bar}${reset_time_display}${RESET}"
-    else
-      usage_text="${YELLOW}Usage: ~${RESET}"
+  if [ -f "$cache_file" ]; then
+    cache_mtime=$(stat -f %m "$cache_file" 2>/dev/null)
+    now=$(date +%s)
+    cache_age=$((now - cache_mtime))
+    # Use cache if less than 5 minutes old
+    if [ "$cache_age" -lt 300 ]; then
+      cache_data=$(cat "$cache_file")
+      profile_name=$(echo "$cache_data" | cut -d'|' -f1)
+      utilization=$(echo "$cache_data" | cut -d'|' -f2)
+      resets_at=$(echo "$cache_data" | cut -d'|' -f3)
+      hint=""
+      use_cache=1
     fi
+  fi
+
+  # Fall back to Swift script if cache is stale or missing
+  if [ "$use_cache" = "0" ]; then
+    swift_result=$(swift "$HOME/.claude/fetch-claude-usage.swift" 2>/dev/null)
+    if [ $? -eq 0 ] && [ -n "$swift_result" ]; then
+      profile_name=$(echo "$swift_result" | cut -d'|' -f1)
+      utilization=$(echo "$swift_result" | cut -d'|' -f2)
+      resets_at=$(echo "$swift_result" | cut -d'|' -f3)
+      hint=$(echo "$swift_result" | cut -d'|' -f4)
+    fi
+  fi
+
+  if [ -n "$utilization" ] && [ "$utilization" != "ERROR" ]; then
+    if [ "$utilization" -le 10 ]; then
+      usage_color="$LEVEL_1"
+    elif [ "$utilization" -le 20 ]; then
+      usage_color="$LEVEL_2"
+    elif [ "$utilization" -le 30 ]; then
+      usage_color="$LEVEL_3"
+    elif [ "$utilization" -le 40 ]; then
+      usage_color="$LEVEL_4"
+    elif [ "$utilization" -le 50 ]; then
+      usage_color="$LEVEL_5"
+    elif [ "$utilization" -le 60 ]; then
+      usage_color="$LEVEL_6"
+    elif [ "$utilization" -le 70 ]; then
+      usage_color="$LEVEL_7"
+    elif [ "$utilization" -le 80 ]; then
+      usage_color="$LEVEL_8"
+    elif [ "$utilization" -le 90 ]; then
+      usage_color="$LEVEL_9"
+    else
+      usage_color="$LEVEL_10"
+    fi
+
+    if [ "$show_bar" = "1" ]; then
+      if [ "$utilization" -eq 0 ]; then
+        filled_blocks=0
+      elif [ "$utilization" -eq 100 ]; then
+        filled_blocks=10
+      else
+        filled_blocks=$(( (utilization * 10 + 50) / 100 ))
+      fi
+      [ "$filled_blocks" -lt 0 ] && filled_blocks=0
+      [ "$filled_blocks" -gt 10 ] && filled_blocks=10
+      empty_blocks=$((10 - filled_blocks))
+
+      # Build progress bar safely without seq
+      progress_bar=" "
+      i=0
+      while [ $i -lt $filled_blocks ]; do
+        progress_bar="${progress_bar}▓"
+        i=$((i + 1))
+      done
+      i=0
+      while [ $i -lt $empty_blocks ]; do
+        progress_bar="${progress_bar}░"
+        i=$((i + 1))
+      done
+    else
+      progress_bar=""
+    fi
+
+    reset_time_display=""
+    if [ "$show_reset" = "1" ] && [ -n "$resets_at" ] && [ "$resets_at" != "null" ]; then
+      iso_time=$(echo "$resets_at" | sed 's/\\.[0-9]*Z$//')
+      epoch=$(date -ju -f "%Y-%m-%dT%H:%M:%S" "$iso_time" "+%s" 2>/dev/null)
+
+      if [ -n "$epoch" ]; then
+        # Detect system time format (12h vs 24h) from macOS locale preferences
+        time_format=$(defaults read -g AppleICUForce24HourTime 2>/dev/null)
+        if [ "$time_format" = "1" ]; then
+          # 24-hour format
+          reset_time=$(date -r "$epoch" "+%H:%M" 2>/dev/null)
+        else
+          # 12-hour format (default)
+          reset_time=$(date -r "$epoch" "+%I:%M %p" 2>/dev/null)
+        fi
+        [ -n "$reset_time" ] && reset_time_display=$(printf " → Reset: %s" "$reset_time")
+      fi
+    fi
+
+    usage_text="${usage_color}Usage: ${utilization}%${progress_bar}${reset_time_display}${RESET}"
   else
     usage_text="${YELLOW}Usage: ~${RESET}"
   fi
@@ -732,11 +760,14 @@ SHOW_PROFILE=\(showProfile ? "1" : "0")
 
     /// Writes a usage cache file so the CLI statusline bash script can display
     /// data immediately without waiting for the Swift fetch script to finish.
-    func writeUsageCache(utilization: Int, resetsAt: String) {
+    /// Format: profileName|utilization|resetsAt|unixTimestamp
+    func writeUsageCache(utilization: Int, resetsAt: String, profileName: String? = nil) {
         let cachePath = Constants.ClaudePaths.claudeDirectory
             .appendingPathComponent(".statusline-usage-cache")
 
-        let content = "\(utilization)|\(resetsAt)"
+        let name = profileName ?? ""
+        let timestamp = Int(Date().timeIntervalSince1970)
+        let content = "\(name)|\(utilization)|\(resetsAt)|\(timestamp)"
         do {
             try content.write(to: cachePath, atomically: true, encoding: .utf8)
         } catch {
