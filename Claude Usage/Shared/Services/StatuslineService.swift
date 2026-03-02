@@ -12,26 +12,60 @@ class StatuslineService {
 
     /// Swift script that fetches Claude usage data from the API.
     /// Installed to ~/.claude/fetch-claude-usage.swift and executed by the bash statusline script.
-    /// The session key and organization ID are injected into this script when statusline is enabled.
-    private func generateSwiftScript(sessionKey: String, organizationId: String) -> String {
-        return """
+    /// Reads the active profile ID from UserDefaults, then looks up credentials from Keychain at runtime.
+    private let swiftScript = """
 #!/usr/bin/env swift
 
 import Foundation
+import Security
+
+// MARK: - Keychain helpers
+
+func keychainLoad(service: String, account: String) -> String? {
+    let query: [String: Any] = [
+        kSecClass as String: kSecClassGenericPassword,
+        kSecAttrService as String: service,
+        kSecAttrAccount as String: account,
+        kSecReturnData as String: true,
+        kSecMatchLimit as String: kSecMatchLimitOne
+    ]
+    var result: AnyObject?
+    let status = SecItemCopyMatching(query as CFDictionary, &result)
+    guard status == errSecSuccess,
+          let data = result as? Data,
+          let value = String(data: data, encoding: .utf8) else {
+        return nil
+    }
+    return value
+}
+
+// MARK: - Credential resolution
+
 func readSessionKey() -> String? {
-    // Session key injected from Keychain by Claude Usage app
-    let injectedKey = "\(sessionKey)"
-    let trimmedKey = injectedKey.trimmingCharacters(in: .whitespacesAndNewlines)
-    return trimmedKey.isEmpty ? nil : trimmedKey
+    guard let profileId = UserDefaults.standard.string(forKey: "activeProfileId") else {
+        return nil
+    }
+    let service = "com.claudeusagetracker.profile.\\(profileId).claude-session-key"
+    guard let key = keychainLoad(service: service, account: "session-key") else {
+        return nil
+    }
+    let trimmed = key.trimmingCharacters(in: .whitespacesAndNewlines)
+    return trimmed.isEmpty ? nil : trimmed
 }
+
 func readOrganizationId() -> String? {
-    // Organization ID injected from settings by Claude Usage app
-    let injectedOrgId = "\(organizationId)"
-    let trimmedOrgId = injectedOrgId.trimmingCharacters(in: .whitespacesAndNewlines)
-    return trimmedOrgId.isEmpty ? nil : trimmedOrgId
+    guard let profileId = UserDefaults.standard.string(forKey: "activeProfileId") else {
+        return nil
+    }
+    let service = "com.claudeusagetracker.profile.\\(profileId).organization-id"
+    guard let orgId = keychainLoad(service: service, account: "session-key") else {
+        return nil
+    }
+    let trimmed = orgId.trimmingCharacters(in: .whitespacesAndNewlines)
+    return trimmed.isEmpty ? nil : trimmed
 }
+
 func fetchUsageData(sessionKey: String, orgId: String) async throws -> (utilization: Int, resetsAt: String?) {
-    // Build URL safely - validate orgId doesn't contain path traversal
     guard !orgId.contains(".."), !orgId.contains("/") else {
         throw NSError(domain: "ClaudeAPI", code: 5, userInfo: [NSLocalizedDescriptionKey: "Invalid organization ID"])
     }
@@ -63,7 +97,6 @@ func fetchUsageData(sessionKey: String, orgId: String) async throws -> (utilizat
 }
 
 // Main execution
-// Use Task to run async code, RunLoop keeps script alive until exit() is called
 Task {
     guard let sessionKey = readSessionKey() else {
         print("ERROR:NO_SESSION_KEY")
@@ -78,7 +111,6 @@ Task {
     do {
         let (utilization, resetsAt) = try await fetchUsageData(sessionKey: sessionKey, orgId: orgId)
 
-        // Output format: UTILIZATION|RESETS_AT
         if let resets = resetsAt {
             print("\\(utilization)|\\(resets)")
         } else {
@@ -91,21 +123,7 @@ Task {
     }
 }
 
-// Keep script alive while async Task executes
 RunLoop.main.run()
-"""
-    }
-
-    /// Placeholder Swift script for when statusline is disabled
-    /// This script returns an error indicating no session key is available
-    private let placeholderSwiftScript = """
-#!/usr/bin/env swift
-
-import Foundation
-
-// No session key available - statusline is disabled
-print("ERROR:NO_SESSION_KEY")
-exit(1)
 """
 
     /// Bash script that builds the statusline display.
@@ -271,42 +289,17 @@ printf "%s\\n" "$output"
 
     // MARK: - Installation
 
-    /// Installs statusline scripts with session key injection from active profile
-    /// - Parameter injectSessionKey: If true, injects the session key from active profile into the Swift script
-    func installScripts(injectSessionKey: Bool = false) throws {
+    /// Installs statusline scripts (Keychain-based, no embedded secrets)
+    func installScripts() throws {
         let claudeDir = Constants.ClaudePaths.claudeDirectory
 
         if !FileManager.default.fileExists(atPath: claudeDir.path) {
             try FileManager.default.createDirectory(at: claudeDir, withIntermediateDirectories: true)
         }
 
-        // Install Swift script (with or without session key)
+        // Install Swift script (reads credentials from Keychain at runtime)
         let swiftDestination = claudeDir.appendingPathComponent("fetch-claude-usage.swift")
-        let swiftScriptContent: String
-
-        if injectSessionKey {
-            // Load session key and org ID from active profile
-            guard let activeProfile = ProfileManager.shared.activeProfile else {
-                throw StatuslineError.noActiveProfile
-            }
-
-            guard let sessionKey = activeProfile.claudeSessionKey else {
-                throw StatuslineError.sessionKeyNotFound
-            }
-
-            guard let organizationId = activeProfile.organizationId else {
-                throw StatuslineError.organizationNotConfigured
-            }
-
-            swiftScriptContent = generateSwiftScript(sessionKey: sessionKey, organizationId: organizationId)
-            LoggingService.shared.log("Injected session key and org ID from profile '\(activeProfile.name)' into statusline")
-        } else {
-            // Install placeholder script
-            swiftScriptContent = placeholderSwiftScript
-            LoggingService.shared.log("Installed placeholder statusline Swift script")
-        }
-
-        try swiftScriptContent.write(to: swiftDestination, atomically: true, encoding: .utf8)
+        try swiftScript.write(to: swiftDestination, atomically: true, encoding: .utf8)
         try FileManager.default.setAttributes(
             [.posixPermissions: 0o755],
             ofItemAtPath: swiftDestination.path
@@ -319,21 +312,8 @@ printf "%s\\n" "$output"
             [.posixPermissions: 0o755],
             ofItemAtPath: bashDestination.path
         )
-    }
 
-    /// Removes the session key from the statusline Swift script
-    func removeSessionKeyFromScript() throws {
-        let swiftDestination = Constants.ClaudePaths.claudeDirectory
-            .appendingPathComponent("fetch-claude-usage.swift")
-
-        // Replace with placeholder script that returns error
-        try placeholderSwiftScript.write(to: swiftDestination, atomically: true, encoding: .utf8)
-        try FileManager.default.setAttributes(
-            [.posixPermissions: 0o755],
-            ofItemAtPath: swiftDestination.path
-        )
-
-        LoggingService.shared.log("Removed session key from statusline Swift script")
+        LoggingService.shared.log("Installed statusline scripts (Keychain-based)")
     }
 
     // MARK: - Configuration
@@ -360,8 +340,6 @@ SHOW_RESET_TIME=\(showResetTime ? "1" : "0")
     }
 
     /// Enables or disables statusline in Claude Code settings.json
-    /// When enabling, also injects the session key into the Swift script
-    /// When disabling, removes the session key from the Swift script
     func updateClaudeCodeSettings(enabled: Bool) throws {
         let settingsPath = Constants.ClaudePaths.claudeDirectory
             .appendingPathComponent("settings.json")
@@ -370,8 +348,8 @@ SHOW_RESET_TIME=\(showResetTime ? "1" : "0")
         let commandPath = "\(homeDir)/.claude/statusline-command.sh"
 
         if enabled {
-            // Install scripts with session key injection
-            try installScripts(injectSessionKey: true)
+            // Install scripts (Keychain-based, no secrets embedded)
+            try installScripts()
 
             // Update settings.json
             var settings: [String: Any] = [:]
@@ -391,10 +369,7 @@ SHOW_RESET_TIME=\(showResetTime ? "1" : "0")
             let jsonData = try JSONSerialization.data(withJSONObject: settings, options: .prettyPrinted)
             try jsonData.write(to: settingsPath)
         } else {
-            // Remove session key from Swift script
-            try removeSessionKeyFromScript()
-
-            // Update settings.json
+            // Update settings.json to remove statusLine
             if FileManager.default.fileExists(atPath: settingsPath.path) {
                 let existingData = try Data(contentsOf: settingsPath)
                 if var settings = try JSONSerialization.jsonObject(with: existingData) as? [String: Any] {
@@ -423,7 +398,7 @@ SHOW_RESET_TIME=\(showResetTime ? "1" : "0")
     /// Updates scripts only if already installed (installation is optional)
     func updateScriptsIfInstalled() throws {
         guard isInstalled else { return }
-        try installScripts(injectSessionKey: true)
+        try installScripts()
     }
 
     /// Checks if active profile has a valid session key
@@ -442,18 +417,12 @@ SHOW_RESET_TIME=\(showResetTime ? "1" : "0")
 // MARK: - StatuslineError
 
 enum StatuslineError: Error, LocalizedError {
-    case noActiveProfile
-    case sessionKeyNotFound
-    case organizationNotConfigured
+    case installFailed(String)
 
     var errorDescription: String? {
         switch self {
-        case .noActiveProfile:
-            return "No active profile found. Please create or select a profile first."
-        case .sessionKeyNotFound:
-            return "Session key not found in active profile. Please configure your session key first."
-        case .organizationNotConfigured:
-            return "Organization not configured in active profile. Please select an organization in the app settings."
+        case .installFailed(let reason):
+            return "Failed to install statusline: \(reason)"
         }
     }
 }
