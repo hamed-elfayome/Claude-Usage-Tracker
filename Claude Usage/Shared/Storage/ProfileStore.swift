@@ -31,14 +31,24 @@ class ProfileStore {
 
     func saveProfiles(_ profiles: [Profile]) {
         do {
+            // Strip credential fields before writing to UserDefaults
+            let stripped = profiles.map { profile -> Profile in
+                var p = profile
+                p.claudeSessionKey = nil
+                p.organizationId = nil
+                p.apiSessionKey = nil
+                p.apiOrganizationId = nil
+                p.cliCredentialsJSON = nil
+                return p
+            }
+
             let encoder = JSONEncoder()
-            encoder.outputFormatting = .prettyPrinted // For debugging
-            let data = try encoder.encode(profiles)
+            encoder.outputFormatting = .prettyPrinted
+            let data = try encoder.encode(stripped)
             defaults.set(data, forKey: Keys.profiles)
 
-            // Verify save
             if let savedData = defaults.data(forKey: Keys.profiles) {
-                LoggingService.shared.log("ProfileStore: Saved \(profiles.count) profiles (\(savedData.count) bytes)")
+                LoggingService.shared.log("ProfileStore: Saved \(profiles.count) profiles (\(savedData.count) bytes, credentials stripped)")
             } else {
                 LoggingService.shared.logError("ProfileStore: Failed to verify save!")
             }
@@ -54,8 +64,19 @@ class ProfileStore {
         }
 
         do {
-            let profiles = try JSONDecoder().decode([Profile].self, from: data)
+            var profiles = try JSONDecoder().decode([Profile].self, from: data)
             LoggingService.shared.log("ProfileStore: Loaded \(profiles.count) profiles from storage")
+
+            // Hydrate credentials from Keychain
+            for i in profiles.indices {
+                let creds = keychainService.loadProfileCredentials(profiles[i].id)
+                profiles[i].claudeSessionKey = creds.claudeSessionKey
+                profiles[i].organizationId = creds.organizationId
+                profiles[i].apiSessionKey = creds.apiSessionKey
+                profiles[i].apiOrganizationId = creds.apiOrganizationId
+                profiles[i].cliCredentialsJSON = creds.cliCredentialsJSON
+            }
+
             return profiles
         } catch {
             LoggingService.shared.logStorageError("loadProfiles", error: error)
@@ -113,33 +134,11 @@ class ProfileStore {
     // MARK: - Credential Helpers
 
     func saveProfileCredentials(_ profileId: UUID, credentials: ProfileCredentials) throws {
-        var profiles = loadProfiles()
-        guard let index = profiles.firstIndex(where: { $0.id == profileId }) else {
-            throw NSError(domain: "ProfileStore", code: 404, userInfo: [NSLocalizedDescriptionKey: "Profile not found"])
-        }
-
-        // Update credentials directly in profile
-        profiles[index].claudeSessionKey = credentials.claudeSessionKey
-        profiles[index].organizationId = credentials.organizationId
-        profiles[index].apiSessionKey = credentials.apiSessionKey
-        profiles[index].apiOrganizationId = credentials.apiOrganizationId
-        profiles[index].cliCredentialsJSON = credentials.cliCredentialsJSON
-
-        saveProfiles(profiles)
+        try keychainService.saveProfileCredentials(profileId, credentials: credentials)
+        LoggingService.shared.log("ProfileStore: Saved credentials to Keychain for profile \(profileId)")
     }
 
-    func loadProfileCredentials(_ profileId: UUID) throws -> ProfileCredentials {
-        let profiles = loadProfiles()
-        guard let profile = profiles.first(where: { $0.id == profileId }) else {
-            throw NSError(domain: "ProfileStore", code: 404, userInfo: [NSLocalizedDescriptionKey: "Profile not found"])
-        }
-
-        return ProfileCredentials(
-            claudeSessionKey: profile.claudeSessionKey,
-            organizationId: profile.organizationId,
-            apiSessionKey: profile.apiSessionKey,
-            apiOrganizationId: profile.apiOrganizationId,
-            cliCredentialsJSON: profile.cliCredentialsJSON
-        )
+    func loadProfileCredentials(_ profileId: UUID) -> ProfileCredentials {
+        return keychainService.loadProfileCredentials(profileId)
     }
 }

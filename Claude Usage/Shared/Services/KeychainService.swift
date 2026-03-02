@@ -15,12 +15,35 @@ class KeychainService {
     private init() {}
 
     /// Keychain item identifiers
-    enum KeychainKey: String {
-        case apiSessionKey = "com.claudeusagetracker.api-session-key"
-        case claudeSessionKey = "com.claudeusagetracker.claude-session-key"
+    enum KeychainKey {
+        // Legacy global keys (kept for backward compat / migration)
+        case apiSessionKey
+        case claudeSessionKey
+
+        // Per-profile credential keys
+        case profileClaudeSessionKey(UUID)
+        case profileOrganizationId(UUID)
+        case profileApiSessionKey(UUID)
+        case profileApiOrganizationId(UUID)
+        case profileCliCredentialsJSON(UUID)
 
         var service: String {
-            return rawValue
+            switch self {
+            case .apiSessionKey:
+                return "com.claudeusagetracker.api-session-key"
+            case .claudeSessionKey:
+                return "com.claudeusagetracker.claude-session-key"
+            case .profileClaudeSessionKey(let id):
+                return "com.claudeusagetracker.profile.\(id.uuidString).claude-session-key"
+            case .profileOrganizationId(let id):
+                return "com.claudeusagetracker.profile.\(id.uuidString).organization-id"
+            case .profileApiSessionKey(let id):
+                return "com.claudeusagetracker.profile.\(id.uuidString).api-session-key"
+            case .profileApiOrganizationId(let id):
+                return "com.claudeusagetracker.profile.\(id.uuidString).api-organization-id"
+            case .profileCliCredentialsJSON(let id):
+                return "com.claudeusagetracker.profile.\(id.uuidString).cli-credentials-json"
+            }
         }
 
         var account: String {
@@ -162,6 +185,77 @@ class KeychainService {
 
         let status = SecItemCopyMatching(query as CFDictionary, nil)
         return status == errSecSuccess
+    }
+
+    // MARK: - Profile Credential Helpers
+
+    /// Saves all credentials for a profile to Keychain
+    func saveProfileCredentials(_ profileId: UUID, credentials: ProfileCredentials) throws {
+        if let value = credentials.claudeSessionKey {
+            try save(value, for: .profileClaudeSessionKey(profileId))
+        } else {
+            try delete(for: .profileClaudeSessionKey(profileId))
+        }
+
+        if let value = credentials.organizationId {
+            try save(value, for: .profileOrganizationId(profileId))
+        } else {
+            try delete(for: .profileOrganizationId(profileId))
+        }
+
+        if let value = credentials.apiSessionKey {
+            try save(value, for: .profileApiSessionKey(profileId))
+        } else {
+            try delete(for: .profileApiSessionKey(profileId))
+        }
+
+        if let value = credentials.apiOrganizationId {
+            try save(value, for: .profileApiOrganizationId(profileId))
+        } else {
+            try delete(for: .profileApiOrganizationId(profileId))
+        }
+
+        if let value = credentials.cliCredentialsJSON {
+            try save(value, for: .profileCliCredentialsJSON(profileId))
+        } else {
+            try delete(for: .profileCliCredentialsJSON(profileId))
+        }
+
+        LoggingService.shared.log("KeychainService: Saved credentials for profile \(profileId)")
+    }
+
+    /// Loads all credentials for a profile from Keychain
+    func loadProfileCredentials(_ profileId: UUID) -> ProfileCredentials {
+        let claudeSessionKey = try? load(for: .profileClaudeSessionKey(profileId))
+        let organizationId = try? load(for: .profileOrganizationId(profileId))
+        let apiSessionKey = try? load(for: .profileApiSessionKey(profileId))
+        let apiOrganizationId = try? load(for: .profileApiOrganizationId(profileId))
+        let cliCredentialsJSON = try? load(for: .profileCliCredentialsJSON(profileId))
+
+        return ProfileCredentials(
+            claudeSessionKey: claudeSessionKey,
+            organizationId: organizationId,
+            apiSessionKey: apiSessionKey,
+            apiOrganizationId: apiOrganizationId,
+            cliCredentialsJSON: cliCredentialsJSON
+        )
+    }
+
+    /// Deletes all Keychain entries for a profile
+    func deleteProfileCredentials(_ profileId: UUID) {
+        let keys: [KeychainKey] = [
+            .profileClaudeSessionKey(profileId),
+            .profileOrganizationId(profileId),
+            .profileApiSessionKey(profileId),
+            .profileApiOrganizationId(profileId),
+            .profileCliCredentialsJSON(profileId)
+        ]
+
+        for key in keys {
+            try? delete(for: key)
+        }
+
+        LoggingService.shared.log("KeychainService: Deleted credentials for profile \(profileId)")
     }
 
 }
