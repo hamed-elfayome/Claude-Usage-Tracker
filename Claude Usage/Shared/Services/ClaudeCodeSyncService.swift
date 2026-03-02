@@ -122,13 +122,14 @@ class ClaudeCodeSyncService {
             throw ClaudeCodeError.invalidJSON
         }
 
-        // Save to profile directly
+        // Save to profile in memory and persist
         var profiles = ProfileStore.shared.loadProfiles()
         guard let index = profiles.firstIndex(where: { $0.id == profileId }) else {
             throw ClaudeCodeError.noProfileCredentials
         }
 
         profiles[index].cliCredentialsJSON = jsonData
+        try KeychainService.shared.save(jsonData, for: .profileCliCredentialsJSON(profileId))
         ProfileStore.shared.saveProfiles(profiles)
 
         LoggingService.shared.log("Synced CLI credentials to profile: \(profileId)")
@@ -159,6 +160,7 @@ class ClaudeCodeSyncService {
         }
 
         profiles[index].cliCredentialsJSON = nil
+        try KeychainService.shared.delete(for: .profileCliCredentialsJSON(profileId))
         ProfileStore.shared.saveProfiles(profiles)
 
         LoggingService.shared.log("Removed CLI credentials from profile: \(profileId)")
@@ -230,7 +232,8 @@ class ClaudeCodeSyncService {
         }
 
         profiles[index].cliCredentialsJSON = freshJSON
-        profiles[index].cliAccountSyncedAt = Date()  // Update sync timestamp
+        profiles[index].cliAccountSyncedAt = Date()
+        try KeychainService.shared.save(freshJSON, for: .profileCliCredentialsJSON(profileId))
         ProfileStore.shared.saveProfiles(profiles)
 
         LoggingService.shared.log("✓ Re-synced CLI credentials from system and updated timestamp")

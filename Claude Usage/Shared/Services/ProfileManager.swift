@@ -113,7 +113,8 @@ class ProfileManager: ObservableObject {
 
         profiles.removeAll { $0.id == id }
 
-        // Credentials are deleted automatically with the profile
+        // Remove orphaned Keychain entries for the deleted profile
+        KeychainService.shared.deleteProfileCredentials(id)
 
         // Switch to first profile if deleted active
         if activeProfile?.id == id {
@@ -253,8 +254,8 @@ class ProfileManager: ObservableObject {
 
     // MARK: - Credentials
 
-    func loadCredentials(for profileId: UUID) throws -> ProfileCredentials {
-        return try profileStore.loadProfileCredentials(profileId)
+    func loadCredentials(for profileId: UUID) -> ProfileCredentials {
+        return profileStore.loadProfileCredentials(profileId)
     }
 
     func saveCredentials(for profileId: UUID, credentials: ProfileCredentials) throws {
@@ -277,7 +278,7 @@ class ProfileManager: ObservableObject {
     /// Removes Claude.ai credentials for a profile
     func removeClaudeAICredentials(for profileId: UUID) throws {
         // Load and clear credentials from Keychain
-        var creds = try profileStore.loadProfileCredentials(profileId)
+        var creds = profileStore.loadProfileCredentials(profileId)
         creds.claudeSessionKey = nil
         creds.organizationId = nil
         try profileStore.saveProfileCredentials(profileId, credentials: creds)
@@ -304,7 +305,7 @@ class ProfileManager: ObservableObject {
     /// Removes API Console credentials for a profile
     func removeAPICredentials(for profileId: UUID) throws {
         // Load and clear credentials from Keychain
-        var creds = try profileStore.loadProfileCredentials(profileId)
+        var creds = profileStore.loadProfileCredentials(profileId)
         creds.apiSessionKey = nil
         creds.apiOrganizationId = nil
         try profileStore.saveProfileCredentials(profileId, credentials: creds)
@@ -454,6 +455,13 @@ class ProfileManager: ObservableObject {
                 activeProfile = profiles[index]
             }
 
+            // Save org ID to Keychain
+            if let value = orgId {
+                try? KeychainService.shared.save(value, for: .profileOrganizationId(profileId))
+            } else {
+                try? KeychainService.shared.delete(for: .profileOrganizationId(profileId))
+            }
+
             profileStore.saveProfiles(profiles)
         }
     }
@@ -465,6 +473,13 @@ class ProfileManager: ObservableObject {
 
             if activeProfile?.id == profileId {
                 activeProfile = profiles[index]
+            }
+
+            // Save API org ID to Keychain
+            if let value = orgId {
+                try? KeychainService.shared.save(value, for: .profileApiOrganizationId(profileId))
+            } else {
+                try? KeychainService.shared.delete(for: .profileApiOrganizationId(profileId))
             }
 
             profileStore.saveProfiles(profiles)
