@@ -75,6 +75,12 @@ class MenuBarManager: NSObject, ObservableObject {
     // Observer for display mode changes (single/multi profile)
     private var displayModeObserver: NSObjectProtocol?
 
+    // Observer for wake-from-sleep to refresh stale data
+    private var wakeObserver: NSObjectProtocol?
+
+    // Track last auto-refresh time for debouncing wake/timer overlap
+    private var lastAutoRefreshTime: Date = .distantPast
+
     // MARK: - Image Caching (CPU Optimization)
     private var cachedImage: NSImage?
     private var cachedImageKey: String = ""
@@ -194,6 +200,9 @@ class MenuBarManager: NSObject, ObservableObject {
         // Observe refresh interval changes
         observeRefreshIntervalChanges()
 
+        // Observe wake-from-sleep to refresh stale data
+        observeWakeFromSleep()
+
         // Register global keyboard shortcut (Ctrl+Shift+C)
         registerGlobalShortcut()
     }
@@ -231,6 +240,10 @@ class MenuBarManager: NSObject, ObservableObject {
         if let displayModeObserver = displayModeObserver {
             NotificationCenter.default.removeObserver(displayModeObserver)
             self.displayModeObserver = nil
+        }
+        if let wakeObserver = wakeObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(wakeObserver)
+            self.wakeObserver = nil
         }
         if let monitor = eventMonitor {
             NSEvent.removeMonitor(monitor)
@@ -581,6 +594,7 @@ class MenuBarManager: NSObject, ObservableObject {
         let timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             self?.refreshUsage()
         }
+        timer.tolerance = interval * 0.1
         // Add to common run loop modes to ensure timer fires during UI interactions
         RunLoop.current.add(timer, forMode: .common)
         refreshTimer = timer
@@ -604,6 +618,25 @@ class MenuBarManager: NSObject, ObservableObject {
                     self?.restartAutoRefresh()
                 }
             }
+        }
+    }
+
+    private func observeWakeFromSleep() {
+        wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didWakeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+            // Debounce: skip if we refreshed less than 10 seconds ago
+            let timeSinceLastRefresh = Date().timeIntervalSince(self.lastAutoRefreshTime)
+            if timeSinceLastRefresh < 10 {
+                LoggingService.shared.logDebug("Mac woke from sleep - skipping refresh (refreshed \(Int(timeSinceLastRefresh))s ago)")
+                return
+            }
+            LoggingService.shared.logInfo("Mac woke from sleep - refreshing usage data")
+            self.restartAutoRefresh()
+            self.refreshUsage()
         }
     }
 
@@ -749,6 +782,16 @@ class MenuBarManager: NSObject, ObservableObject {
 
     /// Refreshes usage data for all profiles selected for multi-profile display
     private func refreshAllSelectedProfiles() {
+        guard !isRefreshing else {
+            LoggingService.shared.log("MenuBarManager: Skipping multi-profile refresh - already in progress")
+            return
+        }
+
+        guard !ErrorRecovery.shared.isCircuitOpen(for: .api) else {
+            LoggingService.shared.log("MenuBarManager: Skipping multi-profile refresh - circuit breaker open")
+            return
+        }
+
         let selectedProfiles = profileManager.profiles.filter { $0.isSelectedForDisplay && $0.hasUsageCredentials }
 
         guard !selectedProfiles.isEmpty else {
@@ -814,6 +857,7 @@ class MenuBarManager: NSObject, ObservableObject {
                     config: config
                 )
                 self.isRefreshing = false
+                self.lastAutoRefreshTime = Date()
             }
         }
     }
@@ -900,6 +944,16 @@ class MenuBarManager: NSObject, ObservableObject {
             return
         }
 
+        guard !isRefreshing else {
+            LoggingService.shared.log("MenuBarManager: Skipping refresh - already in progress")
+            return
+        }
+
+        guard !ErrorRecovery.shared.isCircuitOpen(for: .api) else {
+            LoggingService.shared.log("MenuBarManager: Skipping refresh - circuit breaker open")
+            return
+        }
+
         // Single profile mode - refresh only active profile
         guard let profile = profileManager.activeProfile else {
             LoggingService.shared.log("MenuBarManager.refreshUsage: No active profile")
@@ -926,15 +980,16 @@ class MenuBarManager: NSObject, ObservableObject {
                 self.isRefreshing = true
             }
 
-            // Fetch usage and status in parallel
-            async let usageResult = apiService.fetchUsageData()
+            // Fetch status concurrently (non-critical, no retry)
             async let statusResult = statusService.fetchStatus()
 
             var usageSuccess = false
 
-            // Fetch usage with proper error handling
+            // Fetch usage with retry for transient failures
             do {
-                let newUsage = try await usageResult
+                let newUsage = try await ErrorRecovery.shared.executeWithRetry(maxAttempts: 3) { [apiService] in
+                    try await apiService.fetchUsageData()
+                }
 
                 await MainActor.run {
                     self.usage = newUsage
@@ -1045,6 +1100,7 @@ class MenuBarManager: NSObject, ObservableObject {
             // Clear loading state
             await MainActor.run {
                 self.isRefreshing = false
+                self.lastAutoRefreshTime = Date()
 
                 // Show success notification if this was user-triggered and successful
                 if usageSuccess && abs(self.lastRefreshTriggerTime.timeIntervalSinceNow) < 5 {
