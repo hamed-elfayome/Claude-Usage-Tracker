@@ -12,6 +12,7 @@ struct CLIAccountView: View {
     @State private var isSyncing = false
     @State private var syncError: String?
     @State private var cliAccountInfo: CLIAccountInfo?
+    @State private var recoveryNotice: String?
 
     var body: some View {
         ScrollView {
@@ -150,6 +151,22 @@ struct CLIAccountView: View {
                                 .cornerRadius(DesignTokens.Radius.small)
                             }
 
+                            if let notice = recoveryNotice {
+                                HStack(spacing: DesignTokens.Spacing.small) {
+                                    Image(systemName: "arrow.triangle.2.circlepath.circle.fill")
+                                        .foregroundColor(.orange)
+                                        .font(.system(size: DesignTokens.Icons.standard))
+                                    Text(notice)
+                                        .font(DesignTokens.Typography.body)
+                                        .foregroundColor(.orange)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                                .padding(DesignTokens.Spacing.iconText)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(Color.orange.opacity(0.10))
+                                .cornerRadius(DesignTokens.Radius.small)
+                            }
+
                             // Action Buttons
                             HStack(spacing: DesignTokens.Spacing.iconText) {
                                 Button(action: syncFromCLI) {
@@ -234,6 +251,12 @@ struct CLIAccountView: View {
             // Reload when profile changes
             loadCLIAccountInfo()
             syncError = nil
+            recoveryNotice = nil
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .cliOAuthRecoveryNotice)) { notification in
+            if let message = notification.userInfo?["message"] as? String {
+                recoveryNotice = message
+            }
         }
     }
 

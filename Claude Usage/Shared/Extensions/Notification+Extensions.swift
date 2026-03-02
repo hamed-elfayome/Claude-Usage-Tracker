@@ -19,4 +19,7 @@ extension Notification.Name {
 
     /// Posted when the display mode changes (single/multi profile)
     static let displayModeChanged = Notification.Name("displayModeChanged")
+
+    /// Posted when CLI OAuth auto-recovery attempts to refresh stale credentials.
+    static let cliOAuthRecoveryNotice = Notification.Name("cliOAuthRecoveryNotice")
 }

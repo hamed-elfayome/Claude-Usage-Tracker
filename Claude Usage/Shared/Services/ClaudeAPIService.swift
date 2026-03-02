@@ -411,40 +411,7 @@ class ClaudeAPIService: APIServiceProtocol {
     func fetchUsageData(oauthAccessToken: String) async throws -> ClaudeUsage {
         LoggingService.shared.log("ClaudeAPIService: Fetching usage via OAuth endpoint (explicit token)")
 
-        guard let url = URL(string: "https://api.anthropic.com/api/oauth/usage") else {
-            throw AppError(
-                code: .urlMalformed,
-                message: "Invalid OAuth usage endpoint",
-                isRecoverable: false
-            )
-        }
-
-        var request = buildAuthenticatedRequest(url: url, auth: .cliOAuth(oauthAccessToken))
-        request.httpMethod = "GET"
-        request.timeoutInterval = 30
-
-        let (data, response): (Data, URLResponse)
-        do {
-            (data, response) = try await URLSession.shared.data(for: request)
-        } catch {
-            LoggingService.shared.logAPIError("/api/oauth/usage", error: error)
-            throw AppError(
-                code: .networkGenericError,
-                message: "Failed to connect to Claude API",
-                technicalDetails: "Endpoint: /api/oauth/usage\nError: \(error.localizedDescription)",
-                underlyingError: error,
-                isRecoverable: true,
-                recoverySuggestion: "Please check your internet connection and try again"
-            )
-        }
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw AppError(
-                code: .apiInvalidResponse,
-                message: "Invalid response from OAuth endpoint",
-                isRecoverable: true
-            )
-        }
+        let (data, httpResponse) = try await performOAuthUsageRequest(accessToken: oauthAccessToken)
 
         switch httpResponse.statusCode {
         case 200:
@@ -487,6 +454,45 @@ class ClaudeAPIService: APIServiceProtocol {
                 isRecoverable: true
             )
         }
+    }
+
+    private func performOAuthUsageRequest(accessToken: String) async throws -> (Data, HTTPURLResponse) {
+        guard let url = URL(string: "https://api.anthropic.com/api/oauth/usage") else {
+            throw AppError(
+                code: .urlMalformed,
+                message: "Invalid OAuth usage endpoint",
+                isRecoverable: false
+            )
+        }
+
+        var request = buildAuthenticatedRequest(url: url, auth: .cliOAuth(accessToken))
+        request.httpMethod = "GET"
+        request.timeoutInterval = 30
+
+        let (data, response): (Data, URLResponse)
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch {
+            LoggingService.shared.logAPIError("/api/oauth/usage", error: error)
+            throw AppError(
+                code: .networkGenericError,
+                message: "Failed to connect to Claude API",
+                technicalDetails: "Endpoint: /api/oauth/usage\nError: \(error.localizedDescription)",
+                underlyingError: error,
+                isRecoverable: true,
+                recoverySuggestion: "Please check your internet connection and try again"
+            )
+        }
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw AppError(
+                code: .apiInvalidResponse,
+                message: "Invalid response from OAuth endpoint",
+                isRecoverable: true
+            )
+        }
+
+        return (data, httpResponse)
     }
 
     /// Fetches real usage data from Claude's API
@@ -533,40 +539,51 @@ class ClaudeAPIService: APIServiceProtocol {
             // Use OAuth endpoint (no organization ID needed)
             LoggingService.shared.log("ClaudeAPIService: Fetching usage via OAuth endpoint")
 
-            guard let url = URL(string: "https://api.anthropic.com/api/oauth/usage") else {
-                throw AppError(
-                    code: .urlMalformed,
-                    message: "Invalid OAuth usage endpoint",
-                    isRecoverable: false
-                )
+            let initialToken = try getOAuthAccessTokenFromAuthentication(auth)
+            let (firstData, firstResponse) = try await performOAuthUsageRequest(accessToken: initialToken)
+
+            if firstResponse.statusCode == 200 {
+                return try parseUsageResponse(firstData)
             }
 
-            var request = buildAuthenticatedRequest(url: url, auth: auth)
-            request.httpMethod = "GET"
-            request.timeoutInterval = 30
+            if firstResponse.statusCode == 401 || firstResponse.statusCode == 403 {
+                // Auto-recovery: re-discover keychain service and retry once.
+                ClaudeCodeSyncService.shared.invalidateServiceNameCache()
 
-            let (data, response) = try await URLSession.shared.data(for: request)
+                if let refreshedJSON = try? ClaudeCodeSyncService.shared.readSystemCredentials(),
+                   let refreshedToken = ClaudeCodeSyncService.shared.extractAccessToken(from: refreshedJSON),
+                   refreshedToken != initialToken {
+                    LoggingService.shared.log("ClaudeAPIService: OAuth failed; retrying once with refreshed keychain token")
+                    postCLIOAuthRecoveryNotice("CLI token looked stale. Retrying with refreshed keychain credentials.")
+                    let (retryData, retryResponse) = try await performOAuthUsageRequest(accessToken: refreshedToken)
 
-            guard let httpResponse = response as? HTTPURLResponse else {
-                throw AppError(
-                    code: .apiInvalidResponse,
-                    message: "Invalid response from OAuth endpoint",
-                    isRecoverable: true
-                )
+                    if retryResponse.statusCode == 200 {
+                        postCLIOAuthRecoveryNotice("Recovered from stale CLI token automatically. No manual re-sync needed.")
+                        return try parseUsageResponse(retryData)
+                    }
+
+                    let retryPreview = String(data: retryData, encoding: .utf8)?.prefix(200) ?? "Unable to read response"
+                    postCLIOAuthRecoveryNotice("Retry with refreshed CLI credentials failed. Please re-sync or re-login in Claude Code.")
+                    throw AppError(
+                        code: .apiUnauthorized,
+                        message: "OAuth authentication failed",
+                        technicalDetails: "Status: \(retryResponse.statusCode)\nResponse: \(retryPreview)",
+                        isRecoverable: true,
+                        recoverySuggestion: "Please re-sync your CLI account in Settings"
+                    )
+                }
+
+                postCLIOAuthRecoveryNotice("Unable to refresh CLI credentials automatically. Please re-sync your CLI account.")
             }
 
-            guard httpResponse.statusCode == 200 else {
-                let responsePreview = String(data: data, encoding: .utf8)?.prefix(200) ?? "Unable to read response"
-                throw AppError(
-                    code: .apiUnauthorized,
-                    message: "OAuth authentication failed",
-                    technicalDetails: "Status: \(httpResponse.statusCode)\nResponse: \(responsePreview)",
-                    isRecoverable: true,
-                    recoverySuggestion: "Please re-sync your CLI account in Settings"
-                )
-            }
-
-            return try parseUsageResponse(data)
+            let responsePreview = String(data: firstData, encoding: .utf8)?.prefix(200) ?? "Unable to read response"
+            throw AppError(
+                code: .apiUnauthorized,
+                message: "OAuth authentication failed",
+                technicalDetails: "Status: \(firstResponse.statusCode)\nResponse: \(responsePreview)",
+                isRecoverable: true,
+                recoverySuggestion: "Please re-sync your CLI account in Settings"
+            )
 
         case .consoleAPISession:
             // Console API is for billing/credits only, not usage data
@@ -578,6 +595,22 @@ class ClaudeAPIService: APIServiceProtocol {
                 recoverySuggestion: "Please add a claude.ai session key or sync your CLI account"
             )
         }
+    }
+
+    private func getOAuthAccessTokenFromAuthentication(_ auth: AuthenticationType) throws -> String {
+        if case .cliOAuth(let token) = auth {
+            return token
+        }
+        throw AppError(
+            code: .sessionKeyNotFound,
+            message: "No OAuth credentials available",
+            isRecoverable: true,
+            recoverySuggestion: "Please sync your CLI account in Settings"
+        )
+    }
+
+    private func postCLIOAuthRecoveryNotice(_ message: String) {
+        NotificationCenter.default.post(name: .cliOAuthRecoveryNotice, object: nil, userInfo: ["message": message])
     }
 
     private func performRequest(endpoint: String, sessionKey: String) async throws -> Data {

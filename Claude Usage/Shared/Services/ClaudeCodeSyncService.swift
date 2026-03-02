@@ -14,6 +14,8 @@ class ClaudeCodeSyncService {
 
     /// Cached keychain service name (discovered once per session)
     private var cachedServiceName: String?
+    /// Cached discovered hashed service names to avoid repeated dump-keychain calls.
+    private var cachedHashedServiceNames: [String] = []
 
     private init() {}
 
@@ -41,7 +43,7 @@ class ClaudeCodeSyncService {
         }
 
         // Prefix search: look for "Claude Code-credentials-*" via security dump-keychain
-        if let hashedName = findHashedServiceName() {
+        if let hashedName = getHashedServiceNames().first {
             LoggingService.shared.log("ClaudeCodeSync: Found hashed keychain service name: \(hashedName)")
             cachedServiceName = hashedName
             return hashedName
@@ -69,7 +71,7 @@ class ClaudeCodeSyncService {
     }
 
     /// Searches keychain for service names matching "Claude Code-credentials-*"
-    private func findHashedServiceName() -> String? {
+    private func findHashedServiceNames() -> [String] {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/security")
         process.arguments = ["dump-keychain"]
@@ -80,12 +82,14 @@ class ClaudeCodeSyncService {
         do {
             try process.run()
             process.waitUntilExit()
-        } catch { return nil }
-        guard process.terminationStatus == 0 else { return nil }
+        } catch { return [] }
+        guard process.terminationStatus == 0 else { return [] }
 
         let output = String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
-        // Parse "svce"<blob>="Claude Code-credentials-XXXX" entries
         let prefix = "Claude Code-credentials-"
+        var discovered: [String] = []
+        var seen = Set<String>()
+
         for line in output.components(separatedBy: "\n") {
             let trimmed = line.trimmingCharacters(in: .whitespaces)
             // Match lines like: "svce"<blob>="Claude Code-credentials-abc123"
@@ -93,18 +97,30 @@ class ClaudeCodeSyncService {
                 if let startRange = trimmed.range(of: "=\""),
                    let endRange = trimmed.range(of: "\"", range: trimmed.index(after: startRange.upperBound)..<trimmed.endIndex) {
                     let serviceName = String(trimmed[startRange.upperBound..<endRange.lowerBound])
-                    if serviceName.hasPrefix(prefix) {
-                        return serviceName
+                    if serviceName.hasPrefix(prefix), !seen.contains(serviceName) {
+                        seen.insert(serviceName)
+                        discovered.append(serviceName)
                     }
                 }
             }
         }
-        return nil
+
+        return discovered
     }
 
     /// Invalidates the cached service name (e.g. after CLI re-login)
     func invalidateServiceNameCache() {
         cachedServiceName = nil
+        cachedHashedServiceNames = []
+    }
+
+    private func getHashedServiceNames() -> [String] {
+        if !cachedHashedServiceNames.isEmpty {
+            return cachedHashedServiceNames
+        }
+        let discovered = findHashedServiceNames()
+        cachedHashedServiceNames = discovered
+        return discovered
     }
 
     // MARK: - System Keychain Access
@@ -112,30 +128,92 @@ class ClaudeCodeSyncService {
     /// Reads Claude Code credentials from system Keychain using security command
     func readSystemCredentials() throws -> String? {
         let username = NSUserName()
-        let serviceName = resolveServiceName()
-        LoggingService.shared.log("ClaudeCodeSync: Reading credentials for user '\(username)' (service: '\(serviceName)')...")
+        let primaryServiceName = resolveServiceName()
 
-        let keychainValue = try readKeychainItem(service: serviceName, account: username)
-
-        // If keychain returned data, validate JSON integrity (may be truncated at ~2KB)
-        if let value = keychainValue, !isValidJSON(value) {
-            LoggingService.shared.log("ClaudeCodeSync: Keychain JSON appears truncated (\(value.count) chars), trying file fallback")
-            if let fileValue = readCredentialsFromFile() {
-                LoggingService.shared.log("ClaudeCodeSync: Successfully read credentials from file fallback (\(fileValue.count) chars)")
-                return fileValue
-            }
-            LoggingService.shared.log("ClaudeCodeSync: File fallback also failed, returning truncated keychain data")
+        // Fast path: if primary service has a valid, non-expired token, return immediately.
+        LoggingService.shared.log("ClaudeCodeSync: Reading credentials for user '\(username)' (service: '\(primaryServiceName)')...")
+        if let primaryValue = try readKeychainItem(service: primaryServiceName, account: username),
+           isValidJSON(primaryValue),
+           !isTokenExpired(primaryValue) {
+            return primaryValue
         }
 
-        // If keychain had nothing at all, also try file fallback
-        if keychainValue == nil {
-            if let fileValue = readCredentialsFromFile() {
-                LoggingService.shared.log("ClaudeCodeSync: No keychain item, but found credentials in file fallback (\(fileValue.count) chars)")
-                return fileValue
+        // Try cached/resolved service first, then any discovered alternatives.
+        // This prevents stale service-name cache from pinning us to old credentials.
+        var candidateServices: [String] = [primaryServiceName]
+
+        if primaryServiceName != Self.legacyServiceName {
+            candidateServices.append(Self.legacyServiceName)
+        }
+
+        for hashed in getHashedServiceNames() where !candidateServices.contains(hashed) {
+            candidateServices.append(hashed)
+        }
+
+        var selectedJSON: String?
+        var selectedService: String?
+        var selectedExpiry: Date?
+        var selectedIsExpired = true
+
+        for service in candidateServices {
+            LoggingService.shared.log("ClaudeCodeSync: Reading credentials for user '\(username)' (service: '\(service)')...")
+
+            guard let keychainValue = try readKeychainItem(service: service, account: username) else {
+                continue
+            }
+
+            // Ignore corrupted/truncated JSON values and keep searching.
+            guard isValidJSON(keychainValue) else {
+                LoggingService.shared.log("ClaudeCodeSync: Keychain JSON from service '\(service)' is invalid/truncated (\(keychainValue.count) chars)")
+                continue
+            }
+
+            let expiry = extractTokenExpiry(from: keychainValue)
+            let isExpired = isTokenExpired(keychainValue)
+
+            if selectedJSON == nil {
+                selectedJSON = keychainValue
+                selectedService = service
+                selectedExpiry = expiry
+                selectedIsExpired = isExpired
+                continue
+            }
+
+            // Prefer non-expired tokens over expired tokens.
+            if selectedIsExpired && !isExpired {
+                selectedJSON = keychainValue
+                selectedService = service
+                selectedExpiry = expiry
+                selectedIsExpired = false
+                continue
+            }
+
+            // If both are in same expiry-state, prefer the later expiry when available.
+            if selectedIsExpired == isExpired,
+               let expiry,
+               let currentSelectedExpiry = selectedExpiry,
+               expiry > currentSelectedExpiry {
+                selectedJSON = keychainValue
+                selectedService = service
+                selectedExpiry = expiry
             }
         }
 
-        return keychainValue
+        if let selectedJSON, let selectedService {
+            if cachedServiceName != selectedService {
+                LoggingService.shared.log("ClaudeCodeSync: Updating service cache to '\(selectedService)'")
+                cachedServiceName = selectedService
+            }
+            return selectedJSON
+        }
+
+        // If keychain doesn't have usable credentials, try file fallback.
+        if let fileValue = readCredentialsFromFile(), isValidJSON(fileValue) {
+            LoggingService.shared.log("ClaudeCodeSync: Falling back to file credentials (\(fileValue.count) chars)")
+            return fileValue
+        }
+
+        return nil
     }
 
     /// Low-level keychain read for a specific service/account pair
@@ -273,6 +351,9 @@ class ClaudeCodeSyncService {
 
     /// Syncs credentials from system to profile (one-time copy)
     func syncToProfile(_ profileId: UUID) throws {
+        // Re-discover service each manual sync to avoid stale cache after CLI re-login.
+        invalidateServiceNameCache()
+
         guard let jsonData = try readSystemCredentials() else {
             throw ClaudeCodeError.noCredentialsFound
         }
