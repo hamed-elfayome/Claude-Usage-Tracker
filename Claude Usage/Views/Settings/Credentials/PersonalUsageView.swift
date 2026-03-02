@@ -195,15 +195,14 @@ struct PersonalUsageView: View {
         guard let profile = profileManager.activeProfile else { return }
 
         // Load existing credentials for comparison
-        if let creds = try? ProfileStore.shared.loadProfileCredentials(profile.id) {
-            wizardState.originalOrgId = creds.organizationId
-            wizardState.originalSessionKey = creds.claudeSessionKey
-        }
+        let creds = ProfileStore.shared.loadProfileCredentials(profile.id)
+        wizardState.originalOrgId = creds.organizationId
+        wizardState.originalSessionKey = creds.claudeSessionKey
     }
 
     private func loadCurrentCredentials() {
         guard let profile = profileManager.activeProfile else { return }
-        currentCredentials = try? ProfileStore.shared.loadProfileCredentials(profile.id)
+        currentCredentials = ProfileStore.shared.loadProfileCredentials(profile.id)
     }
 
     private func maskKey(_ key: String) -> String {
@@ -644,7 +643,7 @@ struct ConfirmStep: View {
         Task {
             do {
                 // Save to profile-specific Keychain
-                var creds = try ProfileStore.shared.loadProfileCredentials(profileId)
+                var creds = ProfileStore.shared.loadProfileCredentials(profileId)
                 creds.claudeSessionKey = wizardState.sessionKey
                 creds.organizationId = wizardState.selectedOrgId
                 try ProfileStore.shared.saveProfileCredentials(profileId, credentials: creds)

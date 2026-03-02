@@ -368,7 +368,7 @@ struct ProfileCredentialCardsRow: View {
 
     private func loadCredentials() {
         guard let profile = profileManager.activeProfile else { return }
-        credentials = try? ProfileStore.shared.loadProfileCredentials(profile.id)
+        credentials = ProfileStore.shared.loadProfileCredentials(profile.id)
     }
 }
 

@@ -612,7 +612,7 @@ struct ConfirmStepSetup: View {
                 }
 
                 // Save to profile-specific Keychain using the refactored pattern
-                var creds = try ProfileStore.shared.loadProfileCredentials(profileId)
+                var creds = ProfileStore.shared.loadProfileCredentials(profileId)
                 creds.claudeSessionKey = wizardState.sessionKey
                 creds.organizationId = wizardState.selectedOrgId
                 try ProfileStore.shared.saveProfileCredentials(profileId, credentials: creds)

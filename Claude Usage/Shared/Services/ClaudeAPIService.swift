@@ -177,7 +177,7 @@ class ClaudeAPIService: APIServiceProtocol {
             }
 
             // Save to active profile
-            var credentials = (try? ProfileManager.shared.loadCredentials(for: profileId)) ?? ProfileCredentials()
+            var credentials = ProfileManager.shared.loadCredentials(for: profileId)
             credentials.claudeSessionKey = validatedKey
             try ProfileManager.shared.saveCredentials(for: profileId, credentials: credentials)
 
