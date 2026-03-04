@@ -435,6 +435,8 @@
 "api.single_organization" = "Se encontró y seleccionó automáticamente una sola organización";
 "claudecode.button_apply" = "Aplicar";
 "claudecode.button_reset" = "Restablecer";
+"claudecode.component_profile" = "Nombre del perfil";
+"claudecode.context_info" = "El contexto puede mostrar ~80-95% en vez de 100% — Claude comprime automáticamente antes del límite, y los tokens de salida también usan espacio de contexto.";
 "error.generic" = "Error: %@";
 "personal.button_saving" = "Guardando...";
 "personal.button_setup_wizard" = "Asistente de Configuración";

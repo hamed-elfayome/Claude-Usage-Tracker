@@ -468,6 +468,8 @@
 "api.single_organization" = "単一の組織が見つかり、自動的に選択されました";
 "claudecode.button_apply" = "適用";
 "claudecode.button_reset" = "リセット";
+"claudecode.component_profile" = "プロファイル名";
+"claudecode.context_info" = "コンテキストは100%ではなく約80-95%と表示される場合があります。Claudeは上限に達する前に自動圧縮を行い、出力トークンもコンテキスト領域を使用します。";
 "error.generic" = "エラー：%@";
 "personal.button_saving" = "保存中...";
 "personal.button_setup_wizard" = "セットアップウィザード";

@@ -124,6 +124,8 @@ if [ -f "$config_file" ]; then
   show_usage=$SHOW_USAGE
   show_bar=$SHOW_PROGRESS_BAR
   show_reset=$SHOW_RESET_TIME
+  show_profile=$SHOW_PROFILE
+  profile_name="$PROFILE_NAME"
 else
   show_model=1
   show_dir=1
@@ -133,6 +135,8 @@ else
   show_usage=1
   show_bar=1
   show_reset=1
+  show_profile=0
+  profile_name=""
 fi
 
 input=$(cat)
@@ -145,6 +149,7 @@ GREEN=$'\\033[0;32m'
 GRAY=$'\\033[0;90m'
 YELLOW=$'\\033[0;33m'
 CYAN=$'\\033[0;36m'
+MAGENTA=$'\\033[0;35m'
 RESET=$'\\033[0m'
 
 # 10-level gradient: dark green → deep red
@@ -176,6 +181,11 @@ fi
 model_text=""
 if [ "$show_model" = "1" ] && [ -n "$model" ]; then
   model_text="${YELLOW}${model}${RESET}"
+fi
+
+profile_text=""
+if [ "$show_profile" = "1" ] && [ -n "$profile_name" ]; then
+  profile_text="${MAGENTA}${profile_name}${RESET}"
 fi
 
 # Context percentage calculation from current_usage tokens
@@ -326,6 +336,12 @@ if [ -n "$model_text" ]; then
   output="${output}${model_text}"
 fi
 
+# Then profile
+if [ -n "$profile_text" ]; then
+  [ -n "$output" ] && output="${output}${separator}"
+  output="${output}${profile_text}"
+fi
+
 # Then context
 if [ -n "$context_text" ]; then
   [ -n "$output" ] && output="${output}${separator}"
@@ -418,7 +434,9 @@ printf "%s\\n" "$output"
         contextAsTokens: Bool,
         showUsage: Bool,
         showProgressBar: Bool,
-        showResetTime: Bool
+        showResetTime: Bool,
+        showProfile: Bool,
+        profileName: String
     ) throws {
         let configPath = Constants.ClaudePaths.claudeDirectory
             .appendingPathComponent("statusline-config.txt")
@@ -432,9 +450,30 @@ CONTEXT_AS_TOKENS=\(contextAsTokens ? "1" : "0")
 SHOW_USAGE=\(showUsage ? "1" : "0")
 SHOW_PROGRESS_BAR=\(showProgressBar ? "1" : "0")
 SHOW_RESET_TIME=\(showResetTime ? "1" : "0")
+SHOW_PROFILE=\(showProfile ? "1" : "0")
+PROFILE_NAME="\(profileName)"
 """
 
         try config.write(to: configPath, atomically: true, encoding: .utf8)
+    }
+
+    /// Updates only the profile name in the statusline config file.
+    /// Called during profile switches to keep the config in sync.
+    func updateProfileNameInConfig(_ profileName: String) throws {
+        let configPath = Constants.ClaudePaths.claudeDirectory
+            .appendingPathComponent("statusline-config.txt")
+
+        guard FileManager.default.fileExists(atPath: configPath.path) else { return }
+
+        var content = try String(contentsOf: configPath, encoding: .utf8)
+
+        if let range = content.range(of: #"PROFILE_NAME="[^"]*""#, options: .regularExpression) {
+            content.replaceSubrange(range, with: "PROFILE_NAME=\"\(profileName)\"")
+        } else {
+            content += "\nPROFILE_NAME=\"\(profileName)\"\n"
+        }
+
+        try content.write(to: configPath, atomically: true, encoding: .utf8)
     }
 
     /// Enables or disables statusline in Claude Code settings.json

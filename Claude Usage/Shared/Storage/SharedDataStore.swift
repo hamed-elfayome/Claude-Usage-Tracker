@@ -26,6 +26,7 @@ class SharedDataStore {
         static let statuslineShowUsage = "statuslineShowUsage"
         static let statuslineShowProgressBar = "statuslineShowProgressBar"
         static let statuslineShowResetTime = "statuslineShowResetTime"
+        static let statuslineShowProfile = "statuslineShowProfile"
 
         // Setup State
         static let hasCompletedSetup = "hasCompletedSetup"
@@ -159,6 +160,17 @@ class SharedDataStore {
             return false  // Default to false (percentage)
         }
         return defaults.bool(forKey: Keys.statuslineContextAsTokens)
+    }
+
+    func saveStatuslineShowProfile(_ show: Bool) {
+        defaults.set(show, forKey: Keys.statuslineShowProfile)
+    }
+
+    func loadStatuslineShowProfile() -> Bool {
+        if defaults.object(forKey: Keys.statuslineShowProfile) == nil {
+            return false  // Default to false (new feature)
+        }
+        return defaults.bool(forKey: Keys.statuslineShowProfile)
     }
 
     // MARK: - Setup State

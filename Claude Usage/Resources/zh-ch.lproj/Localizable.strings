@@ -689,6 +689,8 @@
 "api.remove_subtitle" = "从此配置文件中永久删除您的 API 控制台会话密钥";
 "claudecode.button_apply" = "应用";
 "claudecode.button_reset" = "重置";
+"claudecode.component_profile" = "配置文件名称";
+"claudecode.context_info" = "上下文可能显示约80-95%而非100%——Claude会在达到上限前自动压缩，输出令牌也会占用上下文空间。";
 "error.generic" = "错误：%@";
 "personal.button_saving" = "保存中...";
 "personal.button_setup_wizard" = "设置向导";

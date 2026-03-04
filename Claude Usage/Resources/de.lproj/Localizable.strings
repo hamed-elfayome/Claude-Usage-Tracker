@@ -454,6 +454,8 @@
 "api.single_organization" = "Einzelne Organisation gefunden und automatisch ausgewählt";
 "claudecode.button_apply" = "Anwenden";
 "claudecode.button_reset" = "Zurücksetzen";
+"claudecode.component_profile" = "Profilname";
+"claudecode.context_info" = "Der Kontext kann ~80-95% statt 100% anzeigen — Claude komprimiert automatisch vor dem Limit, und Ausgabe-Tokens nutzen ebenfalls Kontextplatz.";
 "error.generic" = "Fehler: %@";
 "personal.button_saving" = "Speichern...";
 "personal.button_setup_wizard" = "Einrichtungsassistent";

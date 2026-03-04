@@ -18,6 +18,7 @@ struct ClaudeCodeView: View {
     @State private var showUsage: Bool = SharedDataStore.shared.loadStatuslineShowUsage()
     @State private var showProgressBar: Bool = SharedDataStore.shared.loadStatuslineShowProgressBar()
     @State private var showResetTime: Bool = SharedDataStore.shared.loadStatuslineShowResetTime()
+    @State private var showProfile: Bool = SharedDataStore.shared.loadStatuslineShowProfile()
 
     // Status feedback
     @State private var statusMessage: String?
@@ -87,6 +88,9 @@ struct ClaudeCodeView: View {
                     Toggle("claudecode.component_model".localized, isOn: $showModel)
                         .font(DesignTokens.Typography.body)
 
+                    Toggle("claudecode.component_profile".localized, isOn: $showProfile)
+                        .font(DesignTokens.Typography.body)
+
                     Toggle("claudecode.component_context".localized, isOn: $showContext)
                         .font(DesignTokens.Typography.body)
 
@@ -94,6 +98,16 @@ struct ClaudeCodeView: View {
                         HStack(spacing: 0) {
                             Spacer().frame(width: 20)
                             Toggle("claudecode.component_context_tokens".localized, isOn: $contextAsTokens)
+                                .font(DesignTokens.Typography.caption)
+                                .foregroundColor(.secondary)
+                        }
+
+                        HStack(spacing: DesignTokens.Spacing.iconText) {
+                            Spacer().frame(width: 20)
+                            Image(systemName: "info.circle")
+                                .font(DesignTokens.Typography.caption)
+                                .foregroundColor(.secondary)
+                            Text("claudecode.context_info".localized)
                                 .font(DesignTokens.Typography.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -187,7 +201,7 @@ struct ClaudeCodeView: View {
     /// Installs scripts, updates config file, and enables statusline in settings.json.
     private func applyConfiguration() {
         // Validate: at least one component must be selected
-        guard showModel || showDirectory || showBranch || showContext || showUsage else {
+        guard showModel || showDirectory || showBranch || showContext || showUsage || showProfile else {
             statusMessage = "claudecode.error_no_components".localized
             isSuccess = false
             return
@@ -209,12 +223,14 @@ struct ClaudeCodeView: View {
         SharedDataStore.shared.saveStatuslineShowUsage(showUsage)
         SharedDataStore.shared.saveStatuslineShowProgressBar(showProgressBar)
         SharedDataStore.shared.saveStatuslineShowResetTime(showResetTime)
+        SharedDataStore.shared.saveStatuslineShowProfile(showProfile)
 
         do {
             // Install scripts to ~/.claude/
             try StatuslineService.shared.installScripts()
 
             // Write configuration file
+            let profileName = ProfileManager.shared.activeProfile?.name ?? ""
             try StatuslineService.shared.updateConfiguration(
                 showModel: showModel,
                 showDirectory: showDirectory,
@@ -223,7 +239,9 @@ struct ClaudeCodeView: View {
                 contextAsTokens: contextAsTokens,
                 showUsage: showUsage,
                 showProgressBar: showProgressBar,
-                showResetTime: showResetTime
+                showResetTime: showResetTime,
+                showProfile: showProfile,
+                profileName: profileName
             )
 
             // Update Claude CLI settings.json
@@ -264,6 +282,11 @@ struct ClaudeCodeView: View {
 
         if showModel {
             parts.append("Opus")  // Example model name
+        }
+
+        if showProfile {
+            let name = ProfileManager.shared.activeProfile?.name ?? "Profile"
+            parts.append(name)
         }
 
         if showContext {

@@ -249,6 +249,13 @@ class ProfileManager: ObservableObject {
             }
         }
 
+        // Update profile name in statusline config
+        do {
+            try StatuslineService.shared.updateProfileNameInConfig(updated.name)
+        } catch {
+            LoggingService.shared.logError("Failed to update statusline profile name (non-fatal)", error: error)
+        }
+
         switchingSemaphore = false
         isSwitchingProfile = false
 

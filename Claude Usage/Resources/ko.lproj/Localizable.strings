@@ -323,6 +323,8 @@
 "api.single_organization" = "단일 조직을 찾아 자동으로 선택했습니다";
 "claudecode.button_apply" = "적용";
 "claudecode.button_reset" = "재설정";
+"claudecode.component_profile" = "프로필 이름";
+"claudecode.context_info" = "컨텍스트가 100% 대신 ~80-95%로 표시될 수 있습니다. Claude는 한도에 도달하기 전에 자동으로 압축하며, 출력 토큰도 컨텍스트 공간을 사용합니다.";
 "error.generic" = "오류: %@";
 "personal.button_saving" = "저장 중...";
 "personal.button_setup_wizard" = "설정 마법사";
