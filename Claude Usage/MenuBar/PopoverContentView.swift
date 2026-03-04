@@ -63,6 +63,16 @@ struct PopoverContentView: View {
     @State private var showInsights = false
     @StateObject private var profileManager = ProfileManager.shared
 
+    private func profileInitials(for name: String) -> String {
+        let words = name.split(separator: " ")
+        if words.count >= 2 {
+            return String(words[0].prefix(1) + words[1].prefix(1)).uppercased()
+        } else if let first = words.first {
+            return String(first.prefix(2)).uppercased()
+        }
+        return "?"
+    }
+
     // Computed properties for multi-profile mode support
     private var displayUsage: ClaudeUsage {
         manager.clickedProfileUsage ?? manager.usage
@@ -95,6 +105,52 @@ struct PopoverContentView: View {
             )
 
             PopoverDivider()
+
+            // Viewing usage tag (shown in multi-profile mode)
+            if profileManager.displayMode == .multi,
+               let viewingProfile = manager.clickedProfileId.flatMap({ id in
+                   profileManager.profiles.first(where: { $0.id == id })
+               }) ?? profileManager.activeProfile {
+                HStack(spacing: 8) {
+                    // Profile initials avatar
+                    ZStack {
+                        Circle()
+                            .fill(Color.accentColor.opacity(0.15))
+                            .frame(width: 20, height: 20)
+
+                        Text(profileInitials(for: viewingProfile.name))
+                            .font(.system(size: 8, weight: .bold, design: .rounded))
+                            .foregroundColor(.accentColor)
+                    }
+
+                    Text(viewingProfile.name)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
+
+                    Spacer()
+
+                    if viewingProfile.id == profileManager.activeProfile?.id {
+                        Text("Active")
+                            .font(.system(size: 8, weight: .semibold))
+                            .foregroundColor(.accentColor)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2)
+                            .background(
+                                Capsule()
+                                    .fill(Color.accentColor.opacity(0.12))
+                            )
+                    }
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 6)
+                .background(
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.primary.opacity(0.03))
+                )
+                .padding(.horizontal, 10)
+                .padding(.top, 6)
+            }
 
             // Usage
             SmartUsageDashboard(usage: displayUsage, apiUsage: displayAPIUsage)
@@ -372,22 +428,10 @@ struct SmartHeader: View {
     var body: some View {
         HStack {
             HStack(spacing: 8) {
-                if isMultiProfileMode, let profile = clickedProfile {
-                    ZStack {
-                        Circle()
-                            .fill(Color.secondary.opacity(0.15))
-                            .frame(width: 24, height: 24)
-
-                        Text(profileInitials(for: profile.name))
-                            .font(.system(size: 10, weight: .semibold, design: .rounded))
-                            .foregroundColor(.secondary)
-                    }
-                } else {
-                    Image("HeaderLogo")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 24, height: 24)
-                }
+                Image("HeaderLogo")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 24, height: 24)
 
                 VStack(alignment: .leading, spacing: 2) {
                     ProfileSwitcherCompact(onManageProfiles: onManageProfiles)
