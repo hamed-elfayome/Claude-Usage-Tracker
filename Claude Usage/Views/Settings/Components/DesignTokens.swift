@@ -105,11 +105,11 @@ enum DesignTokens {
     // MARK: - Colors
 
     enum Colors {
-        /// Card background
-        static let cardBackground = Color(nsColor: .controlBackgroundColor).opacity(0.5)
+        /// Card background — translucent to work with vibrancy
+        static let cardBackground = Color.primary.opacity(0.04)
 
-        /// Card border
-        static let cardBorder = Color.secondary.opacity(0.15)
+        /// Card border — subtle to blend with vibrancy
+        static let cardBorder = Color.primary.opacity(0.08)
 
         /// Text field background
         static let inputBackground = Color(nsColor: .textBackgroundColor)

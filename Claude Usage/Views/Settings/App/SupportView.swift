@@ -82,7 +82,7 @@ struct SupportView: View {
                     }
                 }
                 .padding(20)
-                .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+                .background(DesignTokens.Colors.cardBackground)
                 .cornerRadius(12)
 
                 // Support section
@@ -136,11 +136,11 @@ struct SupportView: View {
                         .foregroundColor(.primary)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
-                        .background(Color(nsColor: .controlBackgroundColor))
+                        .background(DesignTokens.Colors.cardBackground)
                         .cornerRadius(6)
                         .overlay(
                             RoundedRectangle(cornerRadius: 6)
-                                .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
+                                .stroke(DesignTokens.Colors.cardBorder, lineWidth: 1)
                         )
                     }
                     .buttonStyle(.plain)

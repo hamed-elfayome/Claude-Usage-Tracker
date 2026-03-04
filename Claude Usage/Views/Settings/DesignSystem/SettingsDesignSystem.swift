@@ -19,7 +19,7 @@ enum SettingsDesignSystem {
 
     /// Standard card style with shadow and border
     static func cardStyle() -> some ShapeStyle {
-        return Color(nsColor: .controlBackgroundColor)
+        return Color.primary.opacity(0.04)
     }
 
     /// Standard card shape

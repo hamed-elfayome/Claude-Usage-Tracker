@@ -1,13 +1,102 @@
 import SwiftUI
 import UserNotifications
 
+// MARK: - Visual Effect Backgrounds
+
+struct SidebarVisualEffect: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSVisualEffectView {
+        let view = NSVisualEffectView()
+        view.material = .sidebar
+        view.blendingMode = .behindWindow
+        view.state = .active
+        view.isEmphasized = true
+        return view
+    }
+    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
+}
+
+struct ContentVisualEffect: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSVisualEffectView {
+        let view = NSVisualEffectView()
+        view.material = .contentBackground
+        view.blendingMode = .behindWindow
+        view.state = .active
+        return view
+    }
+    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
+}
+
+/// Hosts a SwiftUI SettingsView inside an NSVisualEffectView so vibrancy shows through.
+/// Use this instead of plain NSHostingController for the settings window.
+final class SettingsHostingController: NSViewController {
+    init() {
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) { fatalError() }
+
+    override func loadView() {
+        // Visual effect view as the root — provides the vibrancy material
+        let effectView = NSVisualEffectView()
+        effectView.material = .underWindowBackground
+        effectView.blendingMode = .behindWindow
+        effectView.state = .active
+
+        // SwiftUI hosting view embedded inside the effect view
+        let hostingView = NSHostingView(rootView:
+            SettingsView()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        )
+        hostingView.translatesAutoresizingMaskIntoConstraints = false
+
+        effectView.addSubview(hostingView)
+        NSLayoutConstraint.activate([
+            hostingView.topAnchor.constraint(equalTo: effectView.topAnchor),
+            hostingView.bottomAnchor.constraint(equalTo: effectView.bottomAnchor),
+            hostingView.leadingAnchor.constraint(equalTo: effectView.leadingAnchor),
+            hostingView.trailingAnchor.constraint(equalTo: effectView.trailingAnchor),
+        ])
+
+        self.view = effectView
+    }
+
+    override func viewDidAppear() {
+        super.viewDidAppear()
+        // Remove the opaque background that NSHostingView adds by default
+        if let hostingView = view.subviews.first {
+            hostingView.wantsLayer = true
+            hostingView.layer?.backgroundColor = .clear
+
+            DispatchQueue.main.async {
+                self.clearBackgrounds(in: hostingView)
+            }
+        }
+
+        // Remove the titlebar separator line
+        if let window = view.window {
+            window.titlebarSeparatorStyle = .none
+        }
+    }
+
+    private func clearBackgrounds(in view: NSView) {
+        for subview in view.subviews {
+            let className = String(describing: type(of: subview))
+            if className.contains("Background") {
+                subview.isHidden = true
+            }
+        }
+        view.layer?.backgroundColor = .clear
+    }
+}
+
 /// Professional, native macOS Settings interface with multi-profile support
 struct SettingsView: View {
     @State private var selectedSection: SettingsSection = .appearance
     @StateObject private var profileManager = ProfileManager.shared
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        HSplitView {
+        HStack(spacing: 0) {
             // Sidebar with Profile Switcher
             VStack(spacing: 0) {
                 // Profile Section (Switcher + Credentials + Settings)
@@ -22,10 +111,11 @@ struct SettingsView: View {
                     .padding(.horizontal, 12)
                     .padding(.bottom, 12)
             }
-            .background(Color(nsColor: .windowBackgroundColor))
-            .frame(minWidth: 160, idealWidth: 170, maxWidth: 180)
+            .padding(.top, 22)
+            .background(SidebarVisualEffect())
+            .frame(width: 190)
 
-            // Content
+            // Content — slightly darker (dark mode) / lighter (light mode) than sidebar
             Group {
                 switch selectedSection {
                 // Credentials
@@ -65,9 +155,16 @@ struct SettingsView: View {
                     AboutView()
                 }
             }
-            .frame(minWidth: 500, maxWidth: .infinity)
+            .padding(.top, 22)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(
+                colorScheme == .dark
+                    ? Color.black.opacity(0.15)
+                    : Color.white.opacity(0.3)
+            )
         }
         .frame(width: 720, height: 680)
+        .ignoresSafeArea()
     }
 }
 
@@ -162,11 +259,11 @@ struct ProfileSectionContainer: View {
         }
         .background(
             RoundedRectangle(cornerRadius: 6)
-                .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+                .fill(Color.primary.opacity(0.04))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 6)
-                .strokeBorder(Color.gray.opacity(0.2), lineWidth: 1)
+                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
         )
     }
 }
@@ -310,6 +407,7 @@ struct SidebarItem: View {
     let description: String
     let isSelected: Bool
     let action: () -> Void
+    @State private var isHovered = false
 
     var body: some View {
         Button(action: action) {
@@ -329,13 +427,16 @@ struct SidebarItem: View {
             .padding(.vertical, 4)
             .background(
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(isSelected ? SettingsColors.primary : Color.clear)
+                    .fill(isSelected ? SettingsColors.primary : (isHovered ? Color.primary.opacity(0.06) : Color.clear))
             )
             .padding(.horizontal, 4)
             .padding(.vertical, 1)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .onHover { hovering in
+            isHovered = hovering
+        }
         .help(description)
     }
 }
@@ -407,6 +508,7 @@ struct CredentialMiniCard: View {
     let title: String
     let isConnected: Bool
     let isSelected: Bool
+    @State private var isHovered = false
 
     var body: some View {
         HStack(spacing: 8) {
@@ -432,10 +534,13 @@ struct CredentialMiniCard: View {
         .padding(.vertical, 4)
         .background(
             RoundedRectangle(cornerRadius: 4)
-                .fill(isSelected ? SettingsColors.primary : Color.clear)
+                .fill(isSelected ? SettingsColors.primary : (isHovered ? Color.primary.opacity(0.06) : Color.clear))
         )
         .padding(.horizontal, 4)
         .padding(.vertical, 1)
+        .onHover { hovering in
+            isHovered = hovering
+        }
     }
 }
 
@@ -443,6 +548,7 @@ struct SettingMiniButton: View {
     let icon: String
     let title: String
     let isSelected: Bool
+    @State private var isHovered = false
 
     var body: some View {
         HStack(spacing: 8) {
@@ -463,9 +569,12 @@ struct SettingMiniButton: View {
         .padding(.vertical, 4)
         .background(
             RoundedRectangle(cornerRadius: 4)
-                .fill(isSelected ? SettingsColors.primary : Color.clear)
+                .fill(isSelected ? SettingsColors.primary : (isHovered ? Color.primary.opacity(0.06) : Color.clear))
         )
         .padding(.horizontal, 4)
         .padding(.vertical, 1)
+        .onHover { hovering in
+            isHovered = hovering
+        }
     }
 }

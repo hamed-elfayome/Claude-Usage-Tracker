@@ -140,11 +140,11 @@ struct SessionUsageChart: View {
             .padding(.leading, 4)
         }
         .padding(16)
-        .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+        .background(DesignTokens.Colors.cardBackground)
         .cornerRadius(8)
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.secondary.opacity(0.15), lineWidth: 1)
+                .stroke(DesignTokens.Colors.cardBorder, lineWidth: 1)
         )
     }
 
@@ -264,11 +264,11 @@ struct WeeklyUsageChart: View {
             .padding(.leading, 4)
         }
         .padding(16)
-        .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+        .background(DesignTokens.Colors.cardBackground)
         .cornerRadius(8)
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.secondary.opacity(0.15), lineWidth: 1)
+                .stroke(DesignTokens.Colors.cardBorder, lineWidth: 1)
         )
     }
 
@@ -380,11 +380,11 @@ struct BillingCycleChart: View {
                 .frame(height: 160)
             }
             .padding(16)
-            .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+            .background(DesignTokens.Colors.cardBackground)
             .cornerRadius(8)
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color.secondary.opacity(0.15), lineWidth: 1)
+                    .stroke(DesignTokens.Colors.cardBorder, lineWidth: 1)
             )
         }
     }
@@ -453,11 +453,11 @@ struct EmptyHistoryView: View {
         .frame(maxWidth: .infinity)
         .frame(height: 160)
         .padding(16)
-        .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+        .background(DesignTokens.Colors.cardBackground)
         .cornerRadius(8)
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.secondary.opacity(0.15), lineWidth: 1)
+                .stroke(DesignTokens.Colors.cardBorder, lineWidth: 1)
         )
     }
 }

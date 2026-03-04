@@ -124,7 +124,7 @@ struct UsageHistoryView: View {
             Spacer()
         }
         .frame(height: 100)
-        .background(Color(nsColor: .controlBackgroundColor).opacity(0.3))
+        .background(DesignTokens.Colors.cardBackground)
         .cornerRadius(8)
     }
 
@@ -336,7 +336,7 @@ struct SimpleUsageChart: View {
             .padding(.horizontal, 12)
             .padding(.bottom, 10)
         }
-        .background(Color(nsColor: .controlBackgroundColor).opacity(0.3))
+        .background(DesignTokens.Colors.cardBackground)
         .cornerRadius(8)
         .onChange(of: timeScale) {
             // Reset to now when scale changes
@@ -584,7 +584,7 @@ struct CombinedUsageChart: View {
             .padding(.horizontal, 12)
             .padding(.bottom, 10)
         }
-        .background(Color(nsColor: .controlBackgroundColor).opacity(0.3))
+        .background(DesignTokens.Colors.cardBackground)
         .cornerRadius(8)
         .onChange(of: timeScale) {
             timeOffset = 0

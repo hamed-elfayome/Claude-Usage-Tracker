@@ -57,7 +57,7 @@ struct SettingsButton: View {
             case .primary:
                 return SettingsColors.primary.opacity(0.85)
             case .secondary:
-                return Color(nsColor: .controlBackgroundColor).opacity(1.2)
+                return Color.primary.opacity(0.08)
             case .destructive:
                 return SettingsColors.error.opacity(0.85)
             case .subtle:

@@ -121,12 +121,11 @@ final class WindowCoordinator: NSObject {
             NSApp.setActivationPolicy(.regular)
             NSApp.activate(ignoringOtherApps: true)
 
-            let settingsView = SettingsView()
-            let hostingController = NSHostingController(rootView: settingsView)
+            let hostingController = SettingsHostingController()
 
             let window = NSWindow(
                 contentRect: NSRect(origin: .zero, size: Constants.WindowSizes.settingsWindow),
-                styleMask: [.titled, .closable, .resizable],
+                styleMask: [.titled, .closable, .resizable, .fullSizeContentView],
                 backing: .buffered,
                 defer: false
             )
@@ -134,6 +133,9 @@ final class WindowCoordinator: NSObject {
             window.contentViewController = hostingController
             window.center()
             window.isRestorable = false
+            window.titlebarAppearsTransparent = true
+            window.titleVisibility = .hidden
+            window.titlebarSeparatorStyle = .none
             window.makeKeyAndOrderFront(nil)
             window.delegate = self
 

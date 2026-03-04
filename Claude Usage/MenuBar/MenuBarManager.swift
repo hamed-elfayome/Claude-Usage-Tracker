@@ -1353,16 +1353,22 @@ class MenuBarManager: NSObject, ObservableObject {
             NSApp.setActivationPolicy(.regular)
 
             // Create and show the settings window programmatically
-            let settingsView = SettingsView()
-            let hostingController = NSHostingController(rootView: settingsView)
+            let hostingController = SettingsHostingController()
 
-            let window = NSWindow(contentViewController: hostingController)
+            let window = NSWindow(
+                contentRect: NSRect(origin: .zero, size: NSSize(width: 720, height: 600)),
+                styleMask: [.titled, .closable, .miniaturizable, .fullSizeContentView],
+                backing: .buffered,
+                defer: false
+            )
+            window.contentViewController = hostingController
             window.title = "Claude Usage - Settings"
-            window.styleMask = [.titled, .closable, .miniaturizable]
-            window.setContentSize(NSSize(width: 720, height: 600))
             window.center()
             window.isReleasedWhenClosed = false
             window.isRestorable = false
+            window.titlebarAppearsTransparent = true
+            window.titleVisibility = .hidden
+            window.titlebarSeparatorStyle = .none
 
             // Set window delegate to clean up reference when closed
             window.delegate = self

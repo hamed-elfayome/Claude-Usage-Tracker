@@ -87,12 +87,12 @@ struct MetricIconCard: View {
         .padding(Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: Spacing.radiusMedium)
-                .fill(Color(nsColor: .controlBackgroundColor))
+                .fill(DesignTokens.Colors.cardBackground)
         )
         .overlay(
             RoundedRectangle(cornerRadius: Spacing.radiusMedium)
                 .strokeBorder(
-                    config.isEnabled ? SettingsColors.success.opacity(0.3) : Color.gray.opacity(0.2),
+                    config.isEnabled ? SettingsColors.success.opacity(0.3) : DesignTokens.Colors.cardBorder,
                     lineWidth: 1
                 )
         )

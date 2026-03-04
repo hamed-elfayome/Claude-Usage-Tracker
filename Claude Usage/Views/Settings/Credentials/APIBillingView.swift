@@ -417,7 +417,7 @@ struct APISelectOrgStep: View {
                         .background(
                             wizardState.selectedOrgId == org.id
                                 ? Color.accentColor.opacity(0.06)
-                                : Color(nsColor: .controlBackgroundColor).opacity(0.3)
+                                : Color.primary.opacity(0.04)
                         )
                         .cornerRadius(6)
                         .overlay(
@@ -425,7 +425,7 @@ struct APISelectOrgStep: View {
                                 .strokeBorder(
                                     wizardState.selectedOrgId == org.id
                                         ? Color.accentColor.opacity(0.3)
-                                        : Color.secondary.opacity(0.15),
+                                        : Color.primary.opacity(0.08),
                                     lineWidth: 1
                                 )
                         )
@@ -552,11 +552,11 @@ struct APIConfirmStep: View {
                 }
             }
             .padding(12)
-            .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+            .background(DesignTokens.Colors.cardBackground)
             .cornerRadius(6)
             .overlay(
                 RoundedRectangle(cornerRadius: 6)
-                    .strokeBorder(Color.secondary.opacity(0.15), lineWidth: 1)
+                    .strokeBorder(DesignTokens.Colors.cardBorder, lineWidth: 1)
             )
 
             // Navigation buttons
