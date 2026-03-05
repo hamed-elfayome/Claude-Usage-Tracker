@@ -111,8 +111,8 @@ enum DesignTokens {
         /// Card border — subtle to blend with vibrancy
         static let cardBorder = Color.primary.opacity(0.08)
 
-        /// Text field background
-        static let inputBackground = Color(nsColor: .textBackgroundColor)
+        /// Text field background — translucent to work with vibrancy
+        static let inputBackground = Color.primary.opacity(0.06)
 
         /// Success/connected state
         static let success = Color.green

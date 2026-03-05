@@ -263,11 +263,11 @@ struct EnterKeyStep: View {
                     .textFieldStyle(.plain)
                     .font(.system(size: 12, design: .monospaced))
                     .padding(10)
-                    .background(Color(nsColor: .textBackgroundColor))
+                    .background(DesignTokens.Colors.inputBackground)
                     .cornerRadius(6)
                     .overlay(
                         RoundedRectangle(cornerRadius: 6)
-                            .strokeBorder(Color.secondary.opacity(0.2), lineWidth: 1)
+                            .strokeBorder(DesignTokens.Colors.cardBorder, lineWidth: 1)
                     )
 
                 Text("personal.help_session_key".localized)

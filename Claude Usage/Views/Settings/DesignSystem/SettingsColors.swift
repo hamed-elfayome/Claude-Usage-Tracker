@@ -38,8 +38,8 @@ enum SettingsColors {
     /// Card background — translucent to work with vibrancy
     static let cardBackground = Color.primary.opacity(0.04)
 
-    /// Input field background
-    static let inputBackground = Color(nsColor: .textBackgroundColor)
+    /// Input field background — translucent to work with vibrancy
+    static let inputBackground = Color.primary.opacity(0.06)
 
     /// Border color for inputs and cards — subtle for vibrancy
     static let border = Color.primary.opacity(0.08)

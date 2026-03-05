@@ -109,7 +109,7 @@ struct SettingsView: View {
                 // App Settings Section at bottom
                 AppSettingsSection(selectedSection: $selectedSection)
                     .padding(.horizontal, 12)
-                    .padding(.bottom, 12)
+                    .padding(.bottom, 4)
             }
             .padding(.top, 22)
             .background(SidebarVisualEffect())
@@ -163,7 +163,7 @@ struct SettingsView: View {
                     : Color.white.opacity(0.3)
             )
         }
-        .frame(width: 720, height: 680)
+        .frame(minWidth: 720, maxWidth: 720, maxHeight: .infinity)
         .ignoresSafeArea()
     }
 }
