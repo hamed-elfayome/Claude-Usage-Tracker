@@ -72,9 +72,15 @@ final class SettingsHostingController: NSViewController {
             }
         }
 
-        // Remove the titlebar separator line
+        // Remove the titlebar separator line and make titlebar transparent
         if let window = view.window {
             window.titlebarSeparatorStyle = .none
+            window.backgroundColor = .clear
+
+            // Walk the titlebar view hierarchy to hide separator views
+            if let titlebarContainer = window.standardWindowButton(.closeButton)?.superview?.superview {
+                hideSeparators(in: titlebarContainer)
+            }
         }
     }
 
@@ -86,6 +92,21 @@ final class SettingsHostingController: NSViewController {
             }
         }
         view.layer?.backgroundColor = .clear
+    }
+
+    private func hideSeparators(in view: NSView) {
+        for subview in view.subviews {
+            let className = String(describing: type(of: subview))
+            // Hide the titlebar separator line (NSTitlebarSeparatorView or similar)
+            if className.contains("Separator") {
+                subview.isHidden = true
+            }
+            // Also check if it's a thin line (height <= 2)
+            if subview.frame.height <= 2 && subview.frame.width > 100 {
+                subview.isHidden = true
+            }
+            hideSeparators(in: subview)
+        }
     }
 }
 
