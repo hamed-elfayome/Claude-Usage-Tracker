@@ -14,10 +14,73 @@ class ClaudeCodeSyncService {
 
     private init() {}
 
-    // MARK: - System Keychain Access
+    // MARK: - System Credentials Access (Fallback Chain)
+
+    /// Reads Claude Code credentials using a fallback chain:
+    /// 1. ~/.claude/.credentials.json (always complete, not subject to keychain truncation)
+    /// 2. System Keychain (may be truncated for large payloads >2KB)
+    /// 3. Regex extraction of accessToken from truncated keychain data (last resort)
+    func readSystemCredentials() throws -> String? {
+        // 1. Try credentials file first (most reliable)
+        if let fileJSON = readCredentialsFile() {
+            LoggingService.shared.log("Read credentials from .credentials.json file")
+            return fileJSON
+        }
+
+        // 2. Try keychain
+        let keychainData = try readKeychainCredentials()
+
+        guard let rawJSON = keychainData else {
+            // No credentials anywhere
+            return nil
+        }
+
+        // 3. Validate keychain JSON
+        if let data = rawJSON.data(using: .utf8),
+           let _ = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            return rawJSON
+        }
+
+        // 4. Keychain data is truncated/invalid — try regex extraction
+        LoggingService.shared.log("Keychain JSON is invalid (likely truncated), attempting regex extraction")
+        if let token = extractAccessTokenViaRegex(from: rawJSON) {
+            let minimalJSON = "{\"claudeAiOauth\":{\"accessToken\":\"\(token)\"}}"
+            LoggingService.shared.log("Built minimal credentials from regex-extracted token")
+            return minimalJSON
+        }
+
+        // 5. All attempts failed
+        throw ClaudeCodeError.invalidJSON
+    }
+
+    // MARK: - Private Credential Sources
+
+    /// Reads credentials from ~/.claude/.credentials.json file
+    private func readCredentialsFile() -> String? {
+        let fileURL = Constants.ClaudePaths.credentialsFile
+
+        guard FileManager.default.fileExists(atPath: fileURL.path) else {
+            return nil
+        }
+
+        guard let data = try? Data(contentsOf: fileURL),
+              let jsonString = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !jsonString.isEmpty else {
+            LoggingService.shared.log("credentials file exists but could not be read")
+            return nil
+        }
+
+        // Validate it's actually valid JSON
+        guard let _ = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            LoggingService.shared.log("credentials file contains invalid JSON")
+            return nil
+        }
+
+        return jsonString
+    }
 
     /// Reads Claude Code credentials from system Keychain using security command
-    func readSystemCredentials() throws -> String? {
+    private func readKeychainCredentials() throws -> String? {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/security")
         process.arguments = [
@@ -40,7 +103,7 @@ class ClaudeCodeSyncService {
         if exitCode == 0 {
             let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
             guard let value = String(data: outputData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) else {
-                throw ClaudeCodeError.invalidJSON
+                return nil
             }
             return value
         } else if exitCode == 44 {
@@ -52,6 +115,17 @@ class ClaudeCodeSyncService {
             LoggingService.shared.log("Failed to read keychain: \(errorString)")
             throw ClaudeCodeError.keychainReadFailed(status: OSStatus(exitCode))
         }
+    }
+
+    /// Extracts accessToken from potentially truncated JSON using regex
+    private func extractAccessTokenViaRegex(from rawString: String) -> String? {
+        let pattern = "\"accessToken\"\\s*:\\s*\"([^\"]+)\""
+        guard let regex = try? NSRegularExpression(pattern: pattern),
+              let match = regex.firstMatch(in: rawString, range: NSRange(rawString.startIndex..., in: rawString)),
+              let tokenRange = Range(match.range(at: 1), in: rawString) else {
+            return nil
+        }
+        return String(rawString[tokenRange])
     }
 
     /// Writes Claude Code credentials to system Keychain using security command
@@ -220,6 +294,13 @@ class ClaudeCodeSyncService {
         guard let freshJSON = try readSystemCredentials() else {
             // No credentials in system - user not logged into CLI anymore
             LoggingService.shared.log("No system credentials found - skipping re-sync")
+            return
+        }
+
+        // Validate JSON before saving (defense-in-depth against truncated data)
+        guard let data = freshJSON.data(using: .utf8),
+              let _ = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            LoggingService.shared.log("Re-synced credentials contain invalid JSON - skipping save")
             return
         }
 

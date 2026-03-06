@@ -77,6 +77,10 @@ enum Constants {
         static var projectsDirectory: URL {
             claudeDirectory.appendingPathComponent("projects")
         }
+
+        static var credentialsFile: URL {
+            claudeDirectory.appendingPathComponent(".credentials.json")
+        }
     }
 
     // Refresh intervals (in seconds)
