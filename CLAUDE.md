@@ -66,6 +66,26 @@ Common scopes: `api`, `menubar`, `statusline`, `settings`, `services`, `models`,
 
 Avoid large refactors for now. If upstream becomes active again, we want to be able to contribute back cleanly without a tangled diff.
 
+## Deploy to /Applications
+
+Always pull latest before building, then remove the old bundle before copying — `cp -R` silently skips overwriting an existing `.app` directory, leaving the stale binary in place.
+
+```bash
+git pull origin main
+
+xcodebuild clean build -project "Claude Usage.xcodeproj" -scheme "Claude Usage" -configuration Release \
+  CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+
+DERIVED=$(xcodebuild -project "Claude Usage.xcodeproj" -scheme "Claude Usage" -configuration Release \
+  -showBuildSettings CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO \
+  | awk '/BUILT_PRODUCTS_DIR/{print $3}')
+
+rm -rf "/Applications/Claude Usage.app"
+cp -R "$DERIVED/Claude Usage.app" "/Applications/"
+```
+
+Use `clean build` (not just `build`) when verifying a fix — incremental Release builds can reuse stale object files and ship the old behaviour.
+
 ## Release
 
 1. Bump `MARKETING_VERSION` in `project.pbxproj`
