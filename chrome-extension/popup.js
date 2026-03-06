@@ -164,33 +164,33 @@ async function render() {
   const profile = await getActiveProfile();
   if (!profile) { showOnly(stateNoKey); return; }
 
-  const usage = profile.cachedUsage;
-
-  if (!usage) {
-    // First load — trigger background refresh then wait briefly
-    chrome.runtime.sendMessage({ type: 'REFRESH' });
-    showOnly(stateLoading);
-
-    // Poll storage for up to 5 seconds
-    let attempts = 0;
-    const poll = setInterval(async () => {
-      attempts++;
+  // If we already have cached data show it immediately, then silently refresh in background
+  if (profile.cachedUsage) {
+    renderUsage(profile);
+    chrome.runtime.sendMessage({ type: 'REFRESH' }).then(async () => {
       const fresh = await getActiveProfile();
-      if (fresh?.cachedUsage) {
-        clearInterval(poll);
-        renderUsage(fresh);
-      } else if (attempts >= 10) {
-        clearInterval(poll);
-        // Check if no session key
-        const hasCookie = await checkForSessionKey(profile);
-        if (!hasCookie) showOnly(stateNoKey);
-        else showError('No data', 'Could not fetch usage. Try again.');
-      }
-    }, 500);
+      if (fresh?.cachedUsage) renderUsage(fresh);
+    }).catch(() => {});
     return;
   }
 
-  renderUsage(profile);
+  // No cached data yet — show spinner, wait for the background refresh to finish
+  showOnly(stateLoading);
+  try {
+    await chrome.runtime.sendMessage({ type: 'REFRESH' });
+    const fresh = await getActiveProfile();
+    if (fresh?.cachedUsage) {
+      renderUsage(fresh);
+    } else {
+      const hasCookie = await checkForSessionKey(profile);
+      if (!hasCookie) showOnly(stateNoKey);
+      else showError('No data', 'Could not fetch usage. Try again.');
+    }
+  } catch {
+    const hasCookie = await checkForSessionKey(profile);
+    if (!hasCookie) showOnly(stateNoKey);
+    else showError('Something went wrong', 'Could not reach the background service. Try reloading.');
+  }
 }
 
 async function checkForSessionKey(profile) {

@@ -1,5 +1,8 @@
 /* popup.css — Claude Usage Tracker */
 
+/* Force the native hidden attribute to always win over display rules */
+[hidden] { display: none !important; }
+
 /* ── CSS variables ── */
 :root {
   --bg:         #0f0f1a;
