@@ -524,7 +524,7 @@ struct SmartUsageDashboard: View {
                     showRemaining: showRemainingPercentage,
                     resetTime: usage.weeklyResetTime,
                     isPrimary: false,
-                    periodDuration: 7 * 24 * 3600,
+                    periodDuration: Constants.weeklyWindow,
                     showTimeMarker: showTimeMarker
                 )
 

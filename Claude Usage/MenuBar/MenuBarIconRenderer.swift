@@ -1077,7 +1077,7 @@ final class MenuBarIconRenderer {
             duration = Constants.sessionWindow
         case .week:
             resetTime = usage.weeklyResetTime
-            duration = 7 * 24 * 3600
+            duration = Constants.weeklyWindow
         case .api:
             return nil
         }

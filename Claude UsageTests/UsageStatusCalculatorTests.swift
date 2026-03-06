@@ -202,4 +202,50 @@ final class UsageStatusCalculatorTests: XCTestCase {
             0.0  // max(0, 100 - 110) = 0
         )
     }
+
+    // MARK: - elapsedFraction with shared period constants
+
+    func testElapsedFraction_SessionPeriod_HalfwayThrough() {
+        // 2.5 hours into a 5-hour session = 0.5
+        let resetTime = Date().addingTimeInterval(Constants.sessionWindow / 2)
+        let fraction = UsageStatusCalculator.elapsedFraction(
+            resetTime: resetTime,
+            duration: Constants.sessionWindow,
+            showRemaining: false
+        )
+        XCTAssertEqual(fraction ?? 0, 0.5, accuracy: 0.01)
+    }
+
+    func testElapsedFraction_WeeklyPeriod_HalfwayThrough() {
+        // 3.5 days into a 7-day week = 0.5
+        let resetTime = Date().addingTimeInterval(Constants.weeklyWindow / 2)
+        let fraction = UsageStatusCalculator.elapsedFraction(
+            resetTime: resetTime,
+            duration: Constants.weeklyWindow,
+            showRemaining: false
+        )
+        XCTAssertEqual(fraction ?? 0, 0.5, accuracy: 0.01)
+    }
+
+    func testElapsedFraction_WeeklyPeriod_NearStart() {
+        // Just started (reset in ~7 days) → ~0% elapsed
+        let resetTime = Date().addingTimeInterval(Constants.weeklyWindow - 60)
+        let fraction = UsageStatusCalculator.elapsedFraction(
+            resetTime: resetTime,
+            duration: Constants.weeklyWindow,
+            showRemaining: false
+        )
+        XCTAssertEqual(fraction ?? 0, 0.0, accuracy: 0.01)
+    }
+
+    func testElapsedFraction_WeeklyPeriod_NearEnd() {
+        // 60 seconds left → ~1.0 elapsed
+        let resetTime = Date().addingTimeInterval(60)
+        let fraction = UsageStatusCalculator.elapsedFraction(
+            resetTime: resetTime,
+            duration: Constants.weeklyWindow,
+            showRemaining: false
+        )
+        XCTAssertEqual(fraction ?? 0, 1.0, accuracy: 0.01)
+    }
 }
