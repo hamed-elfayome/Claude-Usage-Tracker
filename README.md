@@ -1,5 +1,7 @@
 # Claude Usage Tracker — Chrome Extension
 
+> **Forked from** [hamed-elfayome/Claude-Usage-Tracker](https://github.com/hamed-elfayome/Claude-Usage-Tracker) (macOS app) — this fork adds a cross-platform Chrome extension.
+
 <div align="center">
 
   **Real-time Claude AI usage monitoring directly in your browser toolbar**
@@ -151,7 +153,7 @@ Cookie: sessionKey=<value>
 
 ## Acknowledgments
 
-Inspired by [hamed-elfayome/Claude-Usage-Tracker](https://github.com/hamed-elfayome/Claude-Usage-Tracker) — a native macOS menu bar app with the same goal. This extension brings the same idea to all platforms via Chrome.
+This is a fork of [hamed-elfayome/Claude-Usage-Tracker](https://github.com/hamed-elfayome/Claude-Usage-Tracker), a native macOS menu bar app. The original macOS app source is still present in this repo. This fork extends it by adding a Chrome extension that brings the same functionality to all platforms.
 
 ---
 
