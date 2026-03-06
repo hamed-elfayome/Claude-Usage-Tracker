@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g. v2.6.0)'
+        required: true
+        type: string
 
 jobs:
   release:
@@ -25,7 +31,7 @@ jobs:
           xcodebuild -version
           swift --version
           echo "macOS: $(sw_vers -productVersion)"
-          echo "Tag: ${{ github.ref_name }}"
+          echo "Tag: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}"
 
       # ── Detect whether Apple Developer signing secrets are configured ──────
       - name: Check Signing Availability
@@ -245,7 +251,7 @@ jobs:
         id: changelog_notes
         continue-on-error: true
         run: |
-          VERSION="${{ github.ref_name }}"
+          VERSION="${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}"
           VERSION="${VERSION#v}"
 
           echo "Extracting release notes for version $VERSION from CHANGELOG.md"
@@ -296,7 +302,8 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: ${{ github.ref_name }}
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+          name: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
           draft: false
           body_path: release-body.md
           generate_release_notes: ${{ steps.changelog_notes.outputs.changelog_extracted != 'true' && steps.signing.outputs.available == 'true' }}
@@ -309,7 +316,7 @@ jobs:
 
       - name: Release Summary
         run: |
-          echo "🎉 Release ${{ github.ref_name }} created successfully!"
+          echo "🎉 Release ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }} created successfully!"
           echo ""
           if [ "${{ steps.signing.outputs.available }}" == "true" ]; then
             echo "✅ App signed with Developer ID Application certificate"
