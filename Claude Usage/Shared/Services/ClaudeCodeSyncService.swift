@@ -190,6 +190,7 @@ class ClaudeCodeSyncService {
     }
 
     /// Extracts the token expiry date from CLI credentials JSON
+    /// Handles both seconds and milliseconds epoch formats
     func extractTokenExpiry(from jsonData: String) -> Date? {
         guard let data = jsonData.data(using: .utf8),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -197,7 +198,9 @@ class ClaudeCodeSyncService {
               let expiresAt = oauth["expiresAt"] as? TimeInterval else {
             return nil
         }
-        return Date(timeIntervalSince1970: expiresAt)
+        // Normalize milliseconds to seconds: ms epoch values are > 1e12
+        let epoch = expiresAt > 1e12 ? expiresAt / 1000.0 : expiresAt
+        return Date(timeIntervalSince1970: epoch)
     }
 
     /// Checks if the OAuth token in the credentials JSON is expired

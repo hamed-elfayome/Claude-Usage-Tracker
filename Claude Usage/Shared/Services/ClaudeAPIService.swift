@@ -71,7 +71,7 @@ class ClaudeAPIService: APIServiceProtocol {
     }
 
     /// Gets the best available authentication method with fallback support
-    /// Priority: 1) claude.ai session → 2) saved CLI OAuth → 3) system Keychain CLI OAuth
+    /// Priority: 1) CLI OAuth (auto-refreshing) → 2) system Keychain CLI OAuth → 3) claude.ai session
     /// Note: Console API session is NOT used as fallback (it only provides billing data, not usage)
     private func getAuthentication() throws -> AuthenticationType {
         guard let activeProfile = ProfileManager.shared.activeProfile else {
@@ -79,22 +79,11 @@ class ClaudeAPIService: APIServiceProtocol {
             throw AppError.sessionKeyNotFound()
         }
 
-        // Try claude.ai session key first
-        if let sessionKey = activeProfile.claudeSessionKey {
-            do {
-                let validatedKey = try sessionKeyValidator.validate(sessionKey)
-                LoggingService.shared.log("ClaudeAPIService: Using claude.ai session key")
-                return .claudeAISession(validatedKey)
-            } catch {
-                LoggingService.shared.logError("ClaudeAPIService: claude.ai session key validation failed: \(error.localizedDescription)")
-            }
-        }
-
-        // Fall back to saved CLI OAuth token if available and not expired
+        // Try saved CLI OAuth token first (auto-refreshing, most reliable)
         if let cliJSON = activeProfile.cliCredentialsJSON {
             if !ClaudeCodeSyncService.shared.isTokenExpired(cliJSON),
                let accessToken = ClaudeCodeSyncService.shared.extractAccessToken(from: cliJSON) {
-                LoggingService.shared.log("ClaudeAPIService: Falling back to saved CLI OAuth token")
+                LoggingService.shared.log("ClaudeAPIService: Using saved CLI OAuth token")
                 return .cliOAuth(accessToken)
             } else {
                 LoggingService.shared.log("ClaudeAPIService: Saved CLI OAuth token is expired or invalid")
@@ -106,7 +95,6 @@ class ClaudeAPIService: APIServiceProtocol {
             if let systemCredentials = try ClaudeCodeSyncService.shared.readSystemCredentials() {
                 LoggingService.shared.log("ClaudeAPIService: Found CLI credentials in system Keychain")
 
-                // Validate token is not expired
                 if ClaudeCodeSyncService.shared.isTokenExpired(systemCredentials) {
                     LoggingService.shared.log("ClaudeAPIService: System Keychain CLI token is expired")
                 } else if let accessToken = ClaudeCodeSyncService.shared.extractAccessToken(from: systemCredentials) {
@@ -120,6 +108,17 @@ class ClaudeAPIService: APIServiceProtocol {
             }
         } catch {
             LoggingService.shared.log("ClaudeAPIService: Could not read system CLI credentials: \(error.localizedDescription)")
+        }
+
+        // Fall back to claude.ai session key
+        if let sessionKey = activeProfile.claudeSessionKey {
+            do {
+                let validatedKey = try sessionKeyValidator.validate(sessionKey)
+                LoggingService.shared.log("ClaudeAPIService: Falling back to claude.ai session key")
+                return .claudeAISession(validatedKey)
+            } catch {
+                LoggingService.shared.logError("ClaudeAPIService: claude.ai session key validation failed: \(error.localizedDescription)")
+            }
         }
 
         LoggingService.shared.logError("ClaudeAPIService.getAuthentication: No valid credentials for usage data")
@@ -377,6 +376,46 @@ class ClaudeAPIService: APIServiceProtocol {
         return try parseUsageResponse(usageData)
     }
 
+    /// Fetches usage data using a CLI OAuth access token directly
+    func fetchUsageData(oauthAccessToken: String) async throws -> ClaudeUsage {
+        LoggingService.shared.log("ClaudeAPIService: Fetching usage via OAuth endpoint (explicit token)")
+
+        guard let url = URL(string: Constants.APIEndpoints.oauthUsage) else {
+            throw AppError(
+                code: .urlMalformed,
+                message: "Invalid OAuth usage endpoint",
+                isRecoverable: false
+            )
+        }
+
+        var request = buildAuthenticatedRequest(url: url, auth: .cliOAuth(oauthAccessToken))
+        request.httpMethod = "GET"
+        request.timeoutInterval = 30
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw AppError(
+                code: .apiInvalidResponse,
+                message: "Invalid response from OAuth endpoint",
+                isRecoverable: true
+            )
+        }
+
+        guard httpResponse.statusCode == 200 else {
+            let responsePreview = String(data: data, encoding: .utf8)?.prefix(200) ?? "Unable to read response"
+            throw AppError(
+                code: httpResponse.statusCode == 401 || httpResponse.statusCode == 403 ? .apiUnauthorized : .apiGenericError,
+                message: "OAuth fetch failed",
+                technicalDetails: "Status: \(httpResponse.statusCode)\nResponse: \(responsePreview)",
+                isRecoverable: true,
+                recoverySuggestion: "Please re-sync your CLI account in Settings"
+            )
+        }
+
+        return try parseUsageResponse(data)
+    }
+
     /// Fetches real usage data from Claude's API
     func fetchUsageData() async throws -> ClaudeUsage {
         let auth = try getAuthentication()
@@ -410,7 +449,7 @@ class ClaudeAPIService: APIServiceProtocol {
             // Use OAuth endpoint (no organization ID needed)
             LoggingService.shared.log("ClaudeAPIService: Fetching usage via OAuth endpoint")
 
-            guard let url = URL(string: "https://api.anthropic.com/api/oauth/usage") else {
+            guard let url = URL(string: Constants.APIEndpoints.oauthUsage) else {
                 throw AppError(
                     code: .urlMalformed,
                     message: "Invalid OAuth usage endpoint",

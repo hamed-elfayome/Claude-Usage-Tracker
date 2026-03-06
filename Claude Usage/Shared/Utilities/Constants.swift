@@ -116,6 +116,7 @@ enum Constants {
     enum APIEndpoints {
         static let claudeBase = "https://claude.ai/api"
         static let consoleBase = "https://console.anthropic.com/api"
+        static let oauthUsage = "https://api.anthropic.com/api/oauth/usage"
     }
 
     // UI Timing

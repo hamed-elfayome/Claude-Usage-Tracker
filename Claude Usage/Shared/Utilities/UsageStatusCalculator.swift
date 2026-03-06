@@ -57,13 +57,15 @@ final class UsageStatusCalculator {
     }
 
     /// Fraction (0...1) of elapsed time within a period, adjusted for display mode.
-    /// Returns nil when the reset time is in the past, nil, or duration is zero/negative.
+    /// Returns nil when the reset time or duration is unavailable.
+    /// When the reset time is in the past (period fully elapsed), returns 1.0 (or 0.0 in remaining mode).
     static func elapsedFraction(
         resetTime: Date?,
         duration: TimeInterval,
         showRemaining: Bool
     ) -> Double? {
-        guard let reset = resetTime, reset > Date(), duration > 0 else { return nil }
+        guard let reset = resetTime, duration > 0 else { return nil }
+        guard reset > Date() else { return showRemaining ? 0.0 : 1.0 }
         let remaining = reset.timeIntervalSince(Date())
         let elapsed = duration - remaining
         let fraction = min(max(elapsed / duration, 0), 1)

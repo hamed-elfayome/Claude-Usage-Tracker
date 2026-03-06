@@ -770,17 +770,32 @@ class MenuBarManager: NSObject, ObservableObject {
     }
 
     /// Fetches usage data for a specific profile using its credentials
+    /// Tries CLI OAuth first, then falls back to cookie-based session
     private func fetchUsageForProfile(_ profile: Profile) async throws -> ClaudeUsage {
-        guard let sessionKey = profile.claudeSessionKey,
-              let orgId = profile.organizationId else {
-            throw AppError(
-                code: .sessionKeyNotFound,
-                message: "Missing credentials for profile '\(profile.name)'",
-                isRecoverable: false
-            )
+        // Try CLI OAuth first (auto-refreshing, most reliable)
+        if let cliJSON = profile.cliCredentialsJSON,
+           !ClaudeCodeSyncService.shared.isTokenExpired(cliJSON),
+           let accessToken = ClaudeCodeSyncService.shared.extractAccessToken(from: cliJSON) {
+            LoggingService.shared.log("Profile '\(profile.name)': Fetching via CLI OAuth")
+            do {
+                return try await apiService.fetchUsageData(oauthAccessToken: accessToken)
+            } catch {
+                LoggingService.shared.logError("Profile '\(profile.name)': CLI OAuth fetch failed, trying cookie fallback: \(error.localizedDescription)")
+            }
         }
 
-        return try await apiService.fetchUsageData(sessionKey: sessionKey, organizationId: orgId)
+        // Fall back to cookie-based claude.ai session
+        if let sessionKey = profile.claudeSessionKey,
+           let orgId = profile.organizationId {
+            LoggingService.shared.log("Profile '\(profile.name)': Fetching via cookie session")
+            return try await apiService.fetchUsageData(sessionKey: sessionKey, organizationId: orgId)
+        }
+
+        throw AppError(
+            code: .sessionKeyNotFound,
+            message: "Missing credentials for profile '\(profile.name)'",
+            isRecoverable: false
+        )
     }
 
     private func setupSingleProfileMode() {

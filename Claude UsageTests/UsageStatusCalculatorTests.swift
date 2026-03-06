@@ -329,15 +329,26 @@ final class UsageStatusCalculatorTests: XCTestCase {
 
     // MARK: - elapsedFraction edge cases
 
-    func testElapsedFraction_ExpiredSession_ReturnsNil() {
-        // resetTime in the past → nil (session expired, pending refresh)
+    func testElapsedFraction_ExpiredSession_Returns1() {
+        // resetTime in the past → 1.0 (fully elapsed) in used mode
         let resetTime = Date().addingTimeInterval(-60)
         let fraction = UsageStatusCalculator.elapsedFraction(
             resetTime: resetTime,
             duration: Constants.sessionWindow,
             showRemaining: false
         )
-        XCTAssertNil(fraction)
+        XCTAssertEqual(fraction, 1.0)
+    }
+
+    func testElapsedFraction_ExpiredSession_Returns0_RemainingMode() {
+        // resetTime in the past → 0.0 (nothing remaining) in remaining mode
+        let resetTime = Date().addingTimeInterval(-60)
+        let fraction = UsageStatusCalculator.elapsedFraction(
+            resetTime: resetTime,
+            duration: Constants.sessionWindow,
+            showRemaining: true
+        )
+        XCTAssertEqual(fraction, 0.0)
     }
 
     func testElapsedFraction_ZeroDuration_ReturnsNil() {
