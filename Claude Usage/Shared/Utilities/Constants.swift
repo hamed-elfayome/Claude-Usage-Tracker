@@ -87,6 +87,16 @@ enum Constants {
         static let widgetLarge: TimeInterval = 1800  // 30 minutes
     }
 
+    // Adaptive polling configuration
+    enum AdaptivePolling {
+        static let maxBackoffInterval: TimeInterval = 300  // 5 minutes
+        static let stableThreshold: Int = 5
+        static let idleThreshold: Int = 10
+        static let stableMultiplier: Double = 2.0
+        static let idleMultiplier: Double = 4.0
+        static let similarityTolerance: Double = 1.0  // percentage points
+    }
+
     // Session window (5 hours in seconds)
     static let sessionWindow: TimeInterval = 5 * 60 * 60
 
