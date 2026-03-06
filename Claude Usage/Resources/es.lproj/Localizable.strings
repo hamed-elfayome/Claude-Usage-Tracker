@@ -329,6 +329,7 @@
 "claudecode.component_usage" = "Estadísticas de uso";
 "claudecode.component_progressbar" = "Barra de progreso";
 "claudecode.component_resettime" = "Tiempo de reinicio";
+"claudecode.component_timemarker" = "Marcador de tiempo transcurrido";
 "claudecode.requirement_sessionkey" = "• Clave de sesión configurada en Credenciales → pestaña Claude.ai";
 "claudecode.requirement_restart" = "• Reiniciar Claude CLI después de aplicar cambios";
 "claudecode.error_no_components" = "Seleccione al menos un componente para mostrar";
@@ -397,6 +398,8 @@
 "appearance.show_labels_description" = "Mostrar etiquetas de prefijo (S:, W:, API:) para cada métrica";
 "appearance.show_remaining_title" = "Mostrar Porcentaje Restante";
 "appearance.show_remaining_description" = "Mostrar capacidad restante en lugar del porcentaje usado (como la batería de macOS)";
+"appearance.show_time_marker_title" = "Mostrar marcador de tiempo transcurrido";
+"appearance.show_time_marker_description" = "Mostrar una marca en las barras de progreso indicando el tiempo transcurrido en el período";
 "appearance.multiprofile_locked_title" = "Ajustes de Apariencia Bloqueados";
 "appearance.multiprofile_locked_description" = "Estos ajustes están deshabilitados mientras la Visualización Multi-Perfil está activa. Cada perfil usa su propia apariencia en modo multi-perfil.";
 "appearance.disable_multiprofile" = "Desactivar Visualización Multi-Perfil";

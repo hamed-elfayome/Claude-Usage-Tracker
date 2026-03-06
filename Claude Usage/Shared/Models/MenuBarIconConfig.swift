@@ -269,12 +269,14 @@ struct MenuBarIconConfiguration: Codable, Equatable {
     var monochromeMode: Bool
     var showIconNames: Bool
     var showRemainingPercentage: Bool
+    var showTimeMarker: Bool
     var metrics: [MetricIconConfig]
 
     init(
         monochromeMode: Bool = false,
         showIconNames: Bool = true,
         showRemainingPercentage: Bool = false,
+        showTimeMarker: Bool = true,
         metrics: [MetricIconConfig] = [
             .sessionDefault,
             .weekDefault,
@@ -284,6 +286,7 @@ struct MenuBarIconConfiguration: Codable, Equatable {
         self.monochromeMode = monochromeMode
         self.showIconNames = showIconNames
         self.showRemainingPercentage = showRemainingPercentage
+        self.showTimeMarker = showTimeMarker
         self.metrics = metrics
     }
 
@@ -293,6 +296,7 @@ struct MenuBarIconConfiguration: Codable, Equatable {
         case monochromeMode
         case showIconNames
         case showRemainingPercentage
+        case showTimeMarker
         case metrics
     }
 
@@ -302,8 +306,9 @@ struct MenuBarIconConfiguration: Codable, Equatable {
         monochromeMode = try container.decode(Bool.self, forKey: .monochromeMode)
         showIconNames = try container.decode(Bool.self, forKey: .showIconNames)
 
-        // New property - provide default value if missing (backwards compatibility)
+        // New properties - provide default values if missing (backwards compatibility)
         showRemainingPercentage = try container.decodeIfPresent(Bool.self, forKey: .showRemainingPercentage) ?? false
+        showTimeMarker = try container.decodeIfPresent(Bool.self, forKey: .showTimeMarker) ?? true
 
         metrics = try container.decode([MetricIconConfig].self, forKey: .metrics)
     }

@@ -23,6 +23,7 @@ class SharedDataStore {
         static let statuslineShowUsage = "statuslineShowUsage"
         static let statuslineShowProgressBar = "statuslineShowProgressBar"
         static let statuslineShowResetTime = "statuslineShowResetTime"
+        static let statuslineShowTimeMarker = "statuslineShowTimeMarker"
 
         // Setup State
         static let hasCompletedSetup = "hasCompletedSetup"
@@ -109,6 +110,17 @@ class SharedDataStore {
             return true
         }
         return defaults.bool(forKey: Keys.statuslineShowResetTime)
+    }
+
+    func saveStatuslineShowTimeMarker(_ show: Bool) {
+        defaults.set(show, forKey: Keys.statuslineShowTimeMarker)
+    }
+
+    func loadStatuslineShowTimeMarker() -> Bool {
+        if defaults.object(forKey: Keys.statuslineShowTimeMarker) == nil {
+            return true
+        }
+        return defaults.bool(forKey: Keys.statuslineShowTimeMarker)
     }
 
     // MARK: - Setup State

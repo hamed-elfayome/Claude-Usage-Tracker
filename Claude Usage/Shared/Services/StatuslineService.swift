@@ -121,12 +121,14 @@ if [ -f "$config_file" ]; then
   show_usage=$SHOW_USAGE
   show_bar=$SHOW_PROGRESS_BAR
   show_reset=$SHOW_RESET_TIME
+  show_time_marker=$SHOW_TIME_MARKER
 else
   show_dir=1
   show_branch=1
   show_usage=1
   show_bar=1
   show_reset=1
+  show_time_marker=1
 fi
 
 input=$(cat)
@@ -207,16 +209,44 @@ if [ "$show_usage" = "1" ]; then
         [ "$filled_blocks" -gt 10 ] && filled_blocks=10
         empty_blocks=$((10 - filled_blocks))
 
+        # Calculate time marker position (fraction of 5h session elapsed)
+        marker_pos=-1
+        if [ "$show_time_marker" = "1" ] && [ -n "$resets_at" ] && [ "$resets_at" != "null" ]; then
+          marker_iso=$(echo "$resets_at" | sed 's/\\.[0-9]*Z$//')
+          marker_epoch=$(date -ju -f "%Y-%m-%dT%H:%M:%S" "$marker_iso" "+%s" 2>/dev/null)
+          if [ -n "$marker_epoch" ]; then
+            now_epoch=$(date "+%s")
+            if [ "$marker_epoch" -gt "$now_epoch" ]; then
+              remaining=$((marker_epoch - now_epoch))
+              elapsed=$((18000 - remaining))  # 18000 = 5 hours (Constants.sessionWindow)
+              if [ "$elapsed" -ge 0 ] && [ "$elapsed" -le 18000 ]; then
+                # Floor-divide: map 0..18000 s elapsed → 0..10 bar positions
+                marker_pos=$(( (elapsed * 10) / 18000 ))
+                [ "$marker_pos" -gt 10 ] && marker_pos=10
+              fi
+            fi
+          fi
+        fi
+
         # Build progress bar safely without seq
         progress_bar=" "
         i=0
         while [ $i -lt $filled_blocks ]; do
-          progress_bar="${progress_bar}▓"
+          if [ $i -eq $marker_pos ]; then
+            progress_bar="${progress_bar}│"
+          else
+            progress_bar="${progress_bar}▓"
+          fi
           i=$((i + 1))
         done
         i=0
         while [ $i -lt $empty_blocks ]; do
-          progress_bar="${progress_bar}░"
+          pos=$((filled_blocks + i))
+          if [ $pos -eq $marker_pos ]; then
+            progress_bar="${progress_bar}│"
+          else
+            progress_bar="${progress_bar}░"
+          fi
           i=$((i + 1))
         done
       else
@@ -343,7 +373,8 @@ printf "%s\\n" "$output"
         showBranch: Bool,
         showUsage: Bool,
         showProgressBar: Bool,
-        showResetTime: Bool
+        showResetTime: Bool,
+        showTimeMarker: Bool = true
     ) throws {
         let configPath = Constants.ClaudePaths.claudeDirectory
             .appendingPathComponent("statusline-config.txt")
@@ -354,6 +385,7 @@ SHOW_BRANCH=\(showBranch ? "1" : "0")
 SHOW_USAGE=\(showUsage ? "1" : "0")
 SHOW_PROGRESS_BAR=\(showProgressBar ? "1" : "0")
 SHOW_RESET_TIME=\(showResetTime ? "1" : "0")
+SHOW_TIME_MARKER=\(showTimeMarker ? "1" : "0")
 """
 
         try config.write(to: configPath, atomically: true, encoding: .utf8)

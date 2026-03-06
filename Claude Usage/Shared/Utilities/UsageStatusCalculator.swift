@@ -42,6 +42,20 @@ final class UsageStatusCalculator {
         }
     }
 
+    /// Fraction (0...1) of elapsed time within a period, adjusted for display mode.
+    /// Returns nil when the reset time is in the past, nil, or duration is zero/negative.
+    static func elapsedFraction(
+        resetTime: Date?,
+        duration: TimeInterval,
+        showRemaining: Bool
+    ) -> CGFloat? {
+        guard let reset = resetTime, reset > Date(), duration > 0 else { return nil }
+        let remaining = reset.timeIntervalSince(Date())
+        let elapsed = duration - remaining
+        let fraction = CGFloat(min(max(elapsed / duration, 0), 1))
+        return showRemaining ? 1.0 - fraction : fraction
+    }
+
     /// Get the display percentage based on mode
     /// - Parameters:
     ///   - usedPercentage: The percentage used (0-100)

@@ -492,6 +492,10 @@ struct SmartUsageDashboard: View {
         profileManager.activeProfile?.iconConfig.showRemainingPercentage ?? false
     }
 
+    private var showTimeMarker: Bool {
+        profileManager.activeProfile?.iconConfig.showTimeMarker ?? true
+    }
+
     // Check if API tracking is enabled globally
     private var isAPITrackingEnabled: Bool {
         DataStore.shared.loadAPITrackingEnabled()
@@ -506,7 +510,9 @@ struct SmartUsageDashboard: View {
                 usedPercentage: usage.sessionPercentage,
                 showRemaining: showRemainingPercentage,
                 resetTime: usage.sessionResetTime,
-                isPrimary: true
+                isPrimary: true,
+                periodDuration: Constants.sessionWindow,
+                showTimeMarker: showTimeMarker
             )
 
             // Secondary Usage Cards
@@ -517,7 +523,9 @@ struct SmartUsageDashboard: View {
                     usedPercentage: usage.weeklyPercentage,
                     showRemaining: showRemainingPercentage,
                     resetTime: usage.weeklyResetTime,
-                    isPrimary: false
+                    isPrimary: false,
+                    periodDuration: 7 * 24 * 3600,
+                    showTimeMarker: showTimeMarker
                 )
 
                 if usage.opusWeeklyTokensUsed > 0 {
@@ -527,7 +535,8 @@ struct SmartUsageDashboard: View {
                         usedPercentage: usage.opusWeeklyPercentage,
                         showRemaining: showRemainingPercentage,
                         resetTime: nil,
-                        isPrimary: false
+                        isPrimary: false,
+                        periodDuration: nil
                     )
                 }
 
@@ -538,7 +547,8 @@ struct SmartUsageDashboard: View {
                         usedPercentage: usage.sonnetWeeklyPercentage,
                         showRemaining: showRemainingPercentage,
                         resetTime: usage.sonnetWeeklyResetTime,
-                        isPrimary: false
+                        isPrimary: false,
+                        periodDuration: nil
                     )
                 }
             }
@@ -551,7 +561,8 @@ struct SmartUsageDashboard: View {
                     usedPercentage: usedPercentage,
                     showRemaining: showRemainingPercentage,
                     resetTime: nil,
-                    isPrimary: false
+                    isPrimary: false,
+                    periodDuration: nil
                 )
             }
 
@@ -576,6 +587,18 @@ struct SmartUsageCard: View {
     let showRemaining: Bool
     let resetTime: Date?
     let isPrimary: Bool
+    let periodDuration: TimeInterval?
+    var showTimeMarker: Bool = true
+
+    /// Fraction (0...1) of elapsed time within the period, or nil if not applicable
+    private var timeMarkerFraction: CGFloat? {
+        guard showTimeMarker else { return nil }
+        return UsageStatusCalculator.elapsedFraction(
+            resetTime: resetTime,
+            duration: periodDuration ?? 0,
+            showRemaining: showRemaining
+        )
+    }
 
     /// Display percentage based on mode
     private var displayPercentage: Double {
@@ -657,6 +680,15 @@ struct SmartUsageCard: View {
                             .frame(width: geometry.size.width * min(displayPercentage / 100.0, 1.0))
                             .clipShape(RoundedRectangle(cornerRadius: 4))
                             .animation(.easeInOut(duration: 0.8), value: displayPercentage)
+                    }
+                    .overlay(alignment: .leading) {
+                        // Time elapsed marker
+                        if let fraction = timeMarkerFraction {
+                            Rectangle()
+                                .fill(Color(nsColor: .labelColor))
+                                .frame(width: 1.5)
+                                .offset(x: round(geometry.size.width * fraction))
+                        }
                     }
                 }
                 .frame(height: 8)

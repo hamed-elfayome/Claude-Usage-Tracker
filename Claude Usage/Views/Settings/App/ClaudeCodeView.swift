@@ -15,6 +15,7 @@ struct ClaudeCodeView: View {
     @State private var showUsage: Bool = SharedDataStore.shared.loadStatuslineShowUsage()
     @State private var showProgressBar: Bool = SharedDataStore.shared.loadStatuslineShowProgressBar()
     @State private var showResetTime: Bool = SharedDataStore.shared.loadStatuslineShowResetTime()
+    @State private var showTimeMarker: Bool = SharedDataStore.shared.loadStatuslineShowTimeMarker()
 
     // Status feedback
     @State private var statusMessage: String?
@@ -97,6 +98,15 @@ struct ClaudeCodeView: View {
                             Toggle("claudecode.component_resettime".localized, isOn: $showResetTime)
                                 .font(DesignTokens.Typography.caption)
                                 .foregroundColor(.secondary)
+                        }
+
+                        if showProgressBar {
+                            HStack(spacing: 0) {
+                                Spacer().frame(width: 20)
+                                Toggle("claudecode.component_timemarker".localized, isOn: $showTimeMarker)
+                                    .font(DesignTokens.Typography.caption)
+                                    .foregroundColor(.secondary)
+                            }
                         }
                     }
                 }
@@ -188,6 +198,7 @@ struct ClaudeCodeView: View {
         SharedDataStore.shared.saveStatuslineShowUsage(showUsage)
         SharedDataStore.shared.saveStatuslineShowProgressBar(showProgressBar)
         SharedDataStore.shared.saveStatuslineShowResetTime(showResetTime)
+        SharedDataStore.shared.saveStatuslineShowTimeMarker(showTimeMarker)
 
         do {
             // Install scripts to ~/.claude/
@@ -199,7 +210,8 @@ struct ClaudeCodeView: View {
                 showBranch: showBranch,
                 showUsage: showUsage,
                 showProgressBar: showProgressBar,
-                showResetTime: showResetTime
+                showResetTime: showResetTime,
+                showTimeMarker: showTimeMarker
             )
 
             // Update Claude CLI settings.json
@@ -240,7 +252,11 @@ struct ClaudeCodeView: View {
         if showUsage {
             var usageText = "Usage: 29%"
             if showProgressBar {
-                usageText += " ▓▓▓░░░░░░░"
+                if showTimeMarker {
+                    usageText += " ▓▓▓░░░│░░░"
+                } else {
+                    usageText += " ▓▓▓░░░░░░░"
+                }
             }
             if showResetTime {
                 usageText += " → Reset: 14:30"
