@@ -481,7 +481,7 @@ final class MenuBarIconRenderer {
         let center = NSPoint(x: centerX, y: size / 2)
         let radius = (circleSize - 4.0) / 2
         let startAngle: CGFloat = 90
-        let endAngle = startAngle + (360 * CGFloat(percentage))
+        let endAngle = startAngle - (360 * CGFloat(percentage))
 
         // Background ring
         let bgArcPath = NSBezierPath()
@@ -505,7 +505,7 @@ final class MenuBarIconRenderer {
                 radius: radius,
                 startAngle: startAngle,
                 endAngle: endAngle,
-                clockwise: false
+                clockwise: true
             )
             fillColor.setStroke()
             arcPath.lineWidth = 3.0
@@ -513,12 +513,9 @@ final class MenuBarIconRenderer {
             arcPath.stroke()
         }
 
-        // Time-elapsed tick mark on the ring
-        // Note: the arc uses clockwise: false (counterclockwise in y-up AppKit coordinates),
-        // so the tick angle increases counterclockwise from 90° (top) — verify visually if
-        // the tick appears on the opposite side of the fill arc.
+        // Time-elapsed tick mark on the ring (clockwise from 12 o'clock)
         if let fraction = timeMarkerFraction {
-            let tickAngle = (90 + 360 * fraction) * .pi / 180
+            let tickAngle = (90 - 360 * fraction) * .pi / 180
             let innerR = radius - 2.0
             let outerR = radius + 2.0
             let tickPath = NSBezierPath()
@@ -694,14 +691,14 @@ final class MenuBarIconRenderer {
 
         // Session progress ring (outer - primary metric)
         if sessionPercentage > 0 {
-            let sessionEndAngle = 90 + (360 * CGFloat(sessionPercentage / 100.0))
+            let sessionEndAngle = 90 - (360 * CGFloat(sessionPercentage / 100.0))
             let outerProgressPath = NSBezierPath()
             outerProgressPath.appendArc(
                 withCenter: center,
                 radius: outerRadius,
                 startAngle: 90,
                 endAngle: sessionEndAngle,
-                clockwise: false
+                clockwise: true
             )
             sessionColor.setStroke()
             outerProgressPath.lineWidth = outerStrokeWidth
@@ -728,14 +725,14 @@ final class MenuBarIconRenderer {
 
         // Week progress ring (inner - secondary metric)
         if weekPercentage > 0 {
-            let weekEndAngle = 90 + (360 * CGFloat(weekPercentage / 100.0))
+            let weekEndAngle = 90 - (360 * CGFloat(weekPercentage / 100.0))
             let innerProgressPath = NSBezierPath()
             innerProgressPath.appendArc(
                 withCenter: center,
                 radius: innerRadius,
                 startAngle: 90,
                 endAngle: weekEndAngle,
-                clockwise: false
+                clockwise: true
             )
             weekColor.setStroke()
             innerProgressPath.lineWidth = innerStrokeWidth
@@ -810,14 +807,14 @@ final class MenuBarIconRenderer {
 
         // Session progress ring (outer - primary metric)
         if sessionPercentage > 0 {
-            let sessionEndAngle = 90 + (360 * CGFloat(sessionPercentage / 100.0))
+            let sessionEndAngle = 90 - (360 * CGFloat(sessionPercentage / 100.0))
             let outerProgressPath = NSBezierPath()
             outerProgressPath.appendArc(
                 withCenter: circleCenter,
                 radius: outerRadius,
                 startAngle: 90,
                 endAngle: sessionEndAngle,
-                clockwise: false
+                clockwise: true
             )
             sessionColor.setStroke()
             outerProgressPath.lineWidth = outerStrokeWidth
@@ -844,14 +841,14 @@ final class MenuBarIconRenderer {
 
         // Week progress ring (inner - secondary metric)
         if weekPercentage > 0 {
-            let weekEndAngle = 90 + (360 * CGFloat(weekPercentage / 100.0))
+            let weekEndAngle = 90 - (360 * CGFloat(weekPercentage / 100.0))
             let innerProgressPath = NSBezierPath()
             innerProgressPath.appendArc(
                 withCenter: circleCenter,
                 radius: innerRadius,
                 startAngle: 90,
                 endAngle: weekEndAngle,
-                clockwise: false
+                clockwise: true
             )
             weekColor.setStroke()
             innerProgressPath.lineWidth = innerStrokeWidth
