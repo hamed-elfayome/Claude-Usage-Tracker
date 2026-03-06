@@ -130,6 +130,9 @@ Temporary Items
 # Local settings
 settings.local.json
 
+# xcode-build-server (machine-local, contains absolute paths)
+buildServer.json
+
 # Build artifacts for installer
 *.pkg
 *.sha256
