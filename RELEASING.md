@@ -66,9 +66,9 @@ The tag push triggers three automated workflows:
 
 1. **Release workflow** (~5-10 minutes)
    - Builds the app
-   - Signs with Apple Developer certificate
-   - Notarizes with Apple
-   - Creates GitHub release with ZIP file
+   - **If Apple signing secrets are configured:** signs with Developer ID certificate, notarizes with Apple, and attaches `Claude-Usage.zip` to the release
+   - **If signing secrets are absent:** builds unsigned and attaches `Claude-Usage-unsigned.zip` with Gatekeeper bypass instructions in the release body
+   - Either way, a pre-built `.app` binary is always published — no Xcode required for end users
 
 2. **Generate Appcast workflow** (triggers after release)
    - Downloads the release
@@ -77,6 +77,19 @@ The tag push triggers three automated workflows:
 
 3. **Update Homebrew Cask workflow** (triggers after release)
    - Automatically updates Homebrew formula
+
+#### Required secrets for signed releases
+
+| Secret | Description |
+|---|---|
+| `DEVELOPER_CERTIFICATE_BASE64` | Base64-encoded `.p12` Developer ID Application certificate |
+| `CERTIFICATE_PASSWORD` | Password for the `.p12` certificate |
+| `APPLE_ID` | Apple ID used for notarization |
+| `APPLE_ID_PASSWORD` | App-specific password for that Apple ID |
+| `TEAM_ID` | 10-character Apple Developer Team ID |
+| `RELEASE_TOKEN` | GitHub PAT (triggers downstream appcast/Homebrew workflows) |
+
+If none of the Apple-related secrets above are configured the release workflow skips signing/notarization entirely and still publishes a usable binary. `RELEASE_TOKEN` falls back to the repository's `GITHUB_TOKEN` automatically, though downstream workflows may not be triggered without a PAT.
 
 Monitor at: `https://github.com/hamed-elfayome/Claude-Usage-Tracker/actions`
 
@@ -105,9 +118,23 @@ Monitor at: `https://github.com/hamed-elfayome/Claude-Usage-Tracker/actions`
 
 ### Workflow failures
 
-- **Release workflow**: Check code signing certificates and notarization credentials
+- **Release workflow**: Check code signing certificates and notarization credentials; if secrets are absent the workflow still succeeds with an unsigned binary
 - **Appcast workflow**: Verify release ZIP was created and SPARKLE_PRIVATE_KEY secret exists
 - **Homebrew workflow**: Check RELEASE_TOKEN has proper permissions
+
+### End users blocked by Gatekeeper (unsigned releases only)
+
+If the release was built without signing secrets, advise users to run one of:
+
+```bash
+# Option A — clear quarantine attribute (Terminal)
+xattr -cr "/Applications/Claude Usage.app"
+
+# Then open normally
+open "/Applications/Claude Usage.app"
+```
+
+Or: right-click `Claude Usage.app` in Finder → **Open** → **Open** on the first launch only.
 
 ## Quick Reference
 
