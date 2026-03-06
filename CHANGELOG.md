@@ -5,6 +5,32 @@ All notable changes to Claude Usage Tracker will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Time-elapsed marker on session and weekly progress bars in popover, menu bar icons, and CLI statusline
+- Settings toggles for marker visibility in Appearance and Claude Code sections
+- Pace-aware status colours: projected end-of-session usage drives green/orange/red instead of absolute thresholds
+- Shared `Constants.sessionWindow` and `Constants.weeklyWindow` for single-source period durations
+- `fetchUsageData(oauthAccessToken:)` method for direct CLI OAuth usage fetch
+- `Constants.APIEndpoints.oauthUsage` for the OAuth usage endpoint
+- Localization strings for time marker toggle in all 8 languages
+
+### Fixed
+
+- Stale session data caused by silently expired cookie sessions not falling through to CLI OAuth
+- Auth priority: CLI OAuth (auto-refreshing) now preferred over cookie session key
+- CLI OAuth fallback in multi-profile `fetchUsageForProfile()` — tries OAuth first, cookie second
+- Token expiry ms/s normalization — millisecond `expiresAt` values were interpreted as seconds, making expired tokens appear valid
+- `elapsedFraction` returns 1.0 (or 0.0 in remaining mode) for expired sessions instead of nil
+- Menu bar arc now sweeps clockwise from 12 o'clock, matching standard progress conventions
+
+### Changed
+
+- `UsageStatusCalculator.calculateStatus()` accepts optional `elapsedFraction` for pacing logic
+- Pacing activates after 15% of session elapsed; falls back to absolute thresholds when timing unavailable
+
 ## [2.3.0] - 2026-01-23
 
 ### Major Release - Multi-Profile Menu Bar Display & Enhanced UI
