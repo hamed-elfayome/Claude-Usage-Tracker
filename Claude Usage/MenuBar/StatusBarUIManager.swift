@@ -228,13 +228,25 @@ final class StatusBarUIManager {
                 showRemaining: showRemaining
             )
 
+            let sessionElapsed = UsageStatusCalculator.elapsedFraction(
+                resetTime: usage.sessionResetTime,
+                duration: Constants.sessionWindow,
+                showRemaining: false
+            )
+            let weekElapsed = UsageStatusCalculator.elapsedFraction(
+                resetTime: usage.weeklyResetTime,
+                duration: Constants.weeklyWindow,
+                showRemaining: false
+            )
             let sessionStatus = UsageStatusCalculator.calculateStatus(
                 usedPercentage: sessionUsed,
-                showRemaining: showRemaining
+                showRemaining: showRemaining,
+                elapsedFraction: sessionElapsed
             )
             let weekStatus = UsageStatusCalculator.calculateStatus(
                 usedPercentage: weekUsed,
-                showRemaining: showRemaining
+                showRemaining: showRemaining,
+                elapsedFraction: weekElapsed
             )
 
             // Use multi-profile config's useSystemColor as monochrome mode

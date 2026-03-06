@@ -203,6 +203,163 @@ final class UsageStatusCalculatorTests: XCTestCase {
         )
     }
 
+    // MARK: - Pacing (elapsedFraction provided)
+
+    func testPacing_Safe_LowProjected() {
+        // 30% used at 50% elapsed → projected 0.60 → safe
+        XCTAssertEqual(
+            UsageStatusCalculator.calculateStatus(usedPercentage: 30, showRemaining: false, elapsedFraction: 0.5),
+            .safe
+        )
+    }
+
+    func testPacing_Moderate_MediumProjected() {
+        // 40% used at 50% elapsed → projected 0.80 → moderate
+        XCTAssertEqual(
+            UsageStatusCalculator.calculateStatus(usedPercentage: 40, showRemaining: false, elapsedFraction: 0.5),
+            .moderate
+        )
+    }
+
+    func testPacing_Critical_HighProjected() {
+        // 60% used at 50% elapsed → projected 1.20 → critical
+        XCTAssertEqual(
+            UsageStatusCalculator.calculateStatus(usedPercentage: 60, showRemaining: false, elapsedFraction: 0.5),
+            .critical
+        )
+    }
+
+    func testPacing_HighUsedLateSession_Moderate() {
+        // 80% used at 90% elapsed → projected 0.89 → moderate (not red as absolute would give)
+        XCTAssertEqual(
+            UsageStatusCalculator.calculateStatus(usedPercentage: 80, showRemaining: false, elapsedFraction: 0.9),
+            .moderate
+        )
+    }
+
+    func testPacing_EarlySession_FallsBackToAbsolute() {
+        // 60% used at only 10% elapsed (too early) → fallback → moderate (absolute 50–80%)
+        XCTAssertEqual(
+            UsageStatusCalculator.calculateStatus(usedPercentage: 60, showRemaining: false, elapsedFraction: 0.10),
+            .moderate
+        )
+    }
+
+    func testPacing_NilElapsed_FallsBackToAbsolute() {
+        // nil elapsed → absolute thresholds
+        XCTAssertEqual(
+            UsageStatusCalculator.calculateStatus(usedPercentage: 60, showRemaining: false, elapsedFraction: nil),
+            .moderate
+        )
+    }
+
+    func testPacing_ZeroUsage_AlwaysSafe() {
+        // 0% used at high elapsed → safe (no data to project a rate from)
+        XCTAssertEqual(
+            UsageStatusCalculator.calculateStatus(usedPercentage: 0, showRemaining: false, elapsedFraction: 0.9),
+            .safe
+        )
+    }
+
+    func testPacing_BoundaryAtExactly15Percent_Activates() {
+        // Exactly 15% elapsed → pacing activates
+        // 10% used at 15% elapsed → projected 0.667 → safe
+        XCTAssertEqual(
+            UsageStatusCalculator.calculateStatus(usedPercentage: 10, showRemaining: false, elapsedFraction: 0.15),
+            .safe
+        )
+    }
+
+    func testPacing_JustBelow15Percent_FallsBack() {
+        // 14% elapsed → fallback; 60% used → moderate (absolute 50–80%)
+        XCTAssertEqual(
+            UsageStatusCalculator.calculateStatus(usedPercentage: 60, showRemaining: false, elapsedFraction: 0.14),
+            .moderate
+        )
+    }
+
+    func testPacing_ProjectedBoundary_75Percent_IsModerate() {
+        // 37.5% used at 50% elapsed → projected exactly 0.75 → moderate
+        XCTAssertEqual(
+            UsageStatusCalculator.calculateStatus(usedPercentage: 37.5, showRemaining: false, elapsedFraction: 0.5),
+            .moderate
+        )
+    }
+
+    func testPacing_ProjectedBoundary_95Percent_IsCritical() {
+        // 47.5% used at 50% elapsed → projected exactly 0.95 → critical
+        XCTAssertEqual(
+            UsageStatusCalculator.calculateStatus(usedPercentage: 47.5, showRemaining: false, elapsedFraction: 0.5),
+            .critical
+        )
+    }
+
+    func testPacing_ShowRemaining_Safe() {
+        // 30% used at 50% elapsed → projected 0.60 → safe (display mode does not affect pacing)
+        XCTAssertEqual(
+            UsageStatusCalculator.calculateStatus(usedPercentage: 30, showRemaining: true, elapsedFraction: 0.5),
+            .safe
+        )
+    }
+
+    func testPacing_ShowRemaining_Moderate() {
+        // 40% used at 50% elapsed → projected 0.80 → moderate (display mode does not affect pacing)
+        XCTAssertEqual(
+            UsageStatusCalculator.calculateStatus(usedPercentage: 40, showRemaining: true, elapsedFraction: 0.5),
+            .moderate
+        )
+    }
+
+    func testPacing_ShowRemaining_HighProjected_Critical() {
+        // 55% used at 50% elapsed → projected 1.10 → critical (regardless of display mode)
+        XCTAssertEqual(
+            UsageStatusCalculator.calculateStatus(usedPercentage: 55, showRemaining: true, elapsedFraction: 0.5),
+            .critical
+        )
+    }
+
+    func testPacing_FullSession_FallsBackToAbsolute() {
+        // t = 1.0 is excluded from pacing (avoid division artefacts at the boundary)
+        // 80% used → critical via absolute
+        XCTAssertEqual(
+            UsageStatusCalculator.calculateStatus(usedPercentage: 80, showRemaining: false, elapsedFraction: 1.0),
+            .critical
+        )
+    }
+
+    // MARK: - elapsedFraction edge cases
+
+    func testElapsedFraction_ExpiredSession_ReturnsNil() {
+        // resetTime in the past → nil (session expired, pending refresh)
+        let resetTime = Date().addingTimeInterval(-60)
+        let fraction = UsageStatusCalculator.elapsedFraction(
+            resetTime: resetTime,
+            duration: Constants.sessionWindow,
+            showRemaining: false
+        )
+        XCTAssertNil(fraction)
+    }
+
+    func testElapsedFraction_ZeroDuration_ReturnsNil() {
+        // duration == 0 → nil (avoid division by zero)
+        let resetTime = Date().addingTimeInterval(3600)
+        let fraction = UsageStatusCalculator.elapsedFraction(
+            resetTime: resetTime,
+            duration: 0,
+            showRemaining: false
+        )
+        XCTAssertNil(fraction)
+    }
+
+    func testElapsedFraction_NilResetTime_ReturnsNil() {
+        let fraction = UsageStatusCalculator.elapsedFraction(
+            resetTime: nil,
+            duration: Constants.sessionWindow,
+            showRemaining: false
+        )
+        XCTAssertNil(fraction)
+    }
+
     // MARK: - elapsedFraction with shared period constants
 
     func testElapsedFraction_SessionPeriod_HalfwayThrough() {

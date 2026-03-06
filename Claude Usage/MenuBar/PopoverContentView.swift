@@ -590,14 +590,21 @@ struct SmartUsageCard: View {
     let periodDuration: TimeInterval?
     var showTimeMarker: Bool = true
 
-    /// Fraction (0...1) of elapsed time within the period, or nil if not applicable
-    private var timeMarkerFraction: CGFloat? {
-        guard showTimeMarker else { return nil }
-        return UsageStatusCalculator.elapsedFraction(
+    /// Raw elapsed fraction (0…1), never inverted. Nil when timing data is unavailable.
+    /// Used for both the time marker position and pacing calculations.
+    private var rawElapsedFraction: Double? {
+        UsageStatusCalculator.elapsedFraction(
             resetTime: resetTime,
             duration: periodDuration ?? 0,
-            showRemaining: showRemaining
+            showRemaining: false
         )
+    }
+
+    /// Fraction (0...1) of elapsed time within the period, adjusted for display mode.
+    /// CGFloat for SwiftUI layout; showRemaining inverts the direction of the arc marker.
+    private var timeMarkerFraction: CGFloat? {
+        guard showTimeMarker, let f = rawElapsedFraction else { return nil }
+        return CGFloat(showRemaining ? 1.0 - f : f)
     }
 
     /// Display percentage based on mode
@@ -608,11 +615,14 @@ struct SmartUsageCard: View {
         )
     }
 
-    /// Status level based on display mode
+    /// Status level based on display mode and session pacing
     private var statusLevel: UsageStatusLevel {
+        // rawElapsedFraction is always the elapsed direction (not inverted for showRemaining),
+        // so pacing logic computes projected usage correctly regardless of display mode.
         UsageStatusCalculator.calculateStatus(
             usedPercentage: usedPercentage,
-            showRemaining: showRemaining
+            showRemaining: showRemaining,
+            elapsedFraction: rawElapsedFraction
         )
     }
 
