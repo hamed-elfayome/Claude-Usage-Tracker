@@ -11,6 +11,7 @@
   ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
   ![Version](https://img.shields.io/badge/version-2.3.0-blue?style=flat-square)
   ![Languages](https://img.shields.io/badge/languages-8-purple?style=flat-square)
+  ![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-yellow?style=flat-square&logo=googlechrome)
 
   <sub>🇬🇧 English • 🇪🇸 Español • 🇫🇷 Français • 🇩🇪 Deutsch • 🇮🇹 Italiano • 🇵🇹 Português • 🇯🇵 日本語 • 🇰🇷 한국어</sub>
 
@@ -69,6 +70,42 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 - **v2.0.0** – Apple code signing, automatic updates, Keychain security
 
 **[View Full Release History](CHANGELOG.md)**
+
+---
+
+## Chrome Extension
+
+> **Cross-platform** — Windows, macOS, Linux · No installation required · Zero configuration
+
+A companion Chrome extension that brings the same real-time Claude usage monitoring directly into your browser toolbar — no macOS required.
+
+### Features
+
+- **Zero-config** — automatically reads your `sessionKey` cookie when you're logged into [claude.ai](https://claude.ai). No manual setup needed.
+- **Toolbar badge** — live session or weekly usage % with green / orange / red color coding
+- **Popup** — session (5-hour window), weekly, and Opus usage cards with progress bars and reset countdowns
+- **Notifications** — desktop alerts at 75 %, 90 %, and 95 % thresholds (once per reset window)
+- **Multi-profile** — manage multiple Claude accounts, each with independent session key and settings
+- **Settings page** — refresh interval, badge display, percentage mode, notification thresholds
+
+### Installation (Developer Mode)
+
+1. Clone or download this repository
+2. Open **chrome://extensions** in Chrome
+3. Enable **Developer mode** (top-right toggle)
+4. Click **Load unpacked** and select the `chrome-extension/` folder
+
+The extension is ready — as long as you are logged into [claude.ai](https://claude.ai) in Chrome, it works without any further configuration.
+
+### Manual session key (optional)
+
+If auto-detection ever fails, open the extension **Settings → Profiles → Edit** and paste your session key manually. You can find it in Chrome DevTools → Application → Cookies → `claude.ai` → `sessionKey`.
+
+### Rebuild icons
+
+```bash
+python chrome-extension/scripts/generate_icons.py
+```
 
 ---
 

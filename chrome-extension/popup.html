@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Claude Usage Tracker</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- ── Header ─────────────────────────────────────────── -->
+    <header class="header">
+      <div class="header-brand">
+        <img src="icons/icon32.png" alt="" class="brand-icon" />
+        <span class="brand-name">Claude Usage</span>
+      </div>
+
+      <div class="header-actions">
+        <!-- Profile switcher -->
+        <div class="profile-switcher" id="profileSwitcher">
+          <button class="profile-btn" id="profileBtn" aria-haspopup="listbox" aria-expanded="false">
+            <span class="profile-label" id="profileLabel">Loading…</span>
+            <svg class="chevron-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="4 6 8 10 12 6"/>
+            </svg>
+          </button>
+          <ul class="profile-dropdown" id="profileDropdown" role="listbox" aria-label="Select profile">
+            <!-- Populated by popup.js -->
+          </ul>
+        </div>
+
+        <!-- Settings link -->
+        <button class="icon-btn" id="settingsBtn" title="Settings" aria-label="Open settings">
+          <svg viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- ── States ─────────────────────────────────────────── -->
+
+    <!-- Loading -->
+    <div class="state-panel" id="stateLoading">
+      <div class="spinner"></div>
+      <p>Loading usage data…</p>
+    </div>
+
+    <!-- No session key -->
+    <div class="state-panel" id="stateNoKey" hidden>
+      <div class="state-icon">🔑</div>
+      <p class="state-title">Not logged in</p>
+      <p class="state-hint">
+        Log into <a href="https://claude.ai" target="_blank" rel="noopener">claude.ai</a> in this
+        browser, or add a session key in Settings.
+      </p>
+      <button class="btn-primary" id="openSettingsBtn">Open Settings</button>
+    </div>
+
+    <!-- Error -->
+    <div class="state-panel" id="stateError" hidden>
+      <div class="state-icon">⚠️</div>
+      <p class="state-title" id="errorTitle">Something went wrong</p>
+      <p class="state-hint" id="errorDetail"></p>
+      <button class="btn-secondary" id="retryBtn">Retry</button>
+    </div>
+
+    <!-- ── Usage cards ────────────────────────────────────── -->
+    <div id="usageSection" hidden>
+      <div class="cards">
+
+        <!-- Session (5-hour) -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Session</span>
+            <span class="card-tag">5-hour window</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-bar" id="sessionBar" style="width:0%"></div>
+          </div>
+          <div class="card-footer">
+            <span class="pct-label" id="sessionPct">0%</span>
+            <span class="reset-label" id="sessionReset">–</span>
+          </div>
+        </div>
+
+        <!-- Weekly -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Weekly</span>
+            <span class="card-tag">All models</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-bar" id="weeklyBar" style="width:0%"></div>
+          </div>
+          <div class="card-footer">
+            <span class="pct-label" id="weeklyPct">0%</span>
+            <span class="reset-label" id="weeklyReset">–</span>
+          </div>
+        </div>
+
+        <!-- Opus (hidden when unavailable) -->
+        <div class="card" id="opusCard" hidden>
+          <div class="card-header">
+            <span class="card-title">Opus</span>
+            <span class="card-tag">Weekly · Pro</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-bar" id="opusBar" style="width:0%"></div>
+          </div>
+          <div class="card-footer">
+            <span class="pct-label" id="opusPct">0%</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── Footer ─────────────────────────────────────────── -->
+    <footer class="footer" id="footerBar" hidden>
+      <button class="refresh-btn" id="refreshBtn">
+        <svg class="spin-on-load" id="refreshIcon" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/>
+        </svg>
+        Refresh
+      </button>
+      <span class="updated-label" id="updatedLabel">–</span>
+    </footer>
+
+  </div>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Claude Usage Tracker – Settings</title>
+  <link rel="stylesheet" href="settings.css" />
+</head>
+<body>
+  <div class="page">
+
+    <!-- ── Sidebar ───────────────────────────────────────────── -->
+    <nav class="sidebar">
+      <div class="sidebar-brand">
+        <img src="icons/icon48.png" alt="" class="sidebar-logo" />
+        <div>
+          <div class="sidebar-title">Claude Usage Tracker</div>
+          <div class="sidebar-sub">Settings</div>
+        </div>
+      </div>
+
+      <ul class="sidebar-nav">
+        <li><a href="#profiles" class="nav-link active" data-section="profiles">Profiles</a></li>
+        <li><a href="#appearance" class="nav-link" data-section="appearance">Appearance</a></li>
+        <li><a href="#notifications" class="nav-link" data-section="notifications">Notifications</a></li>
+        <li><a href="#refresh" class="nav-link" data-section="refresh">Refresh</a></li>
+        <li><a href="#about" class="nav-link" data-section="about">About</a></li>
+      </ul>
+    </nav>
+
+    <!-- ── Main content ──────────────────────────────────────── -->
+    <main class="content">
+
+      <!-- ── Profiles ── -->
+      <section id="sec-profiles" class="section">
+        <h2 class="section-title">Profiles</h2>
+        <p class="section-desc">
+          Each profile stores an independent Claude account and its own settings.
+          The <strong>active profile</strong> is shown in the toolbar badge.
+        </p>
+
+        <!-- Profile list -->
+        <div class="profile-list" id="profileList">
+          <!-- Populated by JS -->
+        </div>
+
+        <button class="btn-outline" id="addProfileBtn">+ Add profile</button>
+      </section>
+
+      <!-- ── Appearance ── -->
+      <section id="sec-appearance" class="section hidden">
+        <h2 class="section-title">Appearance</h2>
+
+        <div class="form-group">
+          <label class="form-label">Badge display</label>
+          <p class="form-hint">What usage percentage to show on the toolbar icon.</p>
+          <select class="form-select" id="badgeDisplay">
+            <option value="session">Session %</option>
+            <option value="weekly">Weekly %</option>
+            <option value="off">Off</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Percentage mode</label>
+          <p class="form-hint">Show how much has been used or how much remains.</p>
+          <select class="form-select" id="percentageMode">
+            <option value="used">Used</option>
+            <option value="remaining">Remaining</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Color mode</label>
+          <select class="form-select" id="colorMode">
+            <option value="auto">Auto (system)</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </div>
+
+        <button class="btn-primary" id="saveAppearanceBtn">Save</button>
+      </section>
+
+      <!-- ── Notifications ── -->
+      <section id="sec-notifications" class="section hidden">
+        <h2 class="section-title">Notifications</h2>
+        <p class="section-desc">Get alerted when usage crosses a threshold. Each fires once per reset window.</p>
+
+        <div class="threshold-group">
+          <h3 class="group-label">Session (5-hour window)</h3>
+          <label class="toggle-row"><input type="checkbox" id="notifSession75" /><span>Alert at 75%</span></label>
+          <label class="toggle-row"><input type="checkbox" id="notifSession90" /><span>Alert at 90%</span></label>
+          <label class="toggle-row"><input type="checkbox" id="notifSession95" /><span>Alert at 95%</span></label>
+        </div>
+
+        <div class="threshold-group">
+          <h3 class="group-label">Weekly</h3>
+          <label class="toggle-row"><input type="checkbox" id="notifWeekly75" /><span>Alert at 75%</span></label>
+          <label class="toggle-row"><input type="checkbox" id="notifWeekly90" /><span>Alert at 90%</span></label>
+          <label class="toggle-row"><input type="checkbox" id="notifWeekly95" /><span>Alert at 95%</span></label>
+        </div>
+
+        <button class="btn-primary" id="saveNotificationsBtn">Save</button>
+      </section>
+
+      <!-- ── Refresh ── -->
+      <section id="sec-refresh" class="section hidden">
+        <h2 class="section-title">Refresh interval</h2>
+        <p class="section-desc">
+          How often the extension polls the Claude API in the background.
+          Chrome enforces a minimum of 1 minute for background alarms.
+          The popup always shows fresh data when opened.
+        </p>
+
+        <div class="form-group">
+          <label class="form-label">Interval</label>
+          <select class="form-select" id="refreshInterval">
+            <option value="1">1 minute</option>
+            <option value="2">2 minutes</option>
+            <option value="5">5 minutes</option>
+          </select>
+        </div>
+
+        <button class="btn-primary" id="saveRefreshBtn">Save</button>
+      </section>
+
+      <!-- ── About ── -->
+      <section id="sec-about" class="section hidden">
+        <h2 class="section-title">About</h2>
+
+        <div class="about-card">
+          <img src="icons/icon48.png" alt="" />
+          <div>
+            <div class="about-name">Claude Usage Tracker</div>
+            <div class="about-version" id="aboutVersion">v1.0.0</div>
+          </div>
+        </div>
+
+        <p class="section-desc">
+          Open-source Chrome extension inspired by the
+          <a href="https://github.com/hamed-elfayome/Claude-Usage-Tracker" target="_blank" rel="noopener">
+            macOS Claude Usage Tracker
+          </a>.
+          Gives you real-time Claude AI usage limits directly in the browser toolbar.
+        </p>
+
+        <p class="section-desc">
+          Source code:
+          <a href="https://github.com/Ali-Aldahmani/claude-usage-extension" target="_blank" rel="noopener">
+            github.com/Ali-Aldahmani/claude-usage-extension
+          </a>
+        </p>
+
+        <p class="about-license">MIT License</p>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ── Profile editor dialog ── -->
+  <dialog class="dialog" id="profileDialog">
+    <form method="dialog" class="dialog-form" id="profileForm">
+      <h3 class="dialog-title" id="dialogTitle">Edit Profile</h3>
+
+      <div class="form-group">
+        <label class="form-label" for="profileName">Profile name</label>
+        <input type="text" id="profileName" class="form-input" placeholder="Swift Falcon" maxlength="40" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="sessionKeyInput">Session key</label>
+        <p class="form-hint">
+          Leave blank — the extension auto-reads your <code>sessionKey</code> cookie when you're
+          logged into <a href="https://claude.ai" target="_blank" rel="noopener">claude.ai</a>.
+          Paste manually only if auto-detection fails.
+        </p>
+        <div class="input-row">
+          <input type="password" id="sessionKeyInput" class="form-input" placeholder="sk-ant-…  (auto-detected if blank)" />
+          <button type="button" class="btn-icon" id="toggleKeyVisible" title="Show/hide key">👁</button>
+        </div>
+      </div>
+
+      <div class="dialog-actions">
+        <button type="button" class="btn-outline" id="cancelDialogBtn">Cancel</button>
+        <button type="submit" class="btn-primary" id="saveProfileBtn">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ── Toast ── -->
+  <div class="toast" id="toast" hidden></div>
+
+  <script type="module" src="settings.js"></script>
+</body>
+</html>
