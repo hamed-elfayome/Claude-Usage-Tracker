@@ -69,7 +69,7 @@ struct SidebarVisualEffect: NSViewRepresentable {
         let tintView = NSView()
         tintView.wantsLayer = true
         if NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua {
-            tintView.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.45).cgColor
+            tintView.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.55).cgColor
         } else {
             tintView.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.5).cgColor
         }
@@ -94,7 +94,7 @@ struct SidebarVisualEffect: NSViewRepresentable {
         if let tintView = nsView.subviews.last {
             tintView.wantsLayer = true
             if NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua {
-                tintView.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.45).cgColor
+                tintView.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.55).cgColor
             } else {
                 tintView.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.5).cgColor
             }
@@ -102,30 +102,121 @@ struct SidebarVisualEffect: NSViewRepresentable {
     }
 }
 
-/// Builds the settings window. Uses a standard NSHostingController — vibrancy is
-/// applied inside SwiftUI via SettingsBackground, not at the AppKit layer.
+/// Borderless window that keeps rounded corners, shadow, and drag-to-move.
+final class BorderlessSettingsWindow: NSWindow {
+    override init(contentRect: NSRect, styleMask: NSWindow.StyleMask,
+                  backing: NSWindow.BackingStoreType, defer flag: Bool) {
+        super.init(contentRect: contentRect,
+                   styleMask: [.borderless, .miniaturizable],
+                   backing: backing, defer: flag)
+        isOpaque = false
+        backgroundColor = .clear
+        hasShadow = true
+        isMovableByWindowBackground = true
+        isRestorable = false
+
+        // Round corners via the content view's layer
+        contentView?.wantsLayer = true
+        contentView?.layer?.cornerRadius = 10
+        contentView?.layer?.masksToBounds = true
+    }
+
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { true }
+}
+
+/// Builds the settings window — fully borderless, no system titlebar.
 enum SettingsWindowBuilder {
     static func makeWindow(size: CGSize) -> NSWindow {
-        let window = NSWindow(
+        let window = BorderlessSettingsWindow(
             contentRect: NSRect(origin: .zero, size: size),
-            styleMask: [.titled, .closable, .resizable, .fullSizeContentView],
+            styleMask: .borderless,
             backing: .buffered,
             defer: false
         )
 
-        window.titlebarAppearsTransparent = true
-        window.titleVisibility = .hidden
-        window.titlebarSeparatorStyle = .none
-        window.isRestorable = false
-
-        let controller = NSHostingController(rootView:
+        let hostingView = NSHostingView(rootView:
             SettingsView()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .ignoresSafeArea()
         )
-        window.contentViewController = controller
+        hostingView.translatesAutoresizingMaskIntoConstraints = false
+
+        window.contentView?.addSubview(hostingView)
+        if let contentView = window.contentView {
+            NSLayoutConstraint.activate([
+                hostingView.topAnchor.constraint(equalTo: contentView.topAnchor),
+                hostingView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+                hostingView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+                hostingView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            ])
+        }
 
         return window
+    }
+}
+
+// MARK: - Custom Traffic Light Buttons
+
+struct TrafficLightButtons: View {
+    @Environment(\.controlActiveState) private var controlActiveState
+
+    var body: some View {
+        HStack(spacing: 8) {
+            TrafficLightButton(type: .close)
+            TrafficLightButton(type: .miniaturize)
+        }
+    }
+}
+
+struct TrafficLightButton: View {
+    enum ButtonType {
+        case close, miniaturize, zoom
+
+        var activeColor: Color {
+            switch self {
+            case .close: return Color(nsColor: NSColor(red: 1.0, green: 0.38, blue: 0.34, alpha: 1.0))
+            case .miniaturize: return Color(nsColor: NSColor(red: 1.0, green: 0.74, blue: 0.18, alpha: 1.0))
+            case .zoom: return Color(nsColor: NSColor(red: 0.15, green: 0.78, blue: 0.24, alpha: 1.0))
+            }
+        }
+
+        var icon: String {
+            switch self {
+            case .close: return "xmark"
+            case .miniaturize: return "minus"
+            case .zoom: return "plus"
+            }
+        }
+    }
+
+    let type: ButtonType
+    @State private var isHovered = false
+    @Environment(\.controlActiveState) private var controlActiveState
+
+    private var isActive: Bool { controlActiveState == .key }
+
+    var body: some View {
+        Circle()
+            .fill(isActive ? type.activeColor : Color.primary.opacity(0.15))
+            .frame(width: 12, height: 12)
+            .overlay {
+                if isHovered && isActive {
+                    Image(systemName: type.icon)
+                        .font(.system(size: 7, weight: .bold))
+                        .foregroundColor(.black.opacity(0.5))
+                }
+            }
+            .onHover { isHovered = $0 }
+            .onTapGesture { performAction() }
+    }
+
+    private func performAction() {
+        guard let window = NSApp.keyWindow else { return }
+        switch type {
+        case .close: window.close()
+        case .miniaturize: window.miniaturize(nil)
+        case .zoom: window.zoom(nil)
+        }
     }
 }
 
@@ -139,10 +230,18 @@ struct SettingsView: View {
         HStack(spacing: 0) {
             // Sidebar with Profile Switcher
             VStack(spacing: 0) {
+                // Traffic light buttons
+                HStack {
+                    TrafficLightButtons()
+                    Spacer()
+                }
+                .padding(.leading, 12)
+                .padding(.top, 12)
+
                 // Profile Section (Switcher + Credentials + Settings)
                 ProfileSectionContainer(selectedSection: $selectedSection)
                     .padding(.horizontal, 12)
-                    .padding(.top, 12)
+                    .padding(.top, 8)
 
                 Spacer()
 
@@ -151,11 +250,10 @@ struct SettingsView: View {
                     .padding(.horizontal, 12)
                     .padding(.bottom, 4)
             }
-            .padding(.top, 22)
             .background(SidebarVisualEffect())
             .frame(width: 190)
 
-            // Content — slightly darker (dark mode) / lighter (light mode) than sidebar
+            // Content
             Group {
                 switch selectedSection {
                 // Credentials
@@ -195,7 +293,6 @@ struct SettingsView: View {
                     AboutView()
                 }
             }
-            .padding(.top, 22)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(
                 colorScheme == .dark
