@@ -1390,7 +1390,7 @@ class MenuBarManager: NSObject, ObservableObject {
             NSApp.setActivationPolicy(.regular)
 
             // Create and show the settings window
-            let window = SettingsWindowBuilder.makeWindow(size: NSSize(width: 720, height: 600))
+            let window = SettingsWindowBuilder.makeWindow(size: Constants.WindowSizes.settingsWindow)
             window.title = "Claude Usage - Settings"
             window.center()
             window.isReleasedWhenClosed = false
