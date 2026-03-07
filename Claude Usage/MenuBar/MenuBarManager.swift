@@ -905,16 +905,31 @@ class MenuBarManager: NSObject, ObservableObject {
 
     /// Fetches usage data for a specific profile using its credentials
     private func fetchUsageForProfile(_ profile: Profile) async throws -> ClaudeUsage {
-        guard let sessionKey = profile.claudeSessionKey,
-              let orgId = profile.organizationId else {
-            throw AppError(
-                code: .sessionKeyNotFound,
-                message: "Missing credentials for profile '\(profile.name)'",
-                isRecoverable: false
-            )
+        // Priority 1: claude.ai session key (cookie-based)
+        if let sessionKey = profile.claudeSessionKey,
+           let orgId = profile.organizationId {
+            return try await apiService.fetchUsageData(sessionKey: sessionKey, organizationId: orgId)
         }
 
-        return try await apiService.fetchUsageData(sessionKey: sessionKey, organizationId: orgId)
+        // Priority 2: Saved CLI OAuth token from profile
+        if let cliJSON = profile.cliCredentialsJSON,
+           !ClaudeCodeSyncService.shared.isTokenExpired(cliJSON),
+           let accessToken = ClaudeCodeSyncService.shared.extractAccessToken(from: cliJSON) {
+            return try await apiService.fetchUsageData(oauthAccessToken: accessToken)
+        }
+
+        // Priority 3: System Keychain CLI OAuth token
+        if let systemCredentials = try? ClaudeCodeSyncService.shared.readSystemCredentials(),
+           !ClaudeCodeSyncService.shared.isTokenExpired(systemCredentials),
+           let accessToken = ClaudeCodeSyncService.shared.extractAccessToken(from: systemCredentials) {
+            return try await apiService.fetchUsageData(oauthAccessToken: accessToken)
+        }
+
+        throw AppError(
+            code: .sessionKeyNotFound,
+            message: "Missing credentials for profile '\(profile.name)'",
+            isRecoverable: false
+        )
     }
 
     private func setupSingleProfileMode() {

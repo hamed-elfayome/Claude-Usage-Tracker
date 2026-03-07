@@ -402,6 +402,34 @@ class ClaudeAPIService: APIServiceProtocol {
         return try parseUsageResponse(usageData)
     }
 
+    /// Fetches usage data via OAuth access token (CLI credential flow)
+    func fetchUsageData(oauthAccessToken: String) async throws -> ClaudeUsage {
+        guard let url = URL(string: "https://api.anthropic.com/api/oauth/usage") else {
+            throw AppError(code: .urlMalformed, message: "Invalid OAuth usage endpoint", isRecoverable: false)
+        }
+
+        var request = buildAuthenticatedRequest(url: url, auth: .cliOAuth(oauthAccessToken))
+        request.httpMethod = "GET"
+        request.timeoutInterval = 30
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw AppError(code: .apiInvalidResponse, message: "Invalid response from OAuth endpoint", isRecoverable: true)
+        }
+
+        guard httpResponse.statusCode == 200 else {
+            throw AppError(
+                code: httpResponse.statusCode == 401 || httpResponse.statusCode == 403
+                    ? .apiUnauthorized : .apiGenericError,
+                message: "OAuth fetch failed (status \(httpResponse.statusCode))",
+                isRecoverable: true
+            )
+        }
+
+        return try parseUsageResponse(data)
+    }
+
     /// Fetches real usage data from Claude's API
     func fetchUsageData() async throws -> ClaudeUsage {
         let auth = try getAuthentication()
