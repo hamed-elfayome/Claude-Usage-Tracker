@@ -398,8 +398,21 @@ class ClaudeAPIService: APIServiceProtocol {
     ///   - organizationId: The organization ID
     /// - Returns: ClaudeUsage data for the profile
     func fetchUsageData(sessionKey: String, organizationId: String) async throws -> ClaudeUsage {
-        let usageData = try await performRequest(endpoint: "/organizations/\(organizationId)/usage", sessionKey: sessionKey)
-        return try parseUsageResponse(usageData)
+        async let usageDataTask = performRequest(endpoint: "/organizations/\(organizationId)/usage", sessionKey: sessionKey)
+        async let overageDataTask: Data? = performRequest(endpoint: "/organizations/\(organizationId)/overage_spend_limit", sessionKey: sessionKey)
+
+        let usageData = try await usageDataTask
+        var claudeUsage = try parseUsageResponse(usageData)
+
+        if let data = try? await overageDataTask,
+           let overage = try? JSONDecoder().decode(OverageSpendLimitResponse.self, from: data),
+           overage.isEnabled == true {
+            claudeUsage.costUsed = overage.usedCredits
+            claudeUsage.costLimit = overage.monthlyCreditLimit
+            claudeUsage.costCurrency = overage.currency
+        }
+
+        return claudeUsage
     }
 
     /// Fetches usage data via OAuth access token (CLI credential flow)
