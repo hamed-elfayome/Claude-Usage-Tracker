@@ -245,10 +245,15 @@ struct SettingsView: View {
 
                 Spacer()
 
-                // App Settings Section at bottom
+                // App Settings Section
                 AppSettingsSection(selectedSection: $selectedSection)
                     .padding(.horizontal, 12)
-                    .padding(.bottom, 4)
+
+                // Bottom bar: About, Debug, Support, Updates
+                BottomBarSection(selectedSection: $selectedSection)
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 8)
+                    .padding(.top, 4)
             }
             .background(SidebarVisualEffect())
             .frame(width: 190)
@@ -411,7 +416,7 @@ struct AppSettingsSection: View {
     @Binding var selectedSection: SettingsSection
 
     var sharedSections: [SettingsSection] {
-        SettingsSection.allCases.filter { !$0.isProfileSetting && !$0.isCredential }
+        SettingsSection.allCases.filter { !$0.isProfileSetting && !$0.isCredential && !$0.isBottomBarItem }
     }
 
     var body: some View {
@@ -431,6 +436,45 @@ struct AppSettingsSection: View {
                     selectedSection = section
                 }
             }
+        }
+    }
+}
+
+struct BottomBarSection: View {
+    @Binding var selectedSection: SettingsSection
+    @State private var hoveredItem: SettingsSection?
+
+    var items: [SettingsSection] {
+        SettingsSection.allCases.filter { $0.isBottomBarItem }
+    }
+
+    var body: some View {
+        VStack(spacing: 6) {
+            Divider()
+
+            HStack(spacing: 0) {
+                ForEach(items, id: \.self) { section in
+                Button {
+                    selectedSection = section
+                } label: {
+                    Image(systemName: section.icon)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(selectedSection == section ? .white : .secondary)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 28)
+                        .background(
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(selectedSection == section ? SettingsColors.primary : (hoveredItem == section ? Color.primary.opacity(0.06) : Color.clear))
+                        )
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .onHover { hovering in
+                    hoveredItem = hovering ? section : nil
+                }
+                .help(section.title)
+            }
+        }
         }
     }
 }
@@ -529,6 +573,15 @@ enum SettingsSection: String, CaseIterable {
     var isProfileSetting: Bool {
         switch self {
         case .appearance, .general, .history:
+            return true
+        default:
+            return false
+        }
+    }
+
+    var isBottomBarItem: Bool {
+        switch self {
+        case .about, .debug, .support, .updates:
             return true
         default:
             return false
