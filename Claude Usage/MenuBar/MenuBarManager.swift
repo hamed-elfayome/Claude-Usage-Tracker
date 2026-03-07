@@ -1591,9 +1591,11 @@ extension MenuBarManager: NSPopoverDelegate {
 // MARK: - StatusBarUIManagerDelegate
 extension MenuBarManager: StatusBarUIManagerDelegate {
     func statusBarAppearanceDidChange() {
-        // Update cached dark mode state
-        cachedIsDarkMode = NSApp.effectiveAppearance.name == .darkAqua
-        // Update all icons with new appearance
+        // Update cached dark mode state from app appearance (best effort for cache invalidation)
+        cachedIsDarkMode = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        // Clear image cache to force redraw with new appearance
+        cachedImageKey = ""
+        // Update all icons with new appearance (each button reads its own effectiveAppearance)
         updateAllStatusBarIcons()
     }
 }

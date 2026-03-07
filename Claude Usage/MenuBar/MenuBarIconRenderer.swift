@@ -287,7 +287,7 @@ final class MenuBarIconRenderer {
             let tickPath = NSBezierPath()
             tickPath.move(to: NSPoint(x: tickX, y: barY))
             tickPath.line(to: NSPoint(x: tickX, y: barY + barHeight))
-            drawTimeMarkerTick(tickPath)
+            drawTimeMarkerTick(tickPath, isDarkMode: isDarkMode)
         }
 
         // Label BELOW the battery (replaces percentage text)
@@ -397,7 +397,7 @@ final class MenuBarIconRenderer {
                 let tickPath = NSBezierPath()
                 tickPath.move(to: NSPoint(x: tickX, y: barY))
                 tickPath.line(to: NSPoint(x: tickX, y: barY + barHeight))
-                drawTimeMarkerTick(tickPath)
+                drawTimeMarkerTick(tickPath, isDarkMode: isDarkMode)
             }
 
             // Draw session reset time inside the fill area if enabled and this is a session metric
@@ -538,7 +538,7 @@ final class MenuBarIconRenderer {
                 x: center.x + outerR * cos(tickAngle),
                 y: center.y + outerR * sin(tickAngle)
             ))
-            drawTimeMarkerTick(tickPath)
+            drawTimeMarkerTick(tickPath, isDarkMode: isDarkMode)
         }
 
         // Draw S/W in the CENTER of the circle
@@ -727,7 +727,7 @@ final class MenuBarIconRenderer {
             let tickPath = NSBezierPath()
             tickPath.move(to: NSPoint(x: center.x + innerR * cos(tickAngle), y: center.y + innerR * sin(tickAngle)))
             tickPath.line(to: NSPoint(x: center.x + outerR * cos(tickAngle), y: center.y + outerR * sin(tickAngle)))
-            drawTimeMarkerTick(tickPath)
+            drawTimeMarkerTick(tickPath, isDarkMode: isDarkMode)
         }
 
         // Inner ring (Week) - smaller radius, thinner stroke - Week is secondary
@@ -772,7 +772,7 @@ final class MenuBarIconRenderer {
             let tickPath = NSBezierPath()
             tickPath.move(to: NSPoint(x: center.x + innerR * cos(tickAngle), y: center.y + innerR * sin(tickAngle)))
             tickPath.line(to: NSPoint(x: center.x + outerR * cos(tickAngle), y: center.y + outerR * sin(tickAngle)))
-            drawTimeMarkerTick(tickPath)
+            drawTimeMarkerTick(tickPath, isDarkMode: isDarkMode)
         }
 
         // Profile initial in center
@@ -867,7 +867,7 @@ final class MenuBarIconRenderer {
             let tickPath = NSBezierPath()
             tickPath.move(to: NSPoint(x: circleCenter.x + innerR * cos(tickAngle), y: circleCenter.y + innerR * sin(tickAngle)))
             tickPath.line(to: NSPoint(x: circleCenter.x + outerR * cos(tickAngle), y: circleCenter.y + outerR * sin(tickAngle)))
-            drawTimeMarkerTick(tickPath)
+            drawTimeMarkerTick(tickPath, isDarkMode: isDarkMode)
         }
 
         // Inner ring (Week) - Week is secondary
@@ -912,7 +912,7 @@ final class MenuBarIconRenderer {
             let tickPath = NSBezierPath()
             tickPath.move(to: NSPoint(x: circleCenter.x + innerR * cos(tickAngle), y: circleCenter.y + innerR * sin(tickAngle)))
             tickPath.line(to: NSPoint(x: circleCenter.x + outerR * cos(tickAngle), y: circleCenter.y + outerR * sin(tickAngle)))
-            drawTimeMarkerTick(tickPath)
+            drawTimeMarkerTick(tickPath, isDarkMode: isDarkMode)
         }
 
         // Profile label below the circle (first 3 characters)
@@ -984,7 +984,7 @@ final class MenuBarIconRenderer {
             let tickPath = NSBezierPath()
             tickPath.move(to: NSPoint(x: tickX, y: currentY))
             tickPath.line(to: NSPoint(x: tickX, y: currentY + barHeight))
-            drawTimeMarkerTick(tickPath)
+            drawTimeMarkerTick(tickPath, isDarkMode: isDarkMode)
         }
 
         // Week bar (if shown)
@@ -1005,7 +1005,7 @@ final class MenuBarIconRenderer {
                 let tickPath = NSBezierPath()
                 tickPath.move(to: NSPoint(x: tickX, y: currentY))
                 tickPath.line(to: NSPoint(x: tickX, y: currentY + barHeight))
-                drawTimeMarkerTick(tickPath)
+                drawTimeMarkerTick(tickPath, isDarkMode: isDarkMode)
             }
         }
 
@@ -1231,17 +1231,11 @@ final class MenuBarIconRenderer {
         }
     }
 
-    /// Draws a time marker tick by clearing a slot then drawing a white line
-    private func drawTimeMarkerTick(_ path: NSBezierPath) {
-        guard let ctx = NSGraphicsContext.current?.cgContext else { return }
-        ctx.saveGState()
-        ctx.setBlendMode(.clear)
-        path.lineWidth = 3.0
-        path.lineCapStyle = .butt
-        path.stroke()
-        ctx.restoreGState()
-        NSColor.white.setStroke()
+    /// Draws a time marker tick using the menu bar foreground color (same as text/outlines)
+    private func drawTimeMarkerTick(_ path: NSBezierPath, isDarkMode: Bool) {
+        menuBarForegroundColor(isDarkMode: isDarkMode).setStroke()
         path.lineWidth = 1.5
+        path.lineCapStyle = .butt
         path.stroke()
     }
 

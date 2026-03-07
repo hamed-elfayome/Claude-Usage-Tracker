@@ -19,7 +19,7 @@ final class StatusBarUIManager {
     // Current display mode
     private var isMultiProfileMode: Bool = false
 
-    private var appearanceObserver: NSKeyValueObservation?
+    private var appearanceObservers: [NSKeyValueObservation] = []
 
     // Icon renderer for creating menu bar images
     private let renderer = MenuBarIconRenderer()
@@ -128,8 +128,8 @@ final class StatusBarUIManager {
     }
 
     func cleanup() {
-        appearanceObserver?.invalidate()
-        appearanceObserver = nil
+        appearanceObservers.forEach { $0.invalidate() }
+        appearanceObservers.removeAll()
 
         // Clean up single profile status items
         for (_, statusItem) in statusItems {
@@ -506,9 +506,38 @@ final class StatusBarUIManager {
     // MARK: - Appearance Observation
 
     private func observeAppearanceChanges() {
-        appearanceObserver = NSApp.observe(\.effectiveAppearance) { [weak self] _, _ in
+        // Invalidate previous observers
+        appearanceObservers.forEach { $0.invalidate() }
+        appearanceObservers.removeAll()
+
+        // Observe each status bar button's effectiveAppearance (reflects wallpaper, not system mode)
+        let allButtons: [NSStatusBarButton] = {
+            var buttons: [NSStatusBarButton] = []
+            for (_, item) in statusItems {
+                if let button = item.button { buttons.append(button) }
+            }
+            for (_, item) in multiProfileStatusItems {
+                if let button = item.button { buttons.append(button) }
+            }
+            return buttons
+        }()
+
+        for button in allButtons {
+            let observer = button.observe(\.effectiveAppearance, options: [.new, .old]) { [weak self] btn, change in
+                // Only fire if the appearance actually changed
+                guard let oldAppearance = change.oldValue,
+                      let newAppearance = change.newValue,
+                      oldAppearance.name != newAppearance.name else { return }
+                self?.delegate?.statusBarAppearanceDidChange()
+            }
+            appearanceObservers.append(observer)
+        }
+
+        // Also observe app-level as fallback for system-wide dark/light mode toggle
+        let appObserver = NSApp.observe(\.effectiveAppearance) { [weak self] _, _ in
             self?.delegate?.statusBarAppearanceDidChange()
         }
+        appearanceObservers.append(appObserver)
     }
 }
 
