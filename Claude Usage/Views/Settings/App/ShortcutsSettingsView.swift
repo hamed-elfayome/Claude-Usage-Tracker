@@ -57,7 +57,7 @@ struct ShortcutsSettingsView: View {
 
                         // Next Profile
                         shortcutRow(
-                            icon: "person.crop.circle.badge.arrow.right",
+                            icon: "person.and.arrow.left.and.arrow.right",
                             title: "shortcuts.next_profile".localized,
                             description: "shortcuts.next_profile_desc".localized,
                             combo: $nextProfileCombo,
