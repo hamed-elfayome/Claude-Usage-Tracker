@@ -427,11 +427,12 @@ struct SmartHeader: View {
 
     var body: some View {
         HStack {
-            HStack(spacing: 8) {
+            HStack(spacing: 2) {
                 Image("HeaderLogo")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: 24, height: 24)
+                    .frame(width: 34, height: 34)
+                    .foregroundColor(.primary.opacity(0.3))
 
                 VStack(alignment: .leading, spacing: 2) {
                     ProfileSwitcherCompact(onManageProfiles: onManageProfiles)
