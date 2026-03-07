@@ -1367,31 +1367,15 @@ class MenuBarManager: NSObject, ObservableObject {
             // Temporarily show dock icon for the settings window (like setup wizard)
             NSApp.setActivationPolicy(.regular)
 
-            // Create and show the settings window programmatically
-            let hostingController = SettingsHostingController()
-
-            let window = NSWindow(
-                contentRect: NSRect(origin: .zero, size: NSSize(width: 720, height: 600)),
-                styleMask: [.titled, .closable, .miniaturizable, .fullSizeContentView],
-                backing: .buffered,
-                defer: false
-            )
-            window.contentViewController = hostingController
+            // Create and show the settings window
+            let window = SettingsWindowBuilder.makeWindow(size: NSSize(width: 720, height: 600))
             window.title = "Claude Usage - Settings"
             window.center()
             window.isReleasedWhenClosed = false
-            window.isRestorable = false
-            window.titlebarAppearsTransparent = true
-            window.titleVisibility = .hidden
-            window.titlebarSeparatorStyle = .none
-
-            // Set window delegate to clean up reference when closed
             window.delegate = self
 
-            // Store reference
             self.settingsWindow = window
 
-            // Show the window
             window.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
         }

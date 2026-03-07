@@ -3,110 +3,129 @@ import UserNotifications
 
 // MARK: - Visual Effect Backgrounds
 
-struct SidebarVisualEffect: NSViewRepresentable {
-    func makeNSView(context: Context) -> NSVisualEffectView {
-        let view = NSVisualEffectView()
-        view.material = .sidebar
-        view.blendingMode = .behindWindow
-        view.state = .active
-        view.isEmphasized = true
-        return view
-    }
-    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
-}
+/// Full-window vibrancy background — same approach as the popover's VisualEffectBackground.
+/// Using NSViewRepresentable inside SwiftUI means the entire view tree is SwiftUI-managed,
+/// so there is no opaque flash on deminiaturize or appearance change.
+struct SettingsBackground: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView {
+        let container = NSView()
 
-struct ContentVisualEffect: NSViewRepresentable {
-    func makeNSView(context: Context) -> NSVisualEffectView {
-        let view = NSVisualEffectView()
-        view.material = .contentBackground
-        view.blendingMode = .behindWindow
-        view.state = .active
-        return view
-    }
-    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
-}
-
-/// Hosts a SwiftUI SettingsView inside an NSVisualEffectView so vibrancy shows through.
-/// Use this instead of plain NSHostingController for the settings window.
-final class SettingsHostingController: NSViewController {
-    init() {
-        super.init(nibName: nil, bundle: nil)
-    }
-
-    required init?(coder: NSCoder) { fatalError() }
-
-    override func loadView() {
-        // Visual effect view as the root — provides the vibrancy material
         let effectView = NSVisualEffectView()
-        effectView.material = .underWindowBackground
+        effectView.material = .hudWindow
         effectView.blendingMode = .behindWindow
         effectView.state = .active
+        effectView.isEmphasized = true
+        effectView.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(effectView)
 
-        // SwiftUI hosting view embedded inside the effect view
-        let hostingView = NSHostingView(rootView:
-            SettingsView()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-        )
-        hostingView.translatesAutoresizingMaskIntoConstraints = false
+        let tintView = NSView()
+        tintView.wantsLayer = true
+        if NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua {
+            tintView.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.35).cgColor
+        } else {
+            tintView.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.4).cgColor
+        }
+        tintView.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(tintView)
 
-        effectView.addSubview(hostingView)
         NSLayoutConstraint.activate([
-            hostingView.topAnchor.constraint(equalTo: effectView.topAnchor),
-            hostingView.bottomAnchor.constraint(equalTo: effectView.bottomAnchor),
-            hostingView.leadingAnchor.constraint(equalTo: effectView.leadingAnchor),
-            hostingView.trailingAnchor.constraint(equalTo: effectView.trailingAnchor),
+            effectView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            effectView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            effectView.topAnchor.constraint(equalTo: container.topAnchor),
+            effectView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+            tintView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            tintView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            tintView.topAnchor.constraint(equalTo: container.topAnchor),
+            tintView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
         ])
 
-        self.view = effectView
+        return container
     }
 
-    override func viewDidAppear() {
-        super.viewDidAppear()
-        // Remove the opaque background that NSHostingView adds by default
-        if let hostingView = view.subviews.first {
-            hostingView.wantsLayer = true
-            hostingView.layer?.backgroundColor = .clear
-
-            DispatchQueue.main.async {
-                self.clearBackgrounds(in: hostingView)
-            }
-        }
-
-        // Remove the titlebar separator line and make titlebar transparent
-        if let window = view.window {
-            window.titlebarSeparatorStyle = .none
-            window.backgroundColor = .clear
-
-            // Walk the titlebar view hierarchy to hide separator views
-            if let titlebarContainer = window.standardWindowButton(.closeButton)?.superview?.superview {
-                hideSeparators(in: titlebarContainer)
+    func updateNSView(_ nsView: NSView, context: Context) {
+        if let tintView = nsView.subviews.last {
+            tintView.wantsLayer = true
+            if NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua {
+                tintView.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.35).cgColor
+            } else {
+                tintView.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.4).cgColor
             }
         }
     }
+}
 
-    private func clearBackgrounds(in view: NSView) {
-        for subview in view.subviews {
-            let className = String(describing: type(of: subview))
-            if className.contains("Background") {
-                subview.isHidden = true
-            }
+struct SidebarVisualEffect: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView {
+        let container = NSView()
+
+        let effectView = NSVisualEffectView()
+        effectView.material = .hudWindow
+        effectView.blendingMode = .behindWindow
+        effectView.state = .active
+        effectView.isEmphasized = true
+        effectView.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(effectView)
+
+        let tintView = NSView()
+        tintView.wantsLayer = true
+        if NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua {
+            tintView.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.45).cgColor
+        } else {
+            tintView.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.5).cgColor
         }
-        view.layer?.backgroundColor = .clear
+        tintView.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(tintView)
+
+        NSLayoutConstraint.activate([
+            effectView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            effectView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            effectView.topAnchor.constraint(equalTo: container.topAnchor),
+            effectView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+            tintView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            tintView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            tintView.topAnchor.constraint(equalTo: container.topAnchor),
+            tintView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+        ])
+
+        return container
     }
 
-    private func hideSeparators(in view: NSView) {
-        for subview in view.subviews {
-            let className = String(describing: type(of: subview))
-            // Hide the titlebar separator line (NSTitlebarSeparatorView or similar)
-            if className.contains("Separator") {
-                subview.isHidden = true
+    func updateNSView(_ nsView: NSView, context: Context) {
+        if let tintView = nsView.subviews.last {
+            tintView.wantsLayer = true
+            if NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua {
+                tintView.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.45).cgColor
+            } else {
+                tintView.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.5).cgColor
             }
-            // Also check if it's a thin line (height <= 2)
-            if subview.frame.height <= 2 && subview.frame.width > 100 {
-                subview.isHidden = true
-            }
-            hideSeparators(in: subview)
         }
+    }
+}
+
+/// Builds the settings window. Uses a standard NSHostingController — vibrancy is
+/// applied inside SwiftUI via SettingsBackground, not at the AppKit layer.
+enum SettingsWindowBuilder {
+    static func makeWindow(size: CGSize) -> NSWindow {
+        let window = NSWindow(
+            contentRect: NSRect(origin: .zero, size: size),
+            styleMask: [.titled, .closable, .resizable, .fullSizeContentView],
+            backing: .buffered,
+            defer: false
+        )
+
+        window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
+        window.titlebarSeparatorStyle = .none
+        window.isRestorable = false
+
+        let controller = NSHostingController(rootView:
+            SettingsView()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .ignoresSafeArea()
+        )
+        window.contentViewController = controller
+
+        return window
     }
 }
 
@@ -185,7 +204,7 @@ struct SettingsView: View {
             )
         }
         .frame(minWidth: 720, maxWidth: 720, maxHeight: .infinity)
-        .ignoresSafeArea()
+        .background(SettingsBackground())
     }
 }
 
