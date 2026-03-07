@@ -883,6 +883,28 @@ class MenuBarManager: NSObject, ObservableObject {
                 } catch {
                     LoggingService.shared.logError("Failed to refresh profile '\(profile.name)': \(error.localizedDescription)")
                 }
+
+                // Fetch API usage if this profile has API console credentials
+                if let apiSessionKey = profile.apiSessionKey,
+                   let orgId = profile.apiOrganizationId {
+                    do {
+                        let previousAPIUsage = profile.apiUsage
+                        let newAPIUsage = try await apiService.fetchAPIUsageData(organizationId: orgId, apiSessionKey: apiSessionKey)
+                        await MainActor.run {
+                            self.checkAndRecordBillingCycleReset(
+                                profileId: profile.id,
+                                previousUsage: previousAPIUsage,
+                                newUsage: newAPIUsage
+                            )
+                            self.profileManager.saveAPIUsage(newAPIUsage, for: profile.id)
+                            if profile.id == self.profileManager.activeProfile?.id {
+                                self.apiUsage = newAPIUsage
+                            }
+                        }
+                    } catch {
+                        LoggingService.shared.logError("Failed to refresh API usage for profile '\(profile.name)': \(error.localizedDescription)")
+                    }
+                }
             }
 
             // Update all icons once after all profiles are refreshed
