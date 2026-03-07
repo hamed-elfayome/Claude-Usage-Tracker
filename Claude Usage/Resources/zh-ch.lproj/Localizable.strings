@@ -437,6 +437,8 @@
 "appearance.show_labels_description" = "为每个指标显示前缀标签（S:, W:, API:）";
 "appearance.show_remaining_title" = "显示剩余百分比";
 "appearance.show_remaining_description" = "显示剩余容量而不是已使用百分比（类似 macOS 电池）";
+"appearance.show_time_marker_title" = "显示时间进度标记";
+"appearance.show_time_marker_description" = "在进度条上显示标记，指示当前时间段已经过去多少时间";
 "appearance.multiprofile_locked_title" = "外观设置已锁定";
 "appearance.multiprofile_locked_description" = "当多配置文件显示处于活动状态时，这些设置被禁用。在多配置文件模式下，每个配置文件使用自己的外观。";
 "appearance.disable_multiprofile" = "关闭多配置文件显示";

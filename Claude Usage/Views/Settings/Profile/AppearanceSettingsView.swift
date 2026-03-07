@@ -77,6 +77,18 @@ struct AppearanceSettingsView: View {
                                 }
                             )
                         )
+
+                        SettingToggle(
+                            title: "appearance.show_time_marker_title".localized,
+                            description: "appearance.show_time_marker_description".localized,
+                            isOn: Binding(
+                                get: { configuration.showTimeMarker },
+                                set: { newValue in
+                                    configuration.showTimeMarker = newValue
+                                    saveConfiguration()
+                                }
+                            )
+                        )
                     }
                 }
                 .disabled(isMultiProfileMode)

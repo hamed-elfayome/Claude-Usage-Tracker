@@ -236,18 +236,38 @@ final class StatusBarUIManager {
                 showRemaining: showRemaining
             )
 
+            let sessionElapsed = UsageStatusCalculator.elapsedFraction(
+                resetTime: usage.sessionResetTime,
+                duration: Constants.sessionWindow,
+                showRemaining: false
+            )
+            let weekElapsed = UsageStatusCalculator.elapsedFraction(
+                resetTime: usage.weeklyResetTime,
+                duration: Constants.weeklyWindow,
+                showRemaining: false
+            )
             let sessionStatus = UsageStatusCalculator.calculateStatus(
                 usedPercentage: sessionUsed,
-                showRemaining: showRemaining
+                showRemaining: showRemaining,
+                elapsedFraction: sessionElapsed
             )
             let weekStatus = UsageStatusCalculator.calculateStatus(
                 usedPercentage: weekUsed,
-                showRemaining: showRemaining
+                showRemaining: showRemaining,
+                elapsedFraction: weekElapsed
             )
 
             // Use multi-profile config's useSystemColor as monochrome mode
             // When useSystemColor is ON, icons will be white (like single-profile monochrome)
             let useMonochrome = config.useSystemColor
+
+            // Calculate time marker fractions for multi-profile display
+            let sessionMarker: CGFloat? = config.showTimeMarker
+                ? sessionElapsed.map { CGFloat(showRemaining ? 1.0 - $0 : $0) }
+                : nil
+            let weekMarker: CGFloat? = config.showTimeMarker
+                ? weekElapsed.map { CGFloat(showRemaining ? 1.0 - $0 : $0) }
+                : nil
 
             // Create icon based on selected style
             let image: NSImage
@@ -262,7 +282,9 @@ final class StatusBarUIManager {
                         profileName: profile.name,
                         monochromeMode: useMonochrome,
                         isDarkMode: menuBarIsDark,
-                        useSystemColor: false
+                        useSystemColor: false,
+                        sessionTimeMarker: sessionMarker,
+                        weekTimeMarker: config.showWeek ? weekMarker : nil
                     )
                 } else {
                     image = renderer.createConcentricIcon(
@@ -273,7 +295,9 @@ final class StatusBarUIManager {
                         profileInitial: String(profile.name.prefix(1)),
                         monochromeMode: useMonochrome,
                         isDarkMode: menuBarIsDark,
-                        useSystemColor: false
+                        useSystemColor: false,
+                        sessionTimeMarker: sessionMarker,
+                        weekTimeMarker: config.showWeek ? weekMarker : nil
                     )
                 }
             case .progressBar:
@@ -285,7 +309,9 @@ final class StatusBarUIManager {
                     profileName: config.showProfileLabel ? profile.name : nil,
                     monochromeMode: useMonochrome,
                     isDarkMode: menuBarIsDark,
-                    useSystemColor: false
+                    useSystemColor: false,
+                    sessionTimeMarker: sessionMarker,
+                    weekTimeMarker: config.showWeek ? weekMarker : nil
                 )
             case .compact:
                 image = renderer.createCompactDot(

@@ -179,6 +179,8 @@
 "appearance.show_labels_description" = "각 메트릭에 접두사 레이블(S:, W:, API:) 표시";
 "appearance.show_remaining_title" = "남은 용량 퍼센트 표시";
 "appearance.show_remaining_description" = "사용된 퍼센트 대신 남은 용량 표시 (macOS 배터리처럼)";
+"appearance.show_time_marker_title" = "경과 시간 마커 표시";
+"appearance.show_time_marker_description" = "진행 막대에 기간 내 경과 시간을 나타내는 마커를 표시합니다";
 "appearance.multiprofile_locked_title" = "모양 설정 잠김";
 "appearance.multiprofile_locked_description" = "다중 프로필 표시가 활성화된 동안 이 설정은 비활성화됩니다. 다중 프로필 모드에서는 각 프로필이 자체 모양을 사용합니다.";
 "appearance.disable_multiprofile" = "다중 프로필 표시 끄기";

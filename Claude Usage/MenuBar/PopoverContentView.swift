@@ -493,6 +493,10 @@ struct SmartUsageDashboard: View {
         profileManager.activeProfile?.iconConfig.showRemainingPercentage ?? false
     }
 
+    private var showTimeMarker: Bool {
+        profileManager.activeProfile?.iconConfig.showTimeMarker ?? true
+    }
+
     private var isAPITrackingEnabled: Bool {
         DataStore.shared.loadAPITrackingEnabled()
     }
@@ -505,7 +509,9 @@ struct SmartUsageDashboard: View {
                 subtitle: "menubar.5_hour_window".localized,
                 usedPercentage: usage.sessionPercentage,
                 showRemaining: showRemainingPercentage,
-                resetTime: usage.sessionResetTime
+                resetTime: usage.sessionResetTime,
+                periodDuration: Constants.sessionWindow,
+                showTimeMarker: showTimeMarker
             )
 
             // Weekly section header
@@ -520,7 +526,9 @@ struct SmartUsageDashboard: View {
                 subtitle: nil,
                 usedPercentage: usage.weeklyPercentage,
                 showRemaining: showRemainingPercentage,
-                resetTime: usage.weeklyResetTime
+                resetTime: usage.weeklyResetTime,
+                periodDuration: Constants.weeklyWindow,
+                showTimeMarker: showTimeMarker
             )
 
             if usage.opusWeeklyTokensUsed > 0 {
@@ -529,7 +537,8 @@ struct SmartUsageDashboard: View {
                     subtitle: nil,
                     usedPercentage: usage.opusWeeklyPercentage,
                     showRemaining: showRemainingPercentage,
-                    resetTime: nil
+                    resetTime: nil,
+                    periodDuration: nil
                 )
             }
 
@@ -539,7 +548,8 @@ struct SmartUsageDashboard: View {
                     subtitle: nil,
                     usedPercentage: usage.sonnetWeeklyPercentage,
                     showRemaining: showRemainingPercentage,
-                    resetTime: usage.sonnetWeeklyResetTime
+                    resetTime: usage.sonnetWeeklyResetTime,
+                    periodDuration: nil
                 )
             }
 
@@ -551,7 +561,8 @@ struct SmartUsageDashboard: View {
                     subtitle: String(format: "%.2f / %.2f %@", used / 100.0, limit / 100.0, currency),
                     usedPercentage: usedPercentage,
                     showRemaining: showRemainingPercentage,
-                    resetTime: nil
+                    resetTime: nil,
+                    periodDuration: nil
                 )
             }
 
@@ -575,6 +586,8 @@ struct UsageRow: View {
     let usedPercentage: Double
     let showRemaining: Bool
     let resetTime: Date?
+    let periodDuration: TimeInterval?
+    var showTimeMarker: Bool = true
 
     private var displayPercentage: Double {
         UsageStatusCalculator.getDisplayPercentage(
@@ -583,10 +596,24 @@ struct UsageRow: View {
         )
     }
 
+    private var rawElapsedFraction: Double? {
+        UsageStatusCalculator.elapsedFraction(
+            resetTime: resetTime,
+            duration: periodDuration ?? 0,
+            showRemaining: false
+        )
+    }
+
+    private var timeMarkerFraction: CGFloat? {
+        guard showTimeMarker, let f = rawElapsedFraction else { return nil }
+        return CGFloat(showRemaining ? 1.0 - f : f)
+    }
+
     private var statusLevel: UsageStatusLevel {
         UsageStatusCalculator.calculateStatus(
             usedPercentage: usedPercentage,
-            showRemaining: showRemaining
+            showRemaining: showRemaining,
+            elapsedFraction: rawElapsedFraction
         )
     }
 
@@ -631,6 +658,14 @@ struct UsageRow: View {
                         .fill(statusColor)
                         .frame(width: geometry.size.width * min(displayPercentage / 100.0, 1.0))
                         .animation(.easeInOut(duration: 0.6), value: displayPercentage)
+                }
+                .overlay(alignment: .leading) {
+                    if let fraction = timeMarkerFraction {
+                        Rectangle()
+                            .fill(Color(nsColor: .labelColor))
+                            .frame(width: 1.5)
+                            .offset(x: round(geometry.size.width * fraction))
+                    }
                 }
             }
             .frame(height: 4)

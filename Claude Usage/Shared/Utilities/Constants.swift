@@ -94,6 +94,9 @@ enum Constants {
     // Session window (5 hours in seconds)
     static let sessionWindow: TimeInterval = 5 * 60 * 60
 
+    // Weekly window (7 days in seconds)
+    static let weeklyWindow: TimeInterval = 7 * 24 * 60 * 60
+
     // Weekly limit (tokens)
     static let weeklyLimit = 1_000_000
 

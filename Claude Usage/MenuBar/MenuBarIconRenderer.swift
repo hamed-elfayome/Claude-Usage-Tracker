@@ -33,6 +33,15 @@ final class MenuBarIconRenderer {
             showRemaining: globalConfig.showRemainingPercentage
         )
 
+        // Calculate time marker fraction for session/week metrics
+        let timeMarkerFraction: CGFloat? = globalConfig.showTimeMarker
+            ? calculateTimeMarkerFraction(
+                metricType: metricType,
+                usage: usage,
+                showRemaining: globalConfig.showRemainingPercentage
+            )
+            : nil
+
         // API is ALWAYS text-based (no icon styles)
         if metricType == .api {
             return createAPITextStyle(
@@ -53,7 +62,8 @@ final class MenuBarIconRenderer {
                 monochromeMode: monochromeMode,
                 showIconName: showIconName,
                 showNextSessionTime: showNextSessionTime,
-                usage: usage
+                usage: usage,
+                timeMarkerFraction: timeMarkerFraction
             )
         case .progressBar:
             return createProgressBarStyle(
@@ -63,7 +73,8 @@ final class MenuBarIconRenderer {
                 monochromeMode: monochromeMode,
                 showIconName: showIconName,
                 showNextSessionTime: showNextSessionTime,
-                usage: usage
+                usage: usage,
+                timeMarkerFraction: timeMarkerFraction
             )
         case .percentageOnly:
             return createPercentageOnlyStyle(
@@ -79,7 +90,8 @@ final class MenuBarIconRenderer {
                 metricData: metricData,
                 isDarkMode: isDarkMode,
                 monochromeMode: monochromeMode,
-                showIconName: showIconName
+                showIconName: showIconName,
+                timeMarkerFraction: timeMarkerFraction
             )
         case .compact:
             return createCompactStyle(
@@ -115,9 +127,15 @@ final class MenuBarIconRenderer {
                 usedPercentage: usedPercentage,
                 showRemaining: showRemaining
             )
+            let sessionElapsed = UsageStatusCalculator.elapsedFraction(
+                resetTime: usage.sessionResetTime,
+                duration: Constants.sessionWindow,
+                showRemaining: false
+            )
             let statusLevel = UsageStatusCalculator.calculateStatus(
                 usedPercentage: usedPercentage,
-                showRemaining: showRemaining
+                showRemaining: showRemaining,
+                elapsedFraction: sessionElapsed
             )
 
             return MetricData(
@@ -133,9 +151,15 @@ final class MenuBarIconRenderer {
                 usedPercentage: usedPercentage,
                 showRemaining: showRemaining
             )
+            let weekElapsed = UsageStatusCalculator.elapsedFraction(
+                resetTime: usage.weeklyResetTime,
+                duration: Constants.weeklyWindow,
+                showRemaining: false
+            )
             let statusLevel = UsageStatusCalculator.calculateStatus(
                 usedPercentage: usedPercentage,
-                showRemaining: showRemaining
+                showRemaining: showRemaining,
+                elapsedFraction: weekElapsed
             )
 
             let displayText: String
@@ -201,7 +225,8 @@ final class MenuBarIconRenderer {
         monochromeMode: Bool,
         showIconName: Bool,
         showNextSessionTime: Bool,
-        usage: ClaudeUsage
+        usage: ClaudeUsage,
+        timeMarkerFraction: CGFloat? = nil
     ) -> NSImage {
         let percentage = CGFloat(metricData.percentage) / 100.0
 
@@ -256,6 +281,15 @@ final class MenuBarIconRenderer {
             fillPath.fill()
         }
 
+        // Time-elapsed tick mark on the battery bar
+        if let fraction = timeMarkerFraction {
+            let tickX = round(xOffset + 1 + padding + (barWidth - padding * 2) * fraction)
+            let tickPath = NSBezierPath()
+            tickPath.move(to: NSPoint(x: tickX, y: barY))
+            tickPath.line(to: NSPoint(x: tickX, y: barY + barHeight))
+            drawTimeMarkerTick(tickPath)
+        }
+
         // Label BELOW the battery (replaces percentage text)
         let textAttributes: [NSAttributedString.Key: Any] = [
             .font: NSFont.systemFont(ofSize: 9, weight: .medium),
@@ -295,7 +329,8 @@ final class MenuBarIconRenderer {
         monochromeMode: Bool,
         showIconName: Bool,
         showNextSessionTime: Bool,
-        usage: ClaudeUsage
+        usage: ClaudeUsage,
+        timeMarkerFraction: CGFloat? = nil
     ) -> NSImage {
         // For progress bar: show "S" or "W" before the bar (not full prefix)
         let labelWidth: CGFloat = showIconName ? 10 : 0
@@ -355,6 +390,15 @@ final class MenuBarIconRenderer {
             )
             fillColor.setFill()
             fillPath.fill()
+
+            // Time-elapsed tick mark on the progress bar
+            if let fraction = timeMarkerFraction {
+                let tickX = round(xOffset + barWidth * fraction)
+                let tickPath = NSBezierPath()
+                tickPath.move(to: NSPoint(x: tickX, y: barY))
+                tickPath.line(to: NSPoint(x: tickX, y: barY + barHeight))
+                drawTimeMarkerTick(tickPath)
+            }
 
             // Draw session reset time inside the fill area if enabled and this is a session metric
             if showNextSessionTime && metricType == .session, let resetTime = metricData.sessionResetTime {
@@ -422,7 +466,8 @@ final class MenuBarIconRenderer {
         metricData: MetricData,
         isDarkMode: Bool,
         monochromeMode: Bool,
-        showIconName: Bool
+        showIconName: Bool,
+        timeMarkerFraction: CGFloat? = nil
     ) -> NSImage {
         // For circle: make it bigger to fit S/W in center
         let circleSize: CGFloat = showIconName ? 22 : 18  // Bigger when showing label
@@ -447,7 +492,7 @@ final class MenuBarIconRenderer {
         let center = NSPoint(x: centerX, y: size / 2)
         let radius = (circleSize - 4.0) / 2
         let startAngle: CGFloat = 90
-        let endAngle = startAngle + (360 * CGFloat(percentage))
+        let endAngle = startAngle - (360 * CGFloat(percentage))
 
         // Background ring
         let bgArcPath = NSBezierPath()
@@ -463,7 +508,7 @@ final class MenuBarIconRenderer {
         bgArcPath.lineCapStyle = .round
         bgArcPath.stroke()
 
-        // Progress ring
+        // Progress ring (clockwise from 12 o'clock)
         if percentage > 0 {
             let arcPath = NSBezierPath()
             arcPath.appendArc(
@@ -471,12 +516,29 @@ final class MenuBarIconRenderer {
                 radius: radius,
                 startAngle: startAngle,
                 endAngle: endAngle,
-                clockwise: false
+                clockwise: true
             )
             fillColor.setStroke()
             arcPath.lineWidth = 3.0
             arcPath.lineCapStyle = .round
             arcPath.stroke()
+        }
+
+        // Time-elapsed tick mark on the ring (clockwise from 12 o'clock)
+        if let fraction = timeMarkerFraction {
+            let tickAngle = (90 - 360 * fraction) * .pi / 180
+            let innerR = radius - 2.0
+            let outerR = radius + 2.0
+            let tickPath = NSBezierPath()
+            tickPath.move(to: NSPoint(
+                x: center.x + innerR * cos(tickAngle),
+                y: center.y + innerR * sin(tickAngle)
+            ))
+            tickPath.line(to: NSPoint(
+                x: center.x + outerR * cos(tickAngle),
+                y: center.y + outerR * sin(tickAngle)
+            ))
+            drawTimeMarkerTick(tickPath)
         }
 
         // Draw S/W in the CENTER of the circle
@@ -604,7 +666,9 @@ final class MenuBarIconRenderer {
         profileInitial: String,
         monochromeMode: Bool,
         isDarkMode: Bool,
-        useSystemColor: Bool = false
+        useSystemColor: Bool = false,
+        sessionTimeMarker: CGFloat? = nil,
+        weekTimeMarker: CGFloat? = nil
     ) -> NSImage {
         let size: CGFloat = 24
         let image = NSImage(size: NSSize(width: size, height: size))
@@ -638,21 +702,32 @@ final class MenuBarIconRenderer {
         outerBgPath.lineWidth = outerStrokeWidth
         outerBgPath.stroke()
 
-        // Session progress ring (outer - primary metric)
+        // Session progress ring (outer - primary metric, clockwise from 12 o'clock)
         if sessionPercentage > 0 {
-            let sessionEndAngle = 90 + (360 * CGFloat(sessionPercentage / 100.0))
+            let sessionEndAngle = 90 - (360 * CGFloat(sessionPercentage / 100.0))
             let outerProgressPath = NSBezierPath()
             outerProgressPath.appendArc(
                 withCenter: center,
                 radius: outerRadius,
                 startAngle: 90,
                 endAngle: sessionEndAngle,
-                clockwise: false
+                clockwise: true
             )
             sessionColor.setStroke()
             outerProgressPath.lineWidth = outerStrokeWidth
             outerProgressPath.lineCapStyle = .round
             outerProgressPath.stroke()
+        }
+
+        // Session time marker on outer ring
+        if let fraction = sessionTimeMarker {
+            let tickAngle = (90 - 360 * fraction) * .pi / 180
+            let innerR = outerRadius - 2.0
+            let outerR = outerRadius + 2.0
+            let tickPath = NSBezierPath()
+            tickPath.move(to: NSPoint(x: center.x + innerR * cos(tickAngle), y: center.y + innerR * sin(tickAngle)))
+            tickPath.line(to: NSPoint(x: center.x + outerR * cos(tickAngle), y: center.y + outerR * sin(tickAngle)))
+            drawTimeMarkerTick(tickPath)
         }
 
         // Inner ring (Week) - smaller radius, thinner stroke - Week is secondary
@@ -672,21 +747,32 @@ final class MenuBarIconRenderer {
         innerBgPath.lineWidth = innerStrokeWidth
         innerBgPath.stroke()
 
-        // Week progress ring (inner - secondary metric)
+        // Week progress ring (inner - secondary metric, clockwise from 12 o'clock)
         if weekPercentage > 0 {
-            let weekEndAngle = 90 + (360 * CGFloat(weekPercentage / 100.0))
+            let weekEndAngle = 90 - (360 * CGFloat(weekPercentage / 100.0))
             let innerProgressPath = NSBezierPath()
             innerProgressPath.appendArc(
                 withCenter: center,
                 radius: innerRadius,
                 startAngle: 90,
                 endAngle: weekEndAngle,
-                clockwise: false
+                clockwise: true
             )
             weekColor.setStroke()
             innerProgressPath.lineWidth = innerStrokeWidth
             innerProgressPath.lineCapStyle = .round
             innerProgressPath.stroke()
+        }
+
+        // Week time marker on inner ring
+        if let fraction = weekTimeMarker {
+            let tickAngle = (90 - 360 * fraction) * .pi / 180
+            let innerR = innerRadius - 2.0
+            let outerR = innerRadius + 2.0
+            let tickPath = NSBezierPath()
+            tickPath.move(to: NSPoint(x: center.x + innerR * cos(tickAngle), y: center.y + innerR * sin(tickAngle)))
+            tickPath.line(to: NSPoint(x: center.x + outerR * cos(tickAngle), y: center.y + outerR * sin(tickAngle)))
+            drawTimeMarkerTick(tickPath)
         }
 
         // Profile initial in center
@@ -714,7 +800,9 @@ final class MenuBarIconRenderer {
         profileName: String,
         monochromeMode: Bool,
         isDarkMode: Bool,
-        useSystemColor: Bool = false
+        useSystemColor: Bool = false,
+        sessionTimeMarker: CGFloat? = nil,
+        weekTimeMarker: CGFloat? = nil
     ) -> NSImage {
         let circleSize: CGFloat = 20
         let labelHeight: CGFloat = 10
@@ -754,21 +842,32 @@ final class MenuBarIconRenderer {
         outerBgPath.lineWidth = outerStrokeWidth
         outerBgPath.stroke()
 
-        // Session progress ring (outer - primary metric)
+        // Session progress ring (outer - primary metric, clockwise from 12 o'clock)
         if sessionPercentage > 0 {
-            let sessionEndAngle = 90 + (360 * CGFloat(sessionPercentage / 100.0))
+            let sessionEndAngle = 90 - (360 * CGFloat(sessionPercentage / 100.0))
             let outerProgressPath = NSBezierPath()
             outerProgressPath.appendArc(
                 withCenter: circleCenter,
                 radius: outerRadius,
                 startAngle: 90,
                 endAngle: sessionEndAngle,
-                clockwise: false
+                clockwise: true
             )
             sessionColor.setStroke()
             outerProgressPath.lineWidth = outerStrokeWidth
             outerProgressPath.lineCapStyle = .round
             outerProgressPath.stroke()
+        }
+
+        // Session time marker on outer ring
+        if let fraction = sessionTimeMarker {
+            let tickAngle = (90 - 360 * fraction) * .pi / 180
+            let innerR = outerRadius - 2.0
+            let outerR = outerRadius + 2.0
+            let tickPath = NSBezierPath()
+            tickPath.move(to: NSPoint(x: circleCenter.x + innerR * cos(tickAngle), y: circleCenter.y + innerR * sin(tickAngle)))
+            tickPath.line(to: NSPoint(x: circleCenter.x + outerR * cos(tickAngle), y: circleCenter.y + outerR * sin(tickAngle)))
+            drawTimeMarkerTick(tickPath)
         }
 
         // Inner ring (Week) - Week is secondary
@@ -788,21 +887,32 @@ final class MenuBarIconRenderer {
         innerBgPath.lineWidth = innerStrokeWidth
         innerBgPath.stroke()
 
-        // Week progress ring (inner - secondary metric)
+        // Week progress ring (inner - secondary metric, clockwise from 12 o'clock)
         if weekPercentage > 0 {
-            let weekEndAngle = 90 + (360 * CGFloat(weekPercentage / 100.0))
+            let weekEndAngle = 90 - (360 * CGFloat(weekPercentage / 100.0))
             let innerProgressPath = NSBezierPath()
             innerProgressPath.appendArc(
                 withCenter: circleCenter,
                 radius: innerRadius,
                 startAngle: 90,
                 endAngle: weekEndAngle,
-                clockwise: false
+                clockwise: true
             )
             weekColor.setStroke()
             innerProgressPath.lineWidth = innerStrokeWidth
             innerProgressPath.lineCapStyle = .round
             innerProgressPath.stroke()
+        }
+
+        // Week time marker on inner ring
+        if let fraction = weekTimeMarker {
+            let tickAngle = (90 - 360 * fraction) * .pi / 180
+            let innerR = innerRadius - 2.0
+            let outerR = innerRadius + 2.0
+            let tickPath = NSBezierPath()
+            tickPath.move(to: NSPoint(x: circleCenter.x + innerR * cos(tickAngle), y: circleCenter.y + innerR * sin(tickAngle)))
+            tickPath.line(to: NSPoint(x: circleCenter.x + outerR * cos(tickAngle), y: circleCenter.y + outerR * sin(tickAngle)))
+            drawTimeMarkerTick(tickPath)
         }
 
         // Profile label below the circle (first 3 characters)
@@ -831,7 +941,9 @@ final class MenuBarIconRenderer {
         profileName: String?,
         monochromeMode: Bool,
         isDarkMode: Bool,
-        useSystemColor: Bool = false
+        useSystemColor: Bool = false,
+        sessionTimeMarker: CGFloat? = nil,
+        weekTimeMarker: CGFloat? = nil
     ) -> NSImage {
         let barWidth: CGFloat = 24
         let barHeight: CGFloat = 4
@@ -866,6 +978,15 @@ final class MenuBarIconRenderer {
         sessionColor.setFill()
         NSBezierPath(roundedRect: sessionFillRect, xRadius: 2, yRadius: 2).fill()
 
+        // Session time marker tick
+        if let fraction = sessionTimeMarker {
+            let tickX = round(barWidth * fraction)
+            let tickPath = NSBezierPath()
+            tickPath.move(to: NSPoint(x: tickX, y: currentY))
+            tickPath.line(to: NSPoint(x: tickX, y: currentY + barHeight))
+            drawTimeMarkerTick(tickPath)
+        }
+
         // Week bar (if shown)
         if let weekPct = weekPercentage {
             currentY -= (spacing + barHeight)
@@ -877,6 +998,15 @@ final class MenuBarIconRenderer {
             let weekFillRect = NSRect(x: 0, y: currentY, width: weekFillWidth, height: barHeight)
             weekColor.setFill()
             NSBezierPath(roundedRect: weekFillRect, xRadius: 2, yRadius: 2).fill()
+
+            // Week time marker tick
+            if let fraction = weekTimeMarker {
+                let tickX = round(barWidth * fraction)
+                let tickPath = NSBezierPath()
+                tickPath.move(to: NSPoint(x: tickX, y: currentY))
+                tickPath.line(to: NSPoint(x: tickX, y: currentY + barHeight))
+                drawTimeMarkerTick(tickPath)
+            }
         }
 
         // Profile label (if shown)
@@ -1099,6 +1229,48 @@ final class MenuBarIconRenderer {
         } else {
             return getColorForStatusLevel(status)
         }
+    }
+
+    /// Draws a time marker tick by clearing a slot then drawing a white line
+    private func drawTimeMarkerTick(_ path: NSBezierPath) {
+        guard let ctx = NSGraphicsContext.current?.cgContext else { return }
+        ctx.saveGState()
+        ctx.setBlendMode(.clear)
+        path.lineWidth = 3.0
+        path.lineCapStyle = .butt
+        path.stroke()
+        ctx.restoreGState()
+        NSColor.white.setStroke()
+        path.lineWidth = 1.5
+        path.stroke()
+    }
+
+    /// Calculates the time marker fraction for a given metric type
+    private func calculateTimeMarkerFraction(
+        metricType: MenuBarMetricType,
+        usage: ClaudeUsage,
+        showRemaining: Bool
+    ) -> CGFloat? {
+        let resetTime: Date?
+        let duration: TimeInterval
+
+        switch metricType {
+        case .session:
+            resetTime = usage.sessionResetTime
+            duration = Constants.sessionWindow
+        case .week:
+            resetTime = usage.weeklyResetTime
+            duration = Constants.weeklyWindow
+        case .api:
+            return nil
+        }
+
+        guard let f = UsageStatusCalculator.elapsedFraction(
+            resetTime: resetTime,
+            duration: duration,
+            showRemaining: showRemaining
+        ) else { return nil }
+        return CGFloat(f)
     }
 
     /// Formats token count intelligently (e.g., 1M instead of 1000K)

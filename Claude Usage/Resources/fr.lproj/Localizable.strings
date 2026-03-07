@@ -407,6 +407,8 @@
 "appearance.show_labels_description" = "Afficher les étiquettes de préfixe (S:, W:, API:) pour chaque métrique";
 "appearance.show_remaining_title" = "Afficher le Pourcentage Restant";
 "appearance.show_remaining_description" = "Afficher la capacité restante au lieu du pourcentage utilisé (comme la batterie macOS)";
+"appearance.show_time_marker_title" = "Afficher le marqueur de temps écoulé";
+"appearance.show_time_marker_description" = "Afficher un repère sur les barres de progression indiquant la progression dans la période";
 "appearance.multiprofile_locked_title" = "Paramètres d'Apparence Verrouillés";
 "appearance.multiprofile_locked_description" = "Ces paramètres sont désactivés pendant que l'Affichage Multi-Profil est actif. Chaque profil utilise sa propre apparence en mode multi-profil.";
 "appearance.disable_multiprofile" = "Désactiver l'Affichage Multi-Profil";

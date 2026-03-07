@@ -179,6 +179,21 @@ struct ManageProfilesView: View {
                                 )
                             )
 
+                            // Show Time Marker Toggle
+                            SettingToggle(
+                                title: "appearance.show_time_marker_title".localized,
+                                description: "appearance.show_time_marker_description".localized,
+                                isOn: Binding(
+                                    get: { profileManager.multiProfileConfig.showTimeMarker },
+                                    set: { showMarker in
+                                        var config = profileManager.multiProfileConfig
+                                        config.showTimeMarker = showMarker
+                                        profileManager.updateMultiProfileConfig(config)
+                                        NotificationCenter.default.post(name: .displayModeChanged, object: nil)
+                                    }
+                                )
+                            )
+
                             // Info message
                             HStack(alignment: .top, spacing: 8) {
                                 Image(systemName: "info.circle.fill")
