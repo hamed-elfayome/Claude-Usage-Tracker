@@ -567,8 +567,7 @@ struct SmartUsageDashboard: View {
             }
 
             // API Usage
-            if isAPITrackingEnabled,
-               let apiUsage = apiUsage,
+            if let apiUsage = apiUsage,
                let profile = profileManager.activeProfile,
                profile.hasAPIConsole {
                 APIUsageCard(apiUsage: apiUsage, showRemaining: showRemainingPercentage)
