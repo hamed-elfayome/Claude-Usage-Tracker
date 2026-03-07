@@ -514,15 +514,10 @@ struct SmartUsageDashboard: View {
                 showTimeMarker: showTimeMarker
             )
 
-            // Weekly section header
-            Text("menubar.weekly".localized)
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundColor(.secondary)
-                .padding(.top, 2)
-
-            // All Models
+            // All Models (Weekly)
             UsageRow(
                 title: "menubar.all_models".localized,
+                tag: "menubar.weekly".localized,
                 subtitle: nil,
                 usedPercentage: usage.weeklyPercentage,
                 showRemaining: showRemainingPercentage,
@@ -534,6 +529,7 @@ struct SmartUsageDashboard: View {
             if usage.opusWeeklyTokensUsed > 0 {
                 UsageRow(
                     title: "menubar.opus_usage".localized,
+                    tag: "menubar.weekly".localized,
                     subtitle: nil,
                     usedPercentage: usage.opusWeeklyPercentage,
                     showRemaining: showRemainingPercentage,
@@ -581,6 +577,7 @@ struct SmartUsageDashboard: View {
 // MARK: - Usage Row (flat, native style)
 struct UsageRow: View {
     let title: String
+    var tag: String? = nil
     let subtitle: String?
     let usedPercentage: Double
     let showRemaining: Bool
@@ -629,9 +626,23 @@ struct UsageRow: View {
             // Title row with percentage
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(title)
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(.primary)
+                    HStack(spacing: 5) {
+                        Text(title)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.primary)
+
+                        if let tag = tag {
+                            Text(tag)
+                                .font(.system(size: 9, weight: .medium))
+                                .foregroundColor(.secondary)
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 1)
+                                .background(
+                                    Capsule()
+                                        .fill(Color.primary.opacity(0.08))
+                                )
+                        }
+                    }
 
                     if let subtitle = subtitle {
                         Text(subtitle)
