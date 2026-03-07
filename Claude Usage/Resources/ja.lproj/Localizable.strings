@@ -439,6 +439,8 @@
 "appearance.show_remaining_description" = "使用済みパーセンテージの代わりに残り容量を表示（macOSバッテリーのように）";
 "appearance.show_time_marker_title" = "経過時間マーカーを表示";
 "appearance.show_time_marker_description" = "プログレスバーに期間内の経過時間を示すマーカーを表示します";
+"appearance.pace_coloring_title" = "ペース対応カラーリング";
+"appearance.pace_coloring_description" = "予測される使用ペースに基づいてインジケーターを色分けします。オフの場合、色は現在の使用量のみを反映します。";
 "appearance.multiprofile_locked_title" = "外観設定がロックされています";
 "appearance.multiprofile_locked_description" = "マルチプロファイル表示がアクティブな間、これらの設定は無効になっています。マルチプロファイルモードでは各プロファイルが独自の外観を使用します。";
 "appearance.disable_multiprofile" = "マルチプロファイル表示をオフにする";

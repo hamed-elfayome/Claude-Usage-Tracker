@@ -194,6 +194,21 @@ struct ManageProfilesView: View {
                                 )
                             )
 
+                            // Pace-Aware Coloring Toggle
+                            SettingToggle(
+                                title: "appearance.pace_coloring_title".localized,
+                                description: "appearance.pace_coloring_description".localized,
+                                isOn: Binding(
+                                    get: { profileManager.multiProfileConfig.usePaceColoring },
+                                    set: { usePace in
+                                        var config = profileManager.multiProfileConfig
+                                        config.usePaceColoring = usePace
+                                        profileManager.updateMultiProfileConfig(config)
+                                        NotificationCenter.default.post(name: .displayModeChanged, object: nil)
+                                    }
+                                )
+                            )
+
                             // Info message
                             HStack(alignment: .top, spacing: 8) {
                                 Image(systemName: "info.circle.fill")

@@ -425,6 +425,8 @@
 "appearance.show_remaining_description" = "Verbleibende Kapazität statt genutzter Prozentsatz anzeigen (wie macOS-Batterie)";
 "appearance.show_time_marker_title" = "Zeitverlaufsmarkierung anzeigen";
 "appearance.show_time_marker_description" = "Eine Markierung auf Fortschrittsbalken anzeigen, die den Zeitfortschritt im Zeitraum zeigt";
+"appearance.pace_coloring_title" = "Tempobasierte Farbgebung";
+"appearance.pace_coloring_description" = "Indikatoren basierend auf dem prognostizierten Nutzungstempo einfärben. Wenn deaktiviert, spiegeln die Farben nur die aktuelle Nutzung wider.";
 "appearance.multiprofile_locked_title" = "Darstellungseinstellungen gesperrt";
 "appearance.multiprofile_locked_description" = "Diese Einstellungen sind deaktiviert, während die Mehrfach-Profil-Anzeige aktiv ist. Jedes Profil verwendet im Mehrfach-Profil-Modus seine eigene Darstellung.";
 "appearance.disable_multiprofile" = "Mehrfach-Profil-Anzeige ausschalten";

@@ -412,6 +412,8 @@
 "appearance.show_remaining_description" = "Mostrar capacidad restante en lugar del porcentaje usado (como la batería de macOS)";
 "appearance.show_time_marker_title" = "Mostrar marcador de tiempo transcurrido";
 "appearance.show_time_marker_description" = "Mostrar una marca en las barras de progreso indicando cuánto tiempo del período ha pasado";
+"appearance.pace_coloring_title" = "Coloración según ritmo";
+"appearance.pace_coloring_description" = "Colorear indicadores según el ritmo de uso proyectado. Cuando está desactivado, los colores reflejan solo el uso actual.";
 "appearance.multiprofile_locked_title" = "Ajustes de Apariencia Bloqueados";
 "appearance.multiprofile_locked_description" = "Estos ajustes están deshabilitados mientras la Visualización Multi-Perfil está activa. Cada perfil usa su propia apariencia en modo multi-perfil.";
 "appearance.disable_multiprofile" = "Desactivar Visualización Multi-Perfil";

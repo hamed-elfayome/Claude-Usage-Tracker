@@ -89,6 +89,18 @@ struct AppearanceSettingsView: View {
                                 }
                             )
                         )
+
+                        SettingToggle(
+                            title: "appearance.pace_coloring_title".localized,
+                            description: "appearance.pace_coloring_description".localized,
+                            isOn: Binding(
+                                get: { configuration.usePaceColoring },
+                                set: { newValue in
+                                    configuration.usePaceColoring = newValue
+                                    saveConfiguration()
+                                }
+                            )
+                        )
                     }
                 }
                 .disabled(isMultiProfileMode)

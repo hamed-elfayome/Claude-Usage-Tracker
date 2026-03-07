@@ -498,6 +498,10 @@ struct SmartUsageDashboard: View {
         profileManager.activeProfile?.iconConfig.showTimeMarker ?? true
     }
 
+    private var usePaceColoring: Bool {
+        profileManager.activeProfile?.iconConfig.usePaceColoring ?? true
+    }
+
     private var isAPITrackingEnabled: Bool {
         DataStore.shared.loadAPITrackingEnabled()
     }
@@ -512,7 +516,8 @@ struct SmartUsageDashboard: View {
                 showRemaining: showRemainingPercentage,
                 resetTime: usage.sessionResetTime,
                 periodDuration: Constants.sessionWindow,
-                showTimeMarker: showTimeMarker
+                showTimeMarker: showTimeMarker,
+                usePaceColoring: usePaceColoring
             )
 
             // All Models (Weekly)
@@ -524,7 +529,8 @@ struct SmartUsageDashboard: View {
                 showRemaining: showRemainingPercentage,
                 resetTime: usage.weeklyResetTime,
                 periodDuration: Constants.weeklyWindow,
-                showTimeMarker: showTimeMarker
+                showTimeMarker: showTimeMarker,
+                usePaceColoring: usePaceColoring
             )
 
             if usage.opusWeeklyTokensUsed > 0 {
@@ -583,6 +589,7 @@ struct UsageRow: View {
     let resetTime: Date?
     let periodDuration: TimeInterval?
     var showTimeMarker: Bool = true
+    var usePaceColoring: Bool = true
 
     private var displayPercentage: Double {
         UsageStatusCalculator.getDisplayPercentage(
@@ -608,7 +615,7 @@ struct UsageRow: View {
         UsageStatusCalculator.calculateStatus(
             usedPercentage: usedPercentage,
             showRemaining: showRemaining,
-            elapsedFraction: rawElapsedFraction
+            elapsedFraction: usePaceColoring ? rawElapsedFraction : nil
         )
     }
 

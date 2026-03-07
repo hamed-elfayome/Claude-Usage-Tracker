@@ -30,7 +30,8 @@ final class MenuBarIconRenderer {
             config: config,
             usage: usage,
             apiUsage: apiUsage,
-            showRemaining: globalConfig.showRemainingPercentage
+            showRemaining: globalConfig.showRemainingPercentage,
+            usePaceColoring: globalConfig.usePaceColoring
         )
 
         // Calculate time marker fraction for session/week metrics
@@ -118,7 +119,8 @@ final class MenuBarIconRenderer {
         config: MetricIconConfig,
         usage: ClaudeUsage,
         apiUsage: APIUsage?,
-        showRemaining: Bool
+        showRemaining: Bool,
+        usePaceColoring: Bool = true
     ) -> MetricData {
         switch metricType {
         case .session:
@@ -127,11 +129,13 @@ final class MenuBarIconRenderer {
                 usedPercentage: usedPercentage,
                 showRemaining: showRemaining
             )
-            let sessionElapsed = UsageStatusCalculator.elapsedFraction(
-                resetTime: usage.sessionResetTime,
-                duration: Constants.sessionWindow,
-                showRemaining: false
-            )
+            let sessionElapsed: Double? = usePaceColoring
+                ? UsageStatusCalculator.elapsedFraction(
+                    resetTime: usage.sessionResetTime,
+                    duration: Constants.sessionWindow,
+                    showRemaining: false
+                )
+                : nil
             let statusLevel = UsageStatusCalculator.calculateStatus(
                 usedPercentage: usedPercentage,
                 showRemaining: showRemaining,
@@ -151,11 +155,13 @@ final class MenuBarIconRenderer {
                 usedPercentage: usedPercentage,
                 showRemaining: showRemaining
             )
-            let weekElapsed = UsageStatusCalculator.elapsedFraction(
-                resetTime: usage.weeklyResetTime,
-                duration: Constants.weeklyWindow,
-                showRemaining: false
-            )
+            let weekElapsed: Double? = usePaceColoring
+                ? UsageStatusCalculator.elapsedFraction(
+                    resetTime: usage.weeklyResetTime,
+                    duration: Constants.weeklyWindow,
+                    showRemaining: false
+                )
+                : nil
             let statusLevel = UsageStatusCalculator.calculateStatus(
                 usedPercentage: usedPercentage,
                 showRemaining: showRemaining,

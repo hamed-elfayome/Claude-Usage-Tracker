@@ -439,6 +439,8 @@
 "appearance.show_remaining_description" = "Display remaining capacity instead of used percentage (like macOS battery)";
 "appearance.show_time_marker_title" = "Show Time-Elapsed Marker";
 "appearance.show_time_marker_description" = "Display a tick mark on progress bars showing how far through the time period you are";
+"appearance.pace_coloring_title" = "Pace-Aware Coloring";
+"appearance.pace_coloring_description" = "Color indicators based on projected usage pace. When off, colors reflect current usage only.";
 "appearance.multiprofile_locked_title" = "Appearance Settings Locked";
 "appearance.multiprofile_locked_description" = "These settings are disabled while Multi-Profile Display is active. Each profile uses its own appearance in multi-profile mode.";
 "appearance.disable_multiprofile" = "Turn Off Multi-Profile Display";
