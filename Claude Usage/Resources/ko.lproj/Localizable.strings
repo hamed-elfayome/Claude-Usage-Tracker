@@ -763,6 +763,7 @@
 "api.remove_subtitle" = "이 프로필에서 API 콘솔 세션 키를 영구적으로 삭제";
 "claudecode.button_apply" = "적용";
 "claudecode.button_reset" = "재설정";
+"claudecode.actions_title" = "작업";
 "error.generic" = "오류: %@";
 "personal.button_saving" = "저장 중...";
 "personal.button_setup_wizard" = "설정 마법사";

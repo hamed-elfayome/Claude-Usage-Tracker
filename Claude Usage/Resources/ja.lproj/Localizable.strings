@@ -703,6 +703,7 @@
 "api.remove_subtitle" = "このプロファイルからAPIコンソールセッションキーを完全に削除";
 "claudecode.button_apply" = "適用";
 "claudecode.button_reset" = "リセット";
+"claudecode.actions_title" = "アクション";
 "error.generic" = "エラー: %@";
 "personal.button_saving" = "保存中...";
 "personal.button_setup_wizard" = "セットアップウィザード";

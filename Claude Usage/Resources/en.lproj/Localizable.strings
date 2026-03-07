@@ -689,6 +689,7 @@
 "api.remove_subtitle" = "Permanently delete your API Console session key from this profile";
 "claudecode.button_apply" = "Apply";
 "claudecode.button_reset" = "Reset";
+"claudecode.actions_title" = "Actions";
 "claudecode.component_profile" = "Profile name";
 "claudecode.context_info" = "Context may show ~80-95% instead of 100% — Claude auto-compresses before the limit, and output tokens also use context space.";
 "error.generic" = "Error: %@";

@@ -681,6 +681,7 @@
 "api.remove_subtitle" = "Supprimer définitivement votre clé de session API Console de ce profil";
 "claudecode.button_apply" = "Appliquer";
 "claudecode.button_reset" = "Réinitialiser";
+"claudecode.actions_title" = "Actions";
 "error.generic" = "Erreur: %@";
 "personal.button_saving" = "Enregistrement...";
 "personal.button_setup_wizard" = "Assistant de Configuration";

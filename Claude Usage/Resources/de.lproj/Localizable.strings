@@ -703,6 +703,7 @@
 "api.remove_subtitle" = "Ihren API Console-Sitzungsschlüssel dauerhaft aus diesem Profil löschen";
 "claudecode.button_apply" = "Anwenden";
 "claudecode.button_reset" = "Zurücksetzen";
+"claudecode.actions_title" = "Aktionen";
 "error.generic" = "Fehler: %@";
 "personal.button_saving" = "Speichere...";
 "personal.button_setup_wizard" = "Einrichtungsassistent";

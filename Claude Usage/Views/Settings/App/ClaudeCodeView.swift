@@ -33,163 +33,165 @@ struct ClaudeCodeView: View {
                     subtitle: "claudecode.subtitle".localized
                 )
 
-            // Preview Card (keep as is - user loves it!)
-            VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
-                HStack {
-                    Label("claudecode.preview_label".localized, systemImage: "eye.fill")
-                        .font(DesignTokens.Typography.sectionTitle)
-                        .foregroundColor(.primary)
+                // Preview Card
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
+                    HStack {
+                        Label("claudecode.preview_label".localized, systemImage: "eye.fill")
+                            .font(DesignTokens.Typography.sectionTitle)
+                            .foregroundColor(.primary)
 
-                    Spacer()
+                        Spacer()
 
-                    Text("ui.updates_realtime".localized)
-                        .font(DesignTokens.Typography.caption)
-                        .foregroundColor(.secondary)
-                }
-
-                VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
-                    Text(generatePreview())
-                        .font(DesignTokens.Typography.monospaced)
-                        .foregroundColor(.accentColor)
-                        .padding(DesignTokens.Spacing.medium)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(
-                            RoundedRectangle(cornerRadius: DesignTokens.Radius.small)
-                                .fill(Color.accentColor.opacity(0.05))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: DesignTokens.Radius.small)
-                                        .strokeBorder(Color.accentColor.opacity(0.2), lineWidth: 1)
-                                )
-                        )
-
-                    Text("claudecode.preview_description".localized)
-                        .font(DesignTokens.Typography.caption)
-                        .foregroundColor(.secondary)
-                }
-            }
-            .padding(DesignTokens.Spacing.cardPadding)
-            .background(
-                RoundedRectangle(cornerRadius: DesignTokens.Radius.card)
-                    .fill(DesignTokens.Colors.cardBackground)
-            )
-
-            // Components - Simple and clean
-            VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
-                Text("ui.display_components".localized)
-                    .font(DesignTokens.Typography.sectionTitle)
-
-                VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
-                    Toggle("claudecode.component_directory".localized, isOn: $showDirectory)
-                        .font(DesignTokens.Typography.body)
-
-                    Toggle("claudecode.component_branch".localized, isOn: $showBranch)
-                        .font(DesignTokens.Typography.body)
-
-                    Toggle("claudecode.component_model".localized, isOn: $showModel)
-                        .font(DesignTokens.Typography.body)
-
-                    Toggle("claudecode.component_profile".localized, isOn: $showProfile)
-                        .font(DesignTokens.Typography.body)
-
-                    Toggle("claudecode.component_context".localized, isOn: $showContext)
-                        .font(DesignTokens.Typography.body)
-
-                    if showContext {
-                        HStack(spacing: 0) {
-                            Spacer().frame(width: 20)
-                            Toggle("claudecode.component_context_tokens".localized, isOn: $contextAsTokens)
-                                .font(DesignTokens.Typography.caption)
-                                .foregroundColor(.secondary)
-                        }
-
-                        HStack(spacing: DesignTokens.Spacing.iconText) {
-                            Spacer().frame(width: 20)
-                            Image(systemName: "info.circle")
-                                .font(DesignTokens.Typography.caption)
-                                .foregroundColor(.secondary)
-                            Text("claudecode.context_info".localized)
-                                .font(DesignTokens.Typography.caption)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-
-                    Toggle("claudecode.component_usage".localized, isOn: $showUsage)
-                        .font(DesignTokens.Typography.body)
-
-                    if showUsage {
-                        HStack(spacing: 0) {
-                            Spacer().frame(width: 20)
-                            Toggle("claudecode.component_progressbar".localized, isOn: $showProgressBar)
-                                .font(DesignTokens.Typography.caption)
-                                .foregroundColor(.secondary)
-                        }
-
-                        HStack(spacing: 0) {
-                            Spacer().frame(width: 20)
-                            Toggle("claudecode.component_resettime".localized, isOn: $showResetTime)
-                                .font(DesignTokens.Typography.caption)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                }
-            }
-
-            // Action buttons - compact
-            HStack(spacing: DesignTokens.Spacing.iconText) {
-                Button(action: applyConfiguration) {
-                    Text("claudecode.button_apply".localized)
-                        .font(DesignTokens.Typography.body)
-                        .frame(minWidth: 70)
-                }
-                .buttonStyle(.borderedProminent)
-
-                Button(action: resetConfiguration) {
-                    Text("claudecode.button_reset".localized)
-                        .font(DesignTokens.Typography.body)
-                        .frame(minWidth: 70)
-                }
-                .buttonStyle(.bordered)
-            }
-
-            // Status message
-            if let message = statusMessage {
-                HStack(spacing: DesignTokens.Spacing.iconText) {
-                    Image(systemName: isSuccess ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .foregroundColor(isSuccess ? .green : .red)
-
-                    Text(message)
-                        .font(DesignTokens.Typography.body)
-
-                    Spacer()
-
-                    Button(action: { statusMessage = nil }) {
-                        Image(systemName: "xmark.circle.fill")
+                        Text("ui.updates_realtime".localized)
+                            .font(DesignTokens.Typography.caption)
                             .foregroundColor(.secondary)
                     }
-                    .buttonStyle(.plain)
+
+                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
+                        Text(generatePreview())
+                            .font(DesignTokens.Typography.monospaced)
+                            .foregroundColor(.accentColor)
+                            .padding(DesignTokens.Spacing.medium)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(
+                                RoundedRectangle(cornerRadius: DesignTokens.Radius.small)
+                                    .fill(Color.accentColor.opacity(0.05))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: DesignTokens.Radius.small)
+                                            .strokeBorder(Color.accentColor.opacity(0.2), lineWidth: 1)
+                                    )
+                            )
+
+                        Text("claudecode.preview_description".localized)
+                            .font(DesignTokens.Typography.caption)
+                            .foregroundColor(.secondary)
+                    }
                 }
-                .padding(DesignTokens.Spacing.medium)
+                .padding(DesignTokens.Spacing.cardPadding)
                 .background(
-                    RoundedRectangle(cornerRadius: DesignTokens.Radius.small)
-                        .fill((isSuccess ? Color.green : Color.red).opacity(0.1))
+                    RoundedRectangle(cornerRadius: DesignTokens.Radius.card)
+                        .fill(DesignTokens.Colors.cardBackground)
                 )
-            }
 
-            // Info - minimal
-            VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
-                Text("ui.requirements".localized)
-                    .font(DesignTokens.Typography.sectionTitle)
+                // Components + Actions (single card)
+                SettingsSectionCard(
+                    title: "ui.display_components".localized
+                ) {
+                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
+                        SettingToggle(
+                            title: "claudecode.component_directory".localized,
+                            isOn: $showDirectory
+                        )
 
-                Text("claudecode.requirement_sessionkey".localized)
-                    .font(DesignTokens.Typography.caption)
-                    .foregroundColor(.secondary)
+                        SettingToggle(
+                            title: "claudecode.component_branch".localized,
+                            isOn: $showBranch
+                        )
 
-                Text("claudecode.requirement_restart".localized)
-                    .font(DesignTokens.Typography.caption)
-                    .foregroundColor(.secondary)
-            }
+                        SettingToggle(
+                            title: "claudecode.component_model".localized,
+                            isOn: $showModel
+                        )
 
-            Spacer()
+                        SettingToggle(
+                            title: "claudecode.component_profile".localized,
+                            isOn: $showProfile
+                        )
+
+                        // Context with sub-option
+                        VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
+                            SettingToggle(
+                                title: "claudecode.component_context".localized,
+                                isOn: $showContext
+                            )
+
+                            if showContext {
+                                SettingToggle(
+                                    title: "claudecode.component_context_tokens".localized,
+                                    description: "claudecode.context_info".localized,
+                                    isOn: $contextAsTokens
+                                )
+                                .padding(.leading, DesignTokens.Spacing.cardPadding)
+                            }
+                        }
+
+                        // Usage with sub-options
+                        VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
+                            SettingToggle(
+                                title: "claudecode.component_usage".localized,
+                                isOn: $showUsage
+                            )
+
+                            if showUsage {
+                                VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
+                                    SettingToggle(
+                                        title: "claudecode.component_progressbar".localized,
+                                        isOn: $showProgressBar
+                                    )
+
+                                    SettingToggle(
+                                        title: "claudecode.component_resettime".localized,
+                                        isOn: $showResetTime
+                                    )
+                                }
+                                .padding(.leading, DesignTokens.Spacing.cardPadding)
+                            }
+                        }
+
+                        Divider()
+
+                        HStack(spacing: DesignTokens.Spacing.small) {
+                            Button(action: applyConfiguration) {
+                                Text("claudecode.button_apply".localized)
+                                    .font(DesignTokens.Typography.body)
+                                    .frame(minWidth: 70)
+                            }
+                            .buttonStyle(.borderedProminent)
+
+                            Button(action: resetConfiguration) {
+                                Text("claudecode.button_reset".localized)
+                                    .font(DesignTokens.Typography.body)
+                                    .frame(minWidth: 70)
+                            }
+                            .buttonStyle(.bordered)
+                        }
+
+                        if let message = statusMessage {
+                            HStack(spacing: DesignTokens.Spacing.iconText) {
+                                Image(systemName: isSuccess ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                    .foregroundColor(isSuccess ? DesignTokens.Colors.success : DesignTokens.Colors.error)
+
+                                Text(message)
+                                    .font(DesignTokens.Typography.caption)
+
+                                Spacer()
+
+                                Button(action: { statusMessage = nil }) {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundColor(.secondary)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            .padding(DesignTokens.Spacing.small)
+                            .background(
+                                RoundedRectangle(cornerRadius: DesignTokens.Radius.tiny)
+                                    .fill((isSuccess ? Color.green : Color.red).opacity(0.08))
+                            )
+                        }
+
+                        VStack(alignment: .leading, spacing: DesignTokens.Spacing.extraSmall) {
+                            Text("claudecode.requirement_sessionkey".localized)
+                                .font(DesignTokens.Typography.caption)
+                                .foregroundColor(.secondary)
+
+                            Text("claudecode.requirement_restart".localized)
+                                .font(DesignTokens.Typography.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+
+                Spacer()
             }
             .padding()
         }
@@ -271,7 +273,6 @@ struct ClaudeCodeView: View {
     private func generatePreview() -> String {
         var parts: [String] = []
 
-        // New order: Directory → Branch → Model → Context → Usage
         if showDirectory {
             parts.append("claude-usage")
         }
@@ -281,7 +282,7 @@ struct ClaudeCodeView: View {
         }
 
         if showModel {
-            parts.append("Opus")  // Example model name
+            parts.append("Opus")
         }
 
         if showProfile {

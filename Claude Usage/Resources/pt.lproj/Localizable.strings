@@ -701,6 +701,7 @@
 "api.remove_subtitle" = "Excluir permanentemente sua chave de sessão do Console API deste perfil";
 "claudecode.button_apply" = "Aplicar";
 "claudecode.button_reset" = "Redefinir";
+"claudecode.actions_title" = "Ações";
 "error.generic" = "Erro: %@";
 "personal.button_saving" = "Salvando...";
 "personal.button_setup_wizard" = "Assistente de Configuração";
