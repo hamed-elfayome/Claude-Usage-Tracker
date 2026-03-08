@@ -159,6 +159,7 @@
 "about.created_by" = "Created By";
 "about.contributors" = "Contributors (%d)";
 "about.contributors_loading" = "Contributors";
+"about.contributors_failed" = "Could not load contributors";
 "about.links" = "Links";
 "about.star_github" = "Star on GitHub";
 "about.report_issue" = "Report Issue";
@@ -588,6 +589,7 @@
 "common.next" = "Next";
 "common.remove" = "Remove";
 "common.switch" = "Switch";
+"common.retry" = "Retry";
 
 /* ==================== */
 /* MARK: - Popover/Menu Bar */

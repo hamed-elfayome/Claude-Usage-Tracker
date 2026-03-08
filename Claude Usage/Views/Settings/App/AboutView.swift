@@ -115,6 +115,30 @@ struct AboutView: View {
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding(.vertical, DesignTokens.Spacing.medium)
                     }
+                } else if contributorsError != nil {
+                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
+                        Text("about.contributors".localized(with: 0))
+                            .font(DesignTokens.Typography.sectionTitle)
+
+                        HStack {
+                            Text("about.contributors_failed".localized)
+                                .font(DesignTokens.Typography.caption)
+                                .foregroundColor(.secondary)
+
+                            Spacer()
+
+                            Button(action: { fetchContributors() }) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "arrow.clockwise")
+                                        .font(.system(size: 10))
+                                    Text("common.retry".localized)
+                                        .font(.system(size: 11))
+                                }
+                                .foregroundColor(.blue)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
                 }
 
                 // Links
@@ -166,7 +190,7 @@ struct AboutView: View {
                         .font(DesignTokens.Typography.caption)
                         .foregroundColor(.secondary)
 
-                    Text("about.copyright".localized)
+                    Text("© \(String(Calendar.current.component(.year, from: Date()))) Hamed Elfayome")
                         .font(DesignTokens.Typography.caption)
                         .foregroundColor(.secondary)
                 }
