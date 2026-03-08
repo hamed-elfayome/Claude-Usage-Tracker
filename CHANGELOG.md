@@ -5,6 +5,83 @@ All notable changes to Claude Usage Tracker will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-03-08
+
+### Major Release — Headless Mode, Usage History, Global Shortcuts & UI Overhaul
+
+A massive update with 14+ new features, 7+ bug fixes, and 12 ported improvements from the novastate fork. This release introduces headless Mac support, interactive usage history charts, global keyboard shortcuts, auto-switch profiles, a borderless vibrancy settings window, and much more.
+
+### Added
+
+- **Headless Mode**: Remote Desktop support for headless Mac environments (Mac mini/Mac Studio with no monitor at boot)
+- **Usage History Tracking**: Interactive timeline charts (session, weekly, billing) with 5h/24h/7d/30d scales, export to JSON/CSV
+- **Global Keyboard Shortcuts**: Configurable hotkeys (Toggle Popover, Refresh, Open Settings, Next Profile) via Carbon API — no Accessibility permission required
+- **Auto-Switch Profiles**: Automatically switch to next available profile when session limit reached
+- **In-App Feedback Prompt**: Feedback form shown after 7 days, anonymous analytics-only
+- **Mobile App "Coming Soon"**: Interest-collection painted door for future mobile companion
+- **Support Page**: Buy Me a Coffee integration with GitHub Sponsors
+- **Network Logging & Debug View**: Timed network capture sessions with request/response detail viewer
+- **Claude Code Statusline — Model Name**: Display current model (Opus, Sonnet) in CLI statusline
+- **Claude Code Statusline — Context Window**: Show context usage as percentage or token count
+- **Claude Code Statusline — Profile Name**: Show active profile name in CLI statusline
+- **Time-Elapsed Marker**: Visual tick marks on progress indicators showing time elapsed in period
+- **Pace-Aware Coloring**: Color indicators based on projected end-of-period usage
+- **Multi-Profile Percentage Style**: New "30 · 4" percentage text icon style for multi-profile mode
+- **Simplified Chinese (zh-cn)**: Full localization (9th language) — contributed by qianmoQ
+- **Simplified Setup Wizard**: CLI auto-detection on first launch (ported from novastate fork)
+- **Keychain Service Name Discovery**: Compatibility with Claude Code v2.1.52+ hashed keychain names (ported)
+- **Wake-from-Sleep Refresh**: Auto-refresh with 10s debounce after waking from sleep (ported)
+- **Stale Data & Error Banners**: Credential expired, refresh failed, and staleness warnings in popover (ported)
+- **Overage Credit Grant Balance**: Display overage balance in popover (ported)
+- **Custom Notification Thresholds**: User-defined percentage thresholds with sound picker (ported)
+- **CLAUDE_CONFIG_DIR Support**: Respect custom Claude config directory environment variable (ported)
+- **Statusline Usage Cache**: Instant CLI rendering via usage cache file (ported)
+- **200+ new localization strings** across all 9 languages
+
+### Changed
+
+- **Borderless Settings Window**: Full vibrancy design with custom traffic lights, HUD material, rounded corners
+- **Settings Sidebar Redesign**: Bottom bar with About/Debug/Support/Updates, fixed 190pt width
+- **Popover Vibrancy Background**: Always-active NSVisualEffectView with tint overlay
+- **Standardized Design Tokens**: Translucent card/input/border colors for vibrancy compatibility
+- **ClaudeCodeView Redesigned**: Single settings card with hierarchical sub-options
+- **Credential Fallback Chain**: 3-tier priority (Claude.ai → CLI OAuth → Keychain)
+- **Credential File Fallback**: Read from .credentials.json → Keychain → regex extraction
+- **Multi-Profile API Fetching**: Each profile's API console usage now fetched independently
+- **Appearance Observation**: Per-button effectiveAppearance observation for wallpaper changes
+- **Circle/Ring Direction**: Progress rings now draw clockwise from 12 o'clock
+- **Detached Popover**: Uses NSPanel with HUD style instead of NSWindow
+- **Header Logo**: Template rendering for automatic light/dark adaptation
+- **Settings Window Size**: Increased to 720×750
+- **Profile Deletion**: Cleans up usage history and tracking data
+- **Per-Profile Notification Tracking**: Independent threshold state per profile (ported)
+
+### Fixed
+
+- **Notification Persistence**: Sent notifications now persist across app restarts via UserDefaults
+- **Notification Deduplication**: Threshold-level identifiers prevent duplicate alerts at each percentage
+- **Overage Limit Fetching**: Now fetched in parallel with usage data when enabled
+- **RTL Shortcuts Icon**: Corrected icon for right-to-left locale accounts
+- **Dark Mode Detection**: Uses bestMatch for reliable appearance detection + cache invalidation
+- **CLI Context Window**: Accurate context display in statusline bash script
+- **Titlebar Separator**: Hidden via view hierarchy traversal for clean borderless look
+- **Token Expiry**: Milliseconds vs seconds fix for CLI OAuth tokens (ported)
+- **SIGSEGV Crash**: Removed synchronous Process spawn from SwiftUI body evaluation (ported)
+- **Menu Bar Re-Enable**: Deferred icon update to next run loop after re-enabling (ported)
+
+### Contributors
+
+- **SteveBlackUK** — Model name display option for statusline
+- **eliasyin** — Usage history tracking with interactive timeline charts
+- **qianmoQ** — Simplified Chinese (zh-cn) localization
+- **novastate** — Fork contributions: simplified CLI onboarding, keychain discovery, credential security, resilience features
+- **heathdutton** — Auto-rotate profiles on session limit, CLI OAuth multi-profile fix, profile name in statusline, menu bar re-enable fix
+- **tsvikas** — Time-elapsed marker on progress bars
+- **kynoptic** — Clockwise progress arc fix
+- **khromov** — Extra usage balance
+
+---
+
 ## [2.3.0] - 2026-01-23
 
 ### Major Release - Multi-Profile Menu Bar Display & Enhanced UI
@@ -1459,6 +1536,7 @@ This major release represents a significant milestone for Claude Usage Tracker, 
 - Detailed usage dashboard with countdown timers
 - Support for macOS 14.0+ (Sonoma and later)
 
+[3.0.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v2.3.0...v3.0.0
 [2.3.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v2.2.3...v2.3.0
 [2.2.3]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v2.2.2...v2.2.3
 [2.2.2]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v2.2.1...v2.2.2
