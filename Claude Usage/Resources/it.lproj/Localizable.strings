@@ -885,3 +885,28 @@
 "feedback.role_student" = "Studente";
 "feedback.role_researcher" = "Ricercatore";
 "feedback.role_other" = "Altro";
+
+// MARK: - Status Banners
+"popover.banner.credentials_expired" = "Credenziali scadute. Aggiorna in Impostazioni.";
+"popover.banner.refresh_failed" = "Aggiornamento fallito %d volte";
+"popover.banner.updated_ago" = "Aggiornato %dm fa";
+
+// MARK: - Overage Balance
+"popover.overage_balance" = "Saldo";
+
+// MARK: - Setup Wizard CLI Detection
+"setup.cli_detecting" = "Ricerca credenziali CLI...";
+"setup.cli_detected.title" = "CLI Rilevato!";
+"setup.cli_detected.description" = "Credenziali Claude Code CLI trovate nel sistema. Inizia il monitoraggio con un clic.";
+"setup.cli_detected.start" = "Inizia Monitoraggio";
+"setup.cli_detected.manual" = "Configura Manualmente";
+
+// MARK: - Custom Notification Settings
+"notifications.custom_thresholds" = "Soglie Personalizzate";
+"notifications.custom_threshold" = "Avviso personalizzato";
+"notifications.custom_placeholder" = "es. 50";
+"notifications.custom_add" = "Aggiungi";
+"notifications.sound" = "Suono";
+"notifications.sound.default" = "Predefinito";
+"notifications.sound.none" = "Nessuno";
+"notifications.sound.preview" = "Anteprima suono";

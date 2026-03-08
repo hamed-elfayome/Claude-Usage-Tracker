@@ -887,3 +887,28 @@
 "feedback.role_student" = "学生";
 "feedback.role_researcher" = "研究者";
 "feedback.role_other" = "その他";
+
+// MARK: - Status Banners
+"popover.banner.credentials_expired" = "認証情報が期限切れです。設定で更新してください。";
+"popover.banner.refresh_failed" = "更新が%d回失敗しました";
+"popover.banner.updated_ago" = "%d分前に更新";
+
+// MARK: - Overage Balance
+"popover.overage_balance" = "残高";
+
+// MARK: - Setup Wizard CLI Detection
+"setup.cli_detecting" = "CLI認証情報を確認中...";
+"setup.cli_detected.title" = "CLIを検出しました！";
+"setup.cli_detected.description" = "システムにClaude Code CLIの認証情報が見つかりました。ワンクリックで使用量の追跡を開始できます。";
+"setup.cli_detected.start" = "追跡を開始";
+"setup.cli_detected.manual" = "手動で設定する";
+
+// MARK: - Custom Notification Settings
+"notifications.custom_thresholds" = "カスタムしきい値";
+"notifications.custom_threshold" = "カスタムアラート";
+"notifications.custom_placeholder" = "例: 50";
+"notifications.custom_add" = "追加";
+"notifications.sound" = "サウンド";
+"notifications.sound.default" = "デフォルト";
+"notifications.sound.none" = "なし";
+"notifications.sound.preview" = "サウンドプレビュー";

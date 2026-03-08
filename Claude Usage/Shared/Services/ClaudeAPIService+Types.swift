@@ -45,6 +45,18 @@ extension ClaudeAPIService {
         }
     }
 
+    struct OverageCreditGrantResponse: Codable {
+        let remainingBalance: Double?
+        let currency: String?
+        let totalGranted: Double?
+
+        enum CodingKeys: String, CodingKey {
+            case remainingBalance = "remaining_balance"
+            case currency
+            case totalGranted = "total_granted"
+        }
+    }
+
     struct CurrentSpendResponse: Codable {
         let amount: Int
         let resetsAt: String

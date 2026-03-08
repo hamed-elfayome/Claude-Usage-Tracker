@@ -877,3 +877,28 @@
 "feedback.role_student" = "学生";
 "feedback.role_researcher" = "研究员";
 "feedback.role_other" = "其他";
+
+// MARK: - Status Banners
+"popover.banner.credentials_expired" = "凭证已过期。请在设置中更新。";
+"popover.banner.refresh_failed" = "刷新失败 %d 次";
+"popover.banner.updated_ago" = "%d分钟前更新";
+
+// MARK: - Overage Balance
+"popover.overage_balance" = "余额";
+
+// MARK: - Setup Wizard CLI Detection
+"setup.cli_detecting" = "正在检查CLI凭证...";
+"setup.cli_detected.title" = "检测到CLI！";
+"setup.cli_detected.description" = "在您的系统上找到了Claude Code CLI凭证。一键开始跟踪您的使用情况。";
+"setup.cli_detected.start" = "开始跟踪";
+"setup.cli_detected.manual" = "手动设置";
+
+// MARK: - Custom Notification Settings
+"notifications.custom_thresholds" = "自定义阈值";
+"notifications.custom_threshold" = "自定义提醒";
+"notifications.custom_placeholder" = "例如 50";
+"notifications.custom_add" = "添加";
+"notifications.sound" = "声音";
+"notifications.sound.default" = "默认";
+"notifications.sound.none" = "无";
+"notifications.sound.preview" = "预览声音";

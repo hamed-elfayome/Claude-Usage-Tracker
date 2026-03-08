@@ -232,7 +232,28 @@ fi
 
 usage_text=""
 if [ "$show_usage" = "1" ]; then
-  swift_result=$(swift "$HOME/.claude/fetch-claude-usage.swift" 2>/dev/null)
+  # Try reading from cache first (written by Claude Usage app on each refresh)
+  cache_file="$HOME/.claude/.statusline-usage-cache"
+  swift_result=""
+  if [ -f "$cache_file" ]; then
+    cache_ts=$(grep "^TIMESTAMP=" "$cache_file" 2>/dev/null | cut -d= -f2)
+    now_ts=$(date +%s)
+    if [ -n "$cache_ts" ]; then
+      cache_age=$((now_ts - cache_ts))
+      if [ "$cache_age" -lt 300 ]; then
+        cache_util=$(grep "^UTILIZATION=" "$cache_file" | cut -d= -f2)
+        cache_reset=$(grep "^RESETS_AT=" "$cache_file" | cut -d= -f2)
+        if [ -n "$cache_util" ]; then
+          swift_result="${cache_util}|${cache_reset}"
+        fi
+      fi
+    fi
+  fi
+
+  # Fall back to swift script if cache is stale or missing
+  if [ -z "$swift_result" ]; then
+    swift_result=$(swift "$HOME/.claude/fetch-claude-usage.swift" 2>/dev/null)
+  fi
 
   if [ $? -eq 0 ] && [ -n "$swift_result" ]; then
     utilization=$(echo "$swift_result" | cut -d'|' -f1)
@@ -535,6 +556,25 @@ PROFILE_NAME="\(profileName)"
 
         return FileManager.default.fileExists(atPath: swiftScript.path) &&
                FileManager.default.fileExists(atPath: bashScript.path)
+    }
+
+    /// Writes usage data to cache file for fast bash script access
+    func writeUsageCache(usage: ClaudeUsage, profileName: String? = nil) {
+        let cachePath = Constants.ClaudePaths.claudeDirectory
+            .appendingPathComponent(".statusline-usage-cache")
+
+        let formatter = ISO8601DateFormatter()
+        var cacheContent = """
+        UTILIZATION=\(Int(usage.sessionPercentage))
+        RESETS_AT=\(formatter.string(from: usage.sessionResetTime))
+        TIMESTAMP=\(Int(Date().timeIntervalSince1970))
+        """
+
+        if let name = profileName {
+            cacheContent += "\nPROFILE_NAME=\(name)"
+        }
+
+        try? cacheContent.write(to: cachePath, atomically: true, encoding: .utf8)
     }
 
     /// Updates scripts only if already installed (installation is optional)

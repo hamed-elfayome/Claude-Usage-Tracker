@@ -5,8 +5,8 @@ import UserNotifications
 class NotificationManager: NotificationServiceProtocol {
     static let shared = NotificationManager()
 
-    // Track previous session percentage to detect resets
-    private var previousSessionPercentage: Double = 0.0
+    // Track previous session percentage per profile to detect resets
+    private var previousSessionPercentages: [String: Double] = [:]
 
     // Track which notifications have been sent to prevent duplicates
     // Persisted to UserDefaults to survive app restarts
@@ -128,9 +128,10 @@ class NotificationManager: NotificationServiceProtocol {
         }
 
         let sessionPercentage = usage.sessionPercentage
+        let previousPercentage = previousSessionPercentages[profileName] ?? 0.0
 
         // Check for session reset (went from >0% to 0%)
-        if previousSessionPercentage > 0.0 && sessionPercentage == 0.0 {
+        if previousPercentage > 0.0 && sessionPercentage == 0.0 {
             // Clear all sent notifications for this profile to allow re-notification in new session
             sentNotifications = sentNotifications.filter { !$0.hasPrefix(profileName) }
 
@@ -144,35 +145,31 @@ class NotificationManager: NotificationServiceProtocol {
             // Note: Auto-start session is handled per-profile but called from elsewhere
         }
 
-        // Update previous percentage for next check
-        previousSessionPercentage = sessionPercentage
+        // Update previous percentage for this specific profile
+        previousSessionPercentages[profileName] = sessionPercentage
 
-        // 95% threshold
-        if sessionPercentage >= 95 && settings.threshold95Enabled {
-            sendProfileAlert(
-                profileName: profileName,
-                type: .sessionCritical,
-                percentage: sessionPercentage,
-                resetTime: usage.sessionResetTime
-            )
-        }
-        // 90% threshold
-        else if sessionPercentage >= 90 && settings.threshold90Enabled {
-            sendProfileAlert(
-                profileName: profileName,
-                type: .sessionWarning,
-                percentage: sessionPercentage,
-                resetTime: usage.sessionResetTime
-            )
-        }
-        // 75% threshold
-        else if sessionPercentage >= 75 && settings.threshold75Enabled {
-            sendProfileAlert(
-                profileName: profileName,
-                type: .sessionInfo,
-                percentage: sessionPercentage,
-                resetTime: usage.sessionResetTime
-            )
+        // Check thresholds (highest first) - includes both built-in and custom
+        let thresholds = settings.sortedThresholds
+        for threshold in thresholds.reversed() {
+            if sessionPercentage >= Double(threshold) {
+                let alertType: AlertType
+                switch threshold {
+                case 95...:
+                    alertType = .sessionCritical
+                case 90..<95:
+                    alertType = .sessionWarning
+                default:
+                    alertType = .sessionInfo
+                }
+                sendProfileAlert(
+                    profileName: profileName,
+                    type: alertType,
+                    percentage: sessionPercentage,
+                    resetTime: usage.sessionResetTime,
+                    soundName: settings.soundName
+                )
+                break
+            }
         }
     }
 
@@ -194,22 +191,11 @@ class NotificationManager: NotificationServiceProtocol {
     }
 
     /// Sends a profile-specific usage alert
-    private func sendProfileAlert(profileName: String, type: AlertType, percentage: Double, resetTime: Date?) {
-        // Map percentage to threshold level to prevent duplicate notifications
-        // at every percentage point (e.g., 81%, 82%, 83%)
-        let thresholdLevel: Int
-        if percentage >= 95 {
-            thresholdLevel = 95
-        } else if percentage >= 90 {
-            thresholdLevel = 90
-        } else if percentage >= 75 {
-            thresholdLevel = 75
-        } else {
-            return // Below all thresholds, no notification needed
-        }
+    private func sendProfileAlert(profileName: String, type: AlertType, percentage: Double, resetTime: Date?, soundName: String = "default") {
+        // Map percentage to nearest threshold level to prevent duplicate notifications
+        let thresholdLevel = Int(percentage)
 
-        // Create unique identifier based on threshold level, not actual percentage
-        // This ensures we only notify once per threshold crossing
+        // Create unique identifier based on alert type and threshold level
         let identifier = "\(profileName)_\(type.rawValue)_\(thresholdLevel)"
 
         // Check if we've already sent this notification
@@ -220,8 +206,17 @@ class NotificationManager: NotificationServiceProtocol {
         let content = UNMutableNotificationContent()
         content.title = "\(profileName) - \(type.title)"
         content.body = type.message(percentage: percentage, resetTime: resetTime)
-        content.sound = .default
         content.categoryIdentifier = "USAGE_ALERT"
+
+        // Apply sound setting
+        switch soundName {
+        case "none":
+            break // No sound
+        case "default":
+            content.sound = .default
+        default:
+            content.sound = UNNotificationSound(named: UNNotificationSoundName(soundName))
+        }
 
         let request = UNNotificationRequest(
             identifier: identifier,
@@ -293,6 +288,12 @@ class NotificationManager: NotificationServiceProtocol {
                 LoggingService.shared.logError("Failed to send auto-switch notification: \(error)")
             }
         }
+    }
+
+    /// Clears notification tracking state for a specific profile
+    func clearNotificationsForProfile(_ profileName: String) {
+        sentNotifications = sentNotifications.filter { !$0.hasPrefix(profileName) }
+        previousSessionPercentages.removeValue(forKey: profileName)
     }
 
     /// Clears all pending notifications

@@ -400,6 +400,7 @@ class ClaudeAPIService: APIServiceProtocol {
     func fetchUsageData(sessionKey: String, organizationId: String) async throws -> ClaudeUsage {
         async let usageDataTask = performRequest(endpoint: "/organizations/\(organizationId)/usage", sessionKey: sessionKey)
         async let overageDataTask: Data? = performRequest(endpoint: "/organizations/\(organizationId)/overage_spend_limit", sessionKey: sessionKey)
+        async let creditGrantTask: Data? = performRequest(endpoint: "/organizations/\(organizationId)/overage_credit_grant", sessionKey: sessionKey)
 
         let usageData = try await usageDataTask
         var claudeUsage = try parseUsageResponse(usageData)
@@ -410,6 +411,12 @@ class ClaudeAPIService: APIServiceProtocol {
             claudeUsage.costUsed = overage.usedCredits
             claudeUsage.costLimit = overage.monthlyCreditLimit
             claudeUsage.costCurrency = overage.currency
+        }
+
+        if let creditData = try? await creditGrantTask,
+           let creditGrant = try? JSONDecoder().decode(OverageCreditGrantResponse.self, from: creditData) {
+            claudeUsage.overageBalance = creditGrant.remainingBalance
+            claudeUsage.overageBalanceCurrency = creditGrant.currency
         }
 
         return claudeUsage
@@ -457,6 +464,7 @@ class ClaudeAPIService: APIServiceProtocol {
             // Use active profile's checkOverageLimitEnabled setting
             let checkOverage = ProfileManager.shared.activeProfile?.checkOverageLimitEnabled ?? true
             async let overageDataTask: Data? = checkOverage ? performRequest(endpoint: "/organizations/\(orgId)/overage_spend_limit", sessionKey: sessionKey) : nil
+            async let creditGrantTask: Data? = checkOverage ? performRequest(endpoint: "/organizations/\(orgId)/overage_credit_grant", sessionKey: sessionKey) : nil
 
             let usageData = try await usageDataTask
             var claudeUsage = try parseUsageResponse(usageData)
@@ -468,6 +476,13 @@ class ClaudeAPIService: APIServiceProtocol {
                 claudeUsage.costUsed = overage.usedCredits
                 claudeUsage.costLimit = overage.monthlyCreditLimit
                 claudeUsage.costCurrency = overage.currency
+            }
+
+            if checkOverage,
+               let creditData = try? await creditGrantTask,
+               let creditGrant = try? JSONDecoder().decode(OverageCreditGrantResponse.self, from: creditData) {
+                claudeUsage.overageBalance = creditGrant.remainingBalance
+                claudeUsage.overageBalanceCurrency = creditGrant.currency
             }
 
             return claudeUsage

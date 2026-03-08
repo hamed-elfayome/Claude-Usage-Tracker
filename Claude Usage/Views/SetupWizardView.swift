@@ -1,6 +1,14 @@
 import SwiftUI
 import AppKit
 
+// MARK: - Setup Mode (Auto-detect vs Manual)
+
+enum SetupMode {
+    case loading
+    case cliDetected(credentials: String)
+    case manualSetup
+}
+
 // MARK: - Wizard State Machine
 
 enum SetupWizardStep: Int, Comparable {
@@ -30,9 +38,72 @@ struct SetupWizardView: View {
     @State private var hasClaudeCodeCredentials = false
     @State private var isMigrating = false
     @State private var migrationMessage: String?
+    @State private var setupMode: SetupMode = .loading
     private let apiService = ClaudeAPIService()
 
     var body: some View {
+        switch setupMode {
+        case .loading:
+            VStack(spacing: 16) {
+                ProgressView()
+                Text("setup.cli_detecting".localized)
+                    .font(.system(size: 13))
+                    .foregroundColor(.secondary)
+            }
+            .frame(width: 580, height: 680)
+            .onAppear { detectCLICredentials() }
+
+        case .cliDetected(let credentials):
+            CLIDetectedSetupView(
+                credentials: credentials,
+                onStartTracking: { startTrackingWithCLI(credentials: credentials) },
+                onManualSetup: { setupMode = .manualSetup }
+            )
+
+        case .manualSetup:
+            manualSetupBody
+        }
+    }
+
+    /// Detects CLI credentials and sets the appropriate setup mode
+    private func detectCLICredentials() {
+        Task {
+            do {
+                if let credentials = try ClaudeCodeSyncService.shared.readSystemCredentials(),
+                   let _ = ClaudeCodeSyncService.shared.extractAccessToken(from: credentials),
+                   !ClaudeCodeSyncService.shared.isTokenExpired(credentials) {
+                    await MainActor.run {
+                        hasClaudeCodeCredentials = true
+                        setupMode = .cliDetected(credentials: credentials)
+                    }
+                    return
+                }
+            } catch { }
+
+            await MainActor.run {
+                setupMode = .manualSetup
+            }
+        }
+    }
+
+    /// Saves CLI credentials to the active profile and dismisses the wizard
+    private func startTrackingWithCLI(credentials: String) {
+        guard let profileId = ProfileManager.shared.activeProfile?.id else {
+            setupMode = .manualSetup
+            return
+        }
+
+        do {
+            try ClaudeCodeSyncService.shared.syncToProfile(profileId)
+            NotificationCenter.default.post(name: .credentialsChanged, object: nil)
+            dismiss()
+        } catch {
+            LoggingService.shared.logError("Failed to sync CLI credentials: \(error)")
+            setupMode = .manualSetup
+        }
+    }
+
+    private var manualSetupBody: some View {
         VStack(spacing: 0) {
             // Header with logo and progress indicator
             VStack(spacing: 16) {
@@ -177,21 +248,6 @@ struct SetupWizardView: View {
             // Load auto-start preference from active profile
             if let activeProfile = ProfileManager.shared.activeProfile {
                 wizardState.autoStartSessionEnabled = activeProfile.autoStartSessionEnabled
-            }
-
-            // Check if Claude Code credentials exist
-            Task {
-                do {
-                    let credentials = try ClaudeCodeSyncService.shared.readSystemCredentials()
-                    await MainActor.run {
-                        hasClaudeCodeCredentials = (credentials != nil)
-                    }
-                } catch {
-                    // If error reading credentials, assume they don't exist
-                    await MainActor.run {
-                        hasClaudeCodeCredentials = false
-                    }
-                }
             }
         }
     }
@@ -789,6 +845,67 @@ struct WizardStatusBox: View {
             RoundedRectangle(cornerRadius: 6)
                 .fill(type.color.opacity(0.1))
         )
+    }
+}
+
+// MARK: - CLI Detected Setup View
+struct CLIDetectedSetupView: View {
+    let credentials: String
+    let onStartTracking: () -> Void
+    let onManualSetup: () -> Void
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer()
+
+            VStack(spacing: 24) {
+                // Terminal icon
+                ZStack {
+                    Circle()
+                        .fill(Color.green.opacity(0.12))
+                        .frame(width: 80, height: 80)
+
+                    Image(systemName: "terminal.fill")
+                        .font(.system(size: 36))
+                        .foregroundColor(.green)
+                }
+
+                // Title
+                Text("setup.cli_detected.title".localized)
+                    .font(.system(size: 24, weight: .bold))
+
+                // Description
+                Text("setup.cli_detected.description".localized)
+                    .font(.system(size: 14))
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 60)
+
+                // Start tracking button
+                Button(action: onStartTracking) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "chart.bar.fill")
+                        Text("setup.cli_detected.start".localized)
+                    }
+                    .font(.system(size: 14, weight: .semibold))
+                    .padding(.horizontal, 28)
+                    .padding(.vertical, 10)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+
+                // Manual setup link
+                Button(action: onManualSetup) {
+                    Text("setup.cli_detected.manual".localized)
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
+
+            Spacer()
+        }
+        .frame(width: 580, height: 680)
     }
 }
 

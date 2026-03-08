@@ -11,6 +11,12 @@ class MenuBarManager: NSObject, ObservableObject {
     @Published private(set) var apiUsage: APIUsage?
     @Published private(set) var isRefreshing: Bool = false
 
+    // Error tracking for stale data / credential banners
+    @Published private(set) var hasCredentialError: Bool = false
+    @Published private(set) var consecutiveRefreshFailures: Int = 0
+    @Published private(set) var lastRefreshError: String? = nil
+    @Published private(set) var lastSuccessfulRefreshTime: Date? = nil
+
     // Multi-profile mode: track which profile's icon was clicked
     @Published private(set) var clickedProfileId: UUID?
     @Published private(set) var clickedProfileUsage: ClaudeUsage?
@@ -84,6 +90,10 @@ class MenuBarManager: NSObject, ObservableObject {
 
     // Observer for screen/display changes (headless mode support)
     private var screenObserver: NSObjectProtocol?
+
+    // Observer for wake-from-sleep
+    private var wakeObserver: NSObjectProtocol?
+    private var lastAutoRefreshTime: Date = .distantPast
 
     // MARK: - Image Caching (CPU Optimization)
     private var cachedImage: NSImage?
@@ -204,6 +214,9 @@ class MenuBarManager: NSObject, ObservableObject {
         // Setup headless mode observer if enabled (for Remote Desktop support)
         setupHeadlessModeObserver()
 
+        // Setup wake-from-sleep observer for auto-refresh
+        setupWakeObserver()
+
         // Setup global keyboard shortcuts
         setupShortcuts()
     }
@@ -255,6 +268,10 @@ class MenuBarManager: NSObject, ObservableObject {
         if let screenObserver = screenObserver {
             NotificationCenter.default.removeObserver(screenObserver)
             self.screenObserver = nil
+        }
+        if let wakeObserver = wakeObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(wakeObserver)
+            self.wakeObserver = nil
         }
         if let monitor = eventMonitor {
             NSEvent.removeMonitor(monitor)
@@ -417,7 +434,10 @@ class MenuBarManager: NSObject, ObservableObject {
             config: displayConfig
         )
 
-        updateAllStatusBarIcons()
+        // Defer icon update to next run loop iteration to let NSStatusBar finalize layout
+        DispatchQueue.main.async { [weak self] in
+            self?.updateAllStatusBarIcons()
+        }
     }
 
     private func restartAutoRefreshWithInterval(_ interval: TimeInterval) {
@@ -608,9 +628,32 @@ class MenuBarManager: NSObject, ObservableObject {
     private func startAutoRefresh() {
         let interval = profileManager.activeProfile?.refreshInterval ?? 30.0
         refreshTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+            self?.lastAutoRefreshTime = Date()
             self?.refreshUsage()
         }
+        refreshTimer?.tolerance = interval * 0.1  // 10% tolerance for energy efficiency
         LoggingService.shared.log("Started auto-refresh with interval: \(interval)s")
+    }
+
+    private func setupWakeObserver() {
+        wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didWakeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+            // Debounce: only refresh if at least 10 seconds since last auto-refresh
+            let timeSinceLastRefresh = Date().timeIntervalSince(self.lastAutoRefreshTime)
+            guard timeSinceLastRefresh > 10 else {
+                LoggingService.shared.log("MenuBarManager: Skipping wake refresh (debounce)")
+                return
+            }
+            LoggingService.shared.log("MenuBarManager: Wake from sleep detected, refreshing after delay")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
+                self?.lastAutoRefreshTime = Date()
+                self?.refreshUsage()
+            }
+        }
     }
 
     private func restartAutoRefresh() {
@@ -796,9 +839,11 @@ class MenuBarManager: NSObject, ObservableObject {
             action: #selector(togglePopover)
         )
 
-        // Update icons for all selected profiles with the display config
-        // Use profiles from profileManager to get the latest data
-        statusBarUIManager?.updateMultiProfileButtons(profiles: profileManager.profiles, config: config)
+        // Defer icon update to next run loop iteration to let NSStatusBar finalize layout
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.statusBarUIManager?.updateMultiProfileButtons(profiles: self.profileManager.profiles, config: config)
+        }
 
         LoggingService.shared.log("MenuBarManager: Multi-profile mode enabled with \(selectedProfiles.count) profiles, style=\(config.iconStyle.rawValue)")
 
@@ -977,7 +1022,11 @@ class MenuBarManager: NSObject, ObservableObject {
         }
 
         statusBarUIManager?.setup(target: self, action: #selector(togglePopover), config: displayConfig)
-        updateAllStatusBarIcons()
+
+        // Defer icon update to next run loop iteration to let NSStatusBar finalize layout
+        DispatchQueue.main.async { [weak self] in
+            self?.updateAllStatusBarIcons()
+        }
 
         LoggingService.shared.log("MenuBarManager: Single profile mode enabled")
     }
@@ -1056,6 +1105,14 @@ class MenuBarManager: NSObject, ObservableObject {
                         self.profileManager.saveClaudeUsage(newUsage, for: profileId)
                     }
 
+                    // Write statusline cache for instant CLI rendering
+                    if StatuslineService.shared.isInstalled {
+                        StatuslineService.shared.writeUsageCache(
+                            usage: newUsage,
+                            profileName: self.profileManager.activeProfile?.name
+                        )
+                    }
+
                     // Update all menu bar icons
                     self.updateAllStatusBarIcons()
 
@@ -1076,6 +1133,13 @@ class MenuBarManager: NSObject, ObservableObject {
                 ErrorRecovery.shared.recordSuccess(for: .api)
                 usageSuccess = true
 
+                await MainActor.run {
+                    self.consecutiveRefreshFailures = 0
+                    self.lastRefreshError = nil
+                    self.hasCredentialError = false
+                    self.lastSuccessfulRefreshTime = Date()
+                }
+
             } catch {
                 // Convert to AppError and log
                 let appError = AppError.wrap(error)
@@ -1084,8 +1148,16 @@ class MenuBarManager: NSObject, ObservableObject {
                 // Record failure for circuit breaker
                 ErrorRecovery.shared.recordFailure(for: .api)
 
-                // Show error to user if this was triggered by session key update
+                // Track error state for UI banners
                 await MainActor.run {
+                    self.consecutiveRefreshFailures += 1
+                    self.lastRefreshError = appError.message
+
+                    // Track credential errors specifically
+                    if appError.code == .apiUnauthorized || appError.code == .sessionKeyExpired {
+                        self.hasCredentialError = true
+                    }
+
                     // Check if this refresh was triggered within last 5 seconds
                     // (indicates user-initiated action like saving session key)
                     if abs(self.lastRefreshTriggerTime.timeIntervalSinceNow) < 5 {

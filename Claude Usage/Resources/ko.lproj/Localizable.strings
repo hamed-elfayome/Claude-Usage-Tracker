@@ -947,3 +947,28 @@
 "feedback.role_student" = "학생";
 "feedback.role_researcher" = "연구원";
 "feedback.role_other" = "기타";
+
+// MARK: - Status Banners
+"popover.banner.credentials_expired" = "인증 정보가 만료되었습니다. 설정에서 업데이트하세요.";
+"popover.banner.refresh_failed" = "새로고침이 %d회 실패했습니다";
+"popover.banner.updated_ago" = "%d분 전에 업데이트됨";
+
+// MARK: - Overage Balance
+"popover.overage_balance" = "잔액";
+
+// MARK: - Setup Wizard CLI Detection
+"setup.cli_detecting" = "CLI 자격 증명 확인 중...";
+"setup.cli_detected.title" = "CLI 감지됨!";
+"setup.cli_detected.description" = "시스템에서 Claude Code CLI 자격 증명을 찾았습니다. 원클릭으로 사용량 추적을 시작하세요.";
+"setup.cli_detected.start" = "추적 시작";
+"setup.cli_detected.manual" = "수동으로 설정";
+
+// MARK: - Custom Notification Settings
+"notifications.custom_thresholds" = "사용자 정의 임계값";
+"notifications.custom_threshold" = "사용자 정의 알림";
+"notifications.custom_placeholder" = "예: 50";
+"notifications.custom_add" = "추가";
+"notifications.sound" = "소리";
+"notifications.sound.default" = "기본값";
+"notifications.sound.none" = "없음";
+"notifications.sound.preview" = "소리 미리듣기";

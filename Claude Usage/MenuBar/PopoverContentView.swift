@@ -106,6 +106,35 @@ struct PopoverContentView: View {
 
             PopoverDivider()
 
+            // Error / stale data banners
+            if manager.hasCredentialError {
+                StatusBannerView(
+                    icon: "exclamationmark.triangle.fill",
+                    message: "popover.banner.credentials_expired".localized,
+                    color: .orange
+                ) {
+                    onPreferences()
+                }
+            } else if manager.consecutiveRefreshFailures >= 3 {
+                StatusBannerView(
+                    icon: "arrow.clockwise.circle.fill",
+                    message: String(format: "popover.banner.refresh_failed".localized, manager.consecutiveRefreshFailures),
+                    color: .yellow
+                ) {
+                    onRefresh()
+                }
+            } else if let lastRefresh = manager.lastSuccessfulRefreshTime,
+                      Date().timeIntervalSince(lastRefresh) > 300 {
+                let minutesAgo = Int(Date().timeIntervalSince(lastRefresh) / 60)
+                StatusBannerView(
+                    icon: "clock.fill",
+                    message: String(format: "popover.banner.updated_ago".localized, minutesAgo),
+                    color: .orange
+                ) {
+                    onRefresh()
+                }
+            }
+
             // Viewing usage tag (shown in multi-profile mode)
             if profileManager.displayMode == .multi,
                let viewingProfile = manager.clickedProfileId.flatMap({ id in
@@ -567,6 +596,19 @@ struct SmartUsageDashboard: View {
                     resetTime: nil,
                     periodDuration: nil
                 )
+
+                // Overage credit grant balance
+                if let balance = usage.overageBalance, let balanceCurrency = usage.overageBalanceCurrency {
+                    HStack {
+                        Text("popover.overage_balance".localized)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Text(String(format: "%.2f %@", balance / 100.0, balanceCurrency.uppercased()))
+                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                            .foregroundColor(.green)
+                    }
+                }
             }
 
             // API Usage
@@ -980,5 +1022,38 @@ struct APIUsageCard: View {
             RoundedRectangle(cornerRadius: 8)
                 .strokeBorder(Color.primary.opacity(0.1), lineWidth: 0.5)
         )
+    }
+}
+
+// MARK: - Status Banner View
+struct StatusBannerView: View {
+    let icon: String
+    let message: String
+    let color: Color
+    var onTap: (() -> Void)? = nil
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.system(size: 11))
+                .foregroundColor(color)
+            Text(message)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(.primary)
+                .lineLimit(1)
+            Spacer()
+            if onTap != nil {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 9))
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 6)
+        .background(color.opacity(0.12))
+        .cornerRadius(6)
+        .padding(.horizontal, 10)
+        .padding(.top, 4)
+        .onTapGesture { onTap?() }
     }
 }
