@@ -54,6 +54,9 @@ class SharedDataStore {
 
         // Auto-Switch Profile
         static let autoSwitchProfileEnabled = "autoSwitchProfileEnabled"
+
+        // Popover Settings
+        static let popoverShowRemainingTime = "popoverShowRemainingTime"
     }
 
     init() {
@@ -375,6 +378,16 @@ class SharedDataStore {
 
     func loadAutoSwitchProfileEnabled() -> Bool {
         return defaults.bool(forKey: Keys.autoSwitchProfileEnabled)
+    }
+
+    // MARK: - Popover Settings
+
+    func savePopoverShowRemainingTime(_ show: Bool) {
+        defaults.set(show, forKey: Keys.popoverShowRemainingTime)
+    }
+
+    func loadPopoverShowRemainingTime() -> Bool {
+        return defaults.bool(forKey: Keys.popoverShowRemainingTime)
     }
 
     // MARK: - Testing Helpers

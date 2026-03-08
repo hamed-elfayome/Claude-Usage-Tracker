@@ -70,6 +70,7 @@
 "menubar.used" = "使用済み";
 "menubar.remaining" = "残り";
 "menubar.resets_time" = "%@にリセット";
+"menubar.resets_in" = "%@後にリセット";
 "menubar.click_status" = "クリックしてstatus.claude.comを開く";
 
 /* ==================== */
@@ -864,6 +865,17 @@
 "mobile.privacy_note" = "個人データは収集されません。興味の登録のみです。";
 "mobile.error_title" = "リクエスト失敗";
 "mobile.error_message" = "興味を登録できませんでした。インターネット接続を確認して再度お試しください。";
+
+/* ==================== */
+/* MARK: - Popover Settings */
+/* ==================== */
+"section.popover_title" = "ポップオーバー";
+"section.popover_desc" = "ポップオーバーの表示をカスタマイズ";
+"popover.title" = "ポップオーバー";
+"popover.subtitle" = "ポップオーバーでの使用状況の表示方法をカスタマイズ";
+"popover.display_section" = "表示";
+"popover.show_remaining_time" = "残り時間を表示";
+"popover.show_remaining_time_desc" = "リセット時刻の代わりにリセットまでのカウントダウンを表示";
 
 /* ==================== */
 /* MARK: - Feedback Prompt */

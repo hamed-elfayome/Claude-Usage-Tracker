@@ -70,6 +70,7 @@
 "menubar.used" = "Used";
 "menubar.remaining" = "Remaining";
 "menubar.resets_time" = "Resets %@";
+"menubar.resets_in" = "Resets in %@";
 "menubar.click_status" = "Click to open status.claude.com";
 
 /* ==================== */
@@ -870,6 +871,17 @@
 "mobile.privacy_note" = "No personal data is collected. This only registers your interest.";
 "mobile.error_title" = "Request Failed";
 "mobile.error_message" = "Could not register your interest. Please check your internet connection and try again.";
+
+/* ==================== */
+/* MARK: - Popover Settings */
+/* ==================== */
+"section.popover_title" = "Popover";
+"section.popover_desc" = "Customize popover display";
+"popover.title" = "Popover";
+"popover.subtitle" = "Customize how the popover displays usage information";
+"popover.display_section" = "Display";
+"popover.show_remaining_time" = "Show remaining time";
+"popover.show_remaining_time_desc" = "Show countdown to reset instead of reset time";
 
 /* ==================== */
 /* MARK: - Feedback Prompt */

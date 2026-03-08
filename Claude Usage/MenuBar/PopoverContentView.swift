@@ -541,6 +541,10 @@ struct SmartUsageDashboard: View {
         DataStore.shared.loadAPITrackingEnabled()
     }
 
+    private var showRemainingTime: Bool {
+        SharedDataStore.shared.loadPopoverShowRemainingTime()
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             // Primary: Session Usage
@@ -552,7 +556,8 @@ struct SmartUsageDashboard: View {
                 resetTime: usage.sessionResetTime,
                 periodDuration: Constants.sessionWindow,
                 showTimeMarker: showTimeMarker,
-                usePaceColoring: usePaceColoring
+                usePaceColoring: usePaceColoring,
+                showRemainingTime: showRemainingTime
             )
 
             // All Models (Weekly)
@@ -565,7 +570,8 @@ struct SmartUsageDashboard: View {
                 resetTime: usage.weeklyResetTime,
                 periodDuration: Constants.weeklyWindow,
                 showTimeMarker: showTimeMarker,
-                usePaceColoring: usePaceColoring
+                usePaceColoring: usePaceColoring,
+                showRemainingTime: showRemainingTime
             )
 
             if usage.opusWeeklyTokensUsed > 0 {
@@ -587,7 +593,8 @@ struct SmartUsageDashboard: View {
                     usedPercentage: usage.sonnetWeeklyPercentage,
                     showRemaining: showRemainingPercentage,
                     resetTime: usage.sonnetWeeklyResetTime,
-                    periodDuration: nil
+                    periodDuration: nil,
+                    showRemainingTime: showRemainingTime
                 )
             }
 
@@ -619,7 +626,7 @@ struct SmartUsageDashboard: View {
 
             // API Usage
             if let apiUsage = apiUsage {
-                APIUsageCard(apiUsage: apiUsage, showRemaining: showRemainingPercentage)
+                APIUsageCard(apiUsage: apiUsage, showRemaining: showRemainingPercentage, showRemainingTime: showRemainingTime)
             }
         }
         .padding(.horizontal, 14)
@@ -638,6 +645,7 @@ struct UsageRow: View {
     let periodDuration: TimeInterval?
     var showTimeMarker: Bool = true
     var usePaceColoring: Bool = true
+    var showRemainingTime: Bool = false
 
     private var displayPercentage: Double {
         UsageStatusCalculator.getDisplayPercentage(
@@ -736,7 +744,9 @@ struct UsageRow: View {
 
             // Reset time
             if let reset = resetTime {
-                Text("menubar.resets_time".localized(with: reset.resetTimeString()))
+                Text(showRemainingTime
+                    ? "menubar.resets_in".localized(with: reset.timeRemainingString())
+                    : "menubar.resets_time".localized(with: reset.resetTimeString()))
                     .font(.system(size: 9))
                     .foregroundColor(.secondary)
             }
@@ -944,6 +954,7 @@ struct SmartActionButton: View {
 struct APIUsageCard: View {
     let apiUsage: APIUsage
     let showRemaining: Bool
+    var showRemainingTime: Bool = false
 
     private var displayPercentage: Double {
         UsageStatusCalculator.getDisplayPercentage(
@@ -1017,7 +1028,9 @@ struct APIUsageCard: View {
 
             // Reset Time
             if apiUsage.resetsAt > Date() {
-                Text("menubar.resets_time".localized(with: apiUsage.resetsAt.formatted(.relative(presentation: .named))))
+                Text(showRemainingTime
+                    ? "menubar.resets_in".localized(with: apiUsage.resetsAt.timeRemainingString())
+                    : "menubar.resets_time".localized(with: apiUsage.resetsAt.formatted(.relative(presentation: .named))))
                     .font(.system(size: 9))
                     .foregroundColor(.secondary)
             }

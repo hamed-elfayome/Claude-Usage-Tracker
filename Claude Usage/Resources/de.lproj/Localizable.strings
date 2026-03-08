@@ -70,6 +70,7 @@
 "menubar.used" = "Verbraucht";
 "menubar.remaining" = "Verbleibend";
 "menubar.resets_time" = "Zurücksetzen %@";
+"menubar.resets_in" = "Zurücksetzung in %@";
 "menubar.click_status" = "Klicken um status.claude.com zu öffnen";
 
 /* ==================== */
@@ -864,6 +865,17 @@
 "mobile.privacy_note" = "Es werden keine persönlichen Daten erhoben. Dies registriert nur dein Interesse.";
 "mobile.error_title" = "Anfrage fehlgeschlagen";
 "mobile.error_message" = "Dein Interesse konnte nicht registriert werden. Bitte überprüfe deine Internetverbindung und versuche es erneut.";
+
+/* ==================== */
+/* MARK: - Popover Settings */
+/* ==================== */
+"section.popover_title" = "Popover";
+"section.popover_desc" = "Popover-Anzeige anpassen";
+"popover.title" = "Popover";
+"popover.subtitle" = "Anzeige der Nutzungsinformationen im Popover anpassen";
+"popover.display_section" = "Anzeige";
+"popover.show_remaining_time" = "Verbleibende Zeit anzeigen";
+"popover.show_remaining_time_desc" = "Countdown bis zum Zurücksetzen statt Zurücksetzungszeit anzeigen";
 
 /* ==================== */
 /* MARK: - Feedback Prompt */

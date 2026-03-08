@@ -70,6 +70,7 @@
 "menubar.used" = "Utilisé";
 "menubar.remaining" = "Restant";
 "menubar.resets_time" = "Réinitialise %@";
+"menubar.resets_in" = "Réinitialisation dans %@";
 "menubar.click_status" = "Cliquer pour ouvrir status.claude.com";
 
 /* ==================== */
@@ -842,6 +843,17 @@
 "mobile.privacy_note" = "Aucune donnée personnelle n'est collectée. Cela enregistre uniquement votre intérêt.";
 "mobile.error_title" = "Échec de la requête";
 "mobile.error_message" = "Impossible d'enregistrer votre intérêt. Vérifiez votre connexion internet et réessayez.";
+
+/* ==================== */
+/* MARK: - Popover Settings */
+/* ==================== */
+"section.popover_title" = "Popover";
+"section.popover_desc" = "Personnaliser l'affichage du popover";
+"popover.title" = "Popover";
+"popover.subtitle" = "Personnalisez l'affichage des informations d'utilisation dans le popover";
+"popover.display_section" = "Affichage";
+"popover.show_remaining_time" = "Afficher le temps restant";
+"popover.show_remaining_time_desc" = "Afficher le compte à rebours au lieu de l'heure de réinitialisation";
 
 /* ==================== */
 /* MARK: - Feedback Prompt */

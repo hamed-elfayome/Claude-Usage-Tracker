@@ -70,6 +70,7 @@
 "menubar.used" = "已使用";
 "menubar.remaining" = "剩余";
 "menubar.resets_time" = "重置时间 %@";
+"menubar.resets_in" = "%@后重置";
 "menubar.click_status" = "点击打开 status.claude.com";
 
 /* ==================== */
@@ -854,6 +855,17 @@
 "mobile.privacy_note" = "不收集任何个人数据。这仅记录您的兴趣。";
 "mobile.error_title" = "请求失败";
 "mobile.error_message" = "无法注册您的兴趣。请检查您的网络连接并重试。";
+
+/* ==================== */
+/* MARK: - Popover Settings */
+/* ==================== */
+"section.popover_title" = "弹出窗口";
+"section.popover_desc" = "自定义弹出窗口显示";
+"popover.title" = "弹出窗口";
+"popover.subtitle" = "自定义弹出窗口如何显示使用信息";
+"popover.display_section" = "显示";
+"popover.show_remaining_time" = "显示剩余时间";
+"popover.show_remaining_time_desc" = "显示重置倒计时而非重置时间";
 
 /* ==================== */
 /* MARK: - Feedback Prompt */

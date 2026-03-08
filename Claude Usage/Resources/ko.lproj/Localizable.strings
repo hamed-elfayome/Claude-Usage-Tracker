@@ -79,6 +79,7 @@
 "menubar.used" = "사용됨";
 "menubar.remaining" = "남음";
 "menubar.resets_time" = "%@ 리셋";
+"menubar.resets_in" = "%@ 후 초기화";
 "menubar.click_status" = "클릭하여 status.claude.com 열기";
 
 /* ==================== */
@@ -924,6 +925,17 @@
 "mobile.privacy_note" = "개인 데이터는 수집되지 않습니다. 관심 등록만 합니다.";
 "mobile.error_title" = "요청 실패";
 "mobile.error_message" = "관심을 등록할 수 없습니다. 인터넷 연결을 확인하고 다시 시도해 주세요.";
+
+/* ==================== */
+/* MARK: - Popover Settings */
+/* ==================== */
+"section.popover_title" = "팝오버";
+"section.popover_desc" = "팝오버 표시 사용자 지정";
+"popover.title" = "팝오버";
+"popover.subtitle" = "팝오버에서 사용량 정보 표시 방법을 사용자 지정합니다";
+"popover.display_section" = "표시";
+"popover.show_remaining_time" = "남은 시간 표시";
+"popover.show_remaining_time_desc" = "초기화 시간 대신 초기화까지 카운트다운 표시";
 
 /* ==================== */
 /* MARK: - Feedback Prompt */
