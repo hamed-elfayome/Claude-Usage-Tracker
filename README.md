@@ -43,6 +43,7 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 - **Native Performance**: Lightweight Swift/SwiftUI design for macOS
 
 <div align="center">
+  <img src=".github/settings.gif" alt="Quick Walkthrough" width="600">
   <img src=".github/icon.jpg" alt="Menu Bar Icon" height="180">
   <img src=".github/popover.png" alt="Popover Interface" width="200">
 
