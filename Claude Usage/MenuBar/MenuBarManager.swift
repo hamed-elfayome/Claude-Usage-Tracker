@@ -959,6 +959,10 @@ class MenuBarManager: NSObject, ObservableObject {
                     profiles: self.profileManager.profiles,
                     config: config
                 )
+                self.consecutiveRefreshFailures = 0
+                self.lastRefreshError = nil
+                self.hasCredentialError = false
+                self.lastSuccessfulRefreshTime = Date()
                 self.isRefreshing = false
 
                 // Check auto-switch for the active profile
