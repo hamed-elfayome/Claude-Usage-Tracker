@@ -5,6 +5,19 @@ All notable changes to Claude Usage Tracker will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.1] - 2026-03-08
+
+### Added
+
+- **Popover Settings Tab**: New app-wide settings tab under "Popover" to customize popover display
+- **Show Remaining Time**: Option to display countdown to reset (e.g., "Resets in 3h 45m") instead of absolute reset time (e.g., "Resets Today 3:59am") — applies to both single and multi-profile popovers
+
+### Fixed
+
+- **Multi-Display CPU Usage**: Fixed high CPU usage when connected to multiple displays — appearance change observers now debounced to prevent redundant redraws
+
+---
+
 ## [3.0.0] - 2026-03-08
 
 ### Major Release — Headless Mode, Usage History, Global Shortcuts & UI Overhaul
@@ -1536,6 +1549,7 @@ This major release represents a significant milestone for Claude Usage Tracker, 
 - Detailed usage dashboard with countdown timers
 - Support for macOS 14.0+ (Sonoma and later)
 
+[3.0.1]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v3.0.0...v3.0.1
 [3.0.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v2.3.0...v3.0.0
 [2.3.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v2.2.3...v2.3.0
 [2.2.3]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v2.2.2...v2.2.3

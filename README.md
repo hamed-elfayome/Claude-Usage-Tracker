@@ -9,14 +9,14 @@
   ![Swift](https://img.shields.io/badge/Swift-5.0+-orange?style=flat-square&logo=swift)
   ![SwiftUI](https://img.shields.io/badge/SwiftUI-5.0+-blue?style=flat-square&logo=swift)
   ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
-  ![Version](https://img.shields.io/badge/version-3.0.0-blue?style=flat-square)
+  ![Version](https://img.shields.io/badge/version-3.0.1-blue?style=flat-square)
   ![Languages](https://img.shields.io/badge/languages-9-purple?style=flat-square)
 
   <sub>🇬🇧 English • 🇪🇸 Español • 🇫🇷 Français • 🇩🇪 Deutsch • 🇮🇹 Italiano • 🇵🇹 Português • 🇯🇵 日本語 • 🇰🇷 한국어 • 🇨🇳 简体中文</sub>
 
-  ### [Download Latest Release (v3.0.0)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
+  ### [Download Latest Release (v3.0.1)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
 
-  <sub>macOS 14.0+ (Sonoma) | ~4 MB | Native Swift/SwiftUI | Officially Signed</sub>
+  <sub>macOS 14.0+ (Sonoma) | ~5 MB | Native Swift/SwiftUI | Officially Signed</sub>
 
   <a href="https://www.buymeacoffee.com/hamedelfayome" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="40"></a>
 </div>
@@ -57,6 +57,8 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 ---
 
 ## What's New
+
+- **v3.0.1 (2026-03-08)**: Popover settings tab (remaining time toggle), multi-display CPU fix
 
 - **v3.0.0 - Major Release (2026-03-08)**:
   - **Headless mode**: Remote Desktop support for headless Mac environments
