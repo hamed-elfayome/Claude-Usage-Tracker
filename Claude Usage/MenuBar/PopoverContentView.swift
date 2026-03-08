@@ -524,11 +524,17 @@ struct SmartUsageDashboard: View {
     }
 
     private var showTimeMarker: Bool {
-        profileManager.activeProfile?.iconConfig.showTimeMarker ?? true
+        if profileManager.displayMode == .multi {
+            return profileManager.multiProfileConfig.showTimeMarker
+        }
+        return profileManager.activeProfile?.iconConfig.showTimeMarker ?? true
     }
 
     private var usePaceColoring: Bool {
-        profileManager.activeProfile?.iconConfig.usePaceColoring ?? true
+        if profileManager.displayMode == .multi {
+            return profileManager.multiProfileConfig.usePaceColoring
+        }
+        return profileManager.activeProfile?.iconConfig.usePaceColoring ?? true
     }
 
     private var isAPITrackingEnabled: Bool {
