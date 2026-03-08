@@ -1,5 +1,6 @@
 import Foundation
 import UserNotifications
+import AppKit
 
 /// Manages user notifications for usage threshold alerts
 class NotificationManager: NotificationServiceProtocol {
@@ -139,7 +140,8 @@ class NotificationManager: NotificationServiceProtocol {
                 profileName: profileName,
                 type: .sessionReset,
                 percentage: sessionPercentage,
-                resetTime: usage.sessionResetTime
+                resetTime: usage.sessionResetTime,
+                soundName: settings.soundName
             )
 
             // Note: Auto-start session is handled per-profile but called from elsewhere
@@ -209,14 +211,20 @@ class NotificationManager: NotificationServiceProtocol {
         content.categoryIdentifier = "USAGE_ALERT"
 
         // Apply sound setting
-        switch soundName {
-        case "none":
-            break // No sound
-        case "default":
-            content.sound = .default
-        default:
-            content.sound = UNNotificationSound(named: UNNotificationSoundName(soundName))
-        }
+        // Note: UNNotificationSound(named:) only finds sounds bundled in the app,
+        // not system sounds from /System/Library/Sounds/. For custom system sounds,
+        // we play via NSSound after the notification is delivered.
+        let customSoundName: String? = {
+            switch soundName {
+            case "none":
+                return nil
+            case "default":
+                content.sound = .default
+                return nil
+            default:
+                return soundName
+            }
+        }()
 
         let request = UNNotificationRequest(
             identifier: identifier,
@@ -226,6 +234,17 @@ class NotificationManager: NotificationServiceProtocol {
 
         UNUserNotificationCenter.current().add(request) { [weak self] error in
             if error == nil {
+                // Play custom system sound after notification is delivered
+                if let name = customSoundName {
+                    DispatchQueue.main.async {
+                        if let sound = NSSound(named: NSSound.Name(name)) {
+                            sound.play()
+                        } else {
+                            NSSound.beep()
+                        }
+                    }
+                }
+
                 // Mark this notification as sent
                 var updated = self?.sentNotifications ?? []
                 updated.insert(identifier)
