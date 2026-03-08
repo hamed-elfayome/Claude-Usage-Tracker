@@ -677,22 +677,11 @@ class MenuBarManager: NSObject, ObservableObject {
     }
 
     private func observeAppearanceChanges() {
-        // Observe appearance changes on NSApp (fires less frequently than button)
-        // This optimization reduces redundant redraws
-        appearanceObserver = NSApp.observe(\.effectiveAppearance, options: [.new]) { [weak self] _, change in
-            guard let self = self,
-                  let button = self.statusItem?.button else { return }
-
-            // Cache the dark mode state to avoid querying it during layout
-            let isDark = change.newValue?.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-
-            DispatchQueue.main.async {
-                self.cachedIsDarkMode = isDark
-                // Clear cache to force redraw with new appearance
-                self.cachedImageKey = ""
-                self.updateStatusButton(button, usage: self.usage)
-            }
-        }
+        // Appearance observation is handled by StatusBarUIManager which observes
+        // each button's effectiveAppearance (important for per-display wallpaper)
+        // and NSApp.effectiveAppearance as fallback. Changes are routed through
+        // the StatusBarUIManagerDelegate.statusBarAppearanceDidChange() callback.
+        // No additional observer needed here to avoid duplicate redraws.
     }
 
     private func observeIconStyleChanges() {
@@ -1688,12 +1677,15 @@ extension MenuBarManager: NSPopoverDelegate {
 // MARK: - StatusBarUIManagerDelegate
 extension MenuBarManager: StatusBarUIManagerDelegate {
     func statusBarAppearanceDidChange() {
-        // Update cached dark mode state from app appearance (best effort for cache invalidation)
-        cachedIsDarkMode = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-        // Clear image cache to force redraw with new appearance
-        cachedImageKey = ""
-        // Update all icons with new appearance (each button reads its own effectiveAppearance)
-        updateAllStatusBarIcons()
+        // Debounce appearance changes — multiple displays and wallpaper-based appearance
+        // can fire many rapid changes. Coalesce into a single redraw after 0.15s of quiet.
+        updateDebounceTimer?.invalidate()
+        updateDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: false) { [weak self] _ in
+            guard let self = self else { return }
+            self.cachedIsDarkMode = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            self.cachedImageKey = ""
+            self.updateAllStatusBarIcons()
+        }
     }
 }
 

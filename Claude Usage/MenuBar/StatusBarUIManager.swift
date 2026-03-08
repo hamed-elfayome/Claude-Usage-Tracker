@@ -20,6 +20,7 @@ final class StatusBarUIManager {
     private var isMultiProfileMode: Bool = false
 
     private var appearanceObservers: [NSKeyValueObservation] = []
+    private var appearanceDebounceTimer: Timer?
 
     // Icon renderer for creating menu bar images
     private let renderer = MenuBarIconRenderer()
@@ -528,16 +529,25 @@ final class StatusBarUIManager {
                 guard let oldAppearance = change.oldValue,
                       let newAppearance = change.newValue,
                       oldAppearance.name != newAppearance.name else { return }
-                self?.delegate?.statusBarAppearanceDidChange()
+                self?.scheduleAppearanceUpdate()
             }
             appearanceObservers.append(observer)
         }
 
         // Also observe app-level as fallback for system-wide dark/light mode toggle
         let appObserver = NSApp.observe(\.effectiveAppearance) { [weak self] _, _ in
-            self?.delegate?.statusBarAppearanceDidChange()
+            self?.scheduleAppearanceUpdate()
         }
         appearanceObservers.append(appObserver)
+    }
+
+    /// Debounces appearance change notifications so multiple displays/buttons
+    /// coalesce into a single delegate callback
+    private func scheduleAppearanceUpdate() {
+        appearanceDebounceTimer?.invalidate()
+        appearanceDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: false) { [weak self] _ in
+            self?.delegate?.statusBarAppearanceDidChange()
+        }
     }
 }
 
