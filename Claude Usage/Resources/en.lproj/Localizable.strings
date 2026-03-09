@@ -63,6 +63,12 @@
 "menubar.sonnet_usage" = "Sonnet";
 "menubar.extra_usage" = "Extra Usage";
 "menubar.api_credits" = "API Credits";
+"menubar.api_cost" = "API Cost";
+"menubar.this_month" = "This Month";
+"menubar.total" = "Total";
+"menubar.cost_source.cli" = "Claude Code";
+"menubar.cost_source.api" = "API";
+"menubar.cost_source.unknown" = "Other";
 "menubar.5_hour_window" = "5-hour rolling window";
 "menubar.all_models" = "All models";
 "menubar.weekly" = "Weekly";

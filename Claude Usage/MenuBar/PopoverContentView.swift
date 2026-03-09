@@ -1,4 +1,5 @@
 import SwiftUI
+import Charts
 
 // MARK: - Always-active vibrancy background
 struct VisualEffectBackground: NSViewRepresentable {
@@ -627,6 +628,11 @@ struct SmartUsageDashboard: View {
             // API Usage
             if let apiUsage = apiUsage {
                 APIUsageCard(apiUsage: apiUsage, showRemaining: showRemainingPercentage, showRemainingTime: showRemainingTime)
+
+                // API Cost Card (only if cost data is available)
+                if let costCents = apiUsage.apiTokenCostCents, costCents > 0 {
+                    APICostCard(apiUsage: apiUsage)
+                }
             }
         }
         .padding(.horizontal, 14)
@@ -945,6 +951,207 @@ struct SmartActionButton: View {
         .onHover { hovering in
             withAnimation(.easeInOut(duration: 0.15)) {
                 isHovered = hovering
+            }
+        }
+    }
+}
+
+// MARK: - API Cost Card
+struct APICostCard: View {
+    let apiUsage: APIUsage
+
+    var body: some View {
+        VStack(spacing: 10) {
+            // Header
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("API Cost")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.primary)
+
+                    Text("This Month")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                // Total cost
+                if let formatted = apiUsage.formattedAPICost {
+                    Text(formatted)
+                        .font(.system(size: 16, weight: .bold, design: .monospaced))
+                        .foregroundColor(.primary)
+                }
+            }
+
+            // Daily cost chart
+            DailyCostChart(dailyCosts: apiUsage.sortedDailyCosts, currency: apiUsage.currency)
+
+            // Per-key breakdown (if multiple sources) or flat model list
+            if apiUsage.hasMultipleSources {
+                VStack(spacing: 6) {
+                    ForEach(apiUsage.sortedCostSources) { source in
+                        APICostSourceRow(source: source, currency: apiUsage.currency)
+                    }
+                }
+            } else {
+                // Single source or no source data — show flat model breakdown
+                let models = apiUsage.sortedModelCosts
+                if !models.isEmpty {
+                    VStack(spacing: 4) {
+                        ForEach(models, id: \.model) { item in
+                            HStack {
+                                Text(item.model)
+                                    .font(.system(size: 10, weight: .medium))
+                                    .foregroundColor(.secondary)
+                                    .lineLimit(1)
+
+                                Spacer()
+
+                                Text(item.cost)
+                                    .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(nsColor: .controlBackgroundColor).opacity(0.4))
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(Color.secondary.opacity(0.15), lineWidth: 1)
+                )
+        )
+    }
+}
+
+// MARK: - Daily Cost Chart
+struct DailyCostChart: View {
+    let dailyCosts: [(date: Date, cents: Double)]
+    let currency: String
+
+    private struct DayCost: Identifiable {
+        let id: Date
+        let dollars: Double
+    }
+
+    var body: some View {
+        if dailyCosts.count >= 2 {
+            let data = dailyCosts.map { DayCost(id: $0.date, dollars: $0.cents / 100.0) }
+            Chart(data) { item in
+                BarMark(
+                    x: .value("Day", item.id, unit: .day),
+                    y: .value("Cost", item.dollars)
+                )
+                .foregroundStyle(.orange)
+                .cornerRadius(2)
+            }
+            .chartXAxis {
+                AxisMarks(values: .stride(by: .day)) { value in
+                    if let date = value.as(Date.self) {
+                        AxisValueLabel {
+                            Text("\(Calendar.current.component(.day, from: date))")
+                                .font(.system(size: 8))
+                        }
+                    }
+                }
+            }
+            .chartYAxis {
+                AxisMarks(position: .leading) { value in
+                    AxisGridLine()
+                    AxisValueLabel {
+                        if let v = value.as(Double.self) {
+                            Text(formatDollars(v))
+                                .font(.system(size: 8))
+                        }
+                    }
+                }
+            }
+            .frame(height: 60)
+        }
+    }
+
+    private func formatDollars(_ amount: Double) -> String {
+        if amount >= 1 {
+            return "$\(Int(amount))"
+        } else {
+            return String(format: "$%.2f", amount)
+        }
+    }
+}
+
+// MARK: - API Cost Source Row
+struct APICostSourceRow: View {
+    let source: APICostSource
+    let currency: String
+    @State private var isExpanded = false
+
+    var body: some View {
+        VStack(spacing: 4) {
+            // Source header (tappable to expand)
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isExpanded.toggle()
+                }
+            }) {
+                HStack(spacing: 6) {
+                    Image(systemName: source.sourceType.icon)
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundColor(.secondary)
+                        .frame(width: 12)
+
+                    Text(source.keyName)
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
+
+                    Spacer()
+
+                    Text(source.formattedTotal(currency: currency))
+                        .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                        .foregroundColor(.primary)
+
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 8, weight: .medium))
+                        .foregroundColor(.secondary.opacity(0.6))
+                        .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                }
+                .padding(.vertical, 4)
+                .padding(.horizontal, 6)
+                .background(
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.secondary.opacity(0.06))
+                )
+            }
+            .buttonStyle(.plain)
+
+            // Expanded model breakdown
+            if isExpanded {
+                let models = source.sortedModelCosts(currency: currency)
+                VStack(spacing: 3) {
+                    ForEach(models, id: \.model) { item in
+                        HStack {
+                            Text(item.model)
+                                .font(.system(size: 9, weight: .medium))
+                                .foregroundColor(.secondary)
+                                .lineLimit(1)
+
+                            Spacer()
+
+                            Text(item.cost)
+                                .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+                .padding(.leading, 24)
+                .padding(.trailing, 6)
+                .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
     }

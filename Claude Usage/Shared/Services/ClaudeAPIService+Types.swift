@@ -91,6 +91,49 @@ extension ClaudeAPIService {
         let name: String
     }
 
+    struct UsageCostResponse: Codable {
+        let costs: [String: [UsageCostEntry]]?
+        let webSearchCosts: [String: [UsageCostEntry]]?
+        let codeExecutionCosts: [String: [UsageCostEntry]]?
+
+        enum CodingKeys: String, CodingKey {
+            case costs
+            case webSearchCosts = "web_search_costs"
+            case codeExecutionCosts = "code_execution_costs"
+        }
+    }
+
+    struct UsageCostEntry: Codable {
+        let workspaceId: String?
+        let keyId: String?
+        let modelName: String?
+        let total: Double?
+        let tokenType: String?
+        let usageType: String?
+
+        enum CodingKeys: String, CodingKey {
+            case workspaceId = "workspace_id"
+            case keyId = "key_id"
+            case modelName = "model_name"
+            case total
+            case tokenType = "token_type"
+            case usageType = "usage_type"
+        }
+
+        var safeKeyId: String { keyId ?? "unknown" }
+        var safeModelName: String { modelName ?? "Unknown" }
+        var safeTotal: Double { total ?? 0 }
+    }
+
+    struct APIKeyInfo: Codable {
+        let id: String
+        let name: String
+    }
+
+    struct APIKeysResponse: Codable {
+        let data: [APIKeyInfo]
+    }
+
     enum APIError: Error, LocalizedError {
         case noSessionKey
         case invalidSessionKey
