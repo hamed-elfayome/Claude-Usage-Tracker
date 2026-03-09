@@ -27,6 +27,8 @@ struct WizardState {
     var selectedOrgId: String? = nil
     var originalSessionKey: String? = nil
     var originalOrgId: String? = nil
+    var showingAuthSheet: Bool = false
+    var sessionKeyExpiryDate: Date? = nil
 }
 
 /// Claude.ai personal usage tracking (free tier)
@@ -253,29 +255,91 @@ struct EnterKeyStep: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Professional input field
+            // Primary: Sign in via embedded browser
             VStack(alignment: .leading, spacing: 8) {
-                Text("personal.label_session_key".localized)
-                    .font(.system(size: 12, weight: .medium))
+                Text("personal.signin_description".localized)
+                    .font(.system(size: 12))
                     .foregroundColor(.secondary)
 
-                TextField("sk-ant-sid01-...", text: $wizardState.sessionKey)
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 12, design: .monospaced))
-                    .padding(10)
-                    .background(DesignTokens.Colors.inputBackground)
-                    .cornerRadius(6)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 6)
-                            .strokeBorder(DesignTokens.Colors.cardBorder, lineWidth: 1)
-                    )
-
-                Text("personal.help_session_key".localized)
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
+                Button(action: { wizardState.showingAuthSheet = true }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "globe")
+                            .font(.system(size: 12))
+                        Text("personal.signin_button".localized)
+                            .font(.system(size: 12))
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.regular)
+                .disabled(wizardState.validationState == .validating)
+            }
+            .sheet(isPresented: $wizardState.showingAuthSheet) {
+                ConsoleAuthSheet(
+                    title: "personal.signin_sheet_title".localized,
+                    loginURL: URL(string: "https://claude.ai/login")!,
+                    cookieDomain: "claude.ai",
+                    onSuccess: { result in
+                        wizardState.showingAuthSheet = false
+                        wizardState.sessionKey = result.sessionKey
+                        wizardState.sessionKeyExpiryDate = result.expiryDate
+                        testConnectionAfterAuth()
+                    },
+                    onCancel: {
+                        wizardState.showingAuthSheet = false
+                    }
+                )
             }
 
-            // Balanced validation status
+            // Fallback: Manual session key entry
+            DisclosureGroup("personal.advanced_manual_key".localized) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("personal.label_session_key".localized)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.secondary)
+
+                    TextField("sk-ant-sid01-...", text: $wizardState.sessionKey)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 12, design: .monospaced))
+                        .padding(10)
+                        .background(DesignTokens.Colors.inputBackground)
+                        .cornerRadius(6)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .strokeBorder(DesignTokens.Colors.cardBorder, lineWidth: 1)
+                        )
+
+                    Text("personal.help_session_key".localized)
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+
+                    HStack(spacing: 10) {
+                        Spacer()
+
+                        Button(action: testConnection) {
+                            HStack(spacing: 6) {
+                                if wizardState.validationState == .validating {
+                                    ProgressView()
+                                        .scaleEffect(0.8)
+                                        .frame(width: 12, height: 12)
+                                } else {
+                                    Image(systemName: "checkmark.circle")
+                                        .font(.system(size: 12))
+                                }
+                                Text(wizardState.validationState == .validating ? "wizard.testing".localized : "wizard.test_connection".localized)
+                                    .font(.system(size: 12))
+                            }
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.regular)
+                        .disabled(wizardState.sessionKey.isEmpty || wizardState.validationState == .validating)
+                    }
+                }
+                .padding(.top, 8)
+            }
+            .font(.system(size: 12, weight: .medium))
+            .foregroundColor(.secondary)
+
+            // Validation status
             if case .success(let message) = wizardState.validationState {
                 HStack(spacing: 8) {
                     Image(systemName: "checkmark.circle.fill")
@@ -304,43 +368,32 @@ struct EnterKeyStep: View {
                 .background(Color.red.opacity(0.08))
                 .cornerRadius(6)
             }
+        }
+    }
 
-            // Balanced buttons
-            HStack(spacing: 10) {
-                Button(action: {
-                    if let url = URL(string: "https://claude.ai") {
-                        NSWorkspace.shared.open(url)
-                    }
-                }) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "safari")
-                            .font(.system(size: 12))
-                        Text("personal.button_open_claude".localized)
-                            .font(.system(size: 12))
-                    }
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.regular)
+    private func testConnectionAfterAuth() {
+        wizardState.validationState = .validating
 
-                Spacer()
+        Task {
+            do {
+                let organizations = try await apiService.testSessionKey(wizardState.sessionKey)
 
-                Button(action: testConnection) {
-                    HStack(spacing: 6) {
-                        if wizardState.validationState == .validating {
-                            ProgressView()
-                                .scaleEffect(0.8)
-                                .frame(width: 12, height: 12)
-                        } else {
-                            Image(systemName: "checkmark.circle")
-                                .font(.system(size: 12))
-                        }
-                        Text(wizardState.validationState == .validating ? "wizard.testing".localized : "wizard.test_connection".localized)
-                            .font(.system(size: 12))
+                await MainActor.run {
+                    wizardState.testedOrganizations = organizations
+                    wizardState.validationState = .success("Connection successful! Found \(organizations.count) organization(s)")
+
+                    withAnimation {
+                        wizardState.currentStep = .selectOrg
                     }
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.regular)
-                .disabled(wizardState.sessionKey.isEmpty || wizardState.validationState == .validating)
+            } catch {
+                let appError = AppError.wrap(error)
+                ErrorLogger.shared.log(appError, severity: .error)
+
+                await MainActor.run {
+                    let errorMessage = "\(appError.message)\n\nError Code: \(appError.code.rawValue)"
+                    wizardState.validationState = .error(errorMessage)
+                }
             }
         }
     }

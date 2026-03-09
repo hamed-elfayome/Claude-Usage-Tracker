@@ -301,6 +301,9 @@ struct APIEnterKeyStep: View {
             }
             .sheet(isPresented: $wizardState.showingAuthSheet) {
                 ConsoleAuthSheet(
+                    title: "Sign in to Anthropic Console",
+                    loginURL: URL(string: "https://console.anthropic.com/login")!,
+                    cookieDomain: "platform.claude.com",
                     onSuccess: { result in
                         wizardState.showingAuthSheet = false
                         wizardState.apiSessionKey = result.sessionKey

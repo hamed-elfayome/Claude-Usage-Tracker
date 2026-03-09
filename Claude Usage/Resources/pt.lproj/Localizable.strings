@@ -713,6 +713,10 @@
 "personal.success_key_saved" = "Chave de sessão salva com sucesso";
 "personal.remove_title" = "Remover Credenciais";
 "personal.remove_subtitle" = "Excluir permanentemente sua chave de sessão do Claude.ai deste perfil";
+"personal.signin_description" = "Faça login para extrair sua chave de sessão automaticamente.";
+"personal.signin_button" = "Entrar no Claude.ai";
+"personal.signin_sheet_title" = "Entrar no Claude.ai";
+"personal.advanced_manual_key" = "Avançado: Chave de sessão manual";
 "about.run_setup_wizard" = "Executar Assistente de Configuração";
 
 /* Migration & Reset */

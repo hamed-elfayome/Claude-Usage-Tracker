@@ -705,6 +705,10 @@
 "personal.success_key_saved" = "会话密钥保存成功";
 "personal.remove_title" = "移除凭据";
 "personal.remove_subtitle" = "从此配置文件中永久删除您的 Claude.ai 会话密钥";
+"personal.signin_description" = "登录以自动提取您的会话密钥。";
+"personal.signin_button" = "登录 Claude.ai";
+"personal.signin_sheet_title" = "登录 Claude.ai";
+"personal.advanced_manual_key" = "高级：手动输入会话密钥";
 "about.run_setup_wizard" = "运行设置向导";
 
 /* ==================== */

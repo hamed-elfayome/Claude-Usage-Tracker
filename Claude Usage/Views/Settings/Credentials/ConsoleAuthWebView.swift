@@ -18,6 +18,8 @@ struct ConsoleCookieResult {
 // MARK: - WKWebView Wrapper
 
 struct ConsoleAuthWebView: NSViewRepresentable {
+    let loginURL: URL
+    let cookieDomain: String
     let onCookieFound: (ConsoleCookieResult) -> Void
 
     func makeNSView(context: Context) -> WKWebView {
@@ -28,8 +30,7 @@ struct ConsoleAuthWebView: NSViewRepresentable {
         webView.navigationDelegate = context.coordinator
         webView.uiDelegate = context.coordinator
 
-        let url = URL(string: "https://console.anthropic.com/login")!
-        webView.load(URLRequest(url: url))
+        webView.load(URLRequest(url: loginURL))
 
         return webView
     }
@@ -37,14 +38,16 @@ struct ConsoleAuthWebView: NSViewRepresentable {
     func updateNSView(_ nsView: WKWebView, context: Context) {}
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(onCookieFound: onCookieFound)
+        Coordinator(cookieDomain: cookieDomain, onCookieFound: onCookieFound)
     }
 
     class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
+        let cookieDomain: String
         let onCookieFound: (ConsoleCookieResult) -> Void
         private var foundCookie = false
 
-        init(onCookieFound: @escaping (ConsoleCookieResult) -> Void) {
+        init(cookieDomain: String, onCookieFound: @escaping (ConsoleCookieResult) -> Void) {
+            self.cookieDomain = cookieDomain
             self.onCookieFound = onCookieFound
         }
 
@@ -71,7 +74,7 @@ struct ConsoleAuthWebView: NSViewRepresentable {
                 guard let self = self, !self.foundCookie else { return }
 
                 for cookie in cookies {
-                    if cookie.name == "sessionKey" && cookie.domain.contains("claude.com") {
+                    if cookie.name == "sessionKey" && cookie.domain.contains(self.cookieDomain) {
                         self.foundCookie = true
                         let result = ConsoleCookieResult(
                             sessionKey: cookie.value,
@@ -91,6 +94,9 @@ struct ConsoleAuthWebView: NSViewRepresentable {
 // MARK: - Auth Sheet
 
 struct ConsoleAuthSheet: View {
+    let title: String
+    let loginURL: URL
+    let cookieDomain: String
     let onSuccess: (ConsoleCookieResult) -> Void
     let onCancel: () -> Void
 
@@ -101,7 +107,7 @@ struct ConsoleAuthSheet: View {
         VStack(spacing: 0) {
             // Title bar
             HStack {
-                Text("Sign in to Anthropic Console")
+                Text(title)
                     .font(.system(size: 13, weight: .semibold))
                 Spacer()
                 Button("Cancel") {
@@ -116,7 +122,7 @@ struct ConsoleAuthSheet: View {
             Divider()
 
             // WebView
-            ConsoleAuthWebView { result in
+            ConsoleAuthWebView(loginURL: loginURL, cookieDomain: cookieDomain) { result in
                 onSuccess(result)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)

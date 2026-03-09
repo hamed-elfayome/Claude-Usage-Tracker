@@ -715,6 +715,10 @@
 "personal.success_key_saved" = "Sitzungsschlüssel erfolgreich gespeichert";
 "personal.remove_title" = "Anmeldedaten Entfernen";
 "personal.remove_subtitle" = "Ihren Claude.ai-Sitzungsschlüssel dauerhaft aus diesem Profil löschen";
+"personal.signin_description" = "Melden Sie sich an, um Ihren Sitzungsschlüssel automatisch zu extrahieren.";
+"personal.signin_button" = "Bei Claude.ai anmelden";
+"personal.signin_sheet_title" = "Bei Claude.ai anmelden";
+"personal.advanced_manual_key" = "Erweitert: Manueller Sitzungsschlüssel";
 "about.run_setup_wizard" = "Einrichtungsassistent Ausführen";
 
 /* Migration & Reset */

@@ -711,6 +711,10 @@
 "personal.success_key_saved" = "Session key saved successfully";
 "personal.remove_title" = "Remove Credentials";
 "personal.remove_subtitle" = "Permanently delete your Claude.ai session key from this profile";
+"personal.signin_description" = "Sign in to extract your session key automatically.";
+"personal.signin_button" = "Sign in to Claude.ai";
+"personal.signin_sheet_title" = "Sign in to Claude.ai";
+"personal.advanced_manual_key" = "Advanced: Manual Session Key";
 "about.run_setup_wizard" = "Run Setup Wizard";
 
 /* ==================== */

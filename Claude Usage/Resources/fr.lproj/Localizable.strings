@@ -693,6 +693,10 @@
 "personal.success_key_saved" = "Clé de session enregistrée avec succès";
 "personal.remove_title" = "Supprimer les Identifiants";
 "personal.remove_subtitle" = "Supprimer définitivement votre clé de session Claude.ai de ce profil";
+"personal.signin_description" = "Connectez-vous pour extraire automatiquement votre clé de session.";
+"personal.signin_button" = "Se connecter à Claude.ai";
+"personal.signin_sheet_title" = "Se connecter à Claude.ai";
+"personal.advanced_manual_key" = "Avancé : Clé de session manuelle";
 "about.run_setup_wizard" = "Exécuter l'Assistant de Configuration";
 
 /* Migration & Reset */

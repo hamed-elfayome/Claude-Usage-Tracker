@@ -775,6 +775,10 @@
 "personal.success_key_saved" = "세션 키가 성공적으로 저장되었습니다";
 "personal.remove_title" = "자격 증명 제거";
 "personal.remove_subtitle" = "이 프로필에서 Claude.ai 세션 키를 영구적으로 삭제";
+"personal.signin_description" = "로그인하여 세션 키를 자동으로 추출합니다.";
+"personal.signin_button" = "Claude.ai에 로그인";
+"personal.signin_sheet_title" = "Claude.ai에 로그인";
+"personal.advanced_manual_key" = "고급: 수동 세션 키 입력";
 "about.run_setup_wizard" = "설정 마법사 실행";
 
 /* Migration & Reset */
