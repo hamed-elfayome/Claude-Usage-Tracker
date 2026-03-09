@@ -874,6 +874,11 @@
 "popover.display_section" = "Exibição";
 "popover.show_remaining_time" = "Mostrar tempo restante";
 "popover.show_remaining_time_desc" = "Mostrar contagem regressiva até a reinicialização em vez do horário de reinicialização";
+"popover.time_format" = "Formato de hora";
+"popover.time_format_desc" = "Escolha como os horários são exibidos no aplicativo";
+"popover.time_format_system" = "Sistema";
+"popover.time_format_12h" = "12 horas";
+"popover.time_format_24h" = "24 horas";
 
 /* ==================== */
 /* MARK: - Feedback Prompt */

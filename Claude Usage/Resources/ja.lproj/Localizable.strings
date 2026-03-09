@@ -876,6 +876,11 @@
 "popover.display_section" = "表示";
 "popover.show_remaining_time" = "残り時間を表示";
 "popover.show_remaining_time_desc" = "リセット時刻の代わりにリセットまでのカウントダウンを表示";
+"popover.time_format" = "時刻形式";
+"popover.time_format_desc" = "アプリ全体での時刻の表示形式を選択";
+"popover.time_format_system" = "システム";
+"popover.time_format_12h" = "12時間";
+"popover.time_format_24h" = "24時間";
 
 /* ==================== */
 /* MARK: - Feedback Prompt */

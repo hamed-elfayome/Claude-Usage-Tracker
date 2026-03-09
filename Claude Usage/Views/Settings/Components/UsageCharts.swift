@@ -16,13 +16,14 @@ struct TimeSlot: Identifiable, Equatable {
 
     var timeLabel: String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm"
+        formatter.dateFormat = SharedDataStore.shared.uses24HourTime() ? "HH:mm" : "h:mma"
         return formatter.string(from: time)
     }
 
     var fullTimeLabel: String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "MM/dd HH:mm"
+        let timeFmt = SharedDataStore.shared.uses24HourTime() ? "HH:mm" : "h:mma"
+        formatter.dateFormat = "MM/dd \(timeFmt)"
         return formatter.string(from: time)
     }
 

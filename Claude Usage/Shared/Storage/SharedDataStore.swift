@@ -57,6 +57,7 @@ class SharedDataStore {
 
         // Popover Settings
         static let popoverShowRemainingTime = "popoverShowRemainingTime"
+        static let timeFormatPreference = "timeFormatPreference"
     }
 
     init() {
@@ -388,6 +389,35 @@ class SharedDataStore {
 
     func loadPopoverShowRemainingTime() -> Bool {
         return defaults.bool(forKey: Keys.popoverShowRemainingTime)
+    }
+
+    func saveTimeFormatPreference(_ format: TimeFormatPreference) {
+        defaults.set(format.rawValue, forKey: Keys.timeFormatPreference)
+    }
+
+    func loadTimeFormatPreference() -> TimeFormatPreference {
+        guard let rawValue = defaults.string(forKey: Keys.timeFormatPreference),
+              let preference = TimeFormatPreference(rawValue: rawValue) else {
+            return .system
+        }
+        return preference
+    }
+
+    /// Returns whether 24-hour time should be used, resolving the system preference
+    func uses24HourTime() -> Bool {
+        switch loadTimeFormatPreference() {
+        case .system:
+            let formatter = DateFormatter()
+            formatter.dateStyle = .none
+            formatter.timeStyle = .short
+            let timeString = formatter.string(from: Date())
+            // If the system-formatted time contains AM/PM, it's 12-hour
+            return !timeString.contains(formatter.amSymbol) && !timeString.contains(formatter.pmSymbol)
+        case .twelveHour:
+            return false
+        case .twentyFourHour:
+            return true
+        }
     }
 
     // MARK: - Testing Helpers

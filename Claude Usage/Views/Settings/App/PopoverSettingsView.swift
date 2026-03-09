@@ -9,6 +9,7 @@ import SwiftUI
 
 struct PopoverSettingsView: View {
     @State private var showRemainingTime: Bool = SharedDataStore.shared.loadPopoverShowRemainingTime()
+    @State private var timeFormat: TimeFormatPreference = SharedDataStore.shared.loadTimeFormatPreference()
 
     var body: some View {
         ScrollView {
@@ -24,12 +25,33 @@ struct PopoverSettingsView: View {
                         description: "popover.show_remaining_time_desc".localized,
                         isOn: $showRemainingTime
                     )
+
+                    Divider()
+
+                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
+                        Text("popover.time_format".localized)
+                            .font(.body)
+                            .fontWeight(.medium)
+                        Text("popover.time_format_desc".localized)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Picker("", selection: $timeFormat) {
+                            Text("popover.time_format_system".localized).tag(TimeFormatPreference.system)
+                            Text("popover.time_format_12h".localized).tag(TimeFormatPreference.twelveHour)
+                            Text("popover.time_format_24h".localized).tag(TimeFormatPreference.twentyFourHour)
+                        }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
+                    }
                 }
             }
             .padding()
         }
         .onChange(of: showRemainingTime) { newValue in
             SharedDataStore.shared.savePopoverShowRemainingTime(newValue)
+        }
+        .onChange(of: timeFormat) { newValue in
+            SharedDataStore.shared.saveTimeFormatPreference(newValue)
         }
     }
 }

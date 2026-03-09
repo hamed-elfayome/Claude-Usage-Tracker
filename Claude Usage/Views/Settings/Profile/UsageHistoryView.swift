@@ -349,7 +349,7 @@ struct SimpleUsageChart: View {
         let formatter = DateFormatter()
         switch timeScale {
         case .hours5, .hours24:
-            formatter.dateFormat = "MMM d, HH:mm"
+            formatter.dateFormat = SharedDataStore.shared.uses24HourTime() ? "MMM d, HH:mm" : "MMM d, h:mma"
         case .days7, .days30:
             formatter.dateFormat = "MMM d"
         }
@@ -631,7 +631,7 @@ struct CombinedUsageChart: View {
         let formatter = DateFormatter()
         switch timeScale {
         case .hours5, .hours24:
-            formatter.dateFormat = "MMM d, HH:mm"
+            formatter.dateFormat = SharedDataStore.shared.uses24HourTime() ? "MMM d, HH:mm" : "MMM d, h:mma"
         case .days7, .days30:
             formatter.dateFormat = "MMM d"
         }

@@ -882,6 +882,11 @@
 "popover.display_section" = "Display";
 "popover.show_remaining_time" = "Show remaining time";
 "popover.show_remaining_time_desc" = "Show countdown to reset instead of reset time";
+"popover.time_format" = "Time format";
+"popover.time_format_desc" = "Choose how times are displayed throughout the app";
+"popover.time_format_system" = "System";
+"popover.time_format_12h" = "12-hour";
+"popover.time_format_24h" = "24-hour";
 
 /* ==================== */
 /* MARK: - Feedback Prompt */
