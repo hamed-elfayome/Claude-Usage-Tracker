@@ -315,6 +315,42 @@ class NotificationManager: NotificationServiceProtocol {
         previousSessionPercentages.removeValue(forKey: profileName)
     }
 
+    /// Schedules a notification 24 hours before the session key expires
+    func scheduleSessionKeyExpiryNotification(expiryDate: Date) {
+        let center = UNUserNotificationCenter.current()
+        let identifier = "api_session_key_expiry"
+
+        // Remove any existing expiry notification
+        center.removePendingNotificationRequests(withIdentifiers: [identifier])
+
+        // Schedule 24 hours before expiry
+        let triggerDate = expiryDate.addingTimeInterval(-24 * 60 * 60)
+        guard triggerDate > Date() else {
+            // Already within 24 hours of expiry — send immediately
+            sendSimpleAlert(type: .sessionKeyExpiring)
+            return
+        }
+
+        let content = UNMutableNotificationContent()
+        content.title = AlertType.sessionKeyExpiring.title
+        content.body = AlertType.sessionKeyExpiring.message(percentage: 0, resetTime: expiryDate)
+        content.sound = .default
+        content.categoryIdentifier = "INFO_ALERT"
+
+        let components = Calendar.current.dateComponents(
+            [.year, .month, .day, .hour, .minute],
+            from: triggerDate
+        )
+        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+
+        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+        center.add(request) { error in
+            if let error = error {
+                LoggingService.shared.logError("Failed to schedule session key expiry notification: \(error)")
+            }
+        }
+    }
+
     /// Clears all pending notifications
     func clearAllNotifications() {
         UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
@@ -336,6 +372,7 @@ extension NotificationManager {
         case weeklyCritical = "weekly_critical"
         case opusWarning = "opus_warning"
         case opusCritical = "opus_critical"
+        case sessionKeyExpiring = "session_key_expiring"
         case notificationsEnabled = "notifications_enabled"
 
         var title: String {
@@ -360,6 +397,8 @@ extension NotificationManager {
                 return "notification.opus_warning.title".localized
             case .opusCritical:
                 return "notification.opus_critical.title".localized
+            case .sessionKeyExpiring:
+                return "API Session Expiring"
             case .notificationsEnabled:
                 return "notification.enabled.title".localized
             }
@@ -390,6 +429,14 @@ extension NotificationManager {
                 return "notification.opus_warning.message".localized(with: percentStr, resetStr)
             case .opusCritical:
                 return "notification.opus_critical.message".localized(with: percentStr, resetStr)
+            case .sessionKeyExpiring:
+                if let resetTime = resetTime {
+                    let formatter = RelativeDateTimeFormatter()
+                    formatter.unitsStyle = .full
+                    let relative = formatter.localizedString(for: resetTime, relativeTo: Date())
+                    return "Your API session key expires \(relative). Please re-authenticate to avoid interruption."
+                }
+                return "Your API session key expires soon. Please re-authenticate to avoid interruption."
             case .notificationsEnabled:
                 return "notification.enabled.message".localized
             }

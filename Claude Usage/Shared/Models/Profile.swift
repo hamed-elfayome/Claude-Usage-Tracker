@@ -18,6 +18,7 @@ struct Profile: Codable, Identifiable, Equatable {
     var organizationId: String?
     var apiSessionKey: String?
     var apiOrganizationId: String?
+    var apiSessionKeyExpiry: Date?
     var cliCredentialsJSON: String?
 
     // MARK: - CLI Account Sync Metadata
@@ -53,6 +54,7 @@ struct Profile: Codable, Identifiable, Equatable {
         organizationId: String? = nil,
         apiSessionKey: String? = nil,
         apiOrganizationId: String? = nil,
+        apiSessionKeyExpiry: Date? = nil,
         cliCredentialsJSON: String? = nil,
         hasCliAccount: Bool = false,
         cliAccountSyncedAt: Date? = nil,
@@ -73,6 +75,7 @@ struct Profile: Codable, Identifiable, Equatable {
         self.organizationId = organizationId
         self.apiSessionKey = apiSessionKey
         self.apiOrganizationId = apiOrganizationId
+        self.apiSessionKeyExpiry = apiSessionKeyExpiry
         self.cliCredentialsJSON = cliCredentialsJSON
         self.hasCliAccount = hasCliAccount
         self.cliAccountSyncedAt = cliAccountSyncedAt
@@ -121,6 +124,7 @@ struct ProfileCredentials {
     var organizationId: String?
     var apiSessionKey: String?
     var apiOrganizationId: String?
+    var apiSessionKeyExpiry: Date?
     var cliCredentialsJSON: String?
 
     var hasClaudeAI: Bool {
