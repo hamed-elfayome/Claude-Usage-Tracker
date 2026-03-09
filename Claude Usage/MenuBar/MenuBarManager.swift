@@ -1240,13 +1240,13 @@ class MenuBarManager: NSObject, ObservableObject {
         let profileId = currentProfile.id
 
         // If usage dropped below 100%, clear the flag (session reset)
-        if usage.sessionPercentage < 100.0 {
+        if usage.effectiveSessionPercentage < 100.0 {
             autoSwitchedProfileIds.remove(profileId)
             return
         }
 
         // Guard: usage must be >= 100%
-        guard usage.sessionPercentage >= 100.0 else { return }
+        guard usage.effectiveSessionPercentage >= 100.0 else { return }
 
         // Guard: don't re-trigger for this profile
         guard !autoSwitchedProfileIds.contains(profileId) else { return }
@@ -1295,7 +1295,7 @@ class MenuBarManager: NSObject, ObservableObject {
             guard let candidateUsage = candidate.claudeUsage else { return candidate }
 
             // Must be below 100%
-            if candidateUsage.sessionPercentage < 100.0 {
+            if candidateUsage.effectiveSessionPercentage < 100.0 {
                 return candidate
             }
         }

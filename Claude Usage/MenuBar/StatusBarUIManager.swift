@@ -225,7 +225,7 @@ final class StatusBarUIManager {
             let showRemaining = profile.iconConfig.showRemainingPercentage
 
             // Calculate percentages
-            let sessionUsed = usage.sessionPercentage
+            let sessionUsed = usage.effectiveSessionPercentage
             let weekUsed = usage.weeklyPercentage
 
             let sessionDisplay = UsageStatusCalculator.getDisplayPercentage(

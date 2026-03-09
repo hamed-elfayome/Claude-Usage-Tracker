@@ -22,11 +22,13 @@ enum APIWizardStep: Int, Comparable {
 struct APIWizardState {
     var currentStep: APIWizardStep = .enterKey
     var apiSessionKey: String = ""
+    var sessionKeyExpiryDate: Date? = nil
     var validationState: ValidationState = .idle
     var testedOrganizations: [APIOrganization] = []
     var selectedOrgId: String? = nil
     var originalApiSessionKey: String? = nil
     var originalOrgId: String? = nil
+    var showingAuthSheet: Bool = false
 }
 
 /// API Console billing and credits tracking
@@ -60,6 +62,34 @@ struct APIBillingView: View {
                             Text(maskKey(apiKey))
                                 .font(DesignTokens.Typography.captionMono)
                                 .foregroundColor(.secondary)
+
+                            // Session key expiry status
+                            if let expiry = creds.apiSessionKeyExpiry {
+                                HStack(spacing: 4) {
+                                    if expiry < Date() {
+                                        Image(systemName: "exclamationmark.circle.fill")
+                                            .foregroundColor(.red)
+                                            .font(.system(size: 11))
+                                        Text("Session expired")
+                                            .font(.system(size: 11))
+                                            .foregroundColor(.red)
+                                    } else if expiry < Date().addingTimeInterval(24 * 60 * 60) {
+                                        Image(systemName: "exclamationmark.triangle.fill")
+                                            .foregroundColor(.orange)
+                                            .font(.system(size: 11))
+                                        Text("Expires soon")
+                                            .font(.system(size: 11))
+                                            .foregroundColor(.orange)
+                                    } else {
+                                        Image(systemName: "clock")
+                                            .foregroundColor(.secondary)
+                                            .font(.system(size: 11))
+                                        Text("Expires \(expiry, style: .relative)")
+                                            .font(.system(size: 11))
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
+                            }
                         }
                     }
 
@@ -251,29 +281,88 @@ struct APIEnterKeyStep: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Professional input field
+            // Primary: Sign in via embedded browser
             VStack(alignment: .leading, spacing: 8) {
-                Text("api.label_api_session_key".localized)
-                    .font(.system(size: 12, weight: .medium))
+                Text("Sign in to extract your session key automatically.")
+                    .font(.system(size: 12))
                     .foregroundColor(.secondary)
 
-                TextField("api.placeholder_api_session_key".localized, text: $wizardState.apiSessionKey)
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 12, design: .monospaced))
-                    .padding(10)
-                    .background(DesignTokens.Colors.inputBackground)
-                    .cornerRadius(6)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 6)
-                            .strokeBorder(DesignTokens.Colors.cardBorder, lineWidth: 1)
-                    )
-
-                Text("api.help_api_session_key".localized)
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
+                Button(action: { wizardState.showingAuthSheet = true }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "globe")
+                            .font(.system(size: 12))
+                        Text("Sign in to Anthropic Console")
+                            .font(.system(size: 12))
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.regular)
+                .disabled(wizardState.validationState == .validating)
+            }
+            .sheet(isPresented: $wizardState.showingAuthSheet) {
+                ConsoleAuthSheet(
+                    onSuccess: { result in
+                        wizardState.showingAuthSheet = false
+                        wizardState.apiSessionKey = result.sessionKey
+                        wizardState.sessionKeyExpiryDate = result.expiryDate
+                        fetchOrganizations()
+                    },
+                    onCancel: {
+                        wizardState.showingAuthSheet = false
+                    }
+                )
             }
 
-            // Balanced validation status
+            // Fallback: Manual session key entry
+            DisclosureGroup("Advanced: Manual Session Key") {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("api.label_api_session_key".localized)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.secondary)
+
+                    TextField("api.placeholder_api_session_key".localized, text: $wizardState.apiSessionKey)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 12, design: .monospaced))
+                        .padding(10)
+                        .background(DesignTokens.Colors.inputBackground)
+                        .cornerRadius(6)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .strokeBorder(DesignTokens.Colors.cardBorder, lineWidth: 1)
+                        )
+
+                    Text("api.help_api_session_key".localized)
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+
+                    HStack(spacing: 10) {
+                        Spacer()
+
+                        Button(action: fetchOrganizations) {
+                            HStack(spacing: 6) {
+                                if wizardState.validationState == .validating {
+                                    ProgressView()
+                                        .scaleEffect(0.8)
+                                        .frame(width: 12, height: 12)
+                                } else {
+                                    Image(systemName: "building.2")
+                                        .font(.system(size: 12))
+                                }
+                                Text(wizardState.validationState == .validating ? "wizard.fetching".localized : "wizard.fetch_organizations".localized)
+                                    .font(.system(size: 12))
+                            }
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.regular)
+                        .disabled(wizardState.apiSessionKey.isEmpty || wizardState.validationState == .validating)
+                    }
+                }
+                .padding(.top, 8)
+            }
+            .font(.system(size: 12, weight: .medium))
+            .foregroundColor(.secondary)
+
+            // Validation status
             if case .success(let message) = wizardState.validationState {
                 HStack(spacing: 8) {
                     Image(systemName: "checkmark.circle.fill")
@@ -301,29 +390,6 @@ struct APIEnterKeyStep: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Color.red.opacity(0.08))
                 .cornerRadius(6)
-            }
-
-            // Balanced buttons
-            HStack(spacing: 10) {
-                Spacer()
-
-                Button(action: fetchOrganizations) {
-                    HStack(spacing: 6) {
-                        if wizardState.validationState == .validating {
-                            ProgressView()
-                                .scaleEffect(0.8)
-                                .frame(width: 12, height: 12)
-                        } else {
-                            Image(systemName: "building.2")
-                                .font(.system(size: 12))
-                        }
-                        Text(wizardState.validationState == .validating ? "wizard.fetching".localized : "wizard.fetch_organizations".localized)
-                            .font(.system(size: 12))
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.regular)
-                .disabled(wizardState.apiSessionKey.isEmpty || wizardState.validationState == .validating)
             }
         }
     }
@@ -616,14 +682,21 @@ struct APIConfirmStep: View {
                 var creds = try ProfileStore.shared.loadProfileCredentials(profileId)
                 creds.apiSessionKey = wizardState.apiSessionKey
                 creds.apiOrganizationId = wizardState.selectedOrgId
+                creds.apiSessionKeyExpiry = wizardState.sessionKeyExpiryDate
                 try ProfileStore.shared.saveProfileCredentials(profileId, credentials: creds)
 
                 // Also update the Profile model with the new credentials
                 if var profile = ProfileManager.shared.activeProfile {
                     profile.apiSessionKey = wizardState.apiSessionKey
                     profile.apiOrganizationId = wizardState.selectedOrgId
+                    profile.apiSessionKeyExpiry = wizardState.sessionKeyExpiryDate
                     ProfileManager.shared.updateProfile(profile)
                     LoggingService.shared.log("APIBillingView: Updated profile model with new credentials")
+                }
+
+                // Schedule expiry notification if we have an expiry date
+                if let expiryDate = wizardState.sessionKeyExpiryDate {
+                    NotificationManager.shared.scheduleSessionKeyExpiryNotification(expiryDate: expiryDate)
                 }
 
                 await MainActor.run {
