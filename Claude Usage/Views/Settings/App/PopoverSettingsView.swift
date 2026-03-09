@@ -47,10 +47,10 @@ struct PopoverSettingsView: View {
             }
             .padding()
         }
-        .onChange(of: showRemainingTime) { newValue in
+        .onChange(of: showRemainingTime) { _, newValue in
             SharedDataStore.shared.savePopoverShowRemainingTime(newValue)
         }
-        .onChange(of: timeFormat) { newValue in
+        .onChange(of: timeFormat) { _, newValue in
             SharedDataStore.shared.saveTimeFormatPreference(newValue)
         }
     }
