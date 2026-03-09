@@ -143,14 +143,15 @@ struct UsageSnapshot: Codable, Identifiable, Equatable {
     /// Short date string (for weekly chart labels - shows date and hour)
     var shortDateString: String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "MM/dd HH:mm"
+        let timeFmt = SharedDataStore.shared.uses24HourTime() ? "HH:mm" : "h:mma"
+        formatter.dateFormat = "MM/dd \(timeFmt)"
         return formatter.string(from: timestamp)
     }
 
     /// Short time string (for session chart labels - shows hour and minute)
     var shortTimeString: String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm"
+        formatter.dateFormat = SharedDataStore.shared.uses24HourTime() ? "HH:mm" : "h:mma"
         return formatter.string(from: timestamp)
     }
 }

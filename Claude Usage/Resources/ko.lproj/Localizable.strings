@@ -936,6 +936,11 @@
 "popover.display_section" = "표시";
 "popover.show_remaining_time" = "남은 시간 표시";
 "popover.show_remaining_time_desc" = "초기화 시간 대신 초기화까지 카운트다운 표시";
+"popover.time_format" = "시간 형식";
+"popover.time_format_desc" = "앱 전체에서 시간이 표시되는 방식을 선택합니다";
+"popover.time_format_system" = "시스템";
+"popover.time_format_12h" = "12시간";
+"popover.time_format_24h" = "24시간";
 
 /* ==================== */
 /* MARK: - Feedback Prompt */

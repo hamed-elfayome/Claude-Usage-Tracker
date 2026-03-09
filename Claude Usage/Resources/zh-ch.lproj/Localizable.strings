@@ -866,6 +866,11 @@
 "popover.display_section" = "显示";
 "popover.show_remaining_time" = "显示剩余时间";
 "popover.show_remaining_time_desc" = "显示重置倒计时而非重置时间";
+"popover.time_format" = "时间格式";
+"popover.time_format_desc" = "选择应用中时间的显示方式";
+"popover.time_format_system" = "系统";
+"popover.time_format_12h" = "12小时";
+"popover.time_format_24h" = "24小时";
 
 /* ==================== */
 /* MARK: - Feedback Prompt */

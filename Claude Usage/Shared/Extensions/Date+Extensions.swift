@@ -58,13 +58,15 @@ extension Date {
         let calendar = Calendar.current
         let formatter = DateFormatter()
         formatter.timeZone = timezone
+        let use24h = SharedDataStore.shared.uses24HourTime()
+        let timeFmt = use24h ? "HH:mm" : "h:mma"
 
         if calendar.isDateInToday(self) {
-            formatter.dateFormat = "'Today' h:mma"
+            formatter.dateFormat = "'Today' \(timeFmt)"
         } else if calendar.isDateInTomorrow(self) {
-            formatter.dateFormat = "'Tomorrow' h:mma"
+            formatter.dateFormat = "'Tomorrow' \(timeFmt)"
         } else {
-            formatter.dateFormat = "MMM d, h:mma"
+            formatter.dateFormat = "MMM d, \(timeFmt)"
         }
 
         return formatter.string(from: self)

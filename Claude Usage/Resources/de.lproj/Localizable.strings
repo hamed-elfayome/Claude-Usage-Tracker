@@ -876,6 +876,11 @@
 "popover.display_section" = "Anzeige";
 "popover.show_remaining_time" = "Verbleibende Zeit anzeigen";
 "popover.show_remaining_time_desc" = "Countdown bis zum Zurücksetzen statt Zurücksetzungszeit anzeigen";
+"popover.time_format" = "Zeitformat";
+"popover.time_format_desc" = "Wählen Sie, wie Uhrzeiten in der App angezeigt werden";
+"popover.time_format_system" = "System";
+"popover.time_format_12h" = "12-Stunden";
+"popover.time_format_24h" = "24-Stunden";
 
 /* ==================== */
 /* MARK: - Feedback Prompt */

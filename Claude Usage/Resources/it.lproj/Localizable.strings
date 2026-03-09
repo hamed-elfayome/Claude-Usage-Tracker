@@ -874,6 +874,11 @@
 "popover.display_section" = "Visualizzazione";
 "popover.show_remaining_time" = "Mostra tempo rimanente";
 "popover.show_remaining_time_desc" = "Mostra il conto alla rovescia invece dell'orario di ripristino";
+"popover.time_format" = "Formato ora";
+"popover.time_format_desc" = "Scegli come vengono visualizzati gli orari nell'app";
+"popover.time_format_system" = "Sistema";
+"popover.time_format_12h" = "12 ore";
+"popover.time_format_24h" = "24 ore";
 
 /* ==================== */
 /* MARK: - Feedback Prompt */
