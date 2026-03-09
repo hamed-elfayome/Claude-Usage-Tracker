@@ -145,7 +145,7 @@ final class AutoStartSessionService {
             // Fetch current usage for this profile
             let usage = try await fetchUsageForProfile(profile)
 
-            let currentPercentage = usage.sessionPercentage
+            let currentPercentage = usage.effectiveSessionPercentage
 
             // Simple logic (like v1.1.0): If session is at 0%, start it
             // The initialization message will bring usage above 0%, preventing repeated starts

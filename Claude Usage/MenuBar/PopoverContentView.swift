@@ -551,7 +551,7 @@ struct SmartUsageDashboard: View {
             UsageRow(
                 title: "menubar.session_usage".localized,
                 subtitle: "menubar.5_hour_window".localized,
-                usedPercentage: usage.sessionPercentage,
+                usedPercentage: usage.effectiveSessionPercentage,
                 showRemaining: showRemainingPercentage,
                 resetTime: usage.sessionResetTime,
                 periodDuration: Constants.sessionWindow,
@@ -767,7 +767,7 @@ struct ContextualInsights: View {
     private var insights: [Insight] {
         var result: [Insight] = []
 
-        if usage.sessionPercentage > 80 {
+        if usage.effectiveSessionPercentage > 80 {
             result.append(Insight(
                 icon: "exclamationmark.triangle.fill",
                 color: .orange,
@@ -785,7 +785,7 @@ struct ContextualInsights: View {
             ))
         }
 
-        if usage.sessionPercentage < 20 && usage.weeklyPercentage < 30 {
+        if usage.effectiveSessionPercentage < 20 && usage.weeklyPercentage < 30 {
             result.append(Insight(
                 icon: "checkmark.circle.fill",
                 color: .green,

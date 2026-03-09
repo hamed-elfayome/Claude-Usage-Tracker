@@ -128,7 +128,7 @@ class NotificationManager: NotificationServiceProtocol {
             return
         }
 
-        let sessionPercentage = usage.sessionPercentage
+        let sessionPercentage = usage.effectiveSessionPercentage
         let previousPercentage = previousSessionPercentages[profileName] ?? 0.0
 
         // Check for session reset (went from >0% to 0%)

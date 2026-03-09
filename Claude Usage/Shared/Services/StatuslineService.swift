@@ -565,7 +565,7 @@ PROFILE_NAME="\(profileName)"
 
         let formatter = ISO8601DateFormatter()
         var cacheContent = """
-        UTILIZATION=\(Int(usage.sessionPercentage))
+        UTILIZATION=\(Int(usage.effectiveSessionPercentage))
         RESETS_AT=\(formatter.string(from: usage.sessionResetTime))
         TIMESTAMP=\(Int(Date().timeIntervalSince1970))
         """

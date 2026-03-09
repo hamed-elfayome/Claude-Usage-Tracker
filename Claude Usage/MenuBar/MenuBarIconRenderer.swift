@@ -124,7 +124,7 @@ final class MenuBarIconRenderer {
     ) -> MetricData {
         switch metricType {
         case .session:
-            let usedPercentage = usage.sessionPercentage
+            let usedPercentage = usage.effectiveSessionPercentage
             let displayPercentage = UsageStatusCalculator.getDisplayPercentage(
                 usedPercentage: usedPercentage,
                 showRemaining: showRemaining
