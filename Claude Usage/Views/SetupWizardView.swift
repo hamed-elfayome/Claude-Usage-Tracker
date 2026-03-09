@@ -29,6 +29,7 @@ struct SetupWizardState {
     var selectedOrgId: String? = nil
     var autoStartSessionEnabled: Bool = false
     var showInstructions: Bool = false
+    var showingAuthSheet: Bool = false
 }
 
 /// Professional, native macOS setup wizard with 3-step flow
@@ -309,72 +310,132 @@ struct EnterKeyStepSetup: View {
                         .font(.system(size: 13))
                         .foregroundColor(.secondary)
 
-                    // Action buttons
-                    HStack(spacing: 10) {
-                        Button(action: {
-                            if let url = URL(string: "https://claude.ai") {
-                                NSWorkspace.shared.open(url)
-                            }
-                        }) {
-                            HStack {
-                                Image(systemName: "safari")
-                                Text("setup.open_claude_ai".localized)
-                            }
+                    // Primary: Sign in via embedded browser
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("personal.signin_description".localized)
                             .font(.system(size: 12))
-                            .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.bordered)
+                            .foregroundColor(.secondary)
 
-                        Button(action: { wizardState.showInstructions.toggle() }) {
-                            HStack {
-                                Image(systemName: wizardState.showInstructions ? "chevron.up" : "chevron.down")
-                                Text(wizardState.showInstructions ? "setup.hide_instructions".localized : "setup.show_instructions".localized)
+                        Button(action: { wizardState.showingAuthSheet = true }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "globe")
+                                    .font(.system(size: 12))
+                                Text("personal.signin_button".localized)
+                                    .font(.system(size: 12))
                             }
-                            .font(.system(size: 12))
                             .frame(maxWidth: .infinity)
                         }
-                        .buttonStyle(.bordered)
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.regular)
+                        .disabled(wizardState.validationState == .validating)
                     }
-
-                    // Instructions (expandable)
-                    if wizardState.showInstructions {
-                        VStack(alignment: .leading, spacing: 8) {
-                            InstructionRow(text: "setup.instruction.step1".localized)
-                            InstructionRow(text: "setup.instruction.step2".localized)
-                            InstructionRow(text: "setup.instruction.step3".localized)
-                            InstructionRow(text: "setup.instruction.step4".localized)
-                        }
-                        .padding(16)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Color(nsColor: .controlBackgroundColor))
+                    .sheet(isPresented: $wizardState.showingAuthSheet) {
+                        ConsoleAuthSheet(
+                            title: "personal.signin_sheet_title".localized,
+                            loginURL: URL(string: "https://claude.ai/login")!,
+                            cookieDomain: "claude.ai",
+                            onSuccess: { result in
+                                wizardState.showingAuthSheet = false
+                                wizardState.sessionKey = result.sessionKey
+                                testConnectionAfterAuth()
+                            },
+                            onCancel: {
+                                wizardState.showingAuthSheet = false
+                            }
                         )
                     }
 
-                    Divider()
+                    // Fallback: Manual session key entry
+                    DisclosureGroup("personal.advanced_manual_key".localized) {
+                        VStack(alignment: .leading, spacing: 12) {
+                            // Action buttons
+                            HStack(spacing: 10) {
+                                Button(action: {
+                                    if let url = URL(string: "https://claude.ai") {
+                                        NSWorkspace.shared.open(url)
+                                    }
+                                }) {
+                                    HStack {
+                                        Image(systemName: "safari")
+                                        Text("setup.open_claude_ai".localized)
+                                    }
+                                    .font(.system(size: 12))
+                                    .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(.bordered)
 
-                    // Session key input
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("personal.label_session_key".localized)
-                            .font(.system(size: 13, weight: .medium))
+                                Button(action: { wizardState.showInstructions.toggle() }) {
+                                    HStack {
+                                        Image(systemName: wizardState.showInstructions ? "chevron.up" : "chevron.down")
+                                        Text(wizardState.showInstructions ? "setup.hide_instructions".localized : "setup.show_instructions".localized)
+                                    }
+                                    .font(.system(size: 12))
+                                    .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(.bordered)
+                            }
 
-                        TextField("personal.placeholder_session_key".localized, text: $wizardState.sessionKey)
-                            .textFieldStyle(.plain)
-                            .font(.system(size: 12, design: .monospaced))
-                            .padding(10)
-                            .background(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .fill(Color(nsColor: .textBackgroundColor))
-                                    .overlay(
+                            // Instructions (expandable)
+                            if wizardState.showInstructions {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    InstructionRow(text: "setup.instruction.step1".localized)
+                                    InstructionRow(text: "setup.instruction.step2".localized)
+                                    InstructionRow(text: "setup.instruction.step3".localized)
+                                    InstructionRow(text: "setup.instruction.step4".localized)
+                                }
+                                .padding(16)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(Color(nsColor: .controlBackgroundColor))
+                                )
+                            }
+
+                            Divider()
+
+                            // Session key input
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("personal.label_session_key".localized)
+                                    .font(.system(size: 13, weight: .medium))
+
+                                TextField("personal.placeholder_session_key".localized, text: $wizardState.sessionKey)
+                                    .textFieldStyle(.plain)
+                                    .font(.system(size: 12, design: .monospaced))
+                                    .padding(10)
+                                    .background(
                                         RoundedRectangle(cornerRadius: 6)
-                                            .strokeBorder(Color.gray.opacity(0.2), lineWidth: 1)
+                                            .fill(Color(nsColor: .textBackgroundColor))
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 6)
+                                                    .strokeBorder(Color.gray.opacity(0.2), lineWidth: 1)
+                                            )
                                     )
-                            )
 
-                        Text("setup.paste_session_key".localized)
-                            .font(.system(size: 11))
-                            .foregroundColor(.secondary)
+                                Text("setup.paste_session_key".localized)
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.secondary)
+                            }
+
+                            HStack {
+                                Spacer()
+
+                                Button(action: testConnection) {
+                                    if case .validating = wizardState.validationState {
+                                        ProgressView()
+                                            .scaleEffect(0.6)
+                                            .frame(width: 100)
+                                    } else {
+                                        Text("wizard.test_connection".localized)
+                                            .frame(width: 100)
+                                    }
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .disabled(wizardState.sessionKey.isEmpty || wizardState.validationState == .validating)
+                            }
+                        }
+                        .padding(.top, 8)
                     }
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.secondary)
 
                     // Validation Status
                     if case .success(let message) = wizardState.validationState {
@@ -396,21 +457,35 @@ struct EnterKeyStepSetup: View {
                 .buttonStyle(.bordered)
 
                 Spacer()
-
-                Button(action: testConnection) {
-                    if case .validating = wizardState.validationState {
-                        ProgressView()
-                            .scaleEffect(0.6)
-                            .frame(width: 100)
-                    } else {
-                        Text("wizard.test_connection".localized)
-                            .frame(width: 100)
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(wizardState.sessionKey.isEmpty || wizardState.validationState == .validating)
             }
             .padding(20)
+        }
+    }
+
+    private func testConnectionAfterAuth() {
+        wizardState.validationState = .validating
+
+        Task {
+            do {
+                let organizations = try await apiService.testSessionKey(wizardState.sessionKey)
+
+                await MainActor.run {
+                    wizardState.testedOrganizations = organizations
+                    wizardState.validationState = .success("Connection successful! Found \(organizations.count) organization(s)")
+
+                    withAnimation {
+                        wizardState.currentStep = .selectOrg
+                    }
+                }
+            } catch {
+                let appError = AppError.wrap(error)
+                ErrorLogger.shared.log(appError, severity: .error)
+
+                await MainActor.run {
+                    let errorMessage = "\(appError.message)\n\nError Code: \(appError.code.rawValue)"
+                    wizardState.validationState = .error(errorMessage)
+                }
+            }
         }
     }
 
