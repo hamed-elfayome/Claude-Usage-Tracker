@@ -71,6 +71,7 @@
 "menubar.remaining" = "残り";
 "menubar.resets_time" = "%@にリセット";
 "menubar.resets_in" = "%@後にリセット";
+"menubar.resets_both" = "%@でリセット (%@)";
 "menubar.click_status" = "クリックしてstatus.claude.comを開く";
 
 /* ==================== */
@@ -874,8 +875,11 @@
 "popover.title" = "ポップオーバー";
 "popover.subtitle" = "ポップオーバーでの使用状況の表示方法をカスタマイズ";
 "popover.display_section" = "表示";
-"popover.show_remaining_time" = "残り時間を表示";
-"popover.show_remaining_time_desc" = "リセット時刻の代わりにリセットまでのカウントダウンを表示";
+"popover.time_display" = "時間表示";
+"popover.time_display_desc" = "リセット時間の表示方法を選択";
+"popover.time_display_reset" = "リセット時刻";
+"popover.time_display_remaining" = "残り時間";
+"popover.time_display_both" = "両方";
 "popover.time_format" = "時刻形式";
 "popover.time_format_desc" = "アプリ全体での時刻の表示形式を選択";
 "popover.time_format_system" = "システム";

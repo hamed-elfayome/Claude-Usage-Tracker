@@ -13,7 +13,7 @@ enum SettingsColors {
     // MARK: - Status Colors
 
     /// Success state (green)
-    static let success = Color.green
+    static let success = Color.adaptiveGreen
 
     /// Error state (red)
     static let error = Color.red
@@ -58,7 +58,7 @@ enum SettingsColors {
     // MARK: - Threshold Colors (for usage indicators)
 
     /// Low usage (0-50%)
-    static let usageLow = Color.green
+    static let usageLow = Color.adaptiveGreen
 
     /// Medium usage (50-75%)
     static let usageMedium = Color.yellow

@@ -56,7 +56,8 @@ class SharedDataStore {
         static let autoSwitchProfileEnabled = "autoSwitchProfileEnabled"
 
         // Popover Settings
-        static let popoverShowRemainingTime = "popoverShowRemainingTime"
+        static let popoverShowRemainingTime = "popoverShowRemainingTime" // legacy bool key
+        static let popoverTimeDisplay = "popoverTimeDisplay"
         static let timeFormatPreference = "timeFormatPreference"
     }
 
@@ -383,12 +384,25 @@ class SharedDataStore {
 
     // MARK: - Popover Settings
 
-    func savePopoverShowRemainingTime(_ show: Bool) {
-        defaults.set(show, forKey: Keys.popoverShowRemainingTime)
+    func savePopoverTimeDisplay(_ display: PopoverTimeDisplay) {
+        defaults.set(display.rawValue, forKey: Keys.popoverTimeDisplay)
     }
 
-    func loadPopoverShowRemainingTime() -> Bool {
-        return defaults.bool(forKey: Keys.popoverShowRemainingTime)
+    func loadPopoverTimeDisplay() -> PopoverTimeDisplay {
+        // Check new key first
+        if let rawValue = defaults.string(forKey: Keys.popoverTimeDisplay),
+           let display = PopoverTimeDisplay(rawValue: rawValue) {
+            return display
+        }
+        // Migrate from old boolean key
+        if defaults.object(forKey: Keys.popoverShowRemainingTime) != nil {
+            let oldValue = defaults.bool(forKey: Keys.popoverShowRemainingTime)
+            let migrated: PopoverTimeDisplay = oldValue ? .remainingTime : .resetTime
+            savePopoverTimeDisplay(migrated)
+            defaults.removeObject(forKey: Keys.popoverShowRemainingTime)
+            return migrated
+        }
+        return .resetTime
     }
 
     func saveTimeFormatPreference(_ format: TimeFormatPreference) {

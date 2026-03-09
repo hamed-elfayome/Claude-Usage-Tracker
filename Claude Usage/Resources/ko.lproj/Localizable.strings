@@ -80,6 +80,7 @@
 "menubar.remaining" = "남음";
 "menubar.resets_time" = "%@ 리셋";
 "menubar.resets_in" = "%@ 후 초기화";
+"menubar.resets_both" = "%@ 후 초기화 (%@)";
 "menubar.click_status" = "클릭하여 status.claude.com 열기";
 
 /* ==================== */
@@ -934,8 +935,11 @@
 "popover.title" = "팝오버";
 "popover.subtitle" = "팝오버에서 사용량 정보 표시 방법을 사용자 지정합니다";
 "popover.display_section" = "표시";
-"popover.show_remaining_time" = "남은 시간 표시";
-"popover.show_remaining_time_desc" = "초기화 시간 대신 초기화까지 카운트다운 표시";
+"popover.time_display" = "시간 표시";
+"popover.time_display_desc" = "초기화 시간 표시 방법 선택";
+"popover.time_display_reset" = "초기화 시각";
+"popover.time_display_remaining" = "남은 시간";
+"popover.time_display_both" = "모두";
 "popover.time_format" = "시간 형식";
 "popover.time_format_desc" = "앱 전체에서 시간이 표시되는 방식을 선택합니다";
 "popover.time_format_system" = "시스템";

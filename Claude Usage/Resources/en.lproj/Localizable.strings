@@ -77,6 +77,7 @@
 "menubar.remaining" = "Remaining";
 "menubar.resets_time" = "Resets %@";
 "menubar.resets_in" = "Resets in %@";
+"menubar.resets_both" = "Resets in %@ (%@)";
 "menubar.click_status" = "Click to open status.claude.com";
 
 /* ==================== */
@@ -886,8 +887,11 @@
 "popover.title" = "Popover";
 "popover.subtitle" = "Customize how the popover displays usage information";
 "popover.display_section" = "Display";
-"popover.show_remaining_time" = "Show remaining time";
-"popover.show_remaining_time_desc" = "Show countdown to reset instead of reset time";
+"popover.time_display" = "Reset time display";
+"popover.time_display_desc" = "Choose what to show for reset times in the popover";
+"popover.time_display_reset" = "Reset time";
+"popover.time_display_remaining" = "Remaining";
+"popover.time_display_both" = "Both";
 "popover.time_format" = "Time format";
 "popover.time_format_desc" = "Choose how times are displayed throughout the app";
 "popover.time_format_system" = "System";

@@ -115,7 +115,7 @@ enum DesignTokens {
         static let inputBackground = Color.primary.opacity(0.06)
 
         /// Success/connected state
-        static let success = Color.green
+        static let success = Color.adaptiveGreen
 
         /// Error state
         static let error = Color.red

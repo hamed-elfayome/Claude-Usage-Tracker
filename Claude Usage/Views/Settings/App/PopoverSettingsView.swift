@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct PopoverSettingsView: View {
-    @State private var showRemainingTime: Bool = SharedDataStore.shared.loadPopoverShowRemainingTime()
+    @State private var timeDisplay: PopoverTimeDisplay = SharedDataStore.shared.loadPopoverTimeDisplay()
     @State private var timeFormat: TimeFormatPreference = SharedDataStore.shared.loadTimeFormatPreference()
 
     var body: some View {
@@ -19,36 +19,30 @@ struct PopoverSettingsView: View {
                     subtitle: "popover.subtitle".localized
                 )
 
-                SettingsSectionCard(title: "popover.display_section".localized) {
-                    SettingToggle(
-                        title: "popover.show_remaining_time".localized,
-                        description: "popover.show_remaining_time_desc".localized,
-                        isOn: $showRemainingTime
-                    )
-
-                    Divider()
-
-                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.small) {
-                        Text("popover.time_format".localized)
-                            .font(.body)
-                            .fontWeight(.medium)
-                        Text("popover.time_format_desc".localized)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Picker("", selection: $timeFormat) {
-                            Text("popover.time_format_system".localized).tag(TimeFormatPreference.system)
-                            Text("popover.time_format_12h".localized).tag(TimeFormatPreference.twelveHour)
-                            Text("popover.time_format_24h".localized).tag(TimeFormatPreference.twentyFourHour)
-                        }
-                        .pickerStyle(.segmented)
-                        .labelsHidden()
+                SettingsSectionCard(title: "popover.time_display".localized, subtitle: "popover.time_display_desc".localized) {
+                    Picker("", selection: $timeDisplay) {
+                        Text("popover.time_display_reset".localized).tag(PopoverTimeDisplay.resetTime)
+                        Text("popover.time_display_remaining".localized).tag(PopoverTimeDisplay.remainingTime)
+                        Text("popover.time_display_both".localized).tag(PopoverTimeDisplay.both)
                     }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                }
+
+                SettingsSectionCard(title: "popover.time_format".localized, subtitle: "popover.time_format_desc".localized) {
+                    Picker("", selection: $timeFormat) {
+                        Text("popover.time_format_system".localized).tag(TimeFormatPreference.system)
+                        Text("popover.time_format_12h".localized).tag(TimeFormatPreference.twelveHour)
+                        Text("popover.time_format_24h".localized).tag(TimeFormatPreference.twentyFourHour)
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
                 }
             }
             .padding()
         }
-        .onChange(of: showRemainingTime) { _, newValue in
-            SharedDataStore.shared.savePopoverShowRemainingTime(newValue)
+        .onChange(of: timeDisplay) { _, newValue in
+            SharedDataStore.shared.savePopoverTimeDisplay(newValue)
         }
         .onChange(of: timeFormat) { _, newValue in
             SharedDataStore.shared.saveTimeFormatPreference(newValue)

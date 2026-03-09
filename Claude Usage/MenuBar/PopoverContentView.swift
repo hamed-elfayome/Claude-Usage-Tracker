@@ -245,7 +245,7 @@ struct ProfileSwitcherCompact: View {
                             if profile.hasCliAccount {
                                 Image(systemName: "terminal.fill")
                                     .font(.system(size: 9))
-                                    .foregroundColor(.green)
+                                    .foregroundColor(.adaptiveGreen)
                             }
 
                             if profile.claudeSessionKey != nil {
@@ -313,7 +313,7 @@ struct ProfileSwitcherBar: View {
                             if profile.hasCliAccount {
                                 Image(systemName: "terminal.fill")
                                     .font(.system(size: 9))
-                                    .foregroundColor(.green)
+                                    .foregroundColor(.adaptiveGreen)
                             }
 
                             if profile.claudeSessionKey != nil {
@@ -428,7 +428,7 @@ struct SmartHeader: View {
 
     private var statusColor: Color {
         switch status.indicator.color {
-        case .green: return .green
+        case .green: return .adaptiveGreen
         case .yellow: return .yellow
         case .orange: return .orange
         case .red: return .red
@@ -538,8 +538,8 @@ struct SmartUsageDashboard: View {
         return profileManager.activeProfile?.iconConfig.usePaceColoring ?? true
     }
 
-    private var showRemainingTime: Bool {
-        SharedDataStore.shared.loadPopoverShowRemainingTime()
+    private var timeDisplay: PopoverTimeDisplay {
+        SharedDataStore.shared.loadPopoverTimeDisplay()
     }
 
     var body: some View {
@@ -554,7 +554,7 @@ struct SmartUsageDashboard: View {
                 periodDuration: Constants.sessionWindow,
                 showTimeMarker: showTimeMarker,
                 usePaceColoring: usePaceColoring,
-                showRemainingTime: showRemainingTime
+                timeDisplay: timeDisplay
             )
 
             // All Models (Weekly)
@@ -568,7 +568,7 @@ struct SmartUsageDashboard: View {
                 periodDuration: Constants.weeklyWindow,
                 showTimeMarker: showTimeMarker,
                 usePaceColoring: usePaceColoring,
-                showRemainingTime: showRemainingTime
+                timeDisplay: timeDisplay
             )
 
             if usage.opusWeeklyTokensUsed > 0 {
@@ -591,7 +591,7 @@ struct SmartUsageDashboard: View {
                     showRemaining: showRemainingPercentage,
                     resetTime: usage.sonnetWeeklyResetTime,
                     periodDuration: nil,
-                    showRemainingTime: showRemainingTime
+                    timeDisplay: timeDisplay
                 )
             }
 
@@ -616,14 +616,14 @@ struct SmartUsageDashboard: View {
                         Spacer()
                         Text(String(format: "%.2f %@", balance / 100.0, balanceCurrency.uppercased()))
                             .font(.system(size: 11, weight: .semibold, design: .rounded))
-                            .foregroundColor(.green)
+                            .foregroundColor(.adaptiveGreen)
                     }
                 }
             }
 
             // API Usage
             if let apiUsage = apiUsage {
-                APIUsageCard(apiUsage: apiUsage, showRemaining: showRemainingPercentage, showRemainingTime: showRemainingTime)
+                APIUsageCard(apiUsage: apiUsage, showRemaining: showRemainingPercentage, timeDisplay: timeDisplay)
 
                 // API Cost Card (only if cost data is available)
                 if let costCents = apiUsage.apiTokenCostCents, costCents > 0 {
@@ -647,7 +647,7 @@ struct UsageRow: View {
     let periodDuration: TimeInterval?
     var showTimeMarker: Bool = true
     var usePaceColoring: Bool = true
-    var showRemainingTime: Bool = false
+    var timeDisplay: PopoverTimeDisplay = .resetTime
 
     private var displayPercentage: Double {
         UsageStatusCalculator.getDisplayPercentage(
@@ -679,7 +679,7 @@ struct UsageRow: View {
 
     private var statusColor: Color {
         switch statusLevel {
-        case .safe: return .green
+        case .safe: return .adaptiveGreen
         case .moderate: return .orange
         case .critical: return .red
         }
@@ -746,9 +746,7 @@ struct UsageRow: View {
 
             // Reset time
             if let reset = resetTime {
-                Text(showRemainingTime
-                    ? "menubar.resets_in".localized(with: reset.timeRemainingString())
-                    : "menubar.resets_time".localized(with: reset.resetTimeString()))
+                Text(resetTimeText(for: reset))
                     .font(.system(size: 9))
                     .foregroundColor(.secondary)
             }
@@ -759,6 +757,17 @@ struct UsageRow: View {
             RoundedRectangle(cornerRadius: 8)
                 .strokeBorder(Color.primary.opacity(0.1), lineWidth: 0.5)
         )
+    }
+
+    private func resetTimeText(for reset: Date) -> String {
+        switch timeDisplay {
+        case .resetTime:
+            return "menubar.resets_time".localized(with: reset.resetTimeString())
+        case .remainingTime:
+            return "menubar.resets_in".localized(with: reset.timeRemainingString())
+        case .both:
+            return "menubar.resets_both".localized(with: reset.timeRemainingString(), reset.resetTimeString())
+        }
     }
 }
 
@@ -790,7 +799,7 @@ struct ContextualInsights: View {
         if usage.effectiveSessionPercentage < 20 && usage.weeklyPercentage < 30 {
             result.append(Insight(
                 icon: "checkmark.circle.fill",
-                color: .green,
+                color: .adaptiveGreen,
                 title: "usage.efficient".localized,
                 description: "usage.efficient.desc".localized
             ))
@@ -873,7 +882,7 @@ struct ClaudeStatusRow: View {
 
     private var statusColor: Color {
         switch status.indicator.color {
-        case .green: return .green
+        case .green: return .adaptiveGreen
         case .yellow: return .yellow
         case .orange: return .orange
         case .red: return .red
@@ -1153,7 +1162,7 @@ struct APICostSourceRow: View {
 struct APIUsageCard: View {
     let apiUsage: APIUsage
     let showRemaining: Bool
-    var showRemainingTime: Bool = false
+    var timeDisplay: PopoverTimeDisplay = .resetTime
 
     private var displayPercentage: Double {
         UsageStatusCalculator.getDisplayPercentage(
@@ -1171,7 +1180,7 @@ struct APIUsageCard: View {
 
     private var usageColor: Color {
         switch statusLevel {
-        case .safe: return .green
+        case .safe: return .adaptiveGreen
         case .moderate: return .orange
         case .critical: return .red
         }
@@ -1227,9 +1236,7 @@ struct APIUsageCard: View {
 
             // Reset Time
             if apiUsage.resetsAt > Date() {
-                Text(showRemainingTime
-                    ? "menubar.resets_in".localized(with: apiUsage.resetsAt.timeRemainingString())
-                    : "menubar.resets_time".localized(with: apiUsage.resetsAt.formatted(.relative(presentation: .named))))
+                Text(resetTimeText(for: apiUsage.resetsAt))
                     .font(.system(size: 9))
                     .foregroundColor(.secondary)
             }
@@ -1240,6 +1247,17 @@ struct APIUsageCard: View {
             RoundedRectangle(cornerRadius: 8)
                 .strokeBorder(Color.primary.opacity(0.1), lineWidth: 0.5)
         )
+    }
+
+    private func resetTimeText(for reset: Date) -> String {
+        switch timeDisplay {
+        case .resetTime:
+            return "menubar.resets_time".localized(with: reset.resetTimeString())
+        case .remainingTime:
+            return "menubar.resets_in".localized(with: reset.timeRemainingString())
+        case .both:
+            return "menubar.resets_both".localized(with: reset.timeRemainingString(), reset.resetTimeString())
+        }
     }
 }
 

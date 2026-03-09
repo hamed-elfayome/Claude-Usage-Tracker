@@ -71,6 +71,7 @@
 "menubar.remaining" = "Restante";
 "menubar.resets_time" = "Se reinicia %@";
 "menubar.resets_in" = "Se reinicia en %@";
+"menubar.resets_both" = "Se reinicia en %@ (%@)";
 "menubar.click_status" = "Clic para abrir status.claude.com";
 
 /* ==================== */
@@ -855,8 +856,11 @@
 "popover.title" = "Popover";
 "popover.subtitle" = "Personaliza cómo el popover muestra la información de uso";
 "popover.display_section" = "Visualización";
-"popover.show_remaining_time" = "Mostrar tiempo restante";
-"popover.show_remaining_time_desc" = "Mostrar cuenta regresiva hasta el reinicio en lugar de la hora de reinicio";
+"popover.time_display" = "Visualización del tiempo";
+"popover.time_display_desc" = "Elige qué mostrar para los tiempos de reinicio";
+"popover.time_display_reset" = "Hora";
+"popover.time_display_remaining" = "Restante";
+"popover.time_display_both" = "Ambos";
 "popover.time_format" = "Formato de hora";
 "popover.time_format_desc" = "Elige cómo se muestran las horas en la aplicación";
 "popover.time_format_system" = "Sistema";

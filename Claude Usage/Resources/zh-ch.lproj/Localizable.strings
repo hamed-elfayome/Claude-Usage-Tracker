@@ -71,6 +71,7 @@
 "menubar.remaining" = "剩余";
 "menubar.resets_time" = "重置时间 %@";
 "menubar.resets_in" = "%@后重置";
+"menubar.resets_both" = "%@后重置 (%@)";
 "menubar.click_status" = "点击打开 status.claude.com";
 
 /* ==================== */
@@ -864,8 +865,11 @@
 "popover.title" = "弹出窗口";
 "popover.subtitle" = "自定义弹出窗口如何显示使用信息";
 "popover.display_section" = "显示";
-"popover.show_remaining_time" = "显示剩余时间";
-"popover.show_remaining_time_desc" = "显示重置倒计时而非重置时间";
+"popover.time_display" = "时间显示";
+"popover.time_display_desc" = "选择重置时间的显示方式";
+"popover.time_display_reset" = "重置时间";
+"popover.time_display_remaining" = "剩余时间";
+"popover.time_display_both" = "两者";
 "popover.time_format" = "时间格式";
 "popover.time_format_desc" = "选择应用中时间的显示方式";
 "popover.time_format_system" = "系统";

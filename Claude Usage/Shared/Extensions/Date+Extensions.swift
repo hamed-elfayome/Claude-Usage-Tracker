@@ -40,6 +40,10 @@ extension Date {
         let days = hours / 24
 
         if days > 0 {
+            let remainingHours = hours % 24
+            if remainingHours > 0 {
+                return "\(days)d \(remainingHours)h"
+            }
             return days == 1 ? "1 day" : "\(days) days"
         } else if hours > 0 {
             if minutes > 0 {
