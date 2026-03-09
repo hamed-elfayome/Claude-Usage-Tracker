@@ -488,20 +488,30 @@ class ClaudeAPIService: APIServiceProtocol {
             return claudeUsage
 
         case .cliOAuth:
-            // Use OAuth endpoint (no organization ID needed)
-            LoggingService.shared.log("ClaudeAPIService: Fetching usage via OAuth endpoint")
+            // The dedicated OAuth usage endpoint (api.anthropic.com/api/oauth/usage) is disabled.
+            // Instead, make a minimal Messages API call and extract usage from response headers.
+            LoggingService.shared.log("ClaudeAPIService: Fetching usage via Messages API headers (OAuth)")
 
-            guard let url = URL(string: "https://api.anthropic.com/api/oauth/usage") else {
+            guard let url = URL(string: "https://api.anthropic.com/v1/messages") else {
                 throw AppError(
                     code: .urlMalformed,
-                    message: "Invalid OAuth usage endpoint",
+                    message: "Invalid Messages API endpoint",
                     isRecoverable: false
                 )
             }
 
             var request = buildAuthenticatedRequest(url: url, auth: auth)
-            request.httpMethod = "GET"
+            request.httpMethod = "POST"
+            request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
             request.timeoutInterval = 30
+
+            // Minimal request: cheapest model, 1 token, to get rate limit headers
+            let body: [String: Any] = [
+                "model": "claude-haiku-4-5-20251001",
+                "max_tokens": 1,
+                "messages": [["role": "user", "content": "hi"]]
+            ]
+            request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
             let startTime = Date()
             let (data, response): (Data, URLResponse)
@@ -511,7 +521,7 @@ class ClaudeAPIService: APIServiceProtocol {
                 let duration = Date().timeIntervalSince(startTime)
                 NetworkLoggerService.shared.logRequest(
                     url: url.absoluteString,
-                    method: "GET",
+                    method: "POST",
                     requestBody: request.httpBody,
                     responseData: nil,
                     statusCode: nil,
@@ -526,7 +536,7 @@ class ClaudeAPIService: APIServiceProtocol {
             guard let httpResponse = response as? HTTPURLResponse else {
                 throw AppError(
                     code: .apiInvalidResponse,
-                    message: "Invalid response from OAuth endpoint",
+                    message: "Invalid response from Messages API",
                     isRecoverable: true
                 )
             }
@@ -534,7 +544,7 @@ class ClaudeAPIService: APIServiceProtocol {
             // Log to NetworkLoggerService
             NetworkLoggerService.shared.logRequest(
                 url: url.absoluteString,
-                method: "GET",
+                method: "POST",
                 requestBody: request.httpBody,
                 responseData: data,
                 statusCode: httpResponse.statusCode,
@@ -546,14 +556,14 @@ class ClaudeAPIService: APIServiceProtocol {
                 let responsePreview = String(data: data, encoding: .utf8)?.prefix(200) ?? "Unable to read response"
                 throw AppError(
                     code: .apiUnauthorized,
-                    message: "OAuth authentication failed",
+                    message: "OAuth Messages API request failed",
                     technicalDetails: "Status: \(httpResponse.statusCode)\nResponse: \(responsePreview)",
                     isRecoverable: true,
                     recoverySuggestion: "Please re-sync your CLI account in Settings"
                 )
             }
 
-            return try parseUsageResponse(data)
+            return parseUsageFromRateLimitHeaders(httpResponse)
 
         case .consoleAPISession:
             // Console API is for billing/credits only, not usage data
@@ -791,6 +801,72 @@ class ClaudeAPIService: APIServiceProtocol {
             technicalDetails: "Unable to parse JSON response structure",
             isRecoverable: false,
             recoverySuggestion: "Please check the error log and report this issue"
+        )
+    }
+
+    // MARK: - Rate Limit Header Parsing
+
+    /// Parses usage data from Messages API rate limit response headers.
+    /// Headers use format: anthropic-ratelimit-unified-{window}-{field}
+    /// Utilization values are 0.0-1.0 (converted to 0-100 percentage).
+    private func parseUsageFromRateLimitHeaders(_ response: HTTPURLResponse) -> ClaudeUsage {
+        func headerDouble(_ name: String) -> Double? {
+            if let value = response.value(forHTTPHeaderField: name) {
+                return Double(value)
+            }
+            return nil
+        }
+
+        // Session (5h) usage — utilization is 0.0-1.0, convert to 0-100
+        let sessionUtilization = headerDouble("anthropic-ratelimit-unified-5h-utilization") ?? 0
+        var sessionPercentage = sessionUtilization * 100.0
+
+        let sessionResetTimestamp = headerDouble("anthropic-ratelimit-unified-5h-reset") ?? 0
+        let sessionResetTime = sessionResetTimestamp > 0
+            ? Date(timeIntervalSince1970: sessionResetTimestamp)
+            : Date().addingTimeInterval(5 * 3600)
+
+        // If the 5-hour window has already expired, the session has reset
+        if sessionResetTime < Date() {
+            sessionPercentage = 0.0
+        }
+
+        // Weekly (7d) usage
+        let weeklyUtilization = headerDouble("anthropic-ratelimit-unified-7d-utilization") ?? 0
+        let weeklyPercentage = weeklyUtilization * 100.0
+
+        let weeklyResetTimestamp = headerDouble("anthropic-ratelimit-unified-7d-reset") ?? 0
+        let weeklyResetTime = weeklyResetTimestamp > 0
+            ? Date(timeIntervalSince1970: weeklyResetTimestamp)
+            : Date().nextMonday1259pm()
+
+        // Per-model breakdowns not available in rate limit headers
+        let weeklyLimit = Constants.weeklyLimit
+        let weeklyTokens = Int(Double(weeklyLimit) * (weeklyPercentage / 100.0))
+
+        LoggingService.shared.log("ClaudeAPIService: Parsed usage from headers - session: \(String(format: "%.1f", sessionPercentage))%, weekly: \(String(format: "%.1f", weeklyPercentage))%")
+
+        return ClaudeUsage(
+            sessionTokensUsed: 0,
+            sessionLimit: 0,
+            sessionPercentage: sessionPercentage,
+            sessionResetTime: sessionResetTime,
+            weeklyTokensUsed: weeklyTokens,
+            weeklyLimit: weeklyLimit,
+            weeklyPercentage: weeklyPercentage,
+            weeklyResetTime: weeklyResetTime,
+            opusWeeklyTokensUsed: 0,
+            opusWeeklyPercentage: 0,
+            sonnetWeeklyTokensUsed: 0,
+            sonnetWeeklyPercentage: 0,
+            sonnetWeeklyResetTime: nil,
+            costUsed: nil,
+            costLimit: nil,
+            costCurrency: nil,
+            overageBalance: nil,
+            overageBalanceCurrency: nil,
+            lastUpdated: Date(),
+            userTimezone: .current
         )
     }
 
