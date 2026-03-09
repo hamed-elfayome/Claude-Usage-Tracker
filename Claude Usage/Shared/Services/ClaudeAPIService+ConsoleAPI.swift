@@ -11,8 +11,7 @@ extension ClaudeAPIService {
             .build()
 
         var request = URLRequest(url: url)
-        let safeKey = Self.sanitizeForHeader(apiSessionKey)
-        request.setValue("sessionKey=\(safeKey)", forHTTPHeaderField: "Cookie")
+        request.setValue("sessionKey=\(apiSessionKey)", forHTTPHeaderField: "Cookie")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.httpMethod = "GET"
 
@@ -41,8 +40,7 @@ extension ClaudeAPIService {
             .build()
 
         var request = URLRequest(url: url)
-        let safeKey = Self.sanitizeForHeader(apiSessionKey)
-        request.setValue("sessionKey=\(safeKey)", forHTTPHeaderField: "Cookie")
+        request.setValue("sessionKey=\(apiSessionKey)", forHTTPHeaderField: "Cookie")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.httpMethod = "GET"
 
@@ -70,8 +68,7 @@ extension ClaudeAPIService {
             .build()
 
         var request = URLRequest(url: url)
-        let safeKey = Self.sanitizeForHeader(apiSessionKey)
-        request.setValue("sessionKey=\(safeKey)", forHTTPHeaderField: "Cookie")
+        request.setValue("sessionKey=\(apiSessionKey)", forHTTPHeaderField: "Cookie")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.httpMethod = "GET"
 
@@ -109,8 +106,7 @@ extension ClaudeAPIService {
             .build()
 
         var request = URLRequest(url: url)
-        let safeKey = Self.sanitizeForHeader(apiSessionKey)
-        request.setValue("sessionKey=\(safeKey)", forHTTPHeaderField: "Cookie")
+        request.setValue("sessionKey=\(apiSessionKey)", forHTTPHeaderField: "Cookie")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.httpMethod = "GET"
 
@@ -158,8 +154,7 @@ extension ClaudeAPIService {
             .build()
 
         var request = URLRequest(url: url)
-        let safeKey = Self.sanitizeForHeader(apiSessionKey)
-        request.setValue("sessionKey=\(safeKey)", forHTTPHeaderField: "Cookie")
+        request.setValue("sessionKey=\(apiSessionKey)", forHTTPHeaderField: "Cookie")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.httpMethod = "GET"
 
