@@ -3,23 +3,41 @@ import Foundation
 // MARK: - Console API Methods
 
 extension ClaudeAPIService {
-    /// Fetches organizations from Console API using the provided session key
-    func fetchConsoleOrganizations(apiSessionKey: String) async throws -> [APIOrganization] {
-        // Build URL safely
-        let url = try URLBuilder(baseURL: consoleBaseURL)
-            .appendingPath("/organizations")
-            .build()
 
+    /// Performs a Console API GET request with network logging
+    private func consoleRequest(url: URL, apiSessionKey: String) async throws -> (Data, HTTPURLResponse) {
         var request = URLRequest(url: url)
         request.setValue("sessionKey=\(apiSessionKey)", forHTTPHeaderField: "Cookie")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.httpMethod = "GET"
 
+        let startTime = CFAbsoluteTimeGetCurrent()
         let (data, response) = try await URLSession.shared.data(for: request)
+        let duration = CFAbsoluteTimeGetCurrent() - startTime
 
         guard let httpResponse = response as? HTTPURLResponse else {
+            NetworkLoggerService.shared.logRequest(
+                url: url.absoluteString, method: "GET", requestBody: nil,
+                responseData: nil, statusCode: nil, duration: duration, error: APIError.invalidResponse
+            )
             throw APIError.invalidResponse
         }
+
+        NetworkLoggerService.shared.logRequest(
+            url: url.absoluteString, method: "GET", requestBody: nil,
+            responseData: data, statusCode: httpResponse.statusCode, duration: duration, error: nil
+        )
+
+        return (data, httpResponse)
+    }
+
+    /// Fetches organizations from Console API using the provided session key
+    func fetchConsoleOrganizations(apiSessionKey: String) async throws -> [APIOrganization] {
+        let url = try URLBuilder(baseURL: consoleBaseURL)
+            .appendingPath("/organizations")
+            .build()
+
+        let (data, httpResponse) = try await consoleRequest(url: url, apiSessionKey: apiSessionKey)
 
         switch httpResponse.statusCode {
         case 200:
@@ -34,21 +52,11 @@ extension ClaudeAPIService {
 
     /// Fetches current spend for the given organization from Console API
     func fetchCurrentSpend(organizationId: String, apiSessionKey: String) async throws -> CurrentSpendResponse {
-        // Build URL safely
         let url = try URLBuilder(baseURL: consoleBaseURL)
             .appendingPathComponents(["/organizations", organizationId, "/current_spend"])
             .build()
 
-        var request = URLRequest(url: url)
-        request.setValue("sessionKey=\(apiSessionKey)", forHTTPHeaderField: "Cookie")
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.httpMethod = "GET"
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw APIError.invalidResponse
-        }
+        let (data, httpResponse) = try await consoleRequest(url: url, apiSessionKey: apiSessionKey)
 
         switch httpResponse.statusCode {
         case 200:
@@ -62,21 +70,11 @@ extension ClaudeAPIService {
 
     /// Fetches prepaid credits for the given organization from Console API
     func fetchPrepaidCredits(organizationId: String, apiSessionKey: String) async throws -> PrepaidCreditsResponse {
-        // Build URL safely
         let url = try URLBuilder(baseURL: consoleBaseURL)
             .appendingPathComponents(["/organizations", organizationId, "/prepaid/credits"])
             .build()
 
-        var request = URLRequest(url: url)
-        request.setValue("sessionKey=\(apiSessionKey)", forHTTPHeaderField: "Cookie")
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.httpMethod = "GET"
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw APIError.invalidResponse
-        }
+        let (data, httpResponse) = try await consoleRequest(url: url, apiSessionKey: apiSessionKey)
 
         switch httpResponse.statusCode {
         case 200:
@@ -105,16 +103,7 @@ extension ClaudeAPIService {
             .addingQueryParameter(name: "group_by", value: "api_key_id")
             .build()
 
-        var request = URLRequest(url: url)
-        request.setValue("sessionKey=\(apiSessionKey)", forHTTPHeaderField: "Cookie")
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.httpMethod = "GET"
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw APIError.invalidResponse
-        }
+        let (data, httpResponse) = try await consoleRequest(url: url, apiSessionKey: apiSessionKey)
 
         switch httpResponse.statusCode {
         case 200:
@@ -153,16 +142,7 @@ extension ClaudeAPIService {
             .addingQueryParameter(name: "status", value: "active")
             .build()
 
-        var request = URLRequest(url: url)
-        request.setValue("sessionKey=\(apiSessionKey)", forHTTPHeaderField: "Cookie")
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.httpMethod = "GET"
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw APIError.invalidResponse
-        }
+        let (data, httpResponse) = try await consoleRequest(url: url, apiSessionKey: apiSessionKey)
 
         switch httpResponse.statusCode {
         case 200:

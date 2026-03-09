@@ -80,9 +80,8 @@ final class UsageRefreshCoordinator {
                 LoggingService.shared.logAPIError("fetchStatus", error: error)
             }
 
-            // Fetch API usage if enabled
-            if dataStore.loadAPITrackingEnabled(),
-               let apiSessionKey = dataStore.loadAPISessionKey(),
+            // Fetch API usage if credentials are available
+            if let apiSessionKey = dataStore.loadAPISessionKey(),
                let orgId = dataStore.loadAPIOrganizationId() {
                 do {
                     let newAPIUsage = try await apiService.fetchAPIUsageData(organizationId: orgId, apiSessionKey: apiSessionKey)

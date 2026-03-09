@@ -1177,7 +1177,7 @@ class MenuBarManager: NSObject, ObservableObject {
                 LoggingService.shared.log("MenuBarManager: Failed to fetch status - [\(appError.code.rawValue)] \(appError.message)")
             }
 
-            // Fetch API usage if enabled (using active profile's API credentials)
+            // Fetch API usage (using active profile's API credentials)
             if let profile = await MainActor.run(body: { self.profileManager.activeProfile }),
                let apiSessionKey = profile.apiSessionKey,
                let orgId = profile.apiOrganizationId {

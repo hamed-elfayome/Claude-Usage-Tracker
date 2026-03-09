@@ -538,10 +538,6 @@ struct SmartUsageDashboard: View {
         return profileManager.activeProfile?.iconConfig.usePaceColoring ?? true
     }
 
-    private var isAPITrackingEnabled: Bool {
-        DataStore.shared.loadAPITrackingEnabled()
-    }
-
     private var showRemainingTime: Bool {
         SharedDataStore.shared.loadPopoverShowRemainingTime()
     }
@@ -961,16 +957,16 @@ struct APICostCard: View {
     let apiUsage: APIUsage
 
     var body: some View {
-        VStack(spacing: 10) {
+        VStack(alignment: .leading, spacing: 5) {
             // Header
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 1) {
                     Text("API Cost")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: 13, weight: .medium))
                         .foregroundColor(.primary)
 
                     Text("This Month")
-                        .font(.system(size: 10, weight: .medium))
+                        .font(.system(size: 10))
                         .foregroundColor(.secondary)
                 }
 
@@ -979,7 +975,7 @@ struct APICostCard: View {
                 // Total cost
                 if let formatted = apiUsage.formattedAPICost {
                     Text(formatted)
-                        .font(.system(size: 16, weight: .bold, design: .monospaced))
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
                         .foregroundColor(.primary)
                 }
             }
@@ -1017,15 +1013,11 @@ struct APICostCard: View {
                 }
             }
         }
-        .padding(12)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(nsColor: .controlBackgroundColor).opacity(0.4))
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(Color.secondary.opacity(0.15), lineWidth: 1)
-                )
+            RoundedRectangle(cornerRadius: 8)
+                .strokeBorder(Color.primary.opacity(0.1), lineWidth: 0.5)
         )
     }
 }
