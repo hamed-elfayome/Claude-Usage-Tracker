@@ -212,7 +212,7 @@ struct ClaudeCodeView: View {
                                         if showPaceMarker {
                                             SettingToggle(
                                                 title: "Pace tier colors",
-                                                description: "Color by projected usage rate",
+                                                description: "6-tier projected pace (green → purple)",
                                                 isOn: $paceMarkerStepColors
                                             )
                                             .padding(.leading, DesignTokens.Spacing.cardPadding * 2)

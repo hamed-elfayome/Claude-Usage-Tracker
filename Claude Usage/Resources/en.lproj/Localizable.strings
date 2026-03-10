@@ -366,7 +366,7 @@
 "claudecode.component_usage" = "Usage statistics";
 "claudecode.component_progressbar" = "Progress bar";
 "claudecode.component_pace_marker" = "Pace marker";
-"claudecode.pace_marker_info" = "Shows a colored tick at the elapsed time position";
+"claudecode.pace_marker_info" = "Colored by projected usage pace (green → purple)";
 "claudecode.component_resettime" = "Reset time";
 "claudecode.requirement_sessionkey" = "• Session key configured in Credentials → Claude.ai tab";
 "claudecode.requirement_restart" = "• Restart Claude CLI after applying changes";

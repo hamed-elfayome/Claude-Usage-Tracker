@@ -430,9 +430,9 @@ if [ "$show_usage" = "1" ]; then
           [ $marker_pos -gt 9 ] && marker_pos=9
           [ $marker_pos -lt 0 ] && marker_pos=0
 
-          # Compute 6-tier pace color (integer math, >= 15% elapsed = 2700s)
+          # Compute 6-tier pace color (integer math, >= 3% elapsed = 540s)
           pace_color=""
-          if [ $elapsed_secs -ge 2700 ]; then
+          if [ $elapsed_secs -ge 540 ]; then
             projected_pct=$((utilization * 18000 / elapsed_secs))
             if [ $projected_pct -lt 50 ]; then
               pace_color="$PACE_COMFORTABLE"
