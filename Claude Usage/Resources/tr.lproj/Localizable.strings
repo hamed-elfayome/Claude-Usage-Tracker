@@ -1,0 +1,949 @@
+/*
+   Localizable.strings
+   Claude Usage Tracker
+
+   Turkish (Türkçe)
+   Created by Claude Code on 2026-03-10.
+*/
+
+/* ==================== */
+/* MARK: - App Info */
+/* ==================== */
+"app.name" = "Claude Kullanım Takibi";
+"app.window.main" = "Claude Kullanım";
+"app.window.settings" = "Ayarlar";
+"app.window.github_prompt" = "Claude Kullanım Takibi'ni Destekle";
+
+/* ==================== */
+/* MARK: - Common Actions */
+/* ==================== */
+"common.ok" = "Tamam";
+"common.cancel" = "İptal";
+"common.save" = "Kaydet";
+"common.delete" = "Sil";
+"common.done" = "Bitti";
+"common.close" = "Kapat";
+"common.refresh" = "Yenile";
+"common.settings" = "Ayarlar";
+"common.quit" = "Çıkış";
+"common.validate" = "Doğrula";
+"common.yes" = "Evet";
+"common.no" = "Hayır";
+
+/* ==================== */
+/* MARK: - Settings Navigation */
+/* ==================== */
+"settings.title" = "Ayarlar";
+"settings.personal_usage" = "Kişisel Kullanım";
+"settings.personal_usage.description" = "Claude.ai ücretsiz katman kullanımınızı takip edin";
+"settings.api_billing" = "API Faturalandırma";
+"settings.api_billing.description" = "API Konsolu faturalandırma ve kredilerini izleyin";
+"settings.general" = "Genel";
+"settings.general.description" = "Uygulama davranışı ve tercihler";
+"settings.appearance" = "Görünüm";
+"settings.appearance.description" = "Menü çubuğu simge özelleştirmesi";
+"settings.session_management" = "Oturum Yönetimi";
+"settings.session_management.description" = "Otomatik oturum yönetimi";
+"settings.notifications" = "Bildirimler";
+"settings.notifications.description" = "Kullanım uyarıları ve bildirimler";
+"settings.claude_cli" = "Claude CLI";
+"settings.claude_cli.description" = "Terminal durum satırı entegrasyonu";
+"settings.updates" = "Güncellemeler";
+"settings.updates.description" = "Uygulamanızı güncel tutun";
+"settings.about" = "Hakkında";
+"settings.about.description" = "Uygulama bilgileri ve katkıda bulunanlar";
+
+/* ==================== */
+/* MARK: - Menu Bar */
+/* ==================== */
+"menubar.claude_usage" = "Claude Kullanım";
+"menubar.session_usage" = "Oturum Kullanımı";
+"menubar.weekly_usage" = "Haftalık";
+"menubar.opus_usage" = "Opus";
+"menubar.sonnet_usage" = "Sonnet";
+"menubar.extra_usage" = "Ek Kullanım";
+"menubar.api_credits" = "API Kredileri";
+"menubar.api_cost" = "API Maliyeti";
+"menubar.this_month" = "Bu Ay";
+"menubar.total" = "Toplam";
+"menubar.cost_source.cli" = "Claude Code";
+"menubar.cost_source.api" = "API";
+"menubar.cost_source.unknown" = "Diğer";
+"menubar.5_hour_window" = "5 saatlik kayan pencere";
+"menubar.all_models" = "Tüm modeller";
+"menubar.weekly" = "Haftalık";
+"menubar.anthropic_console" = "Anthropic API Konsolu";
+"menubar.used" = "Kullanılan";
+"menubar.remaining" = "Kalan";
+"menubar.resets_time" = "%@ sıfırlanır";
+"menubar.resets_in" = "%@ sonra sıfırlanır";
+"menubar.resets_both" = "%@ sonra sıfırlanır (%@)";
+"menubar.click_status" = "status.claude.com adresini açmak için tıklayın";
+
+/* ==================== */
+/* MARK: - Usage Status */
+/* ==================== */
+"usage.high_session" = "Yüksek Oturum Kullanımı";
+"usage.high_session.desc" = "Oturum pencerenizi sıfırlamak için ara vermeyi düşünün";
+"usage.weekly_approaching" = "Haftalık Sınıra Yaklaşılıyor";
+"usage.weekly_approaching.desc" = "Haftalık token limitinize yaklaşıyorsunuz";
+"usage.efficient" = "Verimli Kullanım";
+"usage.efficient.desc" = "Token tüketiminizi iyi yönetiyorsunuz, harika!";
+
+/* ==================== */
+/* MARK: - General Settings */
+/* ==================== */
+"general.launch_at_login" = "Oturum açıldığında başlat";
+"general.launch_at_login.description" = "Mac'inizde oturum açtığınızda Claude Kullanım Takibi'ni otomatik olarak başlatın";
+"general.refresh_interval" = "Yenileme Aralığı";
+"general.refresh_interval.description" = "Daha kısa aralıklar daha gerçek zamanlı veri sağlar ancak pil ömrünü etkileyebilir";
+"general.check_overage_limit" = "Ek Kullanım Limitini Kontrol Et";
+"general.check_overage_limit.description" = "Aylık maliyet ve ek kullanım limiti bilgilerini getir ve göster";
+"general.language.title" = "Dil";
+"general.language.select" = "Dil Seçin";
+"general.language.restart_note" = "Dil değişiklikleri uygulama yeniden başlatıldıktan sonra geçerli olur";
+"general.language.restart_app" = "Uygulamak İçin Yeniden Başlat";
+
+/* ==================== */
+/* MARK: - Appearance Settings */
+/* ==================== */
+"appearance.menu_bar_icons" = "Menü Çubuğu Simgeleri";
+"appearance.menu_bar_icons.subtitle" = "Menü çubuğunuzda hangi metriklerin görüneceğini özelleştirin";
+"appearance.show_icon_names" = "Simge adlarını göster";
+"appearance.show_icon_names.description" = "Simgelerin yanında metrik etiketlerini (S:, W:, API:) göster";
+"appearance.monochrome_mode" = "Tek Renk (Uyarlanabilir)";
+"appearance.monochrome_mode.description" = "Simgeler açık/koyu moda otomatik uyum sağlar";
+"appearance.metric_configuration" = "Metrik Yapılandırması";
+"appearance.drag_to_reorder" = "Simgeleri yeniden sıralamak için sürükleyin. Devre dışı metrikler menü çubuğunda gizlenir.";
+
+/* ==================== */
+/* MARK: - Session Management */
+/* ==================== */
+"session.auto_start" = "Sıfırlamada oturumu otomatik başlat";
+"session.auto_start.description" = "Oturumunuz %0'a sıfırlandığında Claude'a otomatik olarak 'Merhaba' gönderin. Bu, oturumunuzu manuel müdahale olmadan her zaman hazır tutar.";
+"session.enable_auto_start" = "Otomatik oturum başlatmayı etkinleştir";
+"session.beta_badge" = "BETA";
+
+/* ==================== */
+/* MARK: - Notifications Settings */
+/* ==================== */
+"notifications.enable" = "Bildirimleri etkinleştir";
+"notifications.enable.description" = "Kullanım limitlerine yaklaşıldığında uyarı al";
+"notifications.alert_thresholds" = "Uyarı Eşikleri";
+"notifications.threshold.warning" = "Uyarı";
+"notifications.threshold.high" = "Yüksek Kullanım";
+"notifications.threshold.critical" = "Kritik";
+"notifications.threshold.session_reset" = "Oturum Sıfırlama";
+
+/* ==================== */
+/* MARK: - Setup Wizard */
+/* ==================== */
+"setup.welcome.title" = "Claude Kullanım Takibi'ne Hoş Geldiniz";
+"setup.welcome.subtitle" = "Kullanımı takip etmeye başlamak için API erişiminizi yapılandırın";
+"setup.step.get_session_key" = "Oturum Anahtarınızı Alın";
+"setup.step.get_session_key.description" = "Oturum anahtarınızı claude.ai'dan çıkarmanız gerekecek";
+"setup.step.enter_session_key" = "Oturum Anahtarınızı Girin";
+"setup.open_claude_ai" = "claude.ai'yı Aç";
+"setup.show_instructions" = "Talimatları Göster";
+"setup.hide_instructions" = "Gizle";
+"setup.instruction.step1" = "Geliştirici Araçlarını açın (F12 veya Cmd+Option+I)";
+"setup.instruction.step2" = "Uygulama/Depolama → Çerezler → https://claude.ai adresine gidin";
+"setup.instruction.step3" = "'sessionKey' çerezini bulun";
+"setup.instruction.step4" = "Değerine çift tıklayın ve kopyalayın (Cmd+C)";
+"setup.paste_session_key" = "Kopyaladığınız sessionKey değerini yapıştırın";
+"setup.auto_start_session" = "Sıfırlamada oturumu otomatik başlat";
+"setup.auto_start_session.description" = "Oturumunuz %0'a sıfırlandığında Claude 3.5 Haiku'ya otomatik olarak 'Merhaba' gönderin. Bu, oturumunuzu manuel müdahale olmadan her zaman hazır tutar.";
+"setup.enable_auto_start" = "Otomatik oturum başlatmayı etkinleştir";
+"setup.menubar_appearance" = "Menü Çubuğu Görünümü";
+"setup.choose_icon_style" = "Tercih ettiğiniz simge stilini seçin";
+"setup.monochrome_adaptive" = "Tek Renk (Uyarlanabilir)";
+"setup.validation.success" = "Kuruluşa başarıyla bağlanıldı";
+
+/* ==================== */
+/* MARK: - About */
+/* ==================== */
+"about.version" = "Sürüm %@";
+"about.check_updates" = "Güncellemeleri Kontrol Et";
+"about.created_by" = "Geliştiren";
+"about.contributors" = "Katkıda Bulunanlar (%d)";
+"about.contributors_loading" = "Katkıda Bulunanlar";
+"about.contributors_failed" = "Katkıda bulunanlar yüklenemedi";
+"about.links" = "Bağlantılar";
+"about.star_github" = "GitHub'da Yıldızla";
+"about.report_issue" = "Sorun Bildir";
+"about.send_feedback" = "Geri Bildirim Gönder";
+"about.mit_license" = "MIT Lisansı • Açık Kaynak";
+"about.copyright" = "© 2025 Hamed Elfayome";
+
+/* ==================== */
+/* MARK: - Updates Settings */
+/* ==================== */
+"settings.updates.title" = "Yazılım Güncellemeleri";
+"settings.updates.current_version" = "Mevcut Sürüm";
+"settings.updates.last_check" = "Son Kontrol";
+"settings.updates.never_checked" = "Hiç";
+"settings.updates.automatic" = "Otomatik Güncellemeler";
+"settings.updates.automatic.description" = "Güncellemeleri günlük olarak otomatik kontrol et ve indir";
+"settings.updates.check_now" = "Güncellemeleri Kontrol Et";
+"settings.updates.info.title" = "Güvenli Güncellemeler";
+"settings.updates.info.description" = "Tüm güncellemeler kurulumdan önce kriptografik olarak imzalanır ve doğrulanır";
+
+/* ==================== */
+/* MARK: - Icon Styles */
+/* ==================== */
+"icon_style.battery" = "Pil";
+"icon_style.percentage" = "Yüzde";
+"icon_style.text_only" = "Yalnızca Metin";
+"icon_style.minimal" = "Minimal";
+
+/* ==================== */
+/* MARK: - Metric Types */
+/* ==================== */
+"metric.session_usage" = "Oturum Kullanımı";
+"metric.session_usage.description" = "5 saatlik kayan pencere kullanımı";
+"metric.week_usage" = "Haftalık Kullanım";
+"metric.week_usage.description" = "Haftalık token kullanımı (tüm modeller)";
+"metric.api_credits" = "API Kredileri";
+"metric.api_credits.description" = "API Konsolu faturalandırma kredileri";
+
+/* ==================== */
+/* MARK: - Display Modes */
+/* ==================== */
+"display.remaining_credits" = "Kalan Krediler";
+"display.remaining_credits.description" = "Yalnızca kalan kredileri göster";
+"display.used_amount" = "Kullanılan Miktar";
+"display.used_amount.description" = "Yalnızca harcanan miktarı göster";
+"display.both_used_total" = "Her İkisi (Kullanılan / Toplam)";
+"display.both_used_total.description" = "Hem kullanılan hem de toplamı göster";
+"display.percentage" = "Yüzde";
+"display.percentage.description" = "Yüzde olarak göster (ör. %60)";
+"display.token_count" = "Token Sayısı";
+"display.token_count.description" = "Token sayılarını göster (ör. 600K/1M)";
+
+/* ==================== */
+/* MARK: - Notification Messages */
+/* ==================== */
+"notification.session_warning.title" = "Oturum Kullanım Uyarısı";
+"notification.session_warning.message" = "5 saatlik oturum limitinizin %@'ını kullandınız. %@";
+"notification.session_critical.title" = "Oturum Kullanımı Kritik";
+"notification.session_critical.message" = "5 saatlik oturum limitinizin %@'ını kullandınız! %@";
+"notification.session_reset.title" = "Oturum Sıfırlandı";
+"notification.session_reset.message" = "Oturumunuz sıfırlandı! Artık yeni bir 5 saatlik oturumunuz mevcut.";
+"notification.session_auto_started.title" = "Oturum Otomatik Başlatıldı";
+"notification.session_auto_started.message" = "Yeni bir oturum otomatik olarak başlatıldı. 5 saatlik yeni oturumunuz hazır!";
+"notification.session_auto_start_failed.title" = "Otomatik Başlatma Başarısız";
+"notification.session_auto_start_failed.message" = "Oturum otomatik olarak başlatılamadı. Lütfen kimlik bilgilerinizi kontrol edin.";
+"notification.weekly_warning.title" = "Haftalık Kullanım Uyarısı";
+"notification.weekly_warning.message" = "Haftalık limitinizin %@'ını kullandınız. %@";
+"notification.weekly_critical.title" = "Haftalık Kullanım Kritik";
+"notification.weekly_critical.message" = "Haftalık limitinizin %@'ını kullandınız! %@";
+"notification.opus_warning.title" = "Opus Kullanım Uyarısı";
+"notification.opus_warning.message" = "Haftalık Opus limitinizin %@'ını kullandınız. %@";
+"notification.opus_critical.title" = "Opus Kullanımı Kritik";
+"notification.opus_critical.message" = "Haftalık Opus limitinizin %@'ını kullandınız! %@";
+"notification.enabled.title" = "Bildirimler Etkinleştirildi";
+"notification.enabled.message" = "Artık %75, %90 ve %95 kullanım eşiklerinde ve oturum sıfırlama bildirimlerinde uyarı alacaksınız.";
+"notification.profile_auto_switched.title" = "Profil Otomatik Değiştirildi";
+"notification.profile_auto_switched.message" = "Oturum limiti dolduğu için %@ → %@";
+
+/* ==================== */
+/* MARK: - Auto-Switch Profile */
+/* ==================== */
+"auto_switch.title" = "Profil Otomatik Değiştirme";
+"auto_switch.subtitle" = "Oturum limitine ulaşıldığında otomatik olarak geçiş yap";
+"auto_switch.enable_title" = "Otomatik Değiştirmeyi Etkinleştir";
+"auto_switch.enable_description" = "Etkin profil %100 oturum kullanımına ulaştığında, otomatik olarak bir sonraki müsait profile geç";
+
+/* ==================== */
+/* MARK: - Error Messages */
+/* ==================== */
+"error.session_key_not_found" = "Oturum anahtarı bulunamadı";
+"error.session_key_not_found.suggestion" = "Lütfen Ayarlar'dan Claude oturum anahtarınızı yapılandırın";
+"error.session_key_invalid" = "Geçersiz oturum anahtarı";
+"error.session_key_invalid.suggestion" = "Lütfen oturum anahtarınızın biçimini kontrol edin. 'sk-ant-' ile başlamalıdır";
+"error.network_unavailable" = "İnternet bağlantısı yok";
+"error.network_unavailable.suggestion" = "Lütfen internet bağlantınızı kontrol edip tekrar deneyin";
+"error.network_timeout" = "İstek zaman aşımına uğradı";
+"error.network_timeout.suggestion" = "Lütfen tekrar deneyin. Sorun devam ederse status.claude.com adresinden Claude'un durumunu kontrol edin";
+"error.api_unauthorized" = "Yetkisiz erişim";
+"error.api_unauthorized.suggestion" = "Oturum anahtarınızın süresi dolmuş olabilir. Lütfen Ayarlar'dan güncelleyin";
+"error.api_server_error" = "Sunucu hatası";
+"error.api_server_error.suggestion" = "Sunucuda bir hata oluştu. Lütfen daha sonra tekrar deneyin";
+"error.api_rate_limited" = "İstek limiti aşıldı";
+"error.api_rate_limited.suggestion" = "Lütfen tekrar denemeden önce birkaç dakika bekleyin";
+
+/* ==================== */
+/* MARK: - Validation Messages */
+/* ==================== */
+"validation.session_key_too_short" = "Oturum anahtarı çok kısa";
+"validation.session_key_too_long" = "Oturum anahtarı çok uzun";
+"validation.invalid_prefix" = "Geçersiz oturum anahtarı ön eki";
+"validation.invalid_characters" = "Oturum anahtarında geçersiz karakterler var";
+"validation.invalid_format" = "Geçersiz oturum anahtarı biçimi";
+"validation.contains_whitespace" = "Oturum anahtarı boşluk içeriyor";
+
+/* ==================== */
+/* MARK: - GitHub Star Prompt */
+/* ==================== */
+"github.enjoy_app" = "Claude Kullanım Takibi'ni beğendiniz mi?";
+"github.star_description" = "Bu uygulama işinize yaradıysa, lütfen GitHub'da yıldızlamayı düşünün! Başkalarının projeyi keşfetmesine yardımcı olur ve geliştirmeye devam etmemize motivasyon sağlar.";
+"github.star_button" = "GitHub'da Yıldızla";
+"github.maybe_later" = "Belki Sonra";
+"github.never_show" = "Bir Daha Gösterme";
+
+/* ==================== */
+/* MARK: - API Settings */
+/* ==================== */
+"api.enable_tracking" = "API takibini etkinleştir";
+"api.enable_tracking.description" = "Anthropic API Konsolu kredilerinizi ve harcamalarınızı takip edin";
+"api.session_key_placeholder" = "sk-ant-api03-...";
+"api.configure" = "API Takibini Yapılandır";
+"api.configure.description" = "Anthropic Konsol API kullanımınızı ve kredilerinizi izleyin";
+"api.instructions" = "API kullanımını takip etmek için API oturum anahtarınızı sağlamanız gerekir:";
+"api.instruction_step1" = "console.anthropic.com adresine giriş yapın";
+"api.instruction_step2" = "Geliştirici Araçlarını açın (F12 veya Cmd+Option+I)";
+"api.instruction_step3" = "Uygulama → Çerezler → https://console.anthropic.com adresine gidin";
+"api.instruction_step4" = "'sessionKey' bulun ve değerini kopyalayın";
+
+/* ==================== */
+/* MARK: - Personal Usage */
+/* ==================== */
+"personal.configure" = "Kişisel Kullanımı Yapılandır";
+"personal.configure.description" = "claude.ai'daki ücretsiz katman kullanımınızı takip edin";
+"personal.status" = "Durum";
+"personal.session_key" = "Oturum Anahtarı";
+"personal.session_key.configured" = "Yapılandırıldı";
+"personal.session_key.not_configured" = "Yapılandırılmadı";
+"personal.reconfigure" = "Yeniden Yapılandır";
+"personal.remove" = "Oturum Anahtarını Kaldır";
+
+/* ==================== */
+/* MARK: - Claude Code (CLI) */
+/* ==================== */
+"claudecode.title" = "Claude CLI Entegrasyonu";
+"claudecode.description" = "Terminal durum satırınızda kullanım bilgilerini görüntüleyin";
+"claudecode.coming_soon" = "Yakında";
+"claudecode.features_description" = "Terminal durum satırı görüntüsü için Claude Code CLI entegrasyonu gelecek bir güncellemede eklenecektir.";
+
+/* ==================== */
+/* MARK: - Additional UI Labels */
+/* ==================== */
+"ui.app_behavior" = "Uygulama Davranışı";
+"ui.usage_tracking" = "Kullanım Takibi";
+"ui.global_settings" = "Genel Ayarlar";
+"ui.menu_bar_metrics" = "Menü Çubuğu Metrikleri";
+"ui.quick_actions" = "Hızlı İşlemler";
+"ui.how_it_works" = "Nasıl çalışır";
+"ui.display_components" = "Görüntü Bileşenleri";
+"ui.requirements" = "Gereksinimler";
+"ui.live_preview" = "Canlı Önizleme";
+"ui.updates_realtime" = "Gerçek zamanlı güncellenir";
+"ui.organization" = "Kuruluş";
+"ui.icon_style" = "Simge Stili";
+"ui.display_mode" = "Görüntüleme Modu";
+"ui.at_least_one_metric" = "En az bir metrik etkinleştirilmelidir";
+
+/* ==================== */
+/* MARK: - Session Management (Additional) */
+/* ==================== */
+"session.subtitle" = "Otomatik oturum başlatma ve bakım";
+"session.auto_description_line1" = "• Oturumunuzun %0'a sıfırlandığını algılar";
+"session.auto_description_line2" = "• Claude 3.5 Haiku'ya (en ucuz model) 'Merhaba' gönderir";
+"session.auto_description_line3" = "• Geçmişinizde görünmeyecek geçici bir sohbet kullanır";
+"session.auto_description_line4" = "• Yeni 5 saatlik oturum anında hazır olur";
+
+/* ==================== */
+/* MARK: - Claude CLI (Additional) */
+/* ==================== */
+"claudecode.subtitle" = "Terminal durum satırı görüntünüzü özelleştirin";
+"claudecode.preview_label" = "Canlı Önizleme";
+"claudecode.preview_description" = "Durum satırınız Claude CLI'da böyle görünecek";
+"claudecode.component_model" = "Model adı";
+"claudecode.component_directory" = "Dizin adı";
+"claudecode.component_branch" = "Git dalı";
+"claudecode.component_context" = "Bağlam penceresi";
+"claudecode.component_context_tokens" = "Token olarak göster (% yerine)";
+"claudecode.component_usage" = "Kullanım istatistikleri";
+"claudecode.component_progressbar" = "İlerleme çubuğu";
+"claudecode.component_resettime" = "Sıfırlanma zamanı";
+"claudecode.requirement_sessionkey" = "• Kimlik Bilgileri → Claude.ai sekmesinde oturum anahtarı yapılandırılmış olmalı";
+"claudecode.requirement_restart" = "• Değişiklikleri uyguladıktan sonra Claude CLI'ı yeniden başlatın";
+"claudecode.error_no_components" = "Lütfen görüntülenecek en az bir bileşen seçin";
+"claudecode.error_no_sessionkey" = "Oturum anahtarı yapılandırılmamış. Lütfen önce Kişisel Kullanım sekmesinden ayarlayın.";
+"claudecode.success_applied" = "Yapılandırma uygulandı! Değişiklikleri görmek için Claude CLI'ı yeniden başlatın.";
+"claudecode.success_disabled" = "Durum satırı devre dışı bırakıldı. Claude CLI'ı yeniden başlatın.";
+"claudecode.preview_no_components" = "Bileşen seçilmedi";
+
+/* ==================== */
+/* MARK: - API Billing (Additional) */
+/* ==================== */
+"api.title" = "API Faturalandırma";
+"api.subtitle" = "API kullanımını ve harcamalarını izle";
+"api.enable_billing_tracking" = "API faturalandırma takibini etkinleştir";
+"api.enable_billing_description" = "API kullanımınızı, mevcut harcamanızı ve kalan ön ödemeli kredilerinizi izleyin";
+"api.label_api_session_key" = "API Oturum Anahtarı";
+"api.placeholder_api_session_key" = "sk-ant-api03-...";
+"api.help_api_session_key" = "console.anthropic.com adresindeki oturum anahtarınız";
+"api.button_fetch_organizations" = "Kuruluşları Getir";
+"api.button_fetching" = "Getiriliyor...";
+"api.button_save_configuration" = "Yapılandırmayı Kaydet";
+"api.success_organizations_found" = "%d kuruluş bulundu";
+"api.error_fetch_failed" = "Kuruluşlar getirilemedi: %@";
+"api.success_configuration_saved" = "API yapılandırması başarıyla kaydedildi";
+
+/* ==================== */
+/* MARK: - Personal Usage (Additional) */
+/* ==================== */
+"personal.title" = "Kişisel Kullanım";
+"personal.subtitle" = "Claude.ai kullanımınızı ve oturumlarınızı takip edin";
+"personal.label_session_key" = "Oturum Anahtarı";
+"personal.placeholder_session_key" = "sk-ant-sid-...";
+"personal.help_session_key" = "claude.ai DevTools'tan sessionKey çerezinizi yapıştırın";
+"personal.button_test_connection" = "Bağlantıyı Test Et";
+"personal.button_save_and_continue" = "Kaydet ve Devam Et";
+"personal.button_remove_key" = "Anahtarı Kaldır";
+"personal.success_connected" = "Kuruluşa başarıyla bağlanıldı";
+"personal.confirm_remove_title" = "Oturum Anahtarı Kaldırılsın mı?";
+"personal.confirm_remove_message" = "Bu işlem kişisel kullanım takibinizi durduracaktır.";
+
+/* ==================== */
+/* MARK: - Error Presenter */
+/* ==================== */
+"error.code_label" = "Hata Kodu:";
+"error.what_to_do" = "Ne yapmalı:";
+"error.occurred_at" = "Oluşma zamanı: %@";
+
+/* ==================== */
+/* MARK: - General Settings (Additional) */
+/* ==================== */
+"general.slider_realtime" = "Gerçek zamanlı güncellemeler";
+"general.slider_frequent" = "Sık güncellemeler";
+"general.slider_balanced" = "Dengeli mod";
+"general.slider_efficient" = "Güç tasarrufu";
+"general.slider_battery_saver" = "Pil tasarrufu";
+"general.slider_fast" = "Hızlı";
+"general.slider_balanced_label" = "Dengeli";
+"general.slider_battery_saver_label" = "Pil Tasarrufu";
+"general.available_languages" = "Mevcut Diller (%d)";
+
+/* ==================== */
+/* MARK: - Badges */
+/* ==================== */
+"badge.new" = "YENİ";
+"badge.beta" = "BETA";
+"badge.pro" = "PRO";
+
+/* ==================== */
+/* MARK: - Appearance (Additional) */
+/* ==================== */
+"appearance.title" = "Menü Çubuğu Görünümü";
+"appearance.subtitle" = "Menü çubuğu simgelerinizi ve metriklerinizi özelleştirin";
+"appearance.global_settings" = "Genel Ayarlar";
+"appearance.menu_bar_metrics" = "Menü Çubuğu Metrikleri";
+"appearance.monochrome_title" = "Tek Renk";
+"appearance.monochrome_description" = "Durum renkleri (yeşil/turuncu/kırmızı) yerine uyarlanabilir renk kullan";
+"appearance.show_labels_title" = "Simge Etiketlerini Göster";
+"appearance.show_labels_description" = "Her metrik için ön ek etiketlerini (S:, W:, API:) göster";
+"appearance.show_remaining_title" = "Kalan Yüzdeyi Göster";
+"appearance.show_remaining_description" = "Kullanılan yüzde yerine kalan kapasiteyi göster (macOS pili gibi)";
+"appearance.show_time_marker_title" = "Zaman Geçiş İşaretçisini Göster";
+"appearance.show_time_marker_description" = "İlerleme çubuklarında zaman diliminin ne kadarının geçtiğini gösteren bir işaret göster";
+"appearance.pace_coloring_title" = "Tempo Duyarlı Renklendirme";
+"appearance.pace_coloring_description" = "Göstergeleri tahmini kullanım temposuna göre renklendir. Kapalıyken renkler yalnızca mevcut kullanımı yansıtır.";
+"appearance.multiprofile_locked_title" = "Görünüm Ayarları Kilitli";
+"appearance.multiprofile_locked_description" = "Çoklu Profil Görünümü etkinken bu ayarlar devre dışıdır. Çoklu profil modunda her profil kendi görünümünü kullanır.";
+"appearance.disable_multiprofile" = "Çoklu Profil Görünümünü Kapat";
+
+/* ==================== */
+/* MARK: - Setup Wizard (Additional) */
+/* ==================== */
+"setup.step_number_1" = "1";
+"setup.step_number_2" = "2";
+"setup.step_title_get_key" = "Oturum Anahtarınızı Alın";
+"setup.step_title_enter_key" = "Oturum Anahtarınızı Girin";
+"setup.step_description_get_key" = "Oturum anahtarınızı claude.ai'dan çıkarmanız gerekecek";
+"setup.button_open_claude" = "claude.ai'yı Aç";
+"setup.paste_instruction" = "Kopyaladığınız sessionKey değerini yapıştırın";
+
+/* ==================== */
+/* MARK: - Component Preview */
+/* ==================== */
+"preview.sample_text_claude" = "Claude";
+"preview.sample_percentage" = "%60";
+"preview.sample_card_content" = "Kart içeriği burada görünür";
+"preview.sample_more_content" = "Daha fazla içerik";
+"preview.sample_update_every" = "Güncelleme sıklığı:";
+"preview.sample_5_minutes" = "5 dakika";
+
+/* ==================== */
+/* MARK: - Manage Profiles */
+/* ==================== */
+"profiles.title" = "Profilleri Yönet";
+"profiles.subtitle" = "Birden fazla Claude hesabı oluşturun ve yönetin";
+"profiles.create_new" = "Yeni Profil Oluştur";
+"profiles.about_title" = "Profiller Hakkında";
+"profiles.about_description" = "Her profilin kendine ait:";
+"profiles.about_credentials" = "Claude.ai kimlik bilgileri";
+"profiles.about_api" = "API Konsolu kimlik bilgileri";
+"profiles.about_cli" = "CLI hesap senkronizasyonu";
+"profiles.about_appearance" = "Menü çubuğu görünümü";
+"profiles.about_notifications" = "Bildirim ayarları";
+"profiles.about_refresh" = "Yenileme aralığı";
+"profiles.active_badge" = "Etkin";
+"profiles.created" = "Oluşturulma";
+"profiles.cli_synced" = "CLI Senkronize";
+"profiles.rename" = "Profili yeniden adlandır";
+"profiles.activate" = "Profili etkinleştir";
+"profiles.delete" = "Profili sil";
+"profiles.delete_title" = "Profili Sil";
+"profiles.delete_confirm" = "\"%@\" profilini silmek istediğinizden emin misiniz? Bu işlem ilişkili tüm kimlik bilgilerini ve ayarları kaldıracaktır.";
+"profiles.create_title" = "Yeni Profil Oluştur";
+"profiles.name_label" = "Profil Adı (isteğe bağlı)";
+"profiles.name_placeholder" = "Rastgele ad için boş bırakın";
+"profiles.name_hint" = "Boş bırakılırsa eğlenceli rastgele bir ad oluşturulur!";
+
+/* ==================== */
+/* MARK: - Multi-Profile Display */
+/* ==================== */
+"multiprofile.title" = "Çoklu Profil Görünümü";
+"multiprofile.subtitle" = "Menü çubuğunda birden fazla profil göster";
+"multiprofile.enable_title" = "Birden Fazla Profil Göster";
+"multiprofile.enable_description" = "Seçili profilleri yan yana kompakt simgeler olarak göster";
+"multiprofile.select_profiles" = "Gösterilecek profilleri seçin:";
+"multiprofile.info" = "Her profil durumu gösteren renkle (yeşil/turuncu/kırmızı) kullanımı gösterir";
+"multiprofile.active_badge" = "Etkin";
+"multiprofile.at_least_one" = "En az bir profil seçilmelidir";
+"multiprofile.icon_style" = "Simge Stili";
+"multiprofile.style_circles" = "Daireler";
+"multiprofile.style_bars" = "Çubuklar";
+"multiprofile.style_dots" = "Noktalar";
+"multiprofile.style_percent" = "Yüzde";
+"multiprofile.show_week" = "Haftalık Kullanımı Göster";
+"multiprofile.show_week_description" = "Oturuma ek olarak haftalık kullanımı da göster";
+"multiprofile.show_label" = "Profil Etiketini Göster";
+"multiprofile.show_label_description" = "Simgenin altında profil adını göster";
+"multiprofile.use_system_color" = "Tek Renk";
+"multiprofile.use_system_color_description" = "Durum renkleri (yeşil/turuncu/kırmızı) yerine beyaz renk kullan";
+
+/* ==================== */
+/* MARK: - General Settings (Profile-Level) */
+/* ==================== */
+"general.title" = "Genel";
+"general.subtitle" = "Yenileme aralığı, otomatik başlatma ve bildirimler";
+"general.refresh_title" = "Yenileme Aralığı";
+"general.refresh_subtitle" = "Kullanım güncellemelerini ne sıklıkla kontrol edeceğiniz";
+"general.refresh_seconds" = "%d saniye";
+"general.refresh_min" = "10sn";
+"general.refresh_max" = "300sn";
+"general.autostart_title" = "Oturumu Otomatik Başlat";
+"general.autostart_subtitle" = "Gerektiğinde otomatik olarak yeni bir oturum başlat";
+"general.autostart_toggle" = "Yeni Oturumu Otomatik Başlat";
+"general.autostart_description" = "Oturum sıfırlandığında otomatik olarak mesaj gönder";
+"general.autostart_requirement" = "• Kimlik Bilgileri → Claude.ai sekmesinde oturum anahtarı yapılandırılmış olmalı";
+"general.notifications_title" = "Bildirimler";
+"general.notifications_subtitle" = "Kullanım kilometre taşları hakkında bildirim al";
+"general.connected" = "Bağlı";
+"general.not_connected" = "Bağlı Değil";
+
+/* ==================== */
+/* MARK: - Updates Settings */
+/* ==================== */
+"updates.version_info" = "Sürüm Bilgisi";
+"updates.update_preferences" = "Güncelleme Tercihleri";
+"updates.version_label" = "v%@ (%@)";
+
+/* ==================== */
+/* MARK: - Appearance (Additional) */
+/* ==================== */
+"appearance.global_subtitle" = "Menü çubuğu simge davranışını özelleştir";
+"appearance.metrics_subtitle" = "Menü çubuğunda hangi metriklerin görüntüleneceğini seç";
+"appearance.all_metrics_off_title" = "Uygulama Logo Modu";
+"appearance.all_metrics_off_description" = "Tüm metrikler kapalı. Menü çubuğunda bunun yerine uygulama logosu gösterilecek. Profillere ve ayarlara erişmek için tıklayın.";
+
+/* ==================== */
+/* MARK: - Metric Card */
+/* ==================== */
+"metric.show_countdown" = "Sonraki oturuma kalan süreyi göster";
+"metric.countdown_description" = "Simgede kalan süreyi göster (ör. →2S)";
+
+/* ==================== */
+/* MARK: - Personal Usage (Additional) */
+/* ==================== */
+"personal.configuration_title" = "Yapılandırma";
+"personal.status_connected" = "Bağlı";
+"personal.status_not_connected" = "Bağlı Değil";
+
+/* ==================== */
+/* MARK: - Language Settings */
+/* ==================== */
+"language.title" = "Dil";
+"language.subtitle" = "Tercih ettiğiniz dili seçin";
+"language.select_language" = "Dil Seçin";
+"language.available" = "Mevcut Diller";
+"language.restart_required" = "Yeniden Başlatma Gerekli";
+"language.restart_message" = "Dil değişikliklerinin geçerli olması için uygulamanın yeniden başlatılması gerekiyor.";
+"language.restart_now" = "Şimdi Yeniden Başlat";
+"language.restart_later" = "Sonra";
+
+/* ==================== */
+/* MARK: - Common Actions (Additional) */
+/* ==================== */
+"common.create" = "Oluştur";
+"common.rename" = "Yeniden Adlandır";
+"common.activate" = "Etkinleştir";
+"common.connected" = "Bağlı";
+"common.not_connected" = "Bağlı Değil";
+"common.back" = "Geri";
+"common.next" = "İleri";
+"common.remove" = "Kaldır";
+"common.switch" = "Değiştir";
+"common.retry" = "Tekrar Dene";
+
+/* ==================== */
+/* MARK: - Popover/Menu Bar */
+/* ==================== */
+"popover.manage_profiles" = "Profilleri Yönet";
+"popover.no_profile" = "Profil Yok";
+"popover.profiles_count" = "%d profil";
+"popover.profile_count_singular" = "1 profil";
+
+/* ==================== */
+/* MARK: - Setup Wizard */
+/* ==================== */
+"setup.step.enter_session_key" = "Anahtarı Girin";
+"wizard.test_connection" = "Bağlantıyı Test Et";
+"wizard.select_org_title" = "Hangi kuruluşu takip etmek istiyorsunuz?";
+"wizard.select_org_subtitle" = "Kullanım izleme için Claude kuruluşunu seçin";
+"wizard.config_summary" = "Yapılandırma Özeti";
+"wizard.session_key" = "Oturum Anahtarı";
+"wizard.api_session_key" = "API Oturum Anahtarı";
+"wizard.organization" = "Kuruluş";
+"wizard.organization_id" = "Kimlik: %@";
+"wizard.select_organization" = "Kuruluş Seçin";
+"wizard.choose_organization" = "Takip edilecek kuruluşu seçin";
+"wizard.review_config" = "Yapılandırmayı İnceleyin";
+"wizard.confirm_settings" = "Kaydetmeden önce ayarlarınızı onaylayın";
+"wizard.key_will_update" = "Oturum anahtarı güncellenecek";
+"wizard.api_key_will_update" = "API oturum anahtarı güncellenecek";
+
+/* ==================== */
+/* MARK: - CLI Account */
+/* ==================== */
+"cli.access_token" = "Erişim Anahtarı";
+"cli.subscription" = "Abonelik";
+"cli.scopes" = "Yetkiler";
+"cli.sync_instructions" = "Kimlik bilgilerinizi içe aktarmak için aşağıdaki 'Claude Code'dan Senkronize Et' düğmesine tıklayın";
+"cli.about_title" = "CLI Hesap Senkronizasyonu Hakkında";
+"cli.benefits" = "Avantajlar:";
+"cli.tracking_note" = "Not: Kullanım takibi Claude.ai kimlik bilgilerini kullanır. CLI kimlik bilgileri yalnızca hesap geçişi içindir.";
+
+/* ==================== */
+/* MARK: - Settings Sections (Titles & Descriptions) */
+/* ==================== */
+"section.credentials" = "KİMLİK BİLGİLERİ";
+"section.active_profile" = "Etkin Profil";
+"section.settings" = "AYARLAR";
+"section.app" = "UYGULAMA";
+
+"section.claudeai_title" = "Claude.ai";
+"section.claudeai_desc" = "Claude.ai kimlik bilgileri";
+"section.api_console_title" = "API Konsolu";
+"section.api_console_desc" = "API Konsolu kimlik bilgileri";
+"section.cli_account_title" = "CLI Hesabı";
+"section.cli_account_desc" = "CLI hesap senkronizasyonu";
+"section.appearance_title" = "Görünüm";
+"section.appearance_desc" = "Menü çubuğu görünümü";
+"section.general_title" = "Genel";
+"section.general_desc" = "Genel ayarlar";
+"section.manage_profiles_title" = "Profilleri Yönet";
+"section.manage_profiles_desc" = "Profilleri yönet";
+
+/* ==================== */
+/* MARK: - Creator Info */
+/* ==================== */
+"creator.name" = "Hamed Elfayome";
+"creator.username" = "@hamed-elfayome";
+
+/* ==================== */
+/* MARK: - Wizard Steps & Actions */
+/* ==================== */
+"wizard.enter_key" = "Anahtar Girin";
+"wizard.select_org" = "Kuruluş Seçin";
+"wizard.confirm" = "Onayla";
+"wizard.testing" = "Test ediliyor...";
+"wizard.fetching" = "Getiriliyor...";
+"wizard.fetch_organizations" = "Kuruluşları Getir";
+"wizard.saving" = "Kaydediliyor...";
+"wizard.save_configuration" = "Yapılandırmayı Kaydet";
+
+/* ==================== */
+/* MARK: - CLI Account Sync */
+/* ==================== */
+"cli.title" = "CLI Hesabı";
+"cli.subtitle" = "Claude Code oturum açmış hesabınızı senkronize edin";
+"cli.synced" = "CLI Hesabı Senkronize";
+"cli.not_synced" = "Senkronize Değil";
+"cli.account_details" = "Hesap Detayları";
+"cli.credentials_synced" = "Senkronize edilmiş CLI kimlik bilgileriniz";
+"cli.no_credentials" = "Henüz kimlik bilgisi senkronize edilmedi";
+"cli.resync" = "Yeniden Senkronize Et";
+"cli.sync_from_code" = "Claude Code'dan Senkronize Et";
+"cli.benefit_1" = "Profil değişikliğinde Claude Code girişini otomatik değiştir";
+"cli.benefit_2" = "CLI ve uygulama hesaplarını senkronize tut";
+"cli.benefit_3" = "Profil değişikliğinde kimlik bilgilerini otomatik yenile";
+
+/* ==================== */
+/* MARK: - Additional Keys */
+/* ==================== */
+"api.single_organization" = "Tek kuruluş bulundu ve otomatik olarak seçildi";
+"api.remove_title" = "Kimlik Bilgilerini Kaldır";
+"api.remove_subtitle" = "API Konsolu oturum anahtarınızı bu profilden kalıcı olarak sil";
+"claudecode.button_apply" = "Uygula";
+"claudecode.button_reset" = "Sıfırla";
+"claudecode.actions_title" = "İşlemler";
+"claudecode.component_profile" = "Profil adı";
+"claudecode.context_info" = "Bağlam %100 yerine ~%80-95 gösterebilir — Claude limit öncesinde otomatik sıkıştırma yapar ve çıktı token'ları da bağlam alanı kullanır.";
+"error.generic" = "Hata: %@";
+"personal.button_saving" = "Kaydediliyor...";
+"personal.button_setup_wizard" = "Kurulum Sihirbazı";
+"personal.button_open_claude" = "claude.ai'yı Aç";
+"personal.success_key_saved" = "Oturum anahtarı başarıyla kaydedildi";
+"personal.remove_title" = "Kimlik Bilgilerini Kaldır";
+"personal.remove_subtitle" = "Claude.ai oturum anahtarınızı bu profilden kalıcı olarak sil";
+"personal.signin_description" = "Oturum anahtarınızı otomatik olarak çıkarmak için giriş yapın.";
+"personal.signin_button" = "Claude.ai'ya Giriş Yap";
+"personal.signin_sheet_title" = "Claude.ai'ya Giriş Yap";
+"personal.advanced_manual_key" = "Gelişmiş: Manuel Oturum Anahtarı";
+"about.run_setup_wizard" = "Kurulum Sihirbazını Çalıştır";
+
+/* ==================== */
+/* MARK: - Migration & Reset */
+/* ==================== */
+"wizard.migrate_old_data" = "Eski Uygulama Veriniz mi Var?";
+"wizard.migrate_description" = "Önceki bir sürüm yüklüyse, eski profillerinizi ve ayarlarınızı içe aktarmak için aşağıya tıklayın. Bu işlem verilere erişim için sistem izni isteyecektir.";
+"wizard.migrate_button" = "Taşı";
+"wizard.migration_success" = "✅ %d öğe başarıyla taşındı";
+"wizard.migration_failed" = "⚠️ Taşıma başarısız: %@";
+"about.reset_app_data" = "Uygulama Verilerini Sıfırla";
+"about.reset_confirmation_title" = "Tüm Uygulama Verileri Sıfırlansın mı?";
+"about.reset_confirm" = "Sıfırla";
+"about.reset_confirmation_message" = "Bu işlem tüm profilleri, kimlik bilgilerini ve ayarları kalıcı olarak silecektir. Uygulama kapanacak ve tekrar kurulum yapmanız gerekecektir. Bu işlem geri alınamaz.";
+"wizard.skip_migration" = "Atla";
+"wizard.migration_skipped" = "Atlandı";
+
+/* Claude Code Info */
+"wizard.claude_code_info_title" = "Claude Code mu Kullanıyorsunuz?";
+"wizard.claude_code_info_description" = "Kullanım takibi çalışacak, ancak CLI durum satırı ve otomatik oturum başlatma özelliği oturum anahtarı olmadan çalışmaz";
+"wizard.claude_code_skip_setup" = "Kurulumu Atla";
+"wizard.migrate_description_short" = "Önceki uygulama sürümünden eski profil verilerinizi içe aktarın";
+
+/* ==================== */
+/* MARK: - Usage History */
+/* ==================== */
+"section.history_title" = "Geçmiş";
+"section.history_desc" = "Kullanım geçmişini görüntüle";
+"section.support_title" = "Destek";
+"section.support_desc" = "Proje geliştirmesini destekle";
+"section.debug_title" = "Hata Ayıklama Araçları";
+"section.debug_desc" = "Ağ günlüğü ve tanılama";
+"history.title" = "Kullanım Geçmişi";
+"history.subtitle" = "Kullanımınızı zaman içinde takip edin";
+"history.tab.session" = "Oturumlar";
+"history.tab.weekly" = "Haftalık";
+"history.tab.billing" = "Faturalandırma";
+"history.chart.session_title" = "Oturum Kullanım Geçmişi";
+"history.chart.weekly_title" = "Haftalık Kullanım Eğilimi";
+"history.chart.billing_title" = "Aylık API Harcaması";
+"history.chart.now" = "Şimdi";
+"history.empty.session_title" = "Oturum Geçmişi Yok";
+"history.empty.session_description" = "Oturum kullanımı her 5 saatlik sıfırlamadan sonra kaydedilecek";
+"history.empty.weekly_title" = "Haftalık Geçmiş Yok";
+"history.empty.weekly_description" = "Haftalık kullanım her Pazartesi sıfırlamasından sonra kaydedilecek";
+"history.empty.billing_title" = "Faturalandırma Geçmişi Yok";
+"history.empty.billing_description" = "Faturalandırma verileri her aylık sıfırlamadan sonra kaydedilecek";
+"history.list.title" = "Geçmiş Kayıtları";
+"history.list.count" = "%d kayıt";
+"history.list.empty" = "Henüz kayıt yok. Geçmiş her sıfırlamada otomatik olarak kaydedilecek.";
+"history.list.more" = "+%d kayıt daha";
+"history.export_button" = "Dışa Aktar";
+"history.clear_button" = "Temizle";
+"history.no_profile" = "Etkin profil yok";
+"history.reset_type.session" = "Oturum Sıfırlama";
+"history.reset_type.weekly" = "Haftalık Sıfırlama";
+"history.reset_type.billing" = "Faturalandırma Dönemi";
+"history.label.total" = "Toplam";
+"history.label.spent" = "Harcanan";
+"history.label.session" = "Oturum";
+"history.time_scale.5_hours" = "5 Saat";
+"history.time_scale.24_hours" = "24 Saat";
+"history.time_scale.7_days" = "7 Gün";
+"history.time_scale.30_days" = "30 Gün";
+"history.chart.session_usage" = "Oturum Kullanımı";
+"history.chart.weekly_usage" = "Haftalık Kullanım";
+"history.chart.api_billing" = "API Faturalandırma";
+"history.chart.no_data" = "Seçili aralıkta veri yok";
+"history.export.title" = "Veriyi Dışa Aktar";
+"history.export.json" = "JSON olarak dışa aktar";
+"history.export.csv" = "CSV olarak dışa aktar";
+
+/* ==================== */
+/* MARK: - Support View */
+/* ==================== */
+"support.title" = "Projeyi Destekle";
+"support.subtitle" = "Claude Kullanım Takibi ücretsiz ve açık kaynaklıdır";
+"support.all_features_free" = "Tüm Özellikler Ücretsiz";
+"support.all_features_desc" = "Bu uygulamadaki her özellik tamamen ücretsizdir. Premium katman yok, ücret duvarı yok, abonelik yok.";
+"support.open_source" = "Açık Kaynak";
+"support.open_source_desc" = "Kaynak kodu GitHub'da herkese açıktır. Projeyi inceleyebilir, değiştirebilir ve katkıda bulunabilirsiniz.";
+"support.no_tracking" = "Takip Yok";
+"support.no_tracking_desc" = "Gizliliğiniz önemli. Analitik yok, telemetri yok, veri toplama yok. Her şey Mac'inizde kalır.";
+"support.message" = "Bu uygulamayı faydalı buluyorsanız, geliştirmesini desteklemeyi düşünün";
+"support.buy_coffee" = "Bir Kahve Ismarla";
+"support.footer" = "Desteğiniz bu projenin yaşamasına ve büyümesine yardımcı olur";
+"support.also_support" = "Şu şekilde de destek olabilirsiniz:";
+"support.star_github" = "GitHub'da yıldızlayarak";
+
+/* ==================== */
+/* MARK: - Debug View */
+/* ==================== */
+"debug.title" = "Hata Ayıklama Araçları";
+"debug.subtitle" = "Sorun giderme ve tanılama için ağ isteklerini günlüğe kaydedin";
+"debug.network_logger" = "Ağ İsteği Günlükçüsü";
+"debug.network_logger_desc" = "Tüm API isteklerini ayrıntılı bilgilerle yakala";
+"debug.logging_duration" = "Günlük Süresi";
+"debug.logging_active" = "Günlük Etkin";
+"debug.logging_inactive" = "Günlük Devre Dışı";
+"debug.stops_in" = "%@ sonra durur";
+"debug.start_logging" = "Günlüğü Başlat";
+"debug.stop_logging" = "Günlüğü Durdur";
+"debug.clear_logs" = "Günlükleri Temizle";
+"debug.clear_all_logs" = "Tüm Günlükler Temizlensin mi?";
+"debug.clear_logs_message" = "Bu işlem kaydedilen tüm ağ isteklerini kalıcı olarak silecektir.";
+"debug.captured_requests" = "Yakalanan İstekler";
+"debug.requests_logged" = "%d istek kaydedildi";
+"debug.no_requests" = "Henüz istek kaydedilmedi";
+"debug.request_details" = "İstek Detayları";
+"debug.basic_information" = "Temel Bilgiler";
+"debug.request_body" = "İstek Gövdesi";
+"debug.response_preview" = "Yanıt (Önizleme)";
+"debug.full_size" = "Tam boyut: %@";
+"debug.error" = "Hata";
+"debug.url" = "URL";
+"debug.method" = "Yöntem";
+"debug.status_code" = "Durum Kodu";
+"debug.duration" = "Süre";
+"debug.timestamp" = "Zaman Damgası";
+"debug.duration_seconds" = "%.3f saniye";
+
+/* ==================== */
+/* MARK: - Combined Usage Chart */
+/* ==================== */
+"history.chart.usage_overview" = "Kullanım Genel Görünümü";
+
+/* ==================== */
+/* MARK: - Keyboard Shortcuts */
+/* ==================== */
+"section.shortcuts_title" = "Kısayollar";
+"section.shortcuts_desc" = "Klavye kısayollarını yapılandır";
+"shortcuts.title" = "Klavye Kısayolları";
+"shortcuts.subtitle" = "Sık kullanılan işlemler için genel kısayol tuşları belirle";
+"shortcuts.open_popover" = "Açılır Pencereyi Aç/Kapat";
+"shortcuts.open_popover_desc" = "Kullanım açılır penceresini göster veya gizle";
+"shortcuts.refresh" = "Kullanımı Yenile";
+"shortcuts.refresh_desc" = "En güncel kullanım verilerini getir";
+"shortcuts.open_settings" = "Ayarları Aç";
+"shortcuts.open_settings_desc" = "Ayarlar penceresini aç";
+"shortcuts.next_profile" = "Sonraki Profil";
+"shortcuts.next_profile_desc" = "Bir sonraki profile geç";
+"shortcuts.record" = "Kaydetmek için tıklayın";
+"shortcuts.recording" = "Kısayol tuşuna basın...";
+"shortcuts.clear" = "Temizle";
+"shortcuts.none" = "Yok";
+"shortcuts.info_title" = "Genel Kısayollar";
+"shortcuts.info_desc" = "Kısayollar herhangi bir uygulamadan çalışır. Her kısayol en az bir değiştirici tuş (Command, Option, Control veya Shift) içermelidir. Sistem kısayollarıyla çakışmaktan kaçının.";
+
+/* ==================== */
+/* MARK: - Mobile App (Coming Soon) */
+/* ==================== */
+"section.mobile_app_title" = "Mobil Uygulama";
+"section.mobile_app_desc" = "Mobil uygulama yakında";
+"mobile.title" = "Mobil Uygulama";
+"mobile.subtitle" = "Claude kullanımınızı hareket halindeyken takip edin";
+"mobile.coming_soon_badge" = "YAKINDA";
+"mobile.cta_message" = "İlgileniyor musunuz? Bize bildirin, hazır olduğunda size haber verelim.";
+"mobile.notify_me" = "Beni Haberdar Et";
+"mobile.submitting" = "Gönderiliyor...";
+"mobile.notified" = "Listedesiniz!";
+"mobile.notified_desc" = "Mobil uygulama hazır olduğunda size haber vereceğiz.";
+"mobile.privacy_note" = "Kişisel veri toplanmaz. Bu yalnızca ilginizi kaydeder.";
+"mobile.error_title" = "İstek Başarısız";
+"mobile.error_message" = "İlginiz kaydedilemedi. Lütfen internet bağlantınızı kontrol edip tekrar deneyin.";
+
+/* ==================== */
+/* MARK: - Popover Settings */
+/* ==================== */
+"section.popover_title" = "Açılır Pencere";
+"section.popover_desc" = "Açılır pencere görünümünü özelleştir";
+"section.app_settings_title" = "Ayarlar";
+"section.app_settings_desc" = "Uygulama ayarları ve başlangıç";
+"popover.title" = "Açılır Pencere";
+"popover.subtitle" = "Açılır pencerenin kullanım bilgilerini nasıl gösterdiğini özelleştirin";
+"popover.display_section" = "Görüntüleme";
+"popover.time_display" = "Sıfırlama zamanı gösterimi";
+"popover.time_display_desc" = "Açılır pencerede sıfırlama zamanları için ne gösterileceğini seçin";
+"popover.time_display_reset" = "Sıfırlama zamanı";
+"popover.time_display_remaining" = "Kalan";
+"popover.time_display_both" = "Her İkisi";
+"popover.time_format" = "Zaman biçimi";
+"popover.time_format_desc" = "Uygulama genelinde zamanların nasıl gösterileceğini seçin";
+"popover.time_format_system" = "Sistem";
+"popover.time_format_12h" = "12 saat";
+"popover.time_format_24h" = "24 saat";
+
+/* ==================== */
+/* MARK: - Feedback Prompt */
+/* ==================== */
+"feedback.title" = "İyileştirmemize Yardımcı Olun";
+"feedback.subtitle" = "Geri bildiriminiz bu uygulamanın geleceğini şekillendirir";
+"feedback.name_placeholder" = "İsim";
+"feedback.title_label" = "Rol";
+"feedback.contact_placeholder" = "E-posta";
+"feedback.message_placeholder" = "Bize her şeyi söyleyin — geri bildirim, fikirler, özellik istekleri...";
+"feedback.submit" = "Gönder";
+"feedback.submitting" = "Gönderiliyor...";
+"feedback.remind_later" = "Daha Sonra Hatırlat";
+"feedback.never_show" = "Bir Daha Sorma";
+"feedback.thanks" = "Geri bildiriminiz için teşekkürler!";
+"feedback.error_title" = "Gönderim Başarısız";
+"feedback.error_message" = "Geri bildiriminiz gönderilemedi. Lütfen daha sonra tekrar deneyin.";
+"feedback.role_developer" = "Geliştirici";
+"feedback.role_designer" = "Tasarımcı";
+"feedback.role_manager" = "Yönetici";
+"feedback.role_student" = "Öğrenci";
+"feedback.role_researcher" = "Araştırmacı";
+"feedback.role_other" = "Diğer";
+
+// MARK: - Status Banners
+"popover.banner.credentials_expired" = "Kimlik bilgileri süresi doldu. Ayarlar'dan güncelleyin.";
+"popover.banner.refresh_failed" = "Yenileme %d kez başarısız oldu";
+"popover.banner.updated_ago" = "%d dk önce güncellendi";
+
+// MARK: - Overage Balance
+"popover.overage_balance" = "Bakiye";
+
+// MARK: - Setup Wizard CLI Detection
+"setup.cli_detecting" = "CLI kimlik bilgileri kontrol ediliyor...";
+"setup.cli_detected.title" = "CLI Tespit Edildi!";
+"setup.cli_detected.description" = "Sisteminizde Claude Code CLI kimlik bilgileri bulundu. Tek tıklamayla kullanım takibine başlayın.";
+"setup.cli_detected.start" = "Takibi Başlat";
+"setup.cli_detected.manual" = "Bunun Yerine Manuel Kurulum Yap";
+
+// MARK: - Custom Notification Settings
+"notifications.custom_thresholds" = "Özel Eşikler";
+"notifications.custom_threshold" = "Özel uyarı";
+"notifications.custom_placeholder" = "ör. 50";
+"notifications.custom_add" = "Ekle";
+"notifications.sound" = "Ses";
+"notifications.sound.default" = "Varsayılan";
+"notifications.sound.none" = "Yok";
+"notifications.sound.preview" = "Sesi önizle";
