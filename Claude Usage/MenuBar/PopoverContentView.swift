@@ -200,7 +200,6 @@ struct PopoverContentView: View {
         }
         .padding(.bottom, 8)
         .frame(width: 280)
-        .fixedSize(horizontal: false, vertical: true)
         .background(VisualEffectBackground())
     }
 }

@@ -22,13 +22,10 @@ final class WindowCoordinator: NSObject {
 
     func setupPopover(contentViewController: NSViewController) {
         let popover = NSPopover()
-        popover.contentSize = NSSize(width: 320, height: 10) // Auto-sized by SwiftUI content
+        popover.contentSize = Constants.WindowSizes.popoverSize
         popover.behavior = .semitransient
         popover.animates = true
         popover.delegate = self
-        if #available(macOS 13.0, *) {
-            (contentViewController as? NSHostingController<PopoverContentView>)?.sizingOptions = .intrinsicContentSize
-        }
         popover.contentViewController = contentViewController
         self.popover = popover
         LoggingService.shared.logWindowEvent("Popover created")

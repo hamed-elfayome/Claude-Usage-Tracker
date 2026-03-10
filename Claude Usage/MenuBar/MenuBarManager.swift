@@ -383,15 +383,11 @@ class MenuBarManager: NSObject, ObservableObject {
 
         // Recreate popover with fresh content
         let newPopover = NSPopover()
-        newPopover.contentSize = NSSize(width: 320, height: 10) // Auto-sized by SwiftUI content
+        newPopover.contentSize = Constants.WindowSizes.popoverSize
         newPopover.behavior = .semitransient
         newPopover.animates = true
         newPopover.delegate = self
-        let hostingController = createContentViewController()
-        if #available(macOS 13.0, *) {
-            hostingController.sizingOptions = .intrinsicContentSize
-        }
-        newPopover.contentViewController = hostingController
+        newPopover.contentViewController = createContentViewController()
 
         self.popover = newPopover
 
@@ -451,16 +447,12 @@ class MenuBarManager: NSObject, ObservableObject {
 
     private func setupPopover() {
         let popover = NSPopover()
-        popover.contentSize = NSSize(width: 320, height: 10) // Initial size; auto-sized by SwiftUI content
+        popover.contentSize = Constants.WindowSizes.popoverSize
         popover.behavior = .semitransient  // Changed to allow detaching
         popover.animates = true
         popover.delegate = self
 
-        let hostingController = createContentViewController()
-        if #available(macOS 13.0, *) {
-            hostingController.sizingOptions = .intrinsicContentSize
-        }
-        popover.contentViewController = hostingController
+        popover.contentViewController = createContentViewController()
         self.popover = popover
     }
 
