@@ -126,6 +126,10 @@ if [ -f "$config_file" ]; then
   show_reset=$SHOW_RESET_TIME
   show_profile=$SHOW_PROFILE
   profile_name="$PROFILE_NAME"
+  show_pace_marker=$SHOW_PACE_MARKER
+  color_mode=$COLOR_MODE
+  show_context_label=$SHOW_CONTEXT_LABEL
+  pace_marker_step_colors=$PACE_MARKER_STEP_COLORS
 else
   show_model=1
   show_dir=1
@@ -137,6 +141,10 @@ else
   show_reset=1
   show_profile=0
   profile_name=""
+  show_pace_marker=1
+  color_mode=multi
+  show_context_label=1
+  pace_marker_step_colors=1
 fi
 
 input=$(cat)
@@ -163,6 +171,40 @@ LEVEL_7=$'\\033[38;5;172m'  # muted yellow-orange
 LEVEL_8=$'\\033[38;5;166m'  # darker orange
 LEVEL_9=$'\\033[38;5;160m'  # dark red
 LEVEL_10=$'\\033[38;5;124m' # deep red
+
+# 6-tier pace colors
+PACE_COMFORTABLE=$'\\033[38;5;34m'   # green
+PACE_ON_TRACK=$'\\033[38;5;37m'      # teal
+PACE_WARMING=$'\\033[38;5;178m'      # yellow
+PACE_PRESSING=$'\\033[38;5;208m'     # orange
+PACE_CRITICAL=$'\\033[38;5;160m'     # red
+PACE_RUNAWAY=$'\\033[38;5;135m'      # purple
+
+# Color mode overrides
+if [ "$color_mode" = "mono" ]; then
+  BLUE="$RESET"; GREEN="$RESET"; GRAY="$RESET"; YELLOW="$RESET"
+  CYAN="$RESET"; MAGENTA="$RESET"
+  LEVEL_1="$RESET"; LEVEL_2="$RESET"; LEVEL_3="$RESET"; LEVEL_4="$RESET"
+  LEVEL_5="$RESET"; LEVEL_6="$RESET"; LEVEL_7="$RESET"; LEVEL_8="$RESET"
+  LEVEL_9="$RESET"; LEVEL_10="$RESET"
+  PACE_COMFORTABLE="$RESET"; PACE_ON_TRACK="$RESET"; PACE_WARMING="$RESET"
+  PACE_PRESSING="$RESET"; PACE_CRITICAL="$RESET"; PACE_RUNAWAY="$RESET"
+elif [ "$color_mode" = "usage" ]; then
+  BLUE="$RESET"; GREEN="$RESET"; GRAY="$RESET"; YELLOW="$RESET"
+  CYAN="$RESET"; MAGENTA="$RESET"
+  PACE_COMFORTABLE="$RESET"; PACE_ON_TRACK="$RESET"; PACE_WARMING="$RESET"
+  PACE_PRESSING="$RESET"; PACE_CRITICAL="$RESET"; PACE_RUNAWAY="$RESET"
+fi
+
+# When pace step colors enabled, always use real 6-tier colors regardless of color mode
+if [ "$pace_marker_step_colors" != "0" ]; then
+  PACE_COMFORTABLE=$'\\033[38;5;34m'
+  PACE_ON_TRACK=$'\\033[38;5;37m'
+  PACE_WARMING=$'\\033[38;5;178m'
+  PACE_PRESSING=$'\\033[38;5;208m'
+  PACE_CRITICAL=$'\\033[38;5;160m'
+  PACE_RUNAWAY=$'\\033[38;5;135m'
+fi
 
 # Build components (without separators)
 dir_text=""
@@ -216,16 +258,19 @@ if [ "$show_context" = "1" ]; then
     # Integer percentage for display
     context_int=$context_pct
 
+    ctx_label=""
+    [ "$show_context_label" = "1" ] && ctx_label="Ctx: "
+
     # Display as tokens or percentage
     if [ "$context_as_tokens" = "1" ]; then
       if [ "$current_tokens" -ge 1000 ]; then
         tokens_k=$((current_tokens / 1000))
-        context_text="${context_color}Ctx: ${tokens_k}K${RESET}"
+        context_text="${context_color}${ctx_label}${tokens_k}K${RESET}"
       else
-        context_text="${context_color}Ctx: ${current_tokens}${RESET}"
+        context_text="${context_color}${ctx_label}${current_tokens}${RESET}"
       fi
     else
-      context_text="${context_color}Ctx: ${context_int}%${RESET}"
+      context_text="${context_color}${ctx_label}${context_int}%${RESET}"
     fi
   fi
 fi
@@ -295,7 +340,7 @@ if [ "$show_usage" = "1" ]; then
         empty_blocks=$((10 - filled_blocks))
 
         # Build progress bar safely without seq
-        progress_bar=" "
+        progress_bar=""
         i=0
         while [ $i -lt $filled_blocks ]; do
           progress_bar="${progress_bar}▓"
@@ -306,6 +351,58 @@ if [ "$show_usage" = "1" ]; then
           progress_bar="${progress_bar}░"
           i=$((i + 1))
         done
+
+        # Insert pace marker into progress bar
+        if [ "$show_pace_marker" = "1" ] && [ -n "$resets_at" ] && [ "$resets_at" != "null" ]; then
+          iso_reset=$(echo "$resets_at" | sed 's/\\.[0-9]*Z$//')
+          reset_epoch=$(date -ju -f "%Y-%m-%dT%H:%M:%S" "$iso_reset" "+%s" 2>/dev/null)
+          if [ -n "$reset_epoch" ]; then
+            now_epoch=$(date +%s)
+            remaining_secs=$((reset_epoch - now_epoch))
+            if [ "$remaining_secs" -gt 0 ] && [ "$remaining_secs" -lt 18000 ]; then
+              elapsed_secs=$((18000 - remaining_secs))
+              marker_pos=$(( (elapsed_secs * 10 + 9000) / 18000 ))
+              [ "$marker_pos" -lt 0 ] && marker_pos=0
+              [ "$marker_pos" -gt 9 ] && marker_pos=9
+
+              # Determine pace color from 6-tier system
+              elapsed_frac_x100=$((elapsed_secs * 100 / 18000))
+              if [ "$elapsed_frac_x100" -gt 0 ]; then
+                projected=$((utilization * 100 / elapsed_frac_x100))
+              else
+                projected=0
+              fi
+
+              if [ "$projected" -lt 50 ]; then
+                pace_color="$PACE_COMFORTABLE"
+              elif [ "$projected" -lt 75 ]; then
+                pace_color="$PACE_ON_TRACK"
+              elif [ "$projected" -lt 90 ]; then
+                pace_color="$PACE_WARMING"
+              elif [ "$projected" -lt 100 ]; then
+                pace_color="$PACE_PRESSING"
+              elif [ "$projected" -lt 120 ]; then
+                pace_color="$PACE_CRITICAL"
+              else
+                pace_color="$PACE_RUNAWAY"
+              fi
+
+              # Override: use usage bar color if step colors disabled
+              if [ "$pace_marker_step_colors" = "0" ]; then
+                pace_color="$usage_color"
+              fi
+
+              if [ -n "$pace_color" ]; then
+                left=$(echo "$progress_bar" | cut -c1-${marker_pos})
+                right_start=$((marker_pos + 2))
+                right=$(echo "$progress_bar" | cut -c${right_start}-)
+                progress_bar="${left}${pace_color}┃${RESET}${usage_color}${right}"
+              fi
+            fi
+          fi
+        fi
+
+        progress_bar=" ${progress_bar}"
       else
         progress_bar=""
       fi
@@ -457,7 +554,11 @@ printf "%s\\n" "$output"
         showProgressBar: Bool,
         showResetTime: Bool,
         showProfile: Bool,
-        profileName: String
+        profileName: String,
+        showPaceMarker: Bool = true,
+        colorMode: String = "multi",
+        paceMarkerStepColors: Bool = true,
+        showContextLabel: Bool = true
     ) throws {
         let configPath = Constants.ClaudePaths.claudeDirectory
             .appendingPathComponent("statusline-config.txt")
@@ -473,6 +574,10 @@ SHOW_PROGRESS_BAR=\(showProgressBar ? "1" : "0")
 SHOW_RESET_TIME=\(showResetTime ? "1" : "0")
 SHOW_PROFILE=\(showProfile ? "1" : "0")
 PROFILE_NAME="\(profileName)"
+SHOW_PACE_MARKER=\(showPaceMarker ? "1" : "0")
+COLOR_MODE=\(colorMode)
+PACE_MARKER_STEP_COLORS=\(paceMarkerStepColors ? "1" : "0")
+SHOW_CONTEXT_LABEL=\(showContextLabel ? "1" : "0")
 """
 
         try config.write(to: configPath, atomically: true, encoding: .utf8)

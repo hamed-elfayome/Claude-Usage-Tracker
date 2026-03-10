@@ -27,6 +27,9 @@ class SharedDataStore {
         static let statuslineShowProgressBar = "statuslineShowProgressBar"
         static let statuslineShowResetTime = "statuslineShowResetTime"
         static let statuslineShowProfile = "statuslineShowProfile"
+        static let statuslineShowPaceMarker = "statuslineShowPaceMarker"
+        static let statuslinePaceMarkerStepColors = "statuslinePaceMarkerStepColors"
+        static let statuslineShowContextLabel = "statuslineShowContextLabel"
 
         // Setup State
         static let hasCompletedSetup = "hasCompletedSetup"
@@ -176,6 +179,39 @@ class SharedDataStore {
             return false  // Default to false (new feature)
         }
         return defaults.bool(forKey: Keys.statuslineShowProfile)
+    }
+
+    func saveStatuslineShowPaceMarker(_ show: Bool) {
+        defaults.set(show, forKey: Keys.statuslineShowPaceMarker)
+    }
+
+    func loadStatuslineShowPaceMarker() -> Bool {
+        if defaults.object(forKey: Keys.statuslineShowPaceMarker) == nil {
+            return true  // Default to true
+        }
+        return defaults.bool(forKey: Keys.statuslineShowPaceMarker)
+    }
+
+    func saveStatuslinePaceMarkerStepColors(_ useStepColors: Bool) {
+        defaults.set(useStepColors, forKey: Keys.statuslinePaceMarkerStepColors)
+    }
+
+    func loadStatuslinePaceMarkerStepColors() -> Bool {
+        if defaults.object(forKey: Keys.statuslinePaceMarkerStepColors) == nil {
+            return true
+        }
+        return defaults.bool(forKey: Keys.statuslinePaceMarkerStepColors)
+    }
+
+    func saveStatuslineShowContextLabel(_ show: Bool) {
+        defaults.set(show, forKey: Keys.statuslineShowContextLabel)
+    }
+
+    func loadStatuslineShowContextLabel() -> Bool {
+        if defaults.object(forKey: Keys.statuslineShowContextLabel) == nil {
+            return true
+        }
+        return defaults.bool(forKey: Keys.statuslineShowContextLabel)
     }
 
     // MARK: - Setup State
