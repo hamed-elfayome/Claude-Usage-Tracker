@@ -343,6 +343,8 @@
 "claudecode.component_context_tokens" = "Mostrar como tokens (en lugar de %)";
 "claudecode.component_usage" = "Estadísticas de uso";
 "claudecode.component_progressbar" = "Barra de progreso";
+"claudecode.component_pace_marker" = "Marcador de ritmo";
+"claudecode.pace_marker_info" = "Muestra una marca de color en la posición del tiempo transcurrido";
 "claudecode.component_resettime" = "Tiempo de reinicio";
 "claudecode.requirement_sessionkey" = "• Clave de sesión configurada en Credenciales → pestaña Claude.ai";
 "claudecode.requirement_restart" = "• Reiniciar Claude CLI después de aplicar cambios";
@@ -412,10 +414,14 @@
 "appearance.show_labels_description" = "Mostrar etiquetas de prefijo (S:, W:, API:) para cada métrica";
 "appearance.show_remaining_title" = "Mostrar Porcentaje Restante";
 "appearance.show_remaining_description" = "Mostrar capacidad restante en lugar del porcentaje usado (como la batería de macOS)";
+"appearance.pace_marker_section_title" = "Marcador de Ritmo";
+"appearance.pace_marker_section_subtitle" = "Seguimiento del ritmo de uso relativo a los períodos de reinicio";
 "appearance.show_time_marker_title" = "Mostrar marcador de tiempo transcurrido";
 "appearance.show_time_marker_description" = "Mostrar una marca en las barras de progreso indicando cuánto tiempo del período ha pasado";
-"appearance.pace_coloring_title" = "Coloración según ritmo";
-"appearance.pace_coloring_description" = "Colorear indicadores según el ritmo de uso proyectado. Cuando está desactivado, los colores reflejan solo el uso actual.";
+"appearance.show_pace_marker_title" = "Colorear marcador por ritmo";
+"appearance.show_pace_marker_description" = "Colorea el marcador de tiempo según el ritmo de uso proyectado (verde → púrpura). Aplica a métricas de sesión y semanales.";
+"appearance.pace_coloring_title" = "Colores de barra por ritmo";
+"appearance.pace_coloring_description" = "Colorear barras de progreso según el ritmo proyectado en lugar del nivel de uso actual. Proyecta si alcanzarás los límites al final del período.";
 "appearance.multiprofile_locked_title" = "Ajustes de Apariencia Bloqueados";
 "appearance.multiprofile_locked_description" = "Estos ajustes están deshabilitados mientras la Visualización Multi-Perfil está activa. Cada perfil usa su propia apariencia en modo multi-perfil.";
 "appearance.disable_multiprofile" = "Desactivar Visualización Multi-Perfil";

@@ -270,6 +270,16 @@ final class StatusBarUIManager {
                 ? weekElapsed.map { CGFloat(showRemaining ? 1.0 - $0 : $0) }
                 : nil
 
+            // Compute pace status for multi-profile rendering
+            let sessionPaceStatus: PaceStatus? = {
+                guard config.showPaceMarker, let elapsed = sessionElapsed else { return nil }
+                return PaceStatus.calculate(usedPercentage: sessionUsed, elapsedFraction: elapsed)
+            }()
+            let weekPaceStatus: PaceStatus? = {
+                guard config.showPaceMarker, let elapsed = weekElapsed else { return nil }
+                return PaceStatus.calculate(usedPercentage: weekUsed, elapsedFraction: elapsed)
+            }()
+
             // Create icon based on selected style
             let image: NSImage
             switch config.iconStyle {
@@ -285,7 +295,10 @@ final class StatusBarUIManager {
                         isDarkMode: menuBarIsDark,
                         useSystemColor: false,
                         sessionTimeMarker: sessionMarker,
-                        weekTimeMarker: config.showWeek ? weekMarker : nil
+                        weekTimeMarker: config.showWeek ? weekMarker : nil,
+                        sessionPaceStatus: sessionPaceStatus,
+                        weekPaceStatus: config.showWeek ? weekPaceStatus : nil,
+                        showPaceMarker: config.showPaceMarker
                     )
                 } else {
                     image = renderer.createConcentricIcon(
@@ -298,7 +311,10 @@ final class StatusBarUIManager {
                         isDarkMode: menuBarIsDark,
                         useSystemColor: false,
                         sessionTimeMarker: sessionMarker,
-                        weekTimeMarker: config.showWeek ? weekMarker : nil
+                        weekTimeMarker: config.showWeek ? weekMarker : nil,
+                        sessionPaceStatus: sessionPaceStatus,
+                        weekPaceStatus: config.showWeek ? weekPaceStatus : nil,
+                        showPaceMarker: config.showPaceMarker
                     )
                 }
             case .progressBar:
@@ -312,7 +328,10 @@ final class StatusBarUIManager {
                     isDarkMode: menuBarIsDark,
                     useSystemColor: false,
                     sessionTimeMarker: sessionMarker,
-                    weekTimeMarker: config.showWeek ? weekMarker : nil
+                    weekTimeMarker: config.showWeek ? weekMarker : nil,
+                    sessionPaceStatus: sessionPaceStatus,
+                    weekPaceStatus: config.showWeek ? weekPaceStatus : nil,
+                    showPaceMarker: config.showPaceMarker
                 )
             case .compact:
                 image = renderer.createCompactDot(
@@ -321,7 +340,9 @@ final class StatusBarUIManager {
                     profileInitial: config.showProfileLabel ? String(profile.name.prefix(1)) : nil,
                     monochromeMode: useMonochrome,
                     isDarkMode: menuBarIsDark,
-                    useSystemColor: false
+                    useSystemColor: false,
+                    paceStatus: sessionPaceStatus,
+                    showPaceMarker: config.showPaceMarker
                 )
             case .percentage:
                 image = renderer.createMultiProfilePercentage(
@@ -332,14 +353,15 @@ final class StatusBarUIManager {
                     profileName: config.showProfileLabel ? profile.name : nil,
                     monochromeMode: useMonochrome,
                     isDarkMode: menuBarIsDark,
-                    useSystemColor: false
+                    useSystemColor: false,
+                    sessionPaceStatus: sessionPaceStatus,
+                    weekPaceStatus: config.showWeek ? weekPaceStatus : nil,
+                    showPaceMarker: config.showPaceMarker
                 )
             }
 
+            image.isTemplate = useMonochrome && !config.showPaceMarker
             button.image = image
-            // Template mode only for monochrome (lets macOS handle color adaptation)
-            // Non-monochrome needs explicit colors for status indicators
-            button.image?.isTemplate = useMonochrome
         }
     }
 
@@ -426,15 +448,14 @@ final class StatusBarUIManager {
                 usage: usage,
                 apiUsage: apiUsage,
                 isDarkMode: menuBarIsDark,
-                monochromeMode: config.monochromeMode,
+                colorMode: config.colorMode,
+                singleColorHex: config.singleColorHex,
                 showIconName: config.showIconNames,
                 showNextSessionTime: metricConfig.showNextSessionTime
             )
 
+            image.isTemplate = config.colorMode == .monochrome && !config.showPaceMarker
             button.image = image
-            // Template mode only for monochrome (lets macOS handle color adaptation)
-            // Non-monochrome needs explicit colors for status indicators
-            button.image?.isTemplate = config.monochromeMode
         }
     }
 
@@ -466,15 +487,14 @@ final class StatusBarUIManager {
             usage: usage,
             apiUsage: apiUsage,
             isDarkMode: menuBarIsDark,
-            monochromeMode: config.monochromeMode,
+            colorMode: config.colorMode,
+            singleColorHex: config.singleColorHex,
             showIconName: config.showIconNames,
             showNextSessionTime: metricConfig.showNextSessionTime
         )
 
+        image.isTemplate = config.colorMode == .monochrome && !config.showPaceMarker
         button.image = image
-        // Template mode only for monochrome (lets macOS handle color adaptation)
-        // Non-monochrome needs explicit colors for status indicators
-        button.image?.isTemplate = config.monochromeMode
     }
 
     /// Get button for a specific metric (used for popover positioning)

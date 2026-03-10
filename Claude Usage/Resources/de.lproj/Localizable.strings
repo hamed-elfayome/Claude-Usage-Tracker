@@ -344,6 +344,8 @@
 "claudecode.component_context_tokens" = "Als Tokens anzeigen (statt %)";
 "claudecode.component_usage" = "Nutzungsstatistiken";
 "claudecode.component_progressbar" = "Fortschrittsbalken";
+"claudecode.component_pace_marker" = "Tempo-Markierung";
+"claudecode.pace_marker_info" = "Zeigt einen farbigen Strich an der verstrichenen Zeitposition";
 "claudecode.component_resettime" = "Zurücksetzungszeit";
 "claudecode.requirement_sessionkey" = "• Sitzungsschlüssel im Tab 'Anmeldedaten → Claude.ai' konfiguriert";
 "claudecode.requirement_restart" = "• Claude CLI nach Anwendung der Änderungen neu starten";
@@ -425,10 +427,14 @@
 "appearance.show_labels_description" = "Präfix-Labels (S:, W:, API:) für jede Metrik anzeigen";
 "appearance.show_remaining_title" = "Verbleibender Prozentsatz anzeigen";
 "appearance.show_remaining_description" = "Verbleibende Kapazität statt genutzter Prozentsatz anzeigen (wie macOS-Batterie)";
+"appearance.pace_marker_section_title" = "Tempomarkierung";
+"appearance.pace_marker_section_subtitle" = "Nutzungstempo relativ zu Zurücksetzungszeiträumen verfolgen";
 "appearance.show_time_marker_title" = "Zeitverlaufsmarkierung anzeigen";
 "appearance.show_time_marker_description" = "Eine Markierung auf Fortschrittsbalken anzeigen, die den Zeitfortschritt im Zeitraum zeigt";
-"appearance.pace_coloring_title" = "Tempobasierte Farbgebung";
-"appearance.pace_coloring_description" = "Indikatoren basierend auf dem prognostizierten Nutzungstempo einfärben. Wenn deaktiviert, spiegeln die Farben nur die aktuelle Nutzung wider.";
+"appearance.show_pace_marker_title" = "Markierung nach Tempo einfärben";
+"appearance.show_pace_marker_description" = "Die Zeitmarkierung nach dem prognostizierten Nutzungstempo einfärben (grün → lila). Gilt für Sitzungs- und Wochenmetriken.";
+"appearance.pace_coloring_title" = "Tempobasierte Balkenfarben";
+"appearance.pace_coloring_description" = "Fortschrittsbalken basierend auf dem prognostizierten Tempo statt dem aktuellen Nutzungsniveau einfärben. Prognostiziert, ob Limits bis zum Ende des Zeitraums erreicht werden.";
 "appearance.multiprofile_locked_title" = "Darstellungseinstellungen gesperrt";
 "appearance.multiprofile_locked_description" = "Diese Einstellungen sind deaktiviert, während die Mehrfach-Profil-Anzeige aktiv ist. Jedes Profil verwendet im Mehrfach-Profil-Modus seine eigene Darstellung.";
 "appearance.disable_multiprofile" = "Mehrfach-Profil-Anzeige ausschalten";

@@ -358,6 +358,8 @@
 "claudecode.component_context_tokens" = "显示为令牌（而不是 %）";
 "claudecode.component_usage" = "使用统计";
 "claudecode.component_progressbar" = "进度条";
+"claudecode.component_pace_marker" = "节奏标记";
+"claudecode.pace_marker_info" = "在已用时间位置显示彩色标记";
 "claudecode.component_resettime" = "重置时间";
 "claudecode.requirement_sessionkey" = "• 在凭据 → Claude.ai 标签页中配置了会话密钥";
 "claudecode.requirement_restart" = "• 应用更改后重启 Claude CLI";
@@ -439,10 +441,14 @@
 "appearance.show_labels_description" = "为每个指标显示前缀标签（S:, W:, API:）";
 "appearance.show_remaining_title" = "显示剩余百分比";
 "appearance.show_remaining_description" = "显示剩余容量而不是已使用百分比（类似 macOS 电池）";
+"appearance.pace_marker_section_title" = "节奏标记";
+"appearance.pace_marker_section_subtitle" = "跟踪相对于重置周期的使用节奏";
 "appearance.show_time_marker_title" = "显示时间进度标记";
 "appearance.show_time_marker_description" = "在进度条上显示标记，指示当前时间段已经过去多少时间";
-"appearance.pace_coloring_title" = "基于节奏的着色";
-"appearance.pace_coloring_description" = "根据预测的使用节奏为指示器着色。关闭时，颜色仅反映当前使用量。";
+"appearance.show_pace_marker_title" = "按速率着色标记";
+"appearance.show_pace_marker_description" = "根据预计使用速率为时间标记着色（绿色→紫色）。适用于会话和每周指标。";
+"appearance.pace_coloring_title" = "基于节奏的进度条颜色";
+"appearance.pace_coloring_description" = "根据预测节奏而非当前使用水平为进度条着色。预测您是否会在周期结束前达到限制。";
 "appearance.multiprofile_locked_title" = "外观设置已锁定";
 "appearance.multiprofile_locked_description" = "当多配置文件显示处于活动状态时，这些设置被禁用。在多配置文件模式下，每个配置文件使用自己的外观。";
 "appearance.disable_multiprofile" = "关闭多配置文件显示";

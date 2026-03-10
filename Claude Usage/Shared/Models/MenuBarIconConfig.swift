@@ -60,6 +60,46 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
     }
 }
 
+/// Color mode for menu bar icons
+enum MenuBarColorMode: String, Codable, CaseIterable {
+    case multiColor = "multiColor"
+    case monochrome = "monochrome"
+    case singleColor = "singleColor"
+
+    var displayName: String {
+        switch self {
+        case .multiColor:
+            return "Multi-Color"
+        case .monochrome:
+            return "Greyscale"
+        case .singleColor:
+            return "Single Color"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .multiColor:
+            return "Green, orange, red based on usage level"
+        case .monochrome:
+            return "Adapts to menu bar appearance"
+        case .singleColor:
+            return "Custom color of your choice"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .multiColor:
+            return "paintpalette.fill"
+        case .monochrome:
+            return "circle.lefthalf.filled"
+        case .singleColor:
+            return "paintbrush.fill"
+        }
+    }
+}
+
 /// Display mode for API usage
 enum APIDisplayMode: String, Codable, CaseIterable {
     case remaining
@@ -249,6 +289,7 @@ struct MultiProfileDisplayConfig: Codable, Equatable {
     var showProfileLabel: Bool // Show profile name below icon
     var useSystemColor: Bool  // If true, use system accent color instead of status colors
     var showTimeMarker: Bool  // If true, show time-elapsed tick mark on progress indicators
+    var showPaceMarker: Bool  // If true, color time marker by projected usage pace (6-tier)
     var usePaceColoring: Bool // If true, color indicators based on projected usage pace
 
     init(
@@ -257,6 +298,7 @@ struct MultiProfileDisplayConfig: Codable, Equatable {
         showProfileLabel: Bool = true,
         useSystemColor: Bool = false,
         showTimeMarker: Bool = true,
+        showPaceMarker: Bool = true,
         usePaceColoring: Bool = true
     ) {
         self.iconStyle = iconStyle
@@ -264,6 +306,7 @@ struct MultiProfileDisplayConfig: Codable, Equatable {
         self.showProfileLabel = showProfileLabel
         self.useSystemColor = useSystemColor
         self.showTimeMarker = showTimeMarker
+        self.showPaceMarker = showPaceMarker
         self.usePaceColoring = usePaceColoring
     }
 
@@ -275,6 +318,7 @@ struct MultiProfileDisplayConfig: Codable, Equatable {
         case showProfileLabel
         case useSystemColor
         case showTimeMarker
+        case showPaceMarker
         case usePaceColoring
     }
 
@@ -287,7 +331,8 @@ struct MultiProfileDisplayConfig: Codable, Equatable {
         // New properties - provide default values if missing (backwards compatibility)
         useSystemColor = try container.decodeIfPresent(Bool.self, forKey: .useSystemColor) ?? false
         showTimeMarker = try container.decodeIfPresent(Bool.self, forKey: .showTimeMarker) ?? true
-        usePaceColoring = try container.decodeIfPresent(Bool.self, forKey: .usePaceColoring) ?? true
+        showPaceMarker = try container.decodeIfPresent(Bool.self, forKey: .showPaceMarker) ?? false
+        usePaceColoring = try container.decodeIfPresent(Bool.self, forKey: .usePaceColoring) ?? false
     }
 
     static var `default`: MultiProfileDisplayConfig {
@@ -297,18 +342,22 @@ struct MultiProfileDisplayConfig: Codable, Equatable {
 
 /// Global menu bar icon configuration
 struct MenuBarIconConfiguration: Codable, Equatable {
-    var monochromeMode: Bool
+    var colorMode: MenuBarColorMode
+    var singleColorHex: String
     var showIconNames: Bool
     var showRemainingPercentage: Bool
     var showTimeMarker: Bool
+    var showPaceMarker: Bool
     var usePaceColoring: Bool
     var metrics: [MetricIconConfig]
 
     init(
-        monochromeMode: Bool = false,
+        colorMode: MenuBarColorMode = .multiColor,
+        singleColorHex: String = "#00BFFF",
         showIconNames: Bool = true,
         showRemainingPercentage: Bool = false,
         showTimeMarker: Bool = true,
+        showPaceMarker: Bool = true,
         usePaceColoring: Bool = true,
         metrics: [MetricIconConfig] = [
             .sessionDefault,
@@ -316,10 +365,12 @@ struct MenuBarIconConfiguration: Codable, Equatable {
             .apiDefault
         ]
     ) {
-        self.monochromeMode = monochromeMode
+        self.colorMode = colorMode
+        self.singleColorHex = singleColorHex
         self.showIconNames = showIconNames
         self.showRemainingPercentage = showRemainingPercentage
         self.showTimeMarker = showTimeMarker
+        self.showPaceMarker = showPaceMarker
         self.usePaceColoring = usePaceColoring
         self.metrics = metrics
     }
@@ -327,10 +378,13 @@ struct MenuBarIconConfiguration: Codable, Equatable {
     // MARK: - Codable (Custom decoder for backwards compatibility)
 
     enum CodingKeys: String, CodingKey {
-        case monochromeMode
+        case monochromeMode  // Legacy key for backwards compatibility
+        case colorMode
+        case singleColorHex
         case showIconNames
         case showRemainingPercentage
         case showTimeMarker
+        case showPaceMarker
         case usePaceColoring
         case metrics
     }
@@ -338,15 +392,33 @@ struct MenuBarIconConfiguration: Codable, Equatable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
-        monochromeMode = try container.decode(Bool.self, forKey: .monochromeMode)
-        showIconNames = try container.decode(Bool.self, forKey: .showIconNames)
+        // Handle backwards compatibility: if old monochromeMode exists, convert it
+        if let monochromeMode = try container.decodeIfPresent(Bool.self, forKey: .monochromeMode) {
+            colorMode = monochromeMode ? .monochrome : .multiColor
+        } else {
+            colorMode = try container.decodeIfPresent(MenuBarColorMode.self, forKey: .colorMode) ?? .multiColor
+        }
 
-        // New property - provide default value if missing (backwards compatibility)
+        singleColorHex = try container.decodeIfPresent(String.self, forKey: .singleColorHex) ?? "#00BFFF"
+        showIconNames = try container.decode(Bool.self, forKey: .showIconNames)
         showRemainingPercentage = try container.decodeIfPresent(Bool.self, forKey: .showRemainingPercentage) ?? false
         showTimeMarker = try container.decodeIfPresent(Bool.self, forKey: .showTimeMarker) ?? true
-        usePaceColoring = try container.decodeIfPresent(Bool.self, forKey: .usePaceColoring) ?? true
-
+        showPaceMarker = try container.decodeIfPresent(Bool.self, forKey: .showPaceMarker) ?? false
+        usePaceColoring = try container.decodeIfPresent(Bool.self, forKey: .usePaceColoring) ?? false
         metrics = try container.decode([MetricIconConfig].self, forKey: .metrics)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(colorMode, forKey: .colorMode)
+        try container.encode(singleColorHex, forKey: .singleColorHex)
+        try container.encode(showIconNames, forKey: .showIconNames)
+        try container.encode(showRemainingPercentage, forKey: .showRemainingPercentage)
+        try container.encode(showTimeMarker, forKey: .showTimeMarker)
+        try container.encode(showPaceMarker, forKey: .showPaceMarker)
+        try container.encode(usePaceColoring, forKey: .usePaceColoring)
+        try container.encode(metrics, forKey: .metrics)
+        // Note: We don't encode monochromeMode anymore - it's only for reading legacy data
     }
 
     /// Get enabled metrics sorted by order

@@ -431,7 +431,7 @@ class DataStore: StorageProvider {
         var config = MenuBarIconConfiguration.default
 
         // Migrate monochrome mode
-        config.monochromeMode = loadMonochromeMode()
+        config.colorMode = loadMonochromeMode() ? .monochrome : .multiColor
 
         // Migrate icon style for session (was the only option before)
         let legacyStyle = loadMenuBarIconStyle()
