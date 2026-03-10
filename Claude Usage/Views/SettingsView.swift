@@ -444,7 +444,7 @@ struct AppSettingsSection: View {
 
 struct BottomBarSection: View {
     @Binding var selectedSection: SettingsSection
-    @State private var hoveredItem: SettingsSection?
+    @State private var hoveredItem: String?
 
     var items: [SettingsSection] {
         SettingsSection.allCases.filter { $0.isBottomBarItem }
@@ -456,28 +456,63 @@ struct BottomBarSection: View {
 
             HStack(spacing: 0) {
                 ForEach(items, id: \.self) { section in
-                Button {
-                    selectedSection = section
-                } label: {
-                    Image(systemName: section.icon)
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(selectedSection == section ? .white : .secondary)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 28)
-                        .background(
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(selectedSection == section ? SettingsColors.primary : (hoveredItem == section ? Color.primary.opacity(0.06) : Color.clear))
+                    Button {
+                        selectedSection = section
+                    } label: {
+                        bottomBarLabel(
+                            icon: section.icon,
+                            label: section.shortLabel,
+                            isSelected: selectedSection == section,
+                            isHovered: hoveredItem == section.rawValue
                         )
-                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .onHover { hovering in
+                        hoveredItem = hovering ? section.rawValue : nil
+                    }
+                    .help(section.title)
+                }
+
+                // Quit button
+                Button {
+                    NSApplication.shared.terminate(nil)
+                } label: {
+                    bottomBarLabel(
+                        icon: "power",
+                        label: "common.quit".localized,
+                        isSelected: false,
+                        isHovered: hoveredItem == "quit",
+                        hoverColor: Color.red.opacity(0.1)
+                    )
                 }
                 .buttonStyle(.plain)
                 .onHover { hovering in
-                    hoveredItem = hovering ? section : nil
+                    hoveredItem = hovering ? "quit" : nil
                 }
-                .help(section.title)
+                .help("common.quit".localized)
             }
         }
+    }
+
+    private func bottomBarLabel(icon: String, label: String, isSelected: Bool, isHovered: Bool, hoverColor: Color? = nil) -> some View {
+        VStack(spacing: 2) {
+            Image(systemName: icon)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(isSelected ? .white : .secondary)
+                .frame(height: 14)
+
+            Text(label)
+                .font(.system(size: 8, weight: .medium))
+                .foregroundColor(isSelected ? .white.opacity(0.9) : .secondary.opacity(0.7))
+                .lineLimit(1)
         }
+        .frame(maxWidth: .infinity)
+        .frame(height: 36)
+        .background(
+            RoundedRectangle(cornerRadius: 4)
+                .fill(isSelected ? SettingsColors.primary : (isHovered ? (hoverColor ?? Color.primary.opacity(0.06)) : Color.clear))
+        )
+        .contentShape(Rectangle())
     }
 }
 
@@ -567,6 +602,15 @@ enum SettingsSection: String, CaseIterable {
         }
     }
 
+    var shortLabel: String {
+        switch self {
+        case .about: return "About"
+        case .debug: return "Debug"
+        case .support: return "Support"
+        default: return title
+        }
+    }
+
     var isCredential: Bool {
         switch self {
         case .claudeAI, .apiConsole, .cliAccount:
@@ -587,7 +631,7 @@ enum SettingsSection: String, CaseIterable {
 
     var isBottomBarItem: Bool {
         switch self {
-        case .about, .debug, .support, .updates:
+        case .about, .debug, .support:
             return true
         default:
             return false
