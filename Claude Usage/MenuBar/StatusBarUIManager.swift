@@ -19,7 +19,14 @@ final class StatusBarUIManager {
     // Current display mode
     private var isMultiProfileMode: Bool = false
 
-    private var appearanceObserver: NSKeyValueObservation?
+    private var appearanceObservers: [NSKeyValueObservation] = []
+
+    // Image cache: maps button identity to last-set image TIFF data to avoid redundant sets
+    private var lastImageData: [ObjectIdentifier: Data] = [:]
+
+    // Appearance change coalescing
+    private var appearanceCoalesceWork: DispatchWorkItem?
+    private var lastObservedAppearanceName: NSAppearance.Name?
 
     // Icon renderer for creating menu bar images
     private let renderer = MenuBarIconRenderer()
@@ -124,8 +131,9 @@ final class StatusBarUIManager {
     }
 
     func cleanup() {
-        appearanceObserver?.invalidate()
-        appearanceObserver = nil
+        appearanceObservers.forEach { $0.invalidate() }
+        appearanceObservers.removeAll()
+        lastImageData.removeAll()
 
         // Clean up single profile status items
         for (_, statusItem) in statusItems {
@@ -290,10 +298,10 @@ final class StatusBarUIManager {
                 )
             }
 
-            button.image = image
             // Template mode only for monochrome (lets macOS handle color adaptation)
             // Non-monochrome needs explicit colors for status indicators
-            button.image?.isTemplate = useMonochrome
+            image.isTemplate = useMonochrome
+            setButtonImage(button, image: image)
         }
     }
 
@@ -339,8 +347,8 @@ final class StatusBarUIManager {
                 // Get actual menu bar appearance from the button
                 let menuBarIsDark = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
                 let logoImage = renderer.createDefaultAppLogo(isDarkMode: menuBarIsDark)
-                button.image = logoImage
-                button.image?.isTemplate = true  // Let macOS handle the color
+                logoImage.isTemplate = true  // Let macOS handle the color
+                setButtonImage(button, image: logoImage)
             }
             return
         }
@@ -369,10 +377,10 @@ final class StatusBarUIManager {
                 showNextSessionTime: metricConfig.showNextSessionTime
             )
 
-            button.image = image
             // Template mode only for monochrome (lets macOS handle color adaptation)
             // Non-monochrome needs explicit colors for status indicators
-            button.image?.isTemplate = config.colorMode == .monochrome
+            image.isTemplate = config.colorMode == .monochrome
+            setButtonImage(button, image: image)
         }
     }
 
@@ -410,10 +418,10 @@ final class StatusBarUIManager {
             showNextSessionTime: metricConfig.showNextSessionTime
         )
 
-        button.image = image
         // Template mode only for monochrome (lets macOS handle color adaptation)
         // Non-monochrome needs explicit colors for status indicators
-        button.image?.isTemplate = config.colorMode == .monochrome
+        image.isTemplate = config.colorMode == .monochrome
+        setButtonImage(button, image: image)
     }
 
     /// Get button for a specific metric (used for popover positioning)
@@ -446,9 +454,41 @@ final class StatusBarUIManager {
     // MARK: - Appearance Observation
 
     private func observeAppearanceChanges() {
-        appearanceObserver = NSApp.observe(\.effectiveAppearance) { [weak self] _, _ in
-            self?.delegate?.statusBarAppearanceDidChange()
+        appearanceObservers.forEach { $0.invalidate() }
+        appearanceObservers.removeAll()
+
+        // IMPORTANT: Do NOT observe per-button effectiveAppearance.
+        // Setting button.image triggers effectiveAppearance KVO on the button,
+        // which causes an infinite redraw loop.
+        let appObserver = NSApp.observe(\.effectiveAppearance, options: [.new]) { [weak self] _, change in
+            guard let self = self else { return }
+            let newName = change.newValue?.name
+            guard newName != self.lastObservedAppearanceName else { return }
+            self.lastObservedAppearanceName = newName
+
+            self.appearanceCoalesceWork?.cancel()
+            let work = DispatchWorkItem { [weak self] in
+                self?.lastImageData.removeAll()
+                self?.delegate?.statusBarAppearanceDidChange()
+            }
+            self.appearanceCoalesceWork = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: work)
         }
+        appearanceObservers.append(appObserver)
+    }
+
+    // MARK: - Image Caching
+
+    /// Sets button image only if the image data actually changed, preventing KVO loops
+    private func setButtonImage(_ button: NSStatusBarButton, image: NSImage) {
+        let buttonId = ObjectIdentifier(button)
+        guard let newData = image.tiffRepresentation else {
+            button.image = image
+            return
+        }
+        if lastImageData[buttonId] == newData { return }
+        lastImageData[buttonId] = newData
+        button.image = image
     }
 }
 

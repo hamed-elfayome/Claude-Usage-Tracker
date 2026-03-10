@@ -53,8 +53,8 @@ class MenuBarManager: NSObject, ObservableObject {
     // Observer for refresh interval changes
     private var refreshIntervalObserver: NSKeyValueObservation?
 
-    // Observer for appearance changes
-    private var appearanceObserver: NSKeyValueObservation?
+    // Appearance observation is handled by StatusBarUIManager delegate
+    // (see statusBarAppearanceDidChange() below)
 
     // Observer for icon style changes
     private var iconStyleObserver: NSObjectProtocol?
@@ -173,8 +173,8 @@ class MenuBarManager: NSObject, ObservableObject {
         // Start auto-start session service (5-minute cycle for all profiles)
         autoStartService.start()
 
-        // Observe appearance changes
-        observeAppearanceChanges()
+        // Appearance changes are observed by StatusBarUIManager,
+        // which calls back via statusBarAppearanceDidChange() delegate method.
 
         // Observe icon configuration changes
         observeIconConfigChanges()
@@ -194,8 +194,6 @@ class MenuBarManager: NSObject, ObservableObject {
         cancellables.removeAll()  // Clean up Combine subscriptions
         refreshIntervalObserver?.invalidate()
         refreshIntervalObserver = nil
-        appearanceObserver?.invalidate()
-        appearanceObserver = nil
         if let iconStyleObserver = iconStyleObserver {
             NotificationCenter.default.removeObserver(iconStyleObserver)
             self.iconStyleObserver = nil
@@ -578,24 +576,10 @@ class MenuBarManager: NSObject, ObservableObject {
         }
     }
 
-    private func observeAppearanceChanges() {
-        // Observe appearance changes on NSApp (fires less frequently than button)
-        // This optimization reduces redundant redraws
-        appearanceObserver = NSApp.observe(\.effectiveAppearance, options: [.new]) { [weak self] _, change in
-            guard let self = self,
-                  let button = self.statusItem?.button else { return }
-
-            // Cache the dark mode state to avoid querying it during layout
-            let isDark = change.newValue?.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-
-            DispatchQueue.main.async {
-                self.cachedIsDarkMode = isDark
-                // Clear cache to force redraw with new appearance
-                self.cachedImageKey = ""
-                self.updateStatusButton(button, usage: self.usage)
-            }
-        }
-    }
+    // NOTE: observeAppearanceChanges() has been removed.
+    // Appearance observation is now handled solely by StatusBarUIManager,
+    // which calls back via the statusBarAppearanceDidChange() delegate method.
+    // The duplicate observer here was contributing to the CPU spin loop.
 
     private func observeIconStyleChanges() {
         // Observe icon style changes from settings (now consolidated with menuBarIconConfigChanged)
@@ -1134,7 +1118,9 @@ extension MenuBarManager: NSPopoverDelegate {
 extension MenuBarManager: StatusBarUIManagerDelegate {
     func statusBarAppearanceDidChange() {
         // Update cached dark mode state
-        cachedIsDarkMode = NSApp.effectiveAppearance.name == .darkAqua
+        cachedIsDarkMode = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        // Clear legacy image cache to force redraw with new appearance
+        cachedImageKey = ""
         // Update all icons with new appearance
         updateAllStatusBarIcons()
     }
