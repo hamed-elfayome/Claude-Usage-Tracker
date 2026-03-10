@@ -92,4 +92,11 @@ extension Date {
         let hours = Int(ceil(interval / 3600))  // Round up to next hour
         return "→\(hours)H"
     }
+
+    /// Rounds date down to nearest minute (strips seconds)
+    func roundedToNearestMinute() -> Date {
+        let calendar = Calendar.current
+        let components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: self)
+        return calendar.date(from: components) ?? self
+    }
 }
