@@ -22,6 +22,9 @@ final class StatusBarUIManager {
     private var appearanceObservers: [NSKeyValueObservation] = []
     private var appearanceDebounceTimer: Timer?
 
+    // Image cache to avoid redundant button.image assignments (which trigger KVO)
+    private var lastImageData: [ObjectIdentifier: Data] = [:]
+
     // Icon renderer for creating menu bar images
     private let renderer = MenuBarIconRenderer()
 
@@ -336,10 +339,10 @@ final class StatusBarUIManager {
                 )
             }
 
-            button.image = image
             // Template mode only for monochrome (lets macOS handle color adaptation)
             // Non-monochrome needs explicit colors for status indicators
-            button.image?.isTemplate = useMonochrome
+            image.isTemplate = useMonochrome
+            setButtonImage(button, image: image)
         }
     }
 
@@ -402,8 +405,8 @@ final class StatusBarUIManager {
                 // Get actual menu bar appearance from the button
                 let menuBarIsDark = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
                 let logoImage = renderer.createDefaultAppLogo(isDarkMode: menuBarIsDark)
-                button.image = logoImage
-                button.image?.isTemplate = true  // Let macOS handle the color
+                logoImage.isTemplate = true  // Let macOS handle the color
+                setButtonImage(button, image: logoImage)
             }
             return
         }
@@ -431,10 +434,10 @@ final class StatusBarUIManager {
                 showNextSessionTime: metricConfig.showNextSessionTime
             )
 
-            button.image = image
             // Template mode only for monochrome (lets macOS handle color adaptation)
             // Non-monochrome needs explicit colors for status indicators
-            button.image?.isTemplate = config.monochromeMode
+            image.isTemplate = config.monochromeMode
+            setButtonImage(button, image: image)
         }
     }
 
@@ -471,10 +474,10 @@ final class StatusBarUIManager {
             showNextSessionTime: metricConfig.showNextSessionTime
         )
 
-        button.image = image
         // Template mode only for monochrome (lets macOS handle color adaptation)
         // Non-monochrome needs explicit colors for status indicators
-        button.image?.isTemplate = config.monochromeMode
+        image.isTemplate = config.monochromeMode
+        setButtonImage(button, image: image)
     }
 
     /// Get button for a specific metric (used for popover positioning)
@@ -506,39 +509,38 @@ final class StatusBarUIManager {
 
     // MARK: - Appearance Observation
 
+    private var lastObservedAppearanceName: NSAppearance.Name?
+
     private func observeAppearanceChanges() {
-        // Invalidate previous observers
         appearanceObservers.forEach { $0.invalidate() }
         appearanceObservers.removeAll()
 
-        // Observe each status bar button's effectiveAppearance (reflects wallpaper, not system mode)
-        let allButtons: [NSStatusBarButton] = {
-            var buttons: [NSStatusBarButton] = []
-            for (_, item) in statusItems {
-                if let button = item.button { buttons.append(button) }
-            }
-            for (_, item) in multiProfileStatusItems {
-                if let button = item.button { buttons.append(button) }
-            }
-            return buttons
-        }()
-
-        for button in allButtons {
-            let observer = button.observe(\.effectiveAppearance, options: [.new, .old]) { [weak self] btn, change in
-                // Only fire if the appearance actually changed
-                guard let oldAppearance = change.oldValue,
-                      let newAppearance = change.newValue,
-                      oldAppearance.name != newAppearance.name else { return }
-                self?.scheduleAppearanceUpdate()
-            }
-            appearanceObservers.append(observer)
-        }
-
-        // Also observe app-level as fallback for system-wide dark/light mode toggle
-        let appObserver = NSApp.observe(\.effectiveAppearance) { [weak self] _, _ in
-            self?.scheduleAppearanceUpdate()
+        // IMPORTANT: Do NOT observe per-button effectiveAppearance.
+        // Setting button.image triggers effectiveAppearance KVO on the button,
+        // which causes an infinite redraw loop.
+        let appObserver = NSApp.observe(\.effectiveAppearance, options: [.new]) { [weak self] _, change in
+            guard let self = self else { return }
+            let newName = change.newValue?.name
+            guard newName != self.lastObservedAppearanceName else { return }
+            self.lastObservedAppearanceName = newName
+            // Clear image cache so next update re-renders with new appearance
+            self.lastImageData.removeAll()
+            self.delegate?.statusBarAppearanceDidChange()
         }
         appearanceObservers.append(appObserver)
+    }
+
+    /// Only sets button.image if the image data actually changed.
+    /// This prevents triggering effectiveAppearance KVO when the image is identical.
+    private func setButtonImage(_ button: NSStatusBarButton, image: NSImage) {
+        let buttonId = ObjectIdentifier(button)
+        guard let newData = image.tiffRepresentation else {
+            button.image = image
+            return
+        }
+        if lastImageData[buttonId] == newData { return }
+        lastImageData[buttonId] = newData
+        button.image = image
     }
 
     /// Debounces appearance change notifications so multiple displays/buttons
