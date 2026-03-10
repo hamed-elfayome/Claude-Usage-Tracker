@@ -106,6 +106,7 @@ struct PopoverContentView: View {
                     }
                 },
                 onManageProfiles: onPreferences,
+                onPreferences: onPreferences,
                 clickedProfileId: manager.clickedProfileId
             )
 
@@ -196,16 +197,8 @@ struct PopoverContentView: View {
                     .transition(.opacity)
             }
 
-            PopoverDivider()
-
-            // Footer
-            SmartFooter(
-                usage: displayUsage,
-                status: manager.status,
-                showInsights: $showInsights,
-                onPreferences: onPreferences
-            )
         }
+        .padding(.bottom, 8)
         .frame(width: 280)
         .fixedSize(horizontal: false, vertical: true)
         .background(VisualEffectBackground())
@@ -426,6 +419,7 @@ struct SmartHeader: View {
     let isRefreshing: Bool
     let onRefresh: () -> Void
     let onManageProfiles: () -> Void
+    let onPreferences: () -> Void
     var clickedProfileId: UUID? = nil
 
     @StateObject private var profileManager = ProfileManager.shared
@@ -461,60 +455,89 @@ struct SmartHeader: View {
 
     var body: some View {
         HStack {
-            HStack(spacing: 2) {
-                Image("HeaderLogo")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 34, height: 34)
-                    .foregroundColor(.primary.opacity(0.3))
+            VStack(alignment: .leading, spacing: 2) {
+                ProfileSwitcherCompact(onManageProfiles: onManageProfiles)
 
-                VStack(alignment: .leading, spacing: 2) {
-                    ProfileSwitcherCompact(onManageProfiles: onManageProfiles)
-
-                    // Status
-                    Button(action: {
-                        if let url = URL(string: "https://status.claude.com") {
-                            NSWorkspace.shared.open(url)
-                        }
-                    }) {
-                        HStack(spacing: 4) {
-                            Circle()
-                                .fill(statusColor)
-                                .frame(width: 6, height: 6)
-
-                            Text(status.description)
-                                .font(.system(size: 9, weight: .medium))
-                                .foregroundColor(.secondary)
-                        }
+                // Status
+                Button(action: {
+                    if let url = URL(string: "https://status.claude.com") {
+                        NSWorkspace.shared.open(url)
                     }
-                    .buttonStyle(.plain)
-                    .help("Click to open status.claude.com")
+                }) {
+                    HStack(spacing: 4) {
+                        Circle()
+                            .fill(statusColor)
+                            .frame(width: 6, height: 6)
+
+                        Text(status.description)
+                            .font(.system(size: 9, weight: .medium))
+                            .foregroundColor(.secondary)
+                    }
                 }
+                .buttonStyle(.plain)
+                .help("Click to open status.claude.com")
             }
 
             Spacer()
 
-            // Refresh
-            Button(action: onRefresh) {
-                ZStack {
-                    if isRefreshing {
-                        ProgressView()
-                            .controlSize(.small)
-                            .frame(width: 14, height: 14)
-                    } else {
-                        Image(systemName: "arrow.clockwise")
-                            .font(.system(size: 12, weight: .medium))
-                    }
-                }
-                .foregroundColor(.secondary)
-                .frame(width: 28, height: 28)
-                .contentShape(Rectangle())
+            HStack(alignment: .center, spacing: 2) {
+                // Refresh
+                HeaderIconButton(
+                    icon: "arrow.clockwise",
+                    isRefreshing: isRefreshing,
+                    action: onRefresh
+                )
+                .disabled(isRefreshing)
+
+                // Settings
+                HeaderIconButton(
+                    icon: "gearshape.fill",
+                    fontSize: 12,
+                    action: onPreferences
+                )
             }
-            .buttonStyle(.plain)
-            .disabled(isRefreshing)
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, 14)
         .padding(.vertical, 10)
+    }
+}
+
+// MARK: - Header Icon Button
+struct HeaderIconButton: View {
+    let icon: String
+    var fontSize: CGFloat = 10.5
+    var isRefreshing: Bool = false
+    let action: () -> Void
+
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            ZStack {
+                if isRefreshing {
+                    ProgressView()
+                        .controlSize(.small)
+                        .frame(width: 10, height: 10)
+                } else {
+                    Image(systemName: icon)
+                        .font(.system(size: fontSize, weight: .medium))
+                        .imageScale(.medium)
+                }
+            }
+            .foregroundColor(isHovered ? .primary : .secondary)
+            .frame(width: 24, height: 24, alignment: .center)
+            .background(
+                RoundedRectangle(cornerRadius: 5)
+                    .fill(isHovered ? Color.primary.opacity(0.08) : Color.clear)
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.15)) {
+                isHovered = hovering
+            }
+        }
     }
 }
 
