@@ -1042,45 +1042,69 @@ struct DailyCostChart: View {
         let dollars: Double
     }
 
+    private static let dateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MMM d"
+        return f
+    }()
+
+    private var xDomain: ClosedRange<Date> {
+        let cal = Calendar.current
+        let today = Date()
+        let startOfMonth = cal.date(from: cal.dateComponents([.year, .month], from: today))!
+        // End of today (start of tomorrow)
+        let endOfToday = cal.date(byAdding: .day, value: 1, to: cal.startOfDay(for: today))!
+        return startOfMonth ... endOfToday
+    }
+
     var body: some View {
-        if dailyCosts.count >= 2 {
+        if !dailyCosts.isEmpty {
             let data = dailyCosts.map { DayCost(id: $0.date, dollars: $0.cents / 100.0) }
+            let maxValue = data.map(\.dollars).max() ?? 0
             Chart(data) { item in
                 BarMark(
                     x: .value("Day", item.id, unit: .day),
-                    y: .value("Cost", item.dollars)
+                    y: .value("Cost", item.dollars),
+                    width: .fixed(12)
                 )
-                .foregroundStyle(.orange)
+                .foregroundStyle(Color.orange.opacity(0.75))
                 .cornerRadius(2)
             }
+            .chartXScale(domain: xDomain)
             .chartXAxis {
                 AxisMarks(values: .stride(by: .day)) { value in
-                    if let date = value.as(Date.self) {
-                        AxisValueLabel {
+                    AxisValueLabel(centered: true) {
+                        if let date = value.as(Date.self) {
                             Text("\(Calendar.current.component(.day, from: date))")
-                                .font(.system(size: 8))
+                                .font(.system(size: 7))
+                                .foregroundColor(.secondary.opacity(0.6))
                         }
                     }
                 }
             }
             .chartYAxis {
-                AxisMarks(position: .leading) { value in
-                    AxisGridLine()
+                AxisMarks(position: .leading, values: .automatic(desiredCount: 3)) { value in
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.3))
+                        .foregroundStyle(Color.secondary.opacity(0.15))
                     AxisValueLabel {
                         if let v = value.as(Double.self) {
-                            Text(formatDollars(v))
-                                .font(.system(size: 8))
+                            Text(formatDollars(v, max: maxValue))
+                                .font(.system(size: 7, design: .rounded))
+                                .foregroundColor(.secondary.opacity(0.6))
                         }
                     }
                 }
             }
-            .frame(height: 60)
+            .chartYScale(domain: 0 ... max(maxValue * 1.15, 0.01))
+            .frame(height: 80)
         }
     }
 
-    private func formatDollars(_ amount: Double) -> String {
-        if amount >= 1 {
+    private func formatDollars(_ amount: Double, max: Double) -> String {
+        if max >= 100 {
             return "$\(Int(amount))"
+        } else if max >= 1 {
+            return String(format: "$%.1f", amount)
         } else {
             return String(format: "$%.2f", amount)
         }
