@@ -58,7 +58,6 @@ struct PopoverContentView: View {
     @ObservedObject var manager: MenuBarManager
     let onRefresh: () -> Void
     let onPreferences: () -> Void
-    let onQuit: () -> Void
 
     @State private var isRefreshing = false
     @State private var showInsights = false
@@ -80,7 +79,12 @@ struct PopoverContentView: View {
     }
 
     private var displayAPIUsage: APIUsage? {
-        manager.clickedProfileAPIUsage ?? manager.apiUsage
+        // When viewing a non-active profile, use only that profile's API data
+        // to avoid leaking the active profile's console data
+        if manager.clickedProfileUsage != nil {
+            return manager.clickedProfileAPIUsage
+        }
+        return manager.apiUsage
     }
 
     var body: some View {
@@ -199,8 +203,7 @@ struct PopoverContentView: View {
                 usage: displayUsage,
                 status: manager.status,
                 showInsights: $showInsights,
-                onPreferences: onPreferences,
-                onQuit: onQuit
+                onPreferences: onPreferences
             )
         }
         .frame(width: 280)
@@ -852,24 +855,16 @@ struct SmartFooter: View {
     let status: ClaudeStatus
     @Binding var showInsights: Bool
     let onPreferences: () -> Void
-    let onQuit: () -> Void
 
     var body: some View {
-        HStack(spacing: 0) {
+        HStack {
+            Spacer()
             SmartActionButton(
                 icon: "gearshape.fill",
                 title: "common.settings".localized,
                 action: onPreferences
             )
-            .frame(maxWidth: .infinity)
-
-            SmartActionButton(
-                icon: "power",
-                title: "common.quit".localized,
-                isDestructive: true,
-                action: onQuit
-            )
-            .frame(maxWidth: .infinity)
+            Spacer()
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)

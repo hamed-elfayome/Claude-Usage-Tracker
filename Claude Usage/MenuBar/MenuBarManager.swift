@@ -480,9 +480,6 @@ class MenuBarManager: NSObject, ObservableObject {
             onPreferences: { [weak self] in
                 self?.closePopoverOrWindow()
                 self?.preferencesClicked()
-            },
-            onQuit: { [weak self] in
-                self?.quitClicked()
             }
         )
 
