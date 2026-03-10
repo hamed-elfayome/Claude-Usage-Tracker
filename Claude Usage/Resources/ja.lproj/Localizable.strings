@@ -876,6 +876,8 @@
 /* ==================== */
 "section.popover_title" = "ポップオーバー";
 "section.popover_desc" = "ポップオーバーの表示をカスタマイズ";
+"section.app_settings_title" = "設定";
+"section.app_settings_desc" = "アプリの設定と起動";
 "popover.title" = "ポップオーバー";
 "popover.subtitle" = "ポップオーバーでの使用状況の表示方法をカスタマイズ";
 "popover.display_section" = "表示";

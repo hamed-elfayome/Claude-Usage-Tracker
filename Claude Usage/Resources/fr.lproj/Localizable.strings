@@ -854,6 +854,8 @@
 /* ==================== */
 "section.popover_title" = "Popover";
 "section.popover_desc" = "Personnaliser l'affichage du popover";
+"section.app_settings_title" = "Réglages";
+"section.app_settings_desc" = "Réglages de l'application et démarrage";
 "popover.title" = "Popover";
 "popover.subtitle" = "Personnalisez l'affichage des informations d'utilisation dans le popover";
 "popover.display_section" = "Affichage";

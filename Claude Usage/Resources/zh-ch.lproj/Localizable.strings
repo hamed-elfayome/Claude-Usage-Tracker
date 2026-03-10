@@ -866,6 +866,8 @@
 /* ==================== */
 "section.popover_title" = "弹出窗口";
 "section.popover_desc" = "自定义弹出窗口显示";
+"section.app_settings_title" = "设置";
+"section.app_settings_desc" = "应用设置和启动";
 "popover.title" = "弹出窗口";
 "popover.subtitle" = "自定义弹出窗口如何显示使用信息";
 "popover.display_section" = "显示";

@@ -888,6 +888,8 @@
 /* ==================== */
 "section.popover_title" = "Popover";
 "section.popover_desc" = "Customize popover display";
+"section.app_settings_title" = "Settings";
+"section.app_settings_desc" = "App settings and startup";
 "popover.title" = "Popover";
 "popover.subtitle" = "Customize how the popover displays usage information";
 "popover.display_section" = "Display";

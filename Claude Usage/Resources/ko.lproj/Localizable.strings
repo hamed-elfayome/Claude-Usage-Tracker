@@ -936,6 +936,8 @@
 /* ==================== */
 "section.popover_title" = "팝오버";
 "section.popover_desc" = "팝오버 표시 사용자 지정";
+"section.app_settings_title" = "설정";
+"section.app_settings_desc" = "앱 설정 및 시작";
 "popover.title" = "팝오버";
 "popover.subtitle" = "팝오버에서 사용량 정보 표시 방법을 사용자 지정합니다";
 "popover.display_section" = "표시";
