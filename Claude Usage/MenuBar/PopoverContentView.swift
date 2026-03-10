@@ -204,6 +204,7 @@ struct PopoverContentView: View {
             )
         }
         .frame(width: 280)
+        .fixedSize(horizontal: false, vertical: true)
         .background(VisualEffectBackground())
     }
 }
