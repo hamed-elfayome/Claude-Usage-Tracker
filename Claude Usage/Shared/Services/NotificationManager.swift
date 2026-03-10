@@ -167,6 +167,7 @@ class NotificationManager: NotificationServiceProtocol {
                     profileName: profileName,
                     type: alertType,
                     percentage: sessionPercentage,
+                    thresholdLevel: threshold,
                     resetTime: usage.sessionResetTime,
                     soundName: settings.soundName
                 )
@@ -193,12 +194,12 @@ class NotificationManager: NotificationServiceProtocol {
     }
 
     /// Sends a profile-specific usage alert
-    private func sendProfileAlert(profileName: String, type: AlertType, percentage: Double, resetTime: Date?, soundName: String = "default") {
-        // Map percentage to nearest threshold level to prevent duplicate notifications
-        let thresholdLevel = Int(percentage)
+    private func sendProfileAlert(profileName: String, type: AlertType, percentage: Double, thresholdLevel: Int? = nil, resetTime: Date?, soundName: String = "default") {
+        // Use the configured threshold level (not current percentage) to prevent duplicate notifications
+        let level = thresholdLevel ?? Int(percentage)
 
         // Create unique identifier based on alert type and threshold level
-        let identifier = "\(profileName)_\(type.rawValue)_\(thresholdLevel)"
+        let identifier = "\(profileName)_\(type.rawValue)_\(level)"
 
         // Check if we've already sent this notification
         guard !sentNotifications.contains(identifier) else {
