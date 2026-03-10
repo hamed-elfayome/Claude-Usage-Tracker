@@ -46,9 +46,9 @@ struct AppearanceSettingsView: View {
                             title: "appearance.monochrome_title".localized,
                             description: "appearance.monochrome_description".localized,
                             isOn: Binding(
-                                get: { configuration.monochromeMode },
+                                get: { configuration.colorMode == .monochrome },
                                 set: { newValue in
-                                    configuration.monochromeMode = newValue
+                                    configuration.colorMode = newValue ? .monochrome : .multiColor
                                     saveConfiguration()
                                 }
                             )
@@ -85,6 +85,18 @@ struct AppearanceSettingsView: View {
                                 get: { configuration.showTimeMarker },
                                 set: { newValue in
                                     configuration.showTimeMarker = newValue
+                                    saveConfiguration()
+                                }
+                            )
+                        )
+
+                        SettingToggle(
+                            title: "appearance.show_pace_marker_title".localized,
+                            description: "appearance.show_pace_marker_description".localized,
+                            isOn: Binding(
+                                get: { configuration.showPaceMarker },
+                                set: { newValue in
+                                    configuration.showPaceMarker = newValue
                                     saveConfiguration()
                                 }
                             )

@@ -365,6 +365,8 @@
 "claudecode.component_context_tokens" = "Show as tokens (instead of %)";
 "claudecode.component_usage" = "Usage statistics";
 "claudecode.component_progressbar" = "Progress bar";
+"claudecode.component_pace_marker" = "Pace marker";
+"claudecode.pace_marker_info" = "Colored by projected usage pace (green → purple)";
 "claudecode.component_resettime" = "Reset time";
 "claudecode.requirement_sessionkey" = "• Session key configured in Credentials → Claude.ai tab";
 "claudecode.requirement_restart" = "• Restart Claude CLI after applying changes";
@@ -446,10 +448,14 @@
 "appearance.show_labels_description" = "Display prefix labels (S:, W:, API:) for each metric";
 "appearance.show_remaining_title" = "Show Remaining Percentage";
 "appearance.show_remaining_description" = "Display remaining capacity instead of used percentage (like macOS battery)";
-"appearance.show_time_marker_title" = "Show Time-Elapsed Marker";
+"appearance.pace_marker_section_title" = "Pace Marker";
+"appearance.pace_marker_section_subtitle" = "Track usage pace relative to reset periods";
+"appearance.show_time_marker_title" = "Show Time Marker";
 "appearance.show_time_marker_description" = "Display a tick mark on progress bars showing how far through the time period you are";
-"appearance.pace_coloring_title" = "Pace-Aware Coloring";
-"appearance.pace_coloring_description" = "Color indicators based on projected usage pace. When off, colors reflect current usage only.";
+"appearance.show_pace_marker_title" = "Color Marker by Pace";
+"appearance.show_pace_marker_description" = "Color the time marker based on projected usage pace (green → purple). Applies to session and weekly metrics.";
+"appearance.pace_coloring_title" = "Pace-Aware Bar Colors";
+"appearance.pace_coloring_description" = "Color progress bars based on projected pace instead of current usage level. Projects whether you'll hit limits by the end of the period.";
 "appearance.multiprofile_locked_title" = "Appearance Settings Locked";
 "appearance.multiprofile_locked_description" = "These settings are disabled while Multi-Profile Display is active. Each profile uses its own appearance in multi-profile mode.";
 "appearance.disable_multiprofile" = "Turn Off Multi-Profile Display";

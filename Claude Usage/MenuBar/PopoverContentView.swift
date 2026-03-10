@@ -565,6 +565,13 @@ struct SmartUsageDashboard: View {
         return profileManager.activeProfile?.iconConfig.usePaceColoring ?? true
     }
 
+    private var showPaceMarker: Bool {
+        if profileManager.displayMode == .multi {
+            return profileManager.multiProfileConfig.showPaceMarker
+        }
+        return profileManager.activeProfile?.iconConfig.showPaceMarker ?? true
+    }
+
     private var timeDisplay: PopoverTimeDisplay {
         SharedDataStore.shared.loadPopoverTimeDisplay()
     }
@@ -580,6 +587,7 @@ struct SmartUsageDashboard: View {
                 resetTime: usage.sessionResetTime,
                 periodDuration: Constants.sessionWindow,
                 showTimeMarker: showTimeMarker,
+                showPaceMarker: showPaceMarker,
                 usePaceColoring: usePaceColoring,
                 timeDisplay: timeDisplay
             )
@@ -594,6 +602,7 @@ struct SmartUsageDashboard: View {
                 resetTime: usage.weeklyResetTime,
                 periodDuration: Constants.weeklyWindow,
                 showTimeMarker: showTimeMarker,
+                showPaceMarker: showPaceMarker,
                 usePaceColoring: usePaceColoring,
                 timeDisplay: timeDisplay
             )
@@ -673,6 +682,7 @@ struct UsageRow: View {
     let resetTime: Date?
     let periodDuration: TimeInterval?
     var showTimeMarker: Bool = true
+    var showPaceMarker: Bool = true
     var usePaceColoring: Bool = true
     var timeDisplay: PopoverTimeDisplay = .resetTime
 
@@ -694,6 +704,18 @@ struct UsageRow: View {
     private var timeMarkerFraction: CGFloat? {
         guard showTimeMarker, let f = rawElapsedFraction else { return nil }
         return CGFloat(showRemaining ? 1.0 - f : f)
+    }
+
+    private var paceStatus: PaceStatus? {
+        guard showPaceMarker, let elapsed = rawElapsedFraction else { return nil }
+        return PaceStatus.calculate(usedPercentage: usedPercentage, elapsedFraction: elapsed)
+    }
+
+    private var timeMarkerColor: Color {
+        if let pace = paceStatus {
+            return pace.swiftUIColor
+        }
+        return Color(nsColor: .labelColor)
     }
 
     private var statusLevel: UsageStatusLevel {
@@ -762,10 +784,10 @@ struct UsageRow: View {
                 }
                 .overlay(alignment: .leading) {
                     if let fraction = timeMarkerFraction {
-                        Rectangle()
-                            .fill(Color(nsColor: .labelColor))
-                            .frame(width: 1.5)
-                            .offset(x: round(geometry.size.width * fraction))
+                        RoundedRectangle(cornerRadius: 1)
+                            .fill(timeMarkerColor)
+                            .frame(width: 2.5, height: 8)
+                            .offset(x: round(geometry.size.width * fraction) - 0.75)
                     }
                 }
             }

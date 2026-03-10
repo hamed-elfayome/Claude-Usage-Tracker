@@ -27,6 +27,14 @@ class SharedDataStore {
         static let statuslineShowProgressBar = "statuslineShowProgressBar"
         static let statuslineShowResetTime = "statuslineShowResetTime"
         static let statuslineShowProfile = "statuslineShowProfile"
+        static let statuslineShowPaceMarker = "statuslineShowPaceMarker"
+        static let statuslinePaceMarkerStepColors = "statuslinePaceMarkerStepColors"
+        static let statuslineShowContextLabel = "statuslineShowContextLabel"
+        static let statuslineUse24HourTime = "statuslineUse24HourTime"
+        static let statuslineShowUsageLabel = "statuslineShowUsageLabel"
+        static let statuslineShowResetLabel = "statuslineShowResetLabel"
+        static let statuslineColorMode = "statuslineColorMode"
+        static let statuslineSingleColorHex = "statuslineSingleColorHex"
 
         // Setup State
         static let hasCompletedSetup = "hasCompletedSetup"
@@ -176,6 +184,89 @@ class SharedDataStore {
             return false  // Default to false (new feature)
         }
         return defaults.bool(forKey: Keys.statuslineShowProfile)
+    }
+
+    func saveStatuslineShowPaceMarker(_ show: Bool) {
+        defaults.set(show, forKey: Keys.statuslineShowPaceMarker)
+    }
+
+    func loadStatuslineShowPaceMarker() -> Bool {
+        if defaults.object(forKey: Keys.statuslineShowPaceMarker) == nil {
+            return true  // Default to true
+        }
+        return defaults.bool(forKey: Keys.statuslineShowPaceMarker)
+    }
+
+    func saveStatuslinePaceMarkerStepColors(_ useStepColors: Bool) {
+        defaults.set(useStepColors, forKey: Keys.statuslinePaceMarkerStepColors)
+    }
+
+    func loadStatuslinePaceMarkerStepColors() -> Bool {
+        if defaults.object(forKey: Keys.statuslinePaceMarkerStepColors) == nil {
+            return true
+        }
+        return defaults.bool(forKey: Keys.statuslinePaceMarkerStepColors)
+    }
+
+    func saveStatuslineShowContextLabel(_ show: Bool) {
+        defaults.set(show, forKey: Keys.statuslineShowContextLabel)
+    }
+
+    func loadStatuslineShowContextLabel() -> Bool {
+        if defaults.object(forKey: Keys.statuslineShowContextLabel) == nil {
+            return true
+        }
+        return defaults.bool(forKey: Keys.statuslineShowContextLabel)
+    }
+
+    func saveStatuslineUse24HourTime(_ use24Hour: Bool) {
+        defaults.set(use24Hour, forKey: Keys.statuslineUse24HourTime)
+    }
+
+    func loadStatuslineUse24HourTime() -> Bool {
+        return defaults.bool(forKey: Keys.statuslineUse24HourTime)
+    }
+
+    func saveStatuslineShowUsageLabel(_ show: Bool) {
+        defaults.set(show, forKey: Keys.statuslineShowUsageLabel)
+    }
+
+    func loadStatuslineShowUsageLabel() -> Bool {
+        if defaults.object(forKey: Keys.statuslineShowUsageLabel) == nil {
+            return true
+        }
+        return defaults.bool(forKey: Keys.statuslineShowUsageLabel)
+    }
+
+    func saveStatuslineShowResetLabel(_ show: Bool) {
+        defaults.set(show, forKey: Keys.statuslineShowResetLabel)
+    }
+
+    func loadStatuslineShowResetLabel() -> Bool {
+        if defaults.object(forKey: Keys.statuslineShowResetLabel) == nil {
+            return true
+        }
+        return defaults.bool(forKey: Keys.statuslineShowResetLabel)
+    }
+
+    func saveStatuslineColorMode(_ mode: StatuslineColorMode) {
+        defaults.set(mode.rawValue, forKey: Keys.statuslineColorMode)
+    }
+
+    func loadStatuslineColorMode() -> StatuslineColorMode {
+        guard let raw = defaults.string(forKey: Keys.statuslineColorMode),
+              let mode = StatuslineColorMode(rawValue: raw) else {
+            return .colored
+        }
+        return mode
+    }
+
+    func saveStatuslineSingleColorHex(_ hex: String) {
+        defaults.set(hex, forKey: Keys.statuslineSingleColorHex)
+    }
+
+    func loadStatuslineSingleColorHex() -> String {
+        return defaults.string(forKey: Keys.statuslineSingleColorHex) ?? "#00BFFF"
     }
 
     // MARK: - Setup State

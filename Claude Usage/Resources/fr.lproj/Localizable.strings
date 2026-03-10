@@ -340,6 +340,8 @@
 "claudecode.component_context_tokens" = "Afficher en tokens (au lieu de %)";
 "claudecode.component_usage" = "Statistiques d'utilisation";
 "claudecode.component_progressbar" = "Barre de progression";
+"claudecode.component_pace_marker" = "Marqueur de rythme";
+"claudecode.pace_marker_info" = "Affiche un repère coloré à la position du temps écoulé";
 "claudecode.component_resettime" = "Heure de réinitialisation";
 "claudecode.requirement_sessionkey" = "• Clé de session configurée dans Identifiants → onglet Claude.ai";
 "claudecode.requirement_restart" = "• Redémarrez Claude CLI après l'application des modifications";
@@ -409,10 +411,14 @@
 "appearance.show_labels_description" = "Afficher les étiquettes de préfixe (S:, W:, API:) pour chaque métrique";
 "appearance.show_remaining_title" = "Afficher le Pourcentage Restant";
 "appearance.show_remaining_description" = "Afficher la capacité restante au lieu du pourcentage utilisé (comme la batterie macOS)";
+"appearance.pace_marker_section_title" = "Marqueur de Rythme";
+"appearance.pace_marker_section_subtitle" = "Suivre le rythme d'utilisation par rapport aux périodes de réinitialisation";
 "appearance.show_time_marker_title" = "Afficher le marqueur de temps écoulé";
 "appearance.show_time_marker_description" = "Afficher un repère sur les barres de progression indiquant la progression dans la période";
-"appearance.pace_coloring_title" = "Coloration selon le rythme";
-"appearance.pace_coloring_description" = "Colorer les indicateurs selon le rythme d'utilisation projeté. Désactivé, les couleurs reflètent uniquement l'utilisation actuelle.";
+"appearance.show_pace_marker_title" = "Colorer le marqueur par rythme";
+"appearance.show_pace_marker_description" = "Colore le marqueur de temps selon le rythme d'utilisation projeté (vert → violet). S'applique aux métriques de session et hebdomadaires.";
+"appearance.pace_coloring_title" = "Couleurs de barre par rythme";
+"appearance.pace_coloring_description" = "Colorer les barres de progression selon le rythme projeté au lieu du niveau d'utilisation actuel. Projette si vous atteindrez les limites d'ici la fin de la période.";
 "appearance.multiprofile_locked_title" = "Paramètres d'Apparence Verrouillés";
 "appearance.multiprofile_locked_description" = "Ces paramètres sont désactivés pendant que l'Affichage Multi-Profil est actif. Chaque profil utilise sa propre apparence en mode multi-profil.";
 "appearance.disable_multiprofile" = "Désactiver l'Affichage Multi-Profil";
