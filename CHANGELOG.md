@@ -5,6 +5,67 @@ All notable changes to Claude Usage Tracker will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.3] - 2026-03-10
+
+### 6-Tier Pace System
+
+- **Pace Status Engine**: New `PaceStatus` enum with 6 urgency tiers — Comfortable, On Track, Warming, Pressing, Critical, Runaway — projecting end-of-period usage from current consumption rate
+- **Pace Marker on Menu Bar**: Bold `┃` marker drawn at elapsed-time position on progress bars, colored by 6-tier pace (green → teal → yellow → orange → red → purple)
+- **Pace Marker on Statusline**: ANSI-colored `┃` inserted into the ASCII progress bar at the correct elapsed position in the terminal
+- **Pace Marker on Popover**: Time marker upgraded from 1.5px line to 2.5px rounded rectangle, colored by pace status
+- **Independent Toggles**: "Show Pace Marker" and "Pace tier colors" are independently controllable in both menu bar and statusline settings
+
+### 3 Color Modes (Menu Bar + Statusline)
+
+- **Multi-Color**: Threshold-based colors for usage indicators (default behavior)
+- **Greyscale**: No colors — adapts to menu bar appearance / terminal theme
+- **Single Color**: User picks a custom hex color applied to all elements
+- **Color Mode UI**: New "Statusline Colors" settings card with 3 selectable mode buttons and ColorPicker for Single Color
+- **Backwards Compatible**: Old `monochromeMode: true/false` automatically migrated to new `colorMode` system
+
+### Label & Formatting Toggles
+
+- **Show/Hide "Ctx:" Label**: Toggle the `Ctx:` prefix on context display
+- **Show/Hide "Usage:" Label**: Toggle the `Usage:` prefix on usage display
+- **Show/Hide "Reset:" Label**: Toggle the `Reset:` prefix on reset time
+- **24-Hour Time Format**: Override system time format for reset time display (both statusline and preview)
+
+### Terminal-Matching Preview
+
+- **ANSI Color Preview**: ClaudeCodeView preview now renders with ANSI-equivalent terminal colors — blue for directory, green for branch, yellow for model, magenta for profile, cyan for context, 10-level gradient for usage
+- **Live Pace Colors**: Pace marker in preview colored by real pace tier when step colors are enabled
+- **Real Data**: Preview uses actual usage data when available instead of static demo values
+
+### New Utilities
+
+- **Color+Extensions.swift**: `Color(hex:)` init, `toHex()` method, `hexString` property, and `NSColor(hex:)` for hex color conversion
+- **Date.roundedToNearestMinute()**: Strips seconds from reset time to prevent display flickering
+
+### Bug Fixes
+
+- **CPU Spin-Loop Fix**: Fixed 104% CPU caused by per-button `effectiveAppearance` KVO creating infinite redraw loops — replaced with single `NSApp` observer + image data cache deduplication
+- **Reset Time Rounding**: Reset time now rounds to nearest minute to prevent "pinballing" between e.g. 6:59 and 7:00
+- **Pace Marker Restoration**: Pace marker preserved correctly after session resets
+
+### Refactoring
+
+- **MenuBarManager**: Removed empty `observeAppearanceChanges()` no-op and unused `appearanceObserver`; simplified `statusBarAppearanceDidChange()` by removing debounce timer (safe due to image cache)
+- **StatusBarUIManager**: `image.isTemplate` set before assigning to `button.image` to avoid extra KVO; template mode disabled when pace marker is active
+- **WindowCoordinator**: Removed `sizingOptions` workaround; uses `Constants.WindowSizes.popoverSize`
+- **PopoverContentView**: Removed `.fixedSize(horizontal: false, vertical: true)` that caused layout issues
+- **MenuBarIconConfiguration**: Replaced `monochromeMode: Bool` with `colorMode: MenuBarColorMode` + `singleColorHex`; custom `encode(to:)` no longer writes legacy key
+
+### Localization
+
+- Updated all 9 localization files with new keys for pace marker, color mode, and label toggles
+- New keys: `claudecode.component_pace_marker`, `claudecode.pace_marker_info`, `appearance.show_pace_marker_title`, `appearance.show_pace_marker_description`, `appearance.pace_marker_section_title`
+
+### Contributors
+
+- **reowens** (Robert Owens) — 6-tier pace system, color mode system (Multi-Color/Greyscale/Single Color), pace markers for menu bar and statusline, terminal-matching preview with ANSI colors, label toggles, 24-hour time format, CPU spin-loop fix in menu bar rendering, pace marker restoration after session reset
+
+---
+
 ## [3.0.2] - 2026-03-10
 
 ### API Cost Tracking & Usage Monitoring
@@ -1605,6 +1666,7 @@ This major release represents a significant milestone for Claude Usage Tracker, 
 - Detailed usage dashboard with countdown timers
 - Support for macOS 14.0+ (Sonoma and later)
 
+[3.0.3]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v3.0.2...v3.0.3
 [3.0.2]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v3.0.1...v3.0.2
 [3.0.1]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v3.0.0...v3.0.1
 [3.0.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v2.3.0...v3.0.0
