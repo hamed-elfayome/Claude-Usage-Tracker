@@ -73,9 +73,6 @@ class MenuBarManager: NSObject, ObservableObject {
     // Observer for refresh interval changes
     private var refreshIntervalObserver: NSKeyValueObservation?
 
-    // Observer for appearance changes
-    private var appearanceObserver: NSKeyValueObservation?
-
     // Observer for icon style changes
     private var iconStyleObserver: NSObjectProtocol?
 
@@ -199,9 +196,6 @@ class MenuBarManager: NSObject, ObservableObject {
         // Start auto-start session service (5-minute cycle for all profiles)
         autoStartService.start()
 
-        // Observe appearance changes
-        observeAppearanceChanges()
-
         // Observe icon configuration changes
         observeIconConfigChanges()
 
@@ -247,8 +241,6 @@ class MenuBarManager: NSObject, ObservableObject {
         cancellables.removeAll()  // Clean up Combine subscriptions
         refreshIntervalObserver?.invalidate()
         refreshIntervalObserver = nil
-        appearanceObserver?.invalidate()
-        appearanceObserver = nil
         if let iconStyleObserver = iconStyleObserver {
             NotificationCenter.default.removeObserver(iconStyleObserver)
             self.iconStyleObserver = nil
@@ -679,14 +671,6 @@ class MenuBarManager: NSObject, ObservableObject {
                 }
             }
         }
-    }
-
-    private func observeAppearanceChanges() {
-        // Appearance observation is handled by StatusBarUIManager which observes
-        // each button's effectiveAppearance (important for per-display wallpaper)
-        // and NSApp.effectiveAppearance as fallback. Changes are routed through
-        // the StatusBarUIManagerDelegate.statusBarAppearanceDidChange() callback.
-        // No additional observer needed here to avoid duplicate redraws.
     }
 
     private func observeIconStyleChanges() {
@@ -1682,15 +1666,13 @@ extension MenuBarManager: NSPopoverDelegate {
 // MARK: - StatusBarUIManagerDelegate
 extension MenuBarManager: StatusBarUIManagerDelegate {
     func statusBarAppearanceDidChange() {
-        // Debounce appearance changes — multiple displays and wallpaper-based appearance
-        // can fire many rapid changes. Coalesce into a single redraw after 0.15s of quiet.
-        updateDebounceTimer?.invalidate()
-        updateDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: false) { [weak self] _ in
-            guard let self = self else { return }
-            self.cachedIsDarkMode = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-            self.cachedImageKey = ""
-            self.updateAllStatusBarIcons()
-        }
+        // Safe from infinite loops: StatusBarUIManager's observer deduplicates by
+        // appearance name, and setButtonImage() only assigns button.image when the
+        // rendered TIFF data actually changes — so even if setting button.image
+        // triggers effectiveAppearance KVO, the cycle stops immediately.
+        cachedIsDarkMode = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        cachedImageKey = ""
+        updateAllStatusBarIcons()
     }
 }
 
