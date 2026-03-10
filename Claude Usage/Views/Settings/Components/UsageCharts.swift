@@ -321,20 +321,20 @@ struct BillingCycleChart: View {
 
                     if chartStyle == .bar {
                         BarMark(
-                            x: .value("Date", snapshot.shortDateString),
+                            x: .value("Date", snapshot.timestamp, unit: .hour),
                             y: .value("Spend", spendAmount)
                         )
                         .foregroundStyle(Color.accentColor)
                     } else {
                         LineMark(
-                            x: .value("Date", snapshot.shortDateString),
+                            x: .value("Date", snapshot.timestamp, unit: .hour),
                             y: .value("Spend", spendAmount)
                         )
                         .foregroundStyle(Color.accentColor)
                         .interpolationMethod(.catmullRom)
 
                         AreaMark(
-                            x: .value("Date", snapshot.shortDateString),
+                            x: .value("Date", snapshot.timestamp, unit: .hour),
                             y: .value("Spend", spendAmount)
                         )
                         .foregroundStyle(
@@ -347,7 +347,7 @@ struct BillingCycleChart: View {
                         .interpolationMethod(.catmullRom)
 
                         PointMark(
-                            x: .value("Date", snapshot.shortDateString),
+                            x: .value("Date", snapshot.timestamp, unit: .hour),
                             y: .value("Spend", spendAmount)
                         )
                         .foregroundStyle(Color.accentColor)
@@ -369,9 +369,9 @@ struct BillingCycleChart: View {
                     }
                 }
                 .chartXAxis {
-                    AxisMarks(values: .automatic) { _ in
-                        AxisValueLabel()
-                            .font(.system(size: 10))
+                    AxisMarks(values: .automatic) { value in
+                        AxisValueLabel(format: .dateTime.month(.twoDigits).day().hour(.defaultDigits(amPM: .omitted)))
+                            .font(.system(size: 9))
                     }
                 }
                 .chartPlotStyle { plotArea in
