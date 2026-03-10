@@ -72,7 +72,7 @@ final class DateExtensionsTests: XCTestCase {
 
     func testTimeRemainingOneDay() {
         let now = Date()
-        let future = now.addingTimeInterval(25 * 3600) // 25 hours = 1 day
+        let future = now.addingTimeInterval(24 * 3600) // 24 hours = 1 day exactly
 
         let result = future.timeRemainingString(from: now)
         XCTAssertEqual(result, "1 day")
