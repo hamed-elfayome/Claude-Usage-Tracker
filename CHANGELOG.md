@@ -5,6 +5,62 @@ All notable changes to Claude Usage Tracker will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.2] - 2026-03-10
+
+### API Cost Tracking & Usage Monitoring
+
+- **API Cost Dashboard**: Monthly API cost tracking with daily bar chart, per-API-key breakdown, and per-model cost details — fetched from Console `/usage_cost` endpoint
+- **Rate Limit Header Usage**: CLI OAuth usage now fetched via Messages API rate limit headers (`anthropic-ratelimit-unified-*`) instead of the disabled `/api/oauth/usage` endpoint — uses a minimal Haiku request for near-zero cost
+- **Expired Session Window Handling**: New `effectiveSessionPercentage` returns 0% when the 5-hour session window has expired, preventing stale high percentages from persisting in the UI, menu bar icon, notifications, and auto-switch logic
+
+### Browser-Based Authentication
+
+- **WKWebView Sign-In**: Embedded browser authentication for both Claude.ai and Anthropic Console — auto-extracts `sessionKey` cookie after login, including Google SSO support
+- **Session Key Expiry Tracking**: Cookie expiry date stored per profile with visual status indicators (expired/expiring soon/time remaining) in API Console settings
+- **Manual Key Fallback**: Manual session key entry preserved under an "Advanced: Manual Session Key" disclosure group in all credential views and the setup wizard
+
+### Popover UI Overhaul
+
+- **Auto-Sizing Popover**: Popover height now dynamically matches content via `intrinsicContentSize` instead of a fixed 600px frame — grows/shrinks based on available data
+- **Header Redesign**: Removed logo image; added settings gear icon button alongside refresh in the header with hover animations
+- **Footer Removed**: Quit button removed from popover footer — quit is now in the settings bottom bar
+- **API Cost Card**: New expandable card showing total monthly cost, daily cost bar chart, and per-key model breakdown with tap-to-expand source rows
+
+### Time Display & Formatting
+
+- **3-Way Time Display**: Replaced binary "show remaining time" toggle with a segmented picker — choose Reset Time, Remaining Time, or Both (e.g., "Resets in 3h 45m (Today 3:59pm)")
+- **Time Format Preference**: New setting for 12-hour, 24-hour, or system-default time format — applied across all popover reset times, chart labels, and usage history timestamps
+- **Improved Duration Strings**: Multi-day durations now show "Xd Yh" format instead of just "X days"
+
+### Settings & Navigation
+
+- **App Settings Section**: New settings page for app-wide preferences (launch at login) with `gearshape.2.fill` icon
+- **Bottom Bar Labels**: Settings bottom bar items now show both icon and text label; added Quit button with red hover
+- **Updates Removed from Bottom Bar**: Updates section moved out of the bottom bar for cleaner layout
+
+### Visual & Color Improvements
+
+- **Adaptive Green**: All hardcoded `Color.green` replaced with `Color.adaptiveGreen` — dark forest green in light mode, bright green in dark mode for better contrast on translucent surfaces
+- **Chart Axis Fix**: Billing cycle chart x-axis now uses proper `Date` values instead of string labels, fixing irregular spacing
+
+### Notifications
+
+- **Session Key Expiry Alert**: Scheduled notification 24 hours before API session key expires with automatic immediate send if already within the window
+- **Notification Dedup Fix**: Threshold-based notification identifiers now use the configured threshold level (not current percentage) to prevent duplicate alerts when usage fluctuates
+
+### Localization
+
+- **9 Languages Updated**: All localization files updated with ~17 new keys per language for time display settings, browser authentication, app settings section, and combined reset time format
+- **New Keys**: `menubar.resets_both`, `popover.time_display*`, `popover.time_format*`, `personal.signin_*`, `section.app_settings_*`
+
+### Technical
+
+- **Console API Deduplication**: All Console GET requests now go through a shared `consoleRequest()` helper with automatic network logging
+- **API Usage Always Fetched**: Removed `loadAPITrackingEnabled()` gate — API usage is fetched whenever credentials are available
+- **Profile Data Isolation**: Non-active profile popover no longer leaks the active profile's API console data
+
+---
+
 ## [3.0.1] - 2026-03-08
 
 ### Added
@@ -1549,6 +1605,7 @@ This major release represents a significant milestone for Claude Usage Tracker, 
 - Detailed usage dashboard with countdown timers
 - Support for macOS 14.0+ (Sonoma and later)
 
+[3.0.2]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v3.0.1...v3.0.2
 [3.0.1]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v3.0.0...v3.0.1
 [3.0.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v2.3.0...v3.0.0
 [2.3.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v2.2.3...v2.3.0

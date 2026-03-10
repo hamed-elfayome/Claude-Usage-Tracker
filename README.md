@@ -9,12 +9,12 @@
   ![Swift](https://img.shields.io/badge/Swift-5.0+-orange?style=flat-square&logo=swift)
   ![SwiftUI](https://img.shields.io/badge/SwiftUI-5.0+-blue?style=flat-square&logo=swift)
   ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
-  ![Version](https://img.shields.io/badge/version-3.0.1-blue?style=flat-square)
+  ![Version](https://img.shields.io/badge/version-3.0.2-blue?style=flat-square)
   ![Languages](https://img.shields.io/badge/languages-9-purple?style=flat-square)
 
   <sub>🇬🇧 English • 🇪🇸 Español • 🇫🇷 Français • 🇩🇪 Deutsch • 🇮🇹 Italiano • 🇵🇹 Português • 🇯🇵 日本語 • 🇰🇷 한국어 • 🇨🇳 简体中文</sub>
 
-  ### [Download Latest Release (v3.0.1)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
+  ### [Download Latest Release (v3.0.2)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
 
   <sub>macOS 14.0+ (Sonoma) | ~5 MB | Native Swift/SwiftUI | Officially Signed</sub>
 
@@ -32,7 +32,7 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 - **Multi-Profile Support**: Manage unlimited Claude accounts with isolated credentials and settings
 - **Multi-Profile Display**: Monitor all profiles simultaneously in the menu bar
 - **Claude Code Integration**: Sync CLI accounts and auto-switch credentials when changing profiles
-- **Real-Time Monitoring**: Track session, weekly, and API console usage per profile
+- **Real-Time Monitoring**: Track session, weekly, API console usage, and API costs per profile
 - **Usage History**: Interactive charts tracking session, weekly, and billing data over time
 - **Global Shortcuts**: System-wide keyboard shortcuts (no Accessibility permission)
 - **Headless Mode**: Works on headless Macs via Remote Desktop
@@ -57,6 +57,8 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 ---
 
 ## What's New
+
+- **v3.0.2 (2026-03-10)**: API cost tracking with daily chart, browser-based authentication (WKWebView sign-in), rate limit header usage for CLI OAuth, auto-sizing popover, 3-way time display picker, adaptive green color, session key expiry tracking & notifications
 
 - **v3.0.1 (2026-03-08)**: Popover settings tab (remaining time toggle), multi-display CPU fix
 
@@ -92,6 +94,7 @@ Before installing Claude Usage Tracker, ensure you have:
 
 **Authentication** (choose one method):
 - **Easiest**: [Claude Code](https://claude.com/claude-code) installed and logged in - App automatically uses CLI credentials (v2.2.2+)
+- **Browser Sign-In**: Sign in via the built-in browser — session key extracted automatically (v3.0.2+)
 - **Manual**: Web browser access to extract session key from claude.ai (Chrome, Safari, Firefox, etc.)
 
 **Note**: For terminal statusline integration, you'll still need to manually configure a session key even if using Claude Code OAuth
@@ -169,9 +172,20 @@ open "Claude Usage.xcodeproj"
    - Click the menu bar icon
    - You should see your usage statistics immediately
 
-#### Option B: Manual Setup with Session Key
+#### Option B: Browser Sign-In (v3.0.2+)
 
-If you prefer manual configuration or don't use Claude Code:
+If you don't use Claude Code, sign in directly through the app:
+
+1. **Click the menu bar icon** and select "Settings"
+2. **Navigate to "Personal Usage"** tab
+3. **Click "Sign in to Claude.ai"** — an embedded browser opens
+4. **Log in** with your Claude.ai credentials (email, Google SSO, etc.)
+5. **Session key is extracted automatically** — the app validates and saves it
+6. **Select your organization** from the list and confirm
+
+#### Option C: Manual Setup with Session Key
+
+If you prefer manual configuration:
 
 **Step 1: Extract Your Session Key**
 
@@ -194,11 +208,10 @@ If you prefer manual configuration or don't use Claude Code:
 
 1. **Click the menu bar icon** and select "Settings"
 2. **Navigate to "Personal Usage"** tab
-3. **3-Step Wizard** guides you through setup:
-   - **Step 1**: Paste your session key and click "Test Connection"
-   - **Step 2**: Select your Claude organization from the list
-   - **Step 3**: Review and click "Save Configuration"
-4. **Wait for confirmation** (success message appears)
+3. **Expand "Advanced: Manual Session Key"**
+4. **Paste your session key** and click "Test Connection"
+5. **Select your organization** from the list
+6. **Review and click "Save Configuration"**
 
 **Step 3: Verify It's Working**
 
@@ -314,10 +327,11 @@ Access profile switcher in multiple places:
 
 ### Usage Tracking & Monitoring
 - Real-time monitoring of 5-hour session, weekly limits, and Opus-specific usage
-- API console usage tracking for comprehensive visibility
+- API console usage tracking with monthly cost dashboard and daily cost chart
+- Per-API-key cost breakdown with model-level detail
 - Extra usage cost tracking for Claude Extra subscribers
-- Color-coded indicators (green/orange/red) based on consumption levels
-- Smart countdown timers for session and weekly resets
+- Color-coded indicators (adaptive green/orange/red) based on consumption levels
+- Smart countdown timers for session and weekly resets with 3-way display (time, remaining, or both)
 
 ### Menu Bar & Interface
 - **5 Customizable Icon Styles**: Battery, Progress Bar, Percentage Only, Icon with Bar, Compact
@@ -373,7 +387,8 @@ Click the menu bar icon to access:
 - **Session Usage**: 5-hour rolling window percentage and reset time
 - **Weekly Usage**: Overall weekly consumption across all models
 - **Opus Usage**: Weekly Opus-specific usage (if applicable)
-- **Quick Actions**: Refresh, Settings, and Quit
+- **API Cost**: Monthly cost with daily chart and per-key breakdown (if Console configured)
+- **Quick Actions**: Refresh and Settings
 
 ### Settings
 
@@ -388,19 +403,22 @@ Access comprehensive settings through the menu bar popover → Settings button. 
 
 #### Claude.AI (Credentials)
 Configure your Claude.ai personal account:
+- **Browser Sign-In**: Sign in via embedded browser to extract session key automatically (v3.0.2+)
 - **3-Step Setup Wizard**: Guided session key configuration
   - Non-destructive connection testing
   - Visual organization selector
   - Configuration summary with preview
+- **Manual Key Entry**: Advanced option under disclosure group for direct session key input
 - **Smart Updates**: Organization preserved when re-entering same key
-- **Quick Access**: One-click link to claude.ai
 
 #### API Console (Credentials)
 Configure API console usage tracking:
-- **API Session Key**: Set your API authentication key
+- **Browser Sign-In**: Sign in via embedded browser for Anthropic Console (v3.0.2+)
+- **API Session Key**: Set your API authentication key (manual fallback)
 - **Organization ID**: Configure organization for API tracking
 - **Dual Tracking**: Monitor both web and API usage simultaneously
-- **API Billing**: View API console usage costs
+- **API Billing**: View API console spend, prepaid credits, and monthly cost breakdown
+- **Session Key Expiry**: Visual status indicator showing when your session key expires
 
 #### CLI Account (Credentials)
 Sync Claude Code CLI credentials:
@@ -710,7 +728,10 @@ If icons briefly flash to zero during refresh:
 
 ### Session Key Expired
 
-Session keys may expire after a period of time. Extract a new key from claude.ai and update it in Settings → Personal Usage using the wizard.
+Session keys may expire after a period of time. You'll receive a notification 24 hours before expiry (v3.0.2+). To refresh:
+1. Go to Settings → Personal Usage (or API Console)
+2. Click "Sign in to Claude.ai" (or "Sign in to Anthropic Console") to re-authenticate via the built-in browser
+3. Or expand "Advanced: Manual Session Key" to paste a new key manually
 
 ### Updates Not Working
 
