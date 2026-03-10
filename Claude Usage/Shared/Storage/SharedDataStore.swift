@@ -203,7 +203,7 @@ class SharedDataStore {
 
     func loadStatuslinePaceMarkerStepColors() -> Bool {
         if defaults.object(forKey: Keys.statuslinePaceMarkerStepColors) == nil {
-            return true
+            return false
         }
         return defaults.bool(forKey: Keys.statuslinePaceMarkerStepColors)
     }

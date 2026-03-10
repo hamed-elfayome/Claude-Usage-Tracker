@@ -257,10 +257,10 @@ struct ClaudeCodeView: View {
                             }
                         }
                     }
-                }
 
-                // Action buttons + status
-                SettingsSectionCard(title: "") {
+                    Divider()
+
+                    // Action buttons + status
                     VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
                         HStack(spacing: DesignTokens.Spacing.small) {
                             Button(action: applyConfiguration) {
