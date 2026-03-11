@@ -199,7 +199,8 @@ struct PopoverContentView: View {
 
         }
         .padding(.bottom, 8)
-        .frame(width: 280)
+        .frame(width: 260)
+        .fixedSize(horizontal: false, vertical: true)
         .background(VisualEffectBackground())
     }
 }
@@ -550,6 +551,15 @@ struct SmartUsageDashboard: View {
         profileManager.activeProfile?.iconConfig.showRemainingPercentage ?? false
     }
 
+    // Get color mode settings from active profile
+    private var colorMode: MenuBarColorMode {
+        profileManager.activeProfile?.iconConfig.colorMode ?? .multiColor
+    }
+
+    private var singleColorHex: String {
+        profileManager.activeProfile?.iconConfig.singleColorHex ?? "#00BFFF"
+    }
+
     private var showTimeMarker: Bool {
         if profileManager.displayMode == .multi {
             return profileManager.multiProfileConfig.showTimeMarker
@@ -571,6 +581,11 @@ struct SmartUsageDashboard: View {
         return profileManager.activeProfile?.iconConfig.showPaceMarker ?? true
     }
 
+
+    private var isAPITrackingEnabled: Bool {
+        DataStore.shared.loadAPITrackingEnabled()
+    }
+
     private var timeDisplay: PopoverTimeDisplay {
         SharedDataStore.shared.loadPopoverTimeDisplay()
     }
@@ -588,6 +603,8 @@ struct SmartUsageDashboard: View {
                 showTimeMarker: showTimeMarker,
                 showPaceMarker: showPaceMarker,
                 usePaceColoring: usePaceColoring,
+                colorMode: colorMode,
+                singleColorHex: singleColorHex,
                 timeDisplay: timeDisplay
             )
 
@@ -603,6 +620,8 @@ struct SmartUsageDashboard: View {
                 showTimeMarker: showTimeMarker,
                 showPaceMarker: showPaceMarker,
                 usePaceColoring: usePaceColoring,
+                colorMode: colorMode,
+                singleColorHex: singleColorHex,
                 timeDisplay: timeDisplay
             )
 
@@ -614,7 +633,9 @@ struct SmartUsageDashboard: View {
                     usedPercentage: usage.opusWeeklyPercentage,
                     showRemaining: showRemainingPercentage,
                     resetTime: nil,
-                    periodDuration: nil
+                    periodDuration: nil,
+                    colorMode: colorMode,
+                    singleColorHex: singleColorHex
                 )
             }
 
@@ -626,6 +647,8 @@ struct SmartUsageDashboard: View {
                     showRemaining: showRemainingPercentage,
                     resetTime: usage.sonnetWeeklyResetTime,
                     periodDuration: nil,
+                    colorMode: colorMode,
+                    singleColorHex: singleColorHex,
                     timeDisplay: timeDisplay
                 )
             }
@@ -639,7 +662,9 @@ struct SmartUsageDashboard: View {
                     usedPercentage: usedPercentage,
                     showRemaining: showRemainingPercentage,
                     resetTime: nil,
-                    periodDuration: nil
+                    periodDuration: nil,
+                    colorMode: colorMode,
+                    singleColorHex: singleColorHex
                 )
 
                 // Overage credit grant balance
@@ -656,9 +681,18 @@ struct SmartUsageDashboard: View {
                 }
             }
 
-            // API Usage
-            if let apiUsage = apiUsage {
-                APIUsageCard(apiUsage: apiUsage, showRemaining: showRemainingPercentage, timeDisplay: timeDisplay)
+            // API Usage (only if tracking is enabled AND profile has credentials)
+            if isAPITrackingEnabled,
+               let apiUsage = apiUsage,
+               let profile = profileManager.activeProfile,
+               profile.hasAPIConsole {
+                APIUsageCard(
+                    apiUsage: apiUsage,
+                    showRemaining: showRemainingPercentage,
+                    colorMode: colorMode,
+                    singleColorHex: singleColorHex,
+                    timeDisplay: timeDisplay
+                )
 
                 // API Cost Card (only if cost data is available)
                 if let costCents = apiUsage.apiTokenCostCents, costCents > 0 {
@@ -683,6 +717,8 @@ struct UsageRow: View {
     var showTimeMarker: Bool = true
     var showPaceMarker: Bool = true
     var usePaceColoring: Bool = true
+    var colorMode: MenuBarColorMode = .multiColor
+    var singleColorHex: String = "#00BFFF"
     var timeDisplay: PopoverTimeDisplay = .resetTime
 
     private var displayPercentage: Double {
@@ -726,10 +762,17 @@ struct UsageRow: View {
     }
 
     private var statusColor: Color {
-        switch statusLevel {
-        case .safe: return .adaptiveGreen
-        case .moderate: return .orange
-        case .critical: return .red
+        switch colorMode {
+        case .multiColor:
+            switch statusLevel {
+            case .safe: return .adaptiveGreen
+            case .moderate: return .orange
+            case .critical: return .red
+            }
+        case .monochrome:
+            return .primary
+        case .singleColor:
+            return Color(hex: singleColorHex) ?? .blue
         }
     }
 
@@ -763,7 +806,7 @@ struct UsageRow: View {
                     }
                 }
 
-                Spacer()
+                Spacer(minLength: 4)
 
                 Text("\(Int(displayPercentage))%")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -1226,6 +1269,8 @@ struct APICostSourceRow: View {
 struct APIUsageCard: View {
     let apiUsage: APIUsage
     let showRemaining: Bool
+    var colorMode: MenuBarColorMode = .multiColor
+    var singleColorHex: String = "#00BFFF"
     var timeDisplay: PopoverTimeDisplay = .resetTime
 
     private var displayPercentage: Double {
@@ -1243,10 +1288,17 @@ struct APIUsageCard: View {
     }
 
     private var usageColor: Color {
-        switch statusLevel {
-        case .safe: return .adaptiveGreen
-        case .moderate: return .orange
-        case .critical: return .red
+        switch colorMode {
+        case .multiColor:
+            switch statusLevel {
+            case .safe: return .adaptiveGreen
+            case .moderate: return .orange
+            case .critical: return .red
+            }
+        case .monochrome:
+            return .primary
+        case .singleColor:
+            return Color(hex: singleColorHex) ?? .blue
         }
     }
 

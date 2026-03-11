@@ -13,6 +13,10 @@ final class StatusBarUIManager {
     // Dictionary to hold multiple status items keyed by metric type (single profile mode)
     private var statusItems: [MenuBarMetricType: NSStatusItem] = [:]
 
+    // Image cache: maps button identity to last-set image TIFF data to avoid redundant sets
+    // Setting button.image triggers effectiveAppearance KVO which can cause infinite loops
+    private var lastImageData: [ObjectIdentifier: Data] = [:]
+
     // Dictionary to hold status items keyed by profile ID (multi-profile mode)
     private var multiProfileStatusItems: [UUID: NSStatusItem] = [:]
 
@@ -21,9 +25,6 @@ final class StatusBarUIManager {
 
     private var appearanceObservers: [NSKeyValueObservation] = []
     private var appearanceDebounceTimer: Timer?
-
-    // Image cache to avoid redundant button.image assignments (which trigger KVO)
-    private var lastImageData: [ObjectIdentifier: Data] = [:]
 
     // Icon renderer for creating menu bar images
     private let renderer = MenuBarIconRenderer()
@@ -364,7 +365,7 @@ final class StatusBarUIManager {
             }
 
             image.isTemplate = useMonochrome && !config.showPaceMarker
-            button.image = image
+            setButtonImage(button, image: image)
         }
     }
 
@@ -458,7 +459,7 @@ final class StatusBarUIManager {
             )
 
             image.isTemplate = config.colorMode == .monochrome && !config.showPaceMarker
-            button.image = image
+            setButtonImage(button, image: image)
         }
     }
 
@@ -497,7 +498,7 @@ final class StatusBarUIManager {
         )
 
         image.isTemplate = config.colorMode == .monochrome && !config.showPaceMarker
-        button.image = image
+        setButtonImage(button, image: image)
     }
 
     /// Get button for a specific metric (used for popover positioning)
@@ -529,29 +530,39 @@ final class StatusBarUIManager {
 
     // MARK: - Appearance Observation
 
+    /// Coalescing work item to batch rapid appearance changes
+    private var appearanceCoalesceWork: DispatchWorkItem?
     private var lastObservedAppearanceName: NSAppearance.Name?
 
     private func observeAppearanceChanges() {
+        // Invalidate previous observers
         appearanceObservers.forEach { $0.invalidate() }
         appearanceObservers.removeAll()
 
         // IMPORTANT: Do NOT observe per-button effectiveAppearance.
         // Setting button.image triggers effectiveAppearance KVO on the button,
-        // which causes an infinite redraw loop.
+        // which causes an infinite redraw loop (button.image → KVO → redraw → button.image → ...).
+        // Only observe app-level appearance with deduplication and coalescing.
+
         let appObserver = NSApp.observe(\.effectiveAppearance, options: [.new]) { [weak self] _, change in
             guard let self = self else { return }
             let newName = change.newValue?.name
             guard newName != self.lastObservedAppearanceName else { return }
             self.lastObservedAppearanceName = newName
-            // Clear image cache so next update re-renders with new appearance
-            self.lastImageData.removeAll()
-            self.delegate?.statusBarAppearanceDidChange()
+
+            self.appearanceCoalesceWork?.cancel()
+            let work = DispatchWorkItem { [weak self] in
+                self?.lastImageData.removeAll()
+                self?.delegate?.statusBarAppearanceDidChange()
+            }
+            self.appearanceCoalesceWork = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: work)
         }
         appearanceObservers.append(appObserver)
     }
 
-    /// Only sets button.image if the image data actually changed.
-    /// This prevents triggering effectiveAppearance KVO when the image is identical.
+    /// Sets button image only if the image data actually changed.
+    /// This prevents the infinite loop: button.image triggers KVO which triggers redraw.
     private func setButtonImage(_ button: NSStatusBarButton, image: NSImage) {
         let buttonId = ObjectIdentifier(button)
         guard let newData = image.tiffRepresentation else {
@@ -561,15 +572,6 @@ final class StatusBarUIManager {
         if lastImageData[buttonId] == newData { return }
         lastImageData[buttonId] = newData
         button.image = image
-    }
-
-    /// Debounces appearance change notifications so multiple displays/buttons
-    /// coalesce into a single delegate callback
-    private func scheduleAppearanceUpdate() {
-        appearanceDebounceTimer?.invalidate()
-        appearanceDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: false) { [weak self] _ in
-            self?.delegate?.statusBarAppearanceDidChange()
-        }
     }
 }
 

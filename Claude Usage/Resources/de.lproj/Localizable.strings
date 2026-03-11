@@ -105,7 +105,7 @@
 "appearance.menu_bar_icons.subtitle" = "Passen Sie an, welche Metriken in Ihrer Menüleiste erscheinen";
 "appearance.show_icon_names" = "Symbolnamen anzeigen";
 "appearance.show_icon_names.description" = "Metrik-Labels (S:, W:, API:) neben Symbolen anzeigen";
-"appearance.monochrome_mode" = "Monochrom (Adaptiv)";
+"appearance.monochrome_mode" = "Graustufen (Adaptiv)";
 "appearance.monochrome_mode.description" = "Symbole passen sich automatisch an Hell-/Dunkelmodus an";
 "appearance.metric_configuration" = "Metrik-Konfiguration";
 "appearance.drag_to_reorder" = "Ziehen zum Neuordnen von Symbolen. Deaktivierte Metriken werden aus der Menüleiste ausgeblendet.";
@@ -150,7 +150,7 @@
 "setup.enable_auto_start" = "Auto-Start der Sitzung aktivieren";
 "setup.menubar_appearance" = "Menüleisten-Erscheinungsbild";
 "setup.choose_icon_style" = "Wählen Sie Ihren bevorzugten Symbolstil";
-"setup.monochrome_adaptive" = "Monochrom (Adaptiv)";
+"setup.monochrome_adaptive" = "Graustufen (Adaptiv)";
 "setup.validation.success" = "Erfolgreich mit Organisation verbunden";
 
 /* ==================== */
@@ -421,20 +421,20 @@
 "appearance.subtitle" = "Passen Sie Ihre Menüleisten-Symbole und Metriken an";
 "appearance.global_settings" = "Globale Einstellungen";
 "appearance.menu_bar_metrics" = "Menüleisten-Metriken";
-"appearance.monochrome_title" = "Monochrom";
-"appearance.monochrome_description" = "Adaptive Farbe anstelle von Statusfarben verwenden (grün/orange/rot)";
+"appearance.monochrome_title" = "Graustufen";
+"appearance.monochrome_description" = "Graustufen anstelle von Statusfarben verwenden (grün/orange/rot)";
 "appearance.show_labels_title" = "Symbol-Labels Anzeigen";
 "appearance.show_labels_description" = "Präfix-Labels (S:, W:, API:) für jede Metrik anzeigen";
 "appearance.show_remaining_title" = "Verbleibender Prozentsatz anzeigen";
 "appearance.show_remaining_description" = "Verbleibende Kapazität statt genutzter Prozentsatz anzeigen (wie macOS-Batterie)";
 "appearance.pace_marker_section_title" = "Tempomarkierung";
 "appearance.pace_marker_section_subtitle" = "Nutzungstempo relativ zu Zurücksetzungszeiträumen verfolgen";
-"appearance.show_time_marker_title" = "Zeitverlaufsmarkierung anzeigen";
+"appearance.show_time_marker_title" = "Zeitmarkierung anzeigen";
 "appearance.show_time_marker_description" = "Eine Markierung auf Fortschrittsbalken anzeigen, die den Zeitfortschritt im Zeitraum zeigt";
-"appearance.show_pace_marker_title" = "Markierung nach Tempo einfärben";
-"appearance.show_pace_marker_description" = "Die Zeitmarkierung nach dem prognostizierten Nutzungstempo einfärben (grün → lila). Gilt für Sitzungs- und Wochenmetriken.";
-"appearance.pace_coloring_title" = "Tempobasierte Balkenfarben";
-"appearance.pace_coloring_description" = "Fortschrittsbalken basierend auf dem prognostizierten Tempo statt dem aktuellen Nutzungsniveau einfärben. Prognostiziert, ob Limits bis zum Ende des Zeitraums erreicht werden.";
+"appearance.show_pace_marker_title" = "Tempo-Markierungsfarben";
+"appearance.show_pace_marker_description" = "Tempo-Markierung nach 6-stufigem prognostiziertem Tempo einfärben";
+"appearance.pace_coloring_title" = "Tempo-Balkenfarben";
+"appearance.pace_coloring_description" = "Fortschrittsbalken nach prognostiziertem Tempo statt Nutzungsniveau einfärben";
 "appearance.multiprofile_locked_title" = "Darstellungseinstellungen gesperrt";
 "appearance.multiprofile_locked_description" = "Diese Einstellungen sind deaktiviert, während die Mehrfach-Profil-Anzeige aktiv ist. Jedes Profil verwendet im Mehrfach-Profil-Modus seine eigene Darstellung.";
 "appearance.disable_multiprofile" = "Mehrfach-Profil-Anzeige ausschalten";
@@ -531,7 +531,7 @@
 "multiprofile.show_week_description" = "Wöchentliche Nutzung zusätzlich zur Sitzung anzeigen";
 "multiprofile.show_label" = "Profilname anzeigen";
 "multiprofile.show_label_description" = "Profilname unter dem Symbol anzeigen";
-"multiprofile.use_system_color" = "Systemfarbe verwenden";
+"multiprofile.use_system_color" = "Graustufen";
 "multiprofile.use_system_color_description" = "Akzentfarbe des Mac anstelle der Statusfarben verwenden";
 
 /* ==================== */

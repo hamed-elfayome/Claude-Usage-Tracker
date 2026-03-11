@@ -134,6 +134,7 @@ if [ -f "$config_file" ]; then
   show_profile=$SHOW_PROFILE
   profile_name="$PROFILE_NAME"
   pace_marker_step_colors=$PACE_MARKER_STEP_COLORS
+  pace_aware_bar_colors=$PACE_AWARE_BAR_COLORS
 else
   show_model=1
   show_dir=1
@@ -153,6 +154,7 @@ else
   show_profile=0
   profile_name=""
   pace_marker_step_colors=1
+  pace_aware_bar_colors=0
 fi
 
 input=$(cat)
@@ -254,8 +256,8 @@ else
   PACE_RUNAWAY=$'\\033[38;5;135m'     # purple
 fi
 
-# When pace step colors enabled, always use real 6-tier colors regardless of color mode
-if [ "$pace_marker_step_colors" != "0" ]; then
+# When pace step colors or pace-aware bar colors enabled, always use real colors regardless of color mode
+if [ "$pace_marker_step_colors" != "0" ] || [ "$pace_aware_bar_colors" = "1" ]; then
   PACE_COMFORTABLE=$'\\033[38;5;34m'
   PACE_ON_TRACK=$'\\033[38;5;37m'
   PACE_WARMING=$'\\033[38;5;178m'
@@ -392,17 +394,43 @@ if [ "$show_usage" = "1" ]; then
         usage_color="$LEVEL_10"
       fi
 
+      # Pace-aware bar colors: override usage_color based on projected pace
+      if [ "$pace_aware_bar_colors" = "1" ] && [ -n "$reset_epoch" ]; then
+        now_epoch=$(date +%s)
+        remaining=$((reset_epoch - now_epoch))
+        if [ $remaining -gt 0 ] && [ $remaining -lt 18000 ]; then
+          elapsed_secs=$((18000 - remaining))
+          if [ $elapsed_secs -ge 540 ] && [ "$utilization" -gt 0 ]; then
+            # projected_pct = utilization * 18000 / elapsed_secs (integer math)
+            projected_pct=$((utilization * 18000 / elapsed_secs))
+            if [ $projected_pct -lt 75 ]; then
+              usage_color="$PACE_COMFORTABLE"
+            elif [ $projected_pct -lt 100 ]; then
+              usage_color="$PACE_ON_TRACK"
+            elif [ $projected_pct -lt 110 ]; then
+              usage_color="$PACE_WARMING"
+            elif [ $projected_pct -lt 120 ]; then
+              usage_color="$PACE_PRESSING"
+            elif [ $projected_pct -lt 135 ]; then
+              usage_color="$PACE_CRITICAL"
+            else
+              usage_color="$PACE_RUNAWAY"
+            fi
+          fi
+        fi
+      fi
+
       if [ "$show_bar" = "1" ]; then
         if [ "$utilization" -eq 0 ]; then
           filled_blocks=0
         elif [ "$utilization" -eq 100 ]; then
-          filled_blocks=10
+          filled_blocks=12
         else
-          filled_blocks=$(( (utilization * 10 + 50) / 100 ))
+          filled_blocks=$(( (utilization * 12 + 50) / 100 ))
         fi
         [ "$filled_blocks" -lt 0 ] && filled_blocks=0
-        [ "$filled_blocks" -gt 10 ] && filled_blocks=10
-        empty_blocks=$((10 - filled_blocks))
+        [ "$filled_blocks" -gt 12 ] && filled_blocks=12
+        empty_blocks=$((12 - filled_blocks))
 
         # Build progress bar safely without seq
         progress_bar=" "
@@ -426,23 +454,23 @@ if [ "$show_usage" = "1" ]; then
         remaining=$((reset_epoch - now_epoch))
         if [ $remaining -gt 0 ] && [ $remaining -lt 18000 ]; then
           elapsed_secs=$((18000 - remaining))
-          marker_pos=$(( (elapsed_secs * 10 + 9000) / 18000 ))
-          [ $marker_pos -gt 9 ] && marker_pos=9
+          marker_pos=$(( elapsed_secs * 12 / 18000 ))
+          [ $marker_pos -gt 11 ] && marker_pos=11
           [ $marker_pos -lt 0 ] && marker_pos=0
 
           # Compute 6-tier pace color (integer math, >= 3% elapsed = 540s)
           pace_color=""
           if [ $elapsed_secs -ge 540 ]; then
             projected_pct=$((utilization * 18000 / elapsed_secs))
-            if [ $projected_pct -lt 50 ]; then
+            if [ $projected_pct -lt 75 ]; then
               pace_color="$PACE_COMFORTABLE"
-            elif [ $projected_pct -lt 75 ]; then
-              pace_color="$PACE_ON_TRACK"
-            elif [ $projected_pct -lt 90 ]; then
-              pace_color="$PACE_WARMING"
             elif [ $projected_pct -lt 100 ]; then
-              pace_color="$PACE_PRESSING"
+              pace_color="$PACE_ON_TRACK"
+            elif [ $projected_pct -lt 110 ]; then
+              pace_color="$PACE_WARMING"
             elif [ $projected_pct -lt 120 ]; then
+              pace_color="$PACE_PRESSING"
+            elif [ $projected_pct -lt 135 ]; then
               pace_color="$PACE_CRITICAL"
             else
               pace_color="$PACE_RUNAWAY"
@@ -456,7 +484,7 @@ if [ "$show_usage" = "1" ]; then
 
           if [ -n "$pace_color" ]; then
             # Replace bar character at marker_pos with bold ┃
-            # progress_bar = " " + 10 block chars; marker_pos+1 is the target index
+            # progress_bar = " " + 12 block chars; marker_pos+1 is the target index
             left="${progress_bar:0:$((marker_pos + 1))}"
             right="${progress_bar:$((marker_pos + 2))}"
             progress_bar="${left}${pace_color}┃${RESET}${usage_color}${right}"
@@ -635,6 +663,7 @@ printf "%s\\n" "$output"
         showProgressBar: Bool,
         showPaceMarker: Bool = true,
         paceMarkerStepColors: Bool = true,
+        paceAwareBarColors: Bool = false,
         showResetTime: Bool,
         use24HourTime: Bool = false,
         showContextLabel: Bool = true,
@@ -668,6 +697,7 @@ SHOW_USAGE=\(showUsage ? "1" : "0")
 SHOW_PROGRESS_BAR=\(showProgressBar ? "1" : "0")
 SHOW_PACE_MARKER=\(showPaceMarker ? "1" : "0")
 PACE_MARKER_STEP_COLORS=\(paceMarkerStepColors ? "1" : "0")
+PACE_AWARE_BAR_COLORS=\(paceAwareBarColors ? "1" : "0")
 SHOW_RESET_TIME=\(showResetTime ? "1" : "0")
 USE_24_HOUR_TIME=\(use24HourTime ? "1" : "0")
 SHOW_CONTEXT_LABEL=\(showContextLabel ? "1" : "0")

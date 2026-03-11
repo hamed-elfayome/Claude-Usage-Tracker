@@ -21,6 +21,7 @@ struct ClaudeCodeView: View {
     @State private var showProgressBar: Bool = SharedDataStore.shared.loadStatuslineShowProgressBar()
     @State private var showPaceMarker: Bool = SharedDataStore.shared.loadStatuslineShowPaceMarker()
     @State private var paceMarkerStepColors: Bool = SharedDataStore.shared.loadStatuslinePaceMarkerStepColors()
+    @State private var paceAwareBarColors: Bool = SharedDataStore.shared.loadStatuslinePaceAwareBarColors()
     @State private var showResetTime: Bool = SharedDataStore.shared.loadStatuslineShowResetTime()
     @State private var showProfile: Bool = SharedDataStore.shared.loadStatuslineShowProfile()
     @State private var use24HourTime: Bool = SharedDataStore.shared.loadStatuslineUse24HourTime()
@@ -211,12 +212,19 @@ struct ClaudeCodeView: View {
 
                                         if showPaceMarker {
                                             SettingToggle(
-                                                title: "Pace tier colors",
-                                                description: "6-tier projected pace (green → purple)",
+                                                title: "Pace marker colors",
+                                                description: "Color the pace marker by 6-tier projected pace",
                                                 isOn: $paceMarkerStepColors
                                             )
                                             .padding(.leading, DesignTokens.Spacing.cardPadding * 2)
                                         }
+
+                                        SettingToggle(
+                                            title: "Pace bar colors",
+                                            description: "Color the progress bar by projected pace instead of usage level",
+                                            isOn: $paceAwareBarColors
+                                        )
+                                        .padding(.leading, DesignTokens.Spacing.cardPadding)
                                     }
 
                                     SettingToggle(
@@ -257,10 +265,10 @@ struct ClaudeCodeView: View {
                             }
                         }
                     }
+                }
 
-                    Divider()
-
-                    // Action buttons + status
+                // Action buttons + status
+                SettingsSectionCard(title: "") {
                     VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
                         HStack(spacing: DesignTokens.Spacing.small) {
                             Button(action: applyConfiguration) {
@@ -370,20 +378,29 @@ struct ClaudeCodeView: View {
             // Multi-color preview - each element gets its own color
             multiColorPreview
         } else {
-            // Single/mono color preview — split at pace marker if step colors enabled
+            // Single/mono color preview — handle pace marker and pace-aware bar colors
             let preview = generatePreview()
-            if showPaceMarker && paceMarkerStepColors && showProgressBar && showUsage,
-               let markerRange = preview.range(of: "┃") {
-                let usage = profileManager.activeProfile?.claudeUsage
-                let percentage = usage != nil ? Int(usage!.sessionPercentage) : 29
-                let paceColor = previewPaceColor(percentage: percentage)
+            let usage = profileManager.activeProfile?.claudeUsage
+            let percentage = usage != nil ? Int(usage!.sessionPercentage) : 29
+            let needsSplit = showProgressBar && showUsage &&
+                ((showPaceMarker && paceMarkerStepColors) || paceAwareBarColors)
+
+            if needsSplit, let (beforeBar, barSection, afterBar) = splitBarFromPreview(preview) {
+                let barColor = paceAwareBarColors ? previewPaceBarColor(percentage: percentage) : previewColor
+
                 HStack(spacing: 0) {
-                    Text(String(preview[preview.startIndex..<markerRange.lowerBound]))
-                        .foregroundColor(previewColor)
-                    Text("┃")
-                        .foregroundColor(paceColor)
-                    Text(String(preview[markerRange.upperBound...]))
-                        .foregroundColor(previewColor)
+                    Text(beforeBar).foregroundColor(previewColor)
+                    if showPaceMarker && paceMarkerStepColors, let markerRange = barSection.range(of: "┃") {
+                        let paceColor = previewPaceColor(percentage: percentage)
+                        Text(String(barSection[barSection.startIndex..<markerRange.lowerBound]))
+                            .foregroundColor(barColor)
+                        Text("┃").foregroundColor(paceColor)
+                        Text(String(barSection[markerRange.upperBound...]))
+                            .foregroundColor(barColor)
+                    } else {
+                        Text(barSection).foregroundColor(barColor)
+                    }
+                    Text(afterBar).foregroundColor(previewColor)
                 }
                 .font(.system(size: 11, design: .monospaced))
                 .lineLimit(1)
@@ -507,6 +524,7 @@ struct ClaudeCodeView: View {
                 if showProgressBar {
                     let filledBlocks = max(0, min(10, (percentage + 5) / 10))
                     let emptyBlocks = 10 - filledBlocks
+                    let barColor = paceAwareBarColors ? previewPaceBarColor(percentage: percentage) : usageColor
 
                     if showPaceMarker {
                         let markerPos = max(0, min(9, previewMarkerPosition))
@@ -515,15 +533,15 @@ struct ClaudeCodeView: View {
                         let chars = Array(fullBar)
 
                         Text(" " + String(chars.prefix(markerPos)))
-                            .foregroundColor(usageColor)
+                            .foregroundColor(barColor)
                         Text("┃")
                             .foregroundColor(paceColor)
                         Text(String(chars.suffix(from: markerPos + 1)))
-                            .foregroundColor(usageColor)
+                            .foregroundColor(barColor)
                     } else {
                         let bar = String(repeating: "▓", count: filledBlocks) + String(repeating: "░", count: emptyBlocks)
                         Text(" \(bar)")
-                            .foregroundColor(usageColor)
+                            .foregroundColor(barColor)
                     }
                 }
 
@@ -569,6 +587,13 @@ struct ClaudeCodeView: View {
     }
 
     /// Returns the appropriate icon color for each color mode
+    /// Split preview string into (beforeBar, barSection, afterBar)
+    private func splitBarFromPreview(_ preview: String) -> (String, String, String)? {
+        guard let barStart = preview.firstIndex(where: { $0 == "▓" || $0 == "░" || $0 == "┃" }) else { return nil }
+        let barEnd = preview[barStart...].lastIndex(where: { $0 == "▓" || $0 == "░" || $0 == "┃" }).map { preview.index(after: $0) } ?? barStart
+        return (String(preview[preview.startIndex..<barStart]), String(preview[barStart..<barEnd]), String(preview[barEnd...]))
+    }
+
     private func iconColorForMode(_ mode: StatuslineColorMode) -> Color {
         switch mode {
         case .colored:
@@ -586,10 +611,30 @@ struct ClaudeCodeView: View {
             let remaining = usage.sessionResetTime.timeIntervalSince(Date())
             if remaining > 0 && remaining < 18000 {
                 let elapsed = 18000 - remaining
-                return max(0, min(9, Int(round(elapsed * 10.0 / 18000.0))))
+                return max(0, min(9, Int(elapsed * 10.0 / 18000.0)))
             }
         }
         return 6 // Demo: 60% elapsed
+    }
+
+    /// Bar color when pace-aware bar colors is enabled
+    private func previewPaceBarColor(percentage: Int) -> Color {
+        let elapsedFraction: Double
+        if let usage = profileManager.activeProfile?.claudeUsage {
+            let remaining = usage.sessionResetTime.timeIntervalSince(Date())
+            if remaining > 0 && remaining < 18000 {
+                elapsedFraction = (18000 - remaining) / 18000
+            } else {
+                elapsedFraction = 0.6
+            }
+        } else {
+            elapsedFraction = 0.6
+        }
+
+        if let paceStatus = PaceStatus.calculate(usedPercentage: Double(percentage), elapsedFraction: elapsedFraction) {
+            return TerminalColors.paceColor(for: paceStatus)
+        }
+        return TerminalColors.usageLevel(percentage)
     }
 
     /// Pace color for the marker in preview, matching terminal ANSI colors
@@ -649,6 +694,7 @@ struct ClaudeCodeView: View {
         SharedDataStore.shared.saveStatuslineShowProgressBar(showProgressBar)
         SharedDataStore.shared.saveStatuslineShowPaceMarker(showPaceMarker)
         SharedDataStore.shared.saveStatuslinePaceMarkerStepColors(paceMarkerStepColors)
+        SharedDataStore.shared.saveStatuslinePaceAwareBarColors(paceAwareBarColors)
         SharedDataStore.shared.saveStatuslineShowResetTime(showResetTime)
         SharedDataStore.shared.saveStatuslineShowProfile(showProfile)
         SharedDataStore.shared.saveStatuslineUse24HourTime(use24HourTime)
@@ -669,6 +715,7 @@ struct ClaudeCodeView: View {
                 showProgressBar: showProgressBar,
                 showPaceMarker: showPaceMarker,
                 paceMarkerStepColors: paceMarkerStepColors,
+                paceAwareBarColors: paceAwareBarColors,
                 showResetTime: showResetTime,
                 use24HourTime: use24HourTime,
                 showContextLabel: showContextLabel,

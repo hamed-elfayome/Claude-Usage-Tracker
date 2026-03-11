@@ -11,7 +11,6 @@ import SwiftUI
 struct AppearanceSettingsView: View {
     @ObservedObject private var profileManager = ProfileManager.shared
     @State private var configuration: MenuBarIconConfiguration = .default
-    @State private var saveDebounceTimer: Timer?
 
     private var isMultiProfileMode: Bool {
         profileManager.displayMode == .multi
@@ -42,17 +41,13 @@ struct AppearanceSettingsView: View {
                     subtitle: "appearance.global_subtitle".localized
                 ) {
                     VStack(alignment: .leading, spacing: DesignTokens.Spacing.cardPadding) {
-                        SettingToggle(
-                            title: "appearance.monochrome_title".localized,
-                            description: "appearance.monochrome_description".localized,
-                            isOn: Binding(
-                                get: { configuration.colorMode == .monochrome },
-                                set: { newValue in
-                                    configuration.colorMode = newValue ? .monochrome : .multiColor
-                                    saveConfiguration()
-                                }
-                            )
+                        ColorModeSelector(
+                            colorMode: $configuration.colorMode,
+                            singleColorHex: $configuration.singleColorHex,
+                            onConfigChanged: saveConfiguration
                         )
+
+                        Divider()
 
                         SettingToggle(
                             title: "appearance.show_labels_title".localized,
@@ -77,7 +72,17 @@ struct AppearanceSettingsView: View {
                                 }
                             )
                         )
+                    }
+                }
+                .disabled(isMultiProfileMode)
+                .opacity(isMultiProfileMode ? 0.5 : 1.0)
 
+                // Pace Marker
+                SettingsSectionCard(
+                    title: "appearance.pace_marker_section_title".localized,
+                    subtitle: "appearance.pace_marker_section_subtitle".localized
+                ) {
+                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.cardPadding) {
                         SettingToggle(
                             title: "appearance.show_time_marker_title".localized,
                             description: "appearance.show_time_marker_description".localized,

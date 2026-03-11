@@ -57,8 +57,11 @@ extension Date {
         }
     }
 
-    /// Returns a formatted reset time string (e.g., "Today 3:59am" or "Oct 28, 12:59pm")
+    /// Returns a formatted reset time string (e.g., "Today, 3:59AM" or "Wednesday, 7:00PM")
     func resetTimeString(from now: Date = Date(), timezone: TimeZone = .current) -> String {
+        // Round to nearest minute to prevent display flickering (e.g., 6:59 vs 7:00)
+        let roundedDate = self.roundedToNearestMinute()
+
         let calendar = Calendar.current
         let formatter = DateFormatter()
         formatter.timeZone = timezone
@@ -73,7 +76,10 @@ extension Date {
             formatter.dateFormat = "MMM d, \(timeFmt)"
         }
 
-        return formatter.string(from: self)
+        // Convert am/pm to uppercase AM/PM
+        return formatter.string(from: roundedDate)
+            .replacingOccurrences(of: "am", with: "AM")
+            .replacingOccurrences(of: "pm", with: "PM")
     }
 
     /// Returns time remaining rounded to full hours (e.g., "→2H", "→1H", "→<1H")
@@ -93,7 +99,7 @@ extension Date {
         return "→\(hours)H"
     }
 
-    /// Rounds date down to nearest minute (strips seconds)
+    /// Returns the date rounded to the nearest minute
     func roundedToNearestMinute() -> Date {
         let calendar = Calendar.current
         let components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: self)

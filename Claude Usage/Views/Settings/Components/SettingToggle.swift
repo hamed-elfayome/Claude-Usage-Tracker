@@ -75,6 +75,7 @@ struct SettingToggle: View {
             Toggle("", isOn: $isOn)
                 .labelsHidden()
                 .toggleStyle(.switch)
+                .tint(.orange)
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityLabelText)

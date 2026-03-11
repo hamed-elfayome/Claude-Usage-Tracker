@@ -136,7 +136,7 @@
 "multiprofile.show_week_description" = "세션 외에 주간 사용량 표시";
 "multiprofile.show_label" = "프로필 이름 표시";
 "multiprofile.show_label_description" = "아이콘 아래에 프로필 이름 표시";
-"multiprofile.use_system_color" = "시스템 색상 사용";
+"multiprofile.use_system_color" = "그레이스케일";
 "multiprofile.use_system_color_description" = "상태 색상 대신 Mac의 강조 색상 사용";
 
 /* ==================== */
@@ -175,20 +175,20 @@
 "appearance.global_subtitle" = "메뉴 바 아이콘 동작 사용자 지정";
 "appearance.menu_bar_metrics" = "메뉴 바 메트릭";
 "appearance.metrics_subtitle" = "메뉴 바에 표시할 메트릭 선택";
-"appearance.monochrome_title" = "단색";
-"appearance.monochrome_description" = "상태 색상(녹색/주황색/빨간색) 대신 적응형 색상 사용";
+"appearance.monochrome_title" = "그레이스케일";
+"appearance.monochrome_description" = "상태 색상(녹색/주황색/빨간색) 대신 그레이스케일 사용";
 "appearance.show_labels_title" = "아이콘 레이블 표시";
 "appearance.show_labels_description" = "각 메트릭에 접두사 레이블(S:, W:, API:) 표시";
 "appearance.show_remaining_title" = "남은 용량 퍼센트 표시";
 "appearance.show_remaining_description" = "사용된 퍼센트 대신 남은 용량 표시 (macOS 배터리처럼)";
 "appearance.pace_marker_section_title" = "속도 마커";
 "appearance.pace_marker_section_subtitle" = "초기화 기간 대비 사용 속도 추적";
-"appearance.show_time_marker_title" = "경과 시간 마커 표시";
+"appearance.show_time_marker_title" = "시간 마커 표시";
 "appearance.show_time_marker_description" = "진행 막대에 기간 내 경과 시간을 나타내는 마커를 표시합니다";
-"appearance.show_pace_marker_title" = "속도별 마커 색상";
-"appearance.show_pace_marker_description" = "예상 사용 속도에 따라 시간 마커 색상을 변경합니다(녹색→보라색). 세션 및 주간 메트릭에 적용됩니다.";
-"appearance.pace_coloring_title" = "속도 기반 막대 색상";
-"appearance.pace_coloring_description" = "현재 사용 수준 대신 예상 속도에 따라 진행 막대 색상을 지정합니다. 기간 종료 시 한도에 도달할지 예측합니다.";
+"appearance.show_pace_marker_title" = "속도 마커 색상";
+"appearance.show_pace_marker_description" = "6단계 예상 속도에 따라 속도 마커 색상 지정";
+"appearance.pace_coloring_title" = "속도 막대 색상";
+"appearance.pace_coloring_description" = "사용 수준 대신 예상 속도에 따라 진행 막대 색상 지정";
 "appearance.multiprofile_locked_title" = "모양 설정 잠김";
 "appearance.multiprofile_locked_description" = "다중 프로필 표시가 활성화된 동안 이 설정은 비활성화됩니다. 다중 프로필 모드에서는 각 프로필이 자체 모양을 사용합니다.";
 "appearance.disable_multiprofile" = "다중 프로필 표시 끄기";
@@ -198,7 +198,7 @@
 "appearance.menu_bar_icons.subtitle" = "메뉴 바에 표시할 메트릭 사용자 지정";
 "appearance.show_icon_names" = "아이콘 이름 표시";
 "appearance.show_icon_names.description" = "아이콘 옆에 메트릭 레이블 (S:, W:, API:) 표시";
-"appearance.monochrome_mode" = "단색 (적응형)";
+"appearance.monochrome_mode" = "그레이스케일 (적응형)";
 "appearance.monochrome_mode.description" = "아이콘이 라이트/다크 모드에 자동으로 적응";
 "appearance.metric_configuration" = "메트릭 구성";
 "appearance.drag_to_reorder" = "드래그하여 아이콘 재정렬. 비활성화된 메트릭은 메뉴 바에서 숨겨집니다.";
@@ -561,7 +561,7 @@
 "setup.enable_auto_start" = "세션 자동 시작 활성화";
 "setup.menubar_appearance" = "메뉴 바 외형";
 "setup.choose_icon_style" = "선호하는 아이콘 스타일 선택";
-"setup.monochrome_adaptive" = "단색 (적응형)";
+"setup.monochrome_adaptive" = "그레이스케일 (적응형)";
 "setup.validation.success" = "조직에 성공적으로 연결됨";
 
 /* ==================== */

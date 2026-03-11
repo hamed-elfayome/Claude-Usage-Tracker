@@ -9,14 +9,14 @@
   ![Swift](https://img.shields.io/badge/Swift-5.0+-orange?style=flat-square&logo=swift)
   ![SwiftUI](https://img.shields.io/badge/SwiftUI-5.0+-blue?style=flat-square&logo=swift)
   ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
-  ![Version](https://img.shields.io/badge/version-3.0.3-blue?style=flat-square)
+  ![Version](https://img.shields.io/badge/version-3.0.2-blue?style=flat-square)
   ![Languages](https://img.shields.io/badge/languages-9-purple?style=flat-square)
 
   <sub>🇬🇧 English • 🇪🇸 Español • 🇫🇷 Français • 🇩🇪 Deutsch • 🇮🇹 Italiano • 🇵🇹 Português • 🇯🇵 日本語 • 🇰🇷 한국어 • 🇨🇳 简体中文</sub>
 
-  ### [Download Latest Release (v3.0.3)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
+  ### [Download Latest Release (v3.0.2)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
 
-  <sub>macOS 14.0+ (Sonoma) | ~6 MB | Native Swift/SwiftUI | Officially Signed</sub>
+  <sub>macOS 14.0+ (Sonoma) | ~5 MB | Native Swift/SwiftUI | Officially Signed</sub>
 
   <a href="https://www.buymeacoffee.com/hamedelfayome" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="40"></a>
 </div>
@@ -36,9 +36,9 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 - **Usage History**: Interactive charts tracking session, weekly, and billing data over time
 - **Global Shortcuts**: System-wide keyboard shortcuts (no Accessibility permission)
 - **Headless Mode**: Works on headless Macs via Remote Desktop
-- **Customizable Interface**: 5 icon styles + 3 color modes (Multi-Color/Greyscale/Single Color) + remaining/used percentage toggle
+- **Customizable Interface**: 5 icon styles + monochrome mode + remaining/used percentage toggle
 - **Smart Automation**: Auto-start sessions, auto-switch profiles, threshold notifications
-- **Developer Tools**: Terminal statusline integration with model, context, profile display, pace markers, and color modes
+- **Developer Tools**: Terminal statusline integration with model, context, and profile display
 - **Privacy-First**: Local storage, no telemetry, no cloud sync
 - **Native Performance**: Lightweight Swift/SwiftUI design for macOS
 
@@ -57,8 +57,6 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 ---
 
 ## What's New
-
-- **v3.0.3 (2026-03-10)**: 6-tier pace system (Comfortable → Runaway) with colored pace markers on progress bars, 3 color modes (Multi-Color/Greyscale/Single Color) for menu bar and statusline, label toggles (Ctx/Usage/Reset), 24-hour time format, terminal-matching preview colors, CPU spin-loop fix in menu bar rendering
 
 - **v3.0.2 (2026-03-10)**: API cost tracking with daily chart, browser-based authentication (WKWebView sign-in), rate limit header usage for CLI OAuth, auto-sizing popover, 3-way time display picker, adaptive green color, session key expiry tracking & notifications
 
@@ -338,8 +336,7 @@ Access profile switcher in multiple places:
 ### Menu Bar & Interface
 - **5 Customizable Icon Styles**: Battery, Progress Bar, Percentage Only, Icon with Bar, Compact
 - **Multi-Metric Icons**: Display separate icons for session, weekly, and api usage simultaneously
-- **3 Color Modes**: Multi-Color (threshold-based), Greyscale (adapts to appearance), Single Color (custom hex)
-- **6-Tier Pace System**: Pace markers colored by projected usage (green/teal/yellow/orange/red/purple)
+- **Monochrome Mode**: Optional black & white aesthetic
 - **Interactive Popover**: One-click access with detachable floating window capability
 - **Live Status Indicator**: Real-time Claude system status from status.claude.com
 - **Multi-Language Support**: 9 languages (English, Spanish, French, German, Italian, Portuguese, Japanese, Korean, Simplified Chinese)
@@ -357,12 +354,7 @@ Access profile switcher in multiple places:
 
 ### Developer Integration
 - **Claude Code Terminal Statusline**: Real-time usage in your terminal
-- Customizable components: directory, git branch, model name, context window, profile name, usage percentage, progress bar, pace marker, reset timer
-- **3 color modes**: Multi-Color, Greyscale, Single Color (custom hex) for statusline
-- **Pace marker**: 6-tier colored marker on progress bar showing projected usage pace
-- **Label toggles**: Show/hide "Ctx:", "Usage:", "Reset:" prefixes
-- **24-hour time**: Optional 24-hour format for reset time
-- Terminal-matching preview with ANSI-equivalent colors
+- Customizable components: directory, git branch, model name, context window, profile name, usage percentage, progress bar, reset timer
 - Instant rendering via usage cache (no startup delay)
 - One-click automated installation
 - Live preview before applying changes
@@ -443,8 +435,7 @@ Customize menu bar icon per profile:
   - Percentage Only (text-only minimalist)
   - Icon with Bar (Claude icon + progress)
   - Compact (space-efficient)
-- **3 Color Modes**: Multi-Color (threshold-based), Greyscale (adapts to appearance), Single Color (custom hex)
-- **Pace Marker**: Colored time marker on progress bars showing projected usage pace (6 tiers)
+- **Monochrome Mode**: Toggle black & white icon style
 - **Percentage Display Mode**: Toggle between used/remaining percentage
   - Show "75% used" or "25% remaining" - your choice
   - Color coding automatically adapts (green for high remaining, red for low)
@@ -479,12 +470,8 @@ Application language preferences:
 
 #### Claude Code (Statusline)
 Terminal integration (app-wide):
-- **Component Selection**: Choose what to display (directory, branch, model name, context window, profile name, usage, progress bar, pace marker, reset time)
-- **Color Mode**: Multi-Color, Greyscale, or Single Color with custom hex picker
-- **Pace Marker**: 6-tier colored marker showing projected usage pace on progress bar
-- **Label Toggles**: Show/hide "Ctx:", "Usage:", "Reset:" prefixes for compact display
-- **24-Hour Time**: Optional 24-hour format for reset time
-- **Live Preview**: Terminal-matching preview with ANSI-equivalent colors
+- **Component Selection**: Choose what to display (directory, branch, model name, context window, profile name, usage, progress bar, reset time)
+- **Live Preview**: See exact statusline format before installing
 - **One-Click Install**: Automated script installation to `~/.claude/`
 - **Automatic Updates**: Statusline updates when switching profiles
 - **Usage Cache**: Instant CLI rendering via cached usage data
@@ -541,14 +528,10 @@ Bring real-time Claude usage monitoring directly into your terminal with Claude 
      - **Context window**: Shows context usage as percentage or token count
      - **Usage statistics**: Shows session percentage with color coding
      - **Progress bar**: Visual 10-segment indicator (optional when usage is enabled)
-     - **Pace marker**: Colored `┃` on progress bar at elapsed time position (6-tier pace colors)
-     - **Reset time**: When your session resets (12h or 24h format)
-   - **Color mode**: Choose Multi-Color, Greyscale, or Single Color
-   - **Label toggles**: Show/hide "Ctx:", "Usage:", "Reset:" prefixes
 
 3. **Preview Your Statusline**
-   - The live preview shows exactly how it will appear with terminal-matching ANSI colors
-   - Example: `claude-usage │ ⎇ main │ Opus │ Work │ Ctx: 48% │ Usage: 25% ▓▓┃░░░░░░░ → Reset: 3:45 PM`
+   - The live preview shows exactly how it will appear
+   - Example: `claude-usage │ ⎇ main │ Opus │ Work │ Ctx: 48% │ Usage: 25% ▓▓░░░░░░░░`
 
 4. **Apply Configuration**
    - Click "Apply" button
@@ -580,34 +563,20 @@ All scripts are set with secure permissions (755) and only read your existing se
 | Git Branch | Active git branch | `⎇ main` |
 | Model | Current model name | `Opus` |
 | Profile | Active profile name | `Work` |
-| Context | Context window usage | `Ctx: 48%` or `96K` |
-| Usage | Session percentage | `Usage: 25%` or `25%` |
+| Context | Context window usage | `Ctx: 48%` or `Ctx: 96K` |
+| Usage | Session percentage | `Usage: 25%` |
 | Progress Bar | 10-segment visual indicator | `▓▓░░░░░░░░` |
-| Pace Marker | Colored marker at elapsed time position | `▓▓┃░░░░░░░` |
-| Reset Time | When session resets | `→ Reset: 3:45 PM` or `→ 15:45` |
+| Reset Time | When session resets | `→ Reset: 3:45 PM` |
 
 #### Color Coding
 
-**Usage bar** is color-coded with a 10-level gradient:
+Usage percentage is color-coded with a 10-level gradient:
 - **0-10%**: Dark green
 - **11-30%**: Green shades
 - **31-50%**: Yellow-green transitioning to olive
 - **51-70%**: Yellow to orange
 - **71-90%**: Dark orange to red
 - **91-100%**: Deep red
-
-**Pace marker** uses a 6-tier system based on projected end-of-period usage:
-- **Comfortable** (projected <50%): Green
-- **On Track** (50-75%): Teal
-- **Warming** (75-90%): Yellow
-- **Pressing** (90-100%): Orange
-- **Critical** (100-120%): Red
-- **Runaway** (>120%): Purple
-
-**Color modes** (applies to both menu bar and statusline):
-- **Multi-Color**: Full color palette (default)
-- **Greyscale**: No colors, adapts to system theme
-- **Single Color**: All elements use your custom hex color
 
 #### Disabling Statusline
 
@@ -645,14 +614,14 @@ chmod 755 ~/.claude/statusline-command.sh
 
 ### Example Statuslines
 
-With all components enabled (Multi-Color mode):
+With all components enabled:
 ```
-my-project │ ⎇ feature/new-ui │ Opus │ Work │ Ctx: 48% │ Usage: 47% ▓▓▓▓┃░░░░░ → Reset: 4:15 PM
+my-project │ ⎇ feature/new-ui │ Opus │ Work │ Ctx: 48% │ Usage: 47% ▓▓▓▓▓░░░░░ → Reset: 4:15 PM
 ```
 
-Compact (labels hidden, 24h time):
+Directory, branch, and usage:
 ```
-my-project │ ⎇ develop │ 12% ▓┃░░░░░░░░ → 16:15
+backend-api │ ⎇ develop │ Usage: 12% ▓░░░░░░░░░
 ```
 
 Model and context only:
@@ -787,8 +756,11 @@ A huge thank you to everyone who opened pull requests. Many features in v3.0.0 w
 <a href="https://github.com/heathdutton"><img src="https://github.com/heathdutton.png" width="40" height="40" alt="heathdutton" title="heathdutton"></a>
 <a href="https://github.com/tsvikas"><img src="https://github.com/tsvikas.png" width="40" height="40" alt="tsvikas" title="tsvikas"></a>
 <a href="https://github.com/kynoptic"><img src="https://github.com/kynoptic.png" width="40" height="40" alt="kynoptic" title="kynoptic"></a>
+<a href="https://github.com/khromov"><img src="https://github.com/khromov.png" width="40" height="40" alt="khromov" title="khromov"></a>
 <a href="https://github.com/bezlant"><img src="https://github.com/bezlant.png" width="40" height="40" alt="bezlant" title="bezlant"></a>
+<a href="https://github.com/namarks"><img src="https://github.com/namarks.png" width="40" height="40" alt="namarks" title="namarks"></a>
 <a href="https://github.com/trickart"><img src="https://github.com/trickart.png" width="40" height="40" alt="trickart" title="trickart"></a>
+<a href="https://github.com/reowens"><img src="https://github.com/reowens.png" width="40" height="40" alt="reowens" title="reowens"></a>
 <a href="https://github.com/Ali-Aldahmani"><img src="https://github.com/Ali-Aldahmani.png" width="40" height="40" alt="Ali-Aldahmani" title="Ali-Aldahmani"></a>
 <a href="https://github.com/cuvitx"><img src="https://github.com/cuvitx.png" width="40" height="40" alt="cuvitx" title="cuvitx"></a>
 

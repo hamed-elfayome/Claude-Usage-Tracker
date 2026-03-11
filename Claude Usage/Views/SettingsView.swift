@@ -222,7 +222,7 @@ struct TrafficLightButton: View {
 
 /// Professional, native macOS Settings interface with multi-profile support
 struct SettingsView: View {
-    @State private var selectedSection: SettingsSection = .appearance
+    @State private var selectedSection: SettingsSection = .general
     @StateObject private var profileManager = ProfileManager.shared
     @Environment(\.colorScheme) private var colorScheme
 
@@ -270,12 +270,16 @@ struct SettingsView: View {
                     CLIAccountView()
 
                 // Profile Settings
-                case .appearance:
-                    AppearanceSettingsView()
                 case .general:
                     GeneralSettingsView()
+                case .menuBar:
+                    AppearanceSettingsView()
+                case .widgets:
+                    WidgetSettingsView()
                 case .history:
                     UsageHistoryView()
+                case .claudeCode:
+                    ClaudeCodeView()
 
                 // Shared Settings
                 case .appSettings:
@@ -284,8 +288,6 @@ struct SettingsView: View {
                     ManageProfilesView()
                 case .language:
                     LanguageSettingsView()
-                case .claudeCode:
-                    ClaudeCodeView()
                 case .shortcuts:
                     ShortcutsSettingsView()
                 case .updates:
@@ -525,15 +527,16 @@ enum SettingsSection: String, CaseIterable {
     case cliAccount
 
     // Profile Settings
-    case appearance
     case general
+    case menuBar
+    case widgets
     case history
+    case claudeCode
 
     // Shared Settings
     case appSettings
     case manageProfiles
     case language
-    case claudeCode
     case shortcuts
     case updates
     case support
@@ -547,8 +550,9 @@ enum SettingsSection: String, CaseIterable {
         case .claudeAI: return "section.claudeai_title".localized
         case .apiConsole: return "section.api_console_title".localized
         case .cliAccount: return "section.cli_account_title".localized
-        case .appearance: return "section.appearance_title".localized
         case .general: return "section.general_title".localized
+        case .menuBar: return "Menu Bar"
+        case .widgets: return "Widgets"
         case .history: return "section.history_title".localized
         case .appSettings: return "section.app_settings_title".localized
         case .manageProfiles: return "section.manage_profiles_title".localized
@@ -569,8 +573,9 @@ enum SettingsSection: String, CaseIterable {
         case .claudeAI: return "key.fill"
         case .apiConsole: return "dollarsign.circle.fill"
         case .cliAccount: return "terminal.fill"
-        case .appearance: return "paintbrush.fill"
         case .general: return "gearshape.fill"
+        case .menuBar: return "menubar.rectangle"
+        case .widgets: return "square.grid.2x2.fill"
         case .history: return "chart.bar.xaxis"
         case .appSettings: return "gearshape.2.fill"
         case .manageProfiles: return "person.2.fill"
@@ -591,8 +596,9 @@ enum SettingsSection: String, CaseIterable {
         case .claudeAI: return "section.claudeai_desc".localized
         case .apiConsole: return "section.api_console_desc".localized
         case .cliAccount: return "section.cli_account_desc".localized
-        case .appearance: return "section.appearance_desc".localized
         case .general: return "section.general_desc".localized
+        case .menuBar: return "Configure menu bar appearance and metrics"
+        case .widgets: return "Customize desktop widget appearance"
         case .history: return "section.history_desc".localized
         case .appSettings: return "section.app_settings_desc".localized
         case .manageProfiles: return "section.manage_profiles_desc".localized
@@ -628,7 +634,7 @@ enum SettingsSection: String, CaseIterable {
 
     var isProfileSetting: Bool {
         switch self {
-        case .appearance, .general, .history:
+        case .general, .menuBar, .widgets, .history, .claudeCode:
             return true
         default:
             return false
@@ -739,6 +745,9 @@ struct ProfileCredentialCardsRow: View {
             loadCredentials()
         }
         .onChange(of: profileManager.activeProfile?.id) { _, _ in
+            loadCredentials()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .credentialsChanged)) { _ in
             loadCredentials()
         }
     }

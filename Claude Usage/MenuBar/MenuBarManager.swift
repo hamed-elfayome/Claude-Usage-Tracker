@@ -73,6 +73,9 @@ class MenuBarManager: NSObject, ObservableObject {
     // Observer for refresh interval changes
     private var refreshIntervalObserver: NSKeyValueObservation?
 
+    // Observer for appearance changes
+    // appearanceObserver removed — handled by StatusBarUIManager delegate
+
     // Observer for icon style changes
     private var iconStyleObserver: NSObjectProtocol?
 
@@ -197,6 +200,9 @@ class MenuBarManager: NSObject, ObservableObject {
         // Start auto-start session service (5-minute cycle for all profiles)
         autoStartService.start()
 
+        // Appearance changes are handled by StatusBarUIManager via the delegate pattern.
+        // Do NOT observe NSApp.effectiveAppearance here — it causes duplicate redraws.
+
         // Observe icon configuration changes
         observeIconConfigChanges()
 
@@ -242,6 +248,7 @@ class MenuBarManager: NSObject, ObservableObject {
         cancellables.removeAll()  // Clean up Combine subscriptions
         refreshIntervalObserver?.invalidate()
         refreshIntervalObserver = nil
+        // appearanceObserver removed — appearance handled by StatusBarUIManager delegate
         if let iconStyleObserver = iconStyleObserver {
             NotificationCenter.default.removeObserver(iconStyleObserver)
             self.iconStyleObserver = nil
@@ -383,11 +390,15 @@ class MenuBarManager: NSObject, ObservableObject {
 
         // Recreate popover with fresh content
         let newPopover = NSPopover()
-        newPopover.contentSize = Constants.WindowSizes.popoverSize
+        newPopover.contentSize = NSSize(width: 320, height: 10) // Auto-sized by SwiftUI content
         newPopover.behavior = .semitransient
         newPopover.animates = true
         newPopover.delegate = self
-        newPopover.contentViewController = createContentViewController()
+        let hostingController = createContentViewController()
+        if #available(macOS 13.0, *) {
+            hostingController.sizingOptions = .intrinsicContentSize
+        }
+        newPopover.contentViewController = hostingController
 
         self.popover = newPopover
 
@@ -447,12 +458,16 @@ class MenuBarManager: NSObject, ObservableObject {
 
     private func setupPopover() {
         let popover = NSPopover()
-        popover.contentSize = Constants.WindowSizes.popoverSize
+        popover.contentSize = NSSize(width: 320, height: 10) // Initial size; auto-sized by SwiftUI content
         popover.behavior = .semitransient  // Changed to allow detaching
         popover.animates = true
         popover.delegate = self
 
-        popover.contentViewController = createContentViewController()
+        let hostingController = createContentViewController()
+        if #available(macOS 13.0, *) {
+            hostingController.sizingOptions = .intrinsicContentSize
+        }
+        popover.contentViewController = hostingController
         self.popover = popover
     }
 
@@ -526,9 +541,13 @@ class MenuBarManager: NSObject, ObservableObject {
                     stopMonitoringForOutsideClicks()
                     // Update content view controller for new profile data
                     popover.contentViewController = createContentViewController()
-                    popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-                    currentPopoverButton = button
-                    startMonitoringForOutsideClicks()
+                    // Wrap in async to prevent layout recursion warning
+                    DispatchQueue.main.async { [weak self] in
+                        guard let self = self else { return }
+                        popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+                        self.currentPopoverButton = button
+                        self.startMonitoringForOutsideClicks()
+                    }
                 }
             } else {
                 // Popover not shown - show it
@@ -536,9 +555,13 @@ class MenuBarManager: NSObject, ObservableObject {
                 stopMonitoringForOutsideClicks()
                 // Update content view controller for current profile data
                 popover.contentViewController = createContentViewController()
-                popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-                currentPopoverButton = button
-                startMonitoringForOutsideClicks()
+                // Wrap in async to prevent layout recursion warning
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
+                    popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+                    self.currentPopoverButton = button
+                    self.startMonitoringForOutsideClicks()
+                }
             }
         }
     }
@@ -666,6 +689,9 @@ class MenuBarManager: NSObject, ObservableObject {
             }
         }
     }
+
+    // Appearance observation is handled by StatusBarUIManager via the delegate pattern.
+    // Removed observeAppearanceChanges() to prevent duplicate redraws.
 
     private func observeIconStyleChanges() {
         // Observe icon style changes from settings (now consolidated with menuBarIconConfigChanged)
@@ -1661,10 +1687,6 @@ extension MenuBarManager: NSPopoverDelegate {
 // MARK: - StatusBarUIManagerDelegate
 extension MenuBarManager: StatusBarUIManagerDelegate {
     func statusBarAppearanceDidChange() {
-        // Safe from infinite loops: StatusBarUIManager's observer deduplicates by
-        // appearance name, and setButtonImage() only assigns button.image when the
-        // rendered TIFF data actually changes — so even if setting button.image
-        // triggers effectiveAppearance KVO, the cycle stops immediately.
         cachedIsDarkMode = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
         cachedImageKey = ""
         updateAllStatusBarIcons()
