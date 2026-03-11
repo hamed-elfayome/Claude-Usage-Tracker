@@ -469,7 +469,11 @@ class MenuBarManager: NSObject, ObservableObject {
             }
         )
 
-        return NSHostingController(rootView: contentView)
+        let hostingController = NSHostingController(rootView: contentView)
+        // Let the hosting controller report its actual SwiftUI content size to NSPopover,
+        // so the popover positions correctly on all display configurations (fixes #165).
+        hostingController.sizingOptions = .intrinsicContentSize
+        return hostingController
     }
 
     @objc private func togglePopover(_ sender: Any?) {
@@ -526,7 +530,7 @@ class MenuBarManager: NSObject, ObservableObject {
                     stopMonitoringForOutsideClicks()
                     // Update content view controller for new profile data
                     popover.contentViewController = createContentViewController()
-                    popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+                    showPopover(popover, from: button)
                     currentPopoverButton = button
                     startMonitoringForOutsideClicks()
                 }
@@ -536,11 +540,22 @@ class MenuBarManager: NSObject, ObservableObject {
                 stopMonitoringForOutsideClicks()
                 // Update content view controller for current profile data
                 popover.contentViewController = createContentViewController()
-                popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+                showPopover(popover, from: button)
                 currentPopoverButton = button
                 startMonitoringForOutsideClicks()
             }
         }
+    }
+
+    /// Shows the popover anchored to the status bar button.
+    /// Forces a layout pass on the button's window first to ensure correct
+    /// screen coordinates on all display configurations (fixes #165).
+    private func showPopover(_ popover: NSPopover, from button: NSStatusBarButton) {
+        // Force the button's window to resolve its layout before positioning.
+        // On multi-monitor setups (especially stacked displays and macOS 15.x),
+        // the status item's window frame may not be finalized until a layout pass.
+        button.window?.layoutIfNeeded()
+        popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
     }
 
     private func closePopover() {

@@ -2,9 +2,17 @@ import SwiftUI
 import Charts
 
 // MARK: - Always-active vibrancy background
+
+/// Container that reports zero intrinsic size so it never influences
+/// the NSHostingController's preferredContentSize used by NSPopover
+/// for positioning (fixes #165 — popover displaced on macOS 15.x).
+private class _VibrancyContainerView: NSView {
+    override var intrinsicContentSize: NSSize { .zero }
+}
+
 struct VisualEffectBackground: NSViewRepresentable {
     func makeNSView(context: Context) -> NSView {
-        let container = NSView()
+        let container = _VibrancyContainerView()
 
         // Base vibrancy layer
         let effectView = NSVisualEffectView()
