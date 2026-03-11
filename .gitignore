@@ -153,3 +153,6 @@ release/
 /STATUSLINE_PROFILE_FIX.md
 /STORAGE_ARCHITECTURE.md
 /STORAGE_QUICK_REFERENCE.md
+
+# Local plan docs (not for upstream)
+docs/

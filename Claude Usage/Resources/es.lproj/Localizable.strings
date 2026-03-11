@@ -192,7 +192,7 @@
 "appearance.menu_bar_icons.subtitle" = "Personaliza qué métricas aparecen en tu barra de menú";
 "appearance.show_icon_names" = "Mostrar nombres de íconos";
 "appearance.show_icon_names.description" = "Mostrar etiquetas de métricas (S:, W:, API:) junto a los íconos";
-"appearance.monochrome_mode" = "Monocromo (Adaptativo)";
+"appearance.monochrome_mode" = "Escala de grises (Adaptativo)";
 "appearance.monochrome_mode.description" = "Los íconos se adaptan automáticamente al modo claro/oscuro";
 "appearance.metric_configuration" = "Configuración de Métricas";
 "appearance.drag_to_reorder" = "Arrastra para reordenar íconos. Las métricas deshabilitadas se ocultan de la barra de menú.";
@@ -220,7 +220,7 @@
 "setup.enable_auto_start" = "Habilitar auto-inicio de sesión";
 "setup.menubar_appearance" = "Apariencia de Barra de Menú";
 "setup.choose_icon_style" = "Elige tu estilo de ícono preferido";
-"setup.monochrome_adaptive" = "Monocromo (Adaptativo)";
+"setup.monochrome_adaptive" = "Escala de grises (Adaptativo)";
 
 /* ==================== */
 /* MARK: - Icon Styles */
@@ -408,20 +408,20 @@
 "appearance.subtitle" = "Personaliza tus íconos y métricas de barra de menú";
 "appearance.global_settings" = "Configuración Global";
 "appearance.menu_bar_metrics" = "Métricas de Barra de Menú";
-"appearance.monochrome_title" = "Monocromo";
-"appearance.monochrome_description" = "Usar color adaptativo en lugar de colores de estado (verde/naranja/rojo)";
+"appearance.monochrome_title" = "Escala de grises";
+"appearance.monochrome_description" = "Usar escala de grises en lugar de colores de estado (verde/naranja/rojo)";
 "appearance.show_labels_title" = "Mostrar Etiquetas de Íconos";
 "appearance.show_labels_description" = "Mostrar etiquetas de prefijo (S:, W:, API:) para cada métrica";
 "appearance.show_remaining_title" = "Mostrar Porcentaje Restante";
 "appearance.show_remaining_description" = "Mostrar capacidad restante en lugar del porcentaje usado (como la batería de macOS)";
 "appearance.pace_marker_section_title" = "Marcador de Ritmo";
 "appearance.pace_marker_section_subtitle" = "Seguimiento del ritmo de uso relativo a los períodos de reinicio";
-"appearance.show_time_marker_title" = "Mostrar marcador de tiempo transcurrido";
+"appearance.show_time_marker_title" = "Mostrar marcador de tiempo";
 "appearance.show_time_marker_description" = "Mostrar una marca en las barras de progreso indicando cuánto tiempo del período ha pasado";
-"appearance.show_pace_marker_title" = "Colorear marcador por ritmo";
-"appearance.show_pace_marker_description" = "Colorea el marcador de tiempo según el ritmo de uso proyectado (verde → púrpura). Aplica a métricas de sesión y semanales.";
-"appearance.pace_coloring_title" = "Colores de barra por ritmo";
-"appearance.pace_coloring_description" = "Colorear barras de progreso según el ritmo proyectado en lugar del nivel de uso actual. Proyecta si alcanzarás los límites al final del período.";
+"appearance.show_pace_marker_title" = "Colores del marcador de ritmo";
+"appearance.show_pace_marker_description" = "Colorear el marcador de ritmo según el ritmo proyectado en 6 niveles";
+"appearance.pace_coloring_title" = "Colores de barra de ritmo";
+"appearance.pace_coloring_description" = "Colorear la barra de progreso según el ritmo proyectado en lugar del nivel de uso";
 "appearance.multiprofile_locked_title" = "Ajustes de Apariencia Bloqueados";
 "appearance.multiprofile_locked_description" = "Estos ajustes están deshabilitados mientras la Visualización Multi-Perfil está activa. Cada perfil usa su propia apariencia en modo multi-perfil.";
 "appearance.disable_multiprofile" = "Desactivar Visualización Multi-Perfil";
@@ -512,7 +512,7 @@
 "multiprofile.show_week_description" = "Mostrar uso semanal además de la sesión";
 "multiprofile.show_label" = "Mostrar Nombre del Perfil";
 "multiprofile.show_label_description" = "Mostrar nombre del perfil debajo del icono";
-"multiprofile.use_system_color" = "Usar Color del Sistema";
+"multiprofile.use_system_color" = "Escala de grises";
 "multiprofile.use_system_color_description" = "Usar el color de acento del Mac en lugar de los colores de estado";
 
 /* ==================== */

@@ -6,6 +6,8 @@
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIconName</key>
+	<string>AppIcon</string>
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
@@ -18,8 +20,8 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
-	<key>CFBundleIconName</key>
-	<string>AppIcon</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.utilities</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>LSUIElement</key>
@@ -30,32 +32,21 @@
 	<false/>
 	<key>NSSupportsAutomaticTermination</key>
 	<true/>
-	<key>LSApplicationCategoryType</key>
-	<string>public.app-category.utilities</string>
 	<key>NSSupportsSuddenTermination</key>
 	<false/>
-
-	<!-- Sparkle Update Configuration -->
-	<key>SUFeedURL</key>
-	<string>https://hamed-elfayome.github.io/Claude-Usage-Tracker/appcast.xml</string>
-
-	<key>SUPublicEDKey</key>
-	<string>1ol8Exuba8opOy5R93YCQVuBw5Y6q4MgtMrgnsh8Kec=</string>
-
-	<key>SUEnableAutomaticChecks</key>
-	<true/>
-
-	<key>SUScheduledCheckInterval</key>
-	<integer>86400</integer>
-
 	<key>SUAllowsAutomaticUpdates</key>
 	<true/>
-
-	<key>SUEnableInstallerLauncherService</key>
+	<key>SUEnableAutomaticChecks</key>
 	<true/>
-
-	<!-- Enable gentle reminders for background apps -->
 	<key>SUEnableAutomaticUpdateReminders</key>
 	<true/>
+	<key>SUEnableInstallerLauncherService</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://hamed-elfayome.github.io/Claude-Usage-Tracker/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>1ol8Exuba8opOy5R93YCQVuBw5Y6q4MgtMrgnsh8Kec=</string>
+	<key>SUScheduledCheckInterval</key>
+	<integer>86400</integer>
 </dict>
 </plist>

@@ -41,6 +41,7 @@ struct MetricIconCard: View {
                     }
                 ))
                 .toggleStyle(.switch)
+                .tint(.orange)
                 .labelsHidden()
             }
 
@@ -123,6 +124,7 @@ private struct SessionDisplayOptions: View {
                 }
             }
             .toggleStyle(.switch)
+            .tint(.orange)
         }
     }
 }

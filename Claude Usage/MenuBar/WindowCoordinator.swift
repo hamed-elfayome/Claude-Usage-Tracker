@@ -22,10 +22,13 @@ final class WindowCoordinator: NSObject {
 
     func setupPopover(contentViewController: NSViewController) {
         let popover = NSPopover()
-        popover.contentSize = Constants.WindowSizes.popoverSize
+        popover.contentSize = NSSize(width: 320, height: 10) // Auto-sized by SwiftUI content
         popover.behavior = .semitransient
         popover.animates = true
         popover.delegate = self
+        if #available(macOS 13.0, *) {
+            (contentViewController as? NSHostingController<PopoverContentView>)?.sizingOptions = .intrinsicContentSize
+        }
         popover.contentViewController = contentViewController
         self.popover = popover
         LoggingService.shared.logWindowEvent("Popover created")
@@ -110,8 +113,9 @@ final class WindowCoordinator: NSObject {
 
         // If settings window already exists, just bring it to front
         if let existingWindow = settingsWindow, existingWindow.isVisible {
+            NSApp.setActivationPolicy(.regular)
+            NSRunningApplication.current.activate()
             existingWindow.makeKeyAndOrderFront(nil)
-            NSApp.activate(ignoringOtherApps: true)
             LoggingService.shared.logWindowEvent("Settings window brought to front")
             return
         }
@@ -119,15 +123,20 @@ final class WindowCoordinator: NSObject {
         // Create settings window
         DispatchQueue.main.asyncAfter(deadline: .now() + Constants.UITiming.popoverCloseDelay) {
             NSApp.setActivationPolicy(.regular)
-            NSApp.activate(ignoringOtherApps: true)
 
             let window = SettingsWindowBuilder.makeWindow(size: Constants.WindowSizes.settingsWindow)
             window.title = "app.window.settings".localized
             window.center()
+            window.isRestorable = false
             window.delegate = self
             window.makeKeyAndOrderFront(nil)
 
             self.settingsWindow = window
+
+            // Bring window to front and make app active
+            window.makeKeyAndOrderFront(nil)
+            NSRunningApplication.current.activate()
+
             LoggingService.shared.logWindowEvent("Settings window opened")
         }
     }
@@ -138,12 +147,11 @@ final class WindowCoordinator: NSObject {
         // If prompt window already exists, just bring it to front
         if let existingWindow = githubPromptWindow, existingWindow.isVisible {
             existingWindow.makeKeyAndOrderFront(nil)
-            NSApp.activate(ignoringOtherApps: true)
+            NSApp.activate()
             return
         }
 
         NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
 
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 500, height: 300),
@@ -155,10 +163,14 @@ final class WindowCoordinator: NSObject {
         window.contentViewController = promptView
         window.center()
         window.isRestorable = false
-        window.makeKeyAndOrderFront(nil)
         window.delegate = self
 
         githubPromptWindow = window
+
+        // Bring window to front after it's fully configured
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate()
+
         LoggingService.shared.logWindowEvent("GitHub prompt opened")
     }
 

@@ -103,7 +103,7 @@
 "appearance.menu_bar_icons.subtitle" = "Personalize quais métricas aparecem na sua barra de menu";
 "appearance.show_icon_names" = "Mostrar nomes dos ícones";
 "appearance.show_icon_names.description" = "Exibir rótulos de métricas (S:, W:, API:) ao lado dos ícones";
-"appearance.monochrome_mode" = "Monocromático (Adaptativo)";
+"appearance.monochrome_mode" = "Escala de cinzentos (Adaptativo)";
 "appearance.monochrome_mode.description" = "Os ícones se adaptam automaticamente ao modo claro/escuro";
 "appearance.metric_configuration" = "Configuração de Métricas";
 "appearance.drag_to_reorder" = "Arraste para reordenar os ícones. Métricas desabilitadas ficam ocultas da barra de menu.";
@@ -148,7 +148,7 @@
 "setup.enable_auto_start" = "Habilitar início automático de sessão";
 "setup.menubar_appearance" = "Aparência da Barra de Menu";
 "setup.choose_icon_style" = "Escolha seu estilo de ícone preferido";
-"setup.monochrome_adaptive" = "Monocromático (Adaptativo)";
+"setup.monochrome_adaptive" = "Escala de cinzentos (Adaptativo)";
 "setup.validation.success" = "Conectado com sucesso à organização";
 
 /* ==================== */
@@ -419,8 +419,8 @@
 "appearance.subtitle" = "Personalize seus ícones e métricas da barra de menu";
 "appearance.global_settings" = "Configurações Globais";
 "appearance.menu_bar_metrics" = "Métricas da Barra de Menu";
-"appearance.monochrome_title" = "Monocromático";
-"appearance.monochrome_description" = "Usar cor adaptativa em vez de cores de status (verde/laranja/vermelho)";
+"appearance.monochrome_title" = "Escala de cinzentos";
+"appearance.monochrome_description" = "Usar escala de cinzentos em vez de cores de status (verde/laranja/vermelho)";
 "appearance.show_labels_title" = "Mostrar Rótulos dos Ícones";
 "appearance.show_labels_description" = "Exibir rótulos de prefixo (S:, W:, API:) para cada métrica";
 "appearance.show_remaining_title" = "Mostrar Porcentagem Restante";
@@ -429,10 +429,10 @@
 "appearance.pace_marker_section_subtitle" = "Acompanhe o ritmo de uso em relação aos períodos de reinício";
 "appearance.show_time_marker_title" = "Mostrar marcador de tempo";
 "appearance.show_time_marker_description" = "Exibir uma marca nas barras de progresso mostrando quanto do período de tempo já passou";
-"appearance.show_pace_marker_title" = "Colorir marcador por ritmo";
-"appearance.show_pace_marker_description" = "Colore o marcador de tempo pelo ritmo de uso projetado (verde → roxo). Aplica-se a métricas de sessão e semanais.";
-"appearance.pace_coloring_title" = "Cores de barra por ritmo";
-"appearance.pace_coloring_description" = "Colorir barras de progresso com base no ritmo projetado em vez do nível de uso atual. Projeta se você atingirá os limites até o final do período.";
+"appearance.show_pace_marker_title" = "Cores do marcador de ritmo";
+"appearance.show_pace_marker_description" = "Colorir o marcador de ritmo pelo ritmo projetado em 6 níveis";
+"appearance.pace_coloring_title" = "Cores da barra de ritmo";
+"appearance.pace_coloring_description" = "Colorir a barra de progresso pelo ritmo projetado em vez do nível de uso";
 "appearance.multiprofile_locked_title" = "Configurações de Aparência Bloqueadas";
 "appearance.multiprofile_locked_description" = "Estas configurações estão desativadas enquanto a Exibição Multi-Perfil está ativa. Cada perfil usa sua própria aparência no modo multi-perfil.";
 "appearance.disable_multiprofile" = "Desativar Exibição Multi-Perfil";
@@ -529,7 +529,7 @@
 "multiprofile.show_week_description" = "Exibir uso semanal além da sessão";
 "multiprofile.show_label" = "Mostrar Nome do Perfil";
 "multiprofile.show_label_description" = "Exibir nome do perfil abaixo do ícone";
-"multiprofile.use_system_color" = "Usar Cor do Sistema";
+"multiprofile.use_system_color" = "Escala de cinzentos";
 "multiprofile.use_system_color_description" = "Usar a cor de destaque do Mac em vez das cores de status";
 
 /* ==================== */

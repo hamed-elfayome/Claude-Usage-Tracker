@@ -15,12 +15,12 @@ import AppKit
 /// Pace-specific status for the 6-tier color spectrum.
 /// Projects end-of-period usage from current consumption rate to determine urgency.
 enum PaceStatus: Int, Comparable, CaseIterable {
-    case comfortable = 0  // projected <50%  — way under budget
-    case onTrack     = 1  // projected 50-75% — sustainable pace
-    case warming     = 2  // projected 75-90% — starting to push it
-    case pressing    = 3  // projected 90-100% — will likely hit limit
-    case critical    = 4  // projected 100-120% — on track to exceed
-    case runaway     = 5  // projected >120% — burning way too fast
+    case comfortable = 0  // projected <75%   — plenty of headroom
+    case onTrack     = 1  // projected 75-100% — using allocation well
+    case warming     = 2  // projected 100-110% — might hit the limit
+    case pressing    = 3  // projected 110-120% — will likely run short
+    case critical    = 4  // projected 120-135% — running out early
+    case runaway     = 5  // projected >135%  — burning way too fast
 
     static func < (lhs: PaceStatus, rhs: PaceStatus) -> Bool {
         lhs.rawValue < rhs.rawValue
@@ -35,11 +35,11 @@ enum PaceStatus: Int, Comparable, CaseIterable {
         guard usedPercentage > 0 else { return .comfortable }
         let projected = (usedPercentage / 100.0) / elapsedFraction
         switch projected {
-        case ..<0.50:     return .comfortable
-        case 0.50..<0.75: return .onTrack
-        case 0.75..<0.90: return .warming
-        case 0.90..<1.00: return .pressing
-        case 1.00..<1.20: return .critical
+        case ..<0.75:     return .comfortable
+        case 0.75..<1.00: return .onTrack
+        case 1.00..<1.10: return .warming
+        case 1.10..<1.20: return .pressing
+        case 1.20..<1.35: return .critical
         default:          return .runaway
         }
     }

@@ -105,7 +105,7 @@
 "appearance.menu_bar_icons.subtitle" = "Personnalisez les métriques qui apparaissent dans votre barre de menus";
 "appearance.show_icon_names" = "Afficher les noms d'icônes";
 "appearance.show_icon_names.description" = "Afficher les étiquettes de métriques (S:, W:, API:) à côté des icônes";
-"appearance.monochrome_mode" = "Monochrome (Adaptatif)";
+"appearance.monochrome_mode" = "Niveaux de gris (Adaptatif)";
 "appearance.monochrome_mode.description" = "Les icônes s'adaptent automatiquement au mode clair/sombre";
 "appearance.metric_configuration" = "Configuration des Métriques";
 "appearance.drag_to_reorder" = "Glisser pour réorganiser les icônes. Les métriques désactivées sont masquées de la barre de menus.";
@@ -150,7 +150,7 @@
 "setup.enable_auto_start" = "Activer le démarrage automatique de session";
 "setup.menubar_appearance" = "Apparence de la Barre de Menus";
 "setup.choose_icon_style" = "Choisissez votre style d'icône préféré";
-"setup.monochrome_adaptive" = "Monochrome (Adaptatif)";
+"setup.monochrome_adaptive" = "Niveaux de gris (Adaptatif)";
 "setup.validation.success" = "Connecté avec succès à l'organisation";
 
 /* ==================== */
@@ -405,20 +405,20 @@
 "appearance.subtitle" = "Personnalisez vos icônes et métriques de barre de menus";
 "appearance.global_settings" = "Paramètres Globaux";
 "appearance.menu_bar_metrics" = "Métriques de la Barre de Menus";
-"appearance.monochrome_title" = "Monochrome";
-"appearance.monochrome_description" = "Utiliser une couleur adaptative au lieu des couleurs d'état (vert/orange/rouge)";
+"appearance.monochrome_title" = "Niveaux de gris";
+"appearance.monochrome_description" = "Utiliser les niveaux de gris au lieu des couleurs d'état (vert/orange/rouge)";
 "appearance.show_labels_title" = "Afficher les Étiquettes d'Icônes";
 "appearance.show_labels_description" = "Afficher les étiquettes de préfixe (S:, W:, API:) pour chaque métrique";
 "appearance.show_remaining_title" = "Afficher le Pourcentage Restant";
 "appearance.show_remaining_description" = "Afficher la capacité restante au lieu du pourcentage utilisé (comme la batterie macOS)";
 "appearance.pace_marker_section_title" = "Marqueur de Rythme";
 "appearance.pace_marker_section_subtitle" = "Suivre le rythme d'utilisation par rapport aux périodes de réinitialisation";
-"appearance.show_time_marker_title" = "Afficher le marqueur de temps écoulé";
+"appearance.show_time_marker_title" = "Afficher le marqueur de temps";
 "appearance.show_time_marker_description" = "Afficher un repère sur les barres de progression indiquant la progression dans la période";
-"appearance.show_pace_marker_title" = "Colorer le marqueur par rythme";
-"appearance.show_pace_marker_description" = "Colore le marqueur de temps selon le rythme d'utilisation projeté (vert → violet). S'applique aux métriques de session et hebdomadaires.";
-"appearance.pace_coloring_title" = "Couleurs de barre par rythme";
-"appearance.pace_coloring_description" = "Colorer les barres de progression selon le rythme projeté au lieu du niveau d'utilisation actuel. Projette si vous atteindrez les limites d'ici la fin de la période.";
+"appearance.show_pace_marker_title" = "Couleurs du marqueur de rythme";
+"appearance.show_pace_marker_description" = "Colorer le marqueur de rythme selon le rythme projeté en 6 niveaux";
+"appearance.pace_coloring_title" = "Couleurs de barre de rythme";
+"appearance.pace_coloring_description" = "Colorer la barre de progression selon le rythme projeté au lieu du niveau d'utilisation";
 "appearance.multiprofile_locked_title" = "Paramètres d'Apparence Verrouillés";
 "appearance.multiprofile_locked_description" = "Ces paramètres sont désactivés pendant que l'Affichage Multi-Profil est actif. Chaque profil utilise sa propre apparence en mode multi-profil.";
 "appearance.disable_multiprofile" = "Désactiver l'Affichage Multi-Profil";
@@ -509,7 +509,7 @@
 "multiprofile.show_week_description" = "Afficher l'utilisation hebdomadaire en plus de la session";
 "multiprofile.show_label" = "Afficher Nom du Profil";
 "multiprofile.show_label_description" = "Afficher le nom du profil sous l'icône";
-"multiprofile.use_system_color" = "Utiliser la Couleur Système";
+"multiprofile.use_system_color" = "Niveaux de gris";
 "multiprofile.use_system_color_description" = "Utiliser la couleur d'accentuation du Mac au lieu des couleurs d'état";
 
 /* ==================== */

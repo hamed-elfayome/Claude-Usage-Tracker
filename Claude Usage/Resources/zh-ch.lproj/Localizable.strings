@@ -105,7 +105,7 @@
 "appearance.menu_bar_icons.subtitle" = "自定义菜单栏中显示的指标";
 "appearance.show_icon_names" = "显示图标名称";
 "appearance.show_icon_names.description" = "在图标旁边显示指标标签 (S:, W:, API:)";
-"appearance.monochrome_mode" = "单色（自适应）";
+"appearance.monochrome_mode" = "灰度（自适应）";
 "appearance.monochrome_mode.description" = "图标自动适应明暗模式";
 "appearance.metric_configuration" = "指标配置";
 "appearance.drag_to_reorder" = "拖拽重新排序图标。禁用的指标将从菜单栏隐藏。";
@@ -150,7 +150,7 @@
 "setup.enable_auto_start" = "启用自动启动会话";
 "setup.menubar_appearance" = "菜单栏外观";
 "setup.choose_icon_style" = "选择您偏好的图标样式";
-"setup.monochrome_adaptive" = "单色（自适应）";
+"setup.monochrome_adaptive" = "灰度（自适应）";
 "setup.validation.success" = "成功连接到组织";
 
 /* ==================== */
@@ -435,20 +435,20 @@
 "appearance.subtitle" = "自定义您的菜单栏图标和指标";
 "appearance.global_settings" = "全局设置";
 "appearance.menu_bar_metrics" = "菜单栏指标";
-"appearance.monochrome_title" = "单色";
-"appearance.monochrome_description" = "使用自适应颜色而不是状态颜色（绿色/橙色/红色）";
+"appearance.monochrome_title" = "灰度";
+"appearance.monochrome_description" = "使用灰度而不是状态颜色（绿色/橙色/红色）";
 "appearance.show_labels_title" = "显示图标标签";
 "appearance.show_labels_description" = "为每个指标显示前缀标签（S:, W:, API:）";
 "appearance.show_remaining_title" = "显示剩余百分比";
 "appearance.show_remaining_description" = "显示剩余容量而不是已使用百分比（类似 macOS 电池）";
 "appearance.pace_marker_section_title" = "节奏标记";
 "appearance.pace_marker_section_subtitle" = "跟踪相对于重置周期的使用节奏";
-"appearance.show_time_marker_title" = "显示时间进度标记";
+"appearance.show_time_marker_title" = "显示时间标记";
 "appearance.show_time_marker_description" = "在进度条上显示标记，指示当前时间段已经过去多少时间";
-"appearance.show_pace_marker_title" = "按速率着色标记";
-"appearance.show_pace_marker_description" = "根据预计使用速率为时间标记着色（绿色→紫色）。适用于会话和每周指标。";
-"appearance.pace_coloring_title" = "基于节奏的进度条颜色";
-"appearance.pace_coloring_description" = "根据预测节奏而非当前使用水平为进度条着色。预测您是否会在周期结束前达到限制。";
+"appearance.show_pace_marker_title" = "节奏标记颜色";
+"appearance.show_pace_marker_description" = "按6级预测节奏为节奏标记着色";
+"appearance.pace_coloring_title" = "节奏进度条颜色";
+"appearance.pace_coloring_description" = "按预测节奏而非使用水平为进度条着色";
 "appearance.multiprofile_locked_title" = "外观设置已锁定";
 "appearance.multiprofile_locked_description" = "当多配置文件显示处于活动状态时，这些设置被禁用。在多配置文件模式下，每个配置文件使用自己的外观。";
 "appearance.disable_multiprofile" = "关闭多配置文件显示";
@@ -517,7 +517,7 @@
 "multiprofile.show_week_description" = "除了会话使用量外，还显示每周使用量";
 "multiprofile.show_label" = "显示配置文件标签";
 "multiprofile.show_label_description" = "在图标下方显示配置文件名称";
-"multiprofile.use_system_color" = "单色";
+"multiprofile.use_system_color" = "灰度";
 "multiprofile.use_system_color_description" = "使用白色而不是状态颜色（绿色/橙色/红色）";
 
 /* ==================== */
