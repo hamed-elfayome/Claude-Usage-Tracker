@@ -26,6 +26,10 @@ final class WindowCoordinator: NSObject {
         popover.behavior = .semitransient
         popover.animates = true
         popover.delegate = self
+        // Let the hosting controller report its actual content size (fixes #165)
+        if let hostingController = contentViewController as? NSHostingController<PopoverContentView> {
+            hostingController.sizingOptions = .intrinsicContentSize
+        }
         popover.contentViewController = contentViewController
         self.popover = popover
         LoggingService.shared.logWindowEvent("Popover created")
@@ -48,7 +52,11 @@ final class WindowCoordinator: NSObject {
         } else {
             // Recreate content if it was moved to a detached window
             if popover.contentViewController == nil {
-                popover.contentViewController = contentProvider()
+                let newController = contentProvider()
+                if let hostingController = newController as? NSHostingController<PopoverContentView> {
+                    hostingController.sizingOptions = .intrinsicContentSize
+                }
+                popover.contentViewController = newController
             }
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
             startMonitoringForOutsideClicks()

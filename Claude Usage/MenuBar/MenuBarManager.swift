@@ -469,7 +469,11 @@ class MenuBarManager: NSObject, ObservableObject {
             }
         )
 
-        return NSHostingController(rootView: contentView)
+        let hostingController = NSHostingController(rootView: contentView)
+        // Let the hosting controller report its actual SwiftUI content size to NSPopover,
+        // so the popover positions correctly on all display configurations (fixes #165).
+        hostingController.sizingOptions = .intrinsicContentSize
+        return hostingController
     }
 
     @objc private func togglePopover(_ sender: Any?) {
