@@ -477,6 +477,12 @@ class MenuBarManager: NSObject, ObservableObject {
     }
 
     @objc private func togglePopover(_ sender: Any?) {
+        // Right-click: show context menu instead of popover
+        if let event = NSApp.currentEvent, event.type == .rightMouseUp {
+            showContextMenu(from: sender)
+            return
+        }
+
         // Determine which button was clicked
         let clickedButton: NSStatusBarButton?
         if let button = sender as? NSStatusBarButton {
@@ -556,6 +562,56 @@ class MenuBarManager: NSObject, ObservableObject {
         // the status item's window frame may not be finalized until a layout pass.
         button.window?.layoutIfNeeded()
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+    }
+
+    // MARK: - Right-Click Context Menu
+
+    private func showContextMenu(from sender: Any?) {
+        let menu = NSMenu()
+
+        let refreshItem = NSMenuItem(
+            title: "common.refresh".localized,
+            action: #selector(contextRefresh),
+            keyEquivalent: ""
+        )
+        refreshItem.target = self
+        menu.addItem(refreshItem)
+
+        let settingsItem = NSMenuItem(
+            title: "common.settings".localized,
+            action: #selector(contextSettings),
+            keyEquivalent: ","
+        )
+        settingsItem.target = self
+        menu.addItem(settingsItem)
+
+        let quitItem = NSMenuItem(
+            title: "common.quit".localized,
+            action: #selector(contextQuit),
+            keyEquivalent: "q"
+        )
+        quitItem.target = self
+        menu.addItem(quitItem)
+
+        // Show the menu below the clicked status bar button
+        if let button = sender as? NSStatusBarButton,
+           let window = button.window {
+            let buttonFrame = button.convert(button.bounds, to: nil)
+            let screenFrame = window.convertToScreen(buttonFrame)
+            menu.popUp(positioning: nil, at: NSPoint(x: screenFrame.origin.x, y: screenFrame.origin.y), in: nil)
+        }
+    }
+
+    @objc private func contextRefresh() {
+        refreshUsage()
+    }
+
+    @objc private func contextSettings() {
+        preferencesClicked()
+    }
+
+    @objc private func contextQuit() {
+        NSApplication.shared.terminate(nil)
     }
 
     private func closePopover() {

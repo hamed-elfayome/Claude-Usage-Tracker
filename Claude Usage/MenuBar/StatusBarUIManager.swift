@@ -49,6 +49,7 @@ final class StatusBarUIManager {
             if let button = statusItem.button {
                 button.action = action
                 button.target = target
+                button.sendAction(on: [.leftMouseUp, .rightMouseUp])
                 // Set a temporary placeholder - will be updated with actual logo
                 button.title = ""
             } else {
@@ -66,6 +67,7 @@ final class StatusBarUIManager {
                 if let button = statusItem.button {
                     button.action = action
                     button.target = target
+                    button.sendAction(on: [.leftMouseUp, .rightMouseUp])
                 } else {
                     LoggingService.shared.logWarning("Status bar button is nil for \(metricConfig.metricType.displayName) - screens: \(NSScreen.screens.count)")
                 }
@@ -115,6 +117,7 @@ final class StatusBarUIManager {
             if let button = statusItem.button {
                 button.action = action
                 button.target = target
+                button.sendAction(on: [.leftMouseUp, .rightMouseUp])
                 if metricType == .session {
                     // Default logo placeholder
                     button.title = ""
@@ -182,6 +185,7 @@ final class StatusBarUIManager {
             if let button = statusItem.button {
                 button.action = action
                 button.target = target
+                button.sendAction(on: [.leftMouseUp, .rightMouseUp])
                 button.title = ""
             } else {
                 LoggingService.shared.logWarning("Multi-profile status bar button is nil - screens: \(NSScreen.screens.count)")
@@ -197,6 +201,7 @@ final class StatusBarUIManager {
                 if let button = statusItem.button {
                     button.action = action
                     button.target = target
+                    button.sendAction(on: [.leftMouseUp, .rightMouseUp])
                 } else {
                     LoggingService.shared.logWarning("Multi-profile status bar button is nil for \(profile.name) - screens: \(NSScreen.screens.count)")
                 }
