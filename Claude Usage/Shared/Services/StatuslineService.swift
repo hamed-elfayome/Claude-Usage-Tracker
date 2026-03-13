@@ -254,8 +254,8 @@ else
   PACE_RUNAWAY=$'\\033[38;5;135m'     # purple
 fi
 
-# When pace step colors enabled, always use real 6-tier colors regardless of color mode
-if [ "$pace_marker_step_colors" != "0" ]; then
+# When pace step colors enabled, use real 6-tier colors (but not in monochrome mode)
+if [ "$pace_marker_step_colors" != "0" ] && [ "$color_mode" != "monochrome" ]; then
   PACE_COMFORTABLE=$'\\033[38;5;34m'
   PACE_ON_TRACK=$'\\033[38;5;37m'
   PACE_WARMING=$'\\033[38;5;178m'
@@ -430,9 +430,9 @@ if [ "$show_usage" = "1" ]; then
           [ $marker_pos -gt 9 ] && marker_pos=9
           [ $marker_pos -lt 0 ] && marker_pos=0
 
-          # Compute 6-tier pace color (integer math, >= 3% elapsed = 540s)
-          pace_color=""
-          if [ $elapsed_secs -ge 540 ]; then
+          # Compute pace color; fall back to usage_color (empty in monochrome = no color)
+          pace_color="$usage_color"
+          if [ "$pace_marker_step_colors" != "0" ] && [ $elapsed_secs -ge 540 ]; then
             projected_pct=$((utilization * 18000 / elapsed_secs))
             if [ $projected_pct -lt 50 ]; then
               pace_color="$PACE_COMFORTABLE"
@@ -449,18 +449,10 @@ if [ "$show_usage" = "1" ]; then
             fi
           fi
 
-          # Override: use usage bar color if step colors disabled
-          if [ "$pace_marker_step_colors" = "0" ]; then
-            pace_color="$usage_color"
-          fi
-
-          if [ -n "$pace_color" ]; then
-            # Replace bar character at marker_pos with bold ┃
-            # progress_bar = " " + 10 block chars; marker_pos+1 is the target index
-            left="${progress_bar:0:$((marker_pos + 1))}"
-            right="${progress_bar:$((marker_pos + 2))}"
-            progress_bar="${left}${pace_color}┃${RESET}${usage_color}${right}"
-          fi
+          # Always insert marker (color may be empty in monochrome = terminal default)
+          left="${progress_bar:0:$((marker_pos + 1))}"
+          right="${progress_bar:$((marker_pos + 2))}"
+          progress_bar="${left}${pace_color}┃${RESET}${usage_color}${right}"
         fi
       fi
 
