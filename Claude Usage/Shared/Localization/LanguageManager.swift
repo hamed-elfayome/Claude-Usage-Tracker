@@ -54,6 +54,7 @@ class LanguageManager: ObservableObject {
         case japanese = "ja"
         case korean = "ko"
         case zhCn = "zh-cn"
+        case ukrainian = "uk"
 
         var id: String { rawValue }
 
@@ -72,6 +73,7 @@ class LanguageManager: ObservableObject {
             case .japanese: return "日本語"
             case .korean: return "한국어"
             case .zhCn: return "简体中文"
+            case .ukrainian: return "Українська"
             }
         }
 
@@ -87,6 +89,7 @@ class LanguageManager: ObservableObject {
             case .japanese: return "Japanese"
             case .korean: return "Korean"
             case .zhCn: return "Simplified Chinese"
+            case .ukrainian: return "Ukrainian"
             }
         }
 
@@ -102,6 +105,7 @@ class LanguageManager: ObservableObject {
             case .japanese: return "🇯🇵"
             case .korean: return "🇰🇷"
             case .zhCn: return "🇨🇳"
+            case .ukrainian: return "🇺🇦"
             }
         }
     }
