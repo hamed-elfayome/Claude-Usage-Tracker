@@ -27,6 +27,8 @@ struct ClaudeCodeView: View {
     @State private var showUsageLabel: Bool = SharedDataStore.shared.loadStatuslineShowUsageLabel()
     @State private var showContextLabel: Bool = SharedDataStore.shared.loadStatuslineShowContextLabel()
     @State private var showResetLabel: Bool = SharedDataStore.shared.loadStatuslineShowResetLabel()
+    @State private var showWeekly: Bool = SharedDataStore.shared.loadStatuslineShowWeekly()
+    @State private var showExtraUsage: Bool = SharedDataStore.shared.loadStatuslineShowExtraUsage()
 
     // Appearance settings
     @State private var colorMode: StatuslineColorMode = SharedDataStore.shared.loadStatuslineColorMode()
@@ -252,6 +254,20 @@ struct ClaudeCodeView: View {
                                             isOn: $showResetLabel
                                         )
                                     }
+
+                                    Divider()
+
+                                    SettingToggle(
+                                        title: "Show Weekly Usage",
+                                        description: "Weekly token usage with bar and reset time",
+                                        isOn: $showWeekly
+                                    )
+
+                                    SettingToggle(
+                                        title: "Show Extra Usage",
+                                        description: "Cost indicator (e.g., 9.49 USD)",
+                                        isOn: $showExtraUsage
+                                    )
                                 }
                                 .padding(.leading, DesignTokens.Spacing.cardPadding)
                             }
@@ -535,7 +551,58 @@ struct ClaudeCodeView: View {
                 }
             }
 
-            if !showDirectory && !showBranch && !showModel && !showProfile && !showContext && !showUsage {
+            if showWeekly && showUsage {
+                let usage = profileManager.activeProfile?.claudeUsage
+                let weeklyPct = usage != nil ? Int(usage!.weeklyPercentage) : 45
+                let weeklyColor = TerminalColors.usageLevel(weeklyPct)
+                if showDirectory || showBranch || showModel || showProfile || showContext || showUsage {
+                    Text(" │ ").foregroundColor(TerminalColors.gray)
+                }
+                let weeklyPrefix = showUsageLabel ? "Weekly: " : ""
+                Text("\(weeklyPrefix)\(weeklyPct)%")
+                    .foregroundColor(weeklyColor)
+                if showProgressBar {
+                    let wFilled = max(0, min(10, (weeklyPct + 5) / 10))
+                    let wEmpty = 10 - wFilled
+                    let wBar = String(repeating: "▓", count: wFilled) + String(repeating: "░", count: wEmpty)
+                    if showPaceMarker {
+                        let wMarkerPos = max(0, min(9, previewWeeklyMarkerPosition))
+                        let wChars = Array(wBar)
+                        Text(" " + String(wChars.prefix(wMarkerPos)))
+                            .foregroundColor(weeklyColor)
+                        Text("┃")
+                            .foregroundColor(previewWeeklyPaceColor(percentage: weeklyPct))
+                        Text(String(wChars.suffix(from: wMarkerPos + 1)))
+                            .foregroundColor(weeklyColor)
+                    } else {
+                        Text(" \(wBar)").foregroundColor(weeklyColor)
+                    }
+                }
+                if showResetTime {
+                    let weeklyResetString = formatWeeklyResetTime(usage?.weeklyResetTime)
+                    Text(" → \(weeklyResetString)").foregroundColor(weeklyColor)
+                }
+            }
+
+            if showExtraUsage && showUsage {
+                if showDirectory || showBranch || showModel || showProfile || showContext || showUsage || (showWeekly && showUsage) {
+                    Text(" │ ").foregroundColor(TerminalColors.gray)
+                }
+                if let claudeUsage = profileManager.activeProfile?.claudeUsage,
+                   let costUsed = claudeUsage.costUsed,
+                   let costLimit = claudeUsage.costLimit,
+                   let costCurrency = claudeUsage.costCurrency,
+                   costLimit > 0 {
+                    let costPct = min(100, Int(costUsed / costLimit * 100))
+                    let costColor = TerminalColors.usageLevel(costPct)
+                    Text(String(format: "%.2f %@", costUsed / 100.0, costCurrency))
+                        .foregroundColor(costColor)
+                } else {
+                    Text("– USD").foregroundColor(TerminalColors.gray)
+                }
+            }
+
+            if !showDirectory && !showBranch && !showModel && !showProfile && !showContext && !showUsage && !showWeekly && !showExtraUsage {
                 Text("claudecode.preview_no_components".localized)
                     .foregroundColor(.secondary)
             }
@@ -568,6 +635,14 @@ struct ClaudeCodeView: View {
         return formatter.string(from: date.roundedToNearestMinute())
     }
 
+    /// Formats weekly reset time for preview display (weekday + time)
+    private func formatWeeklyResetTime(_ date: Date?) -> String {
+        guard let date = date else { return "Mon --:--" }
+        let formatter = DateFormatter()
+        formatter.dateFormat = use24HourTime ? "EEE HH:mm" : "EEE h:mm a"
+        return formatter.string(from: date.roundedToNearestMinute())
+    }
+
     /// Returns the appropriate icon color for each color mode
     private func iconColorForMode(_ mode: StatuslineColorMode) -> Color {
         switch mode {
@@ -590,6 +665,18 @@ struct ClaudeCodeView: View {
             }
         }
         return 6 // Demo: 60% elapsed
+    }
+
+    /// Marker position for weekly preview (0-9), based on real elapsed time or demo
+    private var previewWeeklyMarkerPosition: Int {
+        if let usage = profileManager.activeProfile?.claudeUsage {
+            let remaining = usage.weeklyResetTime.timeIntervalSince(Date())
+            if remaining > 0 && remaining < 604800 {
+                let elapsed = 604800 - remaining
+                return max(0, min(9, Int(round(elapsed * 10.0 / 604800.0))))
+            }
+        }
+        return 3 // Demo: ~30% elapsed in weekly window
     }
 
     /// Pace color for the marker in preview, matching terminal ANSI colors
@@ -616,13 +703,37 @@ struct ClaudeCodeView: View {
         return TerminalColors.usageLevel(percentage)
     }
 
+    /// Pace color for the weekly marker in preview, matching terminal ANSI colors
+    private func previewWeeklyPaceColor(percentage: Int) -> Color {
+        guard paceMarkerStepColors else {
+            return TerminalColors.usageLevel(percentage)
+        }
+
+        let elapsedFraction: Double
+        if let usage = profileManager.activeProfile?.claudeUsage {
+            let remaining = usage.weeklyResetTime.timeIntervalSince(Date())
+            if remaining > 0 && remaining < 604800 {
+                elapsedFraction = (604800 - remaining) / 604800
+            } else {
+                elapsedFraction = 0.3
+            }
+        } else {
+            elapsedFraction = 0.3
+        }
+
+        if let paceStatus = PaceStatus.calculate(usedPercentage: Double(percentage), elapsedFraction: elapsedFraction) {
+            return TerminalColors.paceColor(for: paceStatus)
+        }
+        return TerminalColors.usageLevel(percentage)
+    }
+
     // MARK: - Actions
 
     /// Applies the current configuration to Claude Code statusline.
     /// Installs scripts, updates config file, and enables statusline in settings.json.
     private func applyConfiguration() {
         // Validate: at least one component must be selected
-        guard showModel || showDirectory || showBranch || showContext || showUsage || showProfile else {
+        guard showModel || showDirectory || showBranch || showContext || showUsage || showProfile || showWeekly || showExtraUsage else {
             statusMessage = "claudecode.error_no_components".localized
             isSuccess = false
             return
@@ -655,6 +766,8 @@ struct ClaudeCodeView: View {
         SharedDataStore.shared.saveStatuslineShowContextLabel(showContextLabel)
         SharedDataStore.shared.saveStatuslineShowUsageLabel(showUsageLabel)
         SharedDataStore.shared.saveStatuslineShowResetLabel(showResetLabel)
+        SharedDataStore.shared.saveStatuslineShowWeekly(showWeekly)
+        SharedDataStore.shared.saveStatuslineShowExtraUsage(showExtraUsage)
 
         do {
             // Write configuration file
@@ -677,7 +790,9 @@ struct ClaudeCodeView: View {
                 colorMode: colorMode,
                 singleColorHex: singleColorHex,
                 showProfile: showProfile,
-                profileName: profileName
+                profileName: profileName,
+                showWeekly: showWeekly,
+                showExtraUsage: showExtraUsage
             )
 
             // Update Claude CLI settings.json
@@ -766,6 +881,42 @@ struct ClaudeCodeView: View {
             }
 
             parts.append(usageText)
+        }
+
+        if showWeekly && showUsage {
+            let usage = profileManager.activeProfile?.claudeUsage
+            let weeklyPct = usage != nil ? Int(usage!.weeklyPercentage) : 45
+            var weeklyText = showUsageLabel ? "Weekly: \(weeklyPct)%" : "\(weeklyPct)%"
+
+            if showProgressBar {
+                let wFilled = max(0, min(10, (weeklyPct + 5) / 10))
+                let wEmpty = 10 - wFilled
+                var wChars = Array(String(repeating: "▓", count: wFilled) + String(repeating: "░", count: wEmpty))
+                if showPaceMarker {
+                    let wMarkerPos = max(0, min(9, previewWeeklyMarkerPosition))
+                    wChars[wMarkerPos] = "┃"
+                }
+                weeklyText += " \(String(wChars))"
+            }
+
+            if showResetTime {
+                let wResetStr = formatWeeklyResetTime(usage?.weeklyResetTime)
+                weeklyText += " → \(wResetStr)"
+            }
+
+            parts.append(weeklyText)
+        }
+
+        if showExtraUsage && showUsage {
+            if let claudeUsage = profileManager.activeProfile?.claudeUsage,
+               let costUsed = claudeUsage.costUsed,
+               let costLimit = claudeUsage.costLimit,
+               let costCurrency = claudeUsage.costCurrency,
+               costLimit > 0 {
+                parts.append(String(format: "%.2f %@", costUsed / 100.0, costCurrency))
+            } else {
+                parts.append("– USD")
+            }
         }
 
         return parts.isEmpty ? "claudecode.preview_no_components".localized : parts.joined(separator: " │ ")

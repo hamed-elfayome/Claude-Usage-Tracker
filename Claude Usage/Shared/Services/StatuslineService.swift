@@ -134,6 +134,8 @@ if [ -f "$config_file" ]; then
   show_profile=$SHOW_PROFILE
   profile_name="$PROFILE_NAME"
   pace_marker_step_colors=$PACE_MARKER_STEP_COLORS
+  show_weekly=$SHOW_WEEKLY
+  show_extra_usage=$SHOW_EXTRA_USAGE
 else
   show_model=1
   show_dir=1
@@ -153,6 +155,8 @@ else
   show_profile=0
   profile_name=""
   pace_marker_step_colors=1
+  show_weekly=0
+  show_extra_usage=0
 fi
 
 input=$(cat)
@@ -514,6 +518,186 @@ if [ "$show_usage" = "1" ]; then
   fi
 fi
 
+weekly_text=""
+if [ "$show_weekly" = "1" ] && [ "$show_usage" = "1" ]; then
+  cache_file="$HOME/.claude/.statusline-usage-cache"
+  weekly_util=""
+  weekly_reset=""
+  if [ -f "$cache_file" ]; then
+    cache_ts=$(grep "^TIMESTAMP=" "$cache_file" 2>/dev/null | cut -d= -f2)
+    now_ts=$(date +%s)
+    if [ -n "$cache_ts" ]; then
+      cache_age=$((now_ts - cache_ts))
+      if [ "$cache_age" -lt 300 ]; then
+        weekly_util=$(grep "^WEEKLY_UTILIZATION=" "$cache_file" | cut -d= -f2)
+        weekly_reset=$(grep "^WEEKLY_RESETS_AT=" "$cache_file" | cut -d= -f2)
+      fi
+    fi
+  fi
+
+  if [ -n "$weekly_util" ]; then
+    if [ "$weekly_util" -le 10 ]; then
+      weekly_color="$LEVEL_1"
+    elif [ "$weekly_util" -le 20 ]; then
+      weekly_color="$LEVEL_2"
+    elif [ "$weekly_util" -le 30 ]; then
+      weekly_color="$LEVEL_3"
+    elif [ "$weekly_util" -le 40 ]; then
+      weekly_color="$LEVEL_4"
+    elif [ "$weekly_util" -le 50 ]; then
+      weekly_color="$LEVEL_5"
+    elif [ "$weekly_util" -le 60 ]; then
+      weekly_color="$LEVEL_6"
+    elif [ "$weekly_util" -le 70 ]; then
+      weekly_color="$LEVEL_7"
+    elif [ "$weekly_util" -le 80 ]; then
+      weekly_color="$LEVEL_8"
+    elif [ "$weekly_util" -le 90 ]; then
+      weekly_color="$LEVEL_9"
+    else
+      weekly_color="$LEVEL_10"
+    fi
+
+    if [ "$show_bar" = "1" ]; then
+      if [ "$weekly_util" -eq 0 ]; then
+        w_filled=0
+      elif [ "$weekly_util" -eq 100 ]; then
+        w_filled=10
+      else
+        w_filled=$(( (weekly_util * 10 + 50) / 100 ))
+      fi
+      [ "$w_filled" -lt 0 ] && w_filled=0
+      [ "$w_filled" -gt 10 ] && w_filled=10
+      w_empty=$((10 - w_filled))
+
+      weekly_bar=" "
+      i=0
+      while [ $i -lt $w_filled ]; do
+        weekly_bar="${weekly_bar}▓"
+        i=$((i + 1))
+      done
+      i=0
+      while [ $i -lt $w_empty ]; do
+        weekly_bar="${weekly_bar}░"
+        i=$((i + 1))
+      done
+    else
+      weekly_bar=""
+    fi
+
+    if [ "$show_pace_marker" = "1" ] && [ "$show_bar" = "1" ] && [ -n "$weekly_reset" ] && [ "$weekly_reset" != "null" ]; then
+      w_iso=$(echo "$weekly_reset" | sed 's/\\.[0-9]*Z$//')
+      w_reset_epoch=$(date -ju -f "%Y-%m-%dT%H:%M:%S" "$w_iso" "+%s" 2>/dev/null)
+      if [ -n "$w_reset_epoch" ]; then
+        now_epoch=$(date +%s)
+        w_remaining=$((w_reset_epoch - now_epoch))
+        if [ $w_remaining -gt 0 ] && [ $w_remaining -lt 604800 ]; then
+          w_elapsed=$((604800 - w_remaining))
+          w_marker_pos=$(( (w_elapsed * 10 + 302400) / 604800 ))
+          [ $w_marker_pos -gt 9 ] && w_marker_pos=9
+          [ $w_marker_pos -lt 0 ] && w_marker_pos=0
+
+          w_pace_color="$weekly_color"
+          if [ $w_elapsed -ge 3024 ] && [ "$pace_marker_step_colors" != "0" ]; then
+            w_projected=$((weekly_util * 604800 / w_elapsed))
+            if [ $w_projected -lt 50 ]; then
+              w_pace_color="$PACE_COMFORTABLE"
+            elif [ $w_projected -lt 75 ]; then
+              w_pace_color="$PACE_ON_TRACK"
+            elif [ $w_projected -lt 90 ]; then
+              w_pace_color="$PACE_WARMING"
+            elif [ $w_projected -lt 100 ]; then
+              w_pace_color="$PACE_PRESSING"
+            elif [ $w_projected -lt 120 ]; then
+              w_pace_color="$PACE_CRITICAL"
+            else
+              w_pace_color="$PACE_RUNAWAY"
+            fi
+          fi
+
+          if [ -n "$w_pace_color" ]; then
+            w_left="${weekly_bar:0:$((w_marker_pos + 1))}"
+            w_right="${weekly_bar:$((w_marker_pos + 2))}"
+            weekly_bar="${w_left}${w_pace_color}┃${RESET}${weekly_color}${w_right}"
+          fi
+        fi
+      fi
+    fi
+
+    weekly_reset_display=""
+    if [ "$show_reset" = "1" ] && [ -n "$weekly_reset" ] && [ "$weekly_reset" != "null" ]; then
+      w_iso=$(echo "$weekly_reset" | sed 's/\\.[0-9]*Z$//')
+      w_reset_epoch=$(date -ju -f "%Y-%m-%dT%H:%M:%S" "$w_iso" "+%s" 2>/dev/null)
+      if [ -n "$w_reset_epoch" ]; then
+        seconds_part=$((w_reset_epoch % 60))
+        if [ "$seconds_part" -ge 30 ]; then
+          w_reset_epoch=$((w_reset_epoch + (60 - seconds_part)))
+        else
+          w_reset_epoch=$((w_reset_epoch - seconds_part))
+        fi
+        if [ "$use_24h" = "1" ]; then
+          w_reset_time=$(date -r "$w_reset_epoch" "+%a %H:%M" 2>/dev/null)
+        else
+          w_reset_time=$(date -r "$w_reset_epoch" "+%a %I:%M %p" 2>/dev/null)
+        fi
+        [ -n "$w_reset_time" ] && weekly_reset_display=$(printf " → %s" "$w_reset_time")
+      fi
+    fi
+
+    if [ "$show_usage_label" = "1" ]; then
+      weekly_text="${weekly_color}Weekly: ${weekly_util}%${weekly_bar}${weekly_reset_display}${RESET}"
+    else
+      weekly_text="${weekly_color}${weekly_util}%${weekly_bar}${weekly_reset_display}${RESET}"
+    fi
+  fi
+fi
+
+extra_usage_text=""
+if [ "$show_extra_usage" = "1" ] && [ "$show_usage" = "1" ]; then
+  cache_file="$HOME/.claude/.statusline-usage-cache"
+  cost_used=""
+  cost_limit=""
+  cost_currency=""
+  if [ -f "$cache_file" ]; then
+    cache_ts=$(grep "^TIMESTAMP=" "$cache_file" 2>/dev/null | cut -d= -f2)
+    now_ts=$(date +%s)
+    if [ -n "$cache_ts" ]; then
+      cache_age=$((now_ts - cache_ts))
+      if [ "$cache_age" -lt 300 ]; then
+        cost_used=$(grep "^COST_USED=" "$cache_file" | cut -d= -f2)
+        cost_limit=$(grep "^COST_LIMIT=" "$cache_file" | cut -d= -f2)
+        cost_currency=$(grep "^COST_CURRENCY=" "$cache_file" | cut -d= -f2)
+      fi
+    fi
+  fi
+
+  if [ -n "$cost_used" ] && [ -n "$cost_limit" ] && [ -n "$cost_currency" ]; then
+    cost_pct=$(awk "BEGIN { p = int($cost_used / $cost_limit * 100); if (p > 100) p = 100; if (p < 0) p = 0; print p }")
+    if [ "$cost_pct" -le 10 ]; then
+      cost_color="$LEVEL_1"
+    elif [ "$cost_pct" -le 20 ]; then
+      cost_color="$LEVEL_2"
+    elif [ "$cost_pct" -le 30 ]; then
+      cost_color="$LEVEL_3"
+    elif [ "$cost_pct" -le 40 ]; then
+      cost_color="$LEVEL_4"
+    elif [ "$cost_pct" -le 50 ]; then
+      cost_color="$LEVEL_5"
+    elif [ "$cost_pct" -le 60 ]; then
+      cost_color="$LEVEL_6"
+    elif [ "$cost_pct" -le 70 ]; then
+      cost_color="$LEVEL_7"
+    elif [ "$cost_pct" -le 80 ]; then
+      cost_color="$LEVEL_8"
+    elif [ "$cost_pct" -le 90 ]; then
+      cost_color="$LEVEL_9"
+    else
+      cost_color="$LEVEL_10"
+    fi
+    extra_usage_text="${cost_color}${cost_used} ${cost_currency}${RESET}"
+  fi
+fi
+
 output=""
 separator="${GRAY} │ ${RESET}"
 
@@ -549,6 +733,18 @@ fi
 if [ -n "$usage_text" ]; then
   [ -n "$output" ] && output="${output}${separator}"
   output="${output}${usage_text}"
+fi
+
+# Then weekly usage
+if [ -n "$weekly_text" ]; then
+  [ -n "$output" ] && output="${output}${separator}"
+  output="${output}${weekly_text}"
+fi
+
+# Then extra usage
+if [ -n "$extra_usage_text" ]; then
+  [ -n "$output" ] && output="${output}${separator}"
+  output="${output}${extra_usage_text}"
 fi
 
 printf "%s\\n" "$output"
@@ -643,7 +839,9 @@ printf "%s\\n" "$output"
         colorMode: StatuslineColorMode = .colored,
         singleColorHex: String = "#00BFFF",
         showProfile: Bool,
-        profileName: String
+        profileName: String,
+        showWeekly: Bool = false,
+        showExtraUsage: Bool = false
     ) throws {
         let configPath = Constants.ClaudePaths.claudeDirectory
             .appendingPathComponent("statusline-config.txt")
@@ -677,6 +875,8 @@ COLOR_MODE=\(colorModeString)
 SINGLE_COLOR=\(singleColorHex)
 SHOW_PROFILE=\(showProfile ? "1" : "0")
 PROFILE_NAME="\(profileName)"
+SHOW_WEEKLY=\(showWeekly ? "1" : "0")
+SHOW_EXTRA_USAGE=\(showExtraUsage ? "1" : "0")
 """
 
         try config.write(to: configPath, atomically: true, encoding: .utf8)
@@ -780,6 +980,18 @@ PROFILE_NAME="\(profileName)"
 
         if let name = profileName {
             cacheContent += "\nPROFILE_NAME=\(name)"
+        }
+
+        let weeklyPct = Int(usage.weeklyPercentage)
+        cacheContent += "\nWEEKLY_UTILIZATION=\(weeklyPct)"
+        cacheContent += "\nWEEKLY_RESETS_AT=\(formatter.string(from: usage.weeklyResetTime))"
+
+        if let costUsed = usage.costUsed, let costLimit = usage.costLimit, let costCurrency = usage.costCurrency, costLimit > 0 {
+            let usedStr = String(format: "%.2f", costUsed / 100.0)
+            let limitStr = String(format: "%.2f", costLimit / 100.0)
+            cacheContent += "\nCOST_USED=\(usedStr)"
+            cacheContent += "\nCOST_LIMIT=\(limitStr)"
+            cacheContent += "\nCOST_CURRENCY=\(costCurrency)"
         }
 
         try? cacheContent.write(to: cachePath, atomically: true, encoding: .utf8)
