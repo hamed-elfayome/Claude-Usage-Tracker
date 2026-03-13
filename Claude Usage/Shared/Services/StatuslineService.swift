@@ -598,7 +598,7 @@ if [ "$show_weekly" = "1" ] && [ "$show_usage" = "1" ]; then
           [ $w_marker_pos -lt 0 ] && w_marker_pos=0
 
           w_pace_color="$weekly_color"
-          if [ $w_elapsed -ge 3024 ] && [ "$pace_marker_step_colors" != "0" ]; then
+          if [ "$pace_marker_step_colors" != "0" ] && [ $w_elapsed -ge 3024 ]; then
             w_projected=$((weekly_util * 604800 / w_elapsed))
             if [ $w_projected -lt 50 ]; then
               w_pace_color="$PACE_COMFORTABLE"
@@ -615,11 +615,10 @@ if [ "$show_weekly" = "1" ] && [ "$show_usage" = "1" ]; then
             fi
           fi
 
-          if [ -n "$w_pace_color" ]; then
-            w_left="${weekly_bar:0:$((w_marker_pos + 1))}"
-            w_right="${weekly_bar:$((w_marker_pos + 2))}"
-            weekly_bar="${w_left}${w_pace_color}┃${RESET}${weekly_color}${w_right}"
-          fi
+          # Always insert marker; w_pace_color may be empty (monochrome = no color wrap)
+          w_left="${weekly_bar:0:$((w_marker_pos + 1))}"
+          w_right="${weekly_bar:$((w_marker_pos + 2))}"
+          weekly_bar="${w_left}${w_pace_color}┃${RESET}${weekly_color}${w_right}"
         fi
       fi
     fi
