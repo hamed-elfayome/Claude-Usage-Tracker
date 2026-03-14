@@ -17,6 +17,7 @@
   ### [Download Latest Release (v3.0.3)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
 
   <sub>macOS 14.0+ (Sonoma) | ~6 MB | Native Swift/SwiftUI | Officially Signed</sub>
+> 🪟 **Windows user?** A community-maintained port is available: [ClaudeTracker for Windows](https://github.com/TobiiNT/ClaudeTracker) — built with WPF/.NET 8, includes pace tracking, ETA estimation, and WebView2 sign-in.
 
   <a href="https://www.buymeacoffee.com/hamedelfayome" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="40"></a>
 </div>
@@ -778,6 +779,9 @@ If automatic updates aren't working:
 <img src="https://contrib.rocks/image?repo=hamed-elfayome/Claude-Usage-Tracker" alt="Contributors" height="30px" />
 
 This project is built for the community — everyone is welcome
+
+### Windows Port
+- [ClaudeTracker for Windows](https://github.com/TobiiNT/ClaudeTracker) by [@TobiiNT](https://github.com/TobiiNT) — WPF/.NET 8 port for Windows users
 
 ### Special Thanks
 
