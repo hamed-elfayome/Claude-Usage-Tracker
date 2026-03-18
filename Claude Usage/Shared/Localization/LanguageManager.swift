@@ -27,8 +27,13 @@ class LanguageManager: ObservableObject {
             currentLanguage = language
         } else {
             // Detect system language and match to supported languages
-            let systemLanguage = Locale.current.language.languageCode?.identifier ?? "en"
-            currentLanguage = SupportedLanguage.allCases.first { $0.code == systemLanguage } ?? .english
+            let langCode = Locale.current.language.languageCode?.identifier ?? "en"
+            let regionCode = Locale.current.language.region?.identifier ?? ""
+            // Build full locale identifier for region-specific matching (e.g. pt-BR)
+            let fullCode = regionCode.isEmpty ? langCode : "\(langCode)-\(regionCode)"
+            currentLanguage = SupportedLanguage.allCases.first { $0.code == fullCode }
+                ?? SupportedLanguage.allCases.first { $0.code == langCode }
+                ?? .english
         }
 
         applyLanguage()
@@ -51,6 +56,7 @@ class LanguageManager: ObservableObject {
         case german = "de"
         case italian = "it"
         case portuguese = "pt"
+        case brazilianPortuguese = "pt-BR"
         case japanese = "ja"
         case korean = "ko"
         case zhCn = "zh-cn"
@@ -69,6 +75,7 @@ class LanguageManager: ObservableObject {
             case .german: return "Deutsch"
             case .italian: return "Italiano"
             case .portuguese: return "Português"
+            case .brazilianPortuguese: return "Português (Brasil)"
             case .japanese: return "日本語"
             case .korean: return "한국어"
             case .zhCn: return "简体中文"
@@ -84,6 +91,7 @@ class LanguageManager: ObservableObject {
             case .german: return "German"
             case .italian: return "Italian"
             case .portuguese: return "Portuguese"
+            case .brazilianPortuguese: return "Brazilian Portuguese"
             case .japanese: return "Japanese"
             case .korean: return "Korean"
             case .zhCn: return "Simplified Chinese"
@@ -99,6 +107,7 @@ class LanguageManager: ObservableObject {
             case .german: return "🇩🇪"
             case .italian: return "🇮🇹"
             case .portuguese: return "🇵🇹"
+            case .brazilianPortuguese: return "🇧🇷"
             case .japanese: return "🇯🇵"
             case .korean: return "🇰🇷"
             case .zhCn: return "🇨🇳"
