@@ -116,21 +116,40 @@ struct ManageProfilesView: View {
                                     .font(DesignTokens.Typography.caption)
                                     .foregroundColor(.secondary)
 
-                                Picker("", selection: Binding(
-                                    get: { profileManager.multiProfileConfig.iconStyle },
-                                    set: { newStyle in
-                                        var config = profileManager.multiProfileConfig
-                                        config.iconStyle = newStyle
-                                        profileManager.updateMultiProfileConfig(config)
-                                        NotificationCenter.default.post(name: .displayModeChanged, object: nil)
-                                    }
-                                )) {
+                                let columns = [
+                                    GridItem(.flexible(), spacing: 8),
+                                    GridItem(.flexible(), spacing: 8)
+                                ]
+                                LazyVGrid(columns: columns, spacing: 8) {
                                     ForEach(MultiProfileIconStyle.allCases, id: \.self) { style in
-                                        Text(style.shortNameKey.localized).tag(style)
+                                        let isSelected = profileManager.multiProfileConfig.iconStyle == style
+                                        Button {
+                                            var config = profileManager.multiProfileConfig
+                                            config.iconStyle = style
+                                            profileManager.updateMultiProfileConfig(config)
+                                            NotificationCenter.default.post(name: .displayModeChanged, object: nil)
+                                        } label: {
+                                            HStack(spacing: 6) {
+                                                Image(systemName: style.icon)
+                                                    .font(.system(size: 11))
+                                                Text(style.shortNameKey.localized)
+                                                    .font(.system(size: 11, weight: .medium))
+                                            }
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.vertical, 6)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 6)
+                                                    .fill(isSelected ? Color.accentColor.opacity(0.15) : Color.primary.opacity(0.05))
+                                            )
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 6)
+                                                    .strokeBorder(isSelected ? Color.accentColor : Color.clear, lineWidth: 1.5)
+                                            )
+                                            .foregroundColor(isSelected ? .accentColor : .secondary)
+                                        }
+                                        .buttonStyle(.plain)
                                     }
                                 }
-                                .pickerStyle(.segmented)
-                                .labelsHidden()
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
 
