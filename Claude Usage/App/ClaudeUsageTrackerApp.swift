@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct ClaudeUsageTrackerApp: App {
+struct AIUsageTrackerApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {
