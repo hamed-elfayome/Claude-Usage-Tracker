@@ -48,6 +48,10 @@ struct UsageSnapshot: Codable, Identifiable, Equatable {
     let apiPrepaidCreditsCents: Int?
     let apiCurrency: String?
 
+    // Multi-provider snapshot type (e.g. "openaiCost", "codexRateLimit")
+    // nil for legacy Claude snapshots (backward compatible)
+    let snapshotType: String?
+
     // The reset time that triggered this snapshot
     let triggeringResetTime: Date
 
@@ -66,6 +70,7 @@ struct UsageSnapshot: Codable, Identifiable, Equatable {
         apiSpendCents: Int? = nil,
         apiPrepaidCreditsCents: Int? = nil,
         apiCurrency: String? = nil,
+        snapshotType: String? = nil,
         triggeringResetTime: Date
     ) {
         self.id = id
@@ -82,7 +87,29 @@ struct UsageSnapshot: Codable, Identifiable, Equatable {
         self.apiSpendCents = apiSpendCents
         self.apiPrepaidCreditsCents = apiPrepaidCreditsCents
         self.apiCurrency = apiCurrency
+        self.snapshotType = snapshotType
         self.triggeringResetTime = triggeringResetTime
+    }
+
+    // Backward-compatible decoding: snapshotType is nil for legacy data
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        timestamp = try container.decode(Date.self, forKey: .timestamp)
+        resetType = try container.decode(ResetType.self, forKey: .resetType)
+        sessionTokensUsed = try container.decodeIfPresent(Int.self, forKey: .sessionTokensUsed)
+        sessionPercentage = try container.decodeIfPresent(Double.self, forKey: .sessionPercentage)
+        weeklyTokensUsed = try container.decodeIfPresent(Int.self, forKey: .weeklyTokensUsed)
+        weeklyPercentage = try container.decodeIfPresent(Double.self, forKey: .weeklyPercentage)
+        opusWeeklyTokensUsed = try container.decodeIfPresent(Int.self, forKey: .opusWeeklyTokensUsed)
+        opusWeeklyPercentage = try container.decodeIfPresent(Double.self, forKey: .opusWeeklyPercentage)
+        sonnetWeeklyTokensUsed = try container.decodeIfPresent(Int.self, forKey: .sonnetWeeklyTokensUsed)
+        sonnetWeeklyPercentage = try container.decodeIfPresent(Double.self, forKey: .sonnetWeeklyPercentage)
+        apiSpendCents = try container.decodeIfPresent(Int.self, forKey: .apiSpendCents)
+        apiPrepaidCreditsCents = try container.decodeIfPresent(Int.self, forKey: .apiPrepaidCreditsCents)
+        apiCurrency = try container.decodeIfPresent(String.self, forKey: .apiCurrency)
+        snapshotType = try container.decodeIfPresent(String.self, forKey: .snapshotType)
+        triggeringResetTime = try container.decode(Date.self, forKey: .triggeringResetTime)
     }
 
     /// Creates a snapshot from ClaudeUsage data (for session reset)

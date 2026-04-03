@@ -310,6 +310,56 @@ class NotificationManager: NotificationServiceProtocol {
         }
     }
 
+    /// Check and notify for any provider type based on profile settings
+    func checkAndNotifyForProfile(_ profile: Profile) {
+        guard profile.notificationSettings.enabled else { return }
+        guard let percentage = profile.effectivePercentageForThreshold else { return }
+
+        let thresholds = profile.notificationSettings.sortedThresholds
+
+        for threshold in thresholds {
+            if percentage >= Double(threshold) {
+                let title: String
+                switch profile.providerType {
+                case .claudeMax:
+                    let model = profile.primaryModel ?? "opus"
+                    title = "\(profile.name) — \(model.capitalized) at \(Int(percentage))%"
+                case .claudeAPI:
+                    title = "\(profile.name) — Claude API spend alert"
+                case .openaiAPI:
+                    title = "\(profile.name) — OpenAI API spend alert"
+                case .codex:
+                    title = "\(profile.name) — Codex rate limit at \(Int(percentage))%"
+                }
+
+                // Dedup using profile ID + threshold (consistent with existing mechanism)
+                let identifier = "\(profile.id.uuidString)-\(threshold)"
+
+                // Check if we've already sent this notification
+                guard !sentNotifications.contains(identifier) else { continue }
+
+                let content = UNMutableNotificationContent()
+                content.title = title
+                content.body = "Usage has reached \(threshold)%"
+                content.categoryIdentifier = "USAGE_ALERT"
+
+                // Apply sound from profile notification settings
+                if let sound = profile.notificationSettings.notificationSound {
+                    content.sound = sound
+                }
+
+                let request = UNNotificationRequest(identifier: identifier, content: content, trigger: nil)
+                UNUserNotificationCenter.current().add(request) { [weak self] error in
+                    if error == nil {
+                        var updated = self?.sentNotifications ?? []
+                        updated.insert(identifier)
+                        self?.sentNotifications = updated
+                    }
+                }
+            }
+        }
+    }
+
     /// Clears notification tracking state for a specific profile
     func clearNotificationsForProfile(_ profileName: String) {
         sentNotifications = sentNotifications.filter { !$0.hasPrefix(profileName) }

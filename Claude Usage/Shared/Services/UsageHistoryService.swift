@@ -249,6 +249,54 @@ class UsageHistoryService {
         LoggingService.shared.logInfo("Recorded periodic weekly snapshot: \(usage.weeklyPercentage)%")
     }
 
+    // MARK: - Multi-Provider Recording
+
+    /// Record OpenAI cost snapshot
+    func recordOpenAICost(for profileId: UUID, usage: OpenAIUsage) {
+        var history = loadHistory(for: profileId)
+        let snapshot = UsageSnapshot(
+            timestamp: usage.lastUpdated,
+            resetType: .billingCycle,
+            apiSpendCents: usage.currentSpendCents,
+            snapshotType: "openaiCost",
+            triggeringResetTime: usage.lastUpdated
+        )
+        history.snapshots.append(snapshot)
+        trimSnapshots(&history.snapshots, type: "openaiCost", max: 500)
+        saveHistory(history, for: profileId)
+    }
+
+    /// Record Codex rate-limit snapshot
+    func recordCodexRateLimit(for profileId: UUID, usage: CodexUsage) {
+        var history = loadHistory(for: profileId)
+        let snapshot = UsageSnapshot(
+            timestamp: usage.lastUpdated,
+            resetType: .sessionReset,
+            sessionPercentage: usage.requestPercentageUsed,
+            weeklyPercentage: usage.tokenPercentageUsed,
+            snapshotType: "codexRateLimit",
+            triggeringResetTime: usage.lastUpdated
+        )
+        history.snapshots.append(snapshot)
+        trimSnapshots(&history.snapshots, type: "codexRateLimit", max: 500)
+        saveHistory(history, for: profileId)
+    }
+
+    private func trimSnapshots(_ snapshots: inout [UsageSnapshot], type: String, max: Int) {
+        let typed = snapshots.filter { $0.snapshotType == type }
+        if typed.count > max {
+            let excess = typed.count - max
+            var removed = 0
+            snapshots.removeAll { snapshot in
+                if snapshot.snapshotType == type && removed < excess {
+                    removed += 1
+                    return true
+                }
+                return false
+            }
+        }
+    }
+
     // MARK: - Query Methods
 
     /// Gets session snapshots for a profile (sorted newest first)

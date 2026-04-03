@@ -10,6 +10,7 @@ class MenuBarManager: NSObject, ObservableObject {
     @Published private(set) var status: ClaudeStatus = .unknown
     @Published private(set) var apiUsage: APIUsage?
     @Published private(set) var isRefreshing: Bool = false
+    @Published private(set) var allProfileUsages: [UUID: ProfileUsageUpdate] = [:]
 
     // Error tracking for stale data / credential banners
     @Published private(set) var hasCredentialError: Bool = false
@@ -290,6 +291,48 @@ class MenuBarManager: NSObject, ObservableObject {
         lastKnownAPIResetTime.removeValue(forKey: profileId)
         resetJustRecorded.removeValue(forKey: profileId)
         autoSwitchedProfileIds.remove(profileId)
+    }
+
+    // MARK: - Multi-Provider Support
+
+    func profileUsageDidUpdate(profileId: UUID, update: ProfileUsageUpdate) {
+        allProfileUsages[profileId] = update
+
+        // Update the profile's stored usage data
+        if var profile = profileManager.profiles.first(where: { $0.id == profileId }) {
+            if let claudeUsage = update.claudeUsage {
+                profile.claudeUsage = claudeUsage
+            }
+            if let apiUsage = update.apiUsage {
+                profile.apiUsage = apiUsage
+            }
+            if let openaiUsage = update.openaiUsage {
+                profile.openaiUsage = openaiUsage
+            }
+            if let codexUsage = update.codexUsage {
+                profile.codexUsage = codexUsage
+            }
+            profileManager.updateProfile(profile)
+        }
+
+        updateSmartStatusBar()
+    }
+
+    func profileRefreshDidFail(profileId: UUID, error: Error) {
+        LoggingService.shared.logError("Refresh failed for profile \(profileId): \(error.localizedDescription)")
+    }
+
+    private func updateSmartStatusBar() {
+        let threshold = UserDefaults.standard.double(forKey: "statusBarThreshold")
+        let maxItems = UserDefaults.standard.integer(forKey: "statusBarMaxItems")
+
+        let _ = SmartStatusBarRenderer.profilesForStatusBar(
+            profileManager.profiles,
+            threshold: threshold > 0 ? threshold : 60,
+            maxItems: maxItems > 0 ? maxItems : 4
+        )
+
+        objectWillChange.send()
     }
 
     // MARK: - Profile Observation
