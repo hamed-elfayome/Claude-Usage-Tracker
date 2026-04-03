@@ -25,12 +25,12 @@ struct CodexProvider: UsageProvider {
             if httpResponse.statusCode == 401 { throw CodexError.unauthorized }
             throw CodexError.serverError(statusCode: httpResponse.statusCode)
         }
-        let headers = Dictionary(
-            uniqueKeysWithValues: httpResponse.allHeaderFields.compactMap { key, value in
-                guard let k = key as? String, let v = value as? String else { return nil }
-                return (k.lowercased(), v)
+        var headers: [String: String] = [:]
+        for (key, value) in httpResponse.allHeaderFields {
+            if let k = key as? String, let v = value as? String {
+                headers[k.lowercased()] = v
             }
-        )
+        }
         guard let usage = CodexUsage.fromHeaders(headers) else {
             throw CodexError.missingRateLimitHeaders
         }

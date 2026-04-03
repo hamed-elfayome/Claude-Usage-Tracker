@@ -113,9 +113,9 @@ class ProfileManager: ObservableObject {
     func createClaudeAPIProfile(name: String, apiSessionKey: String, apiOrganizationId: String) -> Profile {
         let profile = Profile(
             name: name,
-            providerType: .claudeAPI,
             apiSessionKey: apiSessionKey,
-            apiOrganizationId: apiOrganizationId
+            apiOrganizationId: apiOrganizationId,
+            providerType: .claudeAPI
         )
         profiles.append(profile)
         saveAndBroadcast()
