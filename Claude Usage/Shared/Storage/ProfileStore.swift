@@ -15,7 +15,8 @@ class ProfileStore {
     private let keychainService = KeychainService.shared
 
     private enum Keys {
-        static let profiles = "profiles_v3"
+        static let profiles = "profiles_v4"
+        static let legacyProfiles = "profiles_v3"
         static let activeProfileId = "activeProfileId"
         static let displayMode = "profileDisplayMode"
         static let multiProfileConfig = "multiProfileDisplayConfig"
@@ -48,20 +49,29 @@ class ProfileStore {
     }
 
     func loadProfiles() -> [Profile] {
-        guard let data = defaults.data(forKey: Keys.profiles) else {
-            LoggingService.shared.log("ProfileStore: No profiles found in storage")
-            return []
+        // Try v4 first
+        if let data = defaults.data(forKey: Keys.profiles) {
+            do {
+                let profiles = try JSONDecoder().decode([Profile].self, from: data)
+                LoggingService.shared.log("ProfileStore: Loaded \(profiles.count) profiles from v4 storage")
+                return profiles
+            } catch {
+                LoggingService.shared.logStorageError("loadProfiles v4", error: error)
+            }
         }
-
-        do {
-            let profiles = try JSONDecoder().decode([Profile].self, from: data)
-            LoggingService.shared.log("ProfileStore: Loaded \(profiles.count) profiles from storage")
-            return profiles
-        } catch {
-            LoggingService.shared.logStorageError("loadProfiles", error: error)
-            LoggingService.shared.logError("ProfileStore: Failed to decode profiles, returning empty array")
-            return []
+        // Fall back to v3
+        if let data = defaults.data(forKey: Keys.legacyProfiles) {
+            do {
+                let profiles = try JSONDecoder().decode([Profile].self, from: data)
+                LoggingService.shared.log("ProfileStore: Migrated \(profiles.count) profiles from v3 to v4")
+                saveProfiles(profiles)
+                return profiles
+            } catch {
+                LoggingService.shared.logStorageError("loadProfiles v3 migration", error: error)
+            }
         }
+        LoggingService.shared.log("ProfileStore: No profiles found in storage")
+        return []
     }
 
     func saveActiveProfileId(_ id: UUID) {

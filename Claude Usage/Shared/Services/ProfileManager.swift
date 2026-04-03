@@ -82,6 +82,51 @@ class ProfileManager: ObservableObject {
         return newProfile
     }
 
+    // MARK: - Provider-Specific Factory Methods
+
+    /// Create a new OpenAI API profile
+    func createOpenAIAPIProfile(name: String, adminKey: String, organizationId: String? = nil) -> Profile {
+        let profile = Profile(
+            name: name,
+            providerType: .openaiAPI,
+            openaiAdminKey: adminKey,
+            openaiOrganizationId: organizationId
+        )
+        profiles.append(profile)
+        saveAndBroadcast()
+        return profile
+    }
+
+    /// Create a new Codex probe profile
+    func createCodexProfile(name: String, apiKey: String) -> Profile {
+        let profile = Profile(
+            name: name,
+            providerType: .codex,
+            openaiApiKey: apiKey
+        )
+        profiles.append(profile)
+        saveAndBroadcast()
+        return profile
+    }
+
+    /// Create a new Claude API billing profile
+    func createClaudeAPIProfile(name: String, apiSessionKey: String, apiOrganizationId: String) -> Profile {
+        let profile = Profile(
+            name: name,
+            providerType: .claudeAPI,
+            apiSessionKey: apiSessionKey,
+            apiOrganizationId: apiOrganizationId
+        )
+        profiles.append(profile)
+        saveAndBroadcast()
+        return profile
+    }
+
+    private func saveAndBroadcast() {
+        profileStore.saveProfiles(profiles)
+        objectWillChange.send()
+    }
+
     func updateProfile(_ profile: Profile) {
         if let index = profiles.firstIndex(where: { $0.id == profile.id }) {
             profiles[index] = profile

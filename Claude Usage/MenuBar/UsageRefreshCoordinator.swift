@@ -12,6 +12,7 @@ import Combine
 final class UsageRefreshCoordinator {
     private var refreshTimer: Timer?
     private var refreshIntervalObserver: NSKeyValueObservation?
+    private var profileTimers: [UUID: Timer] = [:]
 
     private let apiService: APIServiceProtocol
     private let statusService: ClaudeStatusService
@@ -107,6 +108,47 @@ final class UsageRefreshCoordinator {
         LoggingService.shared.logInfo("Auto-refresh started with interval: \(interval)s")
     }
 
+    // MARK: - Multi-Provider Refresh
+
+    /// Start refresh timers for all enabled profiles with variable intervals
+    func startMultiProviderRefresh(profiles: [Profile]) {
+        stopAllTimers()
+        for profile in profiles where profile.isSelectedForDisplay {
+            let interval = profile.refreshInterval > 0
+                ? profile.refreshInterval
+                : profile.providerType.defaultRefreshInterval
+            let timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+                Task { [weak self] in
+                    await self?.refreshProfile(profile)
+                }
+            }
+            profileTimers[profile.id] = timer
+            // Immediate first refresh
+            Task { [weak self] in
+                await self?.refreshProfile(profile)
+            }
+        }
+    }
+
+    private func refreshProfile(_ profile: Profile) async {
+        let provider = UsageProviderFactory.makeProvider(for: profile)
+        do {
+            let update = try await provider.fetchUsage(for: profile)
+            await MainActor.run {
+                delegate?.profileUsageDidUpdate(profileId: profile.id, update: update)
+            }
+        } catch {
+            await MainActor.run {
+                delegate?.profileRefreshDidFail(profileId: profile.id, error: error)
+            }
+        }
+    }
+
+    func stopAllTimers() {
+        profileTimers.values.forEach { $0.invalidate() }
+        profileTimers.removeAll()
+    }
+
     private func observeRefreshIntervalChanges() {
         // Observe using DataStore.shared directly for KVO
         refreshIntervalObserver = DataStore.shared.userDefaults.observe(\.refreshIntervalValue, options: [.new]) { [weak self] _, change in
@@ -132,4 +174,11 @@ protocol UsageRefreshCoordinatorDelegate: AnyObject {
     func usageRefreshDidComplete(usage: ClaudeUsage)
     func statusRefreshDidComplete(status: ClaudeStatus)
     func apiUsageRefreshDidComplete(apiUsage: APIUsage)
+    func profileUsageDidUpdate(profileId: UUID, update: ProfileUsageUpdate)
+    func profileRefreshDidFail(profileId: UUID, error: Error)
+}
+
+extension UsageRefreshCoordinatorDelegate {
+    func profileUsageDidUpdate(profileId: UUID, update: ProfileUsageUpdate) {}
+    func profileRefreshDidFail(profileId: UUID, error: Error) {}
 }
