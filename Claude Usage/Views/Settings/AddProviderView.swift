@@ -43,11 +43,11 @@ struct AddProviderView: View {
         .sheet(item: $selectedType) { type in
             switch type {
             case .claudeMax:
-                Text("Use the existing Claude setup wizard for Claude Max accounts")
-                    .padding()
+                SetupWizardView()
+                    .frame(minWidth: 500, minHeight: 400)
             case .claudeAPI:
-                Text("Use the existing API billing setup for Claude API")
-                    .padding()
+                APIBillingView()
+                    .frame(minWidth: 500, minHeight: 400)
             case .openaiAPI:
                 OpenAICredentialView(providerType: .openaiAPI)
             case .codex:
