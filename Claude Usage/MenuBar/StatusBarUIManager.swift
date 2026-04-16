@@ -36,6 +36,28 @@ final class StatusBarUIManager {
 
     weak var delegate: StatusBarUIManagerDelegate?
 
+    // MARK: - Stable autosaveName helpers
+
+    /// Base prefix for all status item autosave names.
+    /// Ice (icemenubar.app) and macOS use autosaveName to persist item positions.
+    private static let autosavePrefix = "claudeUsageTracker"
+
+    /// Returns a stable autosaveName for a single-profile metric item
+    private static func autosaveName(for metricType: MenuBarMetricType) -> NSStatusItem.AutosaveName {
+        return "\(autosavePrefix).metric.\(metricType.rawValue)"
+    }
+
+    /// Returns a stable autosaveName for a multi-profile item by profile ID
+    private static func autosaveName(forProfileId id: UUID) -> NSStatusItem.AutosaveName {
+        return "\(autosavePrefix).multiProfile.\(id.uuidString)"
+    }
+
+    /// Returns a stable autosaveName for the peak hours indicator
+    private static let peakHoursAutosaveName: NSStatusItem.AutosaveName = "\(autosavePrefix).peakHours"
+
+    /// Returns a stable autosaveName for the default logo (no credentials)
+    private static let defaultLogoAutosaveName: NSStatusItem.AutosaveName = "\(autosavePrefix).defaultLogo"
+
     // MARK: - Multi-profile identity helpers
 
     /// Well-known placeholder UUID used for the default logo in multi-profile mode
@@ -56,6 +78,7 @@ final class StatusBarUIManager {
         if config.enabledMetrics.isEmpty {
             // No credentials/metrics - show default app logo
             let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+            statusItem.autosaveName = Self.defaultLogoAutosaveName
 
             if let button = statusItem.button {
                 button.action = action
@@ -74,6 +97,7 @@ final class StatusBarUIManager {
             // Create status items for enabled metrics
             for metricConfig in config.enabledMetrics {
                 let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+                statusItem.autosaveName = Self.autosaveName(for: metricConfig.metricType)
 
                 if let button = statusItem.button {
                     button.action = action
@@ -124,6 +148,10 @@ final class StatusBarUIManager {
         let itemsToAdd = newMetricTypes.subtracting(currentMetricTypes)
         for metricType in itemsToAdd {
             let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+            // When enabledMetrics is empty, only .session is in newMetricTypes, so this is safe
+            statusItem.autosaveName = config.enabledMetrics.isEmpty
+                ? Self.defaultLogoAutosaveName
+                : Self.autosaveName(for: metricType)
 
             if let button = statusItem.button {
                 button.action = action
@@ -215,6 +243,7 @@ final class StatusBarUIManager {
             // Create the status item if not already showing
             if peakHoursStatusItem == nil, let target = peakHoursTarget, let action = peakHoursAction {
                 let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+                statusItem.autosaveName = Self.peakHoursAutosaveName
                 if let button = statusItem.button {
                     button.action = action
                     button.target = target
@@ -261,6 +290,7 @@ final class StatusBarUIManager {
         if selectedProfiles.isEmpty {
             // No profiles selected - show default logo
             let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+            statusItem.autosaveName = Self.defaultLogoAutosaveName
             if let button = statusItem.button {
                 button.action = action
                 button.target = target
@@ -276,6 +306,7 @@ final class StatusBarUIManager {
             // Create one status item per selected profile
             for profile in selectedProfiles {
                 let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+                statusItem.autosaveName = Self.autosaveName(forProfileId: profile.id)
 
                 if let button = statusItem.button {
                     button.action = action
@@ -330,6 +361,7 @@ final class StatusBarUIManager {
         if selectedProfiles.isEmpty && idsToAdd.contains(Self.defaultLogoPlaceholderUUID) {
             // Need to add default logo
             let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+            statusItem.autosaveName = Self.defaultLogoAutosaveName
             if let button = statusItem.button {
                 button.action = action
                 button.target = target
@@ -341,6 +373,7 @@ final class StatusBarUIManager {
         } else {
             for profile in selectedProfiles where idsToAdd.contains(profile.id) {
                 let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+                statusItem.autosaveName = Self.autosaveName(forProfileId: profile.id)
                 if let button = statusItem.button {
                     button.action = action
                     button.target = target

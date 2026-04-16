@@ -983,7 +983,9 @@ class MenuBarManager: NSObject, ObservableObject {
             action: #selector(togglePopover)
         )
 
-        // Defer icon update to next run loop iteration to let NSStatusBar finalize layout
+        // WORKAROUND: Defer icon update to next run loop iteration to avoid race condition
+        // where NSStatusBar layout hasn't finalized yet after status item creation.
+        // This prevents potential flicker or layout issues during incremental updates.
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             self.statusBarUIManager?.updateMultiProfileButtons(profiles: self.profileManager.profiles, config: config, activeProfileId: self.profileManager.activeProfile?.id)
