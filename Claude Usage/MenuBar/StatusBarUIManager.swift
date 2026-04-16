@@ -36,6 +36,11 @@ final class StatusBarUIManager {
 
     weak var delegate: StatusBarUIManagerDelegate?
 
+    // MARK: - Multi-profile identity helpers
+
+    /// Well-known placeholder UUID used for the default logo in multi-profile mode
+    private static let defaultLogoPlaceholderUUID = UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
+
     // MARK: - Initialization
 
     init() {}
@@ -264,8 +269,8 @@ final class StatusBarUIManager {
             } else {
                 LoggingService.shared.logWarning("Multi-profile status bar button is nil - screens: \(NSScreen.screens.count)")
             }
-            // Use a placeholder UUID for default logo
-            multiProfileStatusItems[UUID()] = statusItem
+            // Use a well-known placeholder UUID for default logo (stable across calls)
+            multiProfileStatusItems[Self.defaultLogoPlaceholderUUID] = statusItem
             LoggingService.shared.logUIEvent("Multi-profile: No profiles selected, showing default logo")
         } else {
             // Create one status item per selected profile
@@ -287,6 +292,66 @@ final class StatusBarUIManager {
         }
 
         observeAppearanceChanges()
+    }
+
+    /// Incrementally updates multi-profile status items without destroying existing ones.
+    /// Only adds/removes items when the set of selected profiles changes.
+    func updateMultiProfileConfiguration(profiles: [Profile], target: AnyObject, action: Selector) {
+        guard isMultiProfileMode else {
+            // Not in multi-profile mode yet - do a full setup
+            setupMultiProfile(profiles: profiles, target: target, action: action)
+            return
+        }
+
+        let selectedProfiles = profiles.filter { $0.isSelectedForDisplay }
+        let newProfileIds: Set<UUID> = selectedProfiles.isEmpty
+            ? [Self.defaultLogoPlaceholderUUID]
+            : Set(selectedProfiles.map { $0.id })
+        let currentProfileIds = Set(multiProfileStatusItems.keys)
+
+        // Step 1: Remove items that are no longer needed
+        let idsToRemove = currentProfileIds.subtracting(newProfileIds)
+        for profileId in idsToRemove {
+            if let statusItem = multiProfileStatusItems[profileId] {
+                if let button = statusItem.button {
+                    button.image = nil
+                    button.action = nil
+                    button.target = nil
+                }
+                NSStatusBar.system.removeStatusItem(statusItem)
+                LoggingService.shared.logUIEvent("Multi-profile: Removed status item for profile \(profileId)")
+            }
+            multiProfileStatusItems.removeValue(forKey: profileId)
+        }
+
+        // Step 2: Add items that are new
+        let idsToAdd = newProfileIds.subtracting(currentProfileIds)
+
+        if selectedProfiles.isEmpty && idsToAdd.contains(Self.defaultLogoPlaceholderUUID) {
+            // Need to add default logo
+            let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+            if let button = statusItem.button {
+                button.action = action
+                button.target = target
+                button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+                button.title = ""
+            }
+            multiProfileStatusItems[Self.defaultLogoPlaceholderUUID] = statusItem
+            LoggingService.shared.logUIEvent("Multi-profile: Added default logo")
+        } else {
+            for profile in selectedProfiles where idsToAdd.contains(profile.id) {
+                let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+                if let button = statusItem.button {
+                    button.action = action
+                    button.target = target
+                    button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+                }
+                multiProfileStatusItems[profile.id] = statusItem
+                LoggingService.shared.logUIEvent("Multi-profile: Added status item for profile \(profile.name)")
+            }
+        }
+
+        LoggingService.shared.logUIEvent("Multi-profile config updated: removed=\(idsToRemove.count), added=\(idsToAdd.count), kept=\(currentProfileIds.intersection(newProfileIds).count)")
     }
 
     /// Adds a thin green underline to an image to indicate the active profile

@@ -98,6 +98,8 @@ class MenuBarManager: NSObject, ObservableObject {
     // Observer for peak hours setting changes
     private var peakHoursObserver: NSObjectProtocol?
 
+    private var multiProfileConfigObserver: NSObjectProtocol?
+
     // MARK: - Image Caching (CPU Optimization)
     private var cachedImage: NSImage?
     private var cachedImageKey: String = ""
@@ -214,6 +216,7 @@ class MenuBarManager: NSObject, ObservableObject {
 
         // Observe display mode changes (single/multi profile)
         observeDisplayModeChanges()
+        observeMultiProfileConfigChanges()
 
         // Setup headless mode observer if enabled (for Remote Desktop support)
         setupHeadlessModeObserver()
@@ -373,8 +376,8 @@ class MenuBarManager: NSObject, ObservableObject {
         // 3. Update menu bar based on current display mode
         // IMPORTANT: In multi-profile mode, we update all icons, not just switch config
         if profileManager.displayMode == .multi {
-            // Multi-profile mode - refresh all profile icons
-            setupMultiProfileMode()
+            // Multi-profile mode - update icons without recreating status items
+            updateMultiProfileDisplay()
         } else {
             // Single profile mode - update menu bar configuration
             updateMenuBarDisplay(with: profile.iconConfig)
@@ -815,8 +818,8 @@ class MenuBarManager: NSObject, ObservableObject {
             Task { @MainActor in
                 // Handle differently based on display mode
                 if self.profileManager.displayMode == .multi {
-                    // Multi-profile mode - refresh all profile icons
-                    self.setupMultiProfileMode()
+                    // Multi-profile mode - update icons without recreating status items
+                    self.updateMultiProfileDisplay()
                 } else {
                     // Single profile mode
                     let newConfig = self.profileManager.activeProfile?.iconConfig ?? .default
@@ -837,6 +840,22 @@ class MenuBarManager: NSObject, ObservableObject {
 
             Task { @MainActor in
                 self.handleDisplayModeChange()
+            }
+        }
+    }
+
+    private func observeMultiProfileConfigChanges() {
+        // Observe multi-profile visual config changes (icon style, toggles, profile selection)
+        // Uses incremental update — does NOT destroy/recreate status items
+        multiProfileConfigObserver = NotificationCenter.default.addObserver(
+            forName: .multiProfileConfigChanged,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+
+            Task { @MainActor in
+                self.updateMultiProfileDisplay()
             }
         }
     }
@@ -950,6 +969,27 @@ class MenuBarManager: NSObject, ObservableObject {
 
         // Refresh data for all selected profiles that have credentials
         refreshAllSelectedProfiles()
+    }
+
+    /// Incrementally updates multi-profile status items (without destroying/recreating them)
+    /// Use this when only icon config changed but the set of profiles may or may not have changed.
+    private func updateMultiProfileDisplay() {
+        let selectedProfiles = profileManager.getSelectedProfiles()
+        let config = profileManager.multiProfileConfig
+
+        statusBarUIManager?.updateMultiProfileConfiguration(
+            profiles: selectedProfiles,
+            target: self,
+            action: #selector(togglePopover)
+        )
+
+        // Defer icon update to next run loop iteration to let NSStatusBar finalize layout
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.statusBarUIManager?.updateMultiProfileButtons(profiles: self.profileManager.profiles, config: config, activeProfileId: self.profileManager.activeProfile?.id)
+        }
+
+        LoggingService.shared.log("MenuBarManager: Multi-profile display updated incrementally with \(selectedProfiles.count) profiles")
     }
 
     /// Refreshes usage data for all profiles selected for multi-profile display
