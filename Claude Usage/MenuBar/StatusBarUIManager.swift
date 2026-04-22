@@ -629,9 +629,11 @@ final class StatusBarUIManager {
         let profile = ProfileManager.shared.activeProfile
         let config = profile?.iconConfig ?? .default
 
-        // Check if we should show default logo (no usage credentials OR no enabled metrics)
-        let hasUsageCredentials = profile?.hasUsageCredentials ?? false
-        if !hasUsageCredentials || config.enabledMetrics.isEmpty {
+        // Keep the render path aligned with ClaudeAPIService/MenuBarManager auth
+        // fallback logic so users authenticated only via `claude login` don't
+        // periodically repaint to the default logo after successful refreshes.
+        let hasAnyCredentials = hasAnyAvailableCredentials(for: profile)
+        if !hasAnyCredentials || config.enabledMetrics.isEmpty {
             // Show default app logo
             if let statusItem = statusItems[.session],  // We use .session as placeholder key
                let button = statusItem.button {
@@ -709,6 +711,26 @@ final class StatusBarUIManager {
 
         image.isTemplate = config.colorMode == .monochrome && !config.showPaceMarker
         button.image = image
+    }
+
+    /// Mirrors the auth fallback used for actual usage fetches so UI gating does
+    /// not disagree with the network layer.
+    private func hasAnyAvailableCredentials(for profile: Profile?) -> Bool {
+        guard let profile else { return false }
+
+        if profile.hasUsageCredentials { return true }
+
+        do {
+            if let systemCreds = try ClaudeCodeSyncService.shared.readSystemCredentials(),
+               !ClaudeCodeSyncService.shared.isTokenExpired(systemCreds),
+               ClaudeCodeSyncService.shared.extractAccessToken(from: systemCreds) != nil {
+                return true
+            }
+        } catch {
+            LoggingService.shared.log("StatusBarUIManager.hasAnyAvailableCredentials: system keychain check failed: \(error.localizedDescription)")
+        }
+
+        return false
     }
 
     /// Get button for a specific metric (used for popover positioning)
