@@ -394,8 +394,9 @@ class MenuBarManager: NSObject, ObservableObject {
         // 4. Recreate popover with new profile data
         recreatePopover()
 
-        // 5. Trigger immediate refresh ONLY if profile has usage credentials
-        if profile.hasUsageCredentials {
+        // 5. Trigger immediate refresh if any credentials are available, including
+        // system Keychain CLI fallback used by ClaudeAPIService.
+        if hasAnyAvailableCredentials() {
             self.lastRefreshTriggerTime = Date()
             refreshUsage()
         } else {
@@ -429,8 +430,9 @@ class MenuBarManager: NSObject, ObservableObject {
             return
         }
 
-        // Check if active profile has usage credentials (not just CLI)
-        let hasUsageCredentials = profileManager.activeProfile?.hasUsageCredentials ?? false
+        // Keep configuration decisions aligned with the fetch path so users with
+        // only system Keychain CLI credentials keep their configured metric items.
+        let hasUsageCredentials = hasAnyAvailableCredentials()
 
         // If no usage credentials, use an empty config (will show default logo)
         let displayConfig: MenuBarIconConfiguration
@@ -789,8 +791,9 @@ class MenuBarManager: NSObject, ObservableObject {
             guard let self = self else { return }
 
             Task { @MainActor in
-                // Check if active profile has usage credentials
-                guard let profile = self.profileManager.activeProfile, profile.hasUsageCredentials else {
+                // Check if active profile has any credentials, including system
+                // Keychain CLI fallback.
+                guard let profile = self.profileManager.activeProfile, self.hasAnyAvailableCredentials() else {
                     LoggingService.shared.logInfo("Credentials changed but no usage credentials - showing default logo")
 
                     // Reconfigure menu bar to show default logo
@@ -1170,7 +1173,7 @@ class MenuBarManager: NSObject, ObservableObject {
     private func setupSingleProfileMode() {
         guard let profile = profileManager.activeProfile else { return }
 
-        let hasUsageCredentials = profile.hasUsageCredentials
+        let hasUsageCredentials = hasAnyAvailableCredentials()
         let config = profile.iconConfig
 
         // If no usage credentials, create empty config to show default logo
