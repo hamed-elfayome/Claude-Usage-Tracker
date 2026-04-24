@@ -763,6 +763,20 @@ class ClaudeAPIService: APIServiceProtocol {
                 }
             }
 
+            // Extract Design weekly usage (seven_day_design)
+            var designPercentage = 0.0
+            var designResetTime: Date? = nil
+            if let sevenDayDesign = json["seven_day_omelette"] as? [String: Any] {
+                if let utilization = sevenDayDesign["utilization"] {
+                    designPercentage = parseUtilization(utilization)
+                }
+                if let resetsAt = sevenDayDesign["resets_at"] as? String {
+                    let formatter = ISO8601DateFormatter()
+                    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                    designResetTime = formatter.date(from: resetsAt)
+                }
+            }
+
             // We don't know user's plan, so we use 0 for limits we can't determine
             let weeklyLimit = Constants.weeklyLimit
 
@@ -772,6 +786,7 @@ class ClaudeAPIService: APIServiceProtocol {
             let weeklyTokens = Int(Double(weeklyLimit) * (weeklyPercentage / 100.0))
             let opusTokens = Int(Double(weeklyLimit) * (opusPercentage / 100.0))
             let sonnetTokens = Int(Double(weeklyLimit) * (sonnetPercentage / 100.0))
+            let designTokens = Int(Double(weeklyLimit) * (designPercentage / 100.0))
 
             let usage = ClaudeUsage(
                 sessionTokensUsed: sessionTokens,
@@ -787,6 +802,9 @@ class ClaudeAPIService: APIServiceProtocol {
                 sonnetWeeklyTokensUsed: sonnetTokens,
                 sonnetWeeklyPercentage: sonnetPercentage,
                 sonnetWeeklyResetTime: sonnetResetTime,
+                designWeeklyTokensUsed: designTokens,
+                designWeeklyPercentage: designPercentage,
+                designWeeklyResetTime: designResetTime,
                 costUsed: nil,
                 costLimit: nil,
                 costCurrency: nil,
@@ -869,6 +887,9 @@ class ClaudeAPIService: APIServiceProtocol {
             sonnetWeeklyTokensUsed: 0,
             sonnetWeeklyPercentage: 0,
             sonnetWeeklyResetTime: nil,
+            designWeeklyTokensUsed: 0,
+            designWeeklyPercentage: 0,
+            designWeeklyResetTime: nil,
             costUsed: nil,
             costLimit: nil,
             costCurrency: nil,
