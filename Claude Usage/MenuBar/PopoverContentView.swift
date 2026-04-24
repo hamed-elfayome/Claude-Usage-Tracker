@@ -614,6 +614,19 @@ struct SmartUsageDashboard: View {
                 isPeakHighlighted: isPeakHours
             )
 
+            if usage.designWeeklyTokensUsed > 0 {
+                UsageRow(
+                    title: "menubar.design_usage".localized,
+                    tag: "menubar.weekly".localized,
+                    subtitle: nil,
+                    usedPercentage: usage.designWeeklyPercentage,
+                    showRemaining: showRemainingPercentage,
+                    resetTime: usage.designWeeklyResetTime,
+                    periodDuration: nil,
+                    timeDisplay: timeDisplay
+                )
+            }
+
             // All Models (Weekly)
             UsageRow(
                 title: "menubar.all_models".localized,

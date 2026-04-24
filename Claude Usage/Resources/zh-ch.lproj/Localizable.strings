@@ -62,6 +62,7 @@
 "menubar.weekly_usage" = "每周";
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";
+"menubar.design_usage" = "设计";
 "menubar.extra_usage" = "额外使用量";
 "menubar.api_credits" = "API 积分";
 "menubar.5_hour_window" = "5小时滚动窗口";

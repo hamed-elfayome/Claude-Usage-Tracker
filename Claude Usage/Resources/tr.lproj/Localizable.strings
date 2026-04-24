@@ -61,6 +61,7 @@
 "menubar.weekly_usage" = "Haftalık";
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";
+"menubar.design_usage" = "Tasarım";
 "menubar.extra_usage" = "Ek Kullanım";
 "menubar.api_credits" = "API Kredileri";
 "menubar.api_cost" = "API Maliyeti";

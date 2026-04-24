@@ -61,6 +61,7 @@
 "menubar.weekly_usage" = "Weekly";
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";
+"menubar.design_usage" = "Design";
 "menubar.extra_usage" = "Extra Usage";
 "menubar.api_credits" = "API Credits";
 "menubar.api_cost" = "API Cost";
