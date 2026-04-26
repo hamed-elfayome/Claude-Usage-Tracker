@@ -336,6 +336,26 @@ class ClaudeCodeSyncService {
         defaults.removeObject(forKey: Self.discoveryAttemptedKey)
     }
 
+    /// Writes credentials to `~/.claude/.credentials.json` so that
+    /// `readSystemCredentials()` (which reads the file as Priority 1) returns
+    /// the correct data after a profile switch. Without this, the stale file
+    /// from the previous profile shadows the freshly-written keychain entry.
+    private func writeCredentialsFile(_ jsonData: String) {
+        let fileURL = Constants.ClaudePaths.credentialsFile
+        guard let data = jsonData.data(using: .utf8) else {
+            LoggingService.shared.log("writeCredentialsFile: failed to encode JSON as UTF-8")
+            return
+        }
+        do {
+            try data.write(to: fileURL, options: [.atomic])
+            LoggingService.shared.log("writeCredentialsFile: updated \(fileURL.lastPathComponent)")
+        } catch {
+            // Non-fatal: the keychain write is the authoritative path; the file
+            // is a convenience/performance optimisation. Log and move on.
+            LoggingService.shared.logError("writeCredentialsFile: failed to write \(fileURL.lastPathComponent)", error: error)
+        }
+    }
+
     /// Writes Claude Code credentials to system Keychain using security command.
     /// Every subprocess invocation is bounded by `securityCommandTimeout` so a
     /// hung `security` process cannot block the caller indefinitely.
@@ -510,8 +530,9 @@ class ClaudeCodeSyncService {
             throw ClaudeCodeError.noProfileCredentials
         }
 
-        LoggingService.shared.log("📦 Found CLI credentials, writing to keychain...")
+        LoggingService.shared.log("📦 Found CLI credentials, writing to keychain and credentials file...")
         try writeSystemCredentials(jsonData)
+        writeCredentialsFile(jsonData)
 
         // Restore the profile's captured oauthAccount (if any) so Claude Code's
         // /status Status tab shows the right email/org/plan for this profile.
