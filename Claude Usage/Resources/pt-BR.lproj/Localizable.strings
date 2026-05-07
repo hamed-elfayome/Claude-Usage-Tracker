@@ -724,6 +724,13 @@
 "cli.benefit_1" = "Troca automática de login do Claude Code com perfis";
 "cli.benefit_2" = "Manter CLI e contas do aplicativo sincronizadas";
 "cli.benefit_3" = "Atualizar credenciais automaticamente ao trocar de perfil";
+"cli.manual_token_title" = "Cole um token OAuth de configuração";
+"cli.manual_token_subtitle" = "Use um token de longa duração de `claude setup-token` em vez de sincronizar novamente";
+"cli.manual_token_disclosure" = "Inserir token manualmente";
+"cli.manual_token_help" = "Execute `claude setup-token` no seu terminal para gerar um token OAuth de longa duração e cole-o aqui. Use isto quando sua sessão web tiver expirado ou a sincronização com Claude Code não estiver funcionando.";
+"cli.manual_token_placeholder" = "sk-ant-oat01-...";
+"cli.manual_token_save" = "Salvar Token";
+"cli.manual_token_empty_error" = "Cole um token antes de salvar";
 
 /* ==================== */
 /* MARK: - Additional Keys */

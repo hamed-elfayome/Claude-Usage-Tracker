@@ -704,6 +704,13 @@
 "cli.benefit_1" = "Profil değişikliğinde Claude Code girişini otomatik değiştir";
 "cli.benefit_2" = "CLI ve uygulama hesaplarını senkronize tut";
 "cli.benefit_3" = "Profil değişikliğinde kimlik bilgilerini otomatik yenile";
+"cli.manual_token_title" = "OAuth Kurulum Belirteci Yapıştır";
+"cli.manual_token_subtitle" = "Yeniden senkronize etmek yerine `claude setup-token` ile alınan uzun ömürlü belirteci kullanın";
+"cli.manual_token_disclosure" = "Belirteci manuel olarak gir";
+"cli.manual_token_help" = "Uzun ömürlü bir OAuth belirteci oluşturmak için terminalde `claude setup-token` komutunu çalıştırın ve buraya yapıştırın. Web oturumunuz sona erdiyse veya Claude Code'dan senkronizasyon çalışmıyorsa bunu kullanın.";
+"cli.manual_token_placeholder" = "sk-ant-oat01-...";
+"cli.manual_token_save" = "Belirteci Kaydet";
+"cli.manual_token_empty_error" = "Kaydetmeden önce bir belirteç yapıştırın";
 
 /* ==================== */
 /* MARK: - Additional Keys */

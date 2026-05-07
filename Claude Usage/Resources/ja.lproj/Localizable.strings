@@ -730,6 +730,13 @@
 "cli.benefit_1" = "プロファイルでClaude Codeログインを自動切り替え";
 "cli.benefit_2" = "CLIとアプリアカウントを同期状態に保つ";
 "cli.benefit_3" = "プロファイル切り替え時に認証情報を自動更新";
+"cli.manual_token_title" = "OAuthセットアップトークンを貼り付け";
+"cli.manual_token_subtitle" = "再同期の代わりに `claude setup-token` で取得した長期トークンを使用";
+"cli.manual_token_disclosure" = "トークンを手動で入力";
+"cli.manual_token_help" = "ターミナルで `claude setup-token` を実行して長期OAuthトークンを生成し、ここに貼り付けてください。Webセッションが切れている場合やClaude Codeからの同期が機能しない場合に使用します。";
+"cli.manual_token_placeholder" = "sk-ant-oat01-...";
+"cli.manual_token_save" = "トークンを保存";
+"cli.manual_token_empty_error" = "保存する前にトークンを貼り付けてください";
 
 /* ==================== */
 /* MARK: - Additional Keys */

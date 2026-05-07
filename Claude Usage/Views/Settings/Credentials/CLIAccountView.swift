@@ -12,6 +12,9 @@ struct CLIAccountView: View {
     @State private var isSyncing = false
     @State private var syncError: String?
     @State private var cliAccountInfo: CLIAccountInfo?
+    @State private var manualToken: String = ""
+    @State private var manualTokenExpanded: Bool = false
+    @State private var manualTokenError: String?
 
     var body: some View {
         ScrollView {
@@ -189,6 +192,75 @@ struct CLIAccountView: View {
                         }
                     }
 
+                    // Manual OAuth Token Entry (for `claude setup-token`)
+                    SettingsSectionCard(
+                        title: "cli.manual_token_title".localized,
+                        subtitle: "cli.manual_token_subtitle".localized
+                    ) {
+                        VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
+                            DisclosureGroup(
+                                isExpanded: $manualTokenExpanded,
+                                content: {
+                                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
+                                        Text("cli.manual_token_help".localized)
+                                            .font(DesignTokens.Typography.caption)
+                                            .foregroundColor(.secondary)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                            .padding(.top, DesignTokens.Spacing.extraSmall)
+
+                                        TextField("cli.manual_token_placeholder".localized, text: $manualToken)
+                                            .textFieldStyle(.plain)
+                                            .font(DesignTokens.Typography.monospaced)
+                                            .padding(10)
+                                            .background(DesignTokens.Colors.inputBackground)
+                                            .cornerRadius(DesignTokens.Radius.small)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: DesignTokens.Radius.small)
+                                                    .strokeBorder(DesignTokens.Colors.cardBorder, lineWidth: 1)
+                                            )
+                                            .onSubmit { saveManualToken() }
+
+                                        if let error = manualTokenError {
+                                            HStack(spacing: DesignTokens.Spacing.small) {
+                                                Image(systemName: "exclamationmark.triangle.fill")
+                                                    .foregroundColor(.red)
+                                                    .font(.system(size: DesignTokens.Icons.standard))
+                                                Text(error)
+                                                    .font(DesignTokens.Typography.body)
+                                                    .foregroundColor(.red)
+                                                    .fixedSize(horizontal: false, vertical: true)
+                                            }
+                                            .padding(DesignTokens.Spacing.iconText)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .background(Color.red.opacity(0.08))
+                                            .cornerRadius(DesignTokens.Radius.small)
+                                        }
+
+                                        HStack {
+                                            Spacer()
+                                            Button(action: saveManualToken) {
+                                                HStack(spacing: DesignTokens.Spacing.extraSmall) {
+                                                    Image(systemName: "key.fill")
+                                                        .font(.system(size: DesignTokens.Icons.small))
+                                                    Text("cli.manual_token_save".localized)
+                                                        .font(DesignTokens.Typography.body)
+                                                }
+                                            }
+                                            .buttonStyle(.borderedProminent)
+                                            .controlSize(.regular)
+                                            .disabled(manualToken.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                                        }
+                                    }
+                                },
+                                label: {
+                                    Text("cli.manual_token_disclosure".localized)
+                                        .font(DesignTokens.Typography.body)
+                                        .fontWeight(.medium)
+                                }
+                            )
+                        }
+                    }
+
                     // Info Card
                     SettingsContentCard {
                         VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
@@ -261,6 +333,40 @@ struct CLIAccountView: View {
         }
 
         isSyncing = false
+    }
+
+    private func saveManualToken() {
+        guard let profileId = profileManager.activeProfile?.id else { return }
+
+        let trimmed = manualToken.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            manualTokenError = "cli.manual_token_empty_error".localized
+            return
+        }
+
+        manualTokenError = nil
+        syncError = nil
+
+        do {
+            try ClaudeCodeSyncService.shared.saveManualOAuthToken(trimmed, profileId: profileId)
+
+            profileManager.loadProfiles()
+
+            if var updated = profileManager.activeProfile {
+                updated.hasCliAccount = true
+                updated.cliAccountSyncedAt = Date()
+                profileManager.updateProfile(updated)
+            }
+
+            loadCLIAccountInfo()
+            manualToken = ""
+            manualTokenExpanded = false
+
+            LoggingService.shared.log("CLIAccountView: Manual OAuth token saved to profile")
+        } catch {
+            manualTokenError = error.localizedDescription
+            LoggingService.shared.logError("CLIAccountView: Failed to save manual OAuth token - \(error.localizedDescription)")
+        }
     }
 
     private func removeSync() {

@@ -528,6 +528,46 @@ class ClaudeCodeSyncService {
         LoggingService.shared.log("✅ Applied profile CLI credentials to system: \(profileId)")
     }
 
+    /// Saves a manually-pasted long-lived OAuth token (from `claude setup-token`)
+    /// to the given profile. Wraps the bare token in a minimal `claudeAiOauth`
+    /// JSON envelope so the rest of the app can consume it through the same
+    /// extraction helpers used for synced credentials.
+    ///
+    /// Long-lived setup tokens have no `expiresAt` field, which intentionally
+    /// causes `isTokenExpired` to return `false` ("no expiry info = assume valid"),
+    /// which is the desired behavior — these tokens don't expire on a short cycle.
+    func saveManualOAuthToken(_ token: String, profileId: UUID) throws {
+        let trimmed = token.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            throw ClaudeCodeError.invalidToken
+        }
+
+        let payload: [String: Any] = [
+            "claudeAiOauth": [
+                "accessToken": trimmed,
+                "subscriptionType": "manual",
+                "scopes": ["user:inference", "user:profile"]
+            ]
+        ]
+
+        guard let data = try? JSONSerialization.data(withJSONObject: payload),
+              let jsonString = String(data: data, encoding: .utf8) else {
+            throw ClaudeCodeError.invalidJSON
+        }
+
+        var profiles = ProfileStore.shared.loadProfiles()
+        guard let index = profiles.firstIndex(where: { $0.id == profileId }) else {
+            throw ClaudeCodeError.noProfileCredentials
+        }
+
+        profiles[index].cliCredentialsJSON = jsonString
+        profiles[index].hasCliAccount = true
+        profiles[index].cliAccountSyncedAt = Date()
+        ProfileStore.shared.saveProfiles(profiles)
+
+        LoggingService.shared.log("Saved manual OAuth setup token to profile: \(profileId)")
+    }
+
     /// Removes CLI credentials from profile (doesn't affect system)
     func removeFromProfile(_ profileId: UUID) throws {
         var profiles = ProfileStore.shared.loadProfiles()
@@ -661,6 +701,7 @@ class ClaudeCodeSyncService {
 enum ClaudeCodeError: LocalizedError {
     case noCredentialsFound
     case invalidJSON
+    case invalidToken
     case keychainReadFailed(status: OSStatus)
     case keychainWriteFailed(status: OSStatus)
     case noProfileCredentials
@@ -671,6 +712,8 @@ enum ClaudeCodeError: LocalizedError {
             return "No Claude Code credentials found in system Keychain. Please log in to Claude Code first."
         case .invalidJSON:
             return "Claude Code credentials are corrupted or invalid."
+        case .invalidToken:
+            return "OAuth token is empty or invalid. Run `claude setup-token` and paste the full token."
         case .keychainReadFailed(let status):
             return "Failed to read credentials from system Keychain (status: \(status))."
         case .keychainWriteFailed(let status):
