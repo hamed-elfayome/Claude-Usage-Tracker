@@ -708,6 +708,13 @@
 "cli.benefit_1" = "Changement automatique de connexion Claude Code avec les profils";
 "cli.benefit_2" = "Garder CLI et comptes d'application synchronisés";
 "cli.benefit_3" = "Rafraîchir automatiquement les identifiants lors du changement de profil";
+"cli.manual_token_title" = "Coller un jeton OAuth de configuration";
+"cli.manual_token_subtitle" = "Utilisez un jeton longue durée de `claude setup-token` au lieu de resynchroniser";
+"cli.manual_token_disclosure" = "Saisir le jeton manuellement";
+"cli.manual_token_help" = "Exécutez `claude setup-token` dans votre terminal pour générer un jeton OAuth longue durée, puis collez-le ici. Utilisez ceci lorsque votre session web a expiré ou que la synchronisation depuis Claude Code ne fonctionne pas.";
+"cli.manual_token_placeholder" = "sk-ant-oat01-...";
+"cli.manual_token_save" = "Enregistrer le Jeton";
+"cli.manual_token_empty_error" = "Veuillez coller un jeton avant d'enregistrer";
 
 /* ==================== */
 /* MARK: - Additional Keys */

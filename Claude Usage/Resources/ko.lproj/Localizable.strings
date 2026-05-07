@@ -790,6 +790,13 @@
 "cli.benefit_1" = "프로필로 Claude Code 로그인 자동 전환";
 "cli.benefit_2" = "CLI 및 앱 계정 동기화 유지";
 "cli.benefit_3" = "프로필 전환 시 자격 증명 자동 새로 고침";
+"cli.manual_token_title" = "OAuth 설정 토큰 붙여넣기";
+"cli.manual_token_subtitle" = "다시 동기화하는 대신 `claude setup-token`의 장기 토큰 사용";
+"cli.manual_token_disclosure" = "토큰을 수동으로 입력";
+"cli.manual_token_help" = "터미널에서 `claude setup-token`을 실행하여 장기 OAuth 토큰을 생성한 후 여기에 붙여넣으세요. 웹 세션이 만료되었거나 Claude Code 동기화가 작동하지 않을 때 사용합니다.";
+"cli.manual_token_placeholder" = "sk-ant-oat01-...";
+"cli.manual_token_save" = "토큰 저장";
+"cli.manual_token_empty_error" = "저장하기 전에 토큰을 붙여넣으세요";
 
 /* ==================== */
 /* MARK: - Additional Keys */

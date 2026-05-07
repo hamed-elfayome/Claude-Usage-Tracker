@@ -705,6 +705,13 @@
 "cli.benefit_1" = "Автоматичне перемикання входу Claude Code разом з профілями";
 "cli.benefit_2" = "Синхронізація акаунтів CLI та програми";
 "cli.benefit_3" = "Автоматичне оновлення облікових даних при перемиканні профілю";
+"cli.manual_token_title" = "Вставте OAuth-токен налаштування";
+"cli.manual_token_subtitle" = "Використовуйте довготривалий токен з `claude setup-token` замість повторної синхронізації";
+"cli.manual_token_disclosure" = "Ввести токен вручну";
+"cli.manual_token_help" = "Запустіть `claude setup-token` у терміналі, щоб згенерувати довготривалий OAuth-токен, і вставте його сюди. Використовуйте це, коли ваша вебсесія завершилася або синхронізація з Claude Code не працює.";
+"cli.manual_token_placeholder" = "sk-ant-oat01-...";
+"cli.manual_token_save" = "Зберегти Токен";
+"cli.manual_token_empty_error" = "Будь ласка, вставте токен перед збереженням";
 
 /* ==================== */
 /* MARK: - Additional Keys */

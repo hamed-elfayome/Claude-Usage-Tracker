@@ -711,6 +711,13 @@
 "cli.benefit_1" = "使用設定檔自動切換 Claude Code 登入";
 "cli.benefit_2" = "保持 CLI 和軟體帳戶同步";
 "cli.benefit_3" = "設定檔切換時自動重新整理憑證";
+"cli.manual_token_title" = "貼上 OAuth 設定權杖";
+"cli.manual_token_subtitle" = "使用 `claude setup-token` 產生的長效權杖，無需重新同步";
+"cli.manual_token_disclosure" = "手動輸入權杖";
+"cli.manual_token_help" = "在終端機中執行 `claude setup-token` 以產生長效 OAuth 權杖，然後貼到此處。當您的網頁工作階段已過期或無法從 Claude Code 同步時可使用。";
+"cli.manual_token_placeholder" = "sk-ant-oat01-...";
+"cli.manual_token_save" = "儲存權杖";
+"cli.manual_token_empty_error" = "請先貼上權杖再儲存";
 
 /* ==================== */
 /* MARK: - Additional Keys */

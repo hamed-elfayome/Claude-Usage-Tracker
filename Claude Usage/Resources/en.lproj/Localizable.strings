@@ -705,6 +705,13 @@
 "cli.benefit_1" = "Auto-switch Claude Code login with profiles";
 "cli.benefit_2" = "Keep CLI and app accounts in sync";
 "cli.benefit_3" = "Auto-refresh credentials on profile switch";
+"cli.manual_token_title" = "Paste an OAuth Setup Token";
+"cli.manual_token_subtitle" = "Use a long-lived token from `claude setup-token` instead of re-syncing";
+"cli.manual_token_disclosure" = "Enter token manually";
+"cli.manual_token_help" = "Run `claude setup-token` in your terminal to generate a long-lived OAuth token, then paste it here. Use this when your web session has expired or syncing from Claude Code is not working.";
+"cli.manual_token_placeholder" = "sk-ant-oat01-...";
+"cli.manual_token_save" = "Save Token";
+"cli.manual_token_empty_error" = "Please paste a token before saving";
 
 /* ==================== */
 /* MARK: - Additional Keys */
