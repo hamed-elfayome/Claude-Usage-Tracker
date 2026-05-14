@@ -585,35 +585,39 @@ struct SmartUsageDashboard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            // Primary: Session Usage
-            UsageRow(
-                title: "menubar.session_usage".localized,
-                subtitle: "menubar.5_hour_window".localized,
-                usedPercentage: usage.effectiveSessionPercentage,
-                showRemaining: showRemainingPercentage,
-                resetTime: usage.sessionResetTime,
-                periodDuration: Constants.sessionWindow,
-                showTimeMarker: showTimeMarker,
-                showPaceMarker: showPaceMarker,
-                usePaceColoring: usePaceColoring,
-                timeDisplay: timeDisplay,
-                isPeakHighlighted: isPeakHours
-            )
+            // Primary: Session Usage (hidden when account has no session limit)
+            if usage.sessionLimit > 0 {
+                UsageRow(
+                    title: "menubar.session_usage".localized,
+                    subtitle: "menubar.5_hour_window".localized,
+                    usedPercentage: usage.effectiveSessionPercentage,
+                    showRemaining: showRemainingPercentage,
+                    resetTime: usage.sessionResetTime,
+                    periodDuration: Constants.sessionWindow,
+                    showTimeMarker: showTimeMarker,
+                    showPaceMarker: showPaceMarker,
+                    usePaceColoring: usePaceColoring,
+                    timeDisplay: timeDisplay,
+                    isPeakHighlighted: isPeakHours
+                )
+            }
 
-            // All Models (Weekly)
-            UsageRow(
-                title: "menubar.all_models".localized,
-                tag: "menubar.weekly".localized,
-                subtitle: nil,
-                usedPercentage: usage.weeklyPercentage,
-                showRemaining: showRemainingPercentage,
-                resetTime: usage.weeklyResetTime,
-                periodDuration: Constants.weeklyWindow,
-                showTimeMarker: showTimeMarker,
-                showPaceMarker: showPaceMarker,
-                usePaceColoring: usePaceColoring,
-                timeDisplay: timeDisplay
-            )
+            // All Models (Weekly) — hidden when account has no weekly limit
+            if usage.weeklyLimit > 0 {
+                UsageRow(
+                    title: "menubar.all_models".localized,
+                    tag: "menubar.weekly".localized,
+                    subtitle: nil,
+                    usedPercentage: usage.weeklyPercentage,
+                    showRemaining: showRemainingPercentage,
+                    resetTime: usage.weeklyResetTime,
+                    periodDuration: Constants.weeklyWindow,
+                    showTimeMarker: showTimeMarker,
+                    showPaceMarker: showPaceMarker,
+                    usePaceColoring: usePaceColoring,
+                    timeDisplay: timeDisplay
+                )
+            }
 
             if usage.opusWeeklyTokensUsed > 0 {
                 UsageRow(
@@ -639,11 +643,11 @@ struct SmartUsageDashboard: View {
                 )
             }
 
-            // Extra usage (cost-based)
+            // Personal monthly budget — user's cap on extra-usage spending within the team pool
             if let used = usage.costUsed, let limit = usage.costLimit, let currency = usage.costCurrency, limit > 0 {
                 let usedPercentage = (used / limit) * 100.0
                 UsageRow(
-                    title: "menubar.extra_usage".localized,
+                    title: "menubar.personal_limit".localized,
                     subtitle: String(format: "%.2f / %.2f %@", used / 100.0, limit / 100.0, currency),
                     usedPercentage: usedPercentage,
                     showRemaining: showRemainingPercentage,
@@ -663,6 +667,56 @@ struct SmartUsageDashboard: View {
                             .foregroundColor(.adaptiveGreen)
                     }
                 }
+            }
+
+            // Organization-level extra usage — the shared org pool everyone consumes from
+            if let orgUsed = usage.organizationCostUsed,
+               let orgLimit = usage.organizationCostLimit,
+               let orgCurrency = usage.organizationCostCurrency,
+               orgLimit > 0 {
+                let label = "menubar.organization_limit".localized
+                let title = usage.organizationName.map { "\($0) — \(label)" } ?? label
+                UsageRow(
+                    title: title,
+                    subtitle: String(format: "%.2f / %.2f %@", orgUsed / 100.0, orgLimit / 100.0, orgCurrency),
+                    usedPercentage: (orgUsed / orgLimit) * 100.0,
+                    showRemaining: showRemainingPercentage,
+                    resetTime: nil,
+                    periodDuration: nil
+                )
+            }
+
+            // CCR Routine Runs monthly count
+            if let runsUsed = usage.routineRunsUsed,
+               let runsLimit = usage.routineRunsLimit,
+               runsLimit > 0 {
+                let usedPercentage = Double(runsUsed) / Double(runsLimit) * 100.0
+                UsageRow(
+                    title: "menubar.routine_runs".localized,
+                    subtitle: "\(runsUsed) / \(runsLimit) runs",
+                    usedPercentage: usedPercentage,
+                    showRemaining: showRemainingPercentage,
+                    resetTime: nil,
+                    periodDuration: nil
+                )
+            }
+
+            // Disabled-budget chip — shown when the account's budget has been suspended
+            if let disabledReason = usage.budgetDisabledReason {
+                HStack(spacing: 6) {
+                    Image(systemName: "exclamationmark.circle.fill")
+                        .foregroundColor(.red)
+                    Text(disabledReason == "out_of_credits"
+                         ? "Budget disabled: out of credits"
+                         : "Budget disabled: \(disabledReason)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Color.red.opacity(0.1))
+                .cornerRadius(6)
+                .accessibilityIdentifier("budgetDisabledChip")
             }
 
             // API Usage

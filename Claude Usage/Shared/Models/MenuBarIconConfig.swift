@@ -12,6 +12,9 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
     case session
     case week
     case api
+    case personalLimit
+    case organizationLimit
+    case routineRuns
 
     var id: String { rawValue }
 
@@ -23,6 +26,12 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
             return "Week Usage"
         case .api:
             return "API Credits"
+        case .personalLimit:
+            return "Personal Limit"
+        case .organizationLimit:
+            return "Organization Limit"
+        case .routineRuns:
+            return "Routine Runs"
         }
     }
 
@@ -34,6 +43,30 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
             return "W:"
         case .api:
             return "API:"
+        case .personalLimit:
+            return "P:"
+        case .organizationLimit:
+            return "O:"
+        case .routineRuns:
+            return "R:"
+        }
+    }
+
+    /// Short single-character label used in compact icon styles
+    var shortLabel: String {
+        switch self {
+        case .session:
+            return "S"
+        case .week:
+            return "W"
+        case .api:
+            return "$"
+        case .personalLimit:
+            return "P"
+        case .organizationLimit:
+            return "O"
+        case .routineRuns:
+            return "R"
         }
     }
 
@@ -45,6 +78,12 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
             return "Weekly token usage (all models)"
         case .api:
             return "API Console billing credits"
+        case .personalLimit:
+            return "Your personal monthly spend limit"
+        case .organizationLimit:
+            return "Organization-wide monthly spend limit"
+        case .routineRuns:
+            return "Claude Code Routines monthly runs"
         }
     }
 
@@ -56,6 +95,12 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
             return "calendar.badge.clock"
         case .api:
             return "dollarsign.circle.fill"
+        case .personalLimit:
+            return "wallet.pass.fill"
+        case .organizationLimit:
+            return "person.3.fill"
+        case .routineRuns:
+            return "arrow.triangle.2.circlepath"
         }
     }
 }
@@ -219,6 +264,36 @@ struct MetricIconConfig: Codable, Equatable {
             apiDisplayMode: .remaining
         )
     }
+
+    /// Default config for Monthly Budget (disabled by default)
+    static var personalLimitDefault: MetricIconConfig {
+        MetricIconConfig(
+            metricType: .personalLimit,
+            isEnabled: false,
+            iconStyle: .battery,
+            order: 3
+        )
+    }
+
+    /// Default config for Extra Usage (team pool, disabled by default)
+    static var organizationLimitDefault: MetricIconConfig {
+        MetricIconConfig(
+            metricType: .organizationLimit,
+            isEnabled: false,
+            iconStyle: .battery,
+            order: 4
+        )
+    }
+
+    /// Default config for Routine Runs (disabled by default)
+    static var routineRunsDefault: MetricIconConfig {
+        MetricIconConfig(
+            metricType: .routineRuns,
+            isEnabled: false,
+            iconStyle: .battery,
+            order: 5
+        )
+    }
 }
 
 /// Icon style for multi-profile display
@@ -369,11 +444,7 @@ struct MenuBarIconConfiguration: Codable, Equatable {
         showTimeMarker: Bool = true,
         showPaceMarker: Bool = true,
         usePaceColoring: Bool = true,
-        metrics: [MetricIconConfig] = [
-            .sessionDefault,
-            .weekDefault,
-            .apiDefault
-        ]
+        metrics: [MetricIconConfig] = MenuBarIconConfiguration.defaultMetrics
     ) {
         self.colorMode = colorMode
         self.singleColorHex = singleColorHex
@@ -415,7 +486,13 @@ struct MenuBarIconConfiguration: Codable, Equatable {
         showTimeMarker = try container.decodeIfPresent(Bool.self, forKey: .showTimeMarker) ?? true
         showPaceMarker = try container.decodeIfPresent(Bool.self, forKey: .showPaceMarker) ?? false
         usePaceColoring = try container.decodeIfPresent(Bool.self, forKey: .usePaceColoring) ?? false
-        metrics = try container.decode([MetricIconConfig].self, forKey: .metrics)
+        var decoded = try container.decode([MetricIconConfig].self, forKey: .metrics)
+        // Backfill metric types added in later versions onto previously-saved configs
+        let present = Set(decoded.map { $0.metricType })
+        for d in MenuBarIconConfiguration.defaultMetrics where !present.contains(d.metricType) {
+            decoded.append(d)
+        }
+        metrics = decoded
     }
 
     func encode(to encoder: Encoder) throws {
@@ -454,4 +531,14 @@ struct MenuBarIconConfiguration: Codable, Equatable {
     static var `default`: MenuBarIconConfiguration {
         MenuBarIconConfiguration()
     }
+
+    /// Default metric set in display order; used by both new configs and the decoder's backfill path.
+    static let defaultMetrics: [MetricIconConfig] = [
+        .sessionDefault,
+        .weekDefault,
+        .apiDefault,
+        .personalLimitDefault,
+        .organizationLimitDefault,
+        .routineRunsDefault
+    ]
 }

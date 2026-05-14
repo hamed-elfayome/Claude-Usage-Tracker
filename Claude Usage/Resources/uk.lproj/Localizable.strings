@@ -62,6 +62,9 @@
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";
 "menubar.extra_usage" = "Додаткове використання";
+"menubar.personal_limit" = "Особистий ліміт";
+"menubar.organization_limit" = "Ліміт організації";
+"menubar.routine_runs" = "Бюджет CCR";
 "menubar.api_credits" = "Кредити API";
 "menubar.api_cost" = "Вартість API";
 "menubar.this_month" = "Цього місяця";
@@ -372,6 +375,8 @@
 "claudecode.component_weekly_description" = "Тижневе використання токенів з баром та часом скидання";
 "claudecode.component_extra_usage" = "Показати додаткове використання";
 "claudecode.component_extra_usage_description" = "Індикатор вартості (напр., 9,49 USD)";
+"claudecode.component_routine_runs" = "Показати бюджет CCR";
+"claudecode.component_routine_runs_description" = "Особистий місячний бюджет Claude Code Routines";
 "claudecode.weekly_label" = "Показати мітку \"Weekly:\"";
 "claudecode.requirement_sessionkey" = "• Ключ сесії налаштовано в Облікові дані → вкладка Claude.ai";
 "claudecode.requirement_restart" = "• Перезапустіть Claude CLI після застосування змін";

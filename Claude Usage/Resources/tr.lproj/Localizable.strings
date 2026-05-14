@@ -62,6 +62,9 @@
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";
 "menubar.extra_usage" = "Ek Kullanım";
+"menubar.personal_limit" = "Kişisel Limit";
+"menubar.organization_limit" = "Organizasyon Limiti";
+"menubar.routine_runs" = "CCR Bütçesi";
 "menubar.api_credits" = "API Kredileri";
 "menubar.api_cost" = "API Maliyeti";
 "menubar.this_month" = "Bu Ay";
@@ -372,6 +375,8 @@
 "claudecode.component_weekly_description" = "Çubuk ve sıfırlanma zamanı ile haftalık token kullanımı";
 "claudecode.component_extra_usage" = "Ekstra Kullanımı Göster";
 "claudecode.component_extra_usage_description" = "Maliyet göstergesi (ör. 9,49 USD)";
+"claudecode.component_routine_runs" = "CCR Bütçesini Göster";
+"claudecode.component_routine_runs_description" = "Kişisel Claude Code Routines aylık bütçesi";
 "claudecode.weekly_label" = "\"Haftalık:\" etiketini göster";
 "claudecode.requirement_sessionkey" = "• Kimlik Bilgileri → Claude.ai sekmesinde oturum anahtarı yapılandırılmış olmalı";
 "claudecode.requirement_restart" = "• Değişiklikleri uyguladıktan sonra Claude CLI'ı yeniden başlatın";

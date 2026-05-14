@@ -1096,6 +1096,14 @@ ELEMENT_COLOR_EXTRA=\(elementColors.extraUsageBaseHex ?? "")
             cacheContent += "\nCOST_CURRENCY=\(costCurrency)"
         }
 
+        // CCR Routine Runs cache vars (for bash statusline scripts)
+        if let runsUsed  = usage.routineRunsUsed,
+           let runsLimit = usage.routineRunsLimit,
+           runsLimit > 0 {
+            cacheContent += "\nROUTINE_RUNS_USED=\(runsUsed)"
+            cacheContent += "\nROUTINE_RUNS_LIMIT=\(runsLimit)"
+        }
+
         try? cacheContent.write(to: cachePath, atomically: true, encoding: .utf8)
     }
 

@@ -181,6 +181,15 @@ extension URLBuilder {
         let builder = try URLBuilder(baseURL: "https://status.claude.com/api/v2")
         return endpoint.isEmpty ? builder : try builder.appendingPath(endpoint)
     }
+
+    /// Create a builder for Claude base endpoints (https://claude.ai — no /api path prefix).
+    /// Use this for first-party endpoints such as /v1/code/routines/run-budget.
+    /// - Parameter endpoint: The endpoint path (e.g. "/v1/code/routines/run-budget")
+    /// - Returns: A configured URLBuilder rooted at https://claude.ai
+    static func claudeBase(endpoint: String = "") throws -> URLBuilder {
+        let builder = try URLBuilder(baseURL: "https://claude.ai")
+        return endpoint.isEmpty ? builder : try builder.appendingPath(endpoint)
+    }
 }
 
 // MARK: - Result-based API

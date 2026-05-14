@@ -60,6 +60,9 @@
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";
 "menubar.extra_usage" = "Uso Extra";
+"menubar.personal_limit" = "Limite Pessoal";
+"menubar.organization_limit" = "Limite da Organização";
+"menubar.routine_runs" = "Orçamento CCR";
 "menubar.api_credits" = "Créditos da API";
 "menubar.5_hour_window" = "Janela móvel de 5 horas";
 "menubar.all_models" = "Todos os modelos";
@@ -349,6 +352,8 @@
 "claudecode.component_weekly_description" = "Uso semanal de tokens com barra e tempo de reinício";
 "claudecode.component_extra_usage" = "Mostrar uso extra";
 "claudecode.component_extra_usage_description" = "Indicador de custo (ex., 9,49 USD)";
+"claudecode.component_routine_runs" = "Mostrar orçamento CCR";
+"claudecode.component_routine_runs_description" = "Orçamento mensal pessoal do Claude Code Routines";
 "claudecode.weekly_label" = "Mostrar rótulo \"Weekly:\"";
 "claudecode.requirement_sessionkey" = "• Chave de sessão configurada em Credenciais → aba Claude.ai";
 "claudecode.requirement_restart" = "• Reiniciar Claude CLI após aplicar as alterações";

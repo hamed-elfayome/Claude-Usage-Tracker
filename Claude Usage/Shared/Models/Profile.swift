@@ -54,6 +54,11 @@ struct Profile: Codable, Identifiable, Equatable {
     var createdAt: Date
     var lastUsedAt: Date
 
+    /// Account UUID from the /account endpoint.
+    /// Used to scope overage_spend_limit queries. Auto-populated on first login.
+    /// Optional for backward compat — nil on existing profiles until first refresh.
+    var accountUuid: String? = nil
+
     init(
         id: UUID = UUID(),
         name: String,

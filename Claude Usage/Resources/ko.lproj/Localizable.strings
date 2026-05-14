@@ -71,6 +71,9 @@
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";
 "menubar.extra_usage" = "추가 사용량";
+"menubar.personal_limit" = "개인 한도";
+"menubar.organization_limit" = "조직 한도";
+"menubar.routine_runs" = "CCR 예산";
 "menubar.api_credits" = "API 크레딧";
 "menubar.5_hour_window" = "5시간 롤링 윈도우";
 "menubar.all_models" = "모든 모델";
@@ -522,6 +525,8 @@
 "claudecode.component_weekly_description" = "막대 및 초기화 시간이 포함된 주간 토큰 사용량";
 "claudecode.component_extra_usage" = "추가 사용량 표시";
 "claudecode.component_extra_usage_description" = "비용 표시 (예: 9.49 USD)";
+"claudecode.component_routine_runs" = "CCR 예산 표시";
+"claudecode.component_routine_runs_description" = "개인 Claude Code Routines 월별 예산";
 "claudecode.weekly_label" = "\"Weekly:\" 라벨 표시";
 "claudecode.requirement_sessionkey" = "• 자격 증명 → Claude.ai 탭에서 세션 키 구성됨";
 "claudecode.requirement_restart" = "• 변경사항 적용 후 Claude CLI 재시작";

@@ -28,14 +28,30 @@ struct ClaudeUsage: Codable, Equatable {
     var sonnetWeeklyPercentage: Double
     var sonnetWeeklyResetTime: Date?
 
-    // Extra usage data
+    // Personal monthly budget cap (extra_usage from /usage)
     var costUsed: Double?
     var costLimit: Double?
     var costCurrency: String?
+    var costUtilization: Double? = nil   // derived from extra_usage.utilization
+
+    // Organization-level extra usage pool (overage_spend_limit fetched without account_uuid)
+    var organizationCostUsed: Double? = nil
+    var organizationCostLimit: Double? = nil
+    var organizationCostCurrency: String? = nil
+    var organizationName: String? = nil
 
     // Overage credit grant balance
     var overageBalance: Double?
     var overageBalanceCurrency: String?
+
+    // Budget disabled state — from overage_spend_limit disabledReason / outOfCredits
+    var budgetDisabledReason: String? = nil
+
+    // CCR Routine Runs — from GET https://claude.ai/v1/code/routines/run-budget
+    // Units: integer count of runs (e.g. 3 used out of 25 allowed)
+    // Distinct from org-level overage cost (costUsed/costLimit from overage_spend_limit)
+    var routineRunsUsed: Int? = nil
+    var routineRunsLimit: Int? = nil
 
     // Metadata
     var lastUpdated: Date
@@ -83,8 +99,12 @@ struct ClaudeUsage: Codable, Equatable {
             costUsed: nil,
             costLimit: nil,
             costCurrency: nil,
+            costUtilization: nil,
             overageBalance: nil,
             overageBalanceCurrency: nil,
+            budgetDisabledReason: nil,
+            routineRunsUsed: nil,
+            routineRunsLimit: nil,
             lastUpdated: Date(),
             userTimezone: .current
         )

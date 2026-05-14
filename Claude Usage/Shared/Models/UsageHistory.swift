@@ -48,6 +48,14 @@ struct UsageSnapshot: Codable, Identifiable, Equatable {
     let apiPrepaidCreditsCents: Int?
     let apiCurrency: String?
 
+    // Extra usage cost snapshot (from extra_usage / overage_spend_limit)
+    let costUsed: Double?
+    let costLimit: Double?
+
+    // CCR Routine Runs count snapshot
+    let routineRunsUsed: Int?
+    let routineRunsLimit: Int?
+
     // The reset time that triggered this snapshot
     let triggeringResetTime: Date
 
@@ -66,6 +74,10 @@ struct UsageSnapshot: Codable, Identifiable, Equatable {
         apiSpendCents: Int? = nil,
         apiPrepaidCreditsCents: Int? = nil,
         apiCurrency: String? = nil,
+        costUsed: Double? = nil,
+        costLimit: Double? = nil,
+        routineRunsUsed: Int? = nil,
+        routineRunsLimit: Int? = nil,
         triggeringResetTime: Date
     ) {
         self.id = id
@@ -82,6 +94,10 @@ struct UsageSnapshot: Codable, Identifiable, Equatable {
         self.apiSpendCents = apiSpendCents
         self.apiPrepaidCreditsCents = apiPrepaidCreditsCents
         self.apiCurrency = apiCurrency
+        self.costUsed = costUsed
+        self.costLimit = costLimit
+        self.routineRunsUsed = routineRunsUsed
+        self.routineRunsLimit = routineRunsLimit
         self.triggeringResetTime = triggeringResetTime
     }
 
@@ -91,6 +107,10 @@ struct UsageSnapshot: Codable, Identifiable, Equatable {
             resetType: .sessionReset,
             sessionTokensUsed: usage.sessionTokensUsed,
             sessionPercentage: usage.sessionPercentage,
+            costUsed: usage.costUsed,
+            costLimit: usage.costLimit,
+            routineRunsUsed: usage.routineRunsUsed,
+            routineRunsLimit: usage.routineRunsLimit,
             triggeringResetTime: resetTime
         )
     }
@@ -105,6 +125,10 @@ struct UsageSnapshot: Codable, Identifiable, Equatable {
             opusWeeklyPercentage: usage.opusWeeklyPercentage,
             sonnetWeeklyTokensUsed: usage.sonnetWeeklyTokensUsed,
             sonnetWeeklyPercentage: usage.sonnetWeeklyPercentage,
+            costUsed: usage.costUsed,
+            costLimit: usage.costLimit,
+            routineRunsUsed: usage.routineRunsUsed,
+            routineRunsLimit: usage.routineRunsLimit,
             triggeringResetTime: resetTime
         )
     }
