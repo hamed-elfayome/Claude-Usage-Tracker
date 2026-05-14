@@ -62,6 +62,9 @@
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";
 "menubar.extra_usage" = "Extra Usage";
+"menubar.personal_limit" = "Personal Limit";
+"menubar.organization_limit" = "Organization Limit";
+"menubar.routine_runs" = "Routine Runs";
 "menubar.api_credits" = "API Credits";
 "menubar.api_cost" = "API Cost";
 "menubar.this_month" = "This Month";
@@ -372,6 +375,8 @@
 "claudecode.component_weekly_description" = "Weekly token usage with bar and reset time";
 "claudecode.component_extra_usage" = "Show Extra Usage";
 "claudecode.component_extra_usage_description" = "Cost indicator (e.g., 9.49 USD)";
+"claudecode.component_routine_runs" = "Show Routine Runs";
+"claudecode.component_routine_runs_description" = "Monthly Claude Code Routines run count";
 "claudecode.weekly_label" = "Show \"Weekly:\" label";
 "claudecode.requirement_sessionkey" = "• Session key configured in Credentials → Claude.ai tab";
 "claudecode.requirement_restart" = "• Restart Claude CLI after applying changes";

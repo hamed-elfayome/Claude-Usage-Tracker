@@ -254,7 +254,69 @@ final class MenuBarIconRenderer {
                 statusLevel: statusLevel,
                 sessionResetTime: nil
             )
+
+        case .personalLimit:
+            return budgetMetricData(used: usage.costUsed, limit: usage.costLimit, showRemaining: showRemaining)
+
+        case .organizationLimit:
+            return budgetMetricData(used: usage.organizationCostUsed, limit: usage.organizationCostLimit, showRemaining: showRemaining)
+
+        case .routineRuns:
+            guard let used = usage.routineRunsUsed,
+                  let limit = usage.routineRunsLimit,
+                  limit > 0 else {
+                return MetricData(
+                    percentage: showRemaining ? 100 : 0,
+                    displayText: "N/A",
+                    statusLevel: .safe,
+                    sessionResetTime: nil
+                )
+            }
+            let usedPercentage = Double(used) / Double(limit) * 100.0
+            let displayPercentage = UsageStatusCalculator.getDisplayPercentage(
+                usedPercentage: usedPercentage,
+                showRemaining: showRemaining
+            )
+            let statusLevel = UsageStatusCalculator.calculateStatus(
+                usedPercentage: usedPercentage,
+                showRemaining: showRemaining
+            )
+            // Routine runs are discrete units, so show count rather than %
+            let displayText = showRemaining ? "\(max(0, limit - used))" : "\(used)/\(limit)"
+            return MetricData(
+                percentage: displayPercentage,
+                displayText: displayText,
+                statusLevel: statusLevel,
+                sessionResetTime: nil
+            )
         }
+    }
+
+    /// Builds MetricData for a currency-based budget metric (personal or team).
+    private func budgetMetricData(used: Double?, limit: Double?, showRemaining: Bool) -> MetricData {
+        guard let used = used, let limit = limit, limit > 0 else {
+            return MetricData(
+                percentage: showRemaining ? 100 : 0,
+                displayText: "N/A",
+                statusLevel: .safe,
+                sessionResetTime: nil
+            )
+        }
+        let usedPercentage = (used / limit) * 100.0
+        let displayPercentage = UsageStatusCalculator.getDisplayPercentage(
+            usedPercentage: usedPercentage,
+            showRemaining: showRemaining
+        )
+        let statusLevel = UsageStatusCalculator.calculateStatus(
+            usedPercentage: usedPercentage,
+            showRemaining: showRemaining
+        )
+        return MetricData(
+            percentage: displayPercentage,
+            displayText: "\(Int(displayPercentage))%",
+            statusLevel: statusLevel,
+            sessionResetTime: nil
+        )
     }
 
     // MARK: - Icon Style Renderers
@@ -351,8 +413,17 @@ final class MenuBarIconRenderer {
                 text = resetTime.timeRemainingHoursString() as NSString
             }
         } else if showIconName {
-            // Show full word: "Session" or "Week"
-            text = (metricType == .session ? "Session" : "Week") as NSString
+            // Time-based metrics show their period name; monthly-resetting metrics show the next renewal date
+            switch metricType {
+            case .session:
+                text = "Session" as NSString
+            case .week:
+                text = "Week" as NSString
+            case .api:
+                text = "API" as NSString
+            case .personalLimit, .organizationLimit, .routineRuns:
+                text = Date().firstOfNextMonth().shortMonthDayString() as NSString
+            }
         } else {
             // No label mode - show percentage instead
             text = "\(Int(metricData.percentage))%" as NSString
@@ -405,7 +476,7 @@ final class MenuBarIconRenderer {
                 .font: NSFont.systemFont(ofSize: 10, weight: .semibold),
                 .foregroundColor: textColor.withAlphaComponent(0.9)
             ]
-            let label = (metricType == .session ? "S" : "W") as NSString
+            let label = metricType.shortLabel as NSString
             let labelSize = label.size(withAttributes: labelAttributes)
             label.draw(
                 at: NSPoint(x: xOffset, y: (height - labelSize.height) / 2),
@@ -609,7 +680,7 @@ final class MenuBarIconRenderer {
                 .font: NSFont.systemFont(ofSize: 9, weight: .bold),
                 .foregroundColor: textColor
             ]
-            let label = (metricType == .session ? "S" : "W") as NSString
+            let label = metricType.shortLabel as NSString
             let labelSize = label.size(withAttributes: labelAttributes)
             let labelX = center.x - labelSize.width / 2
             let labelY = center.y - labelSize.height / 2
@@ -1403,7 +1474,8 @@ final class MenuBarIconRenderer {
         case .week:
             resetTime = usage.weeklyResetTime
             duration = Constants.weeklyWindow
-        case .api:
+        case .api, .personalLimit, .organizationLimit, .routineRuns:
+            // No elapsed-time tick: monthly reset timestamps aren't surfaced in ClaudeUsage
             return nil
         }
 

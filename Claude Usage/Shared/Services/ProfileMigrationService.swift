@@ -13,6 +13,14 @@ class ProfileMigrationService {
 
     private let migrationKey = "didMigrateToProfilesV3"
 
+    // Schema version history:
+    // v1 — initial single→multi profile migration (didMigrateToProfilesV3 flag)
+    // v2 — oauthAccountJSON field added (no data migration needed)
+    // v3 — routineRunsUsed/Limit fields added (no data migration needed)
+    // v4 — 2026-05-13: Added Profile.accountUuid (optional String).
+    //       No data migration needed; new field defaults to nil on decode.
+    static let currentSchemaVersion: Int = 4
+
     private init() {}
 
     func migrateIfNeeded() {

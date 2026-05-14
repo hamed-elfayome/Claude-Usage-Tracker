@@ -138,6 +138,7 @@ class ClaudeAPIService: APIServiceProtocol {
             request.setValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15", forHTTPHeaderField: "User-Agent")
             request.setValue("https://claude.ai", forHTTPHeaderField: "Referer")
             request.setValue("https://claude.ai", forHTTPHeaderField: "Origin")
+            applyAnthropicWebHeaders(to: &request)
 
         case .cliOAuth(let accessToken):
             // CLI OAuth authentication (requires specific headers)
@@ -395,6 +396,13 @@ class ClaudeAPIService: APIServiceProtocol {
             ProfileManager.shared.updateOrganizationId(selectedOrg.uuid, for: profileId)
         }
 
+        // Auto-populate accountUuid on first successful fetch
+        if ProfileManager.shared.activeProfile?.accountUuid == nil,
+           var updatedProfile = ProfileManager.shared.activeProfile {
+            updatedProfile.accountUuid = selectedOrg.uuid
+            ProfileManager.shared.updateProfile(updatedProfile)
+        }
+
         return selectedOrg.uuid
     }
 
@@ -404,25 +412,39 @@ class ClaudeAPIService: APIServiceProtocol {
     ///   - organizationId: The organization ID
     /// - Returns: ClaudeUsage data for the profile
     func fetchUsageData(sessionKey: String, organizationId: String) async throws -> ClaudeUsage {
+        let checkOverage = ProfileManager.shared.activeProfile?.checkOverageLimitEnabled ?? true
+
+        let accountUuid = ProfileManager.shared.activeProfile?.accountUuid
+        let personalEndpoint = personalOverageEndpoint(organizationId: organizationId, accountUuid: accountUuid)
+        let orgEndpoint = "/organizations/\(organizationId)/overage_spend_limit"
+
         async let usageDataTask = performRequest(endpoint: "/organizations/\(organizationId)/usage", sessionKey: sessionKey)
-        async let overageDataTask: Data? = performRequest(endpoint: "/organizations/\(organizationId)/overage_spend_limit", sessionKey: sessionKey)
-        async let creditGrantTask: Data? = performRequest(endpoint: "/organizations/\(organizationId)/overage_credit_grant", sessionKey: sessionKey)
+        async let overageDataTask: Data?        = (checkOverage && personalEndpoint != nil) ? performRequest(endpoint: personalEndpoint ?? "", sessionKey: sessionKey) : nil
+        async let orgOverageTask: Data?         = checkOverage ? performRequest(endpoint: orgEndpoint, sessionKey: sessionKey) : nil
+        async let creditGrantTask: Data?        = checkOverage ? performRequest(endpoint: "/organizations/\(organizationId)/overage_credit_grant", sessionKey: sessionKey) : nil
+        async let runBudgetTask: RunBudgetResponse? = checkOverage ? fetchRunBudget(sessionKey: sessionKey, organizationId: organizationId) : nil
 
         let usageData = try await usageDataTask
         var claudeUsage = try parseUsageResponse(usageData)
 
-        if let data = try? await overageDataTask,
-           let overage = try? JSONDecoder().decode(OverageSpendLimitResponse.self, from: data),
-           overage.isEnabled == true {
-            claudeUsage.costUsed = overage.usedCredits
-            claudeUsage.costLimit = overage.monthlyCreditLimit
-            claudeUsage.costCurrency = overage.currency
+        if checkOverage {
+            applyPersonalOverage(to: &claudeUsage, data: try? await overageDataTask)
+            applyOrganizationOverage(to: &claudeUsage, data: try? await orgOverageTask)
         }
 
-        if let creditData = try? await creditGrantTask,
+        if checkOverage,
+           let creditData = try? await creditGrantTask,
            let creditGrant = try? JSONDecoder().decode(OverageCreditGrantResponse.self, from: creditData) {
             claudeUsage.overageBalance = creditGrant.remainingBalance
             claudeUsage.overageBalanceCurrency = creditGrant.currency
+        }
+
+        // NEW: CCR Routine Runs
+        if checkOverage,
+           let runBudget = try? await runBudgetTask,
+           runBudget.unifiedBillingEnabled {
+            claudeUsage.routineRunsUsed = runBudget.usedRuns
+            claudeUsage.routineRunsLimit = runBudget.limitRuns
         }
 
         return claudeUsage
@@ -469,19 +491,21 @@ class ClaudeAPIService: APIServiceProtocol {
 
             // Use active profile's checkOverageLimitEnabled setting
             let checkOverage = ProfileManager.shared.activeProfile?.checkOverageLimitEnabled ?? true
-            async let overageDataTask: Data? = checkOverage ? performRequest(endpoint: "/organizations/\(orgId)/overage_spend_limit", sessionKey: sessionKey) : nil
+            let accountUuid = ProfileManager.shared.activeProfile?.accountUuid
+            let personalEndpoint = personalOverageEndpoint(organizationId: orgId, accountUuid: accountUuid)
+            let orgEndpoint = "/organizations/\(orgId)/overage_spend_limit"
+
+            async let overageDataTask: Data? = (checkOverage && personalEndpoint != nil) ? performRequest(endpoint: personalEndpoint ?? "", sessionKey: sessionKey) : nil
+            async let orgOverageTask: Data? = checkOverage ? performRequest(endpoint: orgEndpoint, sessionKey: sessionKey) : nil
             async let creditGrantTask: Data? = checkOverage ? performRequest(endpoint: "/organizations/\(orgId)/overage_credit_grant", sessionKey: sessionKey) : nil
+            async let runBudgetTask: RunBudgetResponse? = checkOverage ? fetchRunBudget(sessionKey: sessionKey, organizationId: orgId) : nil
 
             let usageData = try await usageDataTask
             var claudeUsage = try parseUsageResponse(usageData)
 
-            if checkOverage,
-               let data = try? await overageDataTask,
-               let overage = try? JSONDecoder().decode(OverageSpendLimitResponse.self, from: data),
-               overage.isEnabled == true {
-                claudeUsage.costUsed = overage.usedCredits
-                claudeUsage.costLimit = overage.monthlyCreditLimit
-                claudeUsage.costCurrency = overage.currency
+            if checkOverage {
+                applyPersonalOverage(to: &claudeUsage, data: try? await overageDataTask)
+                applyOrganizationOverage(to: &claudeUsage, data: try? await orgOverageTask)
             }
 
             if checkOverage,
@@ -489,6 +513,14 @@ class ClaudeAPIService: APIServiceProtocol {
                let creditGrant = try? JSONDecoder().decode(OverageCreditGrantResponse.self, from: creditData) {
                 claudeUsage.overageBalance = creditGrant.remainingBalance
                 claudeUsage.overageBalanceCurrency = creditGrant.currency
+            }
+
+            // NEW: CCR Routine Runs
+            if checkOverage,
+               let runBudget = try? await runBudgetTask,
+               runBudget.unifiedBillingEnabled {
+                claudeUsage.routineRunsUsed = runBudget.usedRuns
+                claudeUsage.routineRunsLimit = runBudget.limitRuns
             }
 
             return claudeUsage
@@ -595,6 +627,7 @@ class ClaudeAPIService: APIServiceProtocol {
         request.setValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15", forHTTPHeaderField: "User-Agent")
         request.setValue("https://claude.ai", forHTTPHeaderField: "Referer")
         request.setValue("https://claude.ai", forHTTPHeaderField: "Origin")
+        applyAnthropicWebHeaders(to: &request)
         request.httpMethod = "GET"
         request.timeoutInterval = 30
 
@@ -707,9 +740,156 @@ class ClaudeAPIService: APIServiceProtocol {
         }
     }
 
+    // MARK: - Overage Spend Limit
+
+    /// Returns the overage_spend_limit endpoint for personal data, or nil if no account UUID is set.
+    /// Without account_uuid the endpoint returns team/org data; with it, personal data scoped to the user.
+    private func personalOverageEndpoint(organizationId: String, accountUuid: String?) -> String? {
+        guard let uuid = accountUuid, !uuid.isEmpty else { return nil }
+        return "/organizations/\(organizationId)/overage_spend_limit?account_uuid=\(uuid)"
+    }
+
+    /// Applies the personal overage_spend_limit response to the usage model.
+    /// Personal cost fields take precedence from /usage's extra_usage block; this only fills gaps.
+    /// Always maps disabled state and organization name regardless of cost-field precedence.
+    private func applyPersonalOverage(to usage: inout ClaudeUsage, data: Data?) {
+        guard let data = data,
+              let overage = try? JSONDecoder().decode(OverageSpendLimitResponse.self, from: data),
+              overage.isEnabled == true else { return }
+
+        if usage.costUsed == nil {
+            usage.costLimit = overage.monthlyCreditLimit
+            usage.costUsed = overage.usedCredits
+            usage.costCurrency = overage.currency
+        }
+        if let reason = overage.disabledReason, !reason.isEmpty {
+            usage.budgetDisabledReason = reason
+        } else if overage.outOfCredits == true {
+            usage.budgetDisabledReason = "out_of_credits"
+        }
+        if let name = overage.groupName, !name.isEmpty {
+            usage.organizationName = name
+        }
+    }
+
+    /// Applies the organization-level overage_spend_limit response (fetched without account_uuid).
+    /// The org pool is what all members share; personal caps are sub-limits within it.
+    private func applyOrganizationOverage(to usage: inout ClaudeUsage, data: Data?) {
+        guard let data = data,
+              let overage = try? JSONDecoder().decode(OverageSpendLimitResponse.self, from: data),
+              overage.isEnabled == true else { return }
+
+        usage.organizationCostLimit = overage.monthlyCreditLimit
+        usage.organizationCostUsed = overage.usedCredits
+        usage.organizationCostCurrency = overage.currency
+        if usage.organizationName == nil, let name = overage.groupName, !name.isEmpty {
+            usage.organizationName = name
+        }
+    }
+
+    // MARK: - CCR Run Budget
+
+    /// Fetches the personal Claude Code Routines monthly budget.
+    ///
+    /// Endpoint: GET https://claude.ai/v1/code/routines/run-budget
+    /// (Note: uses claudeBase — no /api prefix.)
+    ///
+    /// Required extra headers beyond standard session headers:
+    ///   - anthropic-beta: ccr-triggers-2026-01-30
+    ///   - x-organization-uuid: {organizationId}
+    ///
+    /// - Parameters:
+    ///   - sessionKey: The Claude.ai session cookie value (same as used in performRequest)
+    ///   - organizationId: The org UUID for the x-organization-uuid header
+    /// - Returns: Decoded `RunBudgetResponse`; throws on non-200 or decode failure
+    private func fetchRunBudget(sessionKey: String, organizationId: String) async throws -> RunBudgetResponse {
+        let endpoint = "/v1/code/routines/run-budget"
+        let url = try URLBuilder.claudeBase(endpoint: endpoint).build()
+
+        var request = URLRequest(url: url)
+        request.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        request.setValue("ccr-triggers-2026-01-30", forHTTPHeaderField: "anthropic-beta")
+        request.setValue(organizationId, forHTTPHeaderField: "x-organization-uuid")
+        request.setValue(
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
+            forHTTPHeaderField: "User-Agent"
+        )
+        request.setValue("https://claude.ai", forHTTPHeaderField: "Referer")
+        request.setValue("https://claude.ai", forHTTPHeaderField: "Origin")
+        applyAnthropicWebHeaders(to: &request)
+        request.httpMethod = "GET"
+        request.timeoutInterval = 30
+
+        LoggingService.shared.logAPIRequest(endpoint)
+
+        let startTime = Date()
+        let (data, response): (Data, URLResponse)
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            NetworkLoggerService.shared.logRequest(
+                url: url.absoluteString,
+                method: "GET",
+                requestBody: nil,
+                responseData: nil,
+                statusCode: nil,
+                duration: duration,
+                error: error
+            )
+            LoggingService.shared.logAPIError(endpoint, error: error)
+            throw error
+        }
+
+        let duration = Date().timeIntervalSince(startTime)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw AppError(
+                code: .apiInvalidResponse,
+                message: "Invalid response from run-budget endpoint",
+                technicalDetails: "Endpoint: \(endpoint)",
+                isRecoverable: true
+            )
+        }
+
+        LoggingService.shared.logAPIResponse(endpoint, statusCode: httpResponse.statusCode)
+
+        NetworkLoggerService.shared.logRequest(
+            url: url.absoluteString,
+            method: "GET",
+            requestBody: nil,
+            responseData: data,
+            statusCode: httpResponse.statusCode,
+            duration: duration,
+            error: nil
+        )
+
+        if DataStore.shared.loadDebugAPILoggingEnabled(),
+           let responseString = String(data: data, encoding: .utf8) {
+            let truncated = responseString.prefix(500)
+            LoggingService.shared.logDebug("API Response [\(endpoint)]: \(truncated)...")
+        }
+
+        guard httpResponse.statusCode == 200 else {
+            let responsePreview = String(data: data, encoding: .utf8)?.prefix(200) ?? "Unable to read response"
+            throw AppError(
+                code: (httpResponse.statusCode == 401 || httpResponse.statusCode == 403)
+                    ? .apiUnauthorized : .apiGenericError,
+                message: "run-budget request failed (HTTP \(httpResponse.statusCode))",
+                technicalDetails: "Endpoint: \(endpoint)\nStatus: \(httpResponse.statusCode)\nResponse: \(responsePreview)",
+                isRecoverable: true
+            )
+        }
+
+        return try JSONDecoder().decode(RunBudgetResponse.self, from: data)
+    }
+
     // MARK: - Response Parsing
 
-    private func parseUsageResponse(_ data: Data) throws -> ClaudeUsage {
+    func parseUsageResponse(_ data: Data) throws -> ClaudeUsage {
         // Parse Claude's actual API response structure
 
         if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
@@ -730,6 +910,7 @@ class ClaudeAPIService: APIServiceProtocol {
             // Extract weekly usage (seven_day)
             var weeklyPercentage = 0.0
             var weeklyResetTime = Date().nextMonday1259pm()
+            let hasSevenDay = (json["seven_day"] as? [String: Any]) != nil
             if let sevenDay = json["seven_day"] as? [String: Any] {
                 if let utilization = sevenDay["utilization"] {
                     weeklyPercentage = parseUtilization(utilization)
@@ -763,8 +944,9 @@ class ClaudeAPIService: APIServiceProtocol {
                 }
             }
 
-            // We don't know user's plan, so we use 0 for limits we can't determine
-            let weeklyLimit = Constants.weeklyLimit
+            // We don't know user's plan, so we use 0 for limits we can't determine.
+            // 0 when API omits seven_day (plans without a weekly cap) so the UI can hide the row.
+            let weeklyLimit = hasSevenDay ? Constants.weeklyLimit : 0
 
             // Calculate token counts from percentages (using weekly limit as reference)
             let sessionTokens = 0  // Can't calculate without knowing plan
@@ -773,7 +955,33 @@ class ClaudeAPIService: APIServiceProtocol {
             let opusTokens = Int(Double(weeklyLimit) * (opusPercentage / 100.0))
             let sonnetTokens = Int(Double(weeklyLimit) * (sonnetPercentage / 100.0))
 
-            let usage = ClaudeUsage(
+            // Extract extra_usage (cost data embedded in /usage response).
+            // If present, this takes PRECEDENCE over the separate overage_spend_limit endpoint.
+            var extraCostUsed: Double? = nil
+            var extraCostLimit: Double? = nil
+            var extraCostCurrency: String? = nil
+            var extraCostUtilization: Double? = nil
+
+            if let extraUsage = json["extra_usage"] as? [String: Any] {
+                if let used = extraUsage["used_credits"] as? Double {
+                    extraCostUsed = used
+                } else if let used = extraUsage["used_credits"] as? Int {
+                    extraCostUsed = Double(used)
+                }
+                if let limit = extraUsage["monthly_limit"] as? Double {
+                    extraCostLimit = limit
+                } else if let limit = extraUsage["monthly_limit"] as? Int {
+                    extraCostLimit = Double(limit)
+                }
+                if let currency = extraUsage["currency"] as? String {
+                    extraCostCurrency = currency
+                }
+                if let utilization = extraUsage["utilization"] {
+                    extraCostUtilization = parseUtilization(utilization)
+                }
+            }
+
+            var usage = ClaudeUsage(
                 sessionTokensUsed: sessionTokens,
                 sessionLimit: sessionLimit,
                 sessionPercentage: sessionPercentage,
@@ -787,13 +995,13 @@ class ClaudeAPIService: APIServiceProtocol {
                 sonnetWeeklyTokensUsed: sonnetTokens,
                 sonnetWeeklyPercentage: sonnetPercentage,
                 sonnetWeeklyResetTime: sonnetResetTime,
-                costUsed: nil,
-                costLimit: nil,
-                costCurrency: nil,
+                costUsed: extraCostUsed,
+                costLimit: extraCostLimit,
+                costCurrency: extraCostCurrency,
                 lastUpdated: Date(),
                 userTimezone: .current
             )
-
+            usage.costUtilization = extraCostUtilization
             return usage
         }
 

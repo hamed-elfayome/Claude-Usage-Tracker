@@ -137,6 +137,16 @@ final class URLBuilderTests: XCTestCase {
         XCTAssertEqual(url.absoluteString, "https://status.claude.com/api/v2/status.json")
     }
 
+    func testClaudeBaseBuilder() throws {
+        let url = try URLBuilder.claudeBase(endpoint: "/v1/code/routines/run-budget").build()
+        XCTAssertEqual(url.absoluteString, "https://claude.ai/v1/code/routines/run-budget")
+    }
+
+    func testClaudeBaseBuilderNoEndpoint() throws {
+        let url = try URLBuilder.claudeBase().build()
+        XCTAssertEqual(url.absoluteString, "https://claude.ai")
+    }
+
     // MARK: - Complex URL Tests
 
     func testComplexClaudeURL() throws {

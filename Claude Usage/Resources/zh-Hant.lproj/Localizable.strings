@@ -63,6 +63,9 @@
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";
 "menubar.extra_usage" = "額外使用量";
+"menubar.personal_limit" = "個人限額";
+"menubar.organization_limit" = "組織限額";
+"menubar.routine_runs" = "CCR 預算";
 "menubar.api_credits" = "API 額度";
 "menubar.5_hour_window" = "5 小時滑動視窗";
 "menubar.all_models" = "所有模型";
@@ -373,6 +376,8 @@
 "claudecode.component_weekly_description" = "帶進度條和重置時間的每週 token 使用量";
 "claudecode.component_extra_usage" = "顯示額外使用量";
 "claudecode.component_extra_usage_description" = "費用指標（例如 9.49 USD）";
+"claudecode.component_routine_runs" = "顯示 CCR 預算";
+"claudecode.component_routine_runs_description" = "個人 Claude Code Routines 月度預算";
 "claudecode.weekly_label" = "顯示 \"Weekly:\" 標籤";
 "claudecode.requirement_sessionkey" = "• 在憑證 → Claude.ai 分頁中設定了 Session 金鑰";
 "claudecode.requirement_restart" = "• 套用變更後重新啟動 Claude CLI";

@@ -62,6 +62,9 @@
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";
 "menubar.extra_usage" = "追加使用";
+"menubar.personal_limit" = "個人制限";
+"menubar.organization_limit" = "組織制限";
+"menubar.routine_runs" = "CCR予算";
 "menubar.api_credits" = "APIクレジット";
 "menubar.5_hour_window" = "5時間ローリングウィンドウ";
 "menubar.all_models" = "すべてのモデル";
@@ -365,6 +368,8 @@
 "claudecode.component_weekly_description" = "バーとリセット時間付きの週間トークン使用量";
 "claudecode.component_extra_usage" = "追加使用量を表示";
 "claudecode.component_extra_usage_description" = "コスト表示（例: 9.49 USD）";
+"claudecode.component_routine_runs" = "CCR予算を表示";
+"claudecode.component_routine_runs_description" = "個人のClaude Code Routines月次予算";
 "claudecode.weekly_label" = "\"Weekly:\" ラベルを表示";
 "claudecode.requirement_sessionkey" = "• 認証情報 → Claude.aiタブでセッションキーが構成されている";
 "claudecode.requirement_restart" = "• 変更適用後にClaude CLIを再起動";

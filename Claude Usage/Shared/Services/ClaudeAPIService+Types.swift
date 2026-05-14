@@ -32,16 +32,45 @@ extension ClaudeAPIService {
     }
 
     struct OverageSpendLimitResponse: Codable {
+        // Existing fields
         let monthlyCreditLimit: Double?
         let currency: String?
         let usedCredits: Double?
         let isEnabled: Bool?
 
+        // Extended fields (present when ?account_uuid=<uuid> query param is supplied)
+        let limitType: String?
+        let accountEmail: String?
+        let accountName: String?
+        let groupUuid: String?
+        let groupName: String?
+        let period: String?
+        let disabledReason: String?
+        let disabledUntil: String?
+        let outOfCredits: Bool?
+        let discountPercent: Double?
+        let resolvedGroupLimit: Double?
+        let createdAt: String?
+        let updatedAt: String?
+
         enum CodingKeys: String, CodingKey {
-            case monthlyCreditLimit = "monthly_credit_limit"
+            case monthlyCreditLimit   = "monthly_credit_limit"
             case currency
-            case usedCredits = "used_credits"
-            case isEnabled = "is_enabled"
+            case usedCredits          = "used_credits"
+            case isEnabled            = "is_enabled"
+            case limitType            = "limit_type"
+            case accountEmail         = "account_email"
+            case accountName          = "account_name"
+            case groupUuid            = "group_uuid"
+            case groupName            = "group_name"
+            case period
+            case disabledReason       = "disabled_reason"
+            case disabledUntil        = "disabled_until"
+            case outOfCredits         = "out_of_credits"
+            case discountPercent      = "discount_percent"
+            case resolvedGroupLimit   = "resolved_group_limit"
+            case createdAt            = "created_at"
+            case updatedAt            = "updated_at"
         }
     }
 
@@ -55,6 +84,27 @@ extension ClaudeAPIService {
             case currency
             case totalGranted = "total_granted"
         }
+    }
+
+    /// Response from GET /v1/code/routines/run-budget
+    struct RunBudgetResponse: Codable {
+        /// Monthly routine run allowance as a string (e.g. "25")
+        let limit: String
+        /// Routine runs consumed this month as a string (e.g. "0")
+        let used: String
+        /// When true, the user's billing is unified and this budget applies
+        let unifiedBillingEnabled: Bool
+
+        enum CodingKeys: String, CodingKey {
+            case limit
+            case used
+            case unifiedBillingEnabled = "unified_billing_enabled"
+        }
+
+        /// Number of routine runs consumed this month.
+        var usedRuns: Int  { Int(used)  ?? 0 }
+        /// Monthly routine run allowance.
+        var limitRuns: Int { Int(limit) ?? 0 }
     }
 
     struct CurrentSpendResponse: Codable {

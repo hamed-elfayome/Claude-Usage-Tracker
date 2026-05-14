@@ -1,6 +1,27 @@
 import Foundation
 
 extension Date {
+    /// Returns the first day of next month at 00:00 (typical monthly billing renewal)
+    func firstOfNextMonth(in timezone: TimeZone = .current) -> Date {
+        var calendar = Calendar.current
+        calendar.timeZone = timezone
+        var components = calendar.dateComponents([.year, .month], from: self)
+        components.month = (components.month ?? 1) + 1
+        components.day = 1
+        components.hour = 0
+        components.minute = 0
+        components.second = 0
+        return calendar.date(from: components) ?? self
+    }
+
+    /// Formats a date as a short month + day label (e.g. "Jun 1")
+    func shortMonthDayString(in timezone: TimeZone = .current) -> String {
+        let formatter = DateFormatter()
+        formatter.timeZone = timezone
+        formatter.dateFormat = "MMM d"
+        return formatter.string(from: self)
+    }
+
     /// Returns the next Monday at 12:59pm in the specified timezone
     func nextMonday1259pm(in timezone: TimeZone = .current) -> Date {
         var calendar = Calendar.current

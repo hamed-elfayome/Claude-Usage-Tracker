@@ -188,6 +188,10 @@ class UsageHistoryService {
             resetType: .sessionReset,
             sessionTokensUsed: usage.sessionTokensUsed,
             sessionPercentage: usage.sessionPercentage,
+            costUsed: usage.costUsed,
+            costLimit: usage.costLimit,
+            routineRunsUsed: usage.routineRunsUsed,
+            routineRunsLimit: usage.routineRunsLimit,
             triggeringResetTime: now
         )
 
@@ -229,6 +233,10 @@ class UsageHistoryService {
             opusWeeklyPercentage: usage.opusWeeklyPercentage,
             sonnetWeeklyTokensUsed: usage.sonnetWeeklyTokensUsed,
             sonnetWeeklyPercentage: usage.sonnetWeeklyPercentage,
+            costUsed: usage.costUsed,
+            costLimit: usage.costLimit,
+            routineRunsUsed: usage.routineRunsUsed,
+            routineRunsLimit: usage.routineRunsLimit,
             triggeringResetTime: now
         )
 

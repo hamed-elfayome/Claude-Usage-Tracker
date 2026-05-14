@@ -190,6 +190,42 @@ struct AppearanceSettingsView: View {
                                 onConfigChanged: { saveConfiguration() }
                             )
                         }
+
+                        // Personal Limit
+                        if let idx = configuration.metrics.firstIndex(where: { $0.metricType == .personalLimit }) {
+                            MetricIconCard(
+                                metricType: .personalLimit,
+                                config: Binding(
+                                    get: { configuration.metrics[idx] },
+                                    set: { configuration.metrics[idx] = $0 }
+                                ),
+                                onConfigChanged: { saveConfiguration() }
+                            )
+                        }
+
+                        // Organization Limit
+                        if let idx = configuration.metrics.firstIndex(where: { $0.metricType == .organizationLimit }) {
+                            MetricIconCard(
+                                metricType: .organizationLimit,
+                                config: Binding(
+                                    get: { configuration.metrics[idx] },
+                                    set: { configuration.metrics[idx] = $0 }
+                                ),
+                                onConfigChanged: { saveConfiguration() }
+                            )
+                        }
+
+                        // Routine Runs
+                        if let idx = configuration.metrics.firstIndex(where: { $0.metricType == .routineRuns }) {
+                            MetricIconCard(
+                                metricType: .routineRuns,
+                                config: Binding(
+                                    get: { configuration.metrics[idx] },
+                                    set: { configuration.metrics[idx] = $0 }
+                                ),
+                                onConfigChanged: { saveConfiguration() }
+                            )
+                        }
                     }
                 }
                 .disabled(isMultiProfileMode)

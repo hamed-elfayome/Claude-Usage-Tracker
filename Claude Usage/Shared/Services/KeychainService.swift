@@ -18,13 +18,21 @@ class KeychainService {
     enum KeychainKey: String {
         case apiSessionKey = "com.claudeusagetracker.api-session-key"
         case claudeSessionKey = "com.claudeusagetracker.claude-session-key"
+        /// Stable anonymous identifier prefixed "claudeai.v1.<uuid>". Created once, never rotated.
+        case anthropicAnonymousId = "com.claudeusagetracker.anthropic-anonymous-id"
+        /// Stable device identifier (bare UUID). Created once, never rotated.
+        case anthropicDeviceId    = "com.claudeusagetracker.anthropic-device-id"
 
         var service: String {
             return rawValue
         }
 
         var account: String {
-            return "session-key"
+            switch self {
+            case .anthropicAnonymousId: return "anthropic-anonymous-id"
+            case .anthropicDeviceId:    return "anthropic-device-id"
+            default:                    return "session-key"
+            }
         }
     }
 
