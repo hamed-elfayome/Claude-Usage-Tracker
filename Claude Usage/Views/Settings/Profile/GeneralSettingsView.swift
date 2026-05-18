@@ -175,6 +175,42 @@ struct GeneralSettingsView: View {
                                     }
                                 }
 
+                                // Reset alerts (calendar-trigger; fires even when app is quit/offline)
+                                Divider()
+
+                                VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
+                                    Text("Reset alerts")
+                                        .font(DesignTokens.Typography.body)
+                                        .fontWeight(.medium)
+                                        .foregroundColor(.secondary)
+
+                                    SettingToggle(
+                                        title: "Notify on 5-hour session reset",
+                                        description: "Schedule a local notification at the moment your 5-hour usage window rolls over for this profile.",
+                                        isOn: Binding(
+                                            get: { profile.notificationSettings.sessionResetEnabled },
+                                            set: { newValue in
+                                                var updated = profile
+                                                updated.notificationSettings.sessionResetEnabled = newValue
+                                                profileManager.updateProfile(updated)
+                                            }
+                                        )
+                                    )
+
+                                    SettingToggle(
+                                        title: "Notify on weekly limit reset",
+                                        description: "Schedule a local notification at the moment your weekly usage window resets for this profile.",
+                                        isOn: Binding(
+                                            get: { profile.notificationSettings.weeklyResetEnabled },
+                                            set: { newValue in
+                                                var updated = profile
+                                                updated.notificationSettings.weeklyResetEnabled = newValue
+                                                profileManager.updateProfile(updated)
+                                            }
+                                        )
+                                    )
+                                }
+
                                 // Custom thresholds
                                 Divider()
 
