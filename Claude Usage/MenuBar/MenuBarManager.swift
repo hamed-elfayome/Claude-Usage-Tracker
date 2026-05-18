@@ -1075,6 +1075,10 @@ class MenuBarManager: NSObject, ObservableObject {
                         self.profileManager.saveClaudeUsage(newUsage, for: profile.id)
                         LoggingService.shared.log("MenuBarManager: Saved usage for profile '\(profile.name)' - session: \(newUsage.sessionPercentage)%")
 
+                        // Re-schedule local reset alerts for this profile against the freshly
+                        // fetched reset times so we still alert even if the app is later quit.
+                        self.scheduleResetAlertsIfEnabled(profile: profile, newUsage: newUsage)
+
                         // If this is the active profile, also update the manager's usage
                         if profile.id == self.profileManager.activeProfile?.id {
                             self.usage = newUsage
@@ -1293,6 +1297,12 @@ class MenuBarManager: NSObject, ObservableObject {
                         self.profileManager.saveClaudeUsage(newUsage, for: profileId)
                     }
 
+                    // Pre-schedule local reset alerts so they fire even if the app is quit
+                    // before the actual reset moment.
+                    if let activeProfile = self.profileManager.activeProfile {
+                        self.scheduleResetAlertsIfEnabled(profile: activeProfile, newUsage: newUsage)
+                    }
+
                     // Write statusline cache for instant CLI rendering
                     if StatuslineService.shared.isInstalled {
                         StatuslineService.shared.writeUsageCache(
@@ -1505,6 +1515,46 @@ class MenuBarManager: NSObject, ObservableObject {
         let calendar = Calendar.current
         let components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date)
         return calendar.date(from: components) ?? date
+    }
+
+    /// Schedules (or cancels) local reset notifications for this profile based on its
+    /// NotificationSettings toggles. Called after every successful usage fetch so the
+    /// pending alerts always reflect the latest server-reported reset times — adding a
+    /// request with the same identifier replaces any prior pending one, so the user
+    /// gets one alert per actual reset event even across reschedules.
+    /// macOS delivers `UNCalendarNotificationTrigger`-based notifications even when
+    /// the app is offline or quit, which is the whole point of pre-scheduling.
+    private func scheduleResetAlertsIfEnabled(profile: Profile, newUsage: ClaudeUsage) {
+        let settings = profile.notificationSettings
+        guard settings.enabled else {
+            NotificationManager.shared.cancelResetNotification(profileId: profile.id, type: .sessionReset)
+            NotificationManager.shared.cancelResetNotification(profileId: profile.id, type: .weeklyReset)
+            return
+        }
+
+        if settings.sessionResetEnabled {
+            NotificationManager.shared.scheduleResetNotification(
+                profileId: profile.id,
+                profileName: profile.name,
+                type: .sessionReset,
+                resetTime: newUsage.sessionResetTime,
+                soundName: settings.soundName
+            )
+        } else {
+            NotificationManager.shared.cancelResetNotification(profileId: profile.id, type: .sessionReset)
+        }
+
+        if settings.weeklyResetEnabled {
+            NotificationManager.shared.scheduleResetNotification(
+                profileId: profile.id,
+                profileName: profile.name,
+                type: .weeklyReset,
+                resetTime: newUsage.weeklyResetTime,
+                soundName: settings.soundName
+            )
+        } else {
+            NotificationManager.shared.cancelResetNotification(profileId: profile.id, type: .weeklyReset)
+        }
     }
 
     /// Checks if a session reset occurred and records a snapshot if so

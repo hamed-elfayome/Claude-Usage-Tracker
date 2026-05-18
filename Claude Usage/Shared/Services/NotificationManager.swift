@@ -359,6 +359,75 @@ class NotificationManager: NotificationServiceProtocol {
     }
 }
 
+// MARK: - Reset Notifications (calendar-trigger-based)
+
+extension NotificationManager {
+    /// Schedules a local notification to fire when the upcoming usage reset occurs
+    /// (5-hour session window or weekly limit window).
+    ///
+    /// Uses `UNCalendarNotificationTrigger`, so macOS delivers the alert at the exact
+    /// reset instant — even when the app is quit, the machine is asleep, or the network
+    /// is offline at the moment of reset. Adding a new request with the same identifier
+    /// replaces any previously pending one, so this is safe to call on every API refresh:
+    /// if the server later reports a different reset time, the pending alert is updated
+    /// in place. Reset times that are already past or less than 5 seconds out are skipped.
+    func scheduleResetNotification(
+        profileId: UUID,
+        profileName: String,
+        type: AlertType,
+        resetTime: Date,
+        soundName: String = "default"
+    ) {
+        guard type == .sessionReset || type == .weeklyReset else { return }
+        guard resetTime.timeIntervalSinceNow > 5 else {
+            LoggingService.shared.log("scheduleResetNotification: skipping \(type.rawValue) for '\(profileName)' (resetTime in the past or <5s away)")
+            return
+        }
+
+        let identifier = resetNotificationIdentifier(profileId: profileId, type: type)
+
+        let content = UNMutableNotificationContent()
+        content.title = "\(profileName) - \(type.title)"
+        content.body = type.message(percentage: 0, resetTime: resetTime)
+        content.categoryIdentifier = "RESET_ALERT"
+        if soundName == "default" {
+            content.sound = .default
+        } else if soundName != "none" {
+            content.sound = UNNotificationSound(named: UNNotificationSoundName(soundName))
+        }
+
+        let components = Calendar.current.dateComponents(
+            [.year, .month, .day, .hour, .minute, .second],
+            from: resetTime
+        )
+        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                LoggingService.shared.logError("Failed to schedule reset notification for '\(profileName)' (\(type.rawValue)) at \(resetTime): \(error.localizedDescription)")
+            } else {
+                LoggingService.shared.log("✓ scheduled \(type.rawValue) for '\(profileName)' at \(resetTime) (id=\(identifier))")
+            }
+        }
+    }
+
+    /// Cancels any pending reset notification for the given profile + reset type.
+    /// Call this when the user disables the corresponding toggle or when a profile is removed.
+    func cancelResetNotification(profileId: UUID, type: AlertType) {
+        guard type == .sessionReset || type == .weeklyReset else { return }
+        let identifier = resetNotificationIdentifier(profileId: profileId, type: type)
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [identifier])
+    }
+
+    /// Uses the profile's UUID (not display name) so two profiles sharing the same name
+    /// can't silently collide and overwrite each other's pending reset alerts; renaming
+    /// a profile also doesn't leak orphan pending requests.
+    private func resetNotificationIdentifier(profileId: UUID, type: AlertType) -> String {
+        return "reset_\(type.rawValue)_\(profileId.uuidString)"
+    }
+}
+
 // MARK: - Alert Types
 
 extension NotificationManager {
@@ -367,6 +436,7 @@ extension NotificationManager {
         case sessionWarning = "session_warning"  // 90% threshold
         case sessionCritical = "session_critical"  // 95% threshold
         case sessionReset = "session_reset"
+        case weeklyReset = "weekly_reset"
         case sessionAutoStarted = "session_auto_started"
         case sessionAutoStartFailed = "session_auto_start_failed"
         case weeklyWarning = "weekly_warning"
@@ -386,6 +456,8 @@ extension NotificationManager {
                 return "notification.session_critical.title".localized
             case .sessionReset:
                 return "notification.session_reset.title".localized
+            case .weeklyReset:
+                return "notification.weekly_reset.title".localizedOrFallback("Weekly Limit Reset")
             case .sessionAutoStarted:
                 return "notification.session_auto_started.title".localized
             case .sessionAutoStartFailed:
@@ -418,6 +490,8 @@ extension NotificationManager {
                 return "notification.session_critical.message".localized(with: percentStr, resetStr)
             case .sessionReset:
                 return "notification.session_reset.message".localized
+            case .weeklyReset:
+                return "notification.weekly_reset.message".localizedOrFallback("Your weekly usage window just reset. You're back to 0%.")
             case .sessionAutoStarted:
                 return "notification.session_auto_started.message".localized
             case .sessionAutoStartFailed:

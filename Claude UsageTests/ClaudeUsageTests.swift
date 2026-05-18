@@ -96,6 +96,30 @@ final class ClaudeUsageTests: XCTestCase {
     }
 }
 
+// MARK: - NotificationSettings backwards-compat
+
+final class NotificationSettingsCodableTests: XCTestCase {
+    func testDecodesOldPlistWithoutResetFlags() throws {
+        let json = #"{"enabled":true,"threshold75Enabled":true,"threshold90Enabled":true,"threshold95Enabled":true}"#.data(using: .utf8)!
+        let decoded = try JSONDecoder().decode(NotificationSettings.self, from: json)
+        XCTAssertFalse(decoded.sessionResetEnabled)
+        XCTAssertFalse(decoded.weeklyResetEnabled)
+        XCTAssertEqual(decoded.soundName, "default")
+        XCTAssertEqual(decoded.customThresholds, [])
+    }
+
+    func testRoundTripsResetFlags() throws {
+        let original = NotificationSettings(
+            sessionResetEnabled: true,
+            weeklyResetEnabled: true
+        )
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(NotificationSettings.self, from: data)
+        XCTAssertTrue(decoded.sessionResetEnabled)
+        XCTAssertTrue(decoded.weeklyResetEnabled)
+    }
+}
+
 // MARK: - Profile custom keychain field
 
 final class ProfileCustomKeychainTests: XCTestCase {
@@ -249,3 +273,11 @@ final class ClaudeCodeSyncServiceLogicTests: XCTestCase {
     }
 }
 
+// MARK: - LocalizationManager fallback
+
+final class LocalizationFallbackTests: XCTestCase {
+    func testReturnsFallbackForMissingKey() {
+        let missingKey = "test.surely.missing.\(UUID().uuidString)"
+        XCTAssertEqual(missingKey.localizedOrFallback("FB"), "FB")
+    }
+}

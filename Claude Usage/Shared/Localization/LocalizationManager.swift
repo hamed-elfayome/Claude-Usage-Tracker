@@ -23,6 +23,12 @@ extension String {
     func localized(comment: String) -> String {
         return NSLocalizedString(self, comment: comment)
     }
+
+    /// Returns the localized string for this key, or `fallback` if the key is missing.
+    /// `NSLocalizedString(value:)` already returns `value` on a table miss.
+    func localizedOrFallback(_ fallback: String) -> String {
+        return NSLocalizedString(self, value: fallback, comment: "")
+    }
 }
 
 /// Type-safe localization keys (optional but recommended)
