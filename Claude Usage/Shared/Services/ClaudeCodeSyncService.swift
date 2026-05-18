@@ -428,7 +428,8 @@ class ClaudeCodeSyncService {
         return labels
     }
 
-    private func sha256HexPrefix(_ s: String, length: Int) -> String {
+    // internal (not private) so unit tests can pin the live-validated hash algorithm.
+    func sha256HexPrefix(_ s: String, length: Int) -> String {
         let digest = SHA256.hash(data: Data(s.utf8))
         let hex = digest.map { String(format: "%02x", $0) }.joined()
         return String(hex.prefix(length))
@@ -840,7 +841,8 @@ class ClaudeCodeSyncService {
         }
     }
 
-    private struct OAuthRefreshResponse: Decodable {
+    // internal so unit tests can construct fixtures to feed mergeRefreshedCredentials.
+    struct OAuthRefreshResponse: Decodable {
         let access_token: String
         let refresh_token: String?
         let expires_in: Int
@@ -987,7 +989,8 @@ class ClaudeCodeSyncService {
 
     /// Merges an OAuth refresh response into the existing `claudeAiOauth` payload,
     /// preserving fields the refresh response does not touch (scopes, subscriptionType, etc.).
-    private func mergeRefreshedCredentials(into cliJSON: String, refreshed: OAuthRefreshResponse) -> String? {
+    // internal so unit tests can verify the merge correctness against fixtures.
+    func mergeRefreshedCredentials(into cliJSON: String, refreshed: OAuthRefreshResponse) -> String? {
         guard let data = cliJSON.data(using: .utf8),
               var root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               var oauth = root["claudeAiOauth"] as? [String: Any] else {
