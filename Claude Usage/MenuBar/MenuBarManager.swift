@@ -1004,7 +1004,11 @@ class MenuBarManager: NSObject, ObservableObject {
 
     /// Refreshes usage data for all profiles selected for multi-profile display
     private func refreshAllSelectedProfiles() {
-        let selectedProfiles = profileManager.profiles.filter { $0.isSelectedForDisplay && $0.hasUsageCredentials }
+        // Filter on `hasAnyCredentials` (not `hasUsageCredentials`) so that profiles
+        // whose CLI OAuth token has expired are still polled — `fetchUsageForProfile`
+        // will transparently refresh expired tokens via the refresh_token grant.
+        // Excluding them here would prevent the refresh path from ever running.
+        let selectedProfiles = profileManager.profiles.filter { $0.isSelectedForDisplay && $0.hasAnyCredentials }
 
         guard !selectedProfiles.isEmpty else {
             LoggingService.shared.log("MenuBarManager: No selected profiles with usage credentials to refresh")
@@ -1142,11 +1146,23 @@ class MenuBarManager: NSObject, ObservableObject {
             return try await apiService.fetchUsageData(sessionKey: sessionKey, organizationId: orgId)
         }
 
-        // Priority 2: Saved CLI OAuth token from profile
-        if let cliJSON = profile.cliCredentialsJSON,
-           !ClaudeCodeSyncService.shared.isTokenExpired(cliJSON),
-           let accessToken = ClaudeCodeSyncService.shared.extractAccessToken(from: cliJSON) {
-            return try await apiService.fetchUsageData(oauthAccessToken: accessToken)
+        // Priority 2: CLI OAuth credentials.
+        // `ensureFreshCredentials` picks the source automatically:
+        //   - If `profile.customKeychainServiceName` is set → pull fresh from that keychain entry
+        //     (which Claude Code rotates during normal CLI use). No network refresh needed when
+        //     the token there is still valid; otherwise transparently refresh via the
+        //     refresh_token grant and write back to both keychain and profile cache.
+        //   - Otherwise → use the profile's cached `cliCredentialsJSON`, refreshing if expired.
+        // If `ensureFreshCredentials` returns nil (e.g. network failure during refresh), fall
+        // back to the stored cliCredentialsJSON so a still-valid cached token isn't wasted.
+        if profile.cliCredentialsJSON != nil || profile.customKeychainServiceName != nil {
+            let usableJSON = await ClaudeCodeSyncService.shared.ensureFreshCredentials(for: profile.id)
+                ?? profile.cliCredentialsJSON
+            if let usableJSON = usableJSON,
+               !ClaudeCodeSyncService.shared.isTokenExpired(usableJSON),
+               let accessToken = ClaudeCodeSyncService.shared.extractAccessToken(from: usableJSON) {
+                return try await apiService.fetchUsageData(oauthAccessToken: accessToken)
+            }
         }
 
         // Priority 3: System Keychain CLI OAuth token
