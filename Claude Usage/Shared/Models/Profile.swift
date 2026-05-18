@@ -25,6 +25,14 @@ struct Profile: Codable, Identifiable, Equatable {
     var hasCliAccount: Bool
     var cliAccountSyncedAt: Date?
 
+    /// Optional override that pins this profile to a specific Claude Code keychain
+    /// service entry (e.g. `Claude Code-credentials-11e1b79e`) as the source of truth
+    /// for OAuth credentials. When set, refresh-aware reads bypass the cached
+    /// `cliCredentialsJSON` and pull fresh tokens directly from that keychain item —
+    /// which is what Claude Code rotates during normal use. Lets users with multiple
+    /// CLAUDE_CONFIG_DIR installs map each Tracker profile to its own keychain entry.
+    var customKeychainServiceName: String?
+
     /// Serialized `oauthAccount` object from Claude Code's `.claude.json` config file.
     /// Captured at sync time and re-applied during profile switches so that
     /// Claude Code's `/status` command shows the correct account for the active
@@ -65,6 +73,7 @@ struct Profile: Codable, Identifiable, Equatable {
         cliCredentialsJSON: String? = nil,
         hasCliAccount: Bool = false,
         cliAccountSyncedAt: Date? = nil,
+        customKeychainServiceName: String? = nil,
         oauthAccountJSON: String? = nil,
         claudeUsage: ClaudeUsage? = nil,
         apiUsage: APIUsage? = nil,
@@ -87,6 +96,7 @@ struct Profile: Codable, Identifiable, Equatable {
         self.cliCredentialsJSON = cliCredentialsJSON
         self.hasCliAccount = hasCliAccount
         self.cliAccountSyncedAt = cliAccountSyncedAt
+        self.customKeychainServiceName = customKeychainServiceName
         self.oauthAccountJSON = oauthAccountJSON
         self.claudeUsage = claudeUsage
         self.apiUsage = apiUsage
@@ -122,7 +132,7 @@ struct Profile: Codable, Identifiable, Equatable {
     }
 
     var hasAnyCredentials: Bool {
-        hasClaudeAI || hasAPIConsole || cliCredentialsJSON != nil
+        hasClaudeAI || hasAPIConsole || cliCredentialsJSON != nil || customKeychainServiceName != nil
     }
 }
 

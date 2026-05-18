@@ -7,6 +7,7 @@
 
 import Foundation
 import Security
+import CryptoKit
 
 /// Manages synchronization of Claude Code CLI credentials between system Keychain and profiles
 class ClaudeCodeSyncService {
@@ -288,6 +289,187 @@ class ClaudeCodeSyncService {
             return false
         }
         return result.exitCode == 0
+    }
+
+    /// Human-readable summary of a keychain entry, used to label the picker so the user
+    /// doesn't have to memorize raw hashes.
+    struct KeychainEntryDescription {
+        let serviceName: String
+        let emailAddress: String?
+        let organizationName: String?
+        let subscriptionType: String?
+
+        /// Picker label combining the most identifying info available with the
+        /// keychain svc shorthand so two similarly-described accounts stay distinct.
+        var displayLabel: String {
+            let svcShort: String
+            if serviceName == "Claude Code-credentials" {
+                svcShort = "default"
+            } else if serviceName.hasPrefix("Claude Code-credentials-") {
+                svcShort = String(serviceName.dropFirst("Claude Code-credentials-".count))
+            } else {
+                svcShort = serviceName
+            }
+
+            if let email = emailAddress {
+                if let org = organizationName, !org.isEmpty {
+                    return "\(email) — \(org) · \(svcShort)"
+                }
+                return "\(email) · \(svcShort)"
+            }
+            if let sub = subscriptionType, !sub.isEmpty {
+                return "\(svcShort) — \(sub)"
+            }
+            return serviceName
+        }
+    }
+
+    /// Builds a `KeychainEntryDescription` for the given service name. Tries to enrich
+    /// the raw hash with human-readable info by:
+    /// 1. Reading the keychain payload for `subscriptionType` + `organizationUuid`
+    /// 2. Matching that organizationUuid against any of `knownProfiles`' `oauthAccountJSON`
+    ///    to recover `emailAddress` + `organizationName`
+    /// 3. If still unknown, consulting `accountMap` (built once via
+    ///    `discoverAccountLabels()`) which derives hashes from local `.claude*` dirs.
+    /// Returns a description that always at least falls back to a sensible svc shorthand.
+    func describeKeychainEntry(
+        serviceName: String,
+        knownProfiles: [Profile],
+        accountMap: [String: (email: String, organizationName: String?)] = [:]
+    ) -> KeychainEntryDescription {
+        var subscription: String?
+        var orgUuid: String?
+
+        if let payload = readKeychainCredentials(serviceName: serviceName),
+           let data = payload.data(using: .utf8),
+           let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            let oauth = (root["claudeAiOauth"] as? [String: Any]) ?? [:]
+            subscription = oauth["subscriptionType"] as? String
+            orgUuid = (root["organizationUuid"] as? String) ?? (oauth["organizationUuid"] as? String)
+        }
+
+        var email: String?
+        var orgName: String?
+        if let orgUuid = orgUuid {
+            for profile in knownProfiles {
+                guard let json = profile.oauthAccountJSON,
+                      let d = json.data(using: .utf8),
+                      let r = try? JSONSerialization.jsonObject(with: d) as? [String: Any],
+                      (r["organizationUuid"] as? String) == orgUuid else {
+                    continue
+                }
+                email = r["emailAddress"] as? String
+                orgName = r["organizationName"] as? String
+                break
+            }
+        }
+
+        // Fall back to the path-derived account map (covers entries whose keychain
+        // payload doesn't carry an organizationUuid — newer Claude Code schemas).
+        if email == nil, let mapped = accountMap[serviceName] {
+            email = mapped.email
+            orgName = mapped.organizationName
+        }
+
+        return KeychainEntryDescription(
+            serviceName: serviceName,
+            emailAddress: email,
+            organizationName: orgName,
+            subscriptionType: subscription
+        )
+    }
+
+    /// Discovers a `keychain-svc → (email, org)` mapping by walking the user's home
+    /// directory for `.claude` and `.claude-*` config dirs, reading each one's
+    /// `.claude.json` `oauthAccount`, and computing the keychain hash Claude Code
+    /// derives from each directory path.
+    ///
+    /// Reverse-engineered fact (validated against live entries): for any non-default
+    /// CLAUDE_CONFIG_DIR, Claude Code stores credentials under
+    /// `Claude Code-credentials-<SHA256(absolute path)[:8]>`. The default `~/.claude`
+    /// maps to the unsuffixed `Claude Code-credentials` entry.
+    ///
+    /// This is the best path-independent way to label a keychain entry when its
+    /// payload doesn't include an organizationUuid (no token data is ever read here —
+    /// only `.claude.json` `oauthAccount` metadata, which is plain user identity info).
+    func discoverAccountLabels() -> [String: (email: String, organizationName: String?)] {
+        var labels: [String: (email: String, organizationName: String?)] = [:]
+        let fm = FileManager.default
+        let homeURL = fm.homeDirectoryForCurrentUser
+        let homePath = homeURL.path
+
+        var candidates: [String] = ["\(homePath)/.claude"]
+        if let entries = try? fm.contentsOfDirectory(atPath: homePath) {
+            for name in entries where name.hasPrefix(".claude-") {
+                candidates.append("\(homePath)/\(name)")
+            }
+        }
+
+        for dir in candidates {
+            let configFile = "\(dir)/.claude.json"
+            guard fm.fileExists(atPath: configFile),
+                  let data = try? Data(contentsOf: URL(fileURLWithPath: configFile)),
+                  let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let oa = root["oauthAccount"] as? [String: Any],
+                  let email = oa["emailAddress"] as? String else {
+                continue
+            }
+            let orgName = oa["organizationName"] as? String
+
+            let svc: String
+            if dir == "\(homePath)/.claude" {
+                svc = "Claude Code-credentials"
+            } else {
+                let hash = sha256HexPrefix(dir, length: 8)
+                svc = "Claude Code-credentials-\(hash)"
+            }
+            labels[svc] = (email, orgName)
+        }
+        return labels
+    }
+
+    private func sha256HexPrefix(_ s: String, length: Int) -> String {
+        let digest = SHA256.hash(data: Data(s.utf8))
+        let hex = digest.map { String(format: "%02x", $0) }.joined()
+        return String(hex.prefix(length))
+    }
+
+    /// Enumerates every Claude Code credentials keychain item — both the legacy
+    /// unsuffixed `Claude Code-credentials` entry and all hash-suffix variants
+    /// (`Claude Code-credentials-<HASH>`). Used by the Advanced settings UI so the
+    /// user can pick the exact entry to pin a profile to.
+    ///
+    /// Uses `SecItemCopyMatching` (Security.framework) instead of shelling out to
+    /// `security dump-keychain` — the shell tool requires broad keychain-access
+    /// authorization and on macOS 26.x has been observed to hang indefinitely when
+    /// invoked from a background-app context where the keychain prompt cannot be
+    /// presented. The Security API is fast, doesn't spawn a subprocess, and only
+    /// returns attributes for items the app is already entitled to read.
+    func listClaudeCodeKeychainServices() -> [String] {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecMatchLimit as String: kSecMatchLimitAll,
+            kSecReturnAttributes as String: true,
+        ]
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        guard status == errSecSuccess else {
+            if status != errSecItemNotFound {
+                LoggingService.shared.log("listClaudeCodeKeychainServices: SecItemCopyMatching failed (status=\(status))")
+            }
+            return []
+        }
+        guard let items = result as? [[String: Any]] else { return [] }
+
+        let prefix = "Claude Code-credentials"
+        var found: Set<String> = []
+        for item in items {
+            guard let name = item[kSecAttrService as String] as? String else { continue }
+            if name == prefix || name.hasPrefix("\(prefix)-") {
+                found.insert(name)
+            }
+        }
+        return found.sorted()
     }
 
     /// Searches the keychain for a hashed service name matching "Claude Code-credentials-*".
@@ -599,6 +781,243 @@ class ClaudeCodeSyncService {
         return Date() > expiryDate
     }
 
+    // MARK: - OAuth Token Auto-Refresh
+
+    /// Endpoint used by Claude Code's HUD to swap a refresh token for a fresh access token.
+    /// Mirrors `TOKEN_REFRESH_URL_*` in `oh-my-claude-sisyphus/dist/hud/usage-api.js`.
+    private static let oauthRefreshURL = URL(string: "https://platform.claude.com/v1/oauth/token")!
+
+    /// Public OAuth client ID for Claude Code, as shipped in the HUD source.
+    /// Overridable via `CLAUDE_CODE_OAUTH_CLIENT_ID` for parity with the HUD.
+    private static let defaultOAuthClientID = "9d1c250a-e61b-44d9-88ed-5944d1962f5e"
+
+    /// How many seconds before expiry we proactively refresh the token.
+    /// Matches the HUD's 60-second leeway so a request never goes out with a token
+    /// that's about to expire mid-flight.
+    private static let refreshLeewaySeconds: TimeInterval = 60
+
+    /// Reads a specific Claude Code keychain item (e.g. `Claude Code-credentials-11e1b79e`)
+    /// by explicit service name, bypassing the `resolveServiceName()` chain. Used when a
+    /// profile pins itself to a non-default keychain entry via
+    /// `Profile.customKeychainServiceName`, so the Tracker can target the same entry Claude
+    /// Code rotates during normal CLI use. Returns nil if the entry is missing, the
+    /// security command timed out, or stdout was empty.
+    func readKeychainCredentials(serviceName: String) -> String? {
+        guard let result = runSecurityCommand(arguments: [
+            "find-generic-password", "-s", serviceName, "-a", NSUserName(), "-w"
+        ]) else {
+            return nil
+        }
+        if result.timedOut {
+            LoggingService.shared.log("readKeychainCredentials(svc=\(serviceName)): security command timed out")
+            return nil
+        }
+        if result.exitCode != 0 {
+            return nil
+        }
+        let value = result.stdout.trimmingCharacters(in: .whitespacesAndNewlines)
+        return value.isEmpty ? nil : value
+    }
+
+    /// Writes a credentials JSON string into a specific keychain item by explicit service name.
+    /// Mirrors `writeSystemCredentials` but does not consult `resolveServiceName()` — callers
+    /// supply the exact target (e.g. a hash-suffix entry tied to one Claude Code account) so
+    /// rotated tokens from auto-refresh can be written back to the same place Claude Code reads.
+    func writeKeychainCredentials(serviceName: String, jsonData: String) throws {
+        // `-U` already updates an existing entry in place, so the previous delete-then-add
+        // pattern is unnecessary and was observed to leave the entry in a partially-overwritten
+        // (invalid-JSON) state under concurrent refreshes. Rely on a single atomic `-U` add.
+        guard let result = runSecurityCommand(arguments: [
+            "add-generic-password", "-s", serviceName, "-a", NSUserName(), "-w", jsonData, "-U"
+        ]) else {
+            throw ClaudeCodeError.keychainWriteFailed(status: -1)
+        }
+        if result.timedOut {
+            throw ClaudeCodeError.keychainWriteFailed(status: -1)
+        }
+        if result.exitCode != 0 {
+            throw ClaudeCodeError.keychainWriteFailed(status: OSStatus(result.exitCode))
+        }
+    }
+
+    private struct OAuthRefreshResponse: Decodable {
+        let access_token: String
+        let refresh_token: String?
+        let expires_in: Int
+        let token_type: String?
+    }
+
+    /// Posts the `refresh_token` grant to platform.claude.com and decodes the response.
+    private func performTokenRefresh(refreshToken: String) async throws -> OAuthRefreshResponse {
+        let clientId = ProcessInfo.processInfo.environment["CLAUDE_CODE_OAUTH_CLIENT_ID"]
+            ?? Self.defaultOAuthClientID
+
+        var components = URLComponents()
+        components.queryItems = [
+            URLQueryItem(name: "grant_type", value: "refresh_token"),
+            URLQueryItem(name: "refresh_token", value: refreshToken),
+            URLQueryItem(name: "client_id", value: clientId),
+        ]
+        let bodyString = components.percentEncodedQuery ?? ""
+        let body = Data(bodyString.utf8)
+
+        var request = URLRequest(url: Self.oauthRefreshURL)
+        request.httpMethod = "POST"
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        request.httpBody = body
+        request.timeoutInterval = 10
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse else {
+            throw ClaudeCodeError.refreshFailed(status: -1, body: "No HTTP response")
+        }
+        guard http.statusCode == 200 else {
+            let snippet = String(data: data, encoding: .utf8)?.prefix(200) ?? "<binary>"
+            throw ClaudeCodeError.refreshFailed(status: http.statusCode, body: String(snippet))
+        }
+        return try JSONDecoder().decode(OAuthRefreshResponse.self, from: data)
+    }
+
+    /// Ensures the given profile's OAuth credentials are usable, refreshing them via the
+    /// `refresh_token` grant if expired (or near-expired). Returns the up-to-date credentials
+    /// JSON on success, or `nil` if the profile has no usable source, no refresh token, or
+    /// the network refresh failed.
+    ///
+    /// Source-of-truth selection:
+    /// - If `profile.customKeychainServiceName` is set, the Tracker reads the latest tokens
+    ///   directly from that keychain entry. Claude Code rotates tokens into the same entry
+    ///   during normal CLI use, so the read is usually already fresh — no network call needed.
+    /// - Otherwise, falls back to `profile.cliCredentialsJSON` (legacy behavior).
+    ///
+    /// On a successful refresh, the new credentials are written back to BOTH the profile's
+    /// cached JSON AND (when applicable) the custom keychain entry, so Claude Code and the
+    /// Tracker stay in sync.
+    func ensureFreshCredentials(for profileId: UUID) async -> String? {
+        let profiles = ProfileStore.shared.loadProfiles()
+        guard let profile = profiles.first(where: { $0.id == profileId }) else {
+            return nil
+        }
+
+        let customSvc = profile.customKeychainServiceName
+        var initialJSON: String?
+        if let svc = customSvc {
+            initialJSON = readKeychainCredentials(serviceName: svc)
+            if initialJSON == nil {
+                LoggingService.shared.logError("ensureFreshCredentials: profile '\(profile.name)' pins keychain '\(svc)' but it was not found")
+            } else if extractRefreshToken(from: initialJSON!) == nil {
+                // Keychain payload exists but is corrupt (e.g. invalid JSON after a prior bad
+                // write). Fall back to the profile's cached plist credentials so we still have
+                // a refresh_token to try — better than going dormant.
+                LoggingService.shared.logError("ensureFreshCredentials: keychain '\(svc)' payload for '\(profile.name)' is unparseable; falling back to plist cliCredentialsJSON")
+                initialJSON = profile.cliCredentialsJSON
+            }
+        } else {
+            initialJSON = profile.cliCredentialsJSON
+        }
+
+        guard let cliJSON = initialJSON else {
+            return nil
+        }
+
+        // Fast path: token still valid beyond the leeway window.
+        if let expiryDate = extractTokenExpiry(from: cliJSON),
+           expiryDate.timeIntervalSinceNow > Self.refreshLeewaySeconds {
+            // If we sourced from a custom keychain entry, mirror its current contents into the
+            // profile cache so display code (menu bar, popover) sees the up-to-date tokens.
+            if customSvc != nil {
+                persistProfileCredentialsJSON(profileId: profileId, json: cliJSON)
+            }
+            return cliJSON
+        }
+
+        guard let refreshToken = extractRefreshToken(from: cliJSON) else {
+            LoggingService.shared.log("ensureFreshCredentials: profile '\(profile.name)' has no refresh token; cannot auto-refresh")
+            return nil
+        }
+
+        let sourceTag = customSvc.map { "keychain:\($0)" } ?? "plist"
+        LoggingService.shared.log("ensureFreshCredentials: refreshing OAuth token for profile '\(profile.name)' (source=\(sourceTag))")
+
+        let refreshed: OAuthRefreshResponse
+        do {
+            refreshed = try await performTokenRefresh(refreshToken: refreshToken)
+        } catch let ClaudeCodeError.refreshFailed(status, body) {
+            // Surface the error body for diagnosis. 4xx responses never contain access
+            // tokens — only `{ "error": "...", "error_description": "..." }` style payloads —
+            // so logging it is safe.
+            LoggingService.shared.logError("ensureFreshCredentials: refresh failed for '\(profile.name)' (HTTP \(status)) body=\(body)")
+            return nil
+        } catch {
+            LoggingService.shared.logError("ensureFreshCredentials: refresh failed for '\(profile.name)'", error: error)
+            return nil
+        }
+
+        guard let updatedJSON = mergeRefreshedCredentials(into: cliJSON, refreshed: refreshed) else {
+            LoggingService.shared.logError("ensureFreshCredentials: failed to merge refreshed credentials for '\(profile.name)'")
+            return nil
+        }
+
+        // Write back: always update the profile cache; if we sourced from a custom keychain
+        // entry, also persist the rotated tokens there so Claude Code's next read picks them up.
+        persistProfileCredentialsJSON(profileId: profileId, json: updatedJSON)
+        if let svc = customSvc {
+            do {
+                try writeKeychainCredentials(serviceName: svc, jsonData: updatedJSON)
+            } catch {
+                LoggingService.shared.logError("ensureFreshCredentials: refreshed but failed to write back to keychain '\(svc)'", error: error)
+            }
+        }
+
+        LoggingService.shared.log("✓ ensureFreshCredentials: refreshed and saved for profile '\(profile.name)'")
+        return updatedJSON
+    }
+
+    /// Re-loads profiles and writes `json` into the profile's `cliCredentialsJSON` if it
+    /// differs from what's already stored. Re-loading inside the call minimizes the risk
+    /// of clobbering concurrent edits to other profile fields.
+    private func persistProfileCredentialsJSON(profileId: UUID, json: String) {
+        var reloaded = ProfileStore.shared.loadProfiles()
+        guard let idx = reloaded.firstIndex(where: { $0.id == profileId }),
+              reloaded[idx].cliCredentialsJSON != json else {
+            return
+        }
+        reloaded[idx].cliCredentialsJSON = json
+        ProfileStore.shared.saveProfiles(reloaded)
+    }
+
+    /// Merges an OAuth refresh response into the existing `claudeAiOauth` payload,
+    /// preserving fields the refresh response does not touch (scopes, subscriptionType, etc.).
+    private func mergeRefreshedCredentials(into cliJSON: String, refreshed: OAuthRefreshResponse) -> String? {
+        guard let data = cliJSON.data(using: .utf8),
+              var root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              var oauth = root["claudeAiOauth"] as? [String: Any] else {
+            return nil
+        }
+
+        oauth["accessToken"] = refreshed.access_token
+        if let newRT = refreshed.refresh_token {
+            oauth["refreshToken"] = newRT
+        }
+        // Claude Code persists `expiresAt` in milliseconds since the Unix epoch.
+        let newExpiryMs = Int64(Date().timeIntervalSince1970 * 1000)
+            + Int64(refreshed.expires_in) * 1000
+        oauth["expiresAt"] = newExpiryMs
+
+        root["claudeAiOauth"] = oauth
+
+        // Single-line, sorted-keys output. Avoid `prettyPrinted` here because the
+        // resulting JSON is round-tripped through `security add-generic-password -w`,
+        // and embedded newlines have been observed to corrupt the stored payload on
+        // some macOS builds — readers then see "Extra data" parse errors.
+        guard let outData = try? JSONSerialization.data(
+                withJSONObject: root,
+                options: [.sortedKeys]),
+              let outString = String(data: outData, encoding: .utf8) else {
+            return nil
+        }
+        return outString
+    }
+
     // MARK: - Auto Re-sync Before Switching
 
     /// Re-syncs credentials from system Keychain before profile switching
@@ -664,6 +1083,7 @@ enum ClaudeCodeError: LocalizedError {
     case keychainReadFailed(status: OSStatus)
     case keychainWriteFailed(status: OSStatus)
     case noProfileCredentials
+    case refreshFailed(status: Int, body: String)
 
     var errorDescription: String? {
         switch self {
@@ -677,6 +1097,8 @@ enum ClaudeCodeError: LocalizedError {
             return "Failed to write credentials to system Keychain (status: \(status))."
         case .noProfileCredentials:
             return "This profile has no synced CLI account."
+        case .refreshFailed(let status, _):
+            return "OAuth token refresh failed (status: \(status))."
         }
     }
 }

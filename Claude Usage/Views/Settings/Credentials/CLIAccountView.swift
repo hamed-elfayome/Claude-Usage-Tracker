@@ -13,6 +13,12 @@ struct CLIAccountView: View {
     @State private var syncError: String?
     @State private var cliAccountInfo: CLIAccountInfo?
 
+    // Advanced: custom keychain source override
+    @State private var availableKeychainServices: [String] = []
+    @State private var keychainLabels: [String: String] = [:]
+    @State private var selectedKeychainSvc: String? = nil
+    @State private var isLoadingKeychainList = false
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: DesignTokens.Spacing.section) {
@@ -189,6 +195,59 @@ struct CLIAccountView: View {
                         }
                     }
 
+                    // Advanced — pin profile to a specific Claude Code keychain entry so
+                    // Tracker reads the same token Claude Code rotates. See PR description
+                    // for the multi-account/token-rotation context.
+                    SettingsSectionCard(
+                        title: "Advanced — Credentials source",
+                        subtitle: "Pin this profile to a specific Claude Code keychain entry (multi-account setups)."
+                    ) {
+                        VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
+                            HStack(spacing: DesignTokens.Spacing.iconText) {
+                                Picker(selection: $selectedKeychainSvc) {
+                                    Text("(Automatic: default behavior)").tag(Optional<String>.none)
+                                    ForEach(availableKeychainServices, id: \.self) { svc in
+                                        Text(keychainLabels[svc] ?? svc).tag(Optional(svc))
+                                    }
+                                } label: {
+                                    Text("Keychain entry")
+                                }
+                                .pickerStyle(.menu)
+                                .onChange(of: selectedKeychainSvc) { _, newValue in
+                                    updateCustomKeychain(newValue)
+                                }
+
+                                Button(action: reloadKeychainList) {
+                                    HStack(spacing: DesignTokens.Spacing.extraSmall) {
+                                        if isLoadingKeychainList {
+                                            ProgressView()
+                                                .scaleEffect(0.7)
+                                                .frame(width: DesignTokens.Icons.small, height: DesignTokens.Icons.small)
+                                        } else {
+                                            Image(systemName: "arrow.clockwise")
+                                                .font(.system(size: DesignTokens.Icons.small))
+                                        }
+                                        Text("Refresh")
+                                            .font(DesignTokens.Typography.body)
+                                    }
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                                .disabled(isLoadingKeychainList)
+                            }
+
+                            if availableKeychainServices.isEmpty && !isLoadingKeychainList {
+                                Text("No Claude Code keychain entries found. Log into the CLI, then Refresh.")
+                                    .font(DesignTokens.Typography.caption)
+                                    .foregroundColor(.secondary)
+                            } else if !availableKeychainServices.isEmpty {
+                                Text("Leave on (Automatic) unless you use multiple CLAUDE_CONFIG_DIRs.")
+                                    .font(DesignTokens.Typography.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+
                     // Info Card
                     SettingsContentCard {
                         VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
@@ -224,12 +283,61 @@ struct CLIAccountView: View {
         }
         .onAppear {
             loadCLIAccountInfo()
+            syncSelectedKeychainFromProfile()
+            reloadKeychainList()
         }
         .onChange(of: profileManager.activeProfile?.id) { _, _ in
             // Reload when profile changes
             loadCLIAccountInfo()
             syncError = nil
+            syncSelectedKeychainFromProfile()
         }
+    }
+
+    /// Loads the currently-pinned keychain svc into the picker selection so the UI
+    /// reflects the active profile's stored value when the view appears or the
+    /// profile changes.
+    private func syncSelectedKeychainFromProfile() {
+        selectedKeychainSvc = profileManager.activeProfile?.customKeychainServiceName
+    }
+
+    /// Enumerates Claude Code keychain entries via SecItemCopyMatching and also
+    /// builds a human-readable label for each (email + org from any matching
+    /// profile.oauthAccountJSON; subscription type as fallback). Runs off the main
+    /// thread so the UI stays responsive even if the keychain is large.
+    private func reloadKeychainList() {
+        isLoadingKeychainList = true
+        let knownProfiles = profileManager.profiles
+        DispatchQueue.global(qos: .userInitiated).async {
+            let services = ClaudeCodeSyncService.shared.listClaudeCodeKeychainServices()
+            // Build the path-derived account map once per refresh; reused for every entry.
+            let accountMap = ClaudeCodeSyncService.shared.discoverAccountLabels()
+            var labels: [String: String] = [:]
+            for svc in services {
+                let desc = ClaudeCodeSyncService.shared.describeKeychainEntry(
+                    serviceName: svc,
+                    knownProfiles: knownProfiles,
+                    accountMap: accountMap
+                )
+                labels[svc] = desc.displayLabel
+            }
+            DispatchQueue.main.async {
+                self.availableKeychainServices = services
+                self.keychainLabels = labels
+                self.isLoadingKeychainList = false
+            }
+        }
+    }
+
+    /// Persists the selected keychain service name onto the active profile so the
+    /// menu bar fetch path picks it up on the next refresh cycle.
+    private func updateCustomKeychain(_ svc: String?) {
+        guard var updated = profileManager.activeProfile else { return }
+        let normalized = (svc?.isEmpty ?? true) ? nil : svc
+        if updated.customKeychainServiceName == normalized { return }
+        updated.customKeychainServiceName = normalized
+        profileManager.updateProfile(updated)
+        LoggingService.shared.log("CLIAccountView: profile '\(updated.name)' customKeychainServiceName set to \(normalized ?? "<nil>")")
     }
 
     private func syncFromCLI() {

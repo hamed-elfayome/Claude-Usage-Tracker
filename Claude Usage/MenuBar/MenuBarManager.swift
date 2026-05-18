@@ -1004,7 +1004,11 @@ class MenuBarManager: NSObject, ObservableObject {
 
     /// Refreshes usage data for all profiles selected for multi-profile display
     private func refreshAllSelectedProfiles() {
-        let selectedProfiles = profileManager.profiles.filter { $0.isSelectedForDisplay && $0.hasUsageCredentials }
+        // Filter on `hasAnyCredentials` (not `hasUsageCredentials`) so that profiles
+        // whose CLI OAuth token has expired are still polled — `fetchUsageForProfile`
+        // will transparently refresh expired tokens via the refresh_token grant.
+        // Excluding them here would prevent the refresh path from ever running.
+        let selectedProfiles = profileManager.profiles.filter { $0.isSelectedForDisplay && $0.hasAnyCredentials }
 
         guard !selectedProfiles.isEmpty else {
             LoggingService.shared.log("MenuBarManager: No selected profiles with usage credentials to refresh")
@@ -1070,6 +1074,10 @@ class MenuBarManager: NSObject, ObservableObject {
                         // Save to profile
                         self.profileManager.saveClaudeUsage(newUsage, for: profile.id)
                         LoggingService.shared.log("MenuBarManager: Saved usage for profile '\(profile.name)' - session: \(newUsage.sessionPercentage)%")
+
+                        // Re-schedule local reset alerts for this profile against the freshly
+                        // fetched reset times so we still alert even if the app is later quit.
+                        self.scheduleResetAlertsIfEnabled(profile: profile, newUsage: newUsage)
 
                         // If this is the active profile, also update the manager's usage
                         if profile.id == self.profileManager.activeProfile?.id {
@@ -1142,11 +1150,23 @@ class MenuBarManager: NSObject, ObservableObject {
             return try await apiService.fetchUsageData(sessionKey: sessionKey, organizationId: orgId)
         }
 
-        // Priority 2: Saved CLI OAuth token from profile
-        if let cliJSON = profile.cliCredentialsJSON,
-           !ClaudeCodeSyncService.shared.isTokenExpired(cliJSON),
-           let accessToken = ClaudeCodeSyncService.shared.extractAccessToken(from: cliJSON) {
-            return try await apiService.fetchUsageData(oauthAccessToken: accessToken)
+        // Priority 2: CLI OAuth credentials.
+        // `ensureFreshCredentials` picks the source automatically:
+        //   - If `profile.customKeychainServiceName` is set → pull fresh from that keychain entry
+        //     (which Claude Code rotates during normal CLI use). No network refresh needed when
+        //     the token there is still valid; otherwise transparently refresh via the
+        //     refresh_token grant and write back to both keychain and profile cache.
+        //   - Otherwise → use the profile's cached `cliCredentialsJSON`, refreshing if expired.
+        // If `ensureFreshCredentials` returns nil (e.g. network failure during refresh), fall
+        // back to the stored cliCredentialsJSON so a still-valid cached token isn't wasted.
+        if profile.cliCredentialsJSON != nil || profile.customKeychainServiceName != nil {
+            let usableJSON = await ClaudeCodeSyncService.shared.ensureFreshCredentials(for: profile.id)
+                ?? profile.cliCredentialsJSON
+            if let usableJSON = usableJSON,
+               !ClaudeCodeSyncService.shared.isTokenExpired(usableJSON),
+               let accessToken = ClaudeCodeSyncService.shared.extractAccessToken(from: usableJSON) {
+                return try await apiService.fetchUsageData(oauthAccessToken: accessToken)
+            }
         }
 
         // Priority 3: System Keychain CLI OAuth token
@@ -1275,6 +1295,12 @@ class MenuBarManager: NSObject, ObservableObject {
                     // Save to active profile instead of global DataStore
                     if let profileId = self.profileManager.activeProfile?.id {
                         self.profileManager.saveClaudeUsage(newUsage, for: profileId)
+                    }
+
+                    // Pre-schedule local reset alerts so they fire even if the app is quit
+                    // before the actual reset moment.
+                    if let activeProfile = self.profileManager.activeProfile {
+                        self.scheduleResetAlertsIfEnabled(profile: activeProfile, newUsage: newUsage)
                     }
 
                     // Write statusline cache for instant CLI rendering
@@ -1489,6 +1515,46 @@ class MenuBarManager: NSObject, ObservableObject {
         let calendar = Calendar.current
         let components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date)
         return calendar.date(from: components) ?? date
+    }
+
+    /// Schedules (or cancels) local reset notifications for this profile based on its
+    /// NotificationSettings toggles. Called after every successful usage fetch so the
+    /// pending alerts always reflect the latest server-reported reset times — adding a
+    /// request with the same identifier replaces any prior pending one, so the user
+    /// gets one alert per actual reset event even across reschedules.
+    /// macOS delivers `UNCalendarNotificationTrigger`-based notifications even when
+    /// the app is offline or quit, which is the whole point of pre-scheduling.
+    private func scheduleResetAlertsIfEnabled(profile: Profile, newUsage: ClaudeUsage) {
+        let settings = profile.notificationSettings
+        guard settings.enabled else {
+            NotificationManager.shared.cancelResetNotification(profileId: profile.id, type: .sessionReset)
+            NotificationManager.shared.cancelResetNotification(profileId: profile.id, type: .weeklyReset)
+            return
+        }
+
+        if settings.sessionResetEnabled {
+            NotificationManager.shared.scheduleResetNotification(
+                profileId: profile.id,
+                profileName: profile.name,
+                type: .sessionReset,
+                resetTime: newUsage.sessionResetTime,
+                soundName: settings.soundName
+            )
+        } else {
+            NotificationManager.shared.cancelResetNotification(profileId: profile.id, type: .sessionReset)
+        }
+
+        if settings.weeklyResetEnabled {
+            NotificationManager.shared.scheduleResetNotification(
+                profileId: profile.id,
+                profileName: profile.name,
+                type: .weeklyReset,
+                resetTime: newUsage.weeklyResetTime,
+                soundName: settings.soundName
+            )
+        } else {
+            NotificationManager.shared.cancelResetNotification(profileId: profile.id, type: .weeklyReset)
+        }
     }
 
     /// Checks if a session reset occurred and records a snapshot if so

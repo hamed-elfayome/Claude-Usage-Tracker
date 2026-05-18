@@ -16,6 +16,16 @@ struct NotificationSettings: Codable, Equatable {
     var soundName: String
     var customThresholds: [Int]
 
+    /// Fires a notification at the moment the 5-hour rolling session window resets.
+    /// Scheduled via UNCalendarNotificationTrigger using the upcoming
+    /// `sessionResetTime` reported by the API, so the alert delivers even if the
+    /// app is offline or quit at the time of reset.
+    var sessionResetEnabled: Bool
+
+    /// Fires a notification at the moment the weekly limit window resets.
+    /// Scheduled the same way as the session reset alert.
+    var weeklyResetEnabled: Bool
+
     /// All active thresholds (built-in + custom), sorted ascending
     var sortedThresholds: [Int] {
         var thresholds: [Int] = []
@@ -44,7 +54,9 @@ struct NotificationSettings: Codable, Equatable {
         threshold90Enabled: Bool = true,
         threshold95Enabled: Bool = true,
         soundName: String = "default",
-        customThresholds: [Int] = []
+        customThresholds: [Int] = [],
+        sessionResetEnabled: Bool = false,
+        weeklyResetEnabled: Bool = false
     ) {
         self.enabled = enabled
         self.threshold75Enabled = threshold75Enabled
@@ -52,6 +64,8 @@ struct NotificationSettings: Codable, Equatable {
         self.threshold95Enabled = threshold95Enabled
         self.soundName = soundName
         self.customThresholds = customThresholds
+        self.sessionResetEnabled = sessionResetEnabled
+        self.weeklyResetEnabled = weeklyResetEnabled
     }
 
     // Backwards-compatible decoding for existing saved settings
@@ -63,5 +77,7 @@ struct NotificationSettings: Codable, Equatable {
         threshold95Enabled = try container.decode(Bool.self, forKey: .threshold95Enabled)
         soundName = try container.decodeIfPresent(String.self, forKey: .soundName) ?? "default"
         customThresholds = try container.decodeIfPresent([Int].self, forKey: .customThresholds) ?? []
+        sessionResetEnabled = try container.decodeIfPresent(Bool.self, forKey: .sessionResetEnabled) ?? false
+        weeklyResetEnabled = try container.decodeIfPresent(Bool.self, forKey: .weeklyResetEnabled) ?? false
     }
 }
