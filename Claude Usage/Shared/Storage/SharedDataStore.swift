@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Security
 
 /// Manages app-wide settings that are shared across all profiles
 class SharedDataStore {
@@ -76,6 +77,11 @@ class SharedDataStore {
         static let timeFormatPreference = "timeFormatPreference"
         static let peakHoursIndicatorEnabled = "peakHoursIndicatorEnabled"
         static let peakHoursMenuIconEnabled = "peakHoursMenuIconEnabled"
+
+        // Local Server (companion mobile app pairing)
+        static let localServerEnabled = "localServerEnabled"
+        static let localServerPort = "localServerPort"
+        static let localServerToken = "localServerToken"
     }
 
     init() {
@@ -640,6 +646,55 @@ class SharedDataStore {
             return true
         }
         return defaults.bool(forKey: Keys.peakHoursMenuIconEnabled)
+    }
+
+    // MARK: - Local Server (companion mobile app)
+
+    func saveLocalServerEnabled(_ enabled: Bool) {
+        defaults.set(enabled, forKey: Keys.localServerEnabled)
+    }
+
+    func loadLocalServerEnabled() -> Bool {
+        // Off by default — the user must explicitly opt in.
+        return defaults.bool(forKey: Keys.localServerEnabled)
+    }
+
+    func saveLocalServerPort(_ port: Int) {
+        defaults.set(port, forKey: Keys.localServerPort)
+    }
+
+    func loadLocalServerPort() -> Int {
+        let port = defaults.integer(forKey: Keys.localServerPort)
+        return port > 0 ? port : Int(LocalServerService.defaultPort)
+    }
+
+    /// Returns the existing pairing token, generating and persisting a new one
+    /// on first use. The token gates access to the local usage endpoint.
+    func loadOrCreateLocalServerToken() -> String {
+        if let existing = defaults.string(forKey: Keys.localServerToken), !existing.isEmpty {
+            return existing
+        }
+        let token = Self.generateToken()
+        defaults.set(token, forKey: Keys.localServerToken)
+        return token
+    }
+
+    /// Generates a fresh pairing token, invalidating any previously paired device.
+    @discardableResult
+    func regenerateLocalServerToken() -> String {
+        let token = Self.generateToken()
+        defaults.set(token, forKey: Keys.localServerToken)
+        return token
+    }
+
+    private static func generateToken() -> String {
+        var bytes = [UInt8](repeating: 0, count: 24)
+        _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+        // URL-safe base64 without padding.
+        return Data(bytes).base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
     }
 
     // MARK: - Testing Helpers

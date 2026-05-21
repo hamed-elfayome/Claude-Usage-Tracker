@@ -45,6 +45,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         // Start 24-hour heartbeat ping to track active app usage
         HeartbeatService.shared.start()
 
+        // Start the local companion server if the user has enabled pairing
+        LocalServerService.shared.startIfEnabled()
+
         if !shouldShowSetupWizard() {
             // Initialize menu bar with active profile
             menuBarManager?.setup()
@@ -218,6 +221,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
     func applicationWillTerminate(_ notification: Notification) {
         // Cleanup
         menuBarManager?.cleanup()
+        LocalServerService.shared.stop()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
