@@ -2,165 +2,196 @@
 //  MobileAppView.swift
 //  Claude Usage
 //
-//  "Painted door" interest-collection view for a potential mobile app.
+//  Pairing screen for the companion mobile app. Lets the user enable a
+//  read-only local server (LocalServerService) and pair a phone by scanning
+//  a QR code that encodes { host, port, token }.
 //
-//  Created by Claude Code on 2026-02-25.
+//  The Claude session key never leaves this machine — the phone only ever
+//  reads the derived usage numbers over the local network.
 //
 
 import SwiftUI
+import CoreImage.CIFilterBuiltins
 
-// ─────────────────────────────────────────────────────────────────────
-// IMPORTANT — Analytics-only endpoint (NO credentials involved)
-// ─────────────────────────────────────────────────────────────────────
-//
-// The URL below is a lightweight Cloudflare Worker that **only** records
-// anonymous interest signals (a single POST with `?type=mobile`).
-//
-// • It does NOT receive, store, or process any user credentials.
-// • It does NOT receive any personally-identifiable information.
-// • It does NOT set cookies or return tracking identifiers.
-// • It is completely separate from the Claude AI / Anthropic APIs.
-//
-// Its sole purpose is to count how many users tap "Notify Me" so the
-// developer can gauge demand before investing in a mobile app.
-//
-// Domain: claude-usage-tracker.hamedelfayome.workers.dev
-// ─────────────────────────────────────────────────────────────────────
-private let kAnalyticsOnlyEndpoint = "https://claude-usage-tracker.hamedelfayome.workers.dev?type=mobile"
-
-/// Mobile app "coming soon" painted-door view.
-/// Collects interest via a single analytics-only POST request.
 struct MobileAppView: View {
-    @State private var hasNotified = UserDefaults.standard.bool(forKey: "mobileApp.notifyMe")
-    @State private var isSubmitting = false
-    @State private var showError = false
+    @State private var isEnabled = SharedDataStore.shared.loadLocalServerEnabled()
+    @State private var lanAddress: String? = LocalServerService.primaryLANAddress()
+    @State private var token: String = ""
+    @State private var didCopy = false
+
+    private var port: Int { SharedDataStore.shared.loadLocalServerPort() }
+
+    /// JSON payload encoded into the pairing QR code.
+    private var pairingPayload: String? {
+        guard let host = lanAddress, !token.isEmpty else { return nil }
+        let dict: [String: Any] = [
+            "v": 1,
+            "host": host,
+            "port": port,
+            "token": token
+        ]
+        guard let data = try? JSONSerialization.data(withJSONObject: dict) else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: DesignTokens.Spacing.section) {
                 SettingsPageHeader(
-                    title: "mobile.title".localized,
-                    subtitle: "mobile.subtitle".localized
+                    title: "Mobile App",
+                    subtitle: "View your usage on your phone over your local network"
                 )
 
-                // Coming Soon badge + icon
-                HStack {
-                    Spacer()
-                    VStack(spacing: DesignTokens.Spacing.medium) {
-                        Image(systemName: "iphone")
-                            .font(.system(size: 28))
-                            .foregroundColor(.accentColor)
-
-                        Text("mobile.coming_soon_badge".localized)
-                            .font(.system(size: 10, weight: .semibold))
-                            .tracking(1)
-                            .foregroundColor(.accentColor)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
-                            .background(
-                                Capsule()
-                                    .fill(Color.accentColor.opacity(0.1))
-                            )
-                    }
-                    Spacer()
-                }
-
-                Divider()
-
-                // Notify Me / Already notified
-                if hasNotified {
-                    HStack(spacing: DesignTokens.Spacing.medium) {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: DesignTokens.Icons.standard))
-                            .foregroundColor(SettingsColors.success)
-
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("mobile.notified".localized)
-                                .font(DesignTokens.Typography.bodyMedium)
-                            Text("mobile.notified_desc".localized)
-                                .font(DesignTokens.Typography.caption)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                    .padding(DesignTokens.Spacing.medium)
-                    .background(
-                        RoundedRectangle(cornerRadius: DesignTokens.Radius.small)
-                            .fill(SettingsColors.lightOverlay(.green))
+                SettingToggle(
+                    title: "Enable companion server",
+                    description: "Serves your current usage (read-only) to paired devices on this network. Off by default.",
+                    badge: .beta,
+                    isOn: Binding(
+                        get: { isEnabled },
+                        set: { setEnabled($0) }
                     )
+                )
+
+                if isEnabled {
+                    pairingCard
+                    securityNote
                 } else {
-                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
-                        Text("mobile.cta_message".localized)
+                    SettingsCard {
+                        Text("Turn this on to pair the Claude Usage mobile app. Your Mac will serve usage data to your phone while it's awake and on the same Wi-Fi network.")
                             .font(DesignTokens.Typography.body)
                             .foregroundColor(.secondary)
-
-                        SettingsButton.primary(
-                            title: isSubmitting ? "mobile.submitting".localized : "mobile.notify_me".localized,
-                            icon: isSubmitting ? nil : "bell",
-                            action: submitInterest
-                        )
-                        .disabled(isSubmitting)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
-                }
-
-                // Privacy note
-                HStack(spacing: DesignTokens.Spacing.small) {
-                    Image(systemName: "lock.shield")
-                        .font(.system(size: DesignTokens.Icons.tiny))
-                        .foregroundColor(.secondary)
-                    Text("mobile.privacy_note".localized)
-                        .font(DesignTokens.Typography.caption)
-                        .foregroundColor(.secondary)
                 }
 
                 Spacer()
             }
             .padding(28)
         }
-        .alert("mobile.error_title".localized, isPresented: $showError) {
-            Button("common.ok".localized, role: .cancel) {}
-        } message: {
-            Text("mobile.error_message".localized)
+        .onAppear {
+            token = SharedDataStore.shared.loadOrCreateLocalServerToken()
+            lanAddress = LocalServerService.primaryLANAddress()
         }
     }
 
-    // MARK: - Analytics-only POST (no credentials, no PII)
+    // MARK: - Pairing card
 
-    /// Sends a single anonymous POST to the analytics-only endpoint.
-    /// See the comment at the top of this file for full details.
-    private func submitInterest() {
-        guard !isSubmitting, !hasNotified else { return }
-        isSubmitting = true
-
-        Task {
-            do {
-                guard let url = URL(string: kAnalyticsOnlyEndpoint) else { return }
-
-                var request = URLRequest(url: url)
-                request.httpMethod = "POST"
-                request.timeoutInterval = 15
-
-                let (_, response) = try await URLSession.shared.data(for: request)
-
-                await MainActor.run {
-                    if let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) {
-                        hasNotified = true
-                        UserDefaults.standard.set(true, forKey: "mobileApp.notifyMe")
-                    } else {
-                        showError = true
+    private var pairingCard: some View {
+        SettingsCard(title: "Pair your phone") {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
+                if let payload = pairingPayload, let qr = Self.qrImage(from: payload) {
+                    HStack {
+                        Spacer()
+                        Image(nsImage: qr)
+                            .interpolation(.none)
+                            .resizable()
+                            .frame(width: 180, height: 180)
+                            .padding(8)
+                            .background(Color.white)
+                            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small))
+                        Spacer()
                     }
-                    isSubmitting = false
+                    Text("Open the Claude Usage app on your phone and scan this code.")
+                        .font(DesignTokens.Typography.caption)
+                        .foregroundColor(.secondary)
+                } else {
+                    Label("No local network address found. Connect to Wi-Fi and reopen this screen.",
+                          systemImage: "wifi.exclamationmark")
+                        .font(DesignTokens.Typography.caption)
+                        .foregroundColor(SettingsColors.warning)
                 }
-            } catch {
-                await MainActor.run {
-                    showError = true
-                    isSubmitting = false
+
+                Divider()
+
+                detailRow(label: "Address", value: lanAddress.map { "\($0):\(port)" } ?? "—")
+                detailRow(label: "Token", value: token, monospaced: true)
+
+                HStack(spacing: DesignTokens.Spacing.small) {
+                    SettingsButton.subtle(
+                        title: didCopy ? "Copied" : "Copy details",
+                        icon: didCopy ? "checkmark" : "doc.on.doc",
+                        action: copyDetails
+                    )
+                    SettingsButton.subtle(
+                        title: "Regenerate token",
+                        icon: "arrow.triangle.2.circlepath",
+                        action: regenerateToken
+                    )
                 }
             }
         }
+    }
+
+    private func detailRow(label: String, value: String, monospaced: Bool = false) -> some View {
+        HStack(alignment: .top) {
+            Text(label)
+                .font(DesignTokens.Typography.caption)
+                .foregroundColor(.secondary)
+                .frame(width: 70, alignment: .leading)
+            Text(value)
+                .font(monospaced ? .system(.caption, design: .monospaced) : DesignTokens.Typography.caption)
+                .foregroundColor(.primary)
+                .textSelection(.enabled)
+                .lineLimit(2)
+                .truncationMode(.middle)
+        }
+    }
+
+    private var securityNote: some View {
+        HStack(alignment: .top, spacing: DesignTokens.Spacing.small) {
+            Image(systemName: "lock.shield")
+                .font(.system(size: DesignTokens.Icons.tiny))
+                .foregroundColor(.secondary)
+            Text("Read-only and token-protected. Your Claude session key never leaves this Mac — the phone only sees usage numbers. Regenerating the token un-pairs existing devices.")
+                .font(DesignTokens.Typography.caption)
+                .foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    // MARK: - Actions
+
+    private func setEnabled(_ enabled: Bool) {
+        isEnabled = enabled
+        SharedDataStore.shared.saveLocalServerEnabled(enabled)
+        if enabled {
+            token = SharedDataStore.shared.loadOrCreateLocalServerToken()
+            lanAddress = LocalServerService.primaryLANAddress()
+            LocalServerService.shared.start()
+        } else {
+            LocalServerService.shared.stop()
+        }
+    }
+
+    private func regenerateToken() {
+        token = SharedDataStore.shared.regenerateLocalServerToken()
+        if isEnabled { LocalServerService.shared.restart() }
+    }
+
+    private func copyDetails() {
+        let details = "Host: \(lanAddress ?? "?")\nPort: \(port)\nToken: \(token)"
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(details, forType: .string)
+        didCopy = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { didCopy = false }
+    }
+
+    // MARK: - QR generation
+
+    private static func qrImage(from string: String) -> NSImage? {
+        let context = CIContext()
+        let filter = CIFilter.qrCodeGenerator()
+        filter.message = Data(string.utf8)
+        filter.correctionLevel = "M"
+        guard let output = filter.outputImage else { return nil }
+
+        let scaled = output.transformed(by: CGAffineTransform(scaleX: 10, y: 10))
+        guard let cgImage = context.createCGImage(scaled, from: scaled.extent) else { return nil }
+        return NSImage(cgImage: cgImage, size: NSSize(width: scaled.extent.width, height: scaled.extent.height))
     }
 }
 
 #Preview {
     MobileAppView()
-        .frame(width: 520, height: 600)
+        .frame(width: 520, height: 700)
 }
