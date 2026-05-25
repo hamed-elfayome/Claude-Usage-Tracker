@@ -371,10 +371,6 @@
 "personal.placeholder_session_key" = "세션 키를 입력하세요";
 "personal.help_session_key" = "Claude.ai에서 세션 키를 추출해야 합니다";
 "personal.button_test_connection" = "연결 테스트";
-"personal.button_save" = "저장";
-"personal.status_testing" = "테스트 중...";
-"personal.success_connection" = "연결 성공! %d개 조직 발견";
-"personal.error_connection_failed" = "연결 실패. 세션 키를 확인하세요.";
 
 /* ==================== */
 /* MARK: - API Billing */
@@ -396,43 +392,18 @@
 /* ==================== */
 /* MARK: - Session Timer */
 /* ==================== */
-"session.timer_active" = "다음까지 남은 시간";
-"session.timer_inactive" = "타이머가 활성화되지 않음";
-"session.timer_paused" = "일시 중지됨";
-"session.timer_reset" = "재설정됨";
 
 /* ==================== */
 /* MARK: - Status Messages */
 /* ==================== */
-"status.fetching" = "데이터 가져오는 중...";
-"status.error" = "오류가 발생했습니다";
-"status.no_data" = "데이터 없음";
-"status.loading" = "로드 중...";
-"status.syncing" = "동기화 중...";
-"status.success" = "성공";
 
 /* ==================== */
 /* MARK: - Usage Display */
 /* ==================== */
-"usage.session" = "세션";
-"usage.week" = "주간";
-"usage.api_credits" = "API 크레딧";
-"usage.remaining" = "남음";
-"usage.used" = "사용됨";
-"usage.limit" = "한도";
-"usage.unlimited" = "무제한";
-"usage.next_reset" = "다음 재설정";
-"usage.time_until_reset" = "재설정까지";
 
 /* ==================== */
 /* MARK: - Notifications */
 /* ==================== */
-"notification.usage_warning_title" = "사용량 경고";
-"notification.usage_warning_body" = "사용량이 %d%%에 도달했습니다";
-"notification.usage_exceeded_title" = "사용량 초과";
-"notification.usage_exceeded_body" = "월간 한도를 초과했습니다";
-"notification.session_reset_title" = "세션 재설정됨";
-"notification.session_reset_body" = "새 세션이 시작되었습니다";
 "notification.session_auto_started.title" = "세션 자동 시작됨";
 "notification.session_auto_started.message" = "Claude로 새 세션이 자동으로 초기화되었습니다. 새로운 5시간 세션이 준비되었습니다!";
 "notification.session_auto_start_failed.title" = "자동 시작 실패";
@@ -458,13 +429,6 @@
 "error.code_label" = "오류 코드:";
 "error.what_to_do" = "해결 방법:";
 "error.occurred_at" = "발생 시각: %@";
-"error.network" = "네트워크 오류";
-"error.invalid_key" = "잘못된 세션 키";
-"error.unauthorized" = "권한 없음";
-"error.rate_limit" = "속도 제한 초과";
-"error.server" = "서버 오류";
-"error.unknown" = "알 수 없는 오류";
-"error.invalid_response" = "잘못된 응답";
 
 /* ==================== */
 /* MARK: - Validation Messages */
@@ -535,7 +499,6 @@
 /* MARK: - About */
 /* ==================== */
 "about.version" = "버전 %@";
-"about.build" = "빌드";
 "about.created_by" = "제작자";
 "about.contributors" = "기여자 (%d명)";
 "about.contributors_loading" = "기여자";
@@ -625,23 +588,11 @@
 /* ==================== */
 "claudecode.title" = "Claude CLI 상태표시줄";
 "claudecode.subtitle" = "터미널 상태표시줄 통합";
-"claudecode.install_statusline" = "상태표시줄 스크립트 설치";
-"claudecode.uninstall_statusline" = "상태표시줄 스크립트 제거";
-"claudecode.statusline_installed" = "설치됨";
-"claudecode.statusline_not_installed" = "설치되지 않음";
-"claudecode.shell_support" = "지원되는 셸";
-"claudecode.installation_guide" = "설치 가이드";
-"claudecode.component_session" = "세션 사용량 표시";
-"claudecode.component_week" = "주간 사용량 표시";
-"claudecode.component_api" = "API 크레딧 표시";
 "claudecode.component_directory" = "현재 디렉토리 표시";
 "claudecode.component_branch" = "Git 브랜치 표시";
 "claudecode.component_usage" = "사용 통계";
 "claudecode.component_progressbar" = "진행 표시줄";
 "claudecode.component_resettime" = "재설정 시간";
-"claudecode.success_installed" = "상태표시줄이 성공적으로 설치되었습니다";
-"claudecode.success_uninstalled" = "상태표시줄이 제거되었습니다";
-"claudecode.error_installation_failed" = "설치 실패";
 
 /* ==================== */
 /* MARK: - General Settings (Additional) */
@@ -1037,3 +988,115 @@
 "notifications.sound.default" = "기본값";
 "notifications.sound.none" = "없음";
 "notifications.sound.preview" = "소리 미리듣기";
+
+
+// MARK: - Limit Optimization Tips
+"tip.claudeai.edit_instead_followup.title" = "Edit instead of following up";
+"tip.claudeai.edit_instead_followup.detail" = "Edit your last message instead of sending a new follow-up to avoid using extra context tokens.";
+"tip.claudeai.batch_requests.title" = "Batch requests";
+"tip.claudeai.batch_requests.detail" = "Combine multiple related requests into a single prompt to reduce message count.";
+"tip.claudeai.fresh_chat.title" = "Start fresh chats";
+"tip.claudeai.fresh_chat.detail" = "Begin a new chat after roughly 15-20 messages to keep context focused and efficient.";
+"tip.claudeai.model_selection.title" = "Choose the right model";
+"tip.claudeai.model_selection.detail" = "Match model complexity to your task to avoid wasting tokens on overkill.";
+"tip.claudeai.extended_thinking.title" = "Turn off extended thinking";
+"tip.claudeai.extended_thinking.detail" = "Keep extended thinking disabled by default and only enable it when truly needed.";
+"tip.claudeai.markdown_conversion.title" = "Convert files to Markdown";
+"tip.claudeai.markdown_conversion.detail" = "Convert files to Markdown before uploading to reduce token consumption.";
+"tip.claudeai.projects.title" = "Use Projects";
+"tip.claudeai.projects.detail" = "Use Projects for repeated documents to avoid re-uploading the same files.";
+"tip.claudeai.session_overlap.title" = "Session overlap planning";
+"tip.claudeai.session_overlap.detail" = "Plan dummy pings before work to overlap 5-hour windows and maximize available sessions.";
+"tip.claudeai.off_peak.title" = "Work off-peak";
+"tip.claudeai.off_peak.detail" = "Use Claude during off-peak hours when possible for faster responses.";
+
+"tip.claudecode.context.title" = "Run /context first";
+"tip.claudecode.context.detail" = "Check your context window usage before starting a new task.";
+"tip.claudecode.disconnect_mcp.title" = "Disconnect unused MCP servers";
+"tip.claudecode.disconnect_mcp.detail" = "Remove MCP servers you aren't actively using to reduce context overhead.";
+"tip.claudecode.prefer_cli.title" = "Prefer CLIs over MCPs";
+"tip.claudecode.prefer_cli.detail" = "Use command-line tools directly where possible instead of MCP wrappers.";
+"tip.claudecode.clear.title" = "Use /clear";
+"tip.claudecode.clear.detail" = "Clear conversation history between unrelated tasks.";
+"tip.claudecode.compact_rewind.title" = "Use /compact and /rewind";
+"tip.claudecode.compact_rewind.detail" = "Compact or rewind conversations to manage context size efficiently.";
+"tip.claudecode.session_handoff.title" = "Session handoff";
+"tip.claudecode.session_handoff.detail" = "When compacting preserves too much stale context, start a fresh session with a handoff summary.";
+"tip.claudecode.subagents.title" = "Use sub-agents";
+"tip.claudecode.subagents.detail" = "Delegate heavy work to sub-agents to keep your main session lean.";
+"tip.claudecode.claude_md_hygiene.title" = "Keep CLAUDE.md clean";
+"tip.claudecode.claude_md_hygiene.detail" = "Maintain focused CLAUDE.md and settings files to avoid bloated default context.";
+
+"tip.claudecowork.dedicated_folder.title" = "Use a clean folder";
+"tip.claudecowork.dedicated_folder.detail" = "Keep Cowork in a dedicated folder to avoid unnecessary file scanning.";
+"tip.claudecowork.local_memory.title" = "Build local memory";
+"tip.claudecowork.local_memory.detail" = "Create a local memory system for frequently needed context.";
+"tip.claudecowork.research_split.title" = "Split research and execution";
+"tip.claudecowork.research_split.detail" = "Use other tools for research while reserving Cowork for execution.";
+"tip.claudecowork.skills.title" = "Build skills";
+"tip.claudecowork.skills.detail" = "Create skills for repeatable workflows to save tokens over time.";
+
+// MARK: - Session Planning Notifications
+"notification.session_overlap.title" = "Session Overlap Reminder";
+"notification.session_overlap.message" = "%@: Send a minimal prompt around %@ to overlap sessions before work at %@.";
+"notification.planned_ping.title" = "Planned Session Started";
+"notification.planned_ping.message" = "Successfully started a planned session for %@.";
+"notification.waste_warning.title" = "Session Waste Warning";
+"notification.waste_warning.message" = "%@: Your dummy session is active. If plans changed, remember it still consumes a 5-hour window.";
+
+// MARK: - Session Planning Settings
+"planning.title" = "Session Planning";
+"planning.subtitle" = "Optimize your Claude sessions by planning ahead";
+"planning.educational_title" = "How Session Windows Work";
+"planning.educational_body" = "Claude uses a user-started 5-hour rolling window. Claude.ai and Claude Code share the same pool. Starting a dummy session consumes a window even if plans change.";
+"planning.enable" = "Enable Session Overlap Planner";
+"planning.planned_work_start" = "Planned work start time";
+"planning.typical_time_to_limit" = "Typical time to hit limit";
+"planning.auto_estimate" = "Auto-estimate from usage history";
+"planning.auto_estimate_not_enough" = "Not enough data yet. Keep using Claude and the estimate will improve.";
+"planning.reminder_only" = "Reminder only (recommended)";
+"planning.auto_ping" = "Auto-send dummy prompt";
+"planning.auto_ping_opt_in" = "Requires Claude.ai credentials. Consumes a 5-hour window automatically.";
+"planning.waste_warning" = "Warn if dummy session may be wasted";
+"planning.plan_mode_tips" = "Show Plan Mode tips near high usage";
+"planning.recommendation" = "Ping at %@. Second session available around %@.";
+"planning.open_claude" = "Open Claude.ai";
+"planning.copy_prompt" = "Copy minimal prompt";
+"planning.dummy_prompt_copied" = "Copied: Hi";
+
+// MARK: - Limit Optimization Guide
+"guide.title" = "Limit Optimization Guide";
+"guide.claude_ai" = "Claude.ai Tips";
+"guide.claude_code" = "Claude Code Tips";
+"guide.claude_cowork" = "Claude Cowork Tips";
+"guide.copy_command" = "Copy";
+"guide.copied" = "Copied!";
+
+// MARK: - Claude Code Diagnostics
+"diagnostics.title" = "Limit Hygiene";
+"diagnostics.mcp_servers" = "MCP Servers";
+"diagnostics.mcp_warning" = "Many MCP servers add context overhead. Consider disconnecting unused ones.";
+"diagnostics.claude_md" = "CLAUDE.md";
+"diagnostics.claude_md_warning" = "Large CLAUDE.md files increase default context size.";
+"diagnostics.settings_entries" = "Settings entries that add context";
+"diagnostics.checklist_title" = "Before You Prompt";
+"diagnostics.handoff_template" = "Session Handoff Template";
+"diagnostics.copy_template" = "Copy Template";
+
+"about.contributors_failed" = "Failed to load contributors";
+"appearance.all_metrics_off_description" = "All metrics are disabled. Enable at least one metric in the Appearance settings.";
+"appearance.all_metrics_off_title" = "No Metrics Enabled";
+"common.retry" = "Retry";
+"menubar.api_cost" = "API Cost";
+"menubar.cost_source.api" = "API";
+"menubar.cost_source.cli" = "Claude Code";
+"menubar.cost_source.unknown" = "Other";
+"menubar.this_month" = "This Month";
+"menubar.total" = "Total";
+"multiprofile.style_bars" = "Bars";
+"multiprofile.style_circles" = "Circles";
+"multiprofile.style_dots" = "Dots";
+"multiprofile.style_percent" = "Percent";
+"settings.updates" = "Updates";
+"settings.updates.description" = "Keep your app up to date";
+

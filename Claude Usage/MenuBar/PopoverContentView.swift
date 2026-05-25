@@ -190,6 +190,20 @@ struct PopoverContentView: View {
             // Usage
             SmartUsageDashboard(usage: displayUsage, apiUsage: displayAPIUsage)
 
+            // Session Overlap Card
+            if let activeProfile = profileManager.activeProfile,
+               let settings = activeProfile.sessionPlanningSettings,
+               settings.isEnabled {
+                PopoverDivider()
+                SessionOverlapCard(profile: activeProfile)
+            }
+
+            // Rotating contextual tip
+            if let activeProfile = profileManager.activeProfile {
+                PopoverDivider()
+                ContextualTipCard(profile: activeProfile, usage: displayUsage)
+            }
+
             // Contextual Insights
             if showInsights {
                 PopoverDivider()

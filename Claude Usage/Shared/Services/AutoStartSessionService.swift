@@ -347,42 +347,51 @@ final class AutoStartSessionService {
         return nil
     }
 
+    enum SessionStartSource: String {
+        case resetAutoStart = "reset_auto_start"
+        case plannedOverlap = "planned_overlap"
+    }
+
     // MARK: - Auto-Start Session
 
-    private func autoStartSession(for profile: Profile) async {
+    func startSession(for profile: Profile, source: SessionStartSource) async {
         do {
-            // Call the initialization API for this profile and get response data
             let responseData = try await sendInitializationMessage(for: profile)
 
-            // Capture reset time from response to prevent duplicate auto-starts
             if let resetTime = parseCompletionResponseForResetTime(responseData) {
                 lastCapturedResetTime[profile.id] = resetTime
-                LoggingService.shared.logInfo("Captured session reset time for '\(profile.name)': \(resetTime)")
+                LoggingService.shared.logInfo("Captured session reset time for '\(profile.name)' [\(source.rawValue)]: \(resetTime)")
             }
 
-            LoggingService.shared.logInfo("Successfully auto-started session for profile '\(profile.name)'")
+            LoggingService.shared.logInfo("Successfully started session for '\(profile.name)' [\(source.rawValue)]")
 
-            // Send success notification
-            await MainActor.run {
-                notificationManager.sendAutoStartNotification(
-                    profileName: profile.name,
-                    success: true,
-                    error: nil
-                )
+            if source == .resetAutoStart {
+                await MainActor.run {
+                    notificationManager.sendAutoStartNotification(
+                        profileName: profile.name,
+                        success: true,
+                        error: nil
+                    )
+                }
             }
 
         } catch {
-            LoggingService.shared.logError("Failed to auto-start session for profile '\(profile.name)': \(error.localizedDescription)")
+            LoggingService.shared.logError("Failed to start session for '\(profile.name)' [\(source.rawValue)]: \(error.localizedDescription)")
 
-            // Send failure notification
-            await MainActor.run {
-                notificationManager.sendAutoStartNotification(
-                    profileName: profile.name,
-                    success: false,
-                    error: error.localizedDescription
-                )
+            if source == .resetAutoStart {
+                await MainActor.run {
+                    notificationManager.sendAutoStartNotification(
+                        profileName: profile.name,
+                        success: false,
+                        error: error.localizedDescription
+                    )
+                }
             }
         }
+    }
+
+    private func autoStartSession(for profile: Profile) async {
+        await startSession(for: profile, source: .resetAutoStart)
     }
 
     private func sendInitializationMessage(for profile: Profile) async throws -> Data {
@@ -435,7 +444,7 @@ final class AutoStartSessionService {
         messageRequest.httpMethod = "POST"
 
         let messageBody: [String: Any] = [
-            "prompt": "Hi",
+            "prompt": Constants.SessionPlanning.dummyPrompt,
             "model": "claude-haiku-4-5-20251001",  // Ensures non-zero usage to prevent duplicate auto-starts
             "timezone": "UTC"
         ]

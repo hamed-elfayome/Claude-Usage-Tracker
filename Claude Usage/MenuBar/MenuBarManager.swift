@@ -63,6 +63,7 @@ class MenuBarManager: NSObject, ObservableObject {
     private let networkMonitor = NetworkMonitor.shared
     private let profileManager = ProfileManager.shared
     private let autoStartService = AutoStartSessionService.shared
+    private let sessionPlanningService = SessionPlanningService.shared
 
     // Combine cancellables for profile observation
     private var cancellables = Set<AnyCancellable>()
@@ -208,6 +209,9 @@ class MenuBarManager: NSObject, ObservableObject {
         // Start auto-start session service (5-minute cycle for all profiles)
         autoStartService.start()
 
+        // Start session planning service
+        sessionPlanningService.start()
+
         // Observe icon configuration changes
         observeIconConfigChanges()
 
@@ -259,6 +263,7 @@ class MenuBarManager: NSObject, ObservableObject {
         refreshTimer = nil
         networkMonitor.stopMonitoring()
         autoStartService.stop()
+        sessionPlanningService.stop()
         cancellables.removeAll()  // Clean up Combine subscriptions
         refreshIntervalObserver?.invalidate()
         refreshIntervalObserver = nil
@@ -1070,6 +1075,9 @@ class MenuBarManager: NSObject, ObservableObject {
                         // Save to profile
                         self.profileManager.saveClaudeUsage(newUsage, for: profile.id)
                         LoggingService.shared.log("MenuBarManager: Saved usage for profile '\(profile.name)' - session: \(newUsage.sessionPercentage)%")
+
+                        // Record for session planning
+                        self.sessionPlanningService.recordUsage(profile: profile, usage: newUsage)
 
                         // If this is the active profile, also update the manager's usage
                         if profile.id == self.profileManager.activeProfile?.id {

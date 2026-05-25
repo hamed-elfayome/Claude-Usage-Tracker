@@ -72,6 +72,7 @@ class ProfileManager: ObservableObject {
             autoStartSessionEnabled: copySettingsFrom?.autoStartSessionEnabled ?? false,
             checkOverageLimitEnabled: copySettingsFrom?.checkOverageLimitEnabled ?? true,
             notificationSettings: copySettingsFrom?.notificationSettings ?? NotificationSettings(),
+            sessionPlanningSettings: copySettingsFrom?.sessionPlanningSettings,
             isSelectedForDisplay: true
         )
 
@@ -434,6 +435,19 @@ class ProfileManager: ObservableObject {
     func updateCheckOverageLimitEnabled(_ enabled: Bool, for profileId: UUID) {
         if let index = profiles.firstIndex(where: { $0.id == profileId }) {
             profiles[index].checkOverageLimitEnabled = enabled
+
+            if activeProfile?.id == profileId {
+                activeProfile = profiles[index]
+            }
+
+            profileStore.saveProfiles(profiles)
+        }
+    }
+
+    /// Updates session planning settings for a profile
+    func updateSessionPlanningSettings(_ settings: SessionPlanningSettings, for profileId: UUID) {
+        if let index = profiles.firstIndex(where: { $0.id == profileId }) {
+            profiles[index].sessionPlanningSettings = settings
 
             if activeProfile?.id == profileId {
                 activeProfile = profiles[index]

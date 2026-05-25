@@ -412,6 +412,9 @@ struct ClaudeCodeView: View {
                     }
                 }
 
+                // Limit Hygiene
+                LimitHygieneCard()
+
                 Spacer()
             }
             .padding()
