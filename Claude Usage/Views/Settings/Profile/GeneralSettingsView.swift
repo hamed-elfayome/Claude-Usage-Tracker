@@ -98,6 +98,34 @@ struct GeneralSettingsView: View {
                         }
                     }
 
+                    // Session Planning
+                    SessionPlanningSettingsView(profile: profile)
+
+                    // Limit Optimization Guide
+                    SettingsSectionCard(
+                        title: "guide.title".localized,
+                        subtitle: "Limit Optimization Guide"
+                    ) {
+                        VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
+                            Text("Access the full guide with tips for Claude.ai, Claude Code, and Claude Cowork.")
+                                .font(DesignTokens.Typography.caption)
+                                .foregroundColor(.secondary)
+
+                            NavigationLink {
+                                LimitOptimizationGuideView()
+                            } label: {
+                                HStack {
+                                    Text("Open Guide")
+                                        .font(DesignTokens.Typography.body)
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                        }
+                    }
+
                     // Notifications
                     SettingsSectionCard(
                         title: "general.notifications_title".localized,

@@ -9,4 +9,11 @@ enum FormatterHelper {
         formatter.dateTimeStyle = .named
         return formatter.localizedString(for: resetDate, relativeTo: Date())
     }
+
+    /// Formats a date as a time string (e.g., "10:00 AM")
+    static func timeString(from date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = DateFormatter.dateFormat(fromTemplate: "j:mm", options: 0, locale: Locale.current)
+        return formatter.string(from: date)
+    }
 }

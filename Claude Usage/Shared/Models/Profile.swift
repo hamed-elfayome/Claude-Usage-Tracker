@@ -47,6 +47,9 @@ struct Profile: Codable, Identifiable, Equatable {
     // MARK: - Notification Settings (Per-Profile)
     var notificationSettings: NotificationSettings
 
+    // MARK: - Session Planning Settings (Per-Profile)
+    var sessionPlanningSettings: SessionPlanningSettings?
+
     // MARK: - Display Configuration
     var isSelectedForDisplay: Bool  // For multi-profile menu bar mode
 
@@ -73,6 +76,7 @@ struct Profile: Codable, Identifiable, Equatable {
         autoStartSessionEnabled: Bool = false,
         checkOverageLimitEnabled: Bool = true,
         notificationSettings: NotificationSettings = NotificationSettings(),
+        sessionPlanningSettings: SessionPlanningSettings? = nil,
         isSelectedForDisplay: Bool = true,
         createdAt: Date = Date(),
         lastUsedAt: Date = Date()
@@ -95,6 +99,7 @@ struct Profile: Codable, Identifiable, Equatable {
         self.autoStartSessionEnabled = autoStartSessionEnabled
         self.checkOverageLimitEnabled = checkOverageLimitEnabled
         self.notificationSettings = notificationSettings
+        self.sessionPlanningSettings = sessionPlanningSettings
         self.isSelectedForDisplay = isSelectedForDisplay
         self.createdAt = createdAt
         self.lastUsedAt = lastUsedAt

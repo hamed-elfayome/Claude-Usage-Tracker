@@ -115,6 +115,17 @@ enum Constants {
     // Session window (5 hours in seconds)
     static let sessionWindow: TimeInterval = 5 * 60 * 60
 
+    // Session Planning
+    enum SessionPlanning {
+        static let dummyPrompt = "Hi"
+        static let defaultManualTimeToLimitMinutes = 120
+        static let observationThreshold: Double = 90.0
+        static let minTimeToLimitMinutes = 15
+        static let maxTimeToLimitMinutes = 300
+        static let pingCheckIntervalSeconds: TimeInterval = 60
+        static let prePingWarningMinutes = 15
+    }
+
     // Weekly window (7 days in seconds)
     static let weeklyWindow: TimeInterval = 7 * 24 * 60 * 60
 

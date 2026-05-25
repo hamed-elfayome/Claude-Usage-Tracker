@@ -955,3 +955,115 @@
 "notifications.sound.default" = "Par défaut";
 "notifications.sound.none" = "Aucun";
 "notifications.sound.preview" = "Aperçu du son";
+
+
+// MARK: - Limit Optimization Tips
+"tip.claudeai.edit_instead_followup.title" = "Edit instead of following up";
+"tip.claudeai.edit_instead_followup.detail" = "Edit your last message instead of sending a new follow-up to avoid using extra context tokens.";
+"tip.claudeai.batch_requests.title" = "Batch requests";
+"tip.claudeai.batch_requests.detail" = "Combine multiple related requests into a single prompt to reduce message count.";
+"tip.claudeai.fresh_chat.title" = "Start fresh chats";
+"tip.claudeai.fresh_chat.detail" = "Begin a new chat after roughly 15-20 messages to keep context focused and efficient.";
+"tip.claudeai.model_selection.title" = "Choose the right model";
+"tip.claudeai.model_selection.detail" = "Match model complexity to your task to avoid wasting tokens on overkill.";
+"tip.claudeai.extended_thinking.title" = "Turn off extended thinking";
+"tip.claudeai.extended_thinking.detail" = "Keep extended thinking disabled by default and only enable it when truly needed.";
+"tip.claudeai.markdown_conversion.title" = "Convert files to Markdown";
+"tip.claudeai.markdown_conversion.detail" = "Convert files to Markdown before uploading to reduce token consumption.";
+"tip.claudeai.projects.title" = "Use Projects";
+"tip.claudeai.projects.detail" = "Use Projects for repeated documents to avoid re-uploading the same files.";
+"tip.claudeai.session_overlap.title" = "Session overlap planning";
+"tip.claudeai.session_overlap.detail" = "Plan dummy pings before work to overlap 5-hour windows and maximize available sessions.";
+"tip.claudeai.off_peak.title" = "Work off-peak";
+"tip.claudeai.off_peak.detail" = "Use Claude during off-peak hours when possible for faster responses.";
+
+"tip.claudecode.context.title" = "Run /context first";
+"tip.claudecode.context.detail" = "Check your context window usage before starting a new task.";
+"tip.claudecode.disconnect_mcp.title" = "Disconnect unused MCP servers";
+"tip.claudecode.disconnect_mcp.detail" = "Remove MCP servers you aren't actively using to reduce context overhead.";
+"tip.claudecode.prefer_cli.title" = "Prefer CLIs over MCPs";
+"tip.claudecode.prefer_cli.detail" = "Use command-line tools directly where possible instead of MCP wrappers.";
+"tip.claudecode.clear.title" = "Use /clear";
+"tip.claudecode.clear.detail" = "Clear conversation history between unrelated tasks.";
+"tip.claudecode.compact_rewind.title" = "Use /compact and /rewind";
+"tip.claudecode.compact_rewind.detail" = "Compact or rewind conversations to manage context size efficiently.";
+"tip.claudecode.session_handoff.title" = "Session handoff";
+"tip.claudecode.session_handoff.detail" = "When compacting preserves too much stale context, start a fresh session with a handoff summary.";
+"tip.claudecode.subagents.title" = "Use sub-agents";
+"tip.claudecode.subagents.detail" = "Delegate heavy work to sub-agents to keep your main session lean.";
+"tip.claudecode.claude_md_hygiene.title" = "Keep CLAUDE.md clean";
+"tip.claudecode.claude_md_hygiene.detail" = "Maintain focused CLAUDE.md and settings files to avoid bloated default context.";
+
+"tip.claudecowork.dedicated_folder.title" = "Use a clean folder";
+"tip.claudecowork.dedicated_folder.detail" = "Keep Cowork in a dedicated folder to avoid unnecessary file scanning.";
+"tip.claudecowork.local_memory.title" = "Build local memory";
+"tip.claudecowork.local_memory.detail" = "Create a local memory system for frequently needed context.";
+"tip.claudecowork.research_split.title" = "Split research and execution";
+"tip.claudecowork.research_split.detail" = "Use other tools for research while reserving Cowork for execution.";
+"tip.claudecowork.skills.title" = "Build skills";
+"tip.claudecowork.skills.detail" = "Create skills for repeatable workflows to save tokens over time.";
+
+// MARK: - Session Planning Notifications
+"notification.session_overlap.title" = "Session Overlap Reminder";
+"notification.session_overlap.message" = "%@: Send a minimal prompt around %@ to overlap sessions before work at %@.";
+"notification.planned_ping.title" = "Planned Session Started";
+"notification.planned_ping.message" = "Successfully started a planned session for %@.";
+"notification.waste_warning.title" = "Session Waste Warning";
+"notification.waste_warning.message" = "%@: Your dummy session is active. If plans changed, remember it still consumes a 5-hour window.";
+
+// MARK: - Session Planning Settings
+"planning.title" = "Session Planning";
+"planning.subtitle" = "Optimize your Claude sessions by planning ahead";
+"planning.educational_title" = "How Session Windows Work";
+"planning.educational_body" = "Claude uses a user-started 5-hour rolling window. Claude.ai and Claude Code share the same pool. Starting a dummy session consumes a window even if plans change.";
+"planning.enable" = "Enable Session Overlap Planner";
+"planning.planned_work_start" = "Planned work start time";
+"planning.typical_time_to_limit" = "Typical time to hit limit";
+"planning.auto_estimate" = "Auto-estimate from usage history";
+"planning.auto_estimate_not_enough" = "Not enough data yet. Keep using Claude and the estimate will improve.";
+"planning.reminder_only" = "Reminder only (recommended)";
+"planning.auto_ping" = "Auto-send dummy prompt";
+"planning.auto_ping_opt_in" = "Requires Claude.ai credentials. Consumes a 5-hour window automatically.";
+"planning.waste_warning" = "Warn if dummy session may be wasted";
+"planning.plan_mode_tips" = "Show Plan Mode tips near high usage";
+"planning.recommendation" = "Ping at %@. Second session available around %@.";
+"planning.open_claude" = "Open Claude.ai";
+"planning.copy_prompt" = "Copy minimal prompt";
+"planning.dummy_prompt_copied" = "Copied: Hi";
+
+// MARK: - Limit Optimization Guide
+"guide.title" = "Limit Optimization Guide";
+"guide.claude_ai" = "Claude.ai Tips";
+"guide.claude_code" = "Claude Code Tips";
+"guide.claude_cowork" = "Claude Cowork Tips";
+"guide.copy_command" = "Copy";
+"guide.copied" = "Copied!";
+
+// MARK: - Claude Code Diagnostics
+"diagnostics.title" = "Limit Hygiene";
+"diagnostics.mcp_servers" = "MCP Servers";
+"diagnostics.mcp_warning" = "Many MCP servers add context overhead. Consider disconnecting unused ones.";
+"diagnostics.claude_md" = "CLAUDE.md";
+"diagnostics.claude_md_warning" = "Large CLAUDE.md files increase default context size.";
+"diagnostics.settings_entries" = "Settings entries that add context";
+"diagnostics.checklist_title" = "Before You Prompt";
+"diagnostics.handoff_template" = "Session Handoff Template";
+"diagnostics.copy_template" = "Copy Template";
+
+"about.contributors_failed" = "Failed to load contributors";
+"appearance.all_metrics_off_description" = "All metrics are disabled. Enable at least one metric in the Appearance settings.";
+"appearance.all_metrics_off_title" = "No Metrics Enabled";
+"common.retry" = "Retry";
+"menubar.api_cost" = "API Cost";
+"menubar.cost_source.api" = "API";
+"menubar.cost_source.cli" = "Claude Code";
+"menubar.cost_source.unknown" = "Other";
+"menubar.this_month" = "This Month";
+"menubar.total" = "Total";
+"multiprofile.style_bars" = "Bars";
+"multiprofile.style_circles" = "Circles";
+"multiprofile.style_dots" = "Dots";
+"multiprofile.style_percent" = "Percent";
+"settings.updates" = "Updates";
+"settings.updates.description" = "Keep your app up to date";
+

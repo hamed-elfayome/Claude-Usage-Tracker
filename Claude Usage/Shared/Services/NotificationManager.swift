@@ -310,6 +310,75 @@ class NotificationManager: NotificationServiceProtocol {
         }
     }
 
+    // MARK: - Session Planning Notifications
+
+    func sendSessionOverlapReminder(profileName: String, pingTime: Date, plannedWorkStart: Date) {
+        let content = UNMutableNotificationContent()
+        content.title = "notification.session_overlap.title".localized
+        content.body = "notification.session_overlap.message".localized(
+            with: profileName,
+            FormatterHelper.timeString(from: pingTime),
+            FormatterHelper.timeString(from: plannedWorkStart)
+        )
+        content.sound = .default
+        content.categoryIdentifier = "PLANNING_ALERT"
+
+        let identifier = "session_overlap_\(profileName)_\(Int(pingTime.timeIntervalSince1970))"
+        let request = UNNotificationRequest(
+            identifier: identifier,
+            content: content,
+            trigger: nil
+        )
+
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                LoggingService.shared.logError("Failed to send session overlap reminder: \(error)")
+            }
+        }
+    }
+
+    func sendPlannedPingSuccess(profileName: String) {
+        let content = UNMutableNotificationContent()
+        content.title = "notification.planned_ping.title".localized
+        content.body = "notification.planned_ping.message".localized(with: profileName)
+        content.sound = .default
+        content.categoryIdentifier = "PLANNING_ALERT"
+
+        let identifier = "planned_ping_\(profileName)_\(Int(Date().timeIntervalSince1970))"
+        let request = UNNotificationRequest(
+            identifier: identifier,
+            content: content,
+            trigger: nil
+        )
+
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                LoggingService.shared.logError("Failed to send planned ping success: \(error)")
+            }
+        }
+    }
+
+    func sendWasteWarning(profileName: String) {
+        let content = UNMutableNotificationContent()
+        content.title = "notification.waste_warning.title".localized
+        content.body = "notification.waste_warning.message".localized(with: profileName)
+        content.sound = .default
+        content.categoryIdentifier = "PLANNING_ALERT"
+
+        let identifier = "waste_warning_\(profileName)_\(Int(Date().timeIntervalSince1970))"
+        let request = UNNotificationRequest(
+            identifier: identifier,
+            content: content,
+            trigger: nil
+        )
+
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                LoggingService.shared.logError("Failed to send waste warning: \(error)")
+            }
+        }
+    }
+
     /// Clears notification tracking state for a specific profile
     func clearNotificationsForProfile(_ profileName: String) {
         sentNotifications = sentNotifications.filter { !$0.hasPrefix(profileName) }
