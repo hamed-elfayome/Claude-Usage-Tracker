@@ -79,6 +79,8 @@ final class StatusBarUIManager {
             // No credentials/metrics - show default app logo
             let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
             statusItem.autosaveName = Self.defaultLogoAutosaveName
+            // Override any persisted false from a prior cmd-drag.
+            statusItem.isVisible = true
 
             if let button = statusItem.button {
                 button.action = action
@@ -98,6 +100,8 @@ final class StatusBarUIManager {
             for metricConfig in config.enabledMetrics {
                 let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
                 statusItem.autosaveName = Self.autosaveName(for: metricConfig.metricType)
+                // Override any persisted false from a prior cmd-drag.
+                statusItem.isVisible = true
 
                 if let button = statusItem.button {
                     button.action = action
@@ -152,6 +156,8 @@ final class StatusBarUIManager {
             statusItem.autosaveName = config.enabledMetrics.isEmpty
                 ? Self.defaultLogoAutosaveName
                 : Self.autosaveName(for: metricType)
+            // Override any persisted false from a prior cmd-drag.
+            statusItem.isVisible = true
 
             if let button = statusItem.button {
                 button.action = action
@@ -244,6 +250,8 @@ final class StatusBarUIManager {
             if peakHoursStatusItem == nil, let target = peakHoursTarget, let action = peakHoursAction {
                 let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
                 statusItem.autosaveName = Self.peakHoursAutosaveName
+                // Override any persisted false from a prior cmd-drag.
+                statusItem.isVisible = true
                 if let button = statusItem.button {
                     button.action = action
                     button.target = target
@@ -291,6 +299,8 @@ final class StatusBarUIManager {
             // No profiles selected - show default logo
             let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
             statusItem.autosaveName = Self.defaultLogoAutosaveName
+            // Override any persisted false from a prior cmd-drag.
+            statusItem.isVisible = true
             if let button = statusItem.button {
                 button.action = action
                 button.target = target
@@ -307,6 +317,8 @@ final class StatusBarUIManager {
             for profile in selectedProfiles {
                 let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
                 statusItem.autosaveName = Self.autosaveName(forProfileId: profile.id)
+                // Override any persisted false from a prior cmd-drag.
+                statusItem.isVisible = true
 
                 if let button = statusItem.button {
                     button.action = action
@@ -362,6 +374,8 @@ final class StatusBarUIManager {
             // Need to add default logo
             let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
             statusItem.autosaveName = Self.defaultLogoAutosaveName
+            // Override any persisted false from a prior cmd-drag.
+            statusItem.isVisible = true
             if let button = statusItem.button {
                 button.action = action
                 button.target = target
@@ -374,6 +388,8 @@ final class StatusBarUIManager {
             for profile in selectedProfiles where idsToAdd.contains(profile.id) {
                 let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
                 statusItem.autosaveName = Self.autosaveName(forProfileId: profile.id)
+                // Override any persisted false from a prior cmd-drag.
+                statusItem.isVisible = true
                 if let button = statusItem.button {
                     button.action = action
                     button.target = target
