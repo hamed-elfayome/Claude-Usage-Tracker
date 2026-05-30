@@ -121,6 +121,20 @@ struct Profile: Codable, Identifiable, Equatable {
         return !ClaudeCodeSyncService.shared.isTokenExpired(cliJSON)
     }
 
+    /// Ako `hasUsageCredentials`, ale pre zobrazenie (menu bar) zohľadňuje aj
+    /// systémový Keychain CLI token (Claude Code). Inak ikona spadne na default
+    /// logo po expirácii profile-cached CLI tokenu, hoci refresh stále beží cez
+    /// systémový token (bug #250).
+    var hasUsageCredentialsForDisplay: Bool {
+        if hasUsageCredentials { return true }
+        if let systemCreds = try? ClaudeCodeSyncService.shared.readSystemCredentials(),
+           !ClaudeCodeSyncService.shared.isTokenExpired(systemCreds),
+           ClaudeCodeSyncService.shared.extractAccessToken(from: systemCreds) != nil {
+            return true
+        }
+        return false
+    }
+
     var hasAnyCredentials: Bool {
         hasClaudeAI || hasAPIConsole || cliCredentialsJSON != nil
     }
