@@ -614,7 +614,7 @@ final class StatusBarUIManager {
         let config = profile?.iconConfig ?? .default
 
         // Check if we should show default logo (no usage credentials OR no enabled metrics)
-        let hasUsageCredentials = profile?.hasUsageCredentials ?? false
+        let hasUsageCredentials = profile?.hasUsageCredentialsForDisplay ?? false
         if !hasUsageCredentials || config.enabledMetrics.isEmpty {
             // Show default app logo
             if let statusItem = statusItems[.session],  // We use .session as placeholder key
