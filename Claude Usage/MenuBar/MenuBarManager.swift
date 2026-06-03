@@ -564,6 +564,10 @@ class MenuBarManager: NSObject, ObservableObject {
                     // the @Published profile properties set earlier in this method
                     popover.close()
                     stopMonitoringForOutsideClicks()
+                    // Activate first so the popover appears over a full-screen Space.
+                    // An .accessory app that isn't active renders the popover on the
+                    // desktop Space, hidden behind any frontmost full-screen app.
+                    NSApp.activate(ignoringOtherApps: true)
                     popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
                     currentPopoverButton = button
                     startMonitoringForOutsideClicks()
@@ -574,6 +578,9 @@ class MenuBarManager: NSObject, ObservableObject {
                 stopMonitoringForOutsideClicks()
                 // Update content view controller for current profile data
                 popover.contentViewController = createContentViewController()
+                // Activate first so the popover appears over a full-screen Space
+                // (otherwise an inactive .accessory app draws it on the desktop Space).
+                NSApp.activate(ignoringOtherApps: true)
                 popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
                 currentPopoverButton = button
                 startMonitoringForOutsideClicks()
@@ -600,6 +607,8 @@ class MenuBarManager: NSObject, ObservableObject {
         popover.behavior = .transient
         popover.animates = true
         popover.contentViewController = NSHostingController(rootView: PeakHoursPopoverView())
+        // Activate first so the popover appears over a full-screen Space.
+        NSApp.activate(ignoringOtherApps: true)
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         peakHoursPopover = popover
     }
@@ -1852,6 +1861,8 @@ extension MenuBarManager: NSPopoverDelegate {
         window.setContentSize(NSSize(width: 280, height: 600))
         window.isReleasedWhenClosed = false
         window.level = .floating
+        // Allow a torn-off popover to stay on a full-screen app's Space.
+        window.collectionBehavior.insert(.fullScreenAuxiliary)
         window.isRestorable = false
         window.delegate = self
         window.backgroundColor = .clear
