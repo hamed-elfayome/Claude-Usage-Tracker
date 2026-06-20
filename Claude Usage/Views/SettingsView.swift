@@ -123,6 +123,19 @@ final class BorderlessSettingsWindow: NSWindow {
 
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { true }
+
+    // Borderless windows don't route Cmd+W to performClose: automatically (and
+    // performClose: needs a close button, which a borderless window lacks), so
+    // close directly to support the standard shortcut (#223, #252). close()
+    // still fires windowWillClose, so MenuBarManager's dock-icon cleanup runs.
+    override func keyDown(with event: NSEvent) {
+        if event.modifierFlags.contains(.command),
+           event.charactersIgnoringModifiers?.lowercased() == "w" {
+            close()
+            return
+        }
+        super.keyDown(with: event)
+    }
 }
 
 /// Builds the settings window — fully borderless, no system titlebar.
