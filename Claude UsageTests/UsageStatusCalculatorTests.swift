@@ -6,7 +6,7 @@ final class UsageStatusCalculatorTests: XCTestCase {
     // MARK: - Used-Based Thresholds (showRemaining = false)
 
     func testUsedBasedThresholds_Safe() {
-        // 0-79% used should be safe (green)
+        // 0-69% used should be safe (green)
         XCTAssertEqual(
             UsageStatusCalculator.calculateStatus(usedPercentage: 0, showRemaining: false),
             .safe
@@ -16,15 +16,15 @@ final class UsageStatusCalculatorTests: XCTestCase {
             .safe
         )
         XCTAssertEqual(
-            UsageStatusCalculator.calculateStatus(usedPercentage: 79, showRemaining: false),
+            UsageStatusCalculator.calculateStatus(usedPercentage: 69, showRemaining: false),
             .safe
         )
     }
 
     func testUsedBasedThresholds_Moderate() {
-        // 80-89% used should be moderate (yellow)
+        // 70-89% used should be moderate (yellow)
         XCTAssertEqual(
-            UsageStatusCalculator.calculateStatus(usedPercentage: 80, showRemaining: false),
+            UsageStatusCalculator.calculateStatus(usedPercentage: 70, showRemaining: false),
             .moderate
         )
         XCTAssertEqual(
@@ -56,7 +56,7 @@ final class UsageStatusCalculatorTests: XCTestCase {
     // MARK: - Remaining-Based Thresholds (showRemaining = true)
 
     func testRemainingBasedThresholds_Safe() {
-        // >20% remaining (0-79% used) should be safe
+        // >=30% remaining (0-70% used) should be safe
         XCTAssertEqual(
             UsageStatusCalculator.calculateStatus(usedPercentage: 0, showRemaining: true),
             .safe
@@ -66,15 +66,15 @@ final class UsageStatusCalculatorTests: XCTestCase {
             .safe
         )
         XCTAssertEqual(
-            UsageStatusCalculator.calculateStatus(usedPercentage: 79, showRemaining: true),
+            UsageStatusCalculator.calculateStatus(usedPercentage: 70, showRemaining: true),
             .safe
         )
     }
 
     func testRemainingBasedThresholds_Moderate() {
-        // 10-19% remaining (81-90% used) should be moderate
+        // 10-29% remaining (71-90% used) should be moderate
         XCTAssertEqual(
-            UsageStatusCalculator.calculateStatus(usedPercentage: 81, showRemaining: true),
+            UsageStatusCalculator.calculateStatus(usedPercentage: 71, showRemaining: true),
             .moderate
         )
         XCTAssertEqual(
@@ -140,11 +140,11 @@ final class UsageStatusCalculatorTests: XCTestCase {
     func testBoundaryConditions_UsedMode() {
         // Test exact boundary values for used-based thresholds
         XCTAssertEqual(
-            UsageStatusCalculator.calculateStatus(usedPercentage: 79.9, showRemaining: false),
+            UsageStatusCalculator.calculateStatus(usedPercentage: 69.9, showRemaining: false),
             .safe
         )
         XCTAssertEqual(
-            UsageStatusCalculator.calculateStatus(usedPercentage: 80.0, showRemaining: false),
+            UsageStatusCalculator.calculateStatus(usedPercentage: 70.0, showRemaining: false),
             .moderate
         )
         XCTAssertEqual(
@@ -159,22 +159,22 @@ final class UsageStatusCalculatorTests: XCTestCase {
 
     func testBoundaryConditions_RemainingMode() {
         // Test exact boundary values for remaining-based thresholds
-        // 21% remaining (79% used) = safe
+        // 31% remaining (69% used) = safe
         XCTAssertEqual(
-            UsageStatusCalculator.calculateStatus(usedPercentage: 79, showRemaining: true),
+            UsageStatusCalculator.calculateStatus(usedPercentage: 69, showRemaining: true),
             .safe
         )
-        // 20% remaining (80% used) = safe (20 is included in 20... range)
+        // 30% remaining (70% used) = safe (30 is included in 30... range)
         XCTAssertEqual(
-            UsageStatusCalculator.calculateStatus(usedPercentage: 80, showRemaining: true),
+            UsageStatusCalculator.calculateStatus(usedPercentage: 70, showRemaining: true),
             .safe
         )
-        // 19% remaining (81% used) = moderate
+        // 29% remaining (71% used) = moderate
         XCTAssertEqual(
-            UsageStatusCalculator.calculateStatus(usedPercentage: 81, showRemaining: true),
+            UsageStatusCalculator.calculateStatus(usedPercentage: 71, showRemaining: true),
             .moderate
         )
-        // 10% remaining (90% used) = moderate (10 is included in 10..<20 range)
+        // 10% remaining (90% used) = moderate (10 is included in 10..<30 range)
         XCTAssertEqual(
             UsageStatusCalculator.calculateStatus(usedPercentage: 90, showRemaining: true),
             .moderate
