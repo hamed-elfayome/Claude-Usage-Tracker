@@ -5,6 +5,26 @@ All notable changes to Claude Usage Tracker will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.2] - 2026-06-20
+
+### New Features
+
+- **Claude Design Weekly Usage Tracking** (PR #221): Parse `seven_day_omelette` API field and show a **Design** usage row in the popover (hidden when 0); localized across all 13 locales — thanks @47vigen
+- **Close Settings Window with Cmd+W** (#223, #252): The borderless settings window now responds to Cmd+W
+
+### Bug Fixes
+
+- **macOS 26 Crash in Menu Bar Icon Refresh** (PR #231): Replace `NSImage.tiffRepresentation` (crashes in `SetupTIFFErrorHandler` on the macOS 26 SDK) with a `CGImage`-based image-equality hash — thanks @hbourget
+- **Menu Bar Item Disappears After Cmd-Drag-Out** (PR #251, fixes #222): Force `isVisible = true` at all status-item creation sites so a persisted `false` can't suppress the item — thanks @mlarocque
+- **Popover Hidden Behind Full-Screen Apps** (PR #257, fixes #256): Activate the app before showing the popover and mark the detached panel `.fullScreenAuxiliary` — thanks @ernestjsf
+- **Menu Bar Color Thresholds Relaxed to 70% / 90%** (PR #232): safe <70%, moderate 70–90%, critical ≥90% — fewer false-alarm warnings now that plan limits are higher — thanks @hbourget
+- **CLI Account Switching — Stale Credentials File**: Write `~/.claude/.credentials.json` alongside the Keychain during profile switch so switching isn't shadowed by a stale file
+- **Menu Bar Icon Reverting to Default for CLI-Authenticated Users** (PR #220): Align UI gating with the network fallback via `hasAnyAvailableCredentials()` — thanks @nfarina
+
+### Contributors
+
+- **@hbourget** (Hugo), **@mlarocque** (Michael Larocque), **@ernestjsf** (Ernest Jusuf), **@nfarina** (Nick Farina), **@47vigen** (Vigen Pouya)
+
 ## [3.1.1] - 2026-04-21
 
 ### New Features
