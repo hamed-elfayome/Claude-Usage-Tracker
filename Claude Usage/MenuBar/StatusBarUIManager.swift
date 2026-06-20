@@ -771,7 +771,10 @@ final class StatusBarUIManager {
     /// This prevents triggering effectiveAppearance KVO when the image is identical.
     private func setButtonImage(_ button: NSStatusBarButton, image: NSImage) {
         let buttonId = ObjectIdentifier(button)
-        guard let newData = image.tiffRepresentation else {
+        // Avoid NSImage.tiffRepresentation: macOS 26 SDK crashes in
+        // SetupTIFFErrorHandler dispatch_once. Hash via CGImage bytes instead.
+        guard let cg = image.cgImage(forProposedRect: nil, context: nil, hints: nil),
+              let newData = cg.dataProvider?.data as Data? else {
             button.image = image
             return
         }
