@@ -217,6 +217,17 @@ class ProfileManager: ObservableObject {
         LoggingService.shared.log("Checking CLI credentials for profile '\(updatedProfile.name)': hasJSON=\(updatedProfile.cliCredentialsJSON != nil)")
 
         if updatedProfile.cliCredentialsJSON != nil {
+            // Refresh the OAuth token before applying. Stored tokens expire (~8h),
+            // so applying a stale snapshot would write a dead access token to the
+            // keychain and Claude Code would 401 ("Please run /login"). This refreshes
+            // via the refresh_token grant and persists the rotated tokens back to the
+            // profile, so applyProfileCredentials below writes a valid token.
+            if let refreshed = await cliSyncService.ensureFreshCredentials(for: updatedProfile.id) {
+                LoggingService.shared.log("✓ Ensured fresh credentials before apply for: \(updatedProfile.name)")
+                _ = refreshed
+                // Reload so applyProfileCredentials picks up the refreshed token.
+                profiles = profileStore.loadProfiles()
+            }
             do {
                 try cliSyncService.applyProfileCredentials(updatedProfile.id)
                 LoggingService.shared.log("✓ Applied CLI credentials for: \(updatedProfile.name)")

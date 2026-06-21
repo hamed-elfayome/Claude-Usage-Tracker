@@ -38,8 +38,18 @@ class ClaudeCodeSyncService {
     /// 2. System Keychain (may be truncated for large payloads >2KB)
     /// 3. Regex extraction of accessToken from truncated keychain data (last resort)
     func readSystemCredentials() throws -> String? {
-        // 1. Try credentials file first (most reliable)
+        // 1. Try credentials file first (most reliable when fresh).
         if let fileJSON = readCredentialsFile() {
+            // Guard against a STALE file shadowing a fresher keychain entry: Claude Code
+            // rotates tokens into the keychain on `login`/refresh, but our own
+            // writeCredentialsFile may have left an older snapshot on disk. If the file
+            // token is expired and the keychain holds a non-expired one, prefer the keychain.
+            if isTokenExpired(fileJSON),
+               let keychainJSON = (try? readKeychainCredentials()) ?? nil,
+               !isTokenExpired(keychainJSON) {
+                LoggingService.shared.log("Credentials file is stale/expired — using fresher keychain entry instead")
+                return keychainJSON
+            }
             LoggingService.shared.log("Read credentials from .credentials.json file")
             return fileJSON
         }
