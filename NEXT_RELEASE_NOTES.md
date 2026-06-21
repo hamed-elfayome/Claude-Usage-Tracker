@@ -49,6 +49,18 @@
   (used mode + pace projection; remaining mode 30%/10% to match).
 - **Files:** `UsageStatusCalculator.swift`, `UsageStatusCalculatorTests.swift`
 
+### CLI Account Switching Fails with 401 "Please run /login" (PR #242 + follow-up; rel. #239)
+- **Root cause:** stored OAuth access tokens expire (~8h), but profile switch wrote the stored
+  token verbatim — applying a stale token made Claude Code 401. A stale `~/.claude/.credentials.json`
+  also shadowed the fresher keychain entry, so re-syncing couldn't recover.
+- **Fix:** PR #242 adds per-profile keychain source pin + `refresh_token` grant against
+  `platform.claude.com`. Follow-up wires `ensureFreshCredentials()` into the switch path
+  (`ProfileManager.activateProfile`) so the token is refreshed and rotated tokens persisted
+  before apply; `readSystemCredentials` now prefers a non-expired keychain entry over an expired
+  file. **Files:** `ClaudeCodeSyncService.swift`, `ProfileManager.swift`, `MenuBarManager.swift`,
+  `Profile.swift`, `CLIAccountView.swift`
+- **Contributor:** keychain-pin + refresh by @Taeknology (PR #242).
+
 ### CLI Account Switching — Stale Credentials File (carried from prior work)
 - `applyProfileCredentials` now also writes `~/.claude/.credentials.json` alongside the Keychain
   so account switching doesn't get shadowed by a stale file. **Files:** `ClaudeCodeSyncService.swift`
