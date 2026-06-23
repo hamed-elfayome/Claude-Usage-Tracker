@@ -541,6 +541,22 @@ class ClaudeCodeSyncService {
         LoggingService.shared.log("Removed CLI credentials from profile: \(profileId)")
     }
 
+    // MARK: - Account Identity
+
+    /// Extracts the stable `accountUuid` from a serialized `oauthAccount` JSON
+    /// string (as captured per-profile in `oauthAccountJSON`, or returned by
+    /// `readOAuthAccount()` for the live system). Unlike the OAuth `refreshToken`,
+    /// `accountUuid` does NOT change when Claude Code rotates tokens, so it is a
+    /// reliable signal for "is this the same account?".
+    private func accountUUID(fromOAuthAccountJSON json: String?) -> String? {
+        guard let json,
+              let data = json.data(using: .utf8),
+              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return nil
+        }
+        return obj["accountUuid"] as? String
+    }
+
     // MARK: - Access Token Extraction
 
     func extractAccessToken(from jsonData: String) -> String? {
@@ -625,13 +641,33 @@ class ClaudeCodeSyncService {
         // mismatch means the keychain holds another account's data (written by
         // applyProfileCredentials for a different profile). Saving would corrupt this profile.
         var profiles = ProfileStore.shared.loadProfiles()
-        if let profile = profiles.first(where: { $0.id == profileId }),
-           let storedJSON = profile.cliCredentialsJSON {
-            let freshRefreshToken = extractRefreshToken(from: freshJSON)
-            let storedRefreshToken = extractRefreshToken(from: storedJSON)
-            if let fresh = freshRefreshToken, let stored = storedRefreshToken, fresh != stored {
-                LoggingService.shared.log("⚠️ resyncBeforeSwitching: skipping for '\(profile.name)' — system refresh token differs (different account)")
-                return
+        if let profile = profiles.first(where: { $0.id == profileId }) {
+            // Identify accounts by a STABLE id (oauthAccount.accountUuid), NOT the
+            // refreshToken. Claude Code rotates the refreshToken on every token
+            // refresh within the SAME account, so refreshToken inequality does not
+            // imply a different account — it almost always just means "the token
+            // rotated since the last sync". Using the refreshToken as the identity
+            // check caused legitimate same-account re-syncs to be skipped, leaving
+            // the profile's stored credentials frozen at a now-invalidated token
+            // (and discarding the live rotated one), which later broke profile
+            // switching with HTTP 401.
+            let freshAccountId = accountUUID(fromOAuthAccountJSON: readOAuthAccount())
+            let storedAccountId = accountUUID(fromOAuthAccountJSON: profile.oauthAccountJSON)
+
+            if let fresh = freshAccountId, let stored = storedAccountId {
+                if fresh != stored {
+                    LoggingService.shared.log("⚠️ resyncBeforeSwitching: skipping for '\(profile.name)' — system account differs from profile account")
+                    return
+                }
+            } else if let storedJSON = profile.cliCredentialsJSON {
+                // Last-resort fallback only when the stable account id is
+                // unavailable on either side: keep the legacy refreshToken check.
+                let freshRefreshToken = extractRefreshToken(from: freshJSON)
+                let storedRefreshToken = extractRefreshToken(from: storedJSON)
+                if let fresh = freshRefreshToken, let stored = storedRefreshToken, fresh != stored {
+                    LoggingService.shared.log("⚠️ resyncBeforeSwitching: skipping for '\(profile.name)' — no account id and refresh tokens differ")
+                    return
+                }
             }
         }
 
