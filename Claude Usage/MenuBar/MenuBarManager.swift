@@ -39,6 +39,12 @@ class MenuBarManager: NSObject, ObservableObject {
     // Event monitor for closing popover on outside click
     private var eventMonitor: Any?
 
+    // Timestamp of the most recent popover close. Used to debounce the
+    // status-item click that dismisses the popover: that same click also fires
+    // togglePopover, which would otherwise immediately re-show the popover
+    // (the "click makes it bounce back instead of closing" race).
+    private var lastPopoverCloseDate: Date = .distantPast
+
     // Detached window reference (when popover is detached)
     private var detachedWindow: NSWindow?
 
@@ -413,7 +419,14 @@ class MenuBarManager: NSObject, ObservableObject {
         let newPopover = NSPopover()
         newPopover.contentSize = Constants.WindowSizes.popoverSize
         newPopover.behavior = .semitransient
-        newPopover.animates = true
+        // Disabled to avoid an infinite layout-recursion crash on macOS 26/27.
+        // The hosting controller's sizingOptions/preferredContentSize (PR #200)
+        // keep the popover sized to its content; with animation on, each animated
+        // resize re-triggers layout (updateAnimatedWindowSize -> setFrame -> layout)
+        // and never converges, overflowing the main-thread stack. Disabling only the
+        // animation breaks the loop while preserving content sizing/positioning.
+        // See Discussion #64.
+        newPopover.animates = false
         newPopover.delegate = self
         newPopover.contentViewController = createContentViewController()
 
@@ -477,7 +490,14 @@ class MenuBarManager: NSObject, ObservableObject {
         let popover = NSPopover()
         popover.contentSize = Constants.WindowSizes.popoverSize
         popover.behavior = .semitransient  // Changed to allow detaching
-        popover.animates = true
+        // Disabled to avoid an infinite layout-recursion crash on macOS 26/27.
+        // The hosting controller's sizingOptions/preferredContentSize (PR #200)
+        // keep the popover sized to its content; with animation on, each animated
+        // resize re-triggers layout (updateAnimatedWindowSize -> setFrame -> layout)
+        // and never converges, overflowing the main-thread stack. Disabling only the
+        // animation breaks the loop while preserving content sizing/positioning.
+        // See Discussion #64.
+        popover.animates = false
         popover.delegate = self
 
         popover.contentViewController = createContentViewController()
@@ -569,7 +589,14 @@ class MenuBarManager: NSObject, ObservableObject {
                     startMonitoringForOutsideClicks()
                 }
             } else {
-                // Popover not shown - show it
+                // Popover not shown - show it.
+                // Guard against the dismiss/re-open race: if the popover was just
+                // closed (e.g. the outside-click monitor handled this same click a
+                // moment before the button action fired), treat this click as the
+                // dismissing click and don't immediately re-open it.
+                if Date().timeIntervalSince(lastPopoverCloseDate) < 0.25 {
+                    return
+                }
                 // Stop any existing monitor first
                 stopMonitoringForOutsideClicks()
                 // Update content view controller for current profile data
@@ -644,6 +671,7 @@ class MenuBarManager: NSObject, ObservableObject {
         popover?.performClose(nil)
         stopMonitoringForOutsideClicks()
         currentPopoverButton = nil
+        lastPopoverCloseDate = Date()
     }
 
     private func startMonitoringForOutsideClicks() {
@@ -1818,6 +1846,13 @@ extension MenuBarManager: NSPopoverDelegate {
     func popoverShouldDetach(_ popover: NSPopover) -> Bool {
         // Allow popover to be detached by dragging
         return true
+    }
+
+    func popoverDidClose(_ notification: Notification) {
+        // Record every close (transient dismiss, outside-click monitor, or
+        // explicit close) so togglePopover can debounce the dismissing click
+        // and avoid the "click bounces the popover back open" race.
+        lastPopoverCloseDate = Date()
     }
 
     func detachableWindow(for popover: NSPopover) -> NSWindow? {
