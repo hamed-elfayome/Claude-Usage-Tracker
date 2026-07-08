@@ -94,6 +94,41 @@ class SharedDataStore {
         return defaults.string(forKey: Keys.languageCode)
     }
 
+    // MARK: - Claude Code Notch HUD
+
+    func saveNotchHUDEnabled(_ enabled: Bool) {
+        defaults.set(enabled, forKey: Constants.UserDefaultsKeys.notchHUDEnabled)
+    }
+
+    func loadNotchHUDEnabled() -> Bool {
+        // Default false: enabling installs hooks into ~/.claude/settings.json,
+        // which must be an explicit user choice.
+        return defaults.bool(forKey: Constants.UserDefaultsKeys.notchHUDEnabled)
+    }
+
+    func saveNotchHUDAutoHide(_ autoHide: Bool) {
+        defaults.set(autoHide, forKey: Constants.UserDefaultsKeys.notchHUDAutoHide)
+    }
+
+    func loadNotchHUDAutoHide() -> Bool {
+        if defaults.object(forKey: Constants.UserDefaultsKeys.notchHUDAutoHide) == nil {
+            return true
+        }
+        return defaults.bool(forKey: Constants.UserDefaultsKeys.notchHUDAutoHide)
+    }
+
+    /// Random URL path segment embedded in installed hook URLs so unrelated
+    /// local processes can't spoof session events. Generated once.
+    func notchHUDPathToken() -> String {
+        if let token = defaults.string(forKey: Constants.UserDefaultsKeys.notchHUDPathToken),
+           !token.isEmpty {
+            return token
+        }
+        let token = String(UUID().uuidString.prefix(8)).lowercased()
+        defaults.set(token, forKey: Constants.UserDefaultsKeys.notchHUDPathToken)
+        return token
+    }
+
     // MARK: - Statusline Configuration
 
     func saveStatuslineShowModel(_ show: Bool) {
