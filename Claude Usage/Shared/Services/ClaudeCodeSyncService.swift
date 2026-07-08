@@ -38,46 +38,64 @@ class ClaudeCodeSyncService {
     /// 2. System Keychain (may be truncated for large payloads >2KB)
     /// 3. Regex extraction of accessToken from truncated keychain data (last resort)
     func readSystemCredentials() throws -> String? {
-        // 1. Try credentials file first (most reliable when fresh).
-        if let fileJSON = readCredentialsFile() {
-            // Guard against a STALE file shadowing a fresher keychain entry: Claude Code
-            // rotates tokens into the keychain on `login`/refresh, but our own
-            // writeCredentialsFile may have left an older snapshot on disk. If the file
-            // token is expired and the keychain holds a non-expired one, prefer the keychain.
-            if isTokenExpired(fileJSON),
-               let keychainJSON = (try? readKeychainCredentials()) ?? nil,
-               !isTokenExpired(keychainJSON) {
-                LoggingService.shared.log("Credentials file is stale/expired — using fresher keychain entry instead")
-                return keychainJSON
+        // Read BOTH sources and pick the fresher one. On macOS Claude Code rotates
+        // tokens in the KEYCHAIN only; `.credentials.json` is a mirror written by this
+        // app at apply-time and goes stale as soon as Claude Code rotates. Letting the
+        // file shadow the keychain made sync capture pre-rotation (consumed) tokens,
+        // which later failed refresh with invalid_grant and forced re-login.
+        let fileJSON = readCredentialsFile()
+
+        // Keychain: validate JSON; fall back to regex extraction for truncated payloads.
+        // A keychain read error is fatal only when there is no file to fall back to.
+        var keychainJSON: String?
+        let rawKeychain: String?
+        do {
+            rawKeychain = try readKeychainCredentials()
+        } catch {
+            if fileJSON == nil { throw error }
+            rawKeychain = nil
+        }
+        if let rawJSON = rawKeychain {
+            if let data = rawJSON.data(using: .utf8),
+               (try? JSONSerialization.jsonObject(with: data) as? [String: Any]) != nil {
+                keychainJSON = rawJSON
+            } else {
+                LoggingService.shared.log("Keychain JSON is invalid (likely truncated), attempting regex extraction")
+                if let token = extractAccessTokenViaRegex(from: rawJSON) {
+                    keychainJSON = "{\"claudeAiOauth\":{\"accessToken\":\"\(token)\"}}"
+                    LoggingService.shared.log("Built minimal credentials from regex-extracted token")
+                } else if fileJSON == nil {
+                    // Keychain garbage and no file — surface the error as before.
+                    throw ClaudeCodeError.invalidJSON
+                }
             }
-            LoggingService.shared.log("Read credentials from .credentials.json file")
-            return fileJSON
         }
 
-        // 2. Try keychain
-        let keychainData = try readKeychainCredentials()
-
-        guard let rawJSON = keychainData else {
-            // No credentials anywhere
+        switch (fileJSON, keychainJSON) {
+        case (nil, nil):
             return nil
+        case (let file?, nil):
+            LoggingService.shared.log("Read credentials from .credentials.json file (no keychain entry)")
+            return file
+        case (nil, let keychain?):
+            LoggingService.shared.log("Read credentials from keychain (no credentials file)")
+            return keychain
+        case (let file?, let keychain?):
+            // Prefer whichever expires LATER; on a tie (or missing expiry on the file
+            // side) prefer the keychain — it is Claude Code's authoritative store.
+            let fileExpiry = extractTokenExpiry(from: file)
+            let keychainExpiry = extractTokenExpiry(from: keychain)
+            if let fe = fileExpiry, let ke = keychainExpiry, fe > ke {
+                LoggingService.shared.log("Read credentials from .credentials.json file (newer than keychain)")
+                return file
+            }
+            if keychainExpiry == nil && fileExpiry != nil {
+                LoggingService.shared.log("Read credentials from .credentials.json file (keychain entry has no expiry)")
+                return file
+            }
+            LoggingService.shared.log("Read credentials from keychain (authoritative/fresher source)")
+            return keychain
         }
-
-        // 3. Validate keychain JSON
-        if let data = rawJSON.data(using: .utf8),
-           let _ = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-            return rawJSON
-        }
-
-        // 4. Keychain data is truncated/invalid — try regex extraction
-        LoggingService.shared.log("Keychain JSON is invalid (likely truncated), attempting regex extraction")
-        if let token = extractAccessTokenViaRegex(from: rawJSON) {
-            let minimalJSON = "{\"claudeAiOauth\":{\"accessToken\":\"\(token)\"}}"
-            LoggingService.shared.log("Built minimal credentials from regex-extracted token")
-            return minimalJSON
-        }
-
-        // 5. All attempts failed
-        throw ClaudeCodeError.invalidJSON
     }
 
     // MARK: - Private Credential Sources
@@ -541,6 +559,12 @@ class ClaudeCodeSyncService {
         }
         do {
             try data.write(to: fileURL, options: [.atomic])
+            // .atomic replaces the inode, dropping the 0600 mode Claude Code uses for
+            // this file — restore owner-only permissions on the credential-bearing file.
+            try? FileManager.default.setAttributes(
+                [.posixPermissions: 0o600],
+                ofItemAtPath: fileURL.path
+            )
             LoggingService.shared.log("writeCredentialsFile: updated \(fileURL.lastPathComponent)")
         } catch {
             // Non-fatal: the keychain write is the authoritative path; the file
@@ -636,6 +660,20 @@ class ClaudeCodeSyncService {
         }
 
         return jsonString
+    }
+
+    /// Extracts a stable account identity from an `oauthAccount` JSON string.
+    /// Prefers `accountUuid` (stable across logins), falls back to `emailAddress`.
+    /// Returns nil if the JSON is missing or has neither field.
+    func accountIdentity(fromOAuthAccountJSON json: String?) -> String? {
+        guard let json = json,
+              let data = json.data(using: .utf8),
+              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return nil
+        }
+        if let uuid = obj["accountUuid"] as? String, !uuid.isEmpty { return uuid }
+        if let email = obj["emailAddress"] as? String, !email.isEmpty { return email }
+        return nil
     }
 
     /// Writes an `oauthAccount` object (serialized JSON string) back into
@@ -932,6 +970,30 @@ class ClaudeCodeSyncService {
         }
 
         let customSvc = profile.customKeychainServiceName
+
+        // ACTIVE profile without a pin: Claude Code itself owns this token lineage in
+        // the system keychain and rotates it during use. NEVER refresh it ourselves —
+        // our refresh would consume the refresh token out from under the CLI, making
+        // its next refresh fail with invalid_grant ("Please run /login"). Instead,
+        // READ the system credentials (Claude keeps them fresh) and mirror them into
+        // the profile when they belong to the same account.
+        if customSvc == nil, ProfileStore.shared.loadActiveProfileId() == profileId {
+            if let systemJSON = try? readSystemCredentials() {
+                let systemIdentity = accountIdentity(fromOAuthAccountJSON: readOAuthAccount())
+                let profileIdentity = accountIdentity(fromOAuthAccountJSON: profile.oauthAccountJSON)
+                let sameAccount = (systemIdentity != nil && systemIdentity == profileIdentity)
+                    || extractRefreshToken(from: systemJSON) == profile.cliCredentialsJSON.flatMap(extractRefreshToken)
+                if sameAccount {
+                    persistProfileCredentialsJSON(profileId: profileId, json: systemJSON)
+                    return systemJSON
+                }
+            }
+            // Fall back to the cached snapshot WITHOUT refreshing — an expired token
+            // here just means Claude Code will refresh on its next use; breaking the
+            // CLI to rescue a stats fetch is never worth it.
+            return profile.cliCredentialsJSON
+        }
+
         var initialJSON: String?
         if let svc = customSvc {
             initialJSON = readKeychainCredentials(serviceName: svc)
@@ -1074,17 +1136,30 @@ class ClaudeCodeSyncService {
         }
 
         // Verify the system credentials belong to the same account as this profile.
-        // The refreshToken is session-scoped and only changes on explicit /login — a
-        // mismatch means the keychain holds another account's data (written by
-        // applyProfileCredentials for a different profile). Saving would corrupt this profile.
+        // IMPORTANT: compare ACCOUNT IDENTITY (oauthAccount.accountUuid), not refresh
+        // tokens. Claude Code ROTATES refresh tokens during normal use, so for the same
+        // account the system refresh token routinely differs from our stored snapshot —
+        // that rotation is exactly what we must capture here, or the profile keeps a
+        // consumed refresh token and every later refresh fails with invalid_grant.
         var profiles = ProfileStore.shared.loadProfiles()
-        if let profile = profiles.first(where: { $0.id == profileId }),
-           let storedJSON = profile.cliCredentialsJSON {
-            let freshRefreshToken = extractRefreshToken(from: freshJSON)
-            let storedRefreshToken = extractRefreshToken(from: storedJSON)
-            if let fresh = freshRefreshToken, let stored = storedRefreshToken, fresh != stored {
-                LoggingService.shared.log("⚠️ resyncBeforeSwitching: skipping for '\(profile.name)' — system refresh token differs (different account)")
-                return
+        if let profile = profiles.first(where: { $0.id == profileId }) {
+            let systemIdentity = accountIdentity(fromOAuthAccountJSON: readOAuthAccount())
+            let profileIdentity = accountIdentity(fromOAuthAccountJSON: profile.oauthAccountJSON)
+            if let sys = systemIdentity, let stored = profileIdentity {
+                if sys != stored {
+                    LoggingService.shared.log("⚠️ resyncBeforeSwitching: skipping for '\(profile.name)' — system account (\(sys)) differs from profile account (\(stored))")
+                    return
+                }
+                // Same account — capture even though the refresh token rotated.
+            } else if let storedJSON = profile.cliCredentialsJSON {
+                // Identity unavailable on one side — fall back to the conservative
+                // refresh-token equality check to avoid cross-profile contamination.
+                let freshRefreshToken = extractRefreshToken(from: freshJSON)
+                let storedRefreshToken = extractRefreshToken(from: storedJSON)
+                if let fresh = freshRefreshToken, let stored = storedRefreshToken, fresh != stored {
+                    LoggingService.shared.log("⚠️ resyncBeforeSwitching: skipping for '\(profile.name)' — no account identity available and refresh token differs")
+                    return
+                }
             }
         }
 
