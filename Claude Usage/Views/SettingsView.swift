@@ -299,6 +299,8 @@ struct SettingsView: View {
                     LanguageSettingsView()
                 case .claudeCode:
                     ClaudeCodeView()
+                case .notchHUD:
+                    NotchHUDSettingsView()
                 case .shortcuts:
                     ShortcutsSettingsView()
                 case .updates:
@@ -547,6 +549,7 @@ enum SettingsSection: String, CaseIterable {
     case manageProfiles
     case language
     case claudeCode
+    case notchHUD
     case shortcuts
     case updates
     case support
@@ -567,6 +570,7 @@ enum SettingsSection: String, CaseIterable {
         case .manageProfiles: return "section.manage_profiles_title".localized
         case .language: return "language.title".localized
         case .claudeCode: return "settings.claude_cli".localized
+        case .notchHUD: return "notch.hud.section_title".localized
         case .shortcuts: return "section.shortcuts_title".localized
         case .updates: return "settings.updates".localized
         case .support: return "section.support_title".localized
@@ -589,6 +593,7 @@ enum SettingsSection: String, CaseIterable {
         case .manageProfiles: return "person.2.fill"
         case .language: return "globe"
         case .claudeCode: return "chevron.left.forwardslash.chevron.right"
+        case .notchHUD: return "inset.filled.topthird.rectangle"
         case .shortcuts: return "keyboard"
         case .updates: return "arrow.down.circle.fill"
         case .support: return "heart.fill"
@@ -611,6 +616,7 @@ enum SettingsSection: String, CaseIterable {
         case .manageProfiles: return "section.manage_profiles_desc".localized
         case .language: return "language.subtitle".localized
         case .claudeCode: return "settings.claude_cli.description".localized
+        case .notchHUD: return "notch.hud.section_desc".localized
         case .shortcuts: return "section.shortcuts_desc".localized
         case .updates: return "settings.updates.description".localized
         case .support: return "section.support_desc".localized
