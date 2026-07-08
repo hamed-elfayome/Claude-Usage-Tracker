@@ -65,6 +65,44 @@
 - `applyProfileCredentials` now also writes `~/.claude/.credentials.json` alongside the Keychain
   so account switching doesn't get shadowed by a stale file. **Files:** `ClaudeCodeSyncService.swift`
 
+### Profile Switching Forced Re-Login — Single-Writer Token Model (fixes #263; supersedes PR #264)
+- **Root cause (three compounding bugs):** (1) the app refreshed the *active* profile's OAuth
+  tokens from the periodic fetch path, consuming the refresh token Claude Code holds in the
+  system keychain; (2) `resyncBeforeSwitching` used the *rotating* `refreshToken` as an
+  account-identity check, so same-account rotations were mistaken for a different account and
+  never captured; (3) the stale `.credentials.json` mirror shadowed the fresher keychain.
+- **Fix:** active profile is never network-refreshed — it is mirrored from the system keychain
+  (identity-checked via `oauthAccount.accountUuid`); the resync guard compares account identity
+  instead of refresh tokens; credential reads prefer the fresher source (later `expiresAt`,
+  tie → keychain). **Files:** `ClaudeCodeSyncService.swift`, `ProfileManager.swift`
+- **Credit:** @AlvaroTena independently diagnosed the identity-guard bug with a controlled A/B
+  rotation experiment (#263) and submitted the equivalent guard fix (PR #264).
+
+### Usage History Exceeded the 4 MB UserDefaults Limit (fixes #260)
+- Per-profile history blobs pushed the CFPreferences domain past the 4 MB hard limit, silently
+  dropping ALL preference writes — including profile/credential saves. History now lives in
+  per-profile JSON files under Application Support, with a one-time migration that removes the
+  oversized keys. **Files:** `UsageHistoryService.swift`
+
+### Popover Layout-Recursion Crash on macOS 26/27 (PR #265)
+- `NSPopover.animates` + `.preferredContentSize` sizing fed an unbounded layout loop
+  (`windowDidLayout → setFrame → layout`) that overflowed the main-thread stack. Native
+  animation disabled; replaced with a SwiftUI fade/scale entrance; plus a 0.25s debounce fixing
+  the click-bounces-popover-back-open race. **Files:** `MenuBarManager.swift`,
+  `PopoverContentView.swift` — thanks @Leewallace017
+
+### Tracker Went Dormant After Sleep (fixes #268)
+- When the active account's token expired during inactivity, the menu bar fell back to the
+  default logo until a manual re-sync. An expired system token means the CLI is idle, so the
+  tracker now performs the refresh grant once and writes the rotated tokens back to the system
+  keychain + mirror file — the CLI seamlessly picks up the new lineage.
+  **Files:** `ClaudeCodeSyncService.swift`
+
+### Security: Statusline Scripts No Longer World-Readable (#267, GHSA-mfxh-xpwm-23c7 part 2)
+- Generated statusline scripts embed the raw session key and were written `0755`; now `0700`.
+  (Part 1 — plaintext profile credentials in UserDefaults — is tracked as a dedicated
+  Keychain-migration pass.) **Files:** `StatuslineService.swift`
+
 ### Menu Bar Icon Reverting to Default for CLI-Authenticated Users (PR #220)
 - UI gating now uses `hasAnyAvailableCredentials()` (aligned with the network fallback) instead
   of `profile.hasUsageCredentials`. **Files:** `MenuBarManager.swift`, `StatusBarUIManager.swift`
