@@ -164,6 +164,196 @@ class KeychainService {
         return status == errSecSuccess
     }
 
+    // MARK: - Per-Profile Credential Storage (#267 / GHSA-mfxh-xpwm-23c7)
+
+    /// Per-profile credential fields stored in the Keychain instead of the
+    /// `profiles_v3` UserDefaults plist (which is cleartext on disk).
+    enum ProfileSecretField: String, CaseIterable {
+        case claudeSessionKey = "claude-session-key"
+        case apiSessionKey = "api-session-key"
+        case cliCredentialsJSON = "cli-credentials"
+    }
+
+    /// Single service for all per-profile secrets; the account encodes profile + field.
+    private static let profileSecretsService = "com.claudeusagetracker.profile-credentials"
+
+    /// In-memory cache: `loadProfiles()` runs on hot paths (every switch/sync/refresh),
+    /// so avoid a SecItemCopyMatching round-trip per field per profile per load.
+    /// Single-process app; the cache is kept coherent by save/delete below.
+    private var profileSecretCache: [String: String] = [:]
+    private let cacheLock = NSLock()
+
+    private func profileSecretAccount(_ profileId: UUID, _ field: ProfileSecretField) -> String {
+        "\(profileId.uuidString).\(field.rawValue)"
+    }
+
+    /// Saves (or deletes, when `value` is nil) a per-profile secret.
+    /// Returns true when the Keychain now reflects the requested state.
+    @discardableResult
+    func saveProfileSecret(_ value: String?, profileId: UUID, field: ProfileSecretField) -> Bool {
+        let account = profileSecretAccount(profileId, field)
+        guard let value = value else {
+            let ok = deleteItem(service: Self.profileSecretsService, account: account)
+            if ok {
+                cacheLock.lock(); profileSecretCache.removeValue(forKey: account); cacheLock.unlock()
+            }
+            return ok
+        }
+
+        cacheLock.lock()
+        let cached = profileSecretCache[account]
+        cacheLock.unlock()
+        if cached == value { return true }
+
+        do {
+            try saveItem(value, service: Self.profileSecretsService, account: account)
+            cacheLock.lock(); profileSecretCache[account] = value; cacheLock.unlock()
+            return true
+        } catch {
+            LoggingService.shared.logError("Keychain: failed to save profile secret \(field.rawValue)", error: error)
+            return false
+        }
+    }
+
+    /// Loads a per-profile secret. Returns nil when absent or unreadable.
+    func loadProfileSecret(profileId: UUID, field: ProfileSecretField) -> String? {
+        let account = profileSecretAccount(profileId, field)
+        cacheLock.lock()
+        let cached = profileSecretCache[account]
+        cacheLock.unlock()
+        if let cached = cached { return cached }
+
+        // `try?` flattens the String?? to String? — nil covers both errors and not-found.
+        guard let value = try? loadItem(service: Self.profileSecretsService, account: account) else {
+            return nil
+        }
+        cacheLock.lock(); profileSecretCache[account] = value; cacheLock.unlock()
+        return value
+    }
+
+    /// Removes all Keychain secrets belonging to a profile (call on profile deletion).
+    func deleteAllProfileSecrets(profileId: UUID) {
+        for field in ProfileSecretField.allCases {
+            _ = saveProfileSecret(nil, profileId: profileId, field: field)
+        }
+    }
+
+    // MARK: - Generic SecItem Helpers (data-protection keychain)
+    //
+    // Per-profile secrets use the DATA-PROTECTION keychain exclusively
+    // (`kSecUseDataProtectionKeychain`). Unlike the classic file-based login
+    // keychain, it has NO ACL password dialogs — access is granted silently by
+    // app identity and denied silently otherwise — so users can never see a
+    // scary "wants to use your confidential information" prompt. Ad-hoc-signed
+    // dev builds lack the required application identifier; there the operations
+    // fail with errSecMissingEntitlement and callers fall back to the legacy
+    // plist storage (zero behavior change, zero data loss).
+
+    /// Set to true after any operation returns errSecMissingEntitlement so we
+    /// stop retrying on every call (ad-hoc dev builds).
+    private var dataProtectionUnavailable = false
+
+    /// Whether per-profile secret storage is usable in this build.
+    /// Probes once with a throwaway item; result is effectively cached via
+    /// `dataProtectionUnavailable`.
+    var isProfileSecretStorageAvailable: Bool {
+        if dataProtectionUnavailable { return false }
+        let probeAccount = "availability-probe"
+        do {
+            try saveItem("probe", service: Self.profileSecretsService, account: probeAccount)
+            _ = deleteItem(service: Self.profileSecretsService, account: probeAccount)
+            return true
+        } catch {
+            return !dataProtectionUnavailable
+        }
+    }
+
+    private func noteStatus(_ status: OSStatus) {
+        if status == errSecMissingEntitlement {
+            if !dataProtectionUnavailable {
+                LoggingService.shared.log("Keychain: data-protection keychain unavailable (ad-hoc build?) — falling back to legacy storage")
+            }
+            dataProtectionUnavailable = true
+        }
+    }
+
+    private func saveItem(_ value: String, service: String, account: String) throws {
+        if dataProtectionUnavailable { throw KeychainError.saveFailed(status: errSecMissingEntitlement) }
+        guard let data = value.data(using: .utf8) else {
+            throw KeychainError.invalidData
+        }
+
+        let updateQuery: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account,
+            kSecUseDataProtectionKeychain as String: true
+        ]
+        let updateStatus = SecItemUpdate(updateQuery as CFDictionary, [kSecValueData as String: data] as CFDictionary)
+        if updateStatus == errSecSuccess { return }
+        noteStatus(updateStatus)
+
+        guard updateStatus == errSecItemNotFound else {
+            throw KeychainError.saveFailed(status: updateStatus)
+        }
+
+        let addQuery: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account,
+            kSecValueData as String: data,
+            // AfterFirstUnlock: the app is a login-item menu bar app and must be
+            // able to read credentials when launched right at login.
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock,
+            kSecAttrSynchronizable as String: false,
+            kSecUseDataProtectionKeychain as String: true
+        ]
+        let addStatus = SecItemAdd(addQuery as CFDictionary, nil)
+        guard addStatus == errSecSuccess else {
+            noteStatus(addStatus)
+            throw KeychainError.saveFailed(status: addStatus)
+        }
+    }
+
+    private func loadItem(service: String, account: String) throws -> String? {
+        if dataProtectionUnavailable { return nil }
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne,
+            kSecUseDataProtectionKeychain as String: true
+        ]
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        if status == errSecSuccess {
+            guard let data = result as? Data, let value = String(data: data, encoding: .utf8) else {
+                throw KeychainError.invalidData
+            }
+            return value
+        }
+        if status == errSecItemNotFound { return nil }
+        noteStatus(status)
+        throw KeychainError.loadFailed(status: status)
+    }
+
+    /// Returns true when the item is gone (deleted or was never there).
+    private func deleteItem(service: String, account: String) -> Bool {
+        if dataProtectionUnavailable { return false }
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account,
+            kSecUseDataProtectionKeychain as String: true
+        ]
+        let status = SecItemDelete(query as CFDictionary)
+        if status == errSecSuccess || status == errSecItemNotFound { return true }
+        noteStatus(status)
+        LoggingService.shared.logError("Keychain: failed to delete item (status: \(status))",
+                                       error: KeychainError.deleteFailed(status: status))
+        return false
+    }
 }
 
 // MARK: - KeychainError

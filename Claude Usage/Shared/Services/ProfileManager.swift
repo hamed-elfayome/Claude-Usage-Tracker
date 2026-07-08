@@ -117,7 +117,9 @@ class ProfileManager: ObservableObject {
 
         profiles.removeAll { $0.id == id }
 
-        // Credentials are deleted automatically with the profile
+        // Remove the profile's credentials from the Keychain (they no longer live
+        // in the profiles plist — #267).
+        profileStore.deleteProfileSecrets(id)
 
         // Switch to first profile if deleted active
         if activeProfile?.id == id {

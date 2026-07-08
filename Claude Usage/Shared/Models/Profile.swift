@@ -110,6 +110,87 @@ struct Profile: Codable, Identifiable, Equatable {
         self.lastUsedAt = lastUsedAt
     }
 
+    // MARK: - Codable (secrets excluded — #267 / GHSA-mfxh-xpwm-23c7)
+
+    /// When set to `true` in `encoder.userInfo`, the credential fields are included
+    /// in the encoded output. Used ONLY as a zero-data-loss fallback when a Keychain
+    /// write fails during save — never in the normal persistence path.
+    static let includeSecretsKey = CodingUserInfoKey(rawValue: "profileIncludeSecrets")!
+
+    private enum CodingKeys: String, CodingKey {
+        case id, name
+        case claudeSessionKey, organizationId
+        case apiSessionKey, apiOrganizationId, apiSessionKeyExpiry
+        case cliCredentialsJSON
+        case hasCliAccount, cliAccountSyncedAt
+        case customKeychainServiceName
+        case oauthAccountJSON
+        case claudeUsage, apiUsage
+        case iconConfig
+        case refreshInterval, autoStartSessionEnabled, checkOverageLimitEnabled
+        case notificationSettings
+        case isSelectedForDisplay
+        case createdAt, lastUsedAt
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        // Secrets: present only in legacy (pre-Keychain-migration) plists; hydrated
+        // from the Keychain by ProfileStore after decoding.
+        claudeSessionKey = try c.decodeIfPresent(String.self, forKey: .claudeSessionKey)
+        organizationId = try c.decodeIfPresent(String.self, forKey: .organizationId)
+        apiSessionKey = try c.decodeIfPresent(String.self, forKey: .apiSessionKey)
+        apiOrganizationId = try c.decodeIfPresent(String.self, forKey: .apiOrganizationId)
+        apiSessionKeyExpiry = try c.decodeIfPresent(Date.self, forKey: .apiSessionKeyExpiry)
+        cliCredentialsJSON = try c.decodeIfPresent(String.self, forKey: .cliCredentialsJSON)
+        hasCliAccount = try c.decodeIfPresent(Bool.self, forKey: .hasCliAccount) ?? false
+        cliAccountSyncedAt = try c.decodeIfPresent(Date.self, forKey: .cliAccountSyncedAt)
+        customKeychainServiceName = try c.decodeIfPresent(String.self, forKey: .customKeychainServiceName)
+        oauthAccountJSON = try c.decodeIfPresent(String.self, forKey: .oauthAccountJSON)
+        claudeUsage = try c.decodeIfPresent(ClaudeUsage.self, forKey: .claudeUsage)
+        apiUsage = try c.decodeIfPresent(APIUsage.self, forKey: .apiUsage)
+        iconConfig = try c.decodeIfPresent(MenuBarIconConfiguration.self, forKey: .iconConfig) ?? .default
+        refreshInterval = try c.decodeIfPresent(TimeInterval.self, forKey: .refreshInterval) ?? 30.0
+        autoStartSessionEnabled = try c.decodeIfPresent(Bool.self, forKey: .autoStartSessionEnabled) ?? false
+        checkOverageLimitEnabled = try c.decodeIfPresent(Bool.self, forKey: .checkOverageLimitEnabled) ?? true
+        notificationSettings = try c.decodeIfPresent(NotificationSettings.self, forKey: .notificationSettings) ?? NotificationSettings()
+        isSelectedForDisplay = try c.decodeIfPresent(Bool.self, forKey: .isSelectedForDisplay) ?? true
+        createdAt = try c.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date()
+        lastUsedAt = try c.decodeIfPresent(Date.self, forKey: .lastUsedAt) ?? Date()
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(name, forKey: .name)
+        // Credentials live in the Keychain (per-profile items), NOT in the plist.
+        // The plist on disk is world-readable cleartext — see #267.
+        if (encoder.userInfo[Profile.includeSecretsKey] as? Bool) == true {
+            try c.encodeIfPresent(claudeSessionKey, forKey: .claudeSessionKey)
+            try c.encodeIfPresent(apiSessionKey, forKey: .apiSessionKey)
+            try c.encodeIfPresent(cliCredentialsJSON, forKey: .cliCredentialsJSON)
+        }
+        try c.encodeIfPresent(organizationId, forKey: .organizationId)
+        try c.encodeIfPresent(apiOrganizationId, forKey: .apiOrganizationId)
+        try c.encodeIfPresent(apiSessionKeyExpiry, forKey: .apiSessionKeyExpiry)
+        try c.encode(hasCliAccount, forKey: .hasCliAccount)
+        try c.encodeIfPresent(cliAccountSyncedAt, forKey: .cliAccountSyncedAt)
+        try c.encodeIfPresent(customKeychainServiceName, forKey: .customKeychainServiceName)
+        try c.encodeIfPresent(oauthAccountJSON, forKey: .oauthAccountJSON)
+        try c.encodeIfPresent(claudeUsage, forKey: .claudeUsage)
+        try c.encodeIfPresent(apiUsage, forKey: .apiUsage)
+        try c.encode(iconConfig, forKey: .iconConfig)
+        try c.encode(refreshInterval, forKey: .refreshInterval)
+        try c.encode(autoStartSessionEnabled, forKey: .autoStartSessionEnabled)
+        try c.encode(checkOverageLimitEnabled, forKey: .checkOverageLimitEnabled)
+        try c.encode(notificationSettings, forKey: .notificationSettings)
+        try c.encode(isSelectedForDisplay, forKey: .isSelectedForDisplay)
+        try c.encode(createdAt, forKey: .createdAt)
+        try c.encode(lastUsedAt, forKey: .lastUsedAt)
+    }
+
     // MARK: - Computed Properties
     var hasClaudeAI: Bool {
         claudeSessionKey != nil && organizationId != nil
