@@ -110,12 +110,22 @@ class ProfileStore {
 
     /// Writes a profile's credential fields to the Keychain (nil deletes the item so a
     /// signed-out credential can't be resurrected). Returns false if any write failed.
+    /// Every non-nil write is READ BACK and byte-compared before we trust it — the
+    /// plist copy is only ever scrubbed for values proven to be retrievable.
     private func persistSecrets(of profile: Profile) -> Bool {
         var ok = true
-        ok = keychainService.saveProfileSecret(profile.claudeSessionKey, profileId: profile.id, field: .claudeSessionKey) && ok
-        ok = keychainService.saveProfileSecret(profile.apiSessionKey, profileId: profile.id, field: .apiSessionKey) && ok
-        ok = keychainService.saveProfileSecret(profile.cliCredentialsJSON, profileId: profile.id, field: .cliCredentialsJSON) && ok
+        ok = persistSecret(profile.claudeSessionKey, profile.id, .claudeSessionKey) && ok
+        ok = persistSecret(profile.apiSessionKey, profile.id, .apiSessionKey) && ok
+        ok = persistSecret(profile.cliCredentialsJSON, profile.id, .cliCredentialsJSON) && ok
         return ok
+    }
+
+    private func persistSecret(_ value: String?, _ profileId: UUID, _ field: KeychainService.ProfileSecretField) -> Bool {
+        guard keychainService.saveProfileSecret(value, profileId: profileId, field: field) else {
+            return false
+        }
+        guard let value = value else { return true }  // deletions need no read-back
+        return keychainService.verifyProfileSecret(value, profileId: profileId, field: field)
     }
 
     /// Removes a deleted profile's Keychain items.

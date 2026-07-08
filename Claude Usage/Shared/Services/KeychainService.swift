@@ -231,6 +231,18 @@ class KeychainService {
         return value
     }
 
+    /// Reads a profile secret DIRECTLY from the keychain (bypassing the in-memory
+    /// cache) and compares it to the expected value. Used to verify a write truly
+    /// landed before the caller scrubs the plaintext copy — a phantom write must
+    /// never cost the user their credentials.
+    func verifyProfileSecret(_ expected: String, profileId: UUID, field: ProfileSecretField) -> Bool {
+        let account = profileSecretAccount(profileId, field)
+        guard let onDisk = try? loadItem(service: Self.profileSecretsService, account: account) else {
+            return false
+        }
+        return onDisk == expected
+    }
+
     /// Removes all Keychain secrets belonging to a profile (call on profile deletion).
     func deleteAllProfileSecrets(profileId: UUID) {
         for field in ProfileSecretField.allCases {
