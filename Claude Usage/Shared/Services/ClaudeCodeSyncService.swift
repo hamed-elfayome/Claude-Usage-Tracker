@@ -984,13 +984,41 @@ class ClaudeCodeSyncService {
                 let sameAccount = (systemIdentity != nil && systemIdentity == profileIdentity)
                     || extractRefreshToken(from: systemJSON) == profile.cliCredentialsJSON.flatMap(extractRefreshToken)
                 if sameAccount {
-                    persistProfileCredentialsJSON(profileId: profileId, json: systemJSON)
+                    if !isTokenExpired(systemJSON) {
+                        persistProfileCredentialsJSON(profileId: profileId, json: systemJSON)
+                        return systemJSON
+                    }
+                    // System token EXPIRED: Claude Code refreshes ~60s BEFORE expiry
+                    // while in use, so an expired keychain token means the CLI is idle
+                    // (sleep/inactivity — #268). Safe window to take over the rotation
+                    // ONCE — but the rotated lineage MUST be handed back to the system
+                    // keychain (+ mirror file), or the CLI would be left holding a
+                    // consumed refresh token and forced to /login.
+                    if let refreshToken = extractRefreshToken(from: systemJSON) {
+                        do {
+                            let refreshed = try await performTokenRefresh(refreshToken: refreshToken)
+                            if let updatedJSON = mergeRefreshedCredentials(into: systemJSON, refreshed: refreshed) {
+                                do {
+                                    try writeSystemCredentials(updatedJSON)
+                                    writeCredentialsFile(updatedJSON)
+                                } catch {
+                                    LoggingService.shared.logError("ensureFreshCredentials: refreshed active-profile tokens but keychain writeback failed — CLI may need /login", error: error)
+                                }
+                                persistProfileCredentialsJSON(profileId: profileId, json: updatedJSON)
+                                LoggingService.shared.log("✓ ensureFreshCredentials: refreshed idle active-profile token and wrote back to system keychain")
+                                return updatedJSON
+                            }
+                        } catch {
+                            LoggingService.shared.logError("ensureFreshCredentials: idle active-profile refresh failed (non-fatal)", error: error)
+                        }
+                    }
+                    // Refresh unavailable/failed — return the expired snapshot without
+                    // rotating anything; the CLI recovers it on next use.
                     return systemJSON
                 }
             }
-            // Fall back to the cached snapshot WITHOUT refreshing — an expired token
-            // here just means Claude Code will refresh on its next use; breaking the
-            // CLI to rescue a stats fetch is never worth it.
+            // Different account in system, or no system creds — fall back to the cached
+            // snapshot WITHOUT refreshing; never rotate a lineage the CLI may own.
             return profile.cliCredentialsJSON
         }
 
