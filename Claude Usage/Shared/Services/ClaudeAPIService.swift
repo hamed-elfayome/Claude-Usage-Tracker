@@ -777,6 +777,20 @@ class ClaudeAPIService: APIServiceProtocol {
                 }
             }
 
+            // Extract Fable weekly usage (seven_day_fable)
+            var fablePercentage = 0.0
+            var fableResetTime: Date? = nil
+            if let sevenDayFable = json["seven_day_fable"] as? [String: Any] {
+                if let utilization = sevenDayFable["utilization"] {
+                    fablePercentage = parseUtilization(utilization)
+                }
+                if let resetsAt = sevenDayFable["resets_at"] as? String {
+                    let formatter = ISO8601DateFormatter()
+                    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                    fableResetTime = formatter.date(from: resetsAt)
+                }
+            }
+
             // We don't know user's plan, so we use 0 for limits we can't determine
             let weeklyLimit = Constants.weeklyLimit
 
@@ -787,6 +801,7 @@ class ClaudeAPIService: APIServiceProtocol {
             let opusTokens = Int(Double(weeklyLimit) * (opusPercentage / 100.0))
             let sonnetTokens = Int(Double(weeklyLimit) * (sonnetPercentage / 100.0))
             let designTokens = Int(Double(weeklyLimit) * (designPercentage / 100.0))
+            let fableTokens = Int(Double(weeklyLimit) * (fablePercentage / 100.0))
 
             let usage = ClaudeUsage(
                 sessionTokensUsed: sessionTokens,
@@ -805,6 +820,9 @@ class ClaudeAPIService: APIServiceProtocol {
                 designWeeklyTokensUsed: designTokens,
                 designWeeklyPercentage: designPercentage,
                 designWeeklyResetTime: designResetTime,
+                fableWeeklyTokensUsed: fableTokens,
+                fableWeeklyPercentage: fablePercentage,
+                fableWeeklyResetTime: fableResetTime,
                 costUsed: nil,
                 costLimit: nil,
                 costCurrency: nil,
@@ -890,6 +908,9 @@ class ClaudeAPIService: APIServiceProtocol {
             designWeeklyTokensUsed: 0,
             designWeeklyPercentage: 0,
             designWeeklyResetTime: nil,
+            fableWeeklyTokensUsed: 0,
+            fableWeeklyPercentage: 0,
+            fableWeeklyResetTime: nil,
             costUsed: nil,
             costLimit: nil,
             costCurrency: nil,

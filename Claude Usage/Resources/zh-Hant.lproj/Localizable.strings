@@ -62,6 +62,7 @@
 "menubar.weekly_usage" = "每週";
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";
+"menubar.fable_usage" = "Fable";
 "menubar.design_usage" = "設計";
 "menubar.extra_usage" = "額外使用量";
 "menubar.api_credits" = "API 額度";

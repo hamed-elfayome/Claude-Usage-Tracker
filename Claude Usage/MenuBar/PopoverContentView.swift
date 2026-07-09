@@ -642,6 +642,19 @@ struct SmartUsageDashboard: View {
                 timeDisplay: timeDisplay
             )
 
+            if usage.fableWeeklyTokensUsed > 0 {
+                UsageRow(
+                    title: "menubar.fable_usage".localized,
+                    tag: "menubar.weekly".localized,
+                    subtitle: nil,
+                    usedPercentage: usage.fableWeeklyPercentage,
+                    showRemaining: showRemainingPercentage,
+                    resetTime: usage.fableWeeklyResetTime,
+                    periodDuration: nil,
+                    timeDisplay: timeDisplay
+                )
+            }
+
             if usage.opusWeeklyTokensUsed > 0 {
                 UsageRow(
                     title: "menubar.opus_usage".localized,

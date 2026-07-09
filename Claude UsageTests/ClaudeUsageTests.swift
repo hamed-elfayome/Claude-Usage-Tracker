@@ -70,6 +70,20 @@ final class ClaudeUsageTests: XCTestCase {
         XCTAssertEqual(original, decoded)
     }
 
+    func testEncodeDecodeFableFields() throws {
+        var original = createUsage(sessionPercentage: 10)
+        original.fableWeeklyTokensUsed = 123_456
+        original.fableWeeklyPercentage = 42.5
+        original.fableWeeklyResetTime = Date(timeIntervalSince1970: 1_800_000_000)
+
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(ClaudeUsage.self, from: data)
+
+        XCTAssertEqual(decoded.fableWeeklyTokensUsed, 123_456)
+        XCTAssertEqual(decoded.fableWeeklyPercentage, 42.5)
+        XCTAssertEqual(decoded.fableWeeklyResetTime, original.fableWeeklyResetTime)
+    }
+
     // MARK: - Helpers
 
     private func createUsage(sessionPercentage: Double) -> ClaudeUsage {
@@ -90,6 +104,9 @@ final class ClaudeUsageTests: XCTestCase {
             designWeeklyTokensUsed: 0,
             designWeeklyPercentage: 0,
             designWeeklyResetTime: nil,
+            fableWeeklyTokensUsed: 0,
+            fableWeeklyPercentage: 0,
+            fableWeeklyResetTime: nil,
             costUsed: nil,
             costLimit: nil,
             costCurrency: nil,
