@@ -5,6 +5,30 @@ All notable changes to Claude Usage Tracker will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### New Features
+
+- **Claude Fable Weekly Usage Tracking**: Parse the `seven_day_fable` API field and show a dedicated Fable row in the popover (hidden when usage is 0), with `menubar.fable_usage` localized across all supported locales
+- **Claude Design Weekly Usage Tracking** (PR #221): Parse the `seven_day_omelette` API field and show a Design row in the popover
+- **OAuth Setup Token Support** (PR #253): Paste a long-lived token from `claude setup-token` in CLI Account settings — useful when the keychain sync flow is unavailable
+- **Relaxed Usage Color Thresholds** (PR #232): Menu bar coloring now flips to moderate at 80% and critical at 90% (was 50%/80%), matching Anthropic's raised plan limits
+
+### Bug Fixes
+
+- **Popover Layout-Recursion Crash on macOS 26/27** (PR #265): Cap SwiftUI popover sizing to stop an unbounded AppKit layout loop that crashed with `EXC_BAD_ACCESS`
+- **NSImage TIFF Crash on macOS 26** (PR #231): Replace `tiffRepresentation`-based image hashing to avoid intermittent `SetupTIFFErrorHandler` crashes
+- **Account Identity Uses accountUuid** (PR #264): Stop treating the rotating OAuth refresh token as account identity, restoring pre-switch re-sync
+- **Popover Over Full-Screen Apps** (PR #257): Activate the app before showing the popover so it appears above full-screen windows
+- **Menu Bar Icon Hidden After Cmd-Drag Removal** (PR #251): Force `isVisible` after status item creation to override persisted hidden state
+- **Menu Bar Icon Reverting for CLI-Authenticated Users** (PR #220): Align icon rendering with the CLI keychain auth fallback
+
+### Documentation
+
+- **Windows Port Mention** (PR #180): README now points Windows users to the community-maintained ClaudeTracker port
+
+---
+
 ## [3.1.1] - 2026-04-21
 
 ### New Features
