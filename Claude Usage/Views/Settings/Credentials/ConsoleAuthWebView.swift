@@ -63,19 +63,41 @@ struct ConsoleAuthWebView: NSViewRepresentable {
         weak var parentWebView: WKWebView?
         private var popupWindow: NSWindow?
         private var popupWebView: WKWebView?
+        private var pollTimer: Timer?
 
         init(cookieDomain: String, onCookieFound: @escaping (ConsoleCookieResult) -> Void) {
             self.cookieDomain = cookieDomain
             self.onCookieFound = onCookieFound
         }
 
+        deinit {
+            pollTimer?.invalidate()
+        }
+
         func startObservingCookies(for dataStore: WKWebsiteDataStore) {
             dataStore.httpCookieStore.add(self)
+
+            // WKHTTPCookieStoreObserver doesn't fire for cookies set via
+            // Set-Cookie by the network process on macOS 26+, and claude.ai is
+            // an SPA so didFinish never fires after login — poll as a fallback.
+            pollTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+                guard let self = self else { return }
+                if self.foundCookie {
+                    self.pollTimer?.invalidate()
+                    self.pollTimer = nil
+                    return
+                }
+                self.searchForSessionCookie(in: dataStore.httpCookieStore)
+            }
         }
 
         // WKHTTPCookieStoreObserver — fires whenever any cookie changes
         func cookiesDidChange(in cookieStore: WKHTTPCookieStore) {
             guard !foundCookie else { return }
+            searchForSessionCookie(in: cookieStore)
+        }
+
+        private func searchForSessionCookie(in cookieStore: WKHTTPCookieStore) {
             cookieStore.getAllCookies { [weak self] cookies in
                 guard let self = self, !self.foundCookie else { return }
                 for cookie in cookies {
@@ -86,6 +108,8 @@ struct ConsoleAuthWebView: NSViewRepresentable {
                             expiryDate: cookie.expiresDate
                         )
                         DispatchQueue.main.async {
+                            self.pollTimer?.invalidate()
+                            self.pollTimer = nil
                             self.onCookieFound(result)
                         }
                         return
@@ -141,23 +165,7 @@ struct ConsoleAuthWebView: NSViewRepresentable {
         }
 
         private func checkForSessionCookie(in webView: WKWebView) {
-            webView.configuration.websiteDataStore.httpCookieStore.getAllCookies { [weak self] cookies in
-                guard let self = self, !self.foundCookie else { return }
-
-                for cookie in cookies {
-                    if cookie.name == "sessionKey" && cookie.domain.contains(self.cookieDomain) {
-                        self.foundCookie = true
-                        let result = ConsoleCookieResult(
-                            sessionKey: cookie.value,
-                            expiryDate: cookie.expiresDate
-                        )
-                        DispatchQueue.main.async {
-                            self.onCookieFound(result)
-                        }
-                        return
-                    }
-                }
-            }
+            searchForSessionCookie(in: webView.configuration.websiteDataStore.httpCookieStore)
         }
     }
 }
