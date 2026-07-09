@@ -558,14 +558,25 @@ class ClaudeAPIService: APIServiceProtocol {
                 error: nil
             )
 
-            guard httpResponse.statusCode == 200 else {
+            // A 429 means the account is at its rate limit — which is exactly
+            // what we're here to measure. The unified rate-limit headers are
+            // still present on 429 responses, so parse them instead of
+            // failing the refresh right when the user most needs the data.
+            let has429UsageHeaders = httpResponse.statusCode == 429
+                && httpResponse.value(forHTTPHeaderField: "anthropic-ratelimit-unified-5h-utilization") != nil
+
+            guard httpResponse.statusCode == 200 || has429UsageHeaders else {
                 let responsePreview = String(data: data, encoding: .utf8)?.prefix(200) ?? "Unable to read response"
                 throw AppError(
-                    code: .apiUnauthorized,
-                    message: "OAuth Messages API request failed",
+                    code: httpResponse.statusCode == 429 ? .apiRateLimited : .apiUnauthorized,
+                    message: httpResponse.statusCode == 429
+                        ? "Rate limited by Claude API"
+                        : "OAuth Messages API request failed",
                     technicalDetails: "Status: \(httpResponse.statusCode)\nResponse: \(responsePreview)",
                     isRecoverable: true,
-                    recoverySuggestion: "Please re-sync your CLI account in Settings"
+                    recoverySuggestion: httpResponse.statusCode == 429
+                        ? "Usage is at its limit — data will refresh once the rate limit window resets"
+                        : "Please re-sync your CLI account in Settings"
                 )
             }
 
@@ -590,7 +601,17 @@ class ClaudeAPIService: APIServiceProtocol {
             .build()
 
         var request = URLRequest(url: url)
-        request.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
+        // Include Cloudflare clearance cookies captured by the sign-in webview
+        // (shared cookie storage) — without them claude.ai intermittently
+        // answers with a 403 "Just a moment..." challenge page.
+        var cookiePairs = ["sessionKey=\(sessionKey)"]
+        if let stored = HTTPCookieStorage.shared.cookies {
+            for cookie in stored where cookie.domain.contains("claude.ai")
+                && ["cf_clearance", "__cf_bm"].contains(cookie.name) {
+                cookiePairs.append("\(cookie.name)=\(cookie.value)")
+            }
+        }
+        request.setValue(cookiePairs.joined(separator: "; "), forHTTPHeaderField: "Cookie")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15", forHTTPHeaderField: "User-Agent")
         request.setValue("https://claude.ai", forHTTPHeaderField: "Referer")
@@ -669,6 +690,19 @@ class ClaudeAPIService: APIServiceProtocol {
         case 401, 403:
             // Include response body in error for debugging
             let responsePreview = String(data: data, encoding: .utf8)?.prefix(200) ?? "Unable to read response"
+
+            // Cloudflare bot challenge, not an actual auth failure — the
+            // session key is fine, the request just got challenged.
+            if responsePreview.contains("Just a moment") || responsePreview.contains("cf-mitigated") {
+                throw AppError(
+                    code: .apiUnauthorized,
+                    message: "Request blocked by Cloudflare protection.",
+                    technicalDetails: "Endpoint: \(endpoint)\nStatus: \(httpResponse.statusCode)\nCloudflare challenge page returned",
+                    isRecoverable: true,
+                    recoverySuggestion: "Your session key is likely still valid — this usually resolves on the next refresh. If it persists, re-sign-in via Settings to refresh Cloudflare cookies."
+                )
+            }
+
             throw AppError(
                 code: .apiUnauthorized,
                 message: "Unauthorized. Your session key may have expired.",
@@ -788,6 +822,37 @@ class ClaudeAPIService: APIServiceProtocol {
                     let formatter = ISO8601DateFormatter()
                     formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
                     fableResetTime = formatter.date(from: resetsAt)
+                }
+            }
+
+            // Newer API responses null out the legacy seven_day_* per-model
+            // fields and report per-model usage in a "limits" array instead:
+            // {"kind":"weekly_scoped","percent":73,"resets_at":...,
+            //  "scope":{"model":{"display_name":"Fable"}}}
+            if let limits = json["limits"] as? [[String: Any]] {
+                let formatter = ISO8601DateFormatter()
+                formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                for limit in limits {
+                    guard limit["kind"] as? String == "weekly_scoped",
+                          let scope = limit["scope"] as? [String: Any],
+                          let model = scope["model"] as? [String: Any],
+                          let displayName = model["display_name"] as? String,
+                          let percentValue = limit["percent"] else { continue }
+                    let percent = parseUtilization(percentValue)
+                    let resetTime = (limit["resets_at"] as? String).flatMap { formatter.date(from: $0) }
+
+                    switch displayName.lowercased() {
+                    case "fable", "mythos":
+                        if fablePercentage == 0 { fablePercentage = percent; fableResetTime = resetTime }
+                    case "opus":
+                        if opusPercentage == 0 { opusPercentage = percent }
+                    case "sonnet":
+                        if sonnetPercentage == 0 { sonnetPercentage = percent; sonnetResetTime = resetTime }
+                    case "design":
+                        if designPercentage == 0 { designPercentage = percent; designResetTime = resetTime }
+                    default:
+                        break
+                    }
                 }
             }
 
