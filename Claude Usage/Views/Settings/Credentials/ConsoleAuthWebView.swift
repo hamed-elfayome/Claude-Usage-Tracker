@@ -80,7 +80,8 @@ struct ConsoleAuthWebView: NSViewRepresentable {
             // WKHTTPCookieStoreObserver doesn't fire for cookies set via
             // Set-Cookie by the network process on macOS 26+, and claude.ai is
             // an SPA so didFinish never fires after login — poll as a fallback.
-            pollTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            // .common mode so the timer keeps firing while the sheet is up.
+            let timer = Timer(timeInterval: 1.0, repeats: true) { [weak self] _ in
                 guard let self = self else { return }
                 if self.foundCookie {
                     self.pollTimer?.invalidate()
@@ -88,6 +89,33 @@ struct ConsoleAuthWebView: NSViewRepresentable {
                     return
                 }
                 self.searchForSessionCookie(in: dataStore.httpCookieStore)
+                self.reloadIfLoggedInWithoutCookie()
+            }
+            RunLoop.main.add(timer, forMode: .common)
+            pollTimer = timer
+        }
+
+        // The network process may not expose the fresh sessionKey to
+        // getAllCookies until the next navigation. If the main webview has
+        // left the login page but the cookie still isn't visible, force a
+        // reload (mirrors the manual page-reload workaround).
+        private var pollsSinceLoginLeft = 0
+        private var reloadAttempts = 0
+
+        private func reloadIfLoggedInWithoutCookie() {
+            guard !foundCookie, let webView = parentWebView else { return }
+            guard let url = webView.url,
+                  url.host?.contains(cookieDomain) == true,
+                  !url.path.contains("login") else {
+                pollsSinceLoginLeft = 0
+                return
+            }
+            pollsSinceLoginLeft += 1
+            // Give the observer/poll 3s to see the cookie, then reload; retry up to 3 times.
+            if pollsSinceLoginLeft >= 3 && reloadAttempts < 3 {
+                pollsSinceLoginLeft = 0
+                reloadAttempts += 1
+                webView.reloadFromOrigin()
             }
         }
 
