@@ -33,6 +33,11 @@ struct ClaudeUsage: Codable, Equatable {
     var designWeeklyPercentage: Double
     var designWeeklyResetTime: Date?
 
+    // Weekly data (Fable only)
+    var fableWeeklyTokensUsed: Int
+    var fableWeeklyPercentage: Double
+    var fableWeeklyResetTime: Date?
+
     // Extra usage data
     var costUsed: Double?
     var costLimit: Double?
@@ -88,6 +93,9 @@ struct ClaudeUsage: Codable, Equatable {
             designWeeklyTokensUsed: 0,
             designWeeklyPercentage: 0,
             designWeeklyResetTime: nil,
+            fableWeeklyTokensUsed: 0,
+            fableWeeklyPercentage: 0,
+            fableWeeklyResetTime: nil,
             costUsed: nil,
             costLimit: nil,
             costCurrency: nil,
