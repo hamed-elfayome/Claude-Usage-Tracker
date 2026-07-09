@@ -108,6 +108,55 @@ struct ClaudeUsage: Codable, Equatable {
 
 }
 
+// Custom decoding lives in an extension so the memberwise initializer is
+// preserved. Fields added after v3.1.1 (design/fable) use decodeIfPresent:
+// pre-upgrade persisted JSON lacks those keys, and synthesized decoding
+// would throw keyNotFound — ProfileStore.loadProfiles() catches that and
+// returns [], wiping every profile on upgrade.
+extension ClaudeUsage {
+    private enum CodingKeys: String, CodingKey {
+        case sessionTokensUsed, sessionLimit, sessionPercentage, sessionResetTime
+        case weeklyTokensUsed, weeklyLimit, weeklyPercentage, weeklyResetTime
+        case opusWeeklyTokensUsed, opusWeeklyPercentage
+        case sonnetWeeklyTokensUsed, sonnetWeeklyPercentage, sonnetWeeklyResetTime
+        case designWeeklyTokensUsed, designWeeklyPercentage, designWeeklyResetTime
+        case fableWeeklyTokensUsed, fableWeeklyPercentage, fableWeeklyResetTime
+        case costUsed, costLimit, costCurrency
+        case overageBalance, overageBalanceCurrency
+        case lastUpdated, userTimezone
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        sessionTokensUsed = try c.decode(Int.self, forKey: .sessionTokensUsed)
+        sessionLimit = try c.decode(Int.self, forKey: .sessionLimit)
+        sessionPercentage = try c.decode(Double.self, forKey: .sessionPercentage)
+        sessionResetTime = try c.decode(Date.self, forKey: .sessionResetTime)
+        weeklyTokensUsed = try c.decode(Int.self, forKey: .weeklyTokensUsed)
+        weeklyLimit = try c.decode(Int.self, forKey: .weeklyLimit)
+        weeklyPercentage = try c.decode(Double.self, forKey: .weeklyPercentage)
+        weeklyResetTime = try c.decode(Date.self, forKey: .weeklyResetTime)
+        opusWeeklyTokensUsed = try c.decode(Int.self, forKey: .opusWeeklyTokensUsed)
+        opusWeeklyPercentage = try c.decode(Double.self, forKey: .opusWeeklyPercentage)
+        sonnetWeeklyTokensUsed = try c.decode(Int.self, forKey: .sonnetWeeklyTokensUsed)
+        sonnetWeeklyPercentage = try c.decode(Double.self, forKey: .sonnetWeeklyPercentage)
+        sonnetWeeklyResetTime = try c.decodeIfPresent(Date.self, forKey: .sonnetWeeklyResetTime)
+        designWeeklyTokensUsed = try c.decodeIfPresent(Int.self, forKey: .designWeeklyTokensUsed) ?? 0
+        designWeeklyPercentage = try c.decodeIfPresent(Double.self, forKey: .designWeeklyPercentage) ?? 0
+        designWeeklyResetTime = try c.decodeIfPresent(Date.self, forKey: .designWeeklyResetTime)
+        fableWeeklyTokensUsed = try c.decodeIfPresent(Int.self, forKey: .fableWeeklyTokensUsed) ?? 0
+        fableWeeklyPercentage = try c.decodeIfPresent(Double.self, forKey: .fableWeeklyPercentage) ?? 0
+        fableWeeklyResetTime = try c.decodeIfPresent(Date.self, forKey: .fableWeeklyResetTime)
+        costUsed = try c.decodeIfPresent(Double.self, forKey: .costUsed)
+        costLimit = try c.decodeIfPresent(Double.self, forKey: .costLimit)
+        costCurrency = try c.decodeIfPresent(String.self, forKey: .costCurrency)
+        overageBalance = try c.decodeIfPresent(Double.self, forKey: .overageBalance)
+        overageBalanceCurrency = try c.decodeIfPresent(String.self, forKey: .overageBalanceCurrency)
+        lastUpdated = try c.decode(Date.self, forKey: .lastUpdated)
+        userTimezone = try c.decode(TimeZone.self, forKey: .userTimezone)
+    }
+}
+
 /// Usage status level for color coding
 /// Thresholds depend on display mode (used vs remaining percentage)
 enum UsageStatusLevel {

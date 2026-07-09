@@ -747,6 +747,11 @@ class ClaudeAPIService: APIServiceProtocol {
         // Parse Claude's actual API response structure
 
         if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            // One shared formatter for every resets_at field in this response —
+            // ISO8601DateFormatter construction is expensive.
+            let resetTimeFormatter = ISO8601DateFormatter()
+            resetTimeFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
             // Extract session usage (five_hour)
             var sessionPercentage = 0.0
             var sessionResetTime = Date().addingTimeInterval(5 * 3600)
@@ -755,9 +760,7 @@ class ClaudeAPIService: APIServiceProtocol {
                     sessionPercentage = parseUtilization(utilization)
                 }
                 if let resetsAt = fiveHour["resets_at"] as? String {
-                    let formatter = ISO8601DateFormatter()
-                    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-                    sessionResetTime = formatter.date(from: resetsAt) ?? sessionResetTime
+                    sessionResetTime = resetTimeFormatter.date(from: resetsAt) ?? sessionResetTime
                 }
             }
 
@@ -769,9 +772,7 @@ class ClaudeAPIService: APIServiceProtocol {
                     weeklyPercentage = parseUtilization(utilization)
                 }
                 if let resetsAt = sevenDay["resets_at"] as? String {
-                    let formatter = ISO8601DateFormatter()
-                    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-                    weeklyResetTime = formatter.date(from: resetsAt) ?? weeklyResetTime
+                    weeklyResetTime = resetTimeFormatter.date(from: resetsAt) ?? weeklyResetTime
                 }
             }
 
@@ -791,9 +792,7 @@ class ClaudeAPIService: APIServiceProtocol {
                     sonnetPercentage = parseUtilization(utilization)
                 }
                 if let resetsAt = sevenDaySonnet["resets_at"] as? String {
-                    let formatter = ISO8601DateFormatter()
-                    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-                    sonnetResetTime = formatter.date(from: resetsAt)
+                    sonnetResetTime = resetTimeFormatter.date(from: resetsAt)
                 }
             }
 
@@ -805,9 +804,7 @@ class ClaudeAPIService: APIServiceProtocol {
                     designPercentage = parseUtilization(utilization)
                 }
                 if let resetsAt = sevenDayDesign["resets_at"] as? String {
-                    let formatter = ISO8601DateFormatter()
-                    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-                    designResetTime = formatter.date(from: resetsAt)
+                    designResetTime = resetTimeFormatter.date(from: resetsAt)
                 }
             }
 
@@ -819,39 +816,44 @@ class ClaudeAPIService: APIServiceProtocol {
                     fablePercentage = parseUtilization(utilization)
                 }
                 if let resetsAt = sevenDayFable["resets_at"] as? String {
-                    let formatter = ISO8601DateFormatter()
-                    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-                    fableResetTime = formatter.date(from: resetsAt)
+                    fableResetTime = resetTimeFormatter.date(from: resetsAt)
                 }
             }
 
             // Newer API responses null out the legacy seven_day_* per-model
             // fields and report per-model usage in a "limits" array instead:
             // {"kind":"weekly_scoped","percent":73,"resets_at":...,
-            //  "scope":{"model":{"display_name":"Fable"}}}
+            //  "scope":{"model":{"id":null,"display_name":"Fable"}}}
+            // limits[] is therefore the source of truth: when an entry is
+            // present it overrides whatever the legacy fields said.
             if let limits = json["limits"] as? [[String: Any]] {
-                let formatter = ISO8601DateFormatter()
-                formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
                 for limit in limits {
                     guard limit["kind"] as? String == "weekly_scoped",
                           let scope = limit["scope"] as? [String: Any],
                           let model = scope["model"] as? [String: Any],
-                          let displayName = model["display_name"] as? String,
                           let percentValue = limit["percent"] else { continue }
                     let percent = parseUtilization(percentValue)
-                    let resetTime = (limit["resets_at"] as? String).flatMap { formatter.date(from: $0) }
+                    let resetTime = (limit["resets_at"] as? String).flatMap { resetTimeFormatter.date(from: $0) }
 
-                    switch displayName.lowercased() {
-                    case "fable", "mythos":
-                        if fablePercentage == 0 { fablePercentage = percent; fableResetTime = resetTime }
-                    case "opus":
-                        if opusPercentage == 0 { opusPercentage = percent }
-                    case "sonnet":
-                        if sonnetPercentage == 0 { sonnetPercentage = percent; sonnetResetTime = resetTime }
-                    case "design":
-                        if designPercentage == 0 { designPercentage = percent; designResetTime = resetTime }
-                    default:
-                        break
+                    // Match on the stable model id when the API provides one;
+                    // display_name is a rename-prone human label kept as fallback.
+                    let modelId = (model["id"] as? String)?.lowercased() ?? ""
+                    let name = (model["display_name"] as? String)?.lowercased() ?? ""
+                    func matches(_ keys: String...) -> Bool {
+                        keys.contains { name == $0 || modelId.contains($0) }
+                    }
+
+                    if matches("fable", "mythos") {
+                        fablePercentage = percent
+                        fableResetTime = resetTime ?? fableResetTime
+                    } else if matches("opus") {
+                        opusPercentage = percent
+                    } else if matches("sonnet") {
+                        sonnetPercentage = percent
+                        sonnetResetTime = resetTime ?? sonnetResetTime
+                    } else if matches("design", "omelette") {
+                        designPercentage = percent
+                        designResetTime = resetTime ?? designResetTime
                     }
                 }
             }

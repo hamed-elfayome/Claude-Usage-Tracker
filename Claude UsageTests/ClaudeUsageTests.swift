@@ -69,6 +69,35 @@ final class ClaudeUsageTests: XCTestCase {
         XCTAssertEqual(original, decoded)
     }
 
+    func testDecodeLegacyJSONWithoutDesignAndFableKeys() throws {
+        // Persisted data from v3.1.1 and earlier has no design/fable keys.
+        // Decoding it must succeed (defaulting to 0/nil), otherwise
+        // ProfileStore.loadProfiles() wipes every profile on upgrade.
+        let legacyJSON = """
+        {
+          "sessionTokensUsed": 100, "sessionLimit": 1000,
+          "sessionPercentage": 10, "sessionResetTime": 700000000,
+          "weeklyTokensUsed": 200, "weeklyLimit": 1000000,
+          "weeklyPercentage": 20, "weeklyResetTime": 700000000,
+          "opusWeeklyTokensUsed": 5, "opusWeeklyPercentage": 5,
+          "sonnetWeeklyTokensUsed": 6, "sonnetWeeklyPercentage": 6,
+          "lastUpdated": 700000000,
+          "userTimezone": {"identifier": "Europe/Moscow"}
+        }
+        """.data(using: .utf8)!
+
+        let decoded = try JSONDecoder().decode(ClaudeUsage.self, from: legacyJSON)
+
+        XCTAssertEqual(decoded.sessionTokensUsed, 100)
+        XCTAssertEqual(decoded.opusWeeklyPercentage, 5)
+        XCTAssertEqual(decoded.designWeeklyTokensUsed, 0)
+        XCTAssertEqual(decoded.designWeeklyPercentage, 0)
+        XCTAssertNil(decoded.designWeeklyResetTime)
+        XCTAssertEqual(decoded.fableWeeklyTokensUsed, 0)
+        XCTAssertEqual(decoded.fableWeeklyPercentage, 0)
+        XCTAssertNil(decoded.fableWeeklyResetTime)
+    }
+
     func testEncodeDecodeFableFields() throws {
         var original = createUsage(sessionPercentage: 10)
         original.fableWeeklyTokensUsed = 123_456
