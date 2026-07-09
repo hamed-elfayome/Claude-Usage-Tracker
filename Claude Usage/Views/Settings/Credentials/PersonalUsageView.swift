@@ -390,24 +390,38 @@ struct EnterKeyStep: View {
         wizardState.validationState = .validating
 
         Task {
-            do {
-                let organizations = try await apiService.testSessionKey(wizardState.sessionKey)
+            // A freshly issued sessionKey can take a moment to propagate on
+            // Anthropic's side — the first request may get a transient 401
+            // (E3000). Retry a few times before surfacing the error.
+            let maxAttempts = 4
+            for attempt in 1...maxAttempts {
+                do {
+                    let organizations = try await apiService.testSessionKey(wizardState.sessionKey)
 
-                await MainActor.run {
-                    wizardState.testedOrganizations = organizations
-                    wizardState.validationState = .success("Connection successful! Found \(organizations.count) organization(s)")
+                    await MainActor.run {
+                        wizardState.testedOrganizations = organizations
+                        wizardState.validationState = .success("Connection successful! Found \(organizations.count) organization(s)")
 
-                    withAnimation {
-                        wizardState.currentStep = .selectOrg
+                        withAnimation {
+                            wizardState.currentStep = .selectOrg
+                        }
                     }
-                }
-            } catch {
-                let appError = AppError.wrap(error)
-                ErrorLogger.shared.log(appError, severity: .error)
+                    return
+                } catch {
+                    let appError = AppError.wrap(error)
 
-                await MainActor.run {
-                    let errorMessage = "\(appError.message)\n\nError Code: \(appError.code.rawValue)"
-                    wizardState.validationState = .error(errorMessage)
+                    if appError.code == .apiUnauthorized && attempt < maxAttempts {
+                        try? await Task.sleep(nanoseconds: UInt64(attempt) * 1_500_000_000)
+                        continue
+                    }
+
+                    ErrorLogger.shared.log(appError, severity: .error)
+
+                    await MainActor.run {
+                        let errorMessage = "\(appError.message)\n\nError Code: \(appError.code.rawValue)"
+                        wizardState.validationState = .error(errorMessage)
+                    }
+                    return
                 }
             }
         }
