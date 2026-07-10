@@ -144,11 +144,23 @@ final class NotchHUDController {
     }
 
     private func refreshScreenHasNotch() {
-        guard let screen = NSScreen.main ?? NSScreen.screens.first else {
+        // IMPORTANT: detect on the SAME screen DynamicNotchKit presents on —
+        // screens[0], the primary display. NSScreen.main is the KEY-WINDOW
+        // screen and is volatile on multi-display setups: sampling it while
+        // focus sat on an external monitor cached hasNotch=false and left the
+        // HUD in its expanded fallback while rendering at the physical notch.
+        guard let screen = NSScreen.screens.first else {
             screenHasNotch = false
             return
         }
+        let hadNotch = screenHasNotch
         screenHasNotch = screen.auxiliaryTopLeftArea != nil && screen.auxiliaryTopRightArea != nil
+
+        // Displays changed (plug/unplug, rearrange): re-apply the correct
+        // resting presentation unless the user explicitly expanded.
+        if hadNotch != screenHasNotch, isVisible, !isExpanded, let notch = dynamicNotch {
+            Task { await self.showCompactState(notch) }
+        }
     }
 
     // MARK: - DEBUG preview support
