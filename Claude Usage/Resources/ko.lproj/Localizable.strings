@@ -70,6 +70,8 @@
 "menubar.weekly_usage" = "주간";
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";
+"menubar.fable_usage" = "Fable";
+"menubar.design_usage" = "디자인";
 "menubar.extra_usage" = "추가 사용량";
 "menubar.api_credits" = "API 크레딧";
 "menubar.5_hour_window" = "5시간 롤링 윈도우";
@@ -132,12 +134,18 @@
 "multiprofile.active_badge" = "활성";
 "multiprofile.at_least_one" = "최소한 하나의 프로필이 선택되어야 합니다";
 "multiprofile.icon_style" = "아이콘 스타일";
+"multiprofile.style_circles" = "원";
+"multiprofile.style_bars" = "막대";
+"multiprofile.style_dots" = "점";
+"multiprofile.style_percent" = "퍼센트";
 "multiprofile.show_week" = "주간 사용량 표시";
 "multiprofile.show_week_description" = "세션 외에 주간 사용량 표시";
 "multiprofile.show_label" = "프로필 이름 표시";
 "multiprofile.show_label_description" = "아이콘 아래에 프로필 이름 표시";
 "multiprofile.use_system_color" = "시스템 색상 사용";
 "multiprofile.use_system_color_description" = "상태 색상 대신 Mac의 강조 색상 사용";
+"multiprofile.active_indicator_title" = "활성 프로파일 표시기 보이기";
+"multiprofile.active_indicator_description" = "현재 활성 프로파일 아이콘 아래에 작은 초록색 밑줄 표시";
 
 /* ==================== */
 /* MARK: - General Settings (Profile-Level) */
@@ -335,6 +343,21 @@
 "claudecode.button_reset" = "재설정";
 "claudecode.component_profile" = "프로필 이름";
 "claudecode.context_info" = "컨텍스트가 100% 대신 ~80-95%로 표시될 수 있습니다. Claude는 한도에 도달하기 전에 자동으로 압축하며, 출력 토큰도 컨텍스트 공간을 사용합니다.";
+"claudecode.element_colors_title" = "요소 색상";
+"claudecode.element_color_directory" = "디렉토리";
+"claudecode.element_color_branch" = "브랜치";
+"claudecode.element_color_model" = "모델";
+"claudecode.element_color_profile" = "프로필";
+"claudecode.element_color_context" = "컨텍스트";
+"claudecode.element_color_separator" = "구분자";
+"claudecode.element_color_usage" = "사용량 그라데이션";
+"claudecode.element_color_usage_desc" = "10단계 그라데이션을 고정 색상으로 대체";
+"claudecode.element_color_pace" = "페이스 마커";
+"claudecode.element_color_pace_desc" = "6단계 페이스 색상을 고정 색상으로 대체";
+"claudecode.element_color_weekly" = "주간 사용량";
+"claudecode.element_color_weekly_desc" = "주간 사용량 그라디언트를 고정 색상으로 대체";
+"claudecode.element_color_extra" = "추가 사용량";
+"claudecode.element_color_extra_desc" = "추가 사용량(비용) 그라디언트를 고정 색상으로 대체";
 "error.generic" = "오류: %@";
 "personal.button_saving" = "저장 중...";
 "personal.button_setup_wizard" = "설정 마법사";
@@ -497,6 +520,11 @@
 "claudecode.component_pace_marker" = "페이스 마커";
 "claudecode.pace_marker_info" = "경과 시간 위치에 색상 표시를 보여줍니다";
 "claudecode.component_resettime" = "리셋 시간";
+"claudecode.component_weekly" = "주간 사용량 표시";
+"claudecode.component_weekly_description" = "막대 및 초기화 시간이 포함된 주간 토큰 사용량";
+"claudecode.component_extra_usage" = "추가 사용량 표시";
+"claudecode.component_extra_usage_description" = "비용 표시 (예: 9.49 USD)";
+"claudecode.weekly_label" = "\"Weekly:\" 라벨 표시";
 "claudecode.requirement_sessionkey" = "• 자격 증명 → Claude.ai 탭에서 세션 키 구성됨";
 "claudecode.requirement_restart" = "• 변경사항 적용 후 Claude CLI 재시작";
 "claudecode.error_no_components" = "표시할 구성요소를 하나 이상 선택하세요";
@@ -764,6 +792,13 @@
 "cli.benefit_1" = "프로필로 Claude Code 로그인 자동 전환";
 "cli.benefit_2" = "CLI 및 앱 계정 동기화 유지";
 "cli.benefit_3" = "프로필 전환 시 자격 증명 자동 새로 고침";
+"cli.manual_token_title" = "OAuth 설정 토큰 붙여넣기";
+"cli.manual_token_subtitle" = "다시 동기화하는 대신 `claude setup-token`의 장기 토큰 사용";
+"cli.manual_token_disclosure" = "토큰을 수동으로 입력";
+"cli.manual_token_help" = "터미널에서 `claude setup-token`을 실행하여 장기 OAuth 토큰을 생성한 후 여기에 붙여넣으세요. 웹 세션이 만료되었거나 Claude Code 동기화가 작동하지 않을 때 사용합니다.";
+"cli.manual_token_placeholder" = "sk-ant-oat01-...";
+"cli.manual_token_save" = "토큰 저장";
+"cli.manual_token_empty_error" = "저장하기 전에 토큰을 붙여넣으세요";
 
 /* ==================== */
 /* MARK: - Additional Keys */
@@ -957,6 +992,12 @@
 "popover.time_format_system" = "시스템";
 "popover.time_format_12h" = "12시간";
 "popover.time_format_24h" = "24시간";
+"popover.peak_hours" = "Peak Hours Indicator";
+"popover.peak_hours_desc" = "Show when Claude is in peak hours (weekdays %@)";
+"popover.peak_hours_toggle" = "Show peak hours indicator";
+"popover.peak_hours_toggle_desc" = "Display a flame icon in the menu bar and highlight the session card during peak hours";
+"popover.peak_hours_menu_icon" = "Show flame icon in menu bar";
+"popover.peak_hours_menu_icon_desc" = "Display a flame icon next to your usage indicators during peak hours";
 
 /* ==================== */
 /* MARK: - Feedback Prompt */

@@ -2,8 +2,8 @@
    Localizable.strings
    Claude Usage Tracker
 
-   Portuguese (Português)
-   Created by Claude Code on 2025-12-27.
+   Brazilian Portuguese (Português do Brasil)
+   Created by Hudson Arruda on 2026-03-18.
 */
 
 /* ==================== */
@@ -475,19 +475,19 @@
 "claudecode.context_info" = "O contexto pode mostrar ~80-95% em vez de 100% — o Claude comprime automaticamente antes do limite, e os tokens de saída também usam espaço de contexto.";
 "claudecode.element_colors_title" = "Cores dos Elementos";
 "claudecode.element_color_directory" = "Diretório";
-"claudecode.element_color_branch" = "Ramo";
+"claudecode.element_color_branch" = "Branch";
 "claudecode.element_color_model" = "Modelo";
 "claudecode.element_color_profile" = "Perfil";
 "claudecode.element_color_context" = "Contexto";
 "claudecode.element_color_separator" = "Separador";
 "claudecode.element_color_usage" = "Gradiente de uso";
-"claudecode.element_color_usage_desc" = "Substitui o gradiente de 10 níveis por uma cor fixa";
+"claudecode.element_color_usage_desc" = "Substituir o gradiente de 10 níveis por uma cor fixa";
 "claudecode.element_color_pace" = "Marcador de ritmo";
-"claudecode.element_color_pace_desc" = "Substitui os 6 níveis de cores de ritmo por uma cor fixa";
+"claudecode.element_color_pace_desc" = "Substituir as cores de ritmo de 6 níveis por uma cor fixa";
 "claudecode.element_color_weekly" = "Uso semanal";
-"claudecode.element_color_weekly_desc" = "Substitui o gradiente de uso semanal por uma cor fixa";
+"claudecode.element_color_weekly_desc" = "Substituir o gradiente de uso semanal por uma cor fixa";
 "claudecode.element_color_extra" = "Uso extra";
-"claudecode.element_color_extra_desc" = "Substitui o gradiente de uso extra (custo) por uma cor fixa";
+"claudecode.element_color_extra_desc" = "Substituir o gradiente de uso extra (custo) por uma cor fixa";
 "error.generic" = "Erro: %@";
 "personal.button_saving" = "Salvando...";
 "personal.button_setup_wizard" = "Assistente de Configuração";
@@ -547,10 +547,6 @@
 "multiprofile.active_badge" = "Ativo";
 "multiprofile.at_least_one" = "Pelo menos um perfil deve estar selecionado";
 "multiprofile.icon_style" = "Estilo do Ícone";
-"multiprofile.style_circles" = "Círculos";
-"multiprofile.style_bars" = "Barras";
-"multiprofile.style_dots" = "Pontos";
-"multiprofile.style_percent" = "Porcentagem";
 "multiprofile.show_week" = "Mostrar Uso Semanal";
 "multiprofile.show_week_description" = "Exibir uso semanal além da sessão";
 "multiprofile.show_label" = "Mostrar Nome do Perfil";
@@ -731,12 +727,12 @@
 "cli.benefit_2" = "Manter CLI e contas do aplicativo sincronizadas";
 "cli.benefit_3" = "Atualizar credenciais automaticamente ao trocar de perfil";
 "cli.manual_token_title" = "Cole um token OAuth de configuração";
-"cli.manual_token_subtitle" = "Utilize um token de longa duração de `claude setup-token` em vez de sincronizar novamente";
-"cli.manual_token_disclosure" = "Introduzir token manualmente";
-"cli.manual_token_help" = "Execute `claude setup-token` no seu terminal para gerar um token OAuth de longa duração e cole-o aqui. Utilize isto quando a sua sessão web tiver expirado ou a sincronização a partir do Claude Code não estiver a funcionar.";
+"cli.manual_token_subtitle" = "Use um token de longa duração de `claude setup-token` em vez de sincronizar novamente";
+"cli.manual_token_disclosure" = "Inserir token manualmente";
+"cli.manual_token_help" = "Execute `claude setup-token` no seu terminal para gerar um token OAuth de longa duração e cole-o aqui. Use isto quando sua sessão web tiver expirado ou a sincronização com Claude Code não estiver funcionando.";
 "cli.manual_token_placeholder" = "sk-ant-oat01-...";
-"cli.manual_token_save" = "Guardar Token";
-"cli.manual_token_empty_error" = "Cole um token antes de guardar";
+"cli.manual_token_save" = "Salvar Token";
+"cli.manual_token_empty_error" = "Cole um token antes de salvar";
 
 /* ==================== */
 /* MARK: - Additional Keys */

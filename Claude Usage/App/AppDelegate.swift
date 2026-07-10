@@ -35,10 +35,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             object: nil
         )
 
-        // Check if setup has been completed
+        // Always create the menu bar manager up front. On macOS Tahoe the setup
+        // wizard window may fail to display (see #197), and if the manager was
+        // only instantiated inside the wizard's close handler the menu bar icon
+        // would never appear. Creating it here guarantees the app has a working
+        // `menuBarManager` reference even if the wizard never visibly opens.
+        menuBarManager = MenuBarManager()
+
+        // Start 24-hour heartbeat ping to track active app usage
+        HeartbeatService.shared.start()
+
         if !shouldShowSetupWizard() {
             // Initialize menu bar with active profile
-            menuBarManager = MenuBarManager()
             menuBarManager?.setup()
         } else {
             showSetupWizardManually()
@@ -195,9 +203,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             NSApp.setActivationPolicy(.accessory)
             self?.setupWindow = nil
 
-            // Initialize menu bar after setup completes
-            if self?.menuBarManager == nil {
-                self?.menuBarManager = MenuBarManager()
+            // Initialize status bar after setup completes. `menuBarManager` is
+            // now always created in `applicationDidFinishLaunching`, so we only
+            // need to call `setup()` if the status bar hasn't been configured yet.
+            if self?.menuBarManager?.hasValidStatusBar() != true {
                 self?.menuBarManager?.setup()
             }
         }

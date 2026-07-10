@@ -290,8 +290,26 @@ struct EnterKeyStep: View {
                 )
             }
 
+            // OR divider
+            HStack {
+                Rectangle()
+                    .fill(Color.secondary.opacity(0.3))
+                    .frame(height: 1)
+                Text("OR")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(.secondary)
+                Rectangle()
+                    .fill(Color.secondary.opacity(0.3))
+                    .frame(height: 1)
+            }
+            .padding(.vertical, 4)
+
             // Fallback: Manual session key entry
-            DisclosureGroup("personal.advanced_manual_key".localized) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("personal.advanced_manual_key".localized)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.secondary)
+
                 VStack(alignment: .leading, spacing: 8) {
                     Text("personal.label_session_key".localized)
                         .font(.system(size: 12, weight: .medium))
@@ -334,10 +352,7 @@ struct EnterKeyStep: View {
                         .disabled(wizardState.sessionKey.isEmpty || wizardState.validationState == .validating)
                     }
                 }
-                .padding(.top, 8)
             }
-            .font(.system(size: 12, weight: .medium))
-            .foregroundColor(.secondary)
 
             // Validation status
             if case .success(let message) = wizardState.validationState {
@@ -376,7 +391,7 @@ struct EnterKeyStep: View {
 
         Task {
             do {
-                let organizations = try await apiService.testSessionKey(wizardState.sessionKey)
+                let organizations = try await apiService.testSessionKeyWithRetry(wizardState.sessionKey)
 
                 await MainActor.run {
                     wizardState.testedOrganizations = organizations

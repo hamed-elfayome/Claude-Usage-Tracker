@@ -61,6 +61,12 @@ struct PopoverContentView: View {
 
     @State private var isRefreshing = false
     @State private var showInsights = false
+    // Drives a custom entrance animation. The native NSPopover open animation is
+    // disabled (see MenuBarManager) because its animated window resize recurses
+    // infinitely on macOS 26/27; this fades/scales the content in from the top
+    // instead — a pure SwiftUI transform on a fixed-size view, so it can't trigger
+    // the window-resize loop.
+    @State private var appeared = false
     @StateObject private var profileManager = ProfileManager.shared
 
     private func profileInitials(for name: String) -> String {
@@ -201,6 +207,14 @@ struct PopoverContentView: View {
         .padding(.bottom, 8)
         .frame(width: 280)
         .background(VisualEffectBackground())
+        .opacity(appeared ? 1 : 0)
+        .scaleEffect(appeared ? 1 : 0.96, anchor: .top)
+        .onAppear {
+            appeared = false
+            withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
+                appeared = true
+            }
+        }
     }
 }
 
@@ -545,9 +559,17 @@ struct SmartUsageDashboard: View {
     let usage: ClaudeUsage
     let apiUsage: APIUsage?
     @StateObject private var profileManager = ProfileManager.shared
+    @ObservedObject private var peakHoursService = PeakHoursService.shared
+
+    private var isPeakHours: Bool {
+        SharedDataStore.shared.loadPeakHoursIndicatorEnabled() && peakHoursService.isPeakHours
+    }
 
     private var showRemainingPercentage: Bool {
-        profileManager.activeProfile?.iconConfig.showRemainingPercentage ?? false
+        if profileManager.displayMode == .multi {
+            return profileManager.multiProfileConfig.showRemainingPercentage
+        }
+        return profileManager.activeProfile?.iconConfig.showRemainingPercentage ?? false
     }
 
     private var showTimeMarker: Bool {
@@ -588,8 +610,22 @@ struct SmartUsageDashboard: View {
                 showTimeMarker: showTimeMarker,
                 showPaceMarker: showPaceMarker,
                 usePaceColoring: usePaceColoring,
-                timeDisplay: timeDisplay
+                timeDisplay: timeDisplay,
+                isPeakHighlighted: isPeakHours
             )
+
+            if usage.designWeeklyTokensUsed > 0 {
+                UsageRow(
+                    title: "menubar.design_usage".localized,
+                    tag: "menubar.weekly".localized,
+                    subtitle: nil,
+                    usedPercentage: usage.designWeeklyPercentage,
+                    showRemaining: showRemainingPercentage,
+                    resetTime: usage.designWeeklyResetTime,
+                    periodDuration: nil,
+                    timeDisplay: timeDisplay
+                )
+            }
 
             // All Models (Weekly)
             UsageRow(
@@ -605,6 +641,19 @@ struct SmartUsageDashboard: View {
                 usePaceColoring: usePaceColoring,
                 timeDisplay: timeDisplay
             )
+
+            if usage.fableWeeklyTokensUsed > 0 {
+                UsageRow(
+                    title: "menubar.fable_usage".localized,
+                    tag: "menubar.weekly".localized,
+                    subtitle: nil,
+                    usedPercentage: usage.fableWeeklyPercentage,
+                    showRemaining: showRemainingPercentage,
+                    resetTime: usage.fableWeeklyResetTime,
+                    periodDuration: nil,
+                    timeDisplay: timeDisplay
+                )
+            }
 
             if usage.opusWeeklyTokensUsed > 0 {
                 UsageRow(
@@ -684,6 +733,7 @@ struct UsageRow: View {
     var showPaceMarker: Bool = true
     var usePaceColoring: Bool = true
     var timeDisplay: PopoverTimeDisplay = .resetTime
+    var isPeakHighlighted: Bool = false
 
     private var displayPercentage: Double {
         UsageStatusCalculator.getDisplayPercentage(
@@ -803,7 +853,10 @@ struct UsageRow: View {
         .padding(.vertical, 8)
         .background(
             RoundedRectangle(cornerRadius: 8)
-                .strokeBorder(Color.primary.opacity(0.1), lineWidth: 0.5)
+                .strokeBorder(
+                    isPeakHighlighted ? Color.red.opacity(0.6) : Color.primary.opacity(0.1),
+                    lineWidth: isPeakHighlighted ? 1.5 : 0.5
+                )
         )
     }
 

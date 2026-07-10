@@ -9,14 +9,15 @@
   ![Swift](https://img.shields.io/badge/Swift-5.0+-orange?style=flat-square&logo=swift)
   ![SwiftUI](https://img.shields.io/badge/SwiftUI-5.0+-blue?style=flat-square&logo=swift)
   ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
-  ![Version](https://img.shields.io/badge/version-3.0.3-blue?style=flat-square)
-  ![Languages](https://img.shields.io/badge/languages-9-purple?style=flat-square)
+  ![Version](https://img.shields.io/badge/version-3.1.1-blue?style=flat-square)
+  ![Languages](https://img.shields.io/badge/languages-13-purple?style=flat-square)
 
-  <sub>🇬🇧 English • 🇪🇸 Español • 🇫🇷 Français • 🇩🇪 Deutsch • 🇮🇹 Italiano • 🇵🇹 Português • 🇯🇵 日本語 • 🇰🇷 한국어 • 🇨🇳 简体中文</sub>
+  <sub>🇬🇧 English • 🇪🇸 Español • 🇫🇷 Français • 🇩🇪 Deutsch • 🇮🇹 Italiano • 🇵🇹 Português • 🇧🇷 Português (BR) • 🇯🇵 日本語 • 🇰🇷 한국어 • 🇨🇳 简体中文 • 🇹🇼 繁體中文 • 🇹🇷 Türkçe • 🇺🇦 Українська</sub>
 
-  ### [Download Latest Release (v3.0.3)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
+  ### [Download Latest Release (v3.1.1)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
 
   <sub>macOS 14.0+ (Sonoma) | ~6 MB | Native Swift/SwiftUI | Officially Signed</sub>
+> 🪟 **Windows user?** A community-maintained port is available: [ClaudeTracker for Windows](https://github.com/TobiiNT/ClaudeTracker) — built with WPF/.NET 8, includes pace tracking, ETA estimation, and WebView2 sign-in.
 
   <a href="https://www.buymeacoffee.com/hamedelfayome" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="40"></a>
 </div>
@@ -36,10 +37,10 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 - **Usage History**: Interactive charts tracking session, weekly, and billing data over time
 - **Global Shortcuts**: System-wide keyboard shortcuts (no Accessibility permission)
 - **Headless Mode**: Works on headless Macs via Remote Desktop
-- **Customizable Interface**: 5 icon styles + 3 color modes (Multi-Color/Greyscale/Single Color) + remaining/used percentage toggle
+- **Customizable Interface**: 5 icon styles + 3 color modes (Multi-Color/Greyscale/Single Color) + per-element statusline colors + remaining/used percentage toggle
 - **Smart Automation**: Auto-start sessions, auto-switch profiles, threshold notifications
-- **Developer Tools**: Terminal statusline integration with model, context, profile display, pace markers, and color modes
-- **Privacy-First**: Local storage, no telemetry, no cloud sync
+- **Developer Tools**: Terminal statusline integration with model, context, profile display, weekly/extra usage segments, pace markers, per-element colors, and color modes
+- **Privacy-First**: Local storage, minimal anonymous analytics (version-only heartbeat), no cloud sync
 - **Native Performance**: Lightweight Swift/SwiftUI design for macOS
 
 <div align="center">
@@ -58,27 +59,18 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 
 ## What's New
 
-- **v3.0.3 (2026-03-10)**: 6-tier pace system (Comfortable → Runaway) with colored pace markers on progress bars, 3 color modes (Multi-Color/Greyscale/Single Color) for menu bar and statusline, label toggles (Ctx/Usage/Reset), 24-hour time format, terminal-matching preview colors, CPU spin-loop fix in menu bar rendering
+- **v3.1.0 (2026-04-14)**: Peak hours indicator with flame icon and countdown popover, right-click context menu on menu bar icons, per-element statusline color customization (#208), weekly & extra usage segments in statusline (#177), active profile indicator in multi-profile mode, Nix installation option (#211), 3 new languages (Brazilian Portuguese, Turkish, Ukrainian) bringing total to 12, 13 bug fixes including popover crash on profile switch, app hang on launch, and E3000 unauthorized errors
 
-- **v3.0.2 (2026-03-10)**: API cost tracking with daily chart, browser-based authentication (WKWebView sign-in), rate limit header usage for CLI OAuth, auto-sizing popover, 3-way time display picker, adaptive green color, session key expiry tracking & notifications
+- **v3.0.3 (2026-03-10)**: 6-tier pace system with colored pace markers, 3 color modes (Multi-Color/Greyscale/Single Color), label toggles, 24-hour time format, terminal-matching preview colors
 
-- **v3.0.1 (2026-03-08)**: Popover settings tab (remaining time toggle), multi-display CPU fix
+- **v3.0.2 (2026-03-10)**: API cost tracking with daily chart, browser-based authentication, rate limit header usage for CLI OAuth, auto-sizing popover, session key expiry tracking
 
-- **v3.0.0 - Major Release (2026-03-08)**:
-  - **Headless mode**: Remote Desktop support for headless Mac environments
-  - **Usage history**: Interactive timeline charts with export to JSON/CSV
-  - **Global keyboard shortcuts**: Configurable hotkeys (no Accessibility permission needed)
-  - **Auto-switch profiles**: Automatically switch when session limit reached
-  - **Borderless settings window**: Full vibrancy design with custom traffic lights
-  - **6 new statusline components**: Model name, context window, profile name, and more
-  - **Time-elapsed markers & pace-aware coloring**: Smart progress indicators
-  - **Network debug view**: Timed capture with request/response detail viewer
-  - **Simplified Chinese** (9th language)
-  - **12 ported improvements** from novastate fork including CLI auto-detection, wake-from-sleep refresh, and custom notification thresholds
+- **v3.0.1 (2026-03-08)**: Popover settings tab, multi-display CPU fix
+
+- **v3.0.0 - Major Release (2026-03-08)**: Headless mode, usage history charts, global shortcuts, auto-switch profiles, borderless settings, 6 new statusline components, Simplified Chinese
 
 - **v2.3.0** – Multi-profile menu bar display, remaining percentage toggle
 - **v2.2.0** – Multi-profile management, CLI integration, Korean language
-- **v2.1.0** – 3-step setup wizard, smart organization preservation
 - **v2.0.0** – Apple code signing, automatic updates, Keychain security
 
 **[View Full Release History](CHANGELOG.md)**
@@ -130,7 +122,23 @@ Or use the built-in automatic update feature (Settings → Updates).
 brew uninstall --cask claude-usage-tracker
 ```
 
-#### Option 2: Direct Download
+#### Option 2: Nix
+
+Test the app:
+
+```bash
+nix-shell -p claude-usage-tracker
+```
+
+Install it using home-manager:
+
+```nix
+home.packages = with pkgs; [
+  claude-usage-tracker
+];
+```
+
+#### Option 3: Direct Download
 
 **[Download Claude-Usage.zip](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)**
 
@@ -143,7 +151,7 @@ brew uninstall --cask claude-usage-tracker
 
 **Automatic Updates**: Once installed, the app will automatically check for updates and notify you when new versions are available (Settings → Updates).
 
-#### Option 3: Build from Source
+#### Option 4: Build from Source
 
 ```bash
 # Clone the repository
@@ -342,7 +350,7 @@ Access profile switcher in multiple places:
 - **6-Tier Pace System**: Pace markers colored by projected usage (green/teal/yellow/orange/red/purple)
 - **Interactive Popover**: One-click access with detachable floating window capability
 - **Live Status Indicator**: Real-time Claude system status from status.claude.com
-- **Multi-Language Support**: 9 languages (English, Spanish, French, German, Italian, Portuguese, Japanese, Korean, Simplified Chinese)
+- **Multi-Language Support**: 13 languages (English, Spanish, French, German, Italian, Portuguese, Brazilian Portuguese, Japanese, Korean, Simplified Chinese, Traditional Chinese, Turkish, Ukrainian)
 - Adaptive colors for light/dark mode
 
 ### Automation & Intelligence
@@ -374,7 +382,7 @@ Access profile switcher in multiple places:
 - **Advanced Error Handling**: Professional error system with user-friendly recovery
 - **Robust Validation**: Session key and API endpoint validation
 - Local storage with no cloud sync
-- Zero telemetry or tracking
+- Minimal anonymous analytics (version-only heartbeat every 24h — no PII, no credentials)
 - HTTPS-only communication with Claude API
 
 ### Advanced Capabilities
@@ -473,9 +481,9 @@ Create and manage multiple profiles:
 
 #### Language
 Application language preferences:
-- **Language Selection**: Choose from 9 supported languages
+- **Language Selection**: Choose from 13 supported languages
 - **Live Updates**: Interface updates immediately when language changes
-- Supported: English, Spanish, French, German, Italian, Portuguese, Japanese, Korean, Simplified Chinese
+- Supported: English, Spanish, French, German, Italian, Portuguese, Brazilian Portuguese, Japanese, Korean, Simplified Chinese, Traditional Chinese, Turkish, Ukrainian
 
 #### Claude Code (Statusline)
 Terminal integration (app-wide):
@@ -720,7 +728,7 @@ The app can simultaneously monitor both web (claude.ai) and API console usage, p
 - **Apple Code Signed**: Officially signed with Apple Developer certificate for verified authenticity
 - **Secure Updates**: Automatic updates delivered over HTTPS with code signature verification
 - **No Cloud Sync**: All data remains local to your machine
-- **No Telemetry**: Zero tracking or analytics
+- **Minimal Analytics**: Anonymous heartbeat every 24 hours containing only the app version — no PII, no credentials, no usage data
 - **Advanced Error Handling**: Robust error system with user-friendly recovery
 - **Session Key Validation**: Comprehensive validation of API credentials
 - **Network**: HTTPS-only communication with claude.ai and Anthropic API
@@ -779,9 +787,12 @@ If automatic updates aren't working:
 
 This project is built for the community — everyone is welcome
 
+### Windows Port
+- [ClaudeTracker for Windows](https://github.com/TobiiNT/ClaudeTracker) by [@TobiiNT](https://github.com/TobiiNT) — WPF/.NET 8 port for Windows users
+
 ### Special Thanks
 
-A huge thank you to everyone who opened pull requests. Many features in v3.0.0 were inspired by or ported from community PRs that couldn't be merged directly due to the scale of this release and resulting conflicts. Your code, ideas, and effort made this release possible:
+A huge thank you to everyone who contributed code, translations, bug reports, and pull requests. Your effort makes this project possible:
 
 <a href="https://github.com/novastate"><img src="https://github.com/novastate.png" width="40" height="40" alt="novastate" title="novastate"></a>
 <a href="https://github.com/heathdutton"><img src="https://github.com/heathdutton.png" width="40" height="40" alt="heathdutton" title="heathdutton"></a>

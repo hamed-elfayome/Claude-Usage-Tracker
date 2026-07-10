@@ -29,6 +29,7 @@
 "common.validate" = "验证";
 "common.yes" = "是";
 "common.no" = "否";
+"common.retry" = "重试";
 
 /* ==================== */
 /* MARK: - Settings Navigation */
@@ -61,12 +62,20 @@
 "menubar.weekly_usage" = "每周";
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";
+"menubar.fable_usage" = "Fable";
+"menubar.design_usage" = "设计";
 "menubar.extra_usage" = "额外使用量";
 "menubar.api_credits" = "API 积分";
 "menubar.5_hour_window" = "5小时滚动窗口";
 "menubar.all_models" = "所有模型";
 "menubar.weekly" = "每周";
 "menubar.anthropic_console" = "Anthropic API 控制台";
+"menubar.api_cost" = "API 费用";
+"menubar.cost_source.api" = "API";
+"menubar.cost_source.cli" = "Claude Code";
+"menubar.cost_source.unknown" = "其他";
+"menubar.this_month" = "本月";
+"menubar.total" = "总计";
 "menubar.used" = "已使用";
 "menubar.remaining" = "剩余";
 "menubar.resets_time" = "重置时间 %@";
@@ -161,6 +170,7 @@
 "about.created_by" = "创建者";
 "about.contributors" = "贡献者 (%d)";
 "about.contributors_loading" = "贡献者";
+"about.contributors_failed" = "无法加载贡献者";
 "about.links" = "链接";
 "about.star_github" = "在 GitHub 上标星";
 "about.report_issue" = "报告问题";
@@ -361,6 +371,11 @@
 "claudecode.component_pace_marker" = "节奏标记";
 "claudecode.pace_marker_info" = "在已用时间位置显示彩色标记";
 "claudecode.component_resettime" = "重置时间";
+"claudecode.component_weekly" = "显示每周使用量";
+"claudecode.component_weekly_description" = "带进度条和重置时间的每周令牌使用量";
+"claudecode.component_extra_usage" = "显示额外使用量";
+"claudecode.component_extra_usage_description" = "费用指标（例如 9.49 USD）";
+"claudecode.weekly_label" = "显示 \"Weekly:\" 标签";
 "claudecode.requirement_sessionkey" = "• 在凭据 → Claude.ai 标签页中配置了会话密钥";
 "claudecode.requirement_restart" = "• 应用更改后重启 Claude CLI";
 "claudecode.error_no_components" = "请至少选择一个要显示的组件";
@@ -513,12 +528,18 @@
 "multiprofile.active_badge" = "活动";
 "multiprofile.at_least_one" = "至少必须选择一个配置文件";
 "multiprofile.icon_style" = "图标样式";
+"multiprofile.style_circles" = "圆圈";
+"multiprofile.style_bars" = "条形";
+"multiprofile.style_dots" = "圆点";
+"multiprofile.style_percent" = "百分比";
 "multiprofile.show_week" = "显示每周使用量";
 "multiprofile.show_week_description" = "除了会话使用量外，还显示每周使用量";
 "multiprofile.show_label" = "显示配置文件标签";
 "multiprofile.show_label_description" = "在图标下方显示配置文件名称";
 "multiprofile.use_system_color" = "单色";
 "multiprofile.use_system_color_description" = "使用白色而不是状态颜色（绿色/橙色/红色）";
+"multiprofile.active_indicator_title" = "显示活动配置文件指示器";
+"multiprofile.active_indicator_description" = "在当前活动配置文件的图标下显示一条小的绿色下划线";
 
 /* ==================== */
 /* MARK: - General Settings (Profile-Level) */
@@ -692,6 +713,13 @@
 "cli.benefit_1" = "使用配置文件自动切换 Claude Code 登录";
 "cli.benefit_2" = "保持 CLI 和应用账户同步";
 "cli.benefit_3" = "配置文件切换时自动刷新凭据";
+"cli.manual_token_title" = "粘贴 OAuth 设置令牌";
+"cli.manual_token_subtitle" = "使用 `claude setup-token` 生成的长效令牌，而不是重新同步";
+"cli.manual_token_disclosure" = "手动输入令牌";
+"cli.manual_token_help" = "在终端中运行 `claude setup-token` 以生成长效 OAuth 令牌，然后粘贴到此处。当您的网页会话已过期或无法从 Claude Code 同步时使用。";
+"cli.manual_token_placeholder" = "sk-ant-oat01-...";
+"cli.manual_token_save" = "保存令牌";
+"cli.manual_token_empty_error" = "请先粘贴令牌再保存";
 
 /* ==================== */
 /* MARK: - Additional Keys */
@@ -704,6 +732,21 @@
 "claudecode.actions_title" = "操作";
 "claudecode.component_profile" = "配置文件名称";
 "claudecode.context_info" = "上下文可能显示约80-95%而非100%——Claude会在达到上限前自动压缩，输出令牌也会占用上下文空间。";
+"claudecode.element_colors_title" = "元素颜色";
+"claudecode.element_color_directory" = "目录";
+"claudecode.element_color_branch" = "分支";
+"claudecode.element_color_model" = "模型";
+"claudecode.element_color_profile" = "配置文件";
+"claudecode.element_color_context" = "上下文";
+"claudecode.element_color_separator" = "分隔符";
+"claudecode.element_color_usage" = "用量渐变";
+"claudecode.element_color_usage_desc" = "用固定颜色替换10级渐变";
+"claudecode.element_color_pace" = "节奏标记";
+"claudecode.element_color_pace_desc" = "用固定颜色替换6级节奏颜色";
+"claudecode.element_color_weekly" = "周使用量";
+"claudecode.element_color_weekly_desc" = "用固定颜色替换周使用量渐变";
+"claudecode.element_color_extra" = "额外使用量";
+"claudecode.element_color_extra_desc" = "用固定颜色替换额外使用量（费用）渐变";
 "error.generic" = "错误：%@";
 "personal.button_saving" = "保存中...";
 "personal.button_setup_wizard" = "设置向导";
@@ -887,6 +930,12 @@
 "popover.time_format_system" = "系统";
 "popover.time_format_12h" = "12小时";
 "popover.time_format_24h" = "24小时";
+"popover.peak_hours" = "Peak Hours Indicator";
+"popover.peak_hours_desc" = "Show when Claude is in peak hours (weekdays %@)";
+"popover.peak_hours_toggle" = "Show peak hours indicator";
+"popover.peak_hours_toggle_desc" = "Display a flame icon in the menu bar and highlight the session card during peak hours";
+"popover.peak_hours_menu_icon" = "Show flame icon in menu bar";
+"popover.peak_hours_menu_icon_desc" = "Display a flame icon next to your usage indicators during peak hours";
 
 /* ==================== */
 /* MARK: - Feedback Prompt */

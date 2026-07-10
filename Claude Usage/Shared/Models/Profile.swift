@@ -25,6 +25,13 @@ struct Profile: Codable, Identifiable, Equatable {
     var hasCliAccount: Bool
     var cliAccountSyncedAt: Date?
 
+    /// Serialized `oauthAccount` object from Claude Code's `.claude.json` config file.
+    /// Captured at sync time and re-applied during profile switches so that
+    /// Claude Code's `/status` command shows the correct account for the active
+    /// profile. Stored as a raw JSON string to preserve unknown/future fields
+    /// (emailAddress, accountUuid, organizationName, billingType, etc.).
+    var oauthAccountJSON: String?
+
     // MARK: - Usage Data (Per-Profile)
     var claudeUsage: ClaudeUsage?
     var apiUsage: APIUsage?
@@ -58,6 +65,7 @@ struct Profile: Codable, Identifiable, Equatable {
         cliCredentialsJSON: String? = nil,
         hasCliAccount: Bool = false,
         cliAccountSyncedAt: Date? = nil,
+        oauthAccountJSON: String? = nil,
         claudeUsage: ClaudeUsage? = nil,
         apiUsage: APIUsage? = nil,
         iconConfig: MenuBarIconConfiguration = .default,
@@ -79,6 +87,7 @@ struct Profile: Codable, Identifiable, Equatable {
         self.cliCredentialsJSON = cliCredentialsJSON
         self.hasCliAccount = hasCliAccount
         self.cliAccountSyncedAt = cliAccountSyncedAt
+        self.oauthAccountJSON = oauthAccountJSON
         self.claudeUsage = claudeUsage
         self.apiUsage = apiUsage
         self.iconConfig = iconConfig

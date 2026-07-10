@@ -5,6 +5,131 @@ All notable changes to Claude Usage Tracker will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### New Features
+
+- **Claude Fable Weekly Usage Tracking**: Parse the `seven_day_fable` API field and show a dedicated Fable row in the popover (hidden when usage is 0), with `menubar.fable_usage` localized across all supported locales
+- **Claude Design Weekly Usage Tracking** (PR #221): Parse the `seven_day_omelette` API field and show a Design row in the popover
+- **OAuth Setup Token Support** (PR #253): Paste a long-lived token from `claude setup-token` in CLI Account settings — useful when the keychain sync flow is unavailable
+- **Relaxed Usage Color Thresholds** (PR #232): Menu bar coloring now flips to moderate at 80% and critical at 90% (was 50%/80%), matching Anthropic's raised plan limits
+
+### Bug Fixes
+
+- **Popover Layout-Recursion Crash on macOS 26/27** (PR #265): Cap SwiftUI popover sizing to stop an unbounded AppKit layout loop that crashed with `EXC_BAD_ACCESS`
+- **NSImage TIFF Crash on macOS 26** (PR #231): Replace `tiffRepresentation`-based image hashing to avoid intermittent `SetupTIFFErrorHandler` crashes
+- **Account Identity Uses accountUuid** (PR #264): Stop treating the rotating OAuth refresh token as account identity, restoring pre-switch re-sync
+- **Popover Over Full-Screen Apps** (PR #257): Activate the app before showing the popover so it appears above full-screen windows
+- **Menu Bar Icon Hidden After Cmd-Drag Removal** (PR #251): Force `isVisible` after status item creation to override persisted hidden state
+- **Menu Bar Icon Reverting for CLI-Authenticated Users** (PR #220): Align icon rendering with the CLI keychain auth fallback
+
+### Documentation
+
+- **Windows Port Mention** (PR #180): README now points Windows users to the community-maintained ClaudeTracker port
+
+---
+
+## [3.1.1] - 2026-04-21
+
+### New Features
+
+- **Traditional Chinese (zh-Hant) Localization** (PR #218): Full translation for all UI strings — language count increased from 12 to 13
+- **Stable Menu Bar Item Positions** (PR #214): NSStatusItems now have stable `autosaveName` so menu bar managers (e.g. Ice) can remember item positions across app restarts
+
+### Bug Fixes
+
+- **Sign-In Shows Fresh Login Page**: Clear all claude.ai/anthropic cookies before sign-in; use real NSPanel popup for Google SSO (fixes "One moment please..." stuck screen); added `WKHTTPCookieStoreObserver` for immediate session key detection after login
+- **Cross-Profile Credential Contamination** (PR #215): Prevent credentials from leaking between profiles during `resyncBeforeSwitching`; restrict system keychain fallback to active profile only
+- **Menu Bar Items Disappearing on Config Changes** (PR #214): Config toggles (icon style, week display, labels) no longer destroy/recreate all status items; new `.multiProfileConfigChanged` notification separates visual tweaks from actual mode switches
+- **Peak Hours Observer Leak** (PR #214): Remove `peakHoursObserver` in `cleanup()` to prevent observer leaks and duplicate notifications
+- **Missing Translations for Multiprofile Icon Styles** (#216): Added translations for `style_circles`, `style_bars`, `style_dots`, `style_percent` in ko, es, fr, de, it, ja, pt
+
+### UI Improvements
+
+- **Manual Session Key Always Visible**: Replaced collapsed DisclosureGroup with always-visible section and OR divider in both Personal and API Console credential views
+- **Removed Incorrect CLI Tracking Note**: Removed the yellow "Usage tracking uses Claude.ai credentials" note from CLI Account view
+
+### Contributors
+
+- **@fcamblor** (Frederic Camblor) — Menu bar item persistence fix (#214), cross-profile credential contamination fix (#215)
+- **@ryanjan666** (Ryan) — Traditional Chinese localization (#218)
+- **@ddotz** — Reported missing Korean i18n keys (#216)
+
+---
+
+## [3.1.0] - 2026-04-14
+
+### Right-Click Context Menu
+
+- **Native macOS Context Menu**: Right-click any status bar icon to access Refresh, Settings (Cmd+,), and Quit (Cmd+Q) — left-click continues to open the popover as before
+- Fully localized across all 12 supported languages
+
+### Per-Element Color Customization for Statusline
+
+- **Individual Segment Colors**: Assign independent colors to each statusline element (session, daily, weekly, extra usage segments) for fine-grained visual differentiation in the menu bar
+
+### Weekly & Extra Usage Segments in Statusline
+
+- **Expanded Statusline**: Dedicated weekly and extra usage segments now rendered alongside session usage in the statusline
+- **Independent Weekly Display**: Show/hide weekly segment and separate weekly toggle options
+
+### Active Profile Indicator
+
+- **Green Underline Marker**: The currently active profile's icon in multi-profile menu bar mode now displays a green underline, making the live profile immediately identifiable
+
+### Nix Installation Option
+
+- **Nix Package**: Added `nix` as a supported installation method (nix-shell and home-manager)
+
+### New Localizations
+
+- **Brazilian Portuguese (pt-BR)**: Full translation including all weekly/extra usage keys
+- **Turkish (Turkce)**: Full translation for all UI strings
+- **Ukrainian (Ukrainska)**: Full translation, including missing keys and corrected region code (`ua` -> `uk`)
+- Language count increased from 9 to 12
+
+### Peak Hours Indicator
+
+- **Peak Hours Detection**: A flame icon appears in the menu bar during Anthropic's peak hours (weekdays 5–11 AM PT), with a popover showing end time and countdown in your local timezone
+- Configurable via Settings — enable or disable the indicator per preference
+
+### Analytics
+
+- **24-Hour Heartbeat Ping**: Anonymous heartbeat sent once every 24 hours to track active app usage — payload contains only app version, no PII or credentials
+
+### Bug Fixes
+
+- **Popover EXC_BAD_ACCESS on Profile Switch**: Fixed crash caused by async `performClose` race condition that reassigned the content view controller mid-teardown when clicking a different profile's menu bar icon while the popover is already shown
+- **Popover Constraint Cycle on Detach**: Fixed crash when dragging the popover to a floating window — caused by width mismatch between `NSHostingController` preferred size (320pt) and the SwiftUI view's fixed frame (280pt)
+- **"Unable" Usage with System Keychain Credentials** (#210): `Profile.hasUsageCredentials` now mirrors the full fallback chain (profile creds + system Keychain) via `hasAnyAvailableCredentials()`; `MenuBarManager` always instantiated before setup wizard
+- **App Hangs on Launch** (#179): All `/usr/bin/security` invocations bounded with hard timeouts (3s/5s); stuck subprocesses terminated via SIGTERM/SIGKILL; resolved keychain service name cached to UserDefaults
+- **oauthAccount Not Updated on Profile Switch** (#175): `syncToProfile()` and `resyncBeforeSwitching()` now capture and restore `oauthAccount` from `~/.claude.json`; config lookup probes `CLAUDE_CONFIG_DIR`, `~/.claude.json`, and `~/.claude/.claude.json`
+- **E3000 Unauthorized Error** (PR #204): Added browser-like HTTP headers (User-Agent, Referer, Origin) to claude.ai session requests
+- **Popover Positioning Offset** (PR #200): Corrected vertical offset so the popover appears flush below the menu bar icon
+- **showRemainingPercentage in Multi-Profile Mode** (PR #205): Setting now consistently applied across all multi-profile slots and the multi-profile popover view
+- **Pace Marker Hidden in Monochrome Mode** (PR #178): `isTemplate` set to `false` when pace markers are visible
+- **Statusline Cache in Multi-Profile Refresh**: Usage cache file now written during multi-profile refreshes so the statusline script has up-to-date data
+- **Extra Top Padding in Popover**: Removed unnecessary top padding causing a whitespace gap
+- **12 Missing zh-ch Localization Keys**: Added 12 missing Simplified Chinese keys that were falling back to English
+- **Ukrainian Region Code**: Corrected from `ua` to `uk` in Xcode project file
+
+### Contributors
+
+- **@andrealufino** (Andrea Mario Lufino) — Per-element statusline color customization (#208)
+- **@vcekron** (Vi Kronberg) — Weekly/extra usage segments (#177), pace marker monochrome fix (#178)
+- **@myrison** (Jason Cumberland) — Active profile indicator, multi-profile remaining % fix (#205)
+- **@yelloduxx** (Duxxie) — E3000 browser headers fix (#204)
+- **@usizu** (Aks) — Popover positioning fix (#200)
+- **@Myzel394** — Nix installation option (#211)
+- **@Hudson3384** (Hudson Arruda) — Brazilian Portuguese localization (#189)
+- **@unkownpr** (Semih Silistre) — Turkish localization (#170)
+- **@ZelikSV** (Serhii Zelik) — Ukrainian localization and region code fixes
+- **@Antony7e4** (Anthony Li) — Reported #210
+- **@Estrarc** (citizen of glass) — Reported #179
+- **@AlvaroTena** (Alvaro Tena) — Reported #175
+
+---
+
 ## [3.0.3] - 2026-03-10
 
 ### 6-Tier Pace System
@@ -1666,6 +1791,7 @@ This major release represents a significant milestone for Claude Usage Tracker, 
 - Detailed usage dashboard with countdown timers
 - Support for macOS 14.0+ (Sonoma and later)
 
+[3.1.0]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v3.0.3...v3.1.0
 [3.0.3]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v3.0.2...v3.0.3
 [3.0.2]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v3.0.1...v3.0.2
 [3.0.1]: https://github.com/hamed-elfayome/Claude-Usage-Tracker/compare/v3.0.0...v3.0.1

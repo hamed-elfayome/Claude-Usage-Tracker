@@ -61,6 +61,8 @@
 "menubar.weekly_usage" = "Weekly";
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";
+"menubar.fable_usage" = "Fable";
+"menubar.design_usage" = "Design";
 "menubar.extra_usage" = "Extra Usage";
 "menubar.api_credits" = "API Credits";
 "menubar.api_cost" = "API Cost";
@@ -368,6 +370,11 @@
 "claudecode.component_pace_marker" = "Pace marker";
 "claudecode.pace_marker_info" = "Colored by projected usage pace (green → purple)";
 "claudecode.component_resettime" = "Reset time";
+"claudecode.component_weekly" = "Show Weekly Usage";
+"claudecode.component_weekly_description" = "Weekly token usage with bar and reset time";
+"claudecode.component_extra_usage" = "Show Extra Usage";
+"claudecode.component_extra_usage_description" = "Cost indicator (e.g., 9.49 USD)";
+"claudecode.weekly_label" = "Show \"Weekly:\" label";
 "claudecode.requirement_sessionkey" = "• Session key configured in Credentials → Claude.ai tab";
 "claudecode.requirement_restart" = "• Restart Claude CLI after applying changes";
 "claudecode.error_no_components" = "Please select at least one component to display";
@@ -530,6 +537,8 @@
 "multiprofile.show_label_description" = "Display profile name below the icon";
 "multiprofile.use_system_color" = "Monochrome";
 "multiprofile.use_system_color_description" = "Use white color instead of status colors (green/orange/red)";
+"multiprofile.active_indicator_title" = "Show Active Profile Indicator";
+"multiprofile.active_indicator_description" = "Show a small green underline under the icon of the currently active profile";
 
 /* ==================== */
 /* MARK: - General Settings (Profile-Level) */
@@ -698,6 +707,13 @@
 "cli.benefit_1" = "Auto-switch Claude Code login with profiles";
 "cli.benefit_2" = "Keep CLI and app accounts in sync";
 "cli.benefit_3" = "Auto-refresh credentials on profile switch";
+"cli.manual_token_title" = "Paste an OAuth Setup Token";
+"cli.manual_token_subtitle" = "Use a long-lived token from `claude setup-token` instead of re-syncing";
+"cli.manual_token_disclosure" = "Enter token manually";
+"cli.manual_token_help" = "Run `claude setup-token` in your terminal to generate a long-lived OAuth token, then paste it here. Use this when your web session has expired or syncing from Claude Code is not working.";
+"cli.manual_token_placeholder" = "sk-ant-oat01-...";
+"cli.manual_token_save" = "Save Token";
+"cli.manual_token_empty_error" = "Please paste a token before saving";
 
 /* ==================== */
 /* MARK: - Additional Keys */
@@ -710,6 +726,21 @@
 "claudecode.actions_title" = "Actions";
 "claudecode.component_profile" = "Profile name";
 "claudecode.context_info" = "Context may show ~80-95% instead of 100% — Claude auto-compresses before the limit, and output tokens also use context space.";
+"claudecode.element_colors_title" = "Element Colors";
+"claudecode.element_color_directory" = "Directory";
+"claudecode.element_color_branch" = "Branch";
+"claudecode.element_color_model" = "Model";
+"claudecode.element_color_profile" = "Profile";
+"claudecode.element_color_context" = "Context";
+"claudecode.element_color_separator" = "Separator";
+"claudecode.element_color_usage" = "Usage gradient";
+"claudecode.element_color_usage_desc" = "Override 10-level gradient with a fixed color";
+"claudecode.element_color_pace" = "Pace marker";
+"claudecode.element_color_pace_desc" = "Override 6-tier pace colors with a fixed color";
+"claudecode.element_color_weekly" = "Weekly usage";
+"claudecode.element_color_weekly_desc" = "Override weekly usage gradient with a fixed color";
+"claudecode.element_color_extra" = "Extra usage";
+"claudecode.element_color_extra_desc" = "Override extra usage (cost) gradient with a fixed color";
 "error.generic" = "Error: %@";
 "personal.button_saving" = "Saving...";
 "personal.button_setup_wizard" = "Setup Wizard";
@@ -909,6 +940,12 @@
 "popover.time_format_system" = "System";
 "popover.time_format_12h" = "12-hour";
 "popover.time_format_24h" = "24-hour";
+"popover.peak_hours" = "Peak Hours Indicator";
+"popover.peak_hours_desc" = "Show when Claude is in peak hours (weekdays %@)";
+"popover.peak_hours_toggle" = "Show peak hours indicator";
+"popover.peak_hours_toggle_desc" = "Display a flame icon in the menu bar and highlight the session card during peak hours";
+"popover.peak_hours_menu_icon" = "Show flame icon in menu bar";
+"popover.peak_hours_menu_icon_desc" = "Display a flame icon next to your usage indicators during peak hours";
 
 /* ==================== */
 /* MARK: - Feedback Prompt */

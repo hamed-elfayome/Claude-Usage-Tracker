@@ -16,6 +16,12 @@ final class StatusBarUIManager {
     // Dictionary to hold status items keyed by profile ID (multi-profile mode)
     private var multiProfileStatusItems: [UUID: NSStatusItem] = [:]
 
+    // Peak hours indicator (independent of metric system)
+    private var peakHoursStatusItem: NSStatusItem?
+    private var peakHoursTimer: Timer?
+    private weak var peakHoursTarget: AnyObject?
+    private var peakHoursAction: Selector?
+
     // Current display mode
     private var isMultiProfileMode: Bool = false
 
@@ -30,11 +36,54 @@ final class StatusBarUIManager {
 
     weak var delegate: StatusBarUIManagerDelegate?
 
+    // MARK: - Stable autosaveName helpers
+
+    /// Base prefix for all status item autosave names.
+    /// Ice (icemenubar.app) and macOS use autosaveName to persist item positions.
+    private static let autosavePrefix = "claudeUsageTracker"
+
+    /// Returns a stable autosaveName for a single-profile metric item
+    private static func autosaveName(for metricType: MenuBarMetricType) -> NSStatusItem.AutosaveName {
+        return "\(autosavePrefix).metric.\(metricType.rawValue)"
+    }
+
+    /// Returns a stable autosaveName for a multi-profile item by profile ID
+    private static func autosaveName(forProfileId id: UUID) -> NSStatusItem.AutosaveName {
+        return "\(autosavePrefix).multiProfile.\(id.uuidString)"
+    }
+
+    /// Returns a stable autosaveName for the peak hours indicator
+    private static let peakHoursAutosaveName: NSStatusItem.AutosaveName = "\(autosavePrefix).peakHours"
+
+    /// Returns a stable autosaveName for the default logo (no credentials)
+    private static let defaultLogoAutosaveName: NSStatusItem.AutosaveName = "\(autosavePrefix).defaultLogo"
+
+    // MARK: - Multi-profile identity helpers
+
+    /// Well-known placeholder UUID used for the default logo in multi-profile mode
+    private static let defaultLogoPlaceholderUUID = UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
+
     // MARK: - Initialization
 
     init() {}
 
     // MARK: - Setup
+
+    /// Creates a status item with its autosave name, forced visibility, and
+    /// standard button wiring. NSStatusItem persists isVisible under its
+    /// autosaveName — a prior cmd-drag removal writes false, so every creation
+    /// site must override it back to true or the item silently never appears.
+    private func makeStatusItem(autosaveName: NSStatusItem.AutosaveName, target: AnyObject, action: Selector) -> NSStatusItem {
+        let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        statusItem.autosaveName = autosaveName
+        statusItem.isVisible = true
+        if let button = statusItem.button {
+            button.action = action
+            button.target = target
+            button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+        }
+        return statusItem
+    }
 
     /// Sets up status bar items based on configuration
     func setup(target: AnyObject, action: Selector, config: MenuBarIconConfiguration) {
@@ -44,11 +93,8 @@ final class StatusBarUIManager {
         // Check if there are any enabled metrics
         if config.enabledMetrics.isEmpty {
             // No credentials/metrics - show default app logo
-            let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-
+            let statusItem = makeStatusItem(autosaveName: Self.defaultLogoAutosaveName, target: target, action: action)
             if let button = statusItem.button {
-                button.action = action
-                button.target = target
                 // Set a temporary placeholder - will be updated with actual logo
                 button.title = ""
             } else {
@@ -61,12 +107,8 @@ final class StatusBarUIManager {
         } else {
             // Create status items for enabled metrics
             for metricConfig in config.enabledMetrics {
-                let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-
-                if let button = statusItem.button {
-                    button.action = action
-                    button.target = target
-                } else {
+                let statusItem = makeStatusItem(autosaveName: Self.autosaveName(for: metricConfig.metricType), target: target, action: action)
+                if statusItem.button == nil {
                     LoggingService.shared.logWarning("Status bar button is nil for \(metricConfig.metricType.displayName) - screens: \(NSScreen.screens.count)")
                 }
 
@@ -110,15 +152,14 @@ final class StatusBarUIManager {
         // Step 2: Add items that are new
         let itemsToAdd = newMetricTypes.subtracting(currentMetricTypes)
         for metricType in itemsToAdd {
-            let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-
-            if let button = statusItem.button {
-                button.action = action
-                button.target = target
-                if metricType == .session {
-                    // Default logo placeholder
-                    button.title = ""
-                }
+            // When enabledMetrics is empty, only .session is in newMetricTypes, so this is safe
+            let autosaveName = config.enabledMetrics.isEmpty
+                ? Self.defaultLogoAutosaveName
+                : Self.autosaveName(for: metricType)
+            let statusItem = makeStatusItem(autosaveName: autosaveName, target: target, action: action)
+            if let button = statusItem.button, metricType == .session {
+                // Default logo placeholder
+                button.title = ""
             }
 
             statusItems[metricType] = statusItem
@@ -161,7 +202,69 @@ final class StatusBarUIManager {
 
         isMultiProfileMode = false
 
+        removePeakHoursIndicator()
+
         LoggingService.shared.logUIEvent("Status bar cleaned up")
+    }
+
+    // MARK: - Peak Hours Indicator
+
+    /// Starts monitoring peak hours. Shows the flame icon only during peak hours.
+    func setupPeakHoursIndicator(target: AnyObject, action: Selector) {
+        removePeakHoursIndicator()
+
+        peakHoursTarget = target
+        peakHoursAction = action
+
+        // Show immediately if currently peak
+        updatePeakHoursIcon()
+
+        peakHoursTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+            self?.updatePeakHoursIcon()
+        }
+        peakHoursTimer?.tolerance = 10
+    }
+
+    /// Removes the peak hours status item and stops monitoring.
+    func removePeakHoursIndicator() {
+        peakHoursTimer?.invalidate()
+        peakHoursTimer = nil
+        peakHoursTarget = nil
+        peakHoursAction = nil
+        removePeakHoursStatusItem()
+    }
+
+    /// Updates the peak hours icon: shows during peak, hides when off-peak.
+    func updatePeakHoursIcon() {
+        let isPeak = PeakHoursService.checkIsPeakHours()
+
+        if isPeak {
+            // Create the status item if not already showing
+            if peakHoursStatusItem == nil, let target = peakHoursTarget, let action = peakHoursAction {
+                peakHoursStatusItem = makeStatusItem(autosaveName: Self.peakHoursAutosaveName, target: target, action: action)
+            }
+            if let button = peakHoursStatusItem?.button {
+                let menuBarIsDark = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+                let image = renderer.createPeakHoursIcon(isPeak: true, isDarkMode: menuBarIsDark)
+                image.isTemplate = false
+                setButtonImage(button, image: image)
+            }
+        } else {
+            // Remove the icon when off-peak
+            removePeakHoursStatusItem()
+        }
+    }
+
+    private func removePeakHoursStatusItem() {
+        if let item = peakHoursStatusItem {
+            if let button = item.button {
+                button.image = nil
+                button.action = nil
+                button.target = nil
+            }
+            NSStatusBar.system.removeStatusItem(item)
+        }
+        peakHoursStatusItem = nil
     }
 
     // MARK: - Multi-Profile Mode
@@ -178,26 +281,20 @@ final class StatusBarUIManager {
 
         if selectedProfiles.isEmpty {
             // No profiles selected - show default logo
-            let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+            let statusItem = makeStatusItem(autosaveName: Self.defaultLogoAutosaveName, target: target, action: action)
             if let button = statusItem.button {
-                button.action = action
-                button.target = target
                 button.title = ""
             } else {
                 LoggingService.shared.logWarning("Multi-profile status bar button is nil - screens: \(NSScreen.screens.count)")
             }
-            // Use a placeholder UUID for default logo
-            multiProfileStatusItems[UUID()] = statusItem
+            // Use a well-known placeholder UUID for default logo (stable across calls)
+            multiProfileStatusItems[Self.defaultLogoPlaceholderUUID] = statusItem
             LoggingService.shared.logUIEvent("Multi-profile: No profiles selected, showing default logo")
         } else {
             // Create one status item per selected profile
             for profile in selectedProfiles {
-                let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-
-                if let button = statusItem.button {
-                    button.action = action
-                    button.target = target
-                } else {
+                let statusItem = makeStatusItem(autosaveName: Self.autosaveName(forProfileId: profile.id), target: target, action: action)
+                if statusItem.button == nil {
                     LoggingService.shared.logWarning("Multi-profile status bar button is nil for \(profile.name) - screens: \(NSScreen.screens.count)")
                 }
 
@@ -210,8 +307,70 @@ final class StatusBarUIManager {
         observeAppearanceChanges()
     }
 
+    /// Incrementally updates multi-profile status items without destroying existing ones.
+    /// Only adds/removes items when the set of selected profiles changes.
+    func updateMultiProfileConfiguration(profiles: [Profile], target: AnyObject, action: Selector) {
+        guard isMultiProfileMode else {
+            // Not in multi-profile mode yet - do a full setup
+            setupMultiProfile(profiles: profiles, target: target, action: action)
+            return
+        }
+
+        let selectedProfiles = profiles.filter { $0.isSelectedForDisplay }
+        let newProfileIds: Set<UUID> = selectedProfiles.isEmpty
+            ? [Self.defaultLogoPlaceholderUUID]
+            : Set(selectedProfiles.map { $0.id })
+        let currentProfileIds = Set(multiProfileStatusItems.keys)
+
+        // Step 1: Remove items that are no longer needed
+        let idsToRemove = currentProfileIds.subtracting(newProfileIds)
+        for profileId in idsToRemove {
+            if let statusItem = multiProfileStatusItems[profileId] {
+                if let button = statusItem.button {
+                    button.image = nil
+                    button.action = nil
+                    button.target = nil
+                }
+                NSStatusBar.system.removeStatusItem(statusItem)
+                LoggingService.shared.logUIEvent("Multi-profile: Removed status item for profile \(profileId)")
+            }
+            multiProfileStatusItems.removeValue(forKey: profileId)
+        }
+
+        // Step 2: Add items that are new
+        let idsToAdd = newProfileIds.subtracting(currentProfileIds)
+
+        if selectedProfiles.isEmpty && idsToAdd.contains(Self.defaultLogoPlaceholderUUID) {
+            // Need to add default logo
+            let statusItem = makeStatusItem(autosaveName: Self.defaultLogoAutosaveName, target: target, action: action)
+            statusItem.button?.title = ""
+            multiProfileStatusItems[Self.defaultLogoPlaceholderUUID] = statusItem
+            LoggingService.shared.logUIEvent("Multi-profile: Added default logo")
+        } else {
+            for profile in selectedProfiles where idsToAdd.contains(profile.id) {
+                let statusItem = makeStatusItem(autosaveName: Self.autosaveName(forProfileId: profile.id), target: target, action: action)
+                multiProfileStatusItems[profile.id] = statusItem
+                LoggingService.shared.logUIEvent("Multi-profile: Added status item for profile \(profile.name)")
+            }
+        }
+
+        LoggingService.shared.logUIEvent("Multi-profile config updated: removed=\(idsToRemove.count), added=\(idsToAdd.count), kept=\(currentProfileIds.intersection(newProfileIds).count)")
+    }
+
+    /// Adds a thin green underline to an image to indicate the active profile
+    private func addGreenUnderline(to image: NSImage) -> NSImage {
+        let newImage = NSImage(size: image.size)
+        newImage.lockFocus()
+        defer { newImage.unlockFocus() }
+        // Shift content up 2px to create a 1px gap above the underline
+        image.draw(at: NSPoint(x: 0, y: 2), from: .zero, operation: .copy, fraction: 1.0)
+        NSColor.systemGreen.setFill()
+        NSBezierPath(rect: NSRect(x: 1, y: 0, width: image.size.width - 2, height: 1)).fill()
+        return newImage
+    }
+
     /// Updates all multi-profile status items
-    func updateMultiProfileButtons(profiles: [Profile], config: MultiProfileDisplayConfig) {
+    func updateMultiProfileButtons(profiles: [Profile], config: MultiProfileDisplayConfig, activeProfileId: UUID? = nil) {
         guard isMultiProfileMode else { return }
 
         for profile in profiles where profile.isSelectedForDisplay {
@@ -225,7 +384,7 @@ final class StatusBarUIManager {
 
             // Get usage data for this profile
             let usage = profile.claudeUsage ?? ClaudeUsage.empty
-            let showRemaining = profile.iconConfig.showRemainingPercentage
+            let showRemaining = config.showRemainingPercentage
 
             // Calculate percentages
             let sessionUsed = usage.effectiveSessionPercentage
@@ -363,8 +522,14 @@ final class StatusBarUIManager {
                 )
             }
 
-            image.isTemplate = useMonochrome && !config.showPaceMarker
-            button.image = image
+            if profile.id == activeProfileId && config.showActiveProfileIndicator {
+                let underlinedImage = addGreenUnderline(to: image)
+                underlinedImage.isTemplate = false
+                button.image = underlinedImage
+            } else {
+                image.isTemplate = useMonochrome && !config.showPaceMarker
+                button.image = image
+            }
         }
     }
 
@@ -418,9 +583,11 @@ final class StatusBarUIManager {
         let profile = ProfileManager.shared.activeProfile
         let config = profile?.iconConfig ?? .default
 
-        // Check if we should show default logo (no usage credentials OR no enabled metrics)
-        let hasUsageCredentials = profile?.hasUsageCredentials ?? false
-        if !hasUsageCredentials || config.enabledMetrics.isEmpty {
+        // Keep the render path aligned with ClaudeAPIService/MenuBarManager auth
+        // fallback logic so users authenticated only via `claude login` don't
+        // periodically repaint to the default logo after successful refreshes.
+        let hasAnyCredentials = hasAnyAvailableCredentials(for: profile)
+        if !hasAnyCredentials || config.enabledMetrics.isEmpty {
             // Show default app logo
             if let statusItem = statusItems[.session],  // We use .session as placeholder key
                let button = statusItem.button {
@@ -500,6 +667,17 @@ final class StatusBarUIManager {
         button.image = image
     }
 
+    /// Mirrors the auth fallback used for actual usage fetches so UI gating does
+    /// not disagree with the network layer.
+    private func hasAnyAvailableCredentials(for profile: Profile?) -> Bool {
+        guard let profile else { return false }
+
+        // Profile-local credentials, then the cached system Keychain CLI
+        // fallback — same rule as MenuBarManager and the network layer.
+        return profile.hasUsageCredentials
+            || ClaudeCodeSyncService.shared.hasUsableSystemCredentials()
+    }
+
     /// Get button for a specific metric (used for popover positioning)
     func button(for metricType: MenuBarMetricType) -> NSStatusBarButton? {
         return statusItems[metricType]?.button
@@ -554,7 +732,10 @@ final class StatusBarUIManager {
     /// This prevents triggering effectiveAppearance KVO when the image is identical.
     private func setButtonImage(_ button: NSStatusBarButton, image: NSImage) {
         let buttonId = ObjectIdentifier(button)
-        guard let newData = image.tiffRepresentation else {
+        // Avoid NSImage.tiffRepresentation: macOS 26 SDK crashes in
+        // SetupTIFFErrorHandler dispatch_once. Hash via CGImage bytes instead.
+        guard let cg = image.cgImage(forProposedRect: nil, context: nil, hints: nil),
+              let newData = cg.dataProvider?.data as Data? else {
             button.image = image
             return
         }

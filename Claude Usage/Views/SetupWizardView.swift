@@ -467,7 +467,7 @@ struct EnterKeyStepSetup: View {
 
         Task {
             do {
-                let organizations = try await apiService.testSessionKey(wizardState.sessionKey)
+                let organizations = try await apiService.testSessionKeyWithRetry(wizardState.sessionKey)
 
                 await MainActor.run {
                     wizardState.testedOrganizations = organizations

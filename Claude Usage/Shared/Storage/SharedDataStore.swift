@@ -33,8 +33,15 @@ class SharedDataStore {
         static let statuslineUse24HourTime = "statuslineUse24HourTime"
         static let statuslineShowUsageLabel = "statuslineShowUsageLabel"
         static let statuslineShowResetLabel = "statuslineShowResetLabel"
+        static let statuslineShowWeekly = "statuslineShowWeekly"
+        static let statuslineShowWeeklyBar = "statuslineShowWeeklyBar"
+        static let statuslineShowWeeklyPaceMarker = "statuslineShowWeeklyPaceMarker"
+        static let statuslineShowWeeklyResetTime = "statuslineShowWeeklyResetTime"
+        static let statuslineShowWeeklyLabel = "statuslineShowWeeklyLabel"
+        static let statuslineShowExtraUsage = "statuslineShowExtraUsage"
         static let statuslineColorMode = "statuslineColorMode"
         static let statuslineSingleColorHex = "statuslineSingleColorHex"
+        static let statuslineElementColors = "statuslineElementColors"
 
         // Setup State
         static let hasCompletedSetup = "hasCompletedSetup"
@@ -67,6 +74,8 @@ class SharedDataStore {
         static let popoverShowRemainingTime = "popoverShowRemainingTime" // legacy bool key
         static let popoverTimeDisplay = "popoverTimeDisplay"
         static let timeFormatPreference = "timeFormatPreference"
+        static let peakHoursIndicatorEnabled = "peakHoursIndicatorEnabled"
+        static let peakHoursMenuIconEnabled = "peakHoursMenuIconEnabled"
     }
 
     init() {
@@ -249,6 +258,72 @@ class SharedDataStore {
         return defaults.bool(forKey: Keys.statuslineShowResetLabel)
     }
 
+    func saveStatuslineShowWeekly(_ show: Bool) {
+        defaults.set(show, forKey: Keys.statuslineShowWeekly)
+    }
+
+    func loadStatuslineShowWeekly() -> Bool {
+        if defaults.object(forKey: Keys.statuslineShowWeekly) == nil {
+            return false
+        }
+        return defaults.bool(forKey: Keys.statuslineShowWeekly)
+    }
+
+    func saveStatuslineShowWeeklyBar(_ show: Bool) {
+        defaults.set(show, forKey: Keys.statuslineShowWeeklyBar)
+    }
+
+    func loadStatuslineShowWeeklyBar() -> Bool {
+        if defaults.object(forKey: Keys.statuslineShowWeeklyBar) == nil {
+            return true
+        }
+        return defaults.bool(forKey: Keys.statuslineShowWeeklyBar)
+    }
+
+    func saveStatuslineShowWeeklyPaceMarker(_ show: Bool) {
+        defaults.set(show, forKey: Keys.statuslineShowWeeklyPaceMarker)
+    }
+
+    func loadStatuslineShowWeeklyPaceMarker() -> Bool {
+        if defaults.object(forKey: Keys.statuslineShowWeeklyPaceMarker) == nil {
+            return true
+        }
+        return defaults.bool(forKey: Keys.statuslineShowWeeklyPaceMarker)
+    }
+
+    func saveStatuslineShowWeeklyResetTime(_ show: Bool) {
+        defaults.set(show, forKey: Keys.statuslineShowWeeklyResetTime)
+    }
+
+    func loadStatuslineShowWeeklyResetTime() -> Bool {
+        if defaults.object(forKey: Keys.statuslineShowWeeklyResetTime) == nil {
+            return true
+        }
+        return defaults.bool(forKey: Keys.statuslineShowWeeklyResetTime)
+    }
+
+    func saveStatuslineShowWeeklyLabel(_ show: Bool) {
+        defaults.set(show, forKey: Keys.statuslineShowWeeklyLabel)
+    }
+
+    func loadStatuslineShowWeeklyLabel() -> Bool {
+        if defaults.object(forKey: Keys.statuslineShowWeeklyLabel) == nil {
+            return true
+        }
+        return defaults.bool(forKey: Keys.statuslineShowWeeklyLabel)
+    }
+
+    func saveStatuslineShowExtraUsage(_ show: Bool) {
+        defaults.set(show, forKey: Keys.statuslineShowExtraUsage)
+    }
+
+    func loadStatuslineShowExtraUsage() -> Bool {
+        if defaults.object(forKey: Keys.statuslineShowExtraUsage) == nil {
+            return false
+        }
+        return defaults.bool(forKey: Keys.statuslineShowExtraUsage)
+    }
+
     func saveStatuslineColorMode(_ mode: StatuslineColorMode) {
         defaults.set(mode.rawValue, forKey: Keys.statuslineColorMode)
     }
@@ -267,6 +342,24 @@ class SharedDataStore {
 
     func loadStatuslineSingleColorHex() -> String {
         return defaults.string(forKey: Keys.statuslineSingleColorHex) ?? "#00BFFF"
+    }
+
+    /// Persists per-element color configuration as JSON data.
+    /// - Parameter colors: The element colors to save.
+    func saveStatuslineElementColors(_ colors: StatuslineElementColors) {
+        if let data = try? JSONEncoder().encode(colors) {
+            defaults.set(data, forKey: Keys.statuslineElementColors)
+        }
+    }
+
+    /// Loads per-element color configuration. Returns defaults matching the ANSI
+    /// `.colored` palette if no configuration has been saved yet.
+    func loadStatuslineElementColors() -> StatuslineElementColors {
+        guard let data = defaults.data(forKey: Keys.statuslineElementColors),
+              let colors = try? JSONDecoder().decode(StatuslineElementColors.self, from: data) else {
+            return StatuslineElementColors()
+        }
+        return colors
     }
 
     // MARK: - Setup State
@@ -523,6 +616,30 @@ class SharedDataStore {
         case .twentyFourHour:
             return true
         }
+    }
+
+    // MARK: - Peak Hours Indicator
+
+    func savePeakHoursIndicatorEnabled(_ enabled: Bool) {
+        defaults.set(enabled, forKey: Keys.peakHoursIndicatorEnabled)
+    }
+
+    func loadPeakHoursIndicatorEnabled() -> Bool {
+        if defaults.object(forKey: Keys.peakHoursIndicatorEnabled) == nil {
+            return false
+        }
+        return defaults.bool(forKey: Keys.peakHoursIndicatorEnabled)
+    }
+
+    func savePeakHoursMenuIconEnabled(_ enabled: Bool) {
+        defaults.set(enabled, forKey: Keys.peakHoursMenuIconEnabled)
+    }
+
+    func loadPeakHoursMenuIconEnabled() -> Bool {
+        if defaults.object(forKey: Keys.peakHoursMenuIconEnabled) == nil {
+            return true
+        }
+        return defaults.bool(forKey: Keys.peakHoursMenuIconEnabled)
     }
 
     // MARK: - Testing Helpers

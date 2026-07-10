@@ -291,6 +291,8 @@ struct MultiProfileDisplayConfig: Codable, Equatable {
     var showTimeMarker: Bool  // If true, show time-elapsed tick mark on progress indicators
     var showPaceMarker: Bool  // If true, color time marker by projected usage pace (6-tier)
     var usePaceColoring: Bool // If true, color indicators based on projected usage pace
+    var showRemainingPercentage: Bool // If true, show remaining capacity instead of used percentage
+    var showActiveProfileIndicator: Bool // If true, show a green underline on the active profile's icon
 
     init(
         iconStyle: MultiProfileIconStyle = .concentric,
@@ -299,7 +301,9 @@ struct MultiProfileDisplayConfig: Codable, Equatable {
         useSystemColor: Bool = false,
         showTimeMarker: Bool = true,
         showPaceMarker: Bool = true,
-        usePaceColoring: Bool = true
+        usePaceColoring: Bool = true,
+        showRemainingPercentage: Bool = false,
+        showActiveProfileIndicator: Bool = false
     ) {
         self.iconStyle = iconStyle
         self.showWeek = showWeek
@@ -308,6 +312,8 @@ struct MultiProfileDisplayConfig: Codable, Equatable {
         self.showTimeMarker = showTimeMarker
         self.showPaceMarker = showPaceMarker
         self.usePaceColoring = usePaceColoring
+        self.showRemainingPercentage = showRemainingPercentage
+        self.showActiveProfileIndicator = showActiveProfileIndicator
     }
 
     // MARK: - Codable (Custom decoder for backwards compatibility)
@@ -320,6 +326,8 @@ struct MultiProfileDisplayConfig: Codable, Equatable {
         case showTimeMarker
         case showPaceMarker
         case usePaceColoring
+        case showRemainingPercentage
+        case showActiveProfileIndicator
     }
 
     init(from decoder: Decoder) throws {
@@ -333,6 +341,8 @@ struct MultiProfileDisplayConfig: Codable, Equatable {
         showTimeMarker = try container.decodeIfPresent(Bool.self, forKey: .showTimeMarker) ?? true
         showPaceMarker = try container.decodeIfPresent(Bool.self, forKey: .showPaceMarker) ?? false
         usePaceColoring = try container.decodeIfPresent(Bool.self, forKey: .usePaceColoring) ?? false
+        showRemainingPercentage = try container.decodeIfPresent(Bool.self, forKey: .showRemainingPercentage) ?? false
+        showActiveProfileIndicator = try container.decodeIfPresent(Bool.self, forKey: .showActiveProfileIndicator) ?? false
     }
 
     static var `default`: MultiProfileDisplayConfig {

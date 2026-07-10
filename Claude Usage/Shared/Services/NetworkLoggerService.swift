@@ -17,7 +17,7 @@ final class NetworkLoggerService: ObservableObject {
     private let maxLogs = 500
     private let maxFileSizeBytes = 10 * 1024 * 1024  // 10MB
     private let requestBodyMaxLength = 2000
-    private let responsePreviewMaxLength = 1000
+    private let responsePreviewMaxLength = 4000
 
     private var storageURL: URL {
         let appSupport = FileManager.default.urls(

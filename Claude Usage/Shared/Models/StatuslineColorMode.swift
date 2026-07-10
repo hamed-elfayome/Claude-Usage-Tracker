@@ -18,6 +18,9 @@ enum StatuslineColorMode: String, Codable, CaseIterable {
     /// Single user-selected color for all elements
     case singleColor = "singleColor"
 
+    /// Individual custom color for each statusline element
+    case perElement = "perElement"
+
     var displayName: String {
         switch self {
         case .colored:
@@ -26,6 +29,8 @@ enum StatuslineColorMode: String, Codable, CaseIterable {
             return "Greyscale"
         case .singleColor:
             return "Single Color"
+        case .perElement:
+            return "Per Element"
         }
     }
 
@@ -37,6 +42,8 @@ enum StatuslineColorMode: String, Codable, CaseIterable {
             return "Adapts to system theme"
         case .singleColor:
             return "Custom color for all"
+        case .perElement:
+            return "Custom color per item"
         }
     }
 
@@ -48,6 +55,8 @@ enum StatuslineColorMode: String, Codable, CaseIterable {
             return "circle.lefthalf.filled"
         case .singleColor:
             return "eyedropper.halffull"
+        case .perElement:
+            return "paintpalette"
         }
     }
 }

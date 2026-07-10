@@ -59,6 +59,8 @@
 "menubar.weekly_usage" = "Settimanale";
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";
+"menubar.fable_usage" = "Fable";
+"menubar.design_usage" = "Design";
 "menubar.extra_usage" = "Utilizzo Extra";
 "menubar.api_credits" = "Crediti API";
 "menubar.5_hour_window" = "finestra mobile di 5 ore";
@@ -345,6 +347,11 @@
 "claudecode.component_pace_marker" = "Indicatore di ritmo";
 "claudecode.pace_marker_info" = "Mostra un segno colorato nella posizione del tempo trascorso";
 "claudecode.component_resettime" = "Ora di ripristino";
+"claudecode.component_weekly" = "Mostra utilizzo settimanale";
+"claudecode.component_weekly_description" = "Utilizzo settimanale token con barra e tempo di ripristino";
+"claudecode.component_extra_usage" = "Mostra utilizzo extra";
+"claudecode.component_extra_usage_description" = "Indicatore di costo (es., 9,49 USD)";
+"claudecode.weekly_label" = "Mostra etichetta \"Weekly:\"";
 "claudecode.requirement_sessionkey" = "• Chiave di sessione configurata in Credenziali → scheda Claude.ai";
 "claudecode.requirement_restart" = "• Riavvia Claude CLI dopo aver applicato le modifiche";
 "claudecode.error_no_components" = "Seleziona almeno un componente da visualizzare";
@@ -466,6 +473,21 @@
 "claudecode.button_reset" = "Ripristina";
 "claudecode.component_profile" = "Nome profilo";
 "claudecode.context_info" = "Il contesto può mostrare ~80-95% invece di 100% — Claude comprime automaticamente prima del limite e i token di output usano anch'essi spazio di contesto.";
+"claudecode.element_colors_title" = "Colori Elementi";
+"claudecode.element_color_directory" = "Directory";
+"claudecode.element_color_branch" = "Branch";
+"claudecode.element_color_model" = "Modello";
+"claudecode.element_color_profile" = "Profilo";
+"claudecode.element_color_context" = "Contesto";
+"claudecode.element_color_separator" = "Separatore";
+"claudecode.element_color_usage" = "Gradiente utilizzo";
+"claudecode.element_color_usage_desc" = "Sostituisci il gradiente a 10 livelli con un colore fisso";
+"claudecode.element_color_pace" = "Indicatore di ritmo";
+"claudecode.element_color_pace_desc" = "Sostituisci i 6 livelli di colore del ritmo con un colore fisso";
+"claudecode.element_color_weekly" = "Uso settimanale";
+"claudecode.element_color_weekly_desc" = "Sostituisci il gradiente di uso settimanale con un colore fisso";
+"claudecode.element_color_extra" = "Uso extra";
+"claudecode.element_color_extra_desc" = "Sostituisci il gradiente di uso extra (costo) con un colore fisso";
 "error.generic" = "Errore: %@";
 "personal.button_saving" = "Salvataggio...";
 "personal.button_setup_wizard" = "Assistente di Configurazione";
@@ -525,12 +547,18 @@
 "multiprofile.active_badge" = "Attivo";
 "multiprofile.at_least_one" = "Almeno un profilo deve essere selezionato";
 "multiprofile.icon_style" = "Stile Icona";
+"multiprofile.style_circles" = "Cerchi";
+"multiprofile.style_bars" = "Barre";
+"multiprofile.style_dots" = "Punti";
+"multiprofile.style_percent" = "Percentuale";
 "multiprofile.show_week" = "Mostra Utilizzo Settimanale";
 "multiprofile.show_week_description" = "Mostra l'utilizzo settimanale oltre alla sessione";
 "multiprofile.show_label" = "Mostra Nome Profilo";
 "multiprofile.show_label_description" = "Mostra il nome del profilo sotto l'icona";
 "multiprofile.use_system_color" = "Usa Colore di Sistema";
 "multiprofile.use_system_color_description" = "Usa il colore accento del Mac invece dei colori di stato";
+"multiprofile.active_indicator_title" = "Mostra Indicatore Profilo Attivo";
+"multiprofile.active_indicator_description" = "Mostra una piccola sottolineatura verde sotto l'icona del profilo attualmente attivo";
 
 /* ==================== */
 /* MARK: - General Settings (Profile-Level) */
@@ -702,6 +730,13 @@
 "cli.benefit_1" = "Cambio automatico login Claude Code con i profili";
 "cli.benefit_2" = "Mantieni sincronizzati CLI e account app";
 "cli.benefit_3" = "Aggiornamento automatico credenziali al cambio profilo";
+"cli.manual_token_title" = "Incolla un token OAuth di configurazione";
+"cli.manual_token_subtitle" = "Usa un token a lunga durata da `claude setup-token` invece di sincronizzare di nuovo";
+"cli.manual_token_disclosure" = "Inserisci token manualmente";
+"cli.manual_token_help" = "Esegui `claude setup-token` nel terminale per generare un token OAuth a lunga durata, quindi incollalo qui. Utile quando la sessione web è scaduta o la sincronizzazione da Claude Code non funziona.";
+"cli.manual_token_placeholder" = "sk-ant-oat01-...";
+"cli.manual_token_save" = "Salva Token";
+"cli.manual_token_empty_error" = "Incolla un token prima di salvare";
 
 /* ==================== */
 /* MARK: - Additional Keys */
@@ -895,6 +930,12 @@
 "popover.time_format_system" = "Sistema";
 "popover.time_format_12h" = "12 ore";
 "popover.time_format_24h" = "24 ore";
+"popover.peak_hours" = "Peak Hours Indicator";
+"popover.peak_hours_desc" = "Show when Claude is in peak hours (weekdays %@)";
+"popover.peak_hours_toggle" = "Show peak hours indicator";
+"popover.peak_hours_toggle_desc" = "Display a flame icon in the menu bar and highlight the session card during peak hours";
+"popover.peak_hours_menu_icon" = "Show flame icon in menu bar";
+"popover.peak_hours_menu_icon_desc" = "Display a flame icon next to your usage indicators during peak hours";
 
 /* ==================== */
 /* MARK: - Feedback Prompt */

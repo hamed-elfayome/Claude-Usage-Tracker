@@ -1,0 +1,986 @@
+/*
+   Localizable.strings
+   Claude Usage Tracker
+
+   繁體中文 (臺灣)
+   Created by Claude Code on 2026-01-27.
+*/
+
+/* ==================== */
+/* MARK: - App Info */
+/* ==================== */
+"app.name" = "Claude Usage Tracker";
+"app.window.main" = "Claude Usage";
+"app.window.settings" = "設定";
+"app.window.github_prompt" = "支援 Claude Usage Tracker";
+
+/* ==================== */
+/* MARK: - Common Actions */
+/* ==================== */
+"common.ok" = "確定";
+"common.cancel" = "取消";
+"common.save" = "儲存";
+"common.delete" = "刪除";
+"common.done" = "完成";
+"common.close" = "關閉";
+"common.refresh" = "重新整理";
+"common.settings" = "設定";
+"common.quit" = "結束";
+"common.validate" = "驗證";
+"common.yes" = "是";
+"common.no" = "否";
+"common.retry" = "重試";
+
+/* ==================== */
+/* MARK: - Settings Navigation */
+/* ==================== */
+"settings.title" = "設定";
+"settings.personal_usage" = "個人使用";
+"settings.personal_usage.description" = "追蹤您的 Claude.ai 免費方案使用情況";
+"settings.api_billing" = "API 付費";
+"settings.api_billing.description" = "監控 API Console 付費和額度";
+"settings.general" = "通用";
+"settings.general.description" = "App 行為和偏好";
+"settings.appearance" = "外觀";
+"settings.appearance.description" = "選單列圖示自訂";
+"settings.session_management" = "Session 管理";
+"settings.session_management.description" = "自動 Session 管理";
+"settings.notifications" = "通知";
+"settings.notifications.description" = "使用警報和通知";
+"settings.claude_cli" = "Claude CLI";
+"settings.claude_cli.description" = "Terminal statusline 整合";
+"settings.updates" = "更新";
+"settings.updates.description" = "保持您的軟體為最新版本";
+"settings.about" = "關於";
+"settings.about.description" = "軟體資訊和致謝";
+
+/* ==================== */
+/* MARK: - Menu Bar */
+/* ==================== */
+"menubar.claude_usage" = "Claude 使用情況";
+"menubar.session_usage" = "Session 使用量";
+"menubar.weekly_usage" = "每週";
+"menubar.opus_usage" = "Opus";
+"menubar.sonnet_usage" = "Sonnet";
+"menubar.fable_usage" = "Fable";
+"menubar.design_usage" = "設計";
+"menubar.extra_usage" = "額外使用量";
+"menubar.api_credits" = "API 額度";
+"menubar.5_hour_window" = "5 小時滑動視窗";
+"menubar.all_models" = "所有模型";
+"menubar.weekly" = "每週";
+"menubar.anthropic_console" = "Anthropic API Console";
+"menubar.api_cost" = "API 費用";
+"menubar.cost_source.api" = "API";
+"menubar.cost_source.cli" = "Claude Code";
+"menubar.cost_source.unknown" = "其他";
+"menubar.this_month" = "本月";
+"menubar.total" = "總計";
+"menubar.used" = "已使用";
+"menubar.remaining" = "剩餘";
+"menubar.resets_time" = "重置時間 %@";
+"menubar.resets_in" = "%@ 後重置";
+"menubar.resets_both" = "%@ 後重置 (%@)";
+"menubar.click_status" = "點選開啟 status.claude.com";
+
+/* ==================== */
+/* MARK: - Usage Status */
+/* ==================== */
+"usage.high_session" = "Session 使用量過高";
+"usage.high_session.desc" = "考慮休息一下以重置您的 Session 視窗";
+"usage.weekly_approaching" = "接近每週限制";
+"usage.weekly_approaching.desc" = "您接近每週 token 限制";
+"usage.efficient" = "用量正常";
+"usage.efficient.desc" = "目前 token 消耗控制得很好！";
+
+/* ==================== */
+/* MARK: - General Settings */
+/* ==================== */
+"general.launch_at_login" = "登入時啟動";
+"general.launch_at_login.description" = "登入 Mac 時自動啟動 Claude Usage Tracker";
+"general.refresh_interval" = "重新整理間隔";
+"general.refresh_interval.description" = "較短的間隔提供更即時的資料，但可能影響電池壽命";
+"general.check_overage_limit" = "檢查額外使用限制";
+"general.check_overage_limit.description" = "取得並顯示月度費用和超額限制資訊";
+"general.language.title" = "語言";
+"general.language.select" = "選擇語言";
+"general.language.restart_note" = "語言更改將在重新啟動軟體後生效";
+"general.language.restart_app" = "重新啟動軟體以生效";
+
+/* ==================== */
+/* MARK: - Appearance Settings */
+/* ==================== */
+"appearance.menu_bar_icons" = "選單列圖示";
+"appearance.menu_bar_icons.subtitle" = "自訂選單列中顯示的指標";
+"appearance.show_icon_names" = "顯示圖示名稱";
+"appearance.show_icon_names.description" = "在圖示旁邊顯示指標標籤 (S:, W:, API:)";
+"appearance.monochrome_mode" = "單色（自適應）";
+"appearance.monochrome_mode.description" = "圖示自動適應明暗模式";
+"appearance.metric_configuration" = "指標設定";
+"appearance.drag_to_reorder" = "拖曳重新排序圖示。停用的指標將從選單列隱藏。";
+
+/* ==================== */
+/* MARK: - Session Management */
+/* ==================== */
+"session.auto_start" = "重置時自動啟動 Session";
+"session.auto_start.description" = "當您的 Session 重置為 0% 時自動向 Claude 傳送 'Hi'。這使您的 Session 始終就緒，無需手動干預。";
+"session.enable_auto_start" = "啟用自動啟動 Session";
+"session.beta_badge" = "測試版";
+
+/* ==================== */
+/* MARK: - Notifications Settings */
+/* ==================== */
+"notifications.enable" = "啟用通知";
+"notifications.enable.description" = "接近使用限制時接收警報";
+"notifications.alert_thresholds" = "警報閾值";
+"notifications.threshold.warning" = "警告";
+"notifications.threshold.high" = "使用量過高";
+"notifications.threshold.critical" = "嚴重";
+"notifications.threshold.session_reset" = "Session 重置";
+
+/* ==================== */
+/* MARK: - Setup Wizard */
+/* ==================== */
+"setup.welcome.title" = "歡迎使用 Claude Usage Tracker";
+"setup.welcome.subtitle" = "設定您的 API 存取以開始追蹤使用情況";
+"setup.step.get_session_key" = "取得您的 Session 金鑰";
+"setup.step.get_session_key.description" = "您需要從 claude.ai 取得您的 Session 金鑰";
+"setup.step.enter_session_key" = "輸入您的 Session 金鑰";
+"setup.open_claude_ai" = "開啟 claude.ai";
+"setup.show_instructions" = "顯示說明";
+"setup.hide_instructions" = "隱藏";
+"setup.instruction.step1" = "開啟開發者工具 (F12 或 Cmd+Option+I)";
+"setup.instruction.step2" = "前往 應用程式/儲存 → Cookies → https://claude.ai";
+"setup.instruction.step3" = "找到 'sessionKey' cookie";
+"setup.instruction.step4" = "連按兩下其值並複製 (Cmd+C)";
+"setup.paste_session_key" = "貼上您複製的 sessionKey 值";
+"setup.auto_start_session" = "重置時自動啟動 Session";
+"setup.auto_start_session.description" = "當您的 Session 重置為 0% 時自動向 Claude 3.5 Haiku 傳送 'Hi'。這使您的 Session 始終就緒，無需手動干預。";
+"setup.enable_auto_start" = "啟用自動啟動 Session";
+"setup.menubar_appearance" = "選單列外觀";
+"setup.choose_icon_style" = "選擇您偏好的圖示樣式";
+"setup.monochrome_adaptive" = "單色（自適應）";
+"setup.validation.success" = "成功連線到組織";
+
+/* ==================== */
+/* MARK: - About */
+/* ==================== */
+"about.version" = "版本 %@";
+"about.check_updates" = "檢查更新";
+"about.created_by" = "建立者";
+"about.contributors" = "貢獻者 (%d)";
+"about.contributors_loading" = "貢獻者";
+"about.contributors_failed" = "無法載入貢獻者";
+"about.links" = "連結";
+"about.star_github" = "在 GitHub 上給星";
+"about.report_issue" = "報告問題";
+"about.send_feedback" = "傳送回饋";
+"about.mit_license" = "MIT 許可證 • 開源";
+"about.copyright" = "© 2025 Hamed Elfayome";
+
+/* ==================== */
+/* MARK: - Updates Settings */
+/* ==================== */
+"settings.updates.title" = "軟體更新";
+"settings.updates.current_version" = "目前版本";
+"settings.updates.last_check" = "上次檢查";
+"settings.updates.never_checked" = "從未檢查";
+"settings.updates.automatic" = "自動更新";
+"settings.updates.automatic.description" = "每天自動檢查並下載更新";
+"settings.updates.check_now" = "檢查更新";
+"settings.updates.info.title" = "安全更新";
+"settings.updates.info.description" = "所有更新在安裝前都經過加密簽名和驗證";
+
+/* ==================== */
+/* MARK: - Icon Styles */
+/* ==================== */
+"icon_style.battery" = "電池";
+"icon_style.percentage" = "百分比";
+"icon_style.text_only" = "僅文字";
+"icon_style.minimal" = "極簡";
+
+/* ==================== */
+/* MARK: - Metric Types */
+/* ==================== */
+"metric.session_usage" = "Session 使用量";
+"metric.session_usage.description" = "5 小時滑動視窗使用量";
+"metric.week_usage" = "每週使用量";
+"metric.week_usage.description" = "每週 token 使用量（所有模型）";
+"metric.api_credits" = "API 額度";
+"metric.api_credits.description" = "API Console 付費額度";
+
+/* ==================== */
+/* MARK: - Display Modes */
+/* ==================== */
+"display.remaining_credits" = "剩餘額度";
+"display.remaining_credits.description" = "僅顯示剩餘額度";
+"display.used_amount" = "已使用金額";
+"display.used_amount.description" = "僅顯示已使用金額";
+"display.both_used_total" = "兩者（已使用/總計）";
+"display.both_used_total.description" = "同時顯示已使用和總計";
+"display.percentage" = "百分比";
+"display.percentage.description" = "顯示為百分比（例如 60%）";
+"display.token_count" = "token 數量";
+"display.token_count.description" = "顯示 token 數量（例如 600K/1M）";
+
+/* ==================== */
+/* MARK: - Notification Messages */
+/* ==================== */
+"notification.session_warning.title" = "Session 使用量警告";
+"notification.session_warning.message" = "您已使用 5 小時 Session 限制的 %@。%@";
+"notification.session_critical.title" = "Session 使用量嚴重";
+"notification.session_critical.message" = "您已使用 5 小時 Session 限制的 %@！%@";
+"notification.session_reset.title" = "Session 重置";
+"notification.session_reset.message" = "您的 Session 已重置！您現在有一個全新的 5 小時 Session 可用。";
+"notification.session_auto_started.title" = "Session 自動啟動";
+"notification.session_auto_started.message" = "新 Session 已自動初始化。您全新的 5 小時 Session 已就緒！";
+"notification.session_auto_start_failed.title" = "自動啟動失敗";
+"notification.session_auto_start_failed.message" = "自動啟動 Session 失敗。請檢查您的憑證。";
+"notification.weekly_warning.title" = "每週使用量警告";
+"notification.weekly_warning.message" = "您已使用每週限制的 %@。%@";
+"notification.weekly_critical.title" = "每週使用量嚴重";
+"notification.weekly_critical.message" = "您已使用每週限制的 %@！%@";
+"notification.opus_warning.title" = "Opus 使用量警告";
+"notification.opus_warning.message" = "您已使用每週 Opus 限制的 %@。%@";
+"notification.opus_critical.title" = "Opus 使用量嚴重";
+"notification.opus_critical.message" = "您已使用每週 Opus 限制的 %@！%@";
+"notification.enabled.title" = "通知已啟用";
+"notification.enabled.message" = "您現在將在 75%、90% 和 95% 使用閾值時接收警報，以及 Session 重置通知。";
+"notification.profile_auto_switched.title" = "設定檔已自動切換";
+"notification.profile_auto_switched.message" = "%@ → %@ 因 Session 限制已達到";
+
+/* ==================== */
+/* MARK: - Auto-Switch Profile */
+/* ==================== */
+"auto_switch.title" = "自動切換設定檔";
+"auto_switch.subtitle" = "當 Session 限制達到時自動切換";
+"auto_switch.enable_title" = "啟用自動切換";
+"auto_switch.enable_description" = "當使用中的設定檔的 Session 使用率達到 100% 時，自動切換到下一個可用的設定檔";
+
+/* ==================== */
+/* MARK: - Error Messages */
+/* ==================== */
+"error.session_key_not_found" = "未找到 Session 金鑰";
+"error.session_key_not_found.suggestion" = "請在設定中設定您的 Claude Session 金鑰";
+"error.session_key_invalid" = "無效的 Session 金鑰";
+"error.session_key_invalid.suggestion" = "請檢查您的 Session 金鑰格式。它應該以 'sk-ant-' 開頭";
+"error.network_unavailable" = "無網路連線";
+"error.network_unavailable.suggestion" = "請檢查您的網路連線並重試";
+"error.network_timeout" = "請求逾時";
+"error.network_timeout.suggestion" = "請重試。如果問題持續存在，請檢查 Claude 的狀態 status.claude.com";
+"error.api_unauthorized" = "未授權存取";
+"error.api_unauthorized.suggestion" = "您的 Session 金鑰可能已過期。請在設定中更新它";
+"error.api_server_error" = "伺服器錯誤";
+"error.api_server_error.suggestion" = "伺服器遇到錯誤。請稍後重試";
+"error.api_rate_limited" = "超出速率限制";
+"error.api_rate_limited.suggestion" = "請稍等片刻後重試";
+
+/* ==================== */
+/* MARK: - Validation Messages */
+/* ==================== */
+"validation.session_key_too_short" = "Session 金鑰過短";
+"validation.session_key_too_long" = "Session 金鑰過長";
+"validation.invalid_prefix" = "無效的 Session 金鑰開頭";
+"validation.invalid_characters" = "Session 金鑰包含無效字元";
+"validation.invalid_format" = "無效的 Session 金鑰格式";
+"validation.contains_whitespace" = "Session 金鑰包含空白字元";
+
+/* ==================== */
+/* MARK: - GitHub Star Prompt */
+/* ==================== */
+"github.enjoy_app" = "喜歡 Claude Usage Tracker 嗎？";
+"github.star_description" = "如果這個軟體對您有幫助，請在 GitHub 上給它一顆星！這有助於其他人發現專案並激勵持續開發。";
+"github.star_button" = "在 GitHub 上給星";
+"github.maybe_later" = "稍後再說";
+"github.never_show" = "不再顯示";
+
+/* ==================== */
+/* MARK: - API Settings */
+/* ==================== */
+"api.enable_tracking" = "啟用 API 追蹤";
+"api.enable_tracking.description" = "追蹤您的 Anthropic API Console 額度和支出";
+"api.session_key_placeholder" = "sk-ant-api03-...";
+"api.configure" = "設定 API 追蹤";
+"api.configure.description" = "監控您的 Anthropic Console API 使用情況和額度";
+"api.instructions" = "要追蹤 API 使用情況，您需要提供您的 API Session 金鑰：";
+"api.instruction_step1" = "登入 console.anthropic.com";
+"api.instruction_step2" = "開啟開發者工具 (F12 或 Cmd+Option+I)";
+"api.instruction_step3" = "前往 應用程式 → Cookies → https://console.anthropic.com";
+"api.instruction_step4" = "找到 'sessionKey' 並複製其值";
+
+/* ==================== */
+/* MARK: - Personal Usage */
+/* ==================== */
+"personal.configure" = "設定個人使用";
+"personal.configure.description" = "追蹤您在 claude.ai 上的免費方案使用情況";
+"personal.status" = "狀態";
+"personal.session_key" = "Session 金鑰";
+"personal.session_key.configured" = "已設定";
+"personal.session_key.not_configured" = "未設定";
+"personal.reconfigure" = "重新設定";
+"personal.remove" = "移除 Session 金鑰";
+
+/* ==================== */
+/* MARK: - Claude Code (CLI) */
+/* ==================== */
+"claudecode.title" = "Claude CLI 整合";
+"claudecode.description" = "在您的終端狀態行中顯示使用資訊";
+"claudecode.coming_soon" = "即將推出";
+"claudecode.features_description" = "與 Claude Code CLI 的終端狀態行顯示整合將在未來更新中推出。";
+
+/* ==================== */
+/* MARK: - Additional UI Labels */
+/* ==================== */
+"ui.app_behavior" = "軟體行為";
+"ui.usage_tracking" = "使用追蹤";
+"ui.global_settings" = "全域設定";
+"ui.menu_bar_metrics" = "選單列指標";
+"ui.quick_actions" = "快速操作";
+"ui.how_it_works" = "工作原理";
+"ui.display_components" = "顯示元件";
+"ui.requirements" = "要求";
+"ui.live_preview" = "即時預覽";
+"ui.updates_realtime" = "即時更新";
+"ui.organization" = "組織";
+"ui.icon_style" = "圖示樣式";
+"ui.display_mode" = "顯示模式";
+"ui.at_least_one_metric" = "至少必須啟用一個指標";
+
+/* ==================== */
+/* MARK: - Session Management (Additional) */
+/* ==================== */
+"session.subtitle" = "自動 Session 初始化和維護";
+"session.auto_description_line1" = "• 偵測您的 Session 何時重置為 0%";
+"session.auto_description_line2" = "• 向 Claude 3.5 Haiku 傳送 'Hi'（最便宜的模型）";
+"session.auto_description_line3" = "• 使用不會出現在您歷史記錄中的臨時聊天";
+"session.auto_description_line4" = "• 新的 5 小時 Session 立即準備就緒";
+
+/* ==================== */
+/* MARK: - Claude CLI (Additional) */
+/* ==================== */
+"claudecode.subtitle" = "自訂您的終端狀態行顯示";
+"claudecode.preview_label" = "即時預覽";
+"claudecode.preview_description" = "這是您的狀態行在 Claude CLI 中的顯示方式";
+"claudecode.component_model" = "模型名稱";
+"claudecode.component_directory" = "目錄名稱";
+"claudecode.component_branch" = "Git 分支";
+"claudecode.component_context" = "上下文視窗";
+"claudecode.component_context_tokens" = "顯示為 token（而不是 %）";
+"claudecode.component_usage" = "使用統計";
+"claudecode.component_progressbar" = "進度條";
+"claudecode.component_pace_marker" = "節奏標記";
+"claudecode.pace_marker_info" = "在已用時間位置顯示彩色標記";
+"claudecode.component_resettime" = "重置時間";
+"claudecode.component_weekly" = "顯示每週使用量";
+"claudecode.component_weekly_description" = "帶進度條和重置時間的每週 token 使用量";
+"claudecode.component_extra_usage" = "顯示額外使用量";
+"claudecode.component_extra_usage_description" = "費用指標（例如 9.49 USD）";
+"claudecode.weekly_label" = "顯示 \"Weekly:\" 標籤";
+"claudecode.requirement_sessionkey" = "• 在憑證 → Claude.ai 分頁中設定了 Session 金鑰";
+"claudecode.requirement_restart" = "• 套用變更後重新啟動 Claude CLI";
+"claudecode.error_no_components" = "請至少選擇一個要顯示的元件";
+"claudecode.error_no_sessionkey" = "Session 金鑰未設定。請先在個人使用分頁中設定。";
+"claudecode.success_applied" = "設定已套用！重新啟動 Claude CLI 以查看變更。";
+"claudecode.success_disabled" = "狀態行已停用。重新啟動 Claude CLI。";
+"claudecode.preview_no_components" = "未選擇元件";
+
+/* ==================== */
+/* MARK: - API Billing (Additional) */
+/* ==================== */
+"api.title" = "API 付費";
+"api.subtitle" = "監控 API 使用情況和支出";
+"api.enable_billing_tracking" = "啟用 API 付費追蹤";
+"api.enable_billing_description" = "監控您的 API 使用情況、目前支出和剩餘預付額度";
+"api.label_api_session_key" = "API Session 金鑰";
+"api.placeholder_api_session_key" = "sk-ant-api03-...";
+"api.help_api_session_key" = "您來自 console.anthropic.com 的 Session 金鑰";
+"api.button_fetch_organizations" = "取得組織";
+"api.button_fetching" = "取得中...";
+"api.button_save_configuration" = "儲存設定";
+"api.success_organizations_found" = "找到 %d 個組織";
+"api.error_fetch_failed" = "取得組織失敗：%@";
+"api.success_configuration_saved" = "API 設定儲存成功";
+
+/* ==================== */
+/* MARK: - Personal Usage (Additional) */
+/* ==================== */
+"personal.title" = "個人使用";
+"personal.subtitle" = "追蹤您的 Claude.ai 使用情況和 Session";
+"personal.label_session_key" = "Session 金鑰";
+"personal.placeholder_session_key" = "sk-ant-sid-...";
+"personal.help_session_key" = "貼上您從 claude.ai DevTools 取得的 sessionKey cookie";
+"personal.button_test_connection" = "測試連線";
+"personal.button_save_and_continue" = "儲存並繼續";
+"personal.button_remove_key" = "移除金鑰";
+"personal.success_connected" = "成功連線到組織";
+"personal.confirm_remove_title" = "移除 Session 金鑰？";
+"personal.confirm_remove_message" = "這將停止追蹤您的個人使用情況。";
+
+/* ==================== */
+/* MARK: - Error Presenter */
+/* ==================== */
+"error.code_label" = "錯誤程式碼：";
+"error.what_to_do" = "如何處理：";
+"error.occurred_at" = "發生時間：%@";
+
+/* ==================== */
+/* MARK: - General Settings (Additional) */
+/* ==================== */
+"general.slider_realtime" = "即時更新";
+"general.slider_frequent" = "頻繁更新";
+"general.slider_balanced" = "平衡模式";
+"general.slider_efficient" = "節能高效";
+"general.slider_battery_saver" = "電池保護";
+"general.slider_fast" = "快速";
+"general.slider_balanced_label" = "平衡";
+"general.slider_battery_saver_label" = "電池保護";
+"general.available_languages" = "可用語言 (%d)";
+
+/* ==================== */
+/* MARK: - Badges */
+/* ==================== */
+"badge.new" = "新功能";
+"badge.beta" = "測試版";
+"badge.pro" = "專業版";
+
+/* ==================== */
+/* MARK: - Appearance (Additional) */
+/* ==================== */
+"appearance.title" = "選單列外觀";
+"appearance.subtitle" = "自訂您的選單列圖示和指標";
+"appearance.global_settings" = "全域設定";
+"appearance.menu_bar_metrics" = "選單列指標";
+"appearance.monochrome_title" = "單色";
+"appearance.monochrome_description" = "使用自適應色彩取代狀態色彩，如綠/橙/紅";
+"appearance.show_labels_title" = "顯示圖示標籤";
+"appearance.show_labels_description" = "為每個指標顯示前綴標籤（S:, W:, API:）";
+"appearance.show_remaining_title" = "顯示剩餘百分比";
+"appearance.show_remaining_description" = "顯示剩餘容量而不是已使用百分比（類似 macOS 電池）";
+"appearance.pace_marker_section_title" = "節奏標記";
+"appearance.pace_marker_section_subtitle" = "追蹤相對於重置週期的使用節奏";
+"appearance.show_time_marker_title" = "顯示時間進度標記";
+"appearance.show_time_marker_description" = "在進度條上顯示標記，指示目前時間段已經過去多少時間";
+"appearance.show_pace_marker_title" = "按速率著色標記";
+"appearance.show_pace_marker_description" = "根據預計使用速率為時間標記著色（綠色→紫色）。適用於 Session 和每週指標。";
+"appearance.pace_coloring_title" = "基於節奏的進度條色彩";
+"appearance.pace_coloring_description" = "根據預測節奏而非目前使用程度為進度條著色。預測您是否會在週期結束前達到限制。";
+"appearance.multiprofile_locked_title" = "外觀設定已鎖定";
+"appearance.multiprofile_locked_description" = "當多設定檔顯示啟用時，這些設定會被停用。在多設定檔模式下，每個設定檔使用自己的外觀。";
+"appearance.disable_multiprofile" = "關閉多設定檔顯示";
+
+/* ==================== */
+/* MARK: - Setup Wizard (Additional) */
+/* ==================== */
+"setup.step_number_1" = "1";
+"setup.step_number_2" = "2";
+"setup.step_title_get_key" = "取得您的 Session 金鑰";
+"setup.step_title_enter_key" = "輸入您的 Session 金鑰";
+"setup.step_description_get_key" = "您需要從 claude.ai 取得您的 Session 金鑰";
+"setup.button_open_claude" = "開啟 claude.ai";
+"setup.paste_instruction" = "貼上您複製的 sessionKey 值";
+
+/* ==================== */
+/* MARK: - Component Preview */
+/* ==================== */
+"preview.sample_text_claude" = "Claude";
+"preview.sample_percentage" = "60%";
+"preview.sample_card_content" = "卡片內容放在這裡";
+"preview.sample_more_content" = "更多內容";
+"preview.sample_update_every" = "更新間隔：";
+"preview.sample_5_minutes" = "5 分鐘";
+
+/* ==================== */
+/* MARK: - Manage Profiles */
+/* ==================== */
+"profiles.title" = "管理設定檔";
+"profiles.subtitle" = "建立和管理多個 Claude 帳戶";
+"profiles.create_new" = "建立新設定檔";
+"profiles.about_title" = "關於設定檔";
+"profiles.about_description" = "每個設定檔都有自己的：";
+"profiles.about_credentials" = "Claude.ai 憑證";
+"profiles.about_api" = "API Console 憑證";
+"profiles.about_cli" = "CLI 帳戶同步";
+"profiles.about_appearance" = "選單列外觀";
+"profiles.about_notifications" = "通知設定";
+"profiles.about_refresh" = "重新整理間隔";
+"profiles.active_badge" = "使用中";
+"profiles.created" = "已建立";
+"profiles.cli_synced" = "CLI 已同步";
+"profiles.rename" = "重新命名設定檔";
+"profiles.activate" = "啟用設定檔";
+"profiles.delete" = "刪除設定檔";
+"profiles.delete_title" = "刪除設定檔";
+"profiles.delete_confirm" = "您確定要刪除 \"%@\" 嗎？這將移除所有相關的憑證和設定。";
+"profiles.create_title" = "建立新設定檔";
+"profiles.name_label" = "設定檔名稱（可選）";
+"profiles.name_placeholder" = "留空以使用隨機名稱";
+"profiles.name_hint" = "如果留空，將生成一個有趣的隨機名稱！";
+
+/* ==================== */
+/* MARK: - Multi-Profile Display */
+/* ==================== */
+"multiprofile.title" = "多設定檔顯示";
+"multiprofile.subtitle" = "在選單列中顯示多個設定檔";
+"multiprofile.enable_title" = "顯示多個設定檔";
+"multiprofile.enable_description" = "將選定的設定檔並排顯示為緊湊圖示";
+"multiprofile.select_profiles" = "選擇要顯示的設定檔：";
+"multiprofile.info" = "每個設定檔顯示使用情況，色彩表示狀態（綠色/橙色/紅色）";
+"multiprofile.active_badge" = "使用中";
+"multiprofile.at_least_one" = "至少必須選擇一個設定檔";
+"multiprofile.icon_style" = "圖示樣式";
+"multiprofile.style_circles" = "圓圈";
+"multiprofile.style_bars" = "長條形";
+"multiprofile.style_dots" = "圓點";
+"multiprofile.style_percent" = "百分比";
+"multiprofile.show_week" = "顯示每週使用量";
+"multiprofile.show_week_description" = "除了 Session 使用量外，還顯示每週使用量";
+"multiprofile.show_label" = "顯示設定檔標籤";
+"multiprofile.show_label_description" = "在圖示下方顯示設定檔名稱";
+"multiprofile.use_system_color" = "單色";
+"multiprofile.use_system_color_description" = "使用白色而不是狀態色彩（綠色/橙色/紅色）";
+"multiprofile.active_indicator_title" = "顯示「使用中設定檔」指示器";
+"multiprofile.active_indicator_description" = "在目前使用中的設定檔的圖示下顯示一條小的綠色底線";
+
+/* ==================== */
+/* MARK: - General Settings (Profile-Level) */
+/* ==================== */
+"general.title" = "通用";
+"general.subtitle" = "重新整理間隔、自動啟動和通知";
+"general.refresh_title" = "重新整理間隔";
+"general.refresh_subtitle" = "檢查使用更新的頻率";
+"general.refresh_seconds" = "%d 秒";
+"general.refresh_min" = "10 秒";
+"general.refresh_max" = "300 秒";
+"general.autostart_title" = "自動啟動 Session";
+"general.autostart_subtitle" = "需要時自動啟動新 Session";
+"general.autostart_toggle" = "自動啟動新 Session";
+"general.autostart_description" = "Session 重置時自動傳送訊息";
+"general.autostart_requirement" = "• 在憑證 → Claude.ai 分頁中設定了 Session 金鑰";
+"general.notifications_title" = "通知";
+"general.notifications_subtitle" = "取得使用里程碑通知";
+"general.connected" = "已連線";
+"general.not_connected" = "未連線";
+
+/* ==================== */
+/* MARK: - Updates Settings */
+/* ==================== */
+"updates.version_info" = "版本資訊";
+"updates.update_preferences" = "更新偏好設定";
+"updates.version_label" = "v%@ (%@)";
+
+/* ==================== */
+/* MARK: - Appearance (Additional) */
+/* ==================== */
+"appearance.global_subtitle" = "自訂選單列圖示行為";
+"appearance.metrics_subtitle" = "選擇要在選單列中顯示的指標";
+"appearance.all_metrics_off_title" = "App Logo 模式";
+"appearance.all_metrics_off_description" = "所有指標都已關閉。將改為在選單列顯示 app logo。點選以開啟設定檔和設定。";
+
+/* ==================== */
+/* MARK: - Metric Card */
+/* ==================== */
+"metric.show_countdown" = "顯示到下次 Session 的時間";
+"metric.countdown_description" = "在圖示中顯示剩餘時間（例如 →2H）";
+
+/* ==================== */
+/* MARK: - Personal Usage (Additional) */
+/* ==================== */
+"personal.configuration_title" = "設定";
+"personal.status_connected" = "已連線";
+"personal.status_not_connected" = "未連線";
+
+/* ==================== */
+/* MARK: - Language Settings */
+/* ==================== */
+"language.title" = "語言";
+"language.subtitle" = "選擇您偏好的語言";
+"language.select_language" = "選擇語言";
+"language.available" = "可用語言";
+"language.restart_required" = "需要重新啟動";
+"language.restart_message" = "軟體需要重新啟動以使語言更改生效。";
+"language.restart_now" = "立即重新啟動";
+"language.restart_later" = "稍後";
+
+/* ==================== */
+/* MARK: - Common Actions (Additional) */
+/* ==================== */
+"common.create" = "建立";
+"common.rename" = "重新命名";
+"common.activate" = "啟用";
+"common.connected" = "已連線";
+"common.not_connected" = "未連線";
+"common.back" = "返回";
+"common.next" = "下一步";
+"common.remove" = "移除";
+"common.switch" = "切換";
+
+/* ==================== */
+/* MARK: - Popover/Menu Bar */
+/* ==================== */
+"popover.manage_profiles" = "管理設定檔";
+"popover.no_profile" = "無設定檔";
+"popover.profiles_count" = "%d 個設定檔";
+"popover.profile_count_singular" = "1 個設定檔";
+
+/* ==================== */
+/* MARK: - Setup Wizard */
+/* ==================== */
+"setup.step.enter_session_key" = "輸入金鑰";
+"wizard.test_connection" = "測試連線";
+"wizard.select_org_title" = "您要追蹤哪個組織？";
+"wizard.select_org_subtitle" = "選擇用於使用監控的 Claude 組織";
+"wizard.config_summary" = "設定摘要";
+"wizard.session_key" = "Session 金鑰";
+"wizard.api_session_key" = "API Session 金鑰";
+"wizard.organization" = "組織";
+"wizard.organization_id" = "ID：%@";
+"wizard.select_organization" = "選擇組織";
+"wizard.choose_organization" = "選擇要追蹤的組織";
+"wizard.review_config" = "確認設定";
+"wizard.confirm_settings" = "儲存前確認您的設定";
+"wizard.key_will_update" = "Session 金鑰將被更新";
+"wizard.api_key_will_update" = "API Session 金鑰將被更新";
+
+/* ==================== */
+/* MARK: - CLI Account */
+/* ==================== */
+"cli.access_token" = "存取 token";
+"cli.subscription" = "訂閱";
+"cli.scopes" = "scopes";
+"cli.sync_instructions" = "點選下方的'從 Claude Code 同步'來匯入您的憑證";
+"cli.about_title" = "關於 CLI 帳戶同步";
+"cli.benefits" = "好處：";
+"cli.tracking_note" = "注意：使用追蹤使用 Claude.ai 憑證。CLI 憑證僅用於帳戶切換。";
+
+/* ==================== */
+/* MARK: - Settings Sections (Titles & Descriptions) */
+/* ==================== */
+"section.credentials" = "憑證";
+"section.active_profile" = "使用中的設定檔";
+"section.settings" = "設定";
+"section.app" = "App";
+
+"section.claudeai_title" = "Claude.ai";
+"section.claudeai_desc" = "Claude.ai 憑證";
+"section.api_console_title" = "API Console";
+"section.api_console_desc" = "API Console 憑證";
+"section.cli_account_title" = "CLI 帳戶";
+"section.cli_account_desc" = "CLI 帳戶同步";
+"section.appearance_title" = "外觀";
+"section.appearance_desc" = "選單列外觀";
+"section.general_title" = "通用";
+"section.general_desc" = "通用設定";
+"section.manage_profiles_title" = "管理設定檔";
+"section.manage_profiles_desc" = "管理設定檔";
+"section.history_title" = "歷史記錄";
+"section.history_desc" = "檢視使用歷史";
+"section.support_title" = "支援";
+"section.support_desc" = "支援專案開發";
+"section.debug_title" = "除錯工具";
+"section.debug_desc" = "網路日誌和診斷";
+
+/* ==================== */
+/* MARK: - Creator Info */
+/* ==================== */
+"creator.name" = "Hamed Elfayome";
+"creator.username" = "@hamed-elfayome";
+
+/* ==================== */
+/* MARK: - Wizard Steps & Actions */
+/* ==================== */
+"wizard.enter_key" = "輸入金鑰";
+"wizard.select_org" = "選擇組織";
+"wizard.confirm" = "確認";
+"wizard.testing" = "測試中...";
+"wizard.test_connection" = "測試連線";
+"wizard.fetching" = "取得中...";
+"wizard.fetch_organizations" = "取得組織";
+"wizard.saving" = "儲存中...";
+"wizard.save_configuration" = "儲存設定";
+
+/* ==================== */
+/* MARK: - CLI Account Sync */
+/* ==================== */
+"cli.title" = "CLI 帳戶";
+"cli.subtitle" = "同步您的 Claude Code 登入帳戶";
+"cli.synced" = "CLI 帳戶已同步";
+"cli.not_synced" = "未同步";
+"cli.account_details" = "帳戶詳情";
+"cli.credentials_synced" = "您同步的 CLI 憑證";
+"cli.no_credentials" = "尚未同步憑證";
+"cli.resync" = "重新同步";
+"cli.sync_from_code" = "從 Claude Code 同步";
+"cli.benefit_1" = "使用設定檔自動切換 Claude Code 登入";
+"cli.benefit_2" = "保持 CLI 和軟體帳戶同步";
+"cli.benefit_3" = "設定檔切換時自動重新整理憑證";
+"cli.manual_token_title" = "貼上 OAuth 設定權杖";
+"cli.manual_token_subtitle" = "使用 `claude setup-token` 產生的長效權杖，無需重新同步";
+"cli.manual_token_disclosure" = "手動輸入權杖";
+"cli.manual_token_help" = "在終端機中執行 `claude setup-token` 以產生長效 OAuth 權杖，然後貼到此處。當您的網頁工作階段已過期或無法從 Claude Code 同步時可使用。";
+"cli.manual_token_placeholder" = "sk-ant-oat01-...";
+"cli.manual_token_save" = "儲存權杖";
+"cli.manual_token_empty_error" = "請先貼上權杖再儲存";
+
+/* ==================== */
+/* MARK: - Additional Keys */
+/* ==================== */
+"api.single_organization" = "找到單個組織並自動選擇";
+"api.remove_title" = "移除憑證";
+"api.remove_subtitle" = "從此設定檔中永久刪除您的 API Console Session 金鑰";
+"claudecode.button_apply" = "套用";
+"claudecode.button_reset" = "重置";
+"claudecode.actions_title" = "操作";
+"claudecode.component_profile" = "設定檔名稱";
+"claudecode.context_info" = "上下文可能顯示約 80-95% 而非 100% —— Claude 會在達到上限前自動壓縮，輸出 token 也會佔用上下文空間。";
+"claudecode.element_colors_title" = "元素色彩";
+"claudecode.element_color_directory" = "目錄";
+"claudecode.element_color_branch" = "分支";
+"claudecode.element_color_model" = "模型";
+"claudecode.element_color_profile" = "設定檔";
+"claudecode.element_color_context" = "上下文";
+"claudecode.element_color_separator" = "分隔號";
+"claudecode.element_color_usage" = "用量漸層";
+"claudecode.element_color_usage_desc" = "用固定色彩替換 10 級漸層";
+"claudecode.element_color_pace" = "節奏標記";
+"claudecode.element_color_pace_desc" = "用固定色彩替換 6 級節奏色彩";
+"claudecode.element_color_weekly" = "每週使用量";
+"claudecode.element_color_weekly_desc" = "用固定色彩替換每週使用量漸層";
+"claudecode.element_color_extra" = "額外使用量";
+"claudecode.element_color_extra_desc" = "用固定色彩替換額外使用量（費用）漸層";
+"error.generic" = "錯誤：%@";
+"personal.button_saving" = "儲存中...";
+"personal.button_setup_wizard" = "設定精靈";
+"personal.button_open_claude" = "開啟 claude.ai";
+"personal.success_key_saved" = "Session 金鑰儲存成功";
+"personal.remove_title" = "移除憑證";
+"personal.remove_subtitle" = "從此設定檔中永久刪除您的 Claude.ai Session 金鑰";
+"personal.signin_description" = "登入以自動取得您的 Session 金鑰。";
+"personal.signin_button" = "登入 Claude.ai";
+"personal.signin_sheet_title" = "登入 Claude.ai";
+"personal.advanced_manual_key" = "進階：手動輸入 Session 金鑰";
+"about.run_setup_wizard" = "執行設定精靈";
+
+/* ==================== */
+/* MARK: - Migration & Reset */
+/* ==================== */
+"wizard.migrate_old_data" = "有舊軟體資料嗎？";
+"wizard.migrate_description" = "如果您安裝了以前的版本，請點選下方匯入您的舊設定檔和設定。這將請求系統權限來存取資料。";
+"wizard.migrate_button" = "遷移";
+"wizard.migration_success" = "✅ 成功遷移了 %d 個項目";
+"wizard.migration_failed" = "⚠️ 遷移失敗：%@";
+"about.reset_app_data" = "重置軟體資料";
+"about.reset_confirmation_title" = "重置所有軟體資料？";
+"about.reset_confirm" = "重置";
+"about.reset_confirmation_message" = "這將永久刪除所有設定檔、憑證和設定。軟體將結束，您需要重新設定。此動作無法復原。";
+"wizard.migration_skipped" = "遷移已跳過。如果需要，您可以稍後手動同步舊資料。";
+"wizard.skip_migration" = "跳過";
+
+/* Claude Code Info */
+"wizard.claude_code_info_title" = "使用 Claude Code？";
+"wizard.claude_code_info_description" = "即使沒有 Session 金鑰，用量追蹤仍可正常運作；但 CLI 狀態列與自動啟動 Session 會無法使用";
+"wizard.claude_code_skip_setup" = "跳過設定";
+"wizard.migrate_description_short" = "從以前的軟體版本匯入您的舊設定檔資料";
+"wizard.skip_migration" = "跳過";
+"wizard.migration_skipped" = "已跳過";
+
+// History
+"history.title" = "使用歷史";
+"history.subtitle" = "檢視您過去的使用情況";
+"history.tab.session" = "Session";
+"history.tab.weekly" = "每週";
+"history.tab.billing" = "帳單";
+"history.chart.session_title" = "Session 使用歷史";
+"history.chart.weekly_title" = "每週使用趨勢";
+"history.chart.billing_title" = "每月 API 支出";
+"history.chart.now" = "現在";
+"history.empty.session_title" = "無 Session 歷史";
+"history.empty.session_description" = "每 5 小時重置後將記錄 Session 使用情況";
+"history.empty.weekly_title" = "無每週歷史";
+"history.empty.weekly_description" = "每週一重置後將記錄每週使用情況";
+"history.empty.billing_title" = "無帳單歷史";
+"history.empty.billing_description" = "每月重置後將記錄帳單資料";
+"history.list.title" = "歷史記錄";
+"history.list.count" = "%d 條記錄";
+"history.list.empty" = "暫無記錄。每次重置時將自動記錄歷史。";
+"history.list.more" = "還有 %d 條記錄";
+"history.export_button" = "匯出";
+"history.clear_button" = "清除";
+"history.no_profile" = "沒有使用中的設定檔";
+"history.reset_type.session" = "Session 重置";
+"history.reset_type.weekly" = "每週重置";
+"history.reset_type.billing" = "帳單週期";
+"history.label.total" = "總計";
+"history.label.spent" = "已用";
+"history.label.session" = "Session";
+"history.time_scale.5_hours" = "5 小時";
+"history.time_scale.24_hours" = "24 小時";
+"history.time_scale.7_days" = "7 天";
+"history.time_scale.30_days" = "30 天";
+"history.chart.session_usage" = "Session 使用";
+"history.chart.weekly_usage" = "每週使用";
+"history.chart.api_billing" = "API 帳單";
+"history.chart.no_data" = "所選範圍內無資料";
+"history.export.title" = "匯出資料";
+"history.export.json" = "匯出為 JSON";
+"history.export.csv" = "匯出為 CSV";
+"history.chart.now" = "現在";
+"support.title" = "支援專案";
+"support.subtitle" = "Claude 使用量追蹤器是免費和開源的";
+"support.all_features_free" = "所有功能都是免費的";
+"support.all_features_desc" = "此軟體中的每個功能都是完全免費的。沒有付費方案、沒有付費牆、沒有訂閱。";
+"support.open_source" = "開源";
+"support.open_source_desc" = "原始碼在 GitHub 上公開可用。您可以檢查、修改並為專案做出貢獻。";
+"support.no_tracking" = "無追蹤";
+"support.no_tracking_desc" = "您的隱私很重要。沒有分析、沒有遙測、沒有資料收集。一切都保留在您的 Mac 上。";
+"support.message" = "如果您覺得這個軟體有用，請考慮支援其開發";
+"support.buy_coffee" = "請我喝咖啡";
+"support.footer" = "您的支援有助於保持這個專案的活力和增長";
+"support.also_support" = "您還可以透過以下方式支援";
+"support.star_github" = "在 GitHub 上加星";
+"debug.title" = "除錯工具";
+"debug.subtitle" = "記錄網路請求以進行故障排除和診斷";
+"debug.network_logger" = "網路請求記錄器";
+"debug.network_logger_desc" = "捕獲所有 API 請求及詳細資訊";
+"debug.logging_duration" = "記錄持續時間";
+"debug.logging_active" = "記錄已啟用";
+"debug.logging_inactive" = "記錄已停用";
+"debug.stops_in" = "%@ 後停止";
+"debug.start_logging" = "開始記錄";
+"debug.stop_logging" = "停止記錄";
+"debug.clear_logs" = "清除日誌";
+"debug.clear_all_logs" = "清除所有日誌？";
+"debug.clear_logs_message" = "這將永久刪除所有記錄的網路請求。";
+"debug.captured_requests" = "捕獲的請求";
+"debug.requests_logged" = "已記錄 %d 個請求";
+"debug.no_requests" = "尚未記錄任何請求";
+"debug.request_details" = "請求詳情";
+"debug.basic_information" = "基本資訊";
+"debug.request_body" = "請求正文";
+"debug.response_preview" = "回應預覽";
+"debug.full_size" = "完整大小：%@";
+"debug.error" = "錯誤";
+"debug.url" = "URL";
+"debug.method" = "方法";
+"debug.status_code" = "狀態碼";
+"debug.duration" = "持續時間";
+"debug.timestamp" = "時間戳記";
+"debug.duration_seconds" = "%.3f 秒";
+
+/* ==================== */
+/* MARK: - Combined Usage Chart */
+/* ==================== */
+"history.chart.usage_overview" = "使用概覽";
+
+/* ==================== */
+/* MARK: - Keyboard Shortcuts */
+/* ==================== */
+"section.shortcuts_title" = "快捷鍵";
+"section.shortcuts_desc" = "設定鍵盤快捷鍵";
+"shortcuts.title" = "鍵盤快捷鍵";
+"shortcuts.subtitle" = "為常用操作設定全域快捷鍵";
+"shortcuts.open_popover" = "切換彈出面板";
+"shortcuts.open_popover_desc" = "顯示或隱藏使用量面板";
+"shortcuts.refresh" = "重新整理使用量";
+"shortcuts.refresh_desc" = "取得最新使用量資料";
+"shortcuts.open_settings" = "開啟設定";
+"shortcuts.open_settings_desc" = "開啟設定視窗";
+"shortcuts.next_profile" = "下一個設定";
+"shortcuts.next_profile_desc" = "切換到下一個設定";
+"shortcuts.record" = "點選錄製";
+"shortcuts.recording" = "請按快捷鍵...";
+"shortcuts.clear" = "清除";
+"shortcuts.none" = "無";
+"shortcuts.info_title" = "全域快捷鍵";
+"shortcuts.info_desc" = "快捷鍵可在任何軟體中使用。每個快捷鍵必須包含至少一個修飾鍵（Command、Option、Control 或 Shift）。請避免與系統快捷鍵衝突。";
+
+/* ==================== */
+/* MARK: - Mobile App (Coming Soon) */
+/* ==================== */
+"section.mobile_app_title" = "行動 App";
+"section.mobile_app_desc" = "行動 App 即將推出";
+"mobile.title" = "行動 App";
+"mobile.subtitle" = "隨時隨地追蹤您的 Claude 使用情況";
+"mobile.coming_soon_badge" = "即將推出";
+"mobile.cta_message" = "感興趣嗎？告訴我們，準備好後我們會通知您。";
+"mobile.notify_me" = "通知我";
+"mobile.submitting" = "提交中...";
+"mobile.notified" = "您已在列表中！";
+"mobile.notified_desc" = "行動 App 可用時我們會通知您。";
+"mobile.privacy_note" = "不收集任何個人資料。這僅記錄您的興趣。";
+"mobile.error_title" = "請求失敗";
+"mobile.error_message" = "無法註冊您的興趣。請檢查您的網路連線並重試。";
+
+/* ==================== */
+/* MARK: - Popover Settings */
+/* ==================== */
+"section.popover_title" = "彈出視窗";
+"section.popover_desc" = "自訂彈出視窗顯示";
+"section.app_settings_title" = "設定";
+"section.app_settings_desc" = "軟體設定和啟動";
+"popover.title" = "彈出視窗";
+"popover.subtitle" = "自訂彈出視窗如何顯示使用資訊";
+"popover.display_section" = "顯示";
+"popover.time_display" = "時間顯示";
+"popover.time_display_desc" = "選擇重置時間的顯示方式";
+"popover.time_display_reset" = "重置時間";
+"popover.time_display_remaining" = "剩餘時間";
+"popover.time_display_both" = "兩者";
+"popover.time_format" = "時間格式";
+"popover.time_format_desc" = "選擇軟體中時間的顯示方式";
+"popover.time_format_system" = "系統";
+"popover.time_format_12h" = "12 小時";
+"popover.time_format_24h" = "24 小時";
+"popover.peak_hours" = "尖峰時段指示器";
+"popover.peak_hours_desc" = "顯示 Claude 處於尖峰時段時（平日 %@）";
+"popover.peak_hours_toggle" = "顯示尖峰時段指示器";
+"popover.peak_hours_toggle_desc" = "尖峰時段時在選單列顯示火焰圖示，並標示 Session 卡片";
+"popover.peak_hours_menu_icon" = "在選單列顯示火焰圖示";
+"popover.peak_hours_menu_icon_desc" = "尖峰時段時在用量指示器旁顯示火焰圖示";
+
+/* ==================== */
+/* MARK: - Feedback Prompt */
+/* ==================== */
+"feedback.title" = "幫助我們改進";
+"feedback.subtitle" = "您的回饋塑造了這款軟體的未來";
+"feedback.name_placeholder" = "姓名";
+"feedback.title_label" = "角色";
+"feedback.contact_placeholder" = "電子郵件";
+"feedback.message_placeholder" = "告訴我們任何事情 — 回饋、想法、功能建議...";
+"feedback.submit" = "提交";
+"feedback.submitting" = "提交中...";
+"feedback.remind_later" = "稍後提醒";
+"feedback.never_show" = "不再詢問";
+"feedback.thanks" = "感謝您的回饋！";
+"feedback.error_title" = "提交失敗";
+"feedback.error_message" = "無法傳送您的回饋。請稍後重試。";
+"feedback.role_developer" = "開發者";
+"feedback.role_designer" = "設計師";
+"feedback.role_manager" = "經理";
+"feedback.role_student" = "學生";
+"feedback.role_researcher" = "研究員";
+"feedback.role_other" = "其他";
+
+// MARK: - Status Banners
+"popover.banner.credentials_expired" = "憑證已過期。請在設定中更新。";
+"popover.banner.refresh_failed" = "重新整理失敗 %d 次";
+"popover.banner.updated_ago" = "%d 分鐘前更新";
+
+// MARK: - Overage Balance
+"popover.overage_balance" = "餘額";
+
+// MARK: - Setup Wizard CLI Detection
+"setup.cli_detecting" = "正在檢查 CLI 憑證...";
+"setup.cli_detected.title" = "偵測到 CLI！";
+"setup.cli_detected.description" = "在您的系統上找到了 Claude Code CLI 憑證。一鍵開始追蹤您的使用情況。";
+"setup.cli_detected.start" = "開始追蹤";
+"setup.cli_detected.manual" = "手動設定";
+
+// MARK: - Custom Notification Settings
+"notifications.custom_thresholds" = "自訂閾值";
+"notifications.custom_threshold" = "自訂提醒";
+"notifications.custom_placeholder" = "例如 50";
+"notifications.custom_add" = "新增";
+"notifications.sound" = "聲音";
+"notifications.sound.default" = "預設";
+"notifications.sound.none" = "無";
+"notifications.sound.preview" = "預覽聲音";

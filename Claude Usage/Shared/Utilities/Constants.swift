@@ -84,6 +84,24 @@ enum Constants {
         static var credentialsFile: URL {
             claudeDirectory.appendingPathComponent(".credentials.json")
         }
+
+        /// Candidate paths for Claude Code's main config file (`.claude.json`),
+        /// which holds `oauthAccount` (email, accountUuid, organizationName, etc.)
+        /// Claude Code historically stores this at `~/.claude.json`, but when
+        /// `CLAUDE_CONFIG_DIR` is set the file lives at `$CLAUDE_CONFIG_DIR/.claude.json`.
+        /// We probe both locations to be resilient to either layout.
+        static var claudeConfigCandidates: [URL] {
+            var candidates: [URL] = []
+            // Respect CLAUDE_CONFIG_DIR first if set
+            if let configDir = ProcessInfo.processInfo.environment["CLAUDE_CONFIG_DIR"] {
+                candidates.append(URL(fileURLWithPath: configDir).appendingPathComponent(".claude.json"))
+            }
+            // Default location: ~/.claude.json
+            candidates.append(homeDirectory.appendingPathComponent(".claude.json"))
+            // Some setups place it inside ~/.claude/
+            candidates.append(homeDirectory.appendingPathComponent(".claude").appendingPathComponent(".claude.json"))
+            return candidates
+        }
     }
 
     // Refresh intervals (in seconds)
@@ -143,6 +161,8 @@ enum Constants {
     enum WindowSizes {
         static let settingsWindow = NSSize(width: 720, height: 750)
         static let popoverSize = NSSize(width: 320, height: 600)
+        /// Height of the system NSPopover arrow (macOS standard ~13pt)
+        static let popoverArrowHeight: CGFloat = 13
     }
 
     // GitHub Repository Info

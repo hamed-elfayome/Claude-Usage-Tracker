@@ -39,6 +39,13 @@ class MenuBarManager: NSObject, ObservableObject {
     // Event monitor for closing popover on outside click
     private var eventMonitor: Any?
 
+    // Timestamp of the most recent popover close. Used to debounce the
+    // status-item click that dismisses the popover: that same click also fires
+    // togglePopover, which would otherwise immediately re-show the popover
+    // (the "click makes it bounce back instead of closing" race).
+    private var lastPopoverCloseDate: Date = .distantPast
+    private weak var lastPopoverCloseButton: NSStatusBarButton?
+
     // Detached window reference (when popover is detached)
     private var detachedWindow: NSWindow?
 
@@ -50,6 +57,9 @@ class MenuBarManager: NSObject, ObservableObject {
 
     // Feedback prompt window reference
     private var feedbackWindow: NSWindow?
+
+    // Peak hours popover (separate from main popover)
+    private var peakHoursPopover: NSPopover?
 
     // Track which button is currently showing the popover
     private weak var currentPopoverButton: NSStatusBarButton?
@@ -92,6 +102,11 @@ class MenuBarManager: NSObject, ObservableObject {
     private var wakeObserver: NSObjectProtocol?
     private var lastAutoRefreshTime: Date = .distantPast
 
+    // Observer for peak hours setting changes
+    private var peakHoursObserver: NSObjectProtocol?
+
+    private var multiProfileConfigObserver: NSObjectProtocol?
+
     // MARK: - Image Caching (CPU Optimization)
     private var cachedImage: NSImage?
     private var cachedImageKey: String = ""
@@ -116,11 +131,13 @@ class MenuBarManager: NSObject, ObservableObject {
         } else {
             // Single profile mode - setup with active profile's config
             let config = profileManager.activeProfile?.iconConfig ?? .default
-            let hasUsageCredentials = profileManager.activeProfile?.hasUsageCredentials ?? false
+            // Includes system Keychain CLI credentials as a fallback so users who
+            // only authenticated via `claude login` still get metrics enabled.
+            let hasCredentials = hasAnyAvailableCredentials()
 
-            // If no usage credentials, create empty config to show default logo
+            // If no credentials anywhere, create empty config to show default logo
             let displayConfig: MenuBarIconConfiguration
-            if !hasUsageCredentials {
+            if !hasCredentials {
                 displayConfig = MenuBarIconConfiguration(
                     colorMode: config.colorMode,
                     singleColorHex: config.singleColorHex,
@@ -141,11 +158,12 @@ class MenuBarManager: NSObject, ObservableObject {
         // Setup popover
         setupPopover()
 
-        // Load saved data from active profile first (provides immediate feedback)
-        // BUT only if profile has usage credentials - CLI alone can't show usage
+        // Load saved data from active profile first (provides immediate feedback).
+        // Credential check includes system Keychain CLI fallback so users who
+        // authenticated only via `claude login` still see usage data.
         if let profile = profileManager.activeProfile {
-            if profile.hasUsageCredentials {
-                // Profile has usage credentials - show saved usage data if available
+            if hasAnyAvailableCredentials() {
+                // Credentials available - show saved usage data if present
                 if let savedUsage = profile.claudeUsage {
                     usage = savedUsage
                 }
@@ -153,10 +171,10 @@ class MenuBarManager: NSObject, ObservableObject {
                     apiUsage = savedAPIUsage
                 }
             } else {
-                // No usage credentials - clear any old usage data and show default logo
+                // No credentials anywhere - clear any old usage data and show default logo
                 usage = .empty
                 apiUsage = nil
-                LoggingService.shared.log("MenuBarManager: Profile has no usage credentials, showing default logo")
+                LoggingService.shared.log("MenuBarManager: No credentials available (profile or system keychain), showing default logo")
             }
             updateAllStatusBarIcons()
         }
@@ -166,9 +184,9 @@ class MenuBarManager: NSObject, ObservableObject {
             // Only refresh if we haven't refreshed recently (avoid duplicate on startup)
             guard let self = self else { return }
 
-            // Skip if profile has no usage credentials (CLI alone can't be used)
-            guard let profile = self.profileManager.activeProfile, profile.hasUsageCredentials else {
-                LoggingService.shared.log("Skipping network-available refresh (no usage credentials)")
+            // Skip only if no credentials exist anywhere (profile or system keychain)
+            guard self.hasAnyAvailableCredentials() else {
+                LoggingService.shared.log("Skipping network-available refresh (no credentials available)")
                 return
             }
 
@@ -181,14 +199,14 @@ class MenuBarManager: NSObject, ObservableObject {
         }
         networkMonitor.startMonitoring()
 
-        // Initial data fetch (with small delay for launch-at-login scenarios)
-        // Only if profile has usage credentials (not just CLI)
-        if let profile = profileManager.activeProfile, profile.hasUsageCredentials {
+        // Initial data fetch (with small delay for launch-at-login scenarios).
+        // Includes system Keychain CLI credentials as a fallback.
+        if hasAnyAvailableCredentials() {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                 self?.refreshUsage()
             }
         } else {
-            LoggingService.shared.log("Skipping initial refresh (no usage credentials)")
+            LoggingService.shared.log("Skipping initial refresh (no credentials available)")
         }
 
         // Start auto-refresh timer with active profile's interval
@@ -205,6 +223,7 @@ class MenuBarManager: NSObject, ObservableObject {
 
         // Observe display mode changes (single/multi profile)
         observeDisplayModeChanges()
+        observeMultiProfileConfigChanges()
 
         // Setup headless mode observer if enabled (for Remote Desktop support)
         setupHeadlessModeObserver()
@@ -214,6 +233,14 @@ class MenuBarManager: NSObject, ObservableObject {
 
         // Setup global keyboard shortcuts
         setupShortcuts()
+
+        // Start peak hours service and indicator
+        PeakHoursService.shared.start()
+        let store = SharedDataStore.shared
+        if store.loadPeakHoursIndicatorEnabled() && store.loadPeakHoursMenuIconEnabled() {
+            statusBarUIManager?.setupPeakHoursIndicator(target: self, action: #selector(togglePeakHoursPopover))
+        }
+        observePeakHoursSettingChanges()
     }
 
     private func setupShortcuts() {
@@ -265,6 +292,14 @@ class MenuBarManager: NSObject, ObservableObject {
         if let wakeObserver = wakeObserver {
             NSWorkspace.shared.notificationCenter.removeObserver(wakeObserver)
             self.wakeObserver = nil
+        }
+        if let multiProfileConfigObserver = multiProfileConfigObserver {
+            NotificationCenter.default.removeObserver(multiProfileConfigObserver)
+            self.multiProfileConfigObserver = nil
+        }
+        if let peakHoursObserver = peakHoursObserver {
+            NotificationCenter.default.removeObserver(peakHoursObserver)
+            self.peakHoursObserver = nil
         }
         if let monitor = eventMonitor {
             NSEvent.removeMonitor(monitor)
@@ -356,8 +391,8 @@ class MenuBarManager: NSObject, ObservableObject {
         // 3. Update menu bar based on current display mode
         // IMPORTANT: In multi-profile mode, we update all icons, not just switch config
         if profileManager.displayMode == .multi {
-            // Multi-profile mode - refresh all profile icons
-            setupMultiProfileMode()
+            // Multi-profile mode - update icons without recreating status items
+            updateMultiProfileDisplay()
         } else {
             // Single profile mode - update menu bar configuration
             updateMenuBarDisplay(with: profile.iconConfig)
@@ -366,8 +401,9 @@ class MenuBarManager: NSObject, ObservableObject {
         // 4. Recreate popover with new profile data
         recreatePopover()
 
-        // 5. Trigger immediate refresh ONLY if profile has usage credentials
-        if profile.hasUsageCredentials {
+        // 5. Trigger immediate refresh if any credentials are available, including
+        // system Keychain CLI fallback used by ClaudeAPIService.
+        if hasAnyAvailableCredentials() {
             self.lastRefreshTriggerTime = Date()
             refreshUsage()
         } else {
@@ -385,7 +421,14 @@ class MenuBarManager: NSObject, ObservableObject {
         let newPopover = NSPopover()
         newPopover.contentSize = Constants.WindowSizes.popoverSize
         newPopover.behavior = .semitransient
-        newPopover.animates = true
+        // Disabled to avoid an infinite layout-recursion crash on macOS 26/27.
+        // The hosting controller's sizingOptions/preferredContentSize (PR #200)
+        // keep the popover sized to its content; with animation on, each animated
+        // resize re-triggers layout (updateAnimatedWindowSize -> setFrame -> layout)
+        // and never converges, overflowing the main-thread stack. Disabling only the
+        // animation breaks the loop while preserving content sizing/positioning.
+        // See Discussion #64.
+        newPopover.animates = false
         newPopover.delegate = self
         newPopover.contentViewController = createContentViewController()
 
@@ -401,8 +444,9 @@ class MenuBarManager: NSObject, ObservableObject {
             return
         }
 
-        // Check if active profile has usage credentials (not just CLI)
-        let hasUsageCredentials = profileManager.activeProfile?.hasUsageCredentials ?? false
+        // Keep configuration decisions aligned with the fetch path so users with
+        // only system Keychain CLI credentials keep their configured metric items.
+        let hasUsageCredentials = hasAnyAvailableCredentials()
 
         // If no usage credentials, use an empty config (will show default logo)
         let displayConfig: MenuBarIconConfiguration
@@ -449,7 +493,14 @@ class MenuBarManager: NSObject, ObservableObject {
         let popover = NSPopover()
         popover.contentSize = Constants.WindowSizes.popoverSize
         popover.behavior = .semitransient  // Changed to allow detaching
-        popover.animates = true
+        // Disabled to avoid an infinite layout-recursion crash on macOS 26/27.
+        // The hosting controller's sizingOptions/preferredContentSize (PR #200)
+        // keep the popover sized to its content; with animation on, each animated
+        // resize re-triggers layout (updateAnimatedWindowSize -> setFrame -> layout)
+        // and never converges, overflowing the main-thread stack. Disabling only the
+        // animation breaks the loop while preserving content sizing/positioning.
+        // See Discussion #64.
+        popover.animates = false
         popover.delegate = self
 
         popover.contentViewController = createContentViewController()
@@ -469,10 +520,19 @@ class MenuBarManager: NSObject, ObservableObject {
             }
         )
 
-        return NSHostingController(rootView: contentView)
+        let hostingController = NSHostingController(rootView: contentView)
+        hostingController.preferredContentSize = Constants.WindowSizes.popoverSize
+        hostingController.sizingOptions = .preferredContentSize
+        return hostingController
     }
 
     @objc private func togglePopover(_ sender: Any?) {
+        // Right-click → show context menu instead of toggling the popover
+        if let event = NSApp.currentEvent, event.type == .rightMouseUp {
+            showContextMenu(for: sender as? NSStatusBarButton)
+            return
+        }
+
         // Determine which button was clicked
         let clickedButton: NSStatusBarButton?
         if let button = sender as? NSStatusBarButton {
@@ -522,20 +582,38 @@ class MenuBarManager: NSObject, ObservableObject {
                     closePopover()
                 } else {
                     // Different button - close current and show at new position
-                    popover.performClose(nil)
+                    // Use close() instead of performClose() to avoid async race condition
+                    // No need to recreate contentViewController — SwiftUI already observes
+                    // the @Published profile properties set earlier in this method
+                    popover.close()
                     stopMonitoringForOutsideClicks()
-                    // Update content view controller for new profile data
-                    popover.contentViewController = createContentViewController()
+                    // Activate first so the popover appears over a full-screen Space.
+                    // An .accessory app that isn't active renders the popover on the
+                    // desktop Space, hidden behind any frontmost full-screen app.
+                    NSApp.activate(ignoringOtherApps: true)
                     popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
                     currentPopoverButton = button
                     startMonitoringForOutsideClicks()
                 }
             } else {
-                // Popover not shown - show it
+                // Popover not shown - show it.
+                // Guard against the dismiss/re-open race: if the popover was just
+                // closed (e.g. the outside-click monitor handled this same click a
+                // moment before the button action fired), treat this click as the
+                // dismissing click and don't immediately re-open it. Only for the
+                // button the popover was anchored to — a click on a different
+                // status item is a deliberate open, not the dismissing click.
+                if button === lastPopoverCloseButton,
+                   Date().timeIntervalSince(lastPopoverCloseDate) < 0.25 {
+                    return
+                }
                 // Stop any existing monitor first
                 stopMonitoringForOutsideClicks()
                 // Update content view controller for current profile data
                 popover.contentViewController = createContentViewController()
+                // Activate first so the popover appears over a full-screen Space
+                // (otherwise an inactive .accessory app draws it on the desktop Space).
+                NSApp.activate(ignoringOtherApps: true)
                 popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
                 currentPopoverButton = button
                 startMonitoringForOutsideClicks()
@@ -543,10 +621,73 @@ class MenuBarManager: NSObject, ObservableObject {
         }
     }
 
+    @objc private func togglePeakHoursPopover(_ sender: Any?) {
+        guard let button = sender as? NSStatusBarButton else { return }
+
+        if let popover = peakHoursPopover, popover.isShown {
+            popover.close()
+            peakHoursPopover = nil
+            return
+        }
+
+        // Close the main popover if open
+        if let mainPopover = popover, mainPopover.isShown {
+            closePopover()
+        }
+
+        let popover = NSPopover()
+        popover.contentSize = NSSize(width: 260, height: 140)
+        popover.behavior = .transient
+        popover.animates = true
+        popover.contentViewController = NSHostingController(rootView: PeakHoursPopoverView())
+        // Activate first so the popover appears over a full-screen Space.
+        NSApp.activate(ignoringOtherApps: true)
+        popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+        peakHoursPopover = popover
+    }
+
+    /// Shows a lightweight context menu (Refresh / Settings / Quit) anchored to the
+    /// status bar button that received the right-click.
+    private func showContextMenu(for button: NSStatusBarButton?) {
+        let menu = NSMenu()
+
+        let refreshItem = NSMenuItem(title: "common.refresh".localized, action: #selector(contextMenuRefresh), keyEquivalent: "")
+        refreshItem.target = self
+        menu.addItem(refreshItem)
+
+        menu.addItem(NSMenuItem.separator())
+
+        let settingsItem = NSMenuItem(title: "common.settings".localized, action: #selector(preferencesClicked), keyEquivalent: ",")
+        settingsItem.keyEquivalentModifierMask = .command
+        settingsItem.target = self
+        menu.addItem(settingsItem)
+
+        let quitItem = NSMenuItem(title: "common.quit".localized, action: #selector(quitClicked), keyEquivalent: "q")
+        quitItem.keyEquivalentModifierMask = .command
+        quitItem.target = self
+        menu.addItem(quitItem)
+
+        // Show the menu at the button's location
+        if let button = button {
+            // Position the menu below the status bar button
+            if let window = button.window {
+                let buttonRect = button.convert(button.bounds, to: nil)
+                let screenRect = window.convertToScreen(buttonRect)
+                menu.popUp(positioning: nil, at: NSPoint(x: screenRect.origin.x, y: screenRect.origin.y), in: nil)
+            }
+        }
+    }
+
+    @objc private func contextMenuRefresh() {
+        refreshUsage()
+    }
+
     private func closePopover() {
         popover?.performClose(nil)
         stopMonitoringForOutsideClicks()
+        lastPopoverCloseButton = currentPopoverButton
         currentPopoverButton = nil
+        lastPopoverCloseDate = Date()
     }
 
     private func startMonitoringForOutsideClicks() {
@@ -587,7 +728,8 @@ class MenuBarManager: NSObject, ObservableObject {
             let config = profileManager.multiProfileConfig
             statusBarUIManager?.updateMultiProfileButtons(
                 profiles: profileManager.profiles,
-                config: config
+                config: config,
+                activeProfileId: profileManager.activeProfile?.id
             )
         } else {
             // Single profile mode - use the standard update
@@ -691,8 +833,9 @@ class MenuBarManager: NSObject, ObservableObject {
             guard let self = self else { return }
 
             Task { @MainActor in
-                // Check if active profile has usage credentials
-                guard let profile = self.profileManager.activeProfile, profile.hasUsageCredentials else {
+                // Check if active profile has any credentials, including system
+                // Keychain CLI fallback.
+                guard let profile = self.profileManager.activeProfile, self.hasAnyAvailableCredentials() else {
                     LoggingService.shared.logInfo("Credentials changed but no usage credentials - showing default logo")
 
                     // Reconfigure menu bar to show default logo
@@ -728,8 +871,8 @@ class MenuBarManager: NSObject, ObservableObject {
             Task { @MainActor in
                 // Handle differently based on display mode
                 if self.profileManager.displayMode == .multi {
-                    // Multi-profile mode - refresh all profile icons
-                    self.setupMultiProfileMode()
+                    // Multi-profile mode - update icons without recreating status items
+                    self.updateMultiProfileDisplay()
                 } else {
                     // Single profile mode
                     let newConfig = self.profileManager.activeProfile?.iconConfig ?? .default
@@ -750,6 +893,40 @@ class MenuBarManager: NSObject, ObservableObject {
 
             Task { @MainActor in
                 self.handleDisplayModeChange()
+            }
+        }
+    }
+
+    private func observeMultiProfileConfigChanges() {
+        // Observe multi-profile visual config changes (icon style, toggles, profile selection)
+        // Uses incremental update — does NOT destroy/recreate status items
+        multiProfileConfigObserver = NotificationCenter.default.addObserver(
+            forName: .multiProfileConfigChanged,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+
+            Task { @MainActor in
+                self.updateMultiProfileDisplay()
+            }
+        }
+    }
+
+    private func observePeakHoursSettingChanges() {
+        peakHoursObserver = NotificationCenter.default.addObserver(
+            forName: .peakHoursSettingChanged,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+            let store = SharedDataStore.shared
+            if store.loadPeakHoursIndicatorEnabled() && store.loadPeakHoursMenuIconEnabled() {
+                self.statusBarUIManager?.setupPeakHoursIndicator(
+                    target: self, action: #selector(self.togglePeakHoursPopover)
+                )
+            } else {
+                self.statusBarUIManager?.removePeakHoursIndicator()
             }
         }
     }
@@ -801,6 +978,19 @@ class MenuBarManager: NSObject, ObservableObject {
         return statusBarUIManager?.hasValidStatusBar ?? false
     }
 
+    /// Checks if ANY credentials are available for the active profile, including
+    /// system Keychain CLI credentials. Mirrors the fallback logic in
+    /// `ClaudeAPIService.getAuthentication()` so the refresh path isn't gated off
+    /// before the API service has a chance to discover system-level credentials.
+    private func hasAnyAvailableCredentials() -> Bool {
+        guard let profile = profileManager.activeProfile else { return false }
+
+        // Profile-local credentials (Claude.ai, API Console, saved CLI OAuth),
+        // then the cached system Keychain CLI fallback.
+        return profile.hasUsageCredentials
+            || ClaudeCodeSyncService.shared.hasUsableSystemCredentials()
+    }
+
     private func setupMultiProfileMode() {
         let selectedProfiles = profileManager.getSelectedProfiles()
         let config = profileManager.multiProfileConfig
@@ -814,13 +1004,36 @@ class MenuBarManager: NSObject, ObservableObject {
         // Defer icon update to next run loop iteration to let NSStatusBar finalize layout
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-            self.statusBarUIManager?.updateMultiProfileButtons(profiles: self.profileManager.profiles, config: config)
+            self.statusBarUIManager?.updateMultiProfileButtons(profiles: self.profileManager.profiles, config: config, activeProfileId: self.profileManager.activeProfile?.id)
         }
 
         LoggingService.shared.log("MenuBarManager: Multi-profile mode enabled with \(selectedProfiles.count) profiles, style=\(config.iconStyle.rawValue)")
 
         // Refresh data for all selected profiles that have credentials
         refreshAllSelectedProfiles()
+    }
+
+    /// Incrementally updates multi-profile status items (without destroying/recreating them)
+    /// Use this when only icon config changed but the set of profiles may or may not have changed.
+    private func updateMultiProfileDisplay() {
+        let selectedProfiles = profileManager.getSelectedProfiles()
+        let config = profileManager.multiProfileConfig
+
+        statusBarUIManager?.updateMultiProfileConfiguration(
+            profiles: selectedProfiles,
+            target: self,
+            action: #selector(togglePopover)
+        )
+
+        // WORKAROUND: Defer icon update to next run loop iteration to avoid race condition
+        // where NSStatusBar layout hasn't finalized yet after status item creation.
+        // This prevents potential flicker or layout issues during incremental updates.
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.statusBarUIManager?.updateMultiProfileButtons(profiles: self.profileManager.profiles, config: config, activeProfileId: self.profileManager.activeProfile?.id)
+        }
+
+        LoggingService.shared.log("MenuBarManager: Multi-profile display updated incrementally with \(selectedProfiles.count) profiles")
     }
 
     /// Refreshes usage data for all profiles selected for multi-profile display
@@ -895,6 +1108,14 @@ class MenuBarManager: NSObject, ObservableObject {
                         // If this is the active profile, also update the manager's usage
                         if profile.id == self.profileManager.activeProfile?.id {
                             self.usage = newUsage
+
+                            // Write statusline cache for instant CLI rendering
+                            if StatuslineService.shared.isInstalled {
+                                StatuslineService.shared.writeUsageCache(
+                                    usage: newUsage,
+                                    profileName: profile.name
+                                )
+                            }
                         }
                     }
                 } catch {
@@ -929,7 +1150,8 @@ class MenuBarManager: NSObject, ObservableObject {
                 let config = self.profileManager.multiProfileConfig
                 self.statusBarUIManager?.updateMultiProfileButtons(
                     profiles: self.profileManager.profiles,
-                    config: config
+                    config: config,
+                    activeProfileId: self.profileManager.activeProfile?.id
                 )
                 self.consecutiveRefreshFailures = 0
                 self.lastRefreshError = nil
@@ -962,7 +1184,11 @@ class MenuBarManager: NSObject, ObservableObject {
         }
 
         // Priority 3: System Keychain CLI OAuth token
-        if let systemCredentials = try? ClaudeCodeSyncService.shared.readSystemCredentials(),
+        // Only use system keychain for the active profile — the keychain/credentials file
+        // reflects the currently active `claude` CLI session. Using it for a non-active
+        // profile would silently return the active profile's stats.
+        if profile.id == profileManager.activeProfile?.id,
+           let systemCredentials = try? ClaudeCodeSyncService.shared.readSystemCredentials(),
            !ClaudeCodeSyncService.shared.isTokenExpired(systemCredentials),
            let accessToken = ClaudeCodeSyncService.shared.extractAccessToken(from: systemCredentials) {
             return try await apiService.fetchUsageData(oauthAccessToken: accessToken)
@@ -978,7 +1204,7 @@ class MenuBarManager: NSObject, ObservableObject {
     private func setupSingleProfileMode() {
         guard let profile = profileManager.activeProfile else { return }
 
-        let hasUsageCredentials = profile.hasUsageCredentials
+        let hasUsageCredentials = hasAnyAvailableCredentials()
         let config = profile.iconConfig
 
         // If no usage credentials, create empty config to show default logo
@@ -1026,9 +1252,12 @@ class MenuBarManager: NSObject, ObservableObject {
         LoggingService.shared.log("  - Profile: '\(profile.name)'")
         LoggingService.shared.log("  - hasUsageCredentials: \(profile.hasUsageCredentials)")
 
-        // Check for usage credentials (Claude.ai or API Console, not just CLI)
-        guard profile.hasUsageCredentials else {
-            LoggingService.shared.log("MenuBarManager: Skipping refresh - no usage credentials")
+        // Check for ANY available credentials, including system Keychain CLI fallback.
+        // Without this fallback, users who only authenticated via `claude login`
+        // would be gated off here before ClaudeAPIService.getAuthentication() could
+        // discover their system-level credentials.
+        guard hasAnyAvailableCredentials() else {
+            LoggingService.shared.log("MenuBarManager: Skipping refresh - no credentials available (profile or system keychain)")
             // Update icons to show default logo if needed
             updateAllStatusBarIcons()
             return
@@ -1625,28 +1854,48 @@ extension MenuBarManager: NSPopoverDelegate {
         return true
     }
 
+    func popoverDidClose(_ notification: Notification) {
+        // Record every close (transient dismiss, outside-click monitor, or
+        // explicit close) so togglePopover can debounce the dismissing click
+        // and avoid the "click bounces the popover back open" race.
+        lastPopoverCloseDate = Date()
+        lastPopoverCloseButton = currentPopoverButton
+    }
+
     func detachableWindow(for popover: NSPopover) -> NSWindow? {
         // Stop monitoring for outside clicks when detaching
         stopMonitoringForOutsideClicks()
 
-        // Create a new window with NEW content view controller
-        // This prevents the popover from losing its content
-        let newContentViewController = createContentViewController()
+        // Create content view controller sized for a window (not a popover).
+        // We don't use createContentViewController() here because its
+        // preferredContentSize/sizingOptions (added by PR #200 for popover
+        // positioning) conflict with the window's layout constraints.
+        let contentView = PopoverContentView(
+            manager: self,
+            onRefresh: { [weak self] in self?.refreshUsage() },
+            onPreferences: { [weak self] in
+                self?.closePopoverOrWindow()
+                self?.preferencesClicked()
+            }
+        )
+        let hostingController = NSHostingController(rootView: contentView)
 
         let window = NSPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 320, height: 600),
-            styleMask: [.titled, .closable, .fullSizeContentView, .nonactivatingPanel, .hudWindow],
+            contentRect: NSRect(x: 0, y: 0, width: 280, height: 600),
+            styleMask: [.titled, .closable, .nonactivatingPanel, .hudWindow],
             backing: .buffered,
             defer: false
         )
-        window.contentViewController = newContentViewController
+        window.contentViewController = hostingController
         window.title = ""
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
         window.isMovableByWindowBackground = true
-        window.setContentSize(NSSize(width: 320, height: 600))
+        window.setContentSize(NSSize(width: 280, height: 600))
         window.isReleasedWhenClosed = false
         window.level = .floating
+        // Allow a torn-off popover to stay on a full-screen app's Space.
+        window.collectionBehavior.insert(.fullScreenAuxiliary)
         window.isRestorable = false
         window.delegate = self
         window.backgroundColor = .clear
@@ -1668,6 +1917,7 @@ extension MenuBarManager: StatusBarUIManagerDelegate {
         cachedIsDarkMode = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
         cachedImageKey = ""
         updateAllStatusBarIcons()
+        statusBarUIManager?.updatePeakHoursIcon()
     }
 }
 

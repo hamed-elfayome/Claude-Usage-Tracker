@@ -42,6 +42,10 @@ struct UsageSnapshot: Codable, Identifiable, Equatable {
     let opusWeeklyPercentage: Double?
     let sonnetWeeklyTokensUsed: Int?
     let sonnetWeeklyPercentage: Double?
+    let designWeeklyTokensUsed: Int?
+    let designWeeklyPercentage: Double?
+    let fableWeeklyTokensUsed: Int?
+    let fableWeeklyPercentage: Double?
 
     // API billing data (captured before reset)
     let apiSpendCents: Int?
@@ -63,6 +67,10 @@ struct UsageSnapshot: Codable, Identifiable, Equatable {
         opusWeeklyPercentage: Double? = nil,
         sonnetWeeklyTokensUsed: Int? = nil,
         sonnetWeeklyPercentage: Double? = nil,
+        designWeeklyTokensUsed: Int? = nil,
+        designWeeklyPercentage: Double? = nil,
+        fableWeeklyTokensUsed: Int? = nil,
+        fableWeeklyPercentage: Double? = nil,
         apiSpendCents: Int? = nil,
         apiPrepaidCreditsCents: Int? = nil,
         apiCurrency: String? = nil,
@@ -79,6 +87,10 @@ struct UsageSnapshot: Codable, Identifiable, Equatable {
         self.opusWeeklyPercentage = opusWeeklyPercentage
         self.sonnetWeeklyTokensUsed = sonnetWeeklyTokensUsed
         self.sonnetWeeklyPercentage = sonnetWeeklyPercentage
+        self.designWeeklyTokensUsed = designWeeklyTokensUsed
+        self.designWeeklyPercentage = designWeeklyPercentage
+        self.fableWeeklyTokensUsed = fableWeeklyTokensUsed
+        self.fableWeeklyPercentage = fableWeeklyPercentage
         self.apiSpendCents = apiSpendCents
         self.apiPrepaidCreditsCents = apiPrepaidCreditsCents
         self.apiCurrency = apiCurrency
@@ -105,6 +117,10 @@ struct UsageSnapshot: Codable, Identifiable, Equatable {
             opusWeeklyPercentage: usage.opusWeeklyPercentage,
             sonnetWeeklyTokensUsed: usage.sonnetWeeklyTokensUsed,
             sonnetWeeklyPercentage: usage.sonnetWeeklyPercentage,
+            designWeeklyTokensUsed: usage.designWeeklyTokensUsed,
+            designWeeklyPercentage: usage.designWeeklyPercentage,
+            fableWeeklyTokensUsed: usage.fableWeeklyTokensUsed,
+            fableWeeklyPercentage: usage.fableWeeklyPercentage,
             triggeringResetTime: resetTime
         )
     }
@@ -223,7 +239,7 @@ struct UsageHistoryData: Codable, Equatable {
 
     /// Export to CSV format
     func exportToCSV() -> String {
-        var csv = "Timestamp,Reset Type,Session %,Session Tokens,Weekly %,Weekly Tokens,Opus %,Sonnet %,API Spend,Currency\n"
+        var csv = "Timestamp,Reset Type,Session %,Session Tokens,Weekly %,Weekly Tokens,Opus %,Sonnet %,Design %,Fable %,API Spend,Currency\n"
 
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
@@ -240,11 +256,13 @@ struct UsageHistoryData: Codable, Equatable {
 
             let opusPct = snapshot.opusWeeklyPercentage.map { String(format: "%.1f", $0) } ?? ""
             let sonnetPct = snapshot.sonnetWeeklyPercentage.map { String(format: "%.1f", $0) } ?? ""
+            let designPct = snapshot.designWeeklyPercentage.map { String(format: "%.1f", $0) } ?? ""
+            let fablePct = snapshot.fableWeeklyPercentage.map { String(format: "%.1f", $0) } ?? ""
 
             let apiSpend = snapshot.apiSpendCents.map { String(Double($0) / 100.0) } ?? ""
             let currency = snapshot.apiCurrency ?? ""
 
-            csv += "\(timestamp),\(resetType),\(sessionPct),\(sessionTokens),\(weeklyPct),\(weeklyTokens),\(opusPct),\(sonnetPct),\(apiSpend),\(currency)\n"
+            csv += "\(timestamp),\(resetType),\(sessionPct),\(sessionTokens),\(weeklyPct),\(weeklyTokens),\(opusPct),\(sonnetPct),\(designPct),\(fablePct),\(apiSpend),\(currency)\n"
         }
 
         return csv

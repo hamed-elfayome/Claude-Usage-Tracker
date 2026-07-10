@@ -25,12 +25,27 @@ struct ConsoleAuthWebView: NSViewRepresentable {
     func makeNSView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
         config.websiteDataStore = .default()
+        config.preferences.javaScriptCanOpenWindowsAutomatically = true
 
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = context.coordinator
         webView.uiDelegate = context.coordinator
+        context.coordinator.parentWebView = webView
+        context.coordinator.startObservingCookies(for: config.websiteDataStore)
 
-        webView.load(URLRequest(url: loginURL))
+        // Clear auth cookies to prevent auto-login with stale session.
+        // Google cookies are preserved so SSO popup works.
+        let cookieStore = config.websiteDataStore.httpCookieStore
+        cookieStore.getAllCookies { cookies in
+            let group = DispatchGroup()
+            for cookie in cookies where cookie.domain.contains("claude") || cookie.domain.contains("anthropic") {
+                group.enter()
+                cookieStore.delete(cookie) { group.leave() }
+            }
+            group.notify(queue: .main) {
+                webView.load(URLRequest(url: self.loginURL))
+            }
+        }
 
         return webView
     }
@@ -41,14 +56,94 @@ struct ConsoleAuthWebView: NSViewRepresentable {
         Coordinator(cookieDomain: cookieDomain, onCookieFound: onCookieFound)
     }
 
-    class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
+    class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate, WKHTTPCookieStoreObserver {
         let cookieDomain: String
         let onCookieFound: (ConsoleCookieResult) -> Void
         private var foundCookie = false
+        weak var parentWebView: WKWebView?
+        private var popupWindow: NSWindow?
+        private var popupWebView: WKWebView?
+        private var pollTimer: Timer?
 
         init(cookieDomain: String, onCookieFound: @escaping (ConsoleCookieResult) -> Void) {
             self.cookieDomain = cookieDomain
             self.onCookieFound = onCookieFound
+        }
+
+        deinit {
+            pollTimer?.invalidate()
+        }
+
+        func startObservingCookies(for dataStore: WKWebsiteDataStore) {
+            dataStore.httpCookieStore.add(self)
+
+            // WKHTTPCookieStoreObserver doesn't fire for cookies set via
+            // Set-Cookie by the network process on macOS 26+, and claude.ai is
+            // an SPA so didFinish never fires after login — poll as a fallback.
+            // .common mode so the timer keeps firing while the sheet is up.
+            let timer = Timer(timeInterval: 1.0, repeats: true) { [weak self] _ in
+                guard let self = self else { return }
+                if self.foundCookie {
+                    self.pollTimer?.invalidate()
+                    self.pollTimer = nil
+                    return
+                }
+                self.searchForSessionCookie(in: dataStore.httpCookieStore)
+                self.reloadIfLoggedInWithoutCookie()
+            }
+            RunLoop.main.add(timer, forMode: .common)
+            pollTimer = timer
+        }
+
+        // The network process may not expose the fresh sessionKey to
+        // getAllCookies until the next navigation. If the main webview has
+        // left the login page but the cookie still isn't visible, force a
+        // reload (mirrors the manual page-reload workaround).
+        private var pollsSinceLoginLeft = 0
+        private var reloadAttempts = 0
+
+        private func reloadIfLoggedInWithoutCookie() {
+            guard !foundCookie, let webView = parentWebView else { return }
+            guard let url = webView.url,
+                  url.host?.contains(cookieDomain) == true,
+                  !url.path.contains("login") else {
+                pollsSinceLoginLeft = 0
+                return
+            }
+            pollsSinceLoginLeft += 1
+            // Give the observer/poll 3s to see the cookie, then reload; retry up to 3 times.
+            if pollsSinceLoginLeft >= 3 && reloadAttempts < 3 {
+                pollsSinceLoginLeft = 0
+                reloadAttempts += 1
+                webView.reloadFromOrigin()
+            }
+        }
+
+        // WKHTTPCookieStoreObserver — fires whenever any cookie changes
+        func cookiesDidChange(in cookieStore: WKHTTPCookieStore) {
+            guard !foundCookie else { return }
+            searchForSessionCookie(in: cookieStore)
+        }
+
+        private func searchForSessionCookie(in cookieStore: WKHTTPCookieStore) {
+            cookieStore.getAllCookies { [weak self] cookies in
+                guard let self = self, !self.foundCookie else { return }
+                for cookie in cookies {
+                    if cookie.name == "sessionKey" && cookie.domain.contains(self.cookieDomain) {
+                        self.foundCookie = true
+                        let result = ConsoleCookieResult(
+                            sessionKey: cookie.value,
+                            expiryDate: cookie.expiresDate
+                        )
+                        DispatchQueue.main.async {
+                            self.pollTimer?.invalidate()
+                            self.pollTimer = nil
+                            self.onCookieFound(result)
+                        }
+                        return
+                    }
+                }
+            }
         }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
@@ -62,31 +157,43 @@ struct ConsoleAuthWebView: NSViewRepresentable {
             for navigationAction: WKNavigationAction,
             windowFeatures: WKWindowFeatures
         ) -> WKWebView? {
-            // Handle Google SSO popups by loading in the same webview
-            if let url = navigationAction.request.url {
-                webView.load(URLRequest(url: url))
+            // Create a real popup WKWebView using the provided configuration
+            // (preserves window.opener linkage and shared cookies for Google SSO)
+            let popup = WKWebView(
+                frame: CGRect(x: 0, y: 0, width: 500, height: 600),
+                configuration: configuration
+            )
+            popup.navigationDelegate = self
+            popup.uiDelegate = self
+
+            let panel = NSPanel(
+                contentRect: CGRect(x: 0, y: 0, width: 500, height: 600),
+                styleMask: [.titled, .closable, .resizable],
+                backing: .buffered,
+                defer: false
+            )
+            panel.contentView = popup
+            panel.title = "Sign In"
+            panel.center()
+            panel.makeKeyAndOrderFront(nil)
+
+            self.popupWindow = panel
+            self.popupWebView = popup
+
+            return popup
+        }
+
+        // Handle window.close() from Google SSO popup after auth completes
+        func webViewDidClose(_ webView: WKWebView) {
+            if webView === popupWebView {
+                popupWindow?.close()
+                popupWindow = nil
+                popupWebView = nil
             }
-            return nil
         }
 
         private func checkForSessionCookie(in webView: WKWebView) {
-            webView.configuration.websiteDataStore.httpCookieStore.getAllCookies { [weak self] cookies in
-                guard let self = self, !self.foundCookie else { return }
-
-                for cookie in cookies {
-                    if cookie.name == "sessionKey" && cookie.domain.contains(self.cookieDomain) {
-                        self.foundCookie = true
-                        let result = ConsoleCookieResult(
-                            sessionKey: cookie.value,
-                            expiryDate: cookie.expiresDate
-                        )
-                        DispatchQueue.main.async {
-                            self.onCookieFound(result)
-                        }
-                        return
-                    }
-                }
-            }
+            searchForSessionCookie(in: webView.configuration.websiteDataStore.httpCookieStore)
         }
     }
 }

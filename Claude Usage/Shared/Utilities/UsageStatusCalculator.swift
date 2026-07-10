@@ -19,8 +19,8 @@ final class UsageStatusCalculator {
         if let t = elapsedFraction, t >= 0.15, t < 1.0, u > 0 {
             let projected = u / t
             switch projected {
-            case ..<0.75:     return .safe
-            case 0.75..<0.95: return .moderate
+            case ..<0.80:     return .safe
+            case 0.80..<0.90: return .moderate
             default:          return .critical
             }
         }
@@ -37,9 +37,9 @@ final class UsageStatusCalculator {
             }
         } else {
             switch usedPercentage {
-            case 0..<50:
+            case 0..<80:
                 return .safe
-            case 50..<80:
+            case 80..<90:
                 return .moderate
             default:
                 return .critical

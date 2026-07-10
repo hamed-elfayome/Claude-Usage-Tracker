@@ -316,8 +316,26 @@ struct APIEnterKeyStep: View {
                 )
             }
 
+            // OR divider
+            HStack {
+                Rectangle()
+                    .fill(Color.secondary.opacity(0.3))
+                    .frame(height: 1)
+                Text("OR")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(.secondary)
+                Rectangle()
+                    .fill(Color.secondary.opacity(0.3))
+                    .frame(height: 1)
+            }
+            .padding(.vertical, 4)
+
             // Fallback: Manual session key entry
-            DisclosureGroup("Advanced: Manual Session Key") {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Advanced: Manual Session Key")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.secondary)
+
                 VStack(alignment: .leading, spacing: 8) {
                     Text("api.label_api_session_key".localized)
                         .font(.system(size: 12, weight: .medium))
@@ -360,10 +378,7 @@ struct APIEnterKeyStep: View {
                         .disabled(wizardState.apiSessionKey.isEmpty || wizardState.validationState == .validating)
                     }
                 }
-                .padding(.top, 8)
             }
-            .font(.system(size: 12, weight: .medium))
-            .foregroundColor(.secondary)
 
             // Validation status
             if case .success(let message) = wizardState.validationState {

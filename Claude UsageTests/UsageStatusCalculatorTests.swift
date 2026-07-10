@@ -6,41 +6,41 @@ final class UsageStatusCalculatorTests: XCTestCase {
     // MARK: - Used-Based Thresholds (showRemaining = false)
 
     func testUsedBasedThresholds_Safe() {
-        // 0-49% used should be safe (green)
+        // 0-79% used should be safe (green)
         XCTAssertEqual(
             UsageStatusCalculator.calculateStatus(usedPercentage: 0, showRemaining: false),
             .safe
         )
         XCTAssertEqual(
-            UsageStatusCalculator.calculateStatus(usedPercentage: 25, showRemaining: false),
+            UsageStatusCalculator.calculateStatus(usedPercentage: 50, showRemaining: false),
             .safe
         )
         XCTAssertEqual(
-            UsageStatusCalculator.calculateStatus(usedPercentage: 49, showRemaining: false),
+            UsageStatusCalculator.calculateStatus(usedPercentage: 79, showRemaining: false),
             .safe
         )
     }
 
     func testUsedBasedThresholds_Moderate() {
-        // 50-79% used should be moderate (orange)
+        // 80-89% used should be moderate (yellow)
         XCTAssertEqual(
-            UsageStatusCalculator.calculateStatus(usedPercentage: 50, showRemaining: false),
+            UsageStatusCalculator.calculateStatus(usedPercentage: 80, showRemaining: false),
             .moderate
         )
         XCTAssertEqual(
-            UsageStatusCalculator.calculateStatus(usedPercentage: 65, showRemaining: false),
+            UsageStatusCalculator.calculateStatus(usedPercentage: 85, showRemaining: false),
             .moderate
         )
         XCTAssertEqual(
-            UsageStatusCalculator.calculateStatus(usedPercentage: 79, showRemaining: false),
+            UsageStatusCalculator.calculateStatus(usedPercentage: 89, showRemaining: false),
             .moderate
         )
     }
 
     func testUsedBasedThresholds_Critical() {
-        // 80-100% used should be critical (red)
+        // 90-100% used should be critical (red)
         XCTAssertEqual(
-            UsageStatusCalculator.calculateStatus(usedPercentage: 80, showRemaining: false),
+            UsageStatusCalculator.calculateStatus(usedPercentage: 90, showRemaining: false),
             .critical
         )
         XCTAssertEqual(
@@ -140,19 +140,19 @@ final class UsageStatusCalculatorTests: XCTestCase {
     func testBoundaryConditions_UsedMode() {
         // Test exact boundary values for used-based thresholds
         XCTAssertEqual(
-            UsageStatusCalculator.calculateStatus(usedPercentage: 49.9, showRemaining: false),
+            UsageStatusCalculator.calculateStatus(usedPercentage: 79.9, showRemaining: false),
             .safe
         )
         XCTAssertEqual(
-            UsageStatusCalculator.calculateStatus(usedPercentage: 50.0, showRemaining: false),
-            .moderate
-        )
-        XCTAssertEqual(
-            UsageStatusCalculator.calculateStatus(usedPercentage: 79.9, showRemaining: false),
-            .moderate
-        )
-        XCTAssertEqual(
             UsageStatusCalculator.calculateStatus(usedPercentage: 80.0, showRemaining: false),
+            .moderate
+        )
+        XCTAssertEqual(
+            UsageStatusCalculator.calculateStatus(usedPercentage: 89.9, showRemaining: false),
+            .moderate
+        )
+        XCTAssertEqual(
+            UsageStatusCalculator.calculateStatus(usedPercentage: 90.0, showRemaining: false),
             .critical
         )
     }

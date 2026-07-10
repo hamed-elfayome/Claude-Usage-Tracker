@@ -1439,4 +1439,82 @@ final class MenuBarIconRenderer {
 
         return "\(formatSingleValue(used))/\(formatSingleValue(limit))"
     }
+
+    // MARK: - Peak Hours Icon
+
+    /// Creates a space-invader style icon for peak hours indicator.
+    func createPeakHoursIcon(isPeak: Bool, isDarkMode: Bool) -> NSImage {
+        let size = NSSize(width: 30, height: 26)
+        let image = NSImage(size: size)
+        image.lockFocus()
+        defer { image.unlockFocus() }
+
+        // Scale SVG viewBox (320x240) into canvas
+        let sx: CGFloat = 28.0 / 320.0
+        let sy: CGFloat = 22.0 / 240.0
+        let ox: CGFloat = 1.0   // offset x to center
+        let oy: CGFloat = 2.0   // offset y to center
+
+        func p(_ x: CGFloat, _ y: CGFloat) -> NSPoint {
+            // Flip Y: SVG y=0 is top, NSImage y=0 is bottom
+            NSPoint(x: ox + x * sx, y: oy + (240 - y) * sy)
+        }
+
+        let color: NSColor = .systemRed
+
+        // Body path (cross shape)
+        let body = NSBezierPath()
+        body.move(to: p(70, 40))
+        body.line(to: p(250, 40))
+        body.line(to: p(250, 75))
+        body.line(to: p(280, 75))
+        body.line(to: p(280, 115))
+        body.line(to: p(250, 115))
+        body.line(to: p(250, 160))
+        body.line(to: p(70, 160))
+        body.line(to: p(70, 115))
+        body.line(to: p(40, 115))
+        body.line(to: p(40, 75))
+        body.line(to: p(70, 75))
+        body.close()
+        color.setFill()
+        body.fill()
+
+        // Legs (4 rectangles)
+        let legs: [(CGFloat, CGFloat)] = [(95, 160), (125, 160), (177, 160), (207, 160)]
+        for (lx, ly) in legs {
+            let legRect = NSBezierPath()
+            legRect.move(to: p(lx, ly))
+            legRect.line(to: p(lx + 18, ly))
+            legRect.line(to: p(lx + 18, ly + 30))
+            legRect.line(to: p(lx, ly + 30))
+            legRect.close()
+            legRect.fill()
+        }
+
+        // Eyes (white X marks)
+        NSColor.white.setStroke()
+
+        // Left eye X
+        let leftEye = NSBezierPath()
+        leftEye.move(to: p(115, 70))
+        leftEye.line(to: p(140, 95))
+        leftEye.move(to: p(140, 70))
+        leftEye.line(to: p(115, 95))
+        leftEye.lineWidth = 1.2
+        leftEye.lineCapStyle = .square
+        leftEye.stroke()
+
+        // Right eye X
+        let rightEye = NSBezierPath()
+        rightEye.move(to: p(180, 70))
+        rightEye.line(to: p(205, 95))
+        rightEye.move(to: p(205, 70))
+        rightEye.line(to: p(180, 95))
+        rightEye.lineWidth = 1.2
+        rightEye.lineCapStyle = .square
+        rightEye.stroke()
+
+        return image
+    }
 }
