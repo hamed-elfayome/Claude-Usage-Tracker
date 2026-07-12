@@ -1,3 +1,7 @@
+<div align="center">
+  <a href="mailto:hamedelfayome@gmail.com?subject=Claude%20Usage%20Tracker%20%E2%80%94%20Sponsorship"><img src=".github/sponsor-slot.svg" alt="This spot is available for sponsors — get in touch: hamedelfayome@gmail.com" width="420"></a>
+</div>
+
 # Claude Usage Tracker
 
 <div align="center">
