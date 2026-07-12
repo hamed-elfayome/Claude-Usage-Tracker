@@ -133,6 +133,7 @@ extension ClaudeUsage {
         case opusWeeklyTokensUsed, opusWeeklyPercentage
         case sonnetWeeklyTokensUsed, sonnetWeeklyPercentage, sonnetWeeklyResetTime
         case designWeeklyTokensUsed, designWeeklyPercentage, designWeeklyResetTime
+        case fableWeeklyTokensUsed, fableWeeklyPercentage, fableWeeklyResetTime
         case costUsed, costLimit, costCurrency
         case overageBalance, overageBalanceCurrency
         case lastUpdated, userTimezone
@@ -157,6 +158,9 @@ extension ClaudeUsage {
             designWeeklyTokensUsed: try c.decodeIfPresent(Int.self, forKey: .designWeeklyTokensUsed) ?? 0,
             designWeeklyPercentage: try c.decodeIfPresent(Double.self, forKey: .designWeeklyPercentage) ?? 0,
             designWeeklyResetTime: try c.decodeIfPresent(Date.self, forKey: .designWeeklyResetTime),
+            fableWeeklyTokensUsed: try c.decodeIfPresent(Int.self, forKey: .fableWeeklyTokensUsed) ?? 0,
+            fableWeeklyPercentage: try c.decodeIfPresent(Double.self, forKey: .fableWeeklyPercentage) ?? 0,
+            fableWeeklyResetTime: try c.decodeIfPresent(Date.self, forKey: .fableWeeklyResetTime),
             costUsed: try c.decodeIfPresent(Double.self, forKey: .costUsed),
             costLimit: try c.decodeIfPresent(Double.self, forKey: .costLimit),
             costCurrency: try c.decodeIfPresent(String.self, forKey: .costCurrency),
