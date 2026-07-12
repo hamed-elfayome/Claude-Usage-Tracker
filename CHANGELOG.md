@@ -5,25 +5,55 @@ All notable changes to Claude Usage Tracker will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.1.2] - 2026-06-20
+## [3.2.0] - 2026-07-12
 
-### New Features
+### Major Features
 
-- **Claude Design Weekly Usage Tracking** (PR #221): Parse `seven_day_omelette` API field and show a **Design** usage row in the popover (hidden when 0); localized across all 13 locales — thanks @47vigen
-- **Close Settings Window with Cmd+W** (#223, #252): The borderless settings window now responds to Cmd+W
+- **Dynamic Island (Beta)**: A minimal notch HUD showing what Claude Code is doing in real time — session status, current tool ("Editing Settings.swift", "swift build…"), and a gentle pulse when Claude is waiting for your input in the terminal. Click to expand into a live session list with durations; auto-hides when idle; floating pill on displays without a notch. Passive by design: the app observes Claude Code through 8 read-only, token-secured local hooks and can never approve or answer anything on your behalf. Enable it in Settings → Dynamic Island.
+- **Claude Fable Weekly Usage Tracking** (from PR #271): New Fable usage row in the popover, plus Design/Fable columns in history and CSV export — thanks @yelloduxx
+- **New `limits[]` Usage Format** (from PR #271): claude.ai moved per-model usage into a `limits[]` array (legacy `seven_day_*` fields are null now); Opus/Sonnet/Design/Fable rows parse from it again — thanks @yelloduxx
+- **Claude Design Weekly Usage Tracking** (PR #221): Design usage row in the popover (hidden when 0) — thanks @47vigen
+
+### Security (GHSA-mfxh-xpwm-23c7 / #267)
+
+- **Profile credentials moved to the Keychain**: Claude.ai session keys, API keys, and CLI OAuth tokens no longer live in cleartext in UserDefaults. Uses the data-protection keychain (no password prompts, ever); existing credentials migrate automatically and are only removed from the old location after a verified Keychain write — zero re-login required.
+- **Statusline scripts no longer world-readable**: generated scripts embedding the session key are now `0700`.
+
+### Reliability
+
+- **Profile wipe on upgrade prevented** (via PR #271): pre-3.2.0 profile data with an older usage-cache shape failed decoding and wiped all profiles; decoding is now backward- and forward-tolerant — thanks @yelloduxx
+- **Profile switching no longer forces re-login** (#263, PR #242, PR #264): three compounding bugs fixed — the app refreshed the active account's OAuth tokens behind Claude Code's back (consuming its refresh token), mistook same-account token rotation for a different account (never capturing rotations), and let a stale `.credentials.json` shadow the fresher keychain. Switching now refreshes the incoming profile's token, mirrors the active account read-only, and compares accounts by `accountUuid` — thanks @Taeknology (keychain pin + refresh) and @AlvaroTena (identity-guard diagnosis with a controlled A/B experiment)
+- **Usage history moved out of UserDefaults** (#260): multi-MB history blobs pushed the preferences domain past macOS's 4 MB hard limit, silently dropping ALL settings writes (including credentials). History now lives in per-profile files with one-time migration.
+- **Tracker no longer goes dormant after sleep** (#268): an expired token while Claude Code is idle is refreshed once and handed back via the system keychain.
+- **macOS 26 sign-in fixes** (from PR #271): cookie-store polling (the observer never fires on macOS 26), post-login auto-reload, transient-401 retry, and Cloudflare-challenge detection — thanks @yelloduxx
 
 ### Bug Fixes
 
-- **macOS 26 Crash in Menu Bar Icon Refresh** (PR #231): Replace `NSImage.tiffRepresentation` (crashes in `SetupTIFFErrorHandler` on the macOS 26 SDK) with a `CGImage`-based image-equality hash — thanks @hbourget
-- **Menu Bar Item Disappears After Cmd-Drag-Out** (PR #251, fixes #222): Force `isVisible = true` at all status-item creation sites so a persisted `false` can't suppress the item — thanks @mlarocque
-- **Popover Hidden Behind Full-Screen Apps** (PR #257, fixes #256): Activate the app before showing the popover and mark the detached panel `.fullScreenAuxiliary` — thanks @ernestjsf
-- **Menu Bar Color Thresholds Relaxed to 70% / 90%** (PR #232): safe <70%, moderate 70–90%, critical ≥90% — fewer false-alarm warnings now that plan limits are higher — thanks @hbourget
-- **CLI Account Switching — Stale Credentials File**: Write `~/.claude/.credentials.json` alongside the Keychain during profile switch so switching isn't shadowed by a stale file
-- **Menu Bar Icon Reverting to Default for CLI-Authenticated Users** (PR #220): Align UI gating with the network fallback via `hasAnyAvailableCredentials()` — thanks @nfarina
+- **Popover layout-recursion crash on macOS 26/27** (PR #265): native popover animation fed an unbounded layout loop; replaced with a SwiftUI entrance animation + click-race debounce — thanks @Leewallace017
+- **macOS 26 crash in menu bar icon refresh** (PR #231): `NSImage.tiffRepresentation` replaced with a `CGImage`-based equality hash — thanks @hbourget
+- **Menu bar item disappears after Cmd-drag-out** (PR #251, fixes #222): `isVisible` forced true at creation so a persisted `false` can't suppress the item — thanks @mlarocque
+- **Popover hidden behind full-screen apps** (PR #257, fixes #256): activate before showing + `.fullScreenAuxiliary` on the detached panel — thanks @ernestjsf
+- **Menu bar color thresholds relaxed to 70% / 90%** (PR #232): fewer false-alarm warnings now that plan limits are higher — thanks @hbourget
+- **Close settings window with Cmd+W** (#223, #252)
+- **429 usage probes** (from PR #271): rate-limited responses still carry the unified rate-limit headers — parse them instead of failing exactly when usage is maxed — thanks @yelloduxx
+- **Menu bar icon reverting to default for CLI-authenticated users** (PR #220) — thanks @nfarina
+
+### Performance & Localization
+
+- Cached system-credentials availability check (was a blocking keychain XPC round-trip on every menu bar repaint) — thanks @yelloduxx
+- Localization parity across all 13 languages (backfilled drifted keys, removed stale keys); Dynamic Island fully localized
 
 ### Contributors
 
-- **@hbourget** (Hugo), **@mlarocque** (Michael Larocque), **@ernestjsf** (Ernest Jusuf), **@nfarina** (Nick Farina), **@47vigen** (Vigen Pouya)
+- **@yelloduxx** (Duxxie) — limits[] format, Fable tracking, macOS 26 sign-in fixes, profile-wipe guard, perf fixes
+- **@Taeknology** — per-profile keychain source pin + OAuth auto-refresh
+- **@AlvaroTena** (Alvaro Tena) — profile-switching identity-guard diagnosis and fix
+- **@Leewallace017** (Lee Wallace) — popover layout-recursion crash fix
+- **@hbourget** (Hugo) — macOS 26 crash fix, color thresholds
+- **@mlarocque** (Michael Larocque) — menu bar visibility fix
+- **@ernestjsf** (Ernest Jusuf) — popover over full-screen apps
+- **@nfarina** (Nick Farina) — menu bar icon fix for CLI-authenticated users
+- **@47vigen** (Vigen Pouya) — Claude Design weekly usage tracking
 
 ## [3.1.1] - 2026-04-21
 

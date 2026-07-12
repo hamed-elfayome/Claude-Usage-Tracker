@@ -9,12 +9,12 @@
   ![Swift](https://img.shields.io/badge/Swift-5.0+-orange?style=flat-square&logo=swift)
   ![SwiftUI](https://img.shields.io/badge/SwiftUI-5.0+-blue?style=flat-square&logo=swift)
   ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
-  ![Version](https://img.shields.io/badge/version-3.1.1-blue?style=flat-square)
+  ![Version](https://img.shields.io/badge/version-3.2.0-blue?style=flat-square)
   ![Languages](https://img.shields.io/badge/languages-13-purple?style=flat-square)
 
   <sub>🇬🇧 English • 🇪🇸 Español • 🇫🇷 Français • 🇩🇪 Deutsch • 🇮🇹 Italiano • 🇵🇹 Português • 🇧🇷 Português (BR) • 🇯🇵 日本語 • 🇰🇷 한국어 • 🇨🇳 简体中文 • 🇹🇼 繁體中文 • 🇹🇷 Türkçe • 🇺🇦 Українська</sub>
 
-  ### [Download Latest Release (v3.1.1)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
+  ### [Download Latest Release (v3.2.0)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
 
   <sub>macOS 14.0+ (Sonoma) | ~6 MB | Native Swift/SwiftUI | Officially Signed</sub>
 
@@ -29,17 +29,18 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 
 ### Key Capabilities
 
+- **Dynamic Island (Beta)**: A minimal notch HUD showing what Claude Code is doing in real time — current tool, session status, and a pulse when Claude needs your input
 - **Multi-Profile Support**: Manage unlimited Claude accounts with isolated credentials and settings
 - **Multi-Profile Display**: Monitor all profiles simultaneously in the menu bar
 - **Claude Code Integration**: Sync CLI accounts and auto-switch credentials when changing profiles
-- **Real-Time Monitoring**: Track session, weekly, API console usage, and API costs per profile
+- **Real-Time Monitoring**: Track session, weekly, and per-model usage (Fable, Opus, Sonnet, Design), API console usage, and API costs per profile
 - **Usage History**: Interactive charts tracking session, weekly, and billing data over time
 - **Global Shortcuts**: System-wide keyboard shortcuts (no Accessibility permission)
 - **Headless Mode**: Works on headless Macs via Remote Desktop
 - **Customizable Interface**: 5 icon styles + 3 color modes (Multi-Color/Greyscale/Single Color) + per-element statusline colors + remaining/used percentage toggle
 - **Smart Automation**: Auto-start sessions, auto-switch profiles, threshold notifications
 - **Developer Tools**: Terminal statusline integration with model, context, profile display, weekly/extra usage segments, pace markers, per-element colors, and color modes
-- **Privacy-First**: Local storage, minimal anonymous analytics (version-only heartbeat), no cloud sync
+- **Privacy-First**: Credentials in the macOS Keychain, local storage, minimal anonymous analytics (version-only heartbeat), no cloud sync
 - **Native Performance**: Lightweight Swift/SwiftUI design for macOS
 
 <div align="center">
@@ -57,6 +58,8 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 ---
 
 ## What's New
+
+- **v3.2.0 (2026-07-12)**: **Dynamic Island (Beta)** — live Claude Code activity HUD at the notch; **Fable per-model tracking** via the new `limits[]` usage format; credentials moved to the macOS Keychain (GHSA-mfxh-xpwm-23c7); profile switching overhaul (no more forced re-logins); usage history storage fix (silent settings loss on macOS 26); macOS 26/27 crash and sign-in fixes; localization parity across all 13 languages. Huge thanks to 9 community contributors.
 
 - **v3.1.0 (2026-04-14)**: Peak hours indicator with flame icon and countdown popover, right-click context menu on menu bar icons, per-element statusline color customization (#208), weekly & extra usage segments in statusline (#177), active profile indicator in multi-profile mode, Nix installation option (#211), 3 new languages (Brazilian Portuguese, Turkish, Ukrainian) bringing total to 12, 13 bug fixes including popover crash on profile switch, app hang on launch, and E3000 unauthorized errors
 
@@ -363,6 +366,7 @@ Access profile switcher in multiple places:
 - Session reset and auto-start confirmations
 
 ### Developer Integration
+- **Dynamic Island (Beta)**: Live Claude Code activity at the notch — session status, current tool, needs-input pulse, multi-session support; passive read-only hooks (the HUD can never approve or answer for you); floating pill on displays without a notch
 - **Claude Code Terminal Statusline**: Real-time usage in your terminal
 - Customizable components: directory, git branch, model name, context window, profile name, usage percentage, progress bar, pace marker, reset timer
 - **3 color modes**: Multi-Color, Greyscale, Single Color (custom hex) for statusline
@@ -375,8 +379,8 @@ Access profile switcher in multiple places:
 - Live preview before applying changes
 
 ### Security & Privacy
-- **macOS Keychain Storage**: Session keys stored in macOS Keychain (most secure option)
-- **Automatic Migration**: Seamless migration from old storage methods
+- **macOS Keychain Storage**: All per-profile credentials (session keys, API keys, CLI OAuth tokens) stored in the macOS data-protection Keychain — never in cleartext on disk (GHSA-mfxh-xpwm-23c7)
+- **Automatic Migration**: Seamless, verified migration from old storage methods — no re-login required
 - **Apple Code Signed**: Verified by Apple for enhanced security and trust
 - **Advanced Error Handling**: Professional error system with user-friendly recovery
 - **Robust Validation**: Session key and API endpoint validation

@@ -1,6 +1,6 @@
 # Next Release Notes — Claude Usage
 
-**Version:** v3.1.2 (build 16)
+**Version:** v3.2.0 (build 17)
 **Branch:** `next-release`
 **Base:** `main` (v3.1.1, build 15)
 
@@ -124,9 +124,9 @@
 ---
 
 ## Checklist (for release)
-- [x] Bump version (3.1.2) and build (16) in Xcode project
+- [x] Bump version (3.2.0) and build (17) in Xcode project
 - [x] Build succeeds (macOS); unit tests pass (`** TEST SUCCEEDED **`)
-- [ ] Update `CHANGELOG.md` with these notes
+- [x] Update `CHANGELOG.md` with these notes
 - [ ] Verify on a macOS 26 host: crash gone, menu bar item appears, full-screen popover
 - [ ] Close the resolved PRs (#220, #221) and issues after shipping `next-release` → `main`
 
