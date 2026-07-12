@@ -1040,9 +1040,9 @@
 "notifications.sound.preview" = "소리 미리듣기";
 
 /* Claude Code Notch HUD */
-"notch.hud.section_title" = "Claude Code HUD";
+"notch.hud.section_title" = "Dynamic Island";
 "notch.hud.section_desc" = "노치 근처에 Claude Code의 작업 상태를 보여주는 미니멀 디스플레이";
-"notch.hud.enable" = "Claude Code HUD 활성화";
+"notch.hud.enable" = "Dynamic Island 활성화";
 "notch.hud.enable_desc" = "Claude Code 훅을 설치하고 노치 근처에 실시간 세션 활동을 표시합니다";
 "notch.hud.auto_hide" = "유휴 시 자동 숨김";
 "notch.hud.auto_hide_desc" = "모든 세션이 유휴 상태가 되면 몇 초 후 HUD를 숨깁니다";

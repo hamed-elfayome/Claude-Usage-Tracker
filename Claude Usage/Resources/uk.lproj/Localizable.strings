@@ -987,9 +987,9 @@
 "support.no_tracking_desc" = "Ваша конфіденційність важлива. Жодної аналітики, телеметрії, збору даних. Все залишається на вашому Mac.";
 
 /* Claude Code Notch HUD */
-"notch.hud.section_title" = "HUD Claude Code";
+"notch.hud.section_title" = "Dynamic Island";
 "notch.hud.section_desc" = "Мінімальний дисплей біля вирізу, що показує, чим зайнятий Claude Code";
-"notch.hud.enable" = "Увімкнути HUD Claude Code";
+"notch.hud.enable" = "Увімкнути Dynamic Island";
 "notch.hud.enable_desc" = "Встановлює хуки Claude Code та показує активність сеансів наживо біля вирізу";
 "notch.hud.auto_hide" = "Автоматично приховувати в режимі очікування";
 "notch.hud.auto_hide_desc" = "Приховує HUD за кілька секунд після завершення всіх сеансів";

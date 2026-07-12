@@ -980,9 +980,9 @@
 "notifications.sound.preview" = "サウンドプレビュー";
 
 /* Claude Code Notch HUD */
-"notch.hud.section_title" = "Claude Code HUD";
+"notch.hud.section_title" = "Dynamic Island";
 "notch.hud.section_desc" = "ノッチ付近にClaude Codeの動作状況を表示するミニマルなHUD";
-"notch.hud.enable" = "Claude Code HUDを有効にする";
+"notch.hud.enable" = "Dynamic Islandを有効にする";
 "notch.hud.enable_desc" = "Claude Codeのフックをインストールし、セッションの状況をノッチ付近にライブ表示します";
 "notch.hud.auto_hide" = "アイドル時に自動的に隠す";
 "notch.hud.auto_hide_desc" = "すべてのセッションがアイドルになってから数秒後にHUDを非表示にします";

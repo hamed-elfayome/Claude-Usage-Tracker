@@ -978,9 +978,9 @@
 "notifications.sound.preview" = "预览声音";
 
 /* Claude Code Notch HUD */
-"notch.hud.section_title" = "Claude Code HUD";
+"notch.hud.section_title" = "Dynamic Island";
 "notch.hud.section_desc" = "在刘海附近以极简方式显示 Claude Code 的实时动态";
-"notch.hud.enable" = "启用 Claude Code HUD";
+"notch.hud.enable" = "启用 Dynamic Island";
 "notch.hud.enable_desc" = "安装 Claude Code 钩子并在刘海附近实时显示会话动态";
 "notch.hud.auto_hide" = "空闲时自动隐藏";
 "notch.hud.auto_hide_desc" = "所有会话空闲数秒后隐藏 HUD";

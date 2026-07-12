@@ -978,9 +978,9 @@
 "notifications.sound.preview" = "預覽聲音";
 
 /* Claude Code Notch HUD */
-"notch.hud.section_title" = "Claude Code HUD";
+"notch.hud.section_title" = "Dynamic Island";
 "notch.hud.section_desc" = "在瀏海附近以極簡方式顯示 Claude Code 的即時動態";
-"notch.hud.enable" = "啟用 Claude Code HUD";
+"notch.hud.enable" = "啟用 Dynamic Island";
 "notch.hud.enable_desc" = "安裝 Claude Code 掛鉤並在瀏海附近即時顯示工作階段動態";
 "notch.hud.auto_hide" = "閒置時自動隱藏";
 "notch.hud.auto_hide_desc" = "所有工作階段閒置數秒後隱藏 HUD";

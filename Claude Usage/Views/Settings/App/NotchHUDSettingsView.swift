@@ -30,7 +30,7 @@ struct NotchHUDSettingsView: View {
                         SettingToggle(
                             title: "notch.hud.enable".localized,
                             description: "notch.hud.enable_desc".localized,
-                            badge: .new,
+                            badge: .beta,
                             isOn: $enabled
                         )
 

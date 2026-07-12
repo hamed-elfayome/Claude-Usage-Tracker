@@ -984,9 +984,9 @@
 "notifications.sound.preview" = "Sesi önizle";
 
 /* Claude Code Notch HUD */
-"notch.hud.section_title" = "Claude Code HUD";
+"notch.hud.section_title" = "Dynamic Island";
 "notch.hud.section_desc" = "Claude Code'un ne yaptığını çentik yanında gösteren minimal bir ekran";
-"notch.hud.enable" = "Claude Code HUD'u etkinleştir";
+"notch.hud.enable" = "Dynamic Island'ı etkinleştir";
 "notch.hud.enable_desc" = "Claude Code kancalarını kurar ve canlı oturum etkinliğini çentik yanında gösterir";
 "notch.hud.auto_hide" = "Boştayken otomatik gizle";
 "notch.hud.auto_hide_desc" = "Tüm oturumlar boşta kaldıktan birkaç saniye sonra HUD'u gizler";

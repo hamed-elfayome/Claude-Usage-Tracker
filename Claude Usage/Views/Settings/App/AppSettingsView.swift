@@ -39,7 +39,6 @@ struct AppSettingsView: View {
                         SettingToggle(
                             title: "popover.peak_hours_toggle".localized,
                             description: "popover.peak_hours_toggle_desc".localized,
-                            badge: .new,
                             isOn: $peakHoursEnabled
                         )
 

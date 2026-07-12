@@ -961,9 +961,9 @@
 "notifications.sound.preview" = "Vista previa del sonido";
 
 /* Claude Code Notch HUD */
-"notch.hud.section_title" = "HUD de Claude Code";
+"notch.hud.section_title" = "Dynamic Island";
 "notch.hud.section_desc" = "Una pantalla minimalista junto al notch que muestra lo que está haciendo Claude Code";
-"notch.hud.enable" = "Activar HUD de Claude Code";
+"notch.hud.enable" = "Activar Dynamic Island";
 "notch.hud.enable_desc" = "Instala hooks de Claude Code y muestra la actividad de sesión en vivo junto al notch";
 "notch.hud.auto_hide" = "Ocultar automáticamente al estar inactivo";
 "notch.hud.auto_hide_desc" = "Oculta el HUD unos segundos después de que todas las sesiones queden inactivas";
