@@ -69,6 +69,48 @@ final class ProfileKeychainMigrationTests: XCTestCase {
         XCTAssertTrue(profile.hasCliAccount)
     }
 
+    func testV311ProfileWithPreDesignUsageCacheSurvivesUpgrade() throws {
+        // Regression for the profile-wipe-on-upgrade bug (via PR #271):
+        // v3.1.1 wrote claudeUsage WITHOUT the designWeekly* fields added later.
+        // Synthesized Codable made that cache fail decoding, which threw out of
+        // loadProfiles() and returned [] — wiping every profile on update.
+        let v311JSON = """
+        {
+            "id": "\(UUID().uuidString)",
+            "name": "Upgrader",
+            "organizationId": "org-1",
+            "hasCliAccount": true,
+            "claudeUsage": {
+                "sessionTokensUsed": 1200, "sessionLimit": 5000, "sessionPercentage": 24,
+                "sessionResetTime": 700000000,
+                "weeklyTokensUsed": 90000, "weeklyLimit": 200000, "weeklyPercentage": 45,
+                "weeklyResetTime": 700400000,
+                "opusWeeklyTokensUsed": 10, "opusWeeklyPercentage": 1,
+                "sonnetWeeklyTokensUsed": 20, "sonnetWeeklyPercentage": 2,
+                "lastUpdated": 700000000,
+                "userTimezone": {"identifier": "Europe/Berlin"}
+            }
+        }
+        """
+        let profile = try JSONDecoder().decode(Profile.self, from: v311JSON.data(using: .utf8)!)
+        XCTAssertEqual(profile.name, "Upgrader")
+        // The cache either decodes with defaulted new fields or degrades to nil —
+        // it must never fail the profile.
+        if let usage = profile.claudeUsage {
+            XCTAssertEqual(usage.sessionTokensUsed, 1200)
+            XCTAssertEqual(usage.designWeeklyTokensUsed, 0)
+        }
+    }
+
+    func testCorruptUsageCacheDegradesToNilNotProfileLoss() throws {
+        let json = """
+        {"id": "\(UUID().uuidString)", "name": "Survivor", "claudeUsage": {"sessionTokensUsed": "not-a-number"}}
+        """
+        let profile = try JSONDecoder().decode(Profile.self, from: json.data(using: .utf8)!)
+        XCTAssertEqual(profile.name, "Survivor")
+        XCTAssertNil(profile.claudeUsage)
+    }
+
     func testDecodeMinimalLegacyProfileAppliesDefaults() throws {
         // Very old / partial plist entries must not fail to decode.
         let minimalJSON = """

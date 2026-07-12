@@ -149,8 +149,11 @@ struct Profile: Codable, Identifiable, Equatable {
         cliAccountSyncedAt = try c.decodeIfPresent(Date.self, forKey: .cliAccountSyncedAt)
         customKeychainServiceName = try c.decodeIfPresent(String.self, forKey: .customKeychainServiceName)
         oauthAccountJSON = try c.decodeIfPresent(String.self, forKey: .oauthAccountJSON)
-        claudeUsage = try c.decodeIfPresent(ClaudeUsage.self, forKey: .claudeUsage)
-        apiUsage = try c.decodeIfPresent(APIUsage.self, forKey: .apiUsage)
+        // Usage values are re-fetchable caches — a malformed cache (e.g. written
+        // by a different app version) must degrade to nil, never fail the
+        // profile decode and wipe the profile list.
+        claudeUsage = (try? c.decodeIfPresent(ClaudeUsage.self, forKey: .claudeUsage)) ?? nil
+        apiUsage = (try? c.decodeIfPresent(APIUsage.self, forKey: .apiUsage)) ?? nil
         iconConfig = try c.decodeIfPresent(MenuBarIconConfiguration.self, forKey: .iconConfig) ?? .default
         refreshInterval = try c.decodeIfPresent(TimeInterval.self, forKey: .refreshInterval) ?? 30.0
         autoStartSessionEnabled = try c.decodeIfPresent(Bool.self, forKey: .autoStartSessionEnabled) ?? false
