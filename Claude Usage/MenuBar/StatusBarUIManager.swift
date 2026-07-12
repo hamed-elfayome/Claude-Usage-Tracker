@@ -69,6 +69,22 @@ final class StatusBarUIManager {
 
     // MARK: - Setup
 
+    /// Creates a status item with its autosave name, forced visibility, and
+    /// standard button wiring. NSStatusItem persists isVisible under its
+    /// autosaveName — a prior cmd-drag removal writes false, so every creation
+    /// site must override it back to true or the item silently never appears.
+    private func makeStatusItem(autosaveName: NSStatusItem.AutosaveName, target: AnyObject, action: Selector) -> NSStatusItem {
+        let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        statusItem.autosaveName = autosaveName
+        statusItem.isVisible = true
+        if let button = statusItem.button {
+            button.action = action
+            button.target = target
+            button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+        }
+        return statusItem
+    }
+
     /// Sets up status bar items based on configuration
     func setup(target: AnyObject, action: Selector, config: MenuBarIconConfiguration) {
         // Remove all existing items first
@@ -77,15 +93,8 @@ final class StatusBarUIManager {
         // Check if there are any enabled metrics
         if config.enabledMetrics.isEmpty {
             // No credentials/metrics - show default app logo
-            let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-            statusItem.autosaveName = Self.defaultLogoAutosaveName
-            // Override any persisted false from a prior cmd-drag.
-            statusItem.isVisible = true
-
+            let statusItem = makeStatusItem(autosaveName: Self.defaultLogoAutosaveName, target: target, action: action)
             if let button = statusItem.button {
-                button.action = action
-                button.target = target
-                button.sendAction(on: [.leftMouseUp, .rightMouseUp])
                 // Set a temporary placeholder - will be updated with actual logo
                 button.title = ""
             } else {
@@ -98,16 +107,8 @@ final class StatusBarUIManager {
         } else {
             // Create status items for enabled metrics
             for metricConfig in config.enabledMetrics {
-                let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-                statusItem.autosaveName = Self.autosaveName(for: metricConfig.metricType)
-                // Override any persisted false from a prior cmd-drag.
-                statusItem.isVisible = true
-
-                if let button = statusItem.button {
-                    button.action = action
-                    button.target = target
-                    button.sendAction(on: [.leftMouseUp, .rightMouseUp])
-                } else {
+                let statusItem = makeStatusItem(autosaveName: Self.autosaveName(for: metricConfig.metricType), target: target, action: action)
+                if statusItem.button == nil {
                     LoggingService.shared.logWarning("Status bar button is nil for \(metricConfig.metricType.displayName) - screens: \(NSScreen.screens.count)")
                 }
 
@@ -151,22 +152,14 @@ final class StatusBarUIManager {
         // Step 2: Add items that are new
         let itemsToAdd = newMetricTypes.subtracting(currentMetricTypes)
         for metricType in itemsToAdd {
-            let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
             // When enabledMetrics is empty, only .session is in newMetricTypes, so this is safe
-            statusItem.autosaveName = config.enabledMetrics.isEmpty
+            let autosaveName = config.enabledMetrics.isEmpty
                 ? Self.defaultLogoAutosaveName
                 : Self.autosaveName(for: metricType)
-            // Override any persisted false from a prior cmd-drag.
-            statusItem.isVisible = true
-
-            if let button = statusItem.button {
-                button.action = action
-                button.target = target
-                button.sendAction(on: [.leftMouseUp, .rightMouseUp])
-                if metricType == .session {
-                    // Default logo placeholder
-                    button.title = ""
-                }
+            let statusItem = makeStatusItem(autosaveName: autosaveName, target: target, action: action)
+            if let button = statusItem.button, metricType == .session {
+                // Default logo placeholder
+                button.title = ""
             }
 
             statusItems[metricType] = statusItem
@@ -248,16 +241,7 @@ final class StatusBarUIManager {
         if isPeak {
             // Create the status item if not already showing
             if peakHoursStatusItem == nil, let target = peakHoursTarget, let action = peakHoursAction {
-                let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-                statusItem.autosaveName = Self.peakHoursAutosaveName
-                // Override any persisted false from a prior cmd-drag.
-                statusItem.isVisible = true
-                if let button = statusItem.button {
-                    button.action = action
-                    button.target = target
-                    button.sendAction(on: [.leftMouseUp, .rightMouseUp])
-                }
-                peakHoursStatusItem = statusItem
+                peakHoursStatusItem = makeStatusItem(autosaveName: Self.peakHoursAutosaveName, target: target, action: action)
             }
             if let button = peakHoursStatusItem?.button {
                 let menuBarIsDark = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
@@ -297,14 +281,8 @@ final class StatusBarUIManager {
 
         if selectedProfiles.isEmpty {
             // No profiles selected - show default logo
-            let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-            statusItem.autosaveName = Self.defaultLogoAutosaveName
-            // Override any persisted false from a prior cmd-drag.
-            statusItem.isVisible = true
+            let statusItem = makeStatusItem(autosaveName: Self.defaultLogoAutosaveName, target: target, action: action)
             if let button = statusItem.button {
-                button.action = action
-                button.target = target
-                button.sendAction(on: [.leftMouseUp, .rightMouseUp])
                 button.title = ""
             } else {
                 LoggingService.shared.logWarning("Multi-profile status bar button is nil - screens: \(NSScreen.screens.count)")
@@ -315,16 +293,8 @@ final class StatusBarUIManager {
         } else {
             // Create one status item per selected profile
             for profile in selectedProfiles {
-                let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-                statusItem.autosaveName = Self.autosaveName(forProfileId: profile.id)
-                // Override any persisted false from a prior cmd-drag.
-                statusItem.isVisible = true
-
-                if let button = statusItem.button {
-                    button.action = action
-                    button.target = target
-                    button.sendAction(on: [.leftMouseUp, .rightMouseUp])
-                } else {
+                let statusItem = makeStatusItem(autosaveName: Self.autosaveName(forProfileId: profile.id), target: target, action: action)
+                if statusItem.button == nil {
                     LoggingService.shared.logWarning("Multi-profile status bar button is nil for \(profile.name) - screens: \(NSScreen.screens.count)")
                 }
 
@@ -372,29 +342,13 @@ final class StatusBarUIManager {
 
         if selectedProfiles.isEmpty && idsToAdd.contains(Self.defaultLogoPlaceholderUUID) {
             // Need to add default logo
-            let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-            statusItem.autosaveName = Self.defaultLogoAutosaveName
-            // Override any persisted false from a prior cmd-drag.
-            statusItem.isVisible = true
-            if let button = statusItem.button {
-                button.action = action
-                button.target = target
-                button.sendAction(on: [.leftMouseUp, .rightMouseUp])
-                button.title = ""
-            }
+            let statusItem = makeStatusItem(autosaveName: Self.defaultLogoAutosaveName, target: target, action: action)
+            statusItem.button?.title = ""
             multiProfileStatusItems[Self.defaultLogoPlaceholderUUID] = statusItem
             LoggingService.shared.logUIEvent("Multi-profile: Added default logo")
         } else {
             for profile in selectedProfiles where idsToAdd.contains(profile.id) {
-                let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-                statusItem.autosaveName = Self.autosaveName(forProfileId: profile.id)
-                // Override any persisted false from a prior cmd-drag.
-                statusItem.isVisible = true
-                if let button = statusItem.button {
-                    button.action = action
-                    button.target = target
-                    button.sendAction(on: [.leftMouseUp, .rightMouseUp])
-                }
+                let statusItem = makeStatusItem(autosaveName: Self.autosaveName(forProfileId: profile.id), target: target, action: action)
                 multiProfileStatusItems[profile.id] = statusItem
                 LoggingService.shared.logUIEvent("Multi-profile: Added status item for profile \(profile.name)")
             }
@@ -718,19 +672,10 @@ final class StatusBarUIManager {
     private func hasAnyAvailableCredentials(for profile: Profile?) -> Bool {
         guard let profile else { return false }
 
-        if profile.hasUsageCredentials { return true }
-
-        do {
-            if let systemCreds = try ClaudeCodeSyncService.shared.readSystemCredentials(),
-               !ClaudeCodeSyncService.shared.isTokenExpired(systemCreds),
-               ClaudeCodeSyncService.shared.extractAccessToken(from: systemCreds) != nil {
-                return true
-            }
-        } catch {
-            LoggingService.shared.log("StatusBarUIManager.hasAnyAvailableCredentials: system keychain check failed: \(error.localizedDescription)")
-        }
-
-        return false
+        // Profile-local credentials, then the cached system Keychain CLI
+        // fallback — same rule as MenuBarManager and the network layer.
+        return profile.hasUsageCredentials
+            || ClaudeCodeSyncService.shared.hasUsableSystemCredentials()
     }
 
     /// Get button for a specific metric (used for popover positioning)
