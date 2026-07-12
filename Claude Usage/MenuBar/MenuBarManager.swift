@@ -985,21 +985,10 @@ class MenuBarManager: NSObject, ObservableObject {
     private func hasAnyAvailableCredentials() -> Bool {
         guard let profile = profileManager.activeProfile else { return false }
 
-        // Profile-local credentials (Claude.ai, API Console, saved CLI OAuth)
-        if profile.hasUsageCredentials { return true }
-
-        // Fall back to system Keychain CLI credentials
-        do {
-            if let systemCreds = try ClaudeCodeSyncService.shared.readSystemCredentials(),
-               !ClaudeCodeSyncService.shared.isTokenExpired(systemCreds),
-               ClaudeCodeSyncService.shared.extractAccessToken(from: systemCreds) != nil {
-                return true
-            }
-        } catch {
-            LoggingService.shared.log("MenuBarManager.hasAnyAvailableCredentials: system keychain check failed: \(error.localizedDescription)")
-        }
-
-        return false
+        // Profile-local credentials (Claude.ai, API Console, saved CLI OAuth),
+        // then the cached system Keychain CLI fallback.
+        return profile.hasUsageCredentials
+            || ClaudeCodeSyncService.shared.hasUsableSystemCredentials()
     }
 
     private func setupMultiProfileMode() {

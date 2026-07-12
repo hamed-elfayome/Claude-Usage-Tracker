@@ -31,6 +31,44 @@ class ClaudeCodeSyncService {
 
     private init() {}
 
+    // MARK: - Cached Availability Check
+
+    /// Cached result of the "are usable system CLI credentials present?" check.
+    /// Keychain access is a blocking XPC round-trip, and UI render paths
+    /// (updateAllButtons, popover gating) ask this on every repaint.
+    private var systemCredsUsableCache: (value: Bool, checkedAt: Date)?
+    private static let systemCredsCacheMaxAge: TimeInterval = 15
+
+    /// Returns whether the system keychain/credentials file holds a
+    /// non-expired CLI token, caching the answer briefly so hot render
+    /// paths don't hit the keychain on every call.
+    func hasUsableSystemCredentials() -> Bool {
+        if let cached = systemCredsUsableCache,
+           Date().timeIntervalSince(cached.checkedAt) < Self.systemCredsCacheMaxAge {
+            return cached.value
+        }
+
+        var usable = false
+        do {
+            if let creds = try readSystemCredentials(),
+               !isTokenExpired(creds),
+               extractAccessToken(from: creds) != nil {
+                usable = true
+            }
+        } catch {
+            LoggingService.shared.log("hasUsableSystemCredentials: system keychain check failed: \(error.localizedDescription)")
+        }
+
+        systemCredsUsableCache = (usable, Date())
+        return usable
+    }
+
+    /// Drops the cached availability answer (call after syncs/logins that
+    /// change the keychain state).
+    func invalidateSystemCredentialsCache() {
+        systemCredsUsableCache = nil
+    }
+
     // MARK: - System Credentials Access (Fallback Chain)
 
     /// Reads Claude Code credentials using a fallback chain:

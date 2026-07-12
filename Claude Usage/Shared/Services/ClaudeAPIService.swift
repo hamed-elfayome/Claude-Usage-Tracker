@@ -357,6 +357,25 @@ class ClaudeAPIService: APIServiceProtocol {
 
     // MARK: - Read-Only Testing
 
+    /// testSessionKey with retry for freshly issued keys: a new sessionKey can
+    /// take a moment to propagate on Anthropic's side, so the first request may
+    /// get a transient 401 (E3000) even though the key is valid. Retries only
+    /// on .apiUnauthorized, with a growing delay (1.5s, 3s, 4.5s).
+    func testSessionKeyWithRetry(_ key: String, maxAttempts: Int = 4) async throws -> [AccountInfo] {
+        var attempt = 1
+        while true {
+            do {
+                return try await testSessionKey(key)
+            } catch {
+                guard AppError.wrap(error).code == .apiUnauthorized, attempt < maxAttempts else {
+                    throw error
+                }
+                try? await Task.sleep(nanoseconds: UInt64(attempt) * 1_500_000_000)
+                attempt += 1
+            }
+        }
+    }
+
     /// Tests a session key without saving to Keychain
     /// Returns available organizations if successful
     func testSessionKey(_ key: String) async throws -> [AccountInfo] {
@@ -605,9 +624,8 @@ class ClaudeAPIService: APIServiceProtocol {
         // (shared cookie storage) — without them claude.ai intermittently
         // answers with a 403 "Just a moment..." challenge page.
         var cookiePairs = ["sessionKey=\(sessionKey)"]
-        if let stored = HTTPCookieStorage.shared.cookies {
-            for cookie in stored where cookie.domain.contains("claude.ai")
-                && ["cf_clearance", "__cf_bm"].contains(cookie.name) {
+        if let stored = HTTPCookieStorage.shared.cookies(for: url) {
+            for cookie in stored where ["cf_clearance", "__cf_bm"].contains(cookie.name) {
                 cookiePairs.append("\(cookie.name)=\(cookie.value)")
             }
         }
