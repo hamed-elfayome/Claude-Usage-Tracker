@@ -44,6 +44,7 @@ class MenuBarManager: NSObject, ObservableObject {
     // togglePopover, which would otherwise immediately re-show the popover
     // (the "click makes it bounce back instead of closing" race).
     private var lastPopoverCloseDate: Date = .distantPast
+    private weak var lastPopoverCloseButton: NSStatusBarButton?
 
     // Detached window reference (when popover is detached)
     private var detachedWindow: NSWindow?
@@ -599,8 +600,11 @@ class MenuBarManager: NSObject, ObservableObject {
                 // Guard against the dismiss/re-open race: if the popover was just
                 // closed (e.g. the outside-click monitor handled this same click a
                 // moment before the button action fired), treat this click as the
-                // dismissing click and don't immediately re-open it.
-                if Date().timeIntervalSince(lastPopoverCloseDate) < 0.25 {
+                // dismissing click and don't immediately re-open it. Only for the
+                // button the popover was anchored to — a click on a different
+                // status item is a deliberate open, not the dismissing click.
+                if button === lastPopoverCloseButton,
+                   Date().timeIntervalSince(lastPopoverCloseDate) < 0.25 {
                     return
                 }
                 // Stop any existing monitor first
@@ -681,6 +685,7 @@ class MenuBarManager: NSObject, ObservableObject {
     private func closePopover() {
         popover?.performClose(nil)
         stopMonitoringForOutsideClicks()
+        lastPopoverCloseButton = currentPopoverButton
         currentPopoverButton = nil
         lastPopoverCloseDate = Date()
     }
@@ -1881,6 +1886,7 @@ extension MenuBarManager: NSPopoverDelegate {
         // explicit close) so togglePopover can debounce the dismissing click
         // and avoid the "click bounces the popover back open" race.
         lastPopoverCloseDate = Date()
+        lastPopoverCloseButton = currentPopoverButton
     }
 
     func detachableWindow(for popover: NSPopover) -> NSWindow? {

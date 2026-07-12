@@ -1188,6 +1188,14 @@ class ClaudeCodeSyncService {
                     LoggingService.shared.log("⚠️ resyncBeforeSwitching: skipping for '\(profile.name)' — no account identity available and refresh token differs")
                     return
                 }
+                // A manually pasted setup token has neither an oauthAccount id
+                // nor a refreshToken, so no identity check can vouch that the
+                // system keychain belongs to the same account — never overwrite
+                // the manual token with potentially foreign credentials.
+                if storedRefreshToken == nil && profileIdentity == nil {
+                    LoggingService.shared.log("⚠️ resyncBeforeSwitching: skipping for '\(profile.name)' — profile uses a manual setup token; account identity unverifiable")
+                    return
+                }
             }
         }
 
