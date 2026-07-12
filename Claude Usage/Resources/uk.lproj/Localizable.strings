@@ -1021,3 +1021,7 @@
 "notch.server.listening" = "Прослуховування %@";
 "notch.server.port_busy" = "Порт %@ зайнятий — можливо, запущено іншу копію застосунку?";
 "notch.server.retry" = "Повторити";
+
+/* Sponsor slot */
+"sponsor.slot_title" = "Це місце доступне для спонсорів";
+"sponsor.slot_cta" = "Звʼязатися";

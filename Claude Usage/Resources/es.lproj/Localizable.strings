@@ -1007,3 +1007,7 @@
 "menubar.cost_source.unknown" = "Otro";
 "menubar.this_month" = "Este mes";
 "menubar.total" = "Total";
+
+/* Sponsor slot */
+"sponsor.slot_title" = "Este espacio está disponible para patrocinadores";
+"sponsor.slot_cta" = "Contáctame";

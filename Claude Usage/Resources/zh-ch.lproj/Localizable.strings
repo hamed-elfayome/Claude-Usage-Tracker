@@ -1012,3 +1012,7 @@
 "notch.server.listening" = "正在监听 %@";
 "notch.server.port_busy" = "端口 %@ 已被占用 — 是否有另一个应用实例正在运行？";
 "notch.server.retry" = "重试";
+
+/* Sponsor slot */
+"sponsor.slot_title" = "此位置开放赞助";
+"sponsor.slot_cta" = "与我联系";

@@ -1022,3 +1022,7 @@
 "notch.server.listening" = "Listening on %@";
 "notch.server.port_busy" = "Port %@ is in use — is another copy of the app running?";
 "notch.server.retry" = "Retry";
+
+/* Sponsor slot */
+"sponsor.slot_title" = "This spot is available for sponsors";
+"sponsor.slot_cta" = "Get in touch";

@@ -1026,3 +1026,7 @@
 "menubar.total" = "Total";
 "settings.updates" = "Atualizações";
 "settings.updates.description" = "Mantenha o app atualizado";
+
+/* Sponsor slot */
+"sponsor.slot_title" = "Este espaço está disponível para patrocinadores";
+"sponsor.slot_cta" = "Entre em contato";

@@ -1026,3 +1026,7 @@
 "menubar.cost_source.unknown" = "その他";
 "menubar.this_month" = "今月";
 "menubar.total" = "合計";
+
+/* Sponsor slot */
+"sponsor.slot_title" = "スポンサー募集中のスペースです";
+"sponsor.slot_cta" = "お問い合わせ";

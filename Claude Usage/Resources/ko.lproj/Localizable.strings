@@ -1035,3 +1035,7 @@
 "menubar.cost_source.unknown" = "기타";
 "menubar.this_month" = "이번 달";
 "menubar.total" = "합계";
+
+/* Sponsor slot */
+"sponsor.slot_title" = "이 공간은 스폰서에게 제공됩니다";
+"sponsor.slot_cta" = "문의하기";

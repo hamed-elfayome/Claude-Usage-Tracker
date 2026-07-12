@@ -256,6 +256,11 @@ struct SettingsView: View {
                     .padding(.horizontal, 12)
                     .padding(.top, 8)
 
+                // Sponsor slot (available placement)
+                SponsorSlotCard()
+                    .padding(.horizontal, 12)
+                    .padding(.top, 8)
+
                 Spacer()
 
                 // App Settings Section
@@ -426,6 +431,51 @@ struct ProfileSectionContainer: View {
             RoundedRectangle(cornerRadius: 6)
                 .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
         )
+    }
+}
+
+// MARK: - Sponsor Slot
+
+/// A reserved placement in the settings sidebar, offered to sponsors.
+/// Clicking opens a pre-addressed mail for sponsorship inquiries.
+struct SponsorSlotCard: View {
+    private static let contactURL = URL(
+        string: "mailto:hamedelfayome@gmail.com?subject=Claude%20Usage%20Tracker%20%E2%80%94%20Sponsorship"
+    )
+
+    var body: some View {
+        Button {
+            if let url = Self.contactURL {
+                NSWorkspace.shared.open(url)
+            }
+        } label: {
+            VStack(spacing: 5) {
+                Image(systemName: "star.circle")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(.secondary)
+                Text("sponsor.slot_title".localized)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                Text("sponsor.slot_cta".localized)
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundColor(.accentColor)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .padding(.horizontal, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color.primary.opacity(0.03))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 6)
+                    .strokeBorder(Color.primary.opacity(0.12), style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help("hamedelfayome@gmail.com")
     }
 }
 

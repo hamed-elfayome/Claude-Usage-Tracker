@@ -1018,3 +1018,7 @@
 "notch.server.listening" = "%@ üzerinde dinleniyor";
 "notch.server.port_busy" = "%@ bağlantı noktası kullanımda — uygulamanın başka bir kopyası mı çalışıyor?";
 "notch.server.retry" = "Yeniden dene";
+
+/* Sponsor slot */
+"sponsor.slot_title" = "Bu alan sponsorlara açıktır";
+"sponsor.slot_cta" = "İletişime geçin";

@@ -1026,3 +1026,7 @@
 "multiprofile.style_bars" = "Barras";
 "multiprofile.style_dots" = "Pontos";
 "multiprofile.style_percent" = "Porcentagem";
+
+/* Sponsor slot */
+"sponsor.slot_title" = "Este espaço está disponível para patrocinadores";
+"sponsor.slot_cta" = "Entre em contato";
