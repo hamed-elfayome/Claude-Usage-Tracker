@@ -129,3 +129,15 @@
 - [ ] Update `CHANGELOG.md` with these notes
 - [ ] Verify on a macOS 26 host: crash gone, menu bar item appears, full-screen popover
 - [ ] Close the resolved PRs (#220, #221) and issues after shipping `next-release` → `main`
+
+### PR #271 Selective Port (@yelloduxx) — API modernization
+- **Profile wipe on upgrade (CRITICAL, would have shipped in v3.1.2):** tolerant `ClaudeUsage`
+  decoding — #221's non-optional fields made v3.1.1 profile data fail decode, wiping all profiles.
+- **New `limits[]` usage format:** legacy `seven_day_*` per-model fields are null now; per-model
+  usage (incl. **new Fable row**) parses from `limits[]`. Verified live.
+- macOS 26 sign-in fixes: cookie-store polling (observer never fires), post-login auto-reload,
+  transient-401 retry, Cloudflare-challenge detection + cf cookies on API requests.
+- 429 usage probes now parse the unified rate-limit headers instead of failing at max usage.
+- Perf: 15s-cached system-credentials availability (was a blocking keychain XPC per repaint).
+- Not ported: makeStatusItem() refactor (conflicts with merged #251/#231). Close #271 on release
+  with credit; #263/#264 also close on release (equivalent fixes shipped).
