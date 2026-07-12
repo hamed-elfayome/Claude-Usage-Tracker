@@ -61,6 +61,8 @@
 "menubar.weekly_usage" = "週次";
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";
+"menubar.fable_usage" = "Fable";
+"menubar.design_usage" = "デザイン";
 "menubar.extra_usage" = "追加使用";
 "menubar.api_credits" = "APIクレジット";
 "menubar.5_hour_window" = "5時間ローリングウィンドウ";
@@ -977,3 +979,54 @@
 "notifications.sound.default" = "デフォルト";
 "notifications.sound.none" = "なし";
 "notifications.sound.preview" = "サウンドプレビュー";
+
+/* Claude Code Notch HUD */
+"notch.hud.section_title" = "Dynamic Island";
+"notch.hud.section_desc" = "ノッチ付近にClaude Codeの動作状況を表示するミニマルなHUD";
+"notch.hud.enable" = "Dynamic Islandを有効にする";
+"notch.hud.enable_desc" = "Claude Codeのフックをインストールし、セッションの状況をノッチ付近にライブ表示します";
+"notch.hud.auto_hide" = "アイドル時に自動的に隠す";
+"notch.hud.auto_hide_desc" = "すべてのセッションがアイドルになってから数秒後にHUDを非表示にします";
+"notch.hud.expanded_title" = "Claude Code";
+"notch.no_sessions" = "アクティブなセッションはありません";
+"notch.status.thinking" = "思考中…";
+"notch.status.writing_code" = "書き込み中…";
+"notch.status.reading_files" = "読み込み中…";
+"notch.status.running_command" = "実行中…";
+"notch.status.needs_attention" = "入力が必要";
+"notch.status.idle" = "完了";
+"notch.task.running_command" = "コマンドを実行中";
+"notch.task.writing" = "%@ を作成中";
+"notch.task.editing" = "%@ を編集中";
+"notch.task.reading" = "%@ を読み込み中";
+"notch.task.searching" = "ファイルを検索中";
+"notch.task.subagent" = "サブエージェントを実行中";
+"notch.task.web" = "Webを閲覧中";
+"notch.hooks.title" = "Claude Codeフック";
+"notch.hooks.desc" = "HUDは ~/.claude/settings.json のフック経由でイベントを受信します";
+"notch.hooks.status_installed" = "フックはインストール済み";
+"notch.hooks.status_partial" = "フックは一部のみインストール済み";
+"notch.hooks.status_not_installed" = "フックは未設定";
+"notch.hooks.status_legacy" = "旧バージョンのフックを検出しました。HUDを有効にすると置き換えられます。";
+"notch.hooks.install" = "インストール";
+"notch.hooks.repair" = "修復";
+"notch.hooks.remove" = "削除";
+"notch.server.listening" = "%@ で待機中";
+"notch.server.port_busy" = "ポート %@ は使用中です。アプリが他にも起動していませんか？";
+"notch.server.retry" = "再試行";
+
+/* Backfilled keys (localization parity) */
+"about.contributors_failed" = "コントリビューターを読み込めませんでした";
+"appearance.all_metrics_off_title" = "アプリロゴモード";
+"appearance.all_metrics_off_description" = "すべてのメトリクスがオフです。メニューバーにはアプリのロゴが表示されます。クリックするとプロファイルと設定にアクセスできます。";
+"common.retry" = "再試行";
+"menubar.api_cost" = "APIコスト";
+"menubar.cost_source.api" = "API";
+"menubar.cost_source.cli" = "Claude Code";
+"menubar.cost_source.unknown" = "その他";
+"menubar.this_month" = "今月";
+"menubar.total" = "合計";
+
+/* Sponsor slot */
+"sponsor.slot_title" = "スポンサー募集中のスペースです";
+"sponsor.slot_cta" = "お問い合わせ";

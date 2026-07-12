@@ -59,6 +59,8 @@
 "menubar.weekly_usage" = "Semanal";
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";
+"menubar.fable_usage" = "Fable";
+"menubar.design_usage" = "Design";
 "menubar.extra_usage" = "Uso Extra";
 "menubar.api_credits" = "Créditos da API";
 "menubar.5_hour_window" = "Janela móvel de 5 horas";
@@ -975,3 +977,56 @@
 "notifications.sound.default" = "Padrão";
 "notifications.sound.none" = "Nenhum";
 "notifications.sound.preview" = "Pré-visualizar som";
+
+/* Claude Code Notch HUD */
+"notch.hud.section_title" = "Dynamic Island";
+"notch.hud.section_desc" = "Uma exibição minimalista junto ao notch mostrando o que o Claude Code está fazendo";
+"notch.hud.enable" = "Ativar Dynamic Island";
+"notch.hud.enable_desc" = "Instala hooks do Claude Code e mostra a atividade da sessão ao vivo junto ao notch";
+"notch.hud.auto_hide" = "Ocultar automaticamente quando ocioso";
+"notch.hud.auto_hide_desc" = "Oculta o HUD alguns segundos depois de todas as sessões ficarem ociosas";
+"notch.hud.expanded_title" = "Claude Code";
+"notch.no_sessions" = "Nenhuma sessão ativa";
+"notch.status.thinking" = "Pensando…";
+"notch.status.writing_code" = "Escrevendo…";
+"notch.status.reading_files" = "Lendo…";
+"notch.status.running_command" = "Executando…";
+"notch.status.needs_attention" = "Requer atenção";
+"notch.status.idle" = "Concluído";
+"notch.task.running_command" = "Executando comando";
+"notch.task.writing" = "Escrevendo %@";
+"notch.task.editing" = "Editando %@";
+"notch.task.reading" = "Lendo %@";
+"notch.task.searching" = "Pesquisando arquivos";
+"notch.task.subagent" = "Executando subagente";
+"notch.task.web" = "Navegando na web";
+"notch.hooks.title" = "Hooks do Claude Code";
+"notch.hooks.desc" = "O HUD recebe eventos por meio de hooks em ~/.claude/settings.json";
+"notch.hooks.status_installed" = "Hooks instalados";
+"notch.hooks.status_partial" = "Hooks parcialmente instalados";
+"notch.hooks.status_not_installed" = "Hooks não configurados";
+"notch.hooks.status_legacy" = "Hooks de uma versão anterior detectados — serão substituídos ao ativar o HUD.";
+"notch.hooks.install" = "Instalar";
+"notch.hooks.repair" = "Reparar";
+"notch.hooks.remove" = "Remover";
+"notch.server.listening" = "Escutando em %@";
+"notch.server.port_busy" = "A porta %@ está em uso — outra cópia do app está em execução?";
+"notch.server.retry" = "Tentar novamente";
+
+/* Backfilled keys (localization parity) */
+"about.contributors_failed" = "Não foi possível carregar os colaboradores";
+"appearance.all_metrics_off_title" = "Modo de logotipo";
+"appearance.all_metrics_off_description" = "Todas as métricas estão desativadas. O logotipo do app será mostrado na barra de menus. Clique nele para acessar perfis e ajustes.";
+"common.retry" = "Tentar novamente";
+"menubar.api_cost" = "Custo de API";
+"menubar.cost_source.api" = "API";
+"menubar.cost_source.cli" = "Claude Code";
+"menubar.cost_source.unknown" = "Outro";
+"menubar.this_month" = "Este mês";
+"menubar.total" = "Total";
+"settings.updates" = "Atualizações";
+"settings.updates.description" = "Mantenha o app atualizado";
+
+/* Sponsor slot */
+"sponsor.slot_title" = "Este espaço está disponível para patrocinadores";
+"sponsor.slot_cta" = "Entre em contato";

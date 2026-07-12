@@ -61,6 +61,8 @@
 "menubar.weekly_usage" = "Haftalık";
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";
+"menubar.fable_usage" = "Fable";
+"menubar.design_usage" = "Tasarım";
 "menubar.extra_usage" = "Ek Kullanım";
 "menubar.api_credits" = "API Kredileri";
 "menubar.api_cost" = "API Maliyeti";
@@ -981,3 +983,42 @@
 "notifications.sound.default" = "Varsayılan";
 "notifications.sound.none" = "Yok";
 "notifications.sound.preview" = "Sesi önizle";
+
+/* Claude Code Notch HUD */
+"notch.hud.section_title" = "Dynamic Island";
+"notch.hud.section_desc" = "Claude Code'un ne yaptığını çentik yanında gösteren minimal bir ekran";
+"notch.hud.enable" = "Dynamic Island'ı etkinleştir";
+"notch.hud.enable_desc" = "Claude Code kancalarını kurar ve canlı oturum etkinliğini çentik yanında gösterir";
+"notch.hud.auto_hide" = "Boştayken otomatik gizle";
+"notch.hud.auto_hide_desc" = "Tüm oturumlar boşta kaldıktan birkaç saniye sonra HUD'u gizler";
+"notch.hud.expanded_title" = "Claude Code";
+"notch.no_sessions" = "Etkin oturum yok";
+"notch.status.thinking" = "Düşünüyor…";
+"notch.status.writing_code" = "Yazıyor…";
+"notch.status.reading_files" = "Okuyor…";
+"notch.status.running_command" = "Çalıştırıyor…";
+"notch.status.needs_attention" = "Girdi gerekli";
+"notch.status.idle" = "Bitti";
+"notch.task.running_command" = "Komut çalıştırılıyor";
+"notch.task.writing" = "%@ yazılıyor";
+"notch.task.editing" = "%@ düzenleniyor";
+"notch.task.reading" = "%@ okunuyor";
+"notch.task.searching" = "Dosyalar aranıyor";
+"notch.task.subagent" = "Alt aracı çalışıyor";
+"notch.task.web" = "Web'de geziniyor";
+"notch.hooks.title" = "Claude Code Kancaları";
+"notch.hooks.desc" = "HUD, olayları ~/.claude/settings.json içindeki kancalar aracılığıyla alır";
+"notch.hooks.status_installed" = "Kancalar kuruldu";
+"notch.hooks.status_partial" = "Kancalar kısmen kuruldu";
+"notch.hooks.status_not_installed" = "Kancalar yapılandırılmadı";
+"notch.hooks.status_legacy" = "Önceki sürüme ait kancalar algılandı — HUD etkinleştirildiğinde değiştirilecek.";
+"notch.hooks.install" = "Kur";
+"notch.hooks.repair" = "Onar";
+"notch.hooks.remove" = "Kaldır";
+"notch.server.listening" = "%@ üzerinde dinleniyor";
+"notch.server.port_busy" = "%@ bağlantı noktası kullanımda — uygulamanın başka bir kopyası mı çalışıyor?";
+"notch.server.retry" = "Yeniden dene";
+
+/* Sponsor slot */
+"sponsor.slot_title" = "Bu alan sponsorlara açıktır";
+"sponsor.slot_cta" = "İletişime geçin";

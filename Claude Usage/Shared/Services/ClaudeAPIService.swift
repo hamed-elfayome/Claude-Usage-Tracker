@@ -357,6 +357,25 @@ class ClaudeAPIService: APIServiceProtocol {
 
     // MARK: - Read-Only Testing
 
+    /// testSessionKey with retry for freshly issued keys: a new sessionKey can
+    /// take a moment to propagate on Anthropic's side, so the first request may
+    /// get a transient 401 (E3000) even though the key is valid. Retries only
+    /// on .apiUnauthorized, with a growing delay (1.5s, 3s, 4.5s).
+    func testSessionKeyWithRetry(_ key: String, maxAttempts: Int = 4) async throws -> [AccountInfo] {
+        var attempt = 1
+        while true {
+            do {
+                return try await testSessionKey(key)
+            } catch {
+                guard AppError.wrap(error).code == .apiUnauthorized, attempt < maxAttempts else {
+                    throw error
+                }
+                try? await Task.sleep(nanoseconds: UInt64(attempt) * 1_500_000_000)
+                attempt += 1
+            }
+        }
+    }
+
     /// Tests a session key without saving to Keychain
     /// Returns available organizations if successful
     func testSessionKey(_ key: String) async throws -> [AccountInfo] {
@@ -558,14 +577,25 @@ class ClaudeAPIService: APIServiceProtocol {
                 error: nil
             )
 
-            guard httpResponse.statusCode == 200 else {
+            // A 429 means the account is at its rate limit — which is exactly
+            // what we're here to measure. The unified rate-limit headers are
+            // still present on 429 responses, so parse them instead of
+            // failing the refresh right when the user most needs the data.
+            let has429UsageHeaders = httpResponse.statusCode == 429
+                && httpResponse.value(forHTTPHeaderField: "anthropic-ratelimit-unified-5h-utilization") != nil
+
+            guard httpResponse.statusCode == 200 || has429UsageHeaders else {
                 let responsePreview = String(data: data, encoding: .utf8)?.prefix(200) ?? "Unable to read response"
                 throw AppError(
-                    code: .apiUnauthorized,
-                    message: "OAuth Messages API request failed",
+                    code: httpResponse.statusCode == 429 ? .apiRateLimited : .apiUnauthorized,
+                    message: httpResponse.statusCode == 429
+                        ? "Rate limited by Claude API"
+                        : "OAuth Messages API request failed",
                     technicalDetails: "Status: \(httpResponse.statusCode)\nResponse: \(responsePreview)",
                     isRecoverable: true,
-                    recoverySuggestion: "Please re-sync your CLI account in Settings"
+                    recoverySuggestion: httpResponse.statusCode == 429
+                        ? "Usage is at its limit — data will refresh once the rate limit window resets"
+                        : "Please re-sync your CLI account in Settings"
                 )
             }
 
@@ -590,7 +620,16 @@ class ClaudeAPIService: APIServiceProtocol {
             .build()
 
         var request = URLRequest(url: url)
-        request.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
+        // Include Cloudflare clearance cookies captured by the sign-in webview
+        // (shared cookie storage) — without them claude.ai intermittently
+        // answers with a 403 "Just a moment..." challenge page.
+        var cookiePairs = ["sessionKey=\(sessionKey)"]
+        if let stored = HTTPCookieStorage.shared.cookies(for: url) {
+            for cookie in stored where ["cf_clearance", "__cf_bm"].contains(cookie.name) {
+                cookiePairs.append("\(cookie.name)=\(cookie.value)")
+            }
+        }
+        request.setValue(cookiePairs.joined(separator: "; "), forHTTPHeaderField: "Cookie")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15", forHTTPHeaderField: "User-Agent")
         request.setValue("https://claude.ai", forHTTPHeaderField: "Referer")
@@ -669,6 +708,19 @@ class ClaudeAPIService: APIServiceProtocol {
         case 401, 403:
             // Include response body in error for debugging
             let responsePreview = String(data: data, encoding: .utf8)?.prefix(200) ?? "Unable to read response"
+
+            // Cloudflare bot challenge, not an actual auth failure — the
+            // session key is fine, the request just got challenged.
+            if responsePreview.contains("Just a moment") || responsePreview.contains("cf-mitigated") {
+                throw AppError(
+                    code: .apiUnauthorized,
+                    message: "Request blocked by Cloudflare protection.",
+                    technicalDetails: "Endpoint: \(endpoint)\nStatus: \(httpResponse.statusCode)\nCloudflare challenge page returned",
+                    isRecoverable: true,
+                    recoverySuggestion: "Your session key is likely still valid — this usually resolves on the next refresh. If it persists, re-sign-in via Settings to refresh Cloudflare cookies."
+                )
+            }
+
             throw AppError(
                 code: .apiUnauthorized,
                 message: "Unauthorized. Your session key may have expired.",
@@ -713,6 +765,11 @@ class ClaudeAPIService: APIServiceProtocol {
         // Parse Claude's actual API response structure
 
         if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            // One shared formatter for every resets_at field in this response —
+            // ISO8601DateFormatter construction is expensive.
+            let resetTimeFormatter = ISO8601DateFormatter()
+            resetTimeFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
             // Extract session usage (five_hour)
             var sessionPercentage = 0.0
             var sessionResetTime = Date().addingTimeInterval(5 * 3600)
@@ -721,9 +778,7 @@ class ClaudeAPIService: APIServiceProtocol {
                     sessionPercentage = parseUtilization(utilization)
                 }
                 if let resetsAt = fiveHour["resets_at"] as? String {
-                    let formatter = ISO8601DateFormatter()
-                    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-                    sessionResetTime = formatter.date(from: resetsAt) ?? sessionResetTime
+                    sessionResetTime = resetTimeFormatter.date(from: resetsAt) ?? sessionResetTime
                 }
             }
 
@@ -735,9 +790,7 @@ class ClaudeAPIService: APIServiceProtocol {
                     weeklyPercentage = parseUtilization(utilization)
                 }
                 if let resetsAt = sevenDay["resets_at"] as? String {
-                    let formatter = ISO8601DateFormatter()
-                    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-                    weeklyResetTime = formatter.date(from: resetsAt) ?? weeklyResetTime
+                    weeklyResetTime = resetTimeFormatter.date(from: resetsAt) ?? weeklyResetTime
                 }
             }
 
@@ -757,9 +810,69 @@ class ClaudeAPIService: APIServiceProtocol {
                     sonnetPercentage = parseUtilization(utilization)
                 }
                 if let resetsAt = sevenDaySonnet["resets_at"] as? String {
-                    let formatter = ISO8601DateFormatter()
-                    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-                    sonnetResetTime = formatter.date(from: resetsAt)
+                    sonnetResetTime = resetTimeFormatter.date(from: resetsAt)
+                }
+            }
+
+            // Extract Design weekly usage (seven_day_design)
+            var designPercentage = 0.0
+            var designResetTime: Date? = nil
+            if let sevenDayDesign = json["seven_day_omelette"] as? [String: Any] {
+                if let utilization = sevenDayDesign["utilization"] {
+                    designPercentage = parseUtilization(utilization)
+                }
+                if let resetsAt = sevenDayDesign["resets_at"] as? String {
+                    designResetTime = resetTimeFormatter.date(from: resetsAt)
+                }
+            }
+
+            // Extract Fable weekly usage (seven_day_fable)
+            var fablePercentage = 0.0
+            var fableResetTime: Date? = nil
+            if let sevenDayFable = json["seven_day_fable"] as? [String: Any] {
+                if let utilization = sevenDayFable["utilization"] {
+                    fablePercentage = parseUtilization(utilization)
+                }
+                if let resetsAt = sevenDayFable["resets_at"] as? String {
+                    fableResetTime = resetTimeFormatter.date(from: resetsAt)
+                }
+            }
+
+            // Newer API responses null out the legacy seven_day_* per-model
+            // fields and report per-model usage in a "limits" array instead:
+            // {"kind":"weekly_scoped","percent":73,"resets_at":...,
+            //  "scope":{"model":{"id":null,"display_name":"Fable"}}}
+            // limits[] is therefore the source of truth: when an entry is
+            // present it overrides whatever the legacy fields said.
+            if let limits = json["limits"] as? [[String: Any]] {
+                for limit in limits {
+                    guard limit["kind"] as? String == "weekly_scoped",
+                          let scope = limit["scope"] as? [String: Any],
+                          let model = scope["model"] as? [String: Any],
+                          let percentValue = limit["percent"] else { continue }
+                    let percent = parseUtilization(percentValue)
+                    let resetTime = (limit["resets_at"] as? String).flatMap { resetTimeFormatter.date(from: $0) }
+
+                    // Match on the stable model id when the API provides one;
+                    // display_name is a rename-prone human label kept as fallback.
+                    let modelId = (model["id"] as? String)?.lowercased() ?? ""
+                    let name = (model["display_name"] as? String)?.lowercased() ?? ""
+                    func matches(_ keys: String...) -> Bool {
+                        keys.contains { name == $0 || modelId.contains($0) }
+                    }
+
+                    if matches("fable", "mythos") {
+                        fablePercentage = percent
+                        fableResetTime = resetTime ?? fableResetTime
+                    } else if matches("opus") {
+                        opusPercentage = percent
+                    } else if matches("sonnet") {
+                        sonnetPercentage = percent
+                        sonnetResetTime = resetTime ?? sonnetResetTime
+                    } else if matches("design", "omelette") {
+                        designPercentage = percent
+                        designResetTime = resetTime ?? designResetTime
+                    }
                 }
             }
 
@@ -772,6 +885,8 @@ class ClaudeAPIService: APIServiceProtocol {
             let weeklyTokens = Int(Double(weeklyLimit) * (weeklyPercentage / 100.0))
             let opusTokens = Int(Double(weeklyLimit) * (opusPercentage / 100.0))
             let sonnetTokens = Int(Double(weeklyLimit) * (sonnetPercentage / 100.0))
+            let designTokens = Int(Double(weeklyLimit) * (designPercentage / 100.0))
+            let fableTokens = Int(Double(weeklyLimit) * (fablePercentage / 100.0))
 
             let usage = ClaudeUsage(
                 sessionTokensUsed: sessionTokens,
@@ -787,6 +902,12 @@ class ClaudeAPIService: APIServiceProtocol {
                 sonnetWeeklyTokensUsed: sonnetTokens,
                 sonnetWeeklyPercentage: sonnetPercentage,
                 sonnetWeeklyResetTime: sonnetResetTime,
+                designWeeklyTokensUsed: designTokens,
+                designWeeklyPercentage: designPercentage,
+                designWeeklyResetTime: designResetTime,
+                fableWeeklyTokensUsed: fableTokens,
+                fableWeeklyPercentage: fablePercentage,
+                fableWeeklyResetTime: fableResetTime,
                 costUsed: nil,
                 costLimit: nil,
                 costCurrency: nil,
@@ -869,6 +990,12 @@ class ClaudeAPIService: APIServiceProtocol {
             sonnetWeeklyTokensUsed: 0,
             sonnetWeeklyPercentage: 0,
             sonnetWeeklyResetTime: nil,
+            designWeeklyTokensUsed: 0,
+            designWeeklyPercentage: 0,
+            designWeeklyResetTime: nil,
+            fableWeeklyTokensUsed: 0,
+            fableWeeklyPercentage: 0,
+            fableWeeklyResetTime: nil,
             costUsed: nil,
             costLimit: nil,
             costCurrency: nil,

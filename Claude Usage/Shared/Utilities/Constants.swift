@@ -56,6 +56,28 @@ enum Constants {
 
         // Localization
         static let appLanguage = "appLanguage"
+
+        // Claude Code notch HUD
+        static let notchHUDEnabled = "notchHUDEnabled"
+        static let notchHUDAutoHide = "notchHUDAutoHide"
+        static let notchHUDPathToken = "notchHUDPathToken"
+    }
+
+    // Claude Code notch HUD (hook listener + display)
+    enum NotchHUD {
+        static let host = "127.0.0.1"
+        static let port: UInt16 = 19847
+        /// Base URL prefix used in installed hook URLs; also matched by the
+        /// installer when stripping our own (or legacy) hook entries.
+        static var baseURL: String { "http://\(host):\(port)" }
+        /// Session with no events for this long is removed from the HUD.
+        static let staleSessionTimeout: TimeInterval = 120
+        /// Sessions waiting for the user get a longer grace before removal.
+        static let attentionStaleTimeout: TimeInterval = 600
+        /// Delay before the HUD hides once every session is idle (auto-hide on).
+        static let idleHideDelay: TimeInterval = 5
+        static let maxBodyBytes = 65_536
+        static let maxHeaderBytes = 8_192
     }
 
     // Claude Code paths

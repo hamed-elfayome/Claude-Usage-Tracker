@@ -62,6 +62,8 @@
 "menubar.weekly_usage" = "每週";
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";
+"menubar.fable_usage" = "Fable";
+"menubar.design_usage" = "設計";
 "menubar.extra_usage" = "額外使用量";
 "menubar.api_credits" = "API 額度";
 "menubar.5_hour_window" = "5 小時滑動視窗";
@@ -975,3 +977,42 @@
 "notifications.sound.default" = "預設";
 "notifications.sound.none" = "無";
 "notifications.sound.preview" = "預覽聲音";
+
+/* Claude Code Notch HUD */
+"notch.hud.section_title" = "Dynamic Island";
+"notch.hud.section_desc" = "在瀏海附近以極簡方式顯示 Claude Code 的即時動態";
+"notch.hud.enable" = "啟用 Dynamic Island";
+"notch.hud.enable_desc" = "安裝 Claude Code 掛鉤並在瀏海附近即時顯示工作階段動態";
+"notch.hud.auto_hide" = "閒置時自動隱藏";
+"notch.hud.auto_hide_desc" = "所有工作階段閒置數秒後隱藏 HUD";
+"notch.hud.expanded_title" = "Claude Code";
+"notch.no_sessions" = "沒有進行中的工作階段";
+"notch.status.thinking" = "思考中…";
+"notch.status.writing_code" = "編寫中…";
+"notch.status.reading_files" = "讀取中…";
+"notch.status.running_command" = "執行中…";
+"notch.status.needs_attention" = "需要輸入";
+"notch.status.idle" = "完成";
+"notch.task.running_command" = "正在執行指令";
+"notch.task.writing" = "正在寫入 %@";
+"notch.task.editing" = "正在編輯 %@";
+"notch.task.reading" = "正在讀取 %@";
+"notch.task.searching" = "正在搜尋檔案";
+"notch.task.subagent" = "正在執行子代理";
+"notch.task.web" = "正在瀏覽網頁";
+"notch.hooks.title" = "Claude Code 掛鉤";
+"notch.hooks.desc" = "HUD 透過 ~/.claude/settings.json 中的掛鉤接收事件";
+"notch.hooks.status_installed" = "掛鉤已安裝";
+"notch.hooks.status_partial" = "掛鉤部分安裝";
+"notch.hooks.status_not_installed" = "掛鉤未設定";
+"notch.hooks.status_legacy" = "偵測到舊版掛鉤 — 啟用 HUD 時將自動取代。";
+"notch.hooks.install" = "安裝";
+"notch.hooks.repair" = "修復";
+"notch.hooks.remove" = "移除";
+"notch.server.listening" = "正在監聽 %@";
+"notch.server.port_busy" = "連接埠 %@ 已被占用 — 是否有另一個 App 正在執行？";
+"notch.server.retry" = "重試";
+
+/* Sponsor slot */
+"sponsor.slot_title" = "此位置開放贊助";
+"sponsor.slot_cta" = "與我聯繫";

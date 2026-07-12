@@ -123,6 +123,19 @@ final class BorderlessSettingsWindow: NSWindow {
 
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { true }
+
+    // Borderless windows don't route Cmd+W to performClose: automatically (and
+    // performClose: needs a close button, which a borderless window lacks), so
+    // close directly to support the standard shortcut (#223, #252). close()
+    // still fires windowWillClose, so MenuBarManager's dock-icon cleanup runs.
+    override func keyDown(with event: NSEvent) {
+        if event.modifierFlags.contains(.command),
+           event.charactersIgnoringModifiers?.lowercased() == "w" {
+            close()
+            return
+        }
+        super.keyDown(with: event)
+    }
 }
 
 /// Builds the settings window — fully borderless, no system titlebar.
@@ -243,6 +256,11 @@ struct SettingsView: View {
                     .padding(.horizontal, 12)
                     .padding(.top, 8)
 
+                // Sponsor slot (available placement)
+                SponsorSlotCard()
+                    .padding(.horizontal, 12)
+                    .padding(.top, 8)
+
                 Spacer()
 
                 // App Settings Section
@@ -286,6 +304,8 @@ struct SettingsView: View {
                     LanguageSettingsView()
                 case .claudeCode:
                     ClaudeCodeView()
+                case .notchHUD:
+                    NotchHUDSettingsView()
                 case .shortcuts:
                     ShortcutsSettingsView()
                 case .updates:
@@ -414,6 +434,51 @@ struct ProfileSectionContainer: View {
     }
 }
 
+// MARK: - Sponsor Slot
+
+/// A reserved placement in the settings sidebar, offered to sponsors.
+/// Clicking opens a pre-addressed mail for sponsorship inquiries.
+struct SponsorSlotCard: View {
+    private static let contactURL = URL(
+        string: "mailto:hamedelfayome@gmail.com?subject=Claude%20Usage%20Tracker%20%E2%80%94%20Sponsorship"
+    )
+
+    var body: some View {
+        Button {
+            if let url = Self.contactURL {
+                NSWorkspace.shared.open(url)
+            }
+        } label: {
+            VStack(spacing: 5) {
+                Image(systemName: "star.circle")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(.secondary)
+                Text("sponsor.slot_title".localized)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                Text("sponsor.slot_cta".localized)
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundColor(.accentColor)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .padding(.horizontal, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color.primary.opacity(0.03))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 6)
+                    .strokeBorder(Color.primary.opacity(0.12), style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help("hamedelfayome@gmail.com")
+    }
+}
+
 // MARK: - App Settings Section
 
 struct AppSettingsSection: View {
@@ -534,6 +599,7 @@ enum SettingsSection: String, CaseIterable {
     case manageProfiles
     case language
     case claudeCode
+    case notchHUD
     case shortcuts
     case updates
     case support
@@ -554,6 +620,7 @@ enum SettingsSection: String, CaseIterable {
         case .manageProfiles: return "section.manage_profiles_title".localized
         case .language: return "language.title".localized
         case .claudeCode: return "settings.claude_cli".localized
+        case .notchHUD: return "notch.hud.section_title".localized
         case .shortcuts: return "section.shortcuts_title".localized
         case .updates: return "settings.updates".localized
         case .support: return "section.support_title".localized
@@ -576,6 +643,7 @@ enum SettingsSection: String, CaseIterable {
         case .manageProfiles: return "person.2.fill"
         case .language: return "globe"
         case .claudeCode: return "chevron.left.forwardslash.chevron.right"
+        case .notchHUD: return "inset.filled.topthird.rectangle"
         case .shortcuts: return "keyboard"
         case .updates: return "arrow.down.circle.fill"
         case .support: return "heart.fill"
@@ -598,6 +666,7 @@ enum SettingsSection: String, CaseIterable {
         case .manageProfiles: return "section.manage_profiles_desc".localized
         case .language: return "language.subtitle".localized
         case .claudeCode: return "settings.claude_cli.description".localized
+        case .notchHUD: return "notch.hud.section_desc".localized
         case .shortcuts: return "section.shortcuts_desc".localized
         case .updates: return "settings.updates.description".localized
         case .support: return "section.support_desc".localized

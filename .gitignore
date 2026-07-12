@@ -153,3 +153,7 @@ release/
 /STATUSLINE_PROFILE_FIX.md
 /STORAGE_ARCHITECTURE.md
 /STORAGE_QUICK_REFERENCE.md
+
+# Local-only working notes
+NEXT_RELEASE_NOTES.md
+iOS-App-Spec.md

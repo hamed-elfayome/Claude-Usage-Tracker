@@ -79,6 +79,8 @@ final class StatusBarUIManager {
             // No credentials/metrics - show default app logo
             let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
             statusItem.autosaveName = Self.defaultLogoAutosaveName
+            // Override any persisted false from a prior cmd-drag.
+            statusItem.isVisible = true
 
             if let button = statusItem.button {
                 button.action = action
@@ -98,6 +100,8 @@ final class StatusBarUIManager {
             for metricConfig in config.enabledMetrics {
                 let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
                 statusItem.autosaveName = Self.autosaveName(for: metricConfig.metricType)
+                // Override any persisted false from a prior cmd-drag.
+                statusItem.isVisible = true
 
                 if let button = statusItem.button {
                     button.action = action
@@ -152,6 +156,8 @@ final class StatusBarUIManager {
             statusItem.autosaveName = config.enabledMetrics.isEmpty
                 ? Self.defaultLogoAutosaveName
                 : Self.autosaveName(for: metricType)
+            // Override any persisted false from a prior cmd-drag.
+            statusItem.isVisible = true
 
             if let button = statusItem.button {
                 button.action = action
@@ -244,6 +250,8 @@ final class StatusBarUIManager {
             if peakHoursStatusItem == nil, let target = peakHoursTarget, let action = peakHoursAction {
                 let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
                 statusItem.autosaveName = Self.peakHoursAutosaveName
+                // Override any persisted false from a prior cmd-drag.
+                statusItem.isVisible = true
                 if let button = statusItem.button {
                     button.action = action
                     button.target = target
@@ -291,6 +299,8 @@ final class StatusBarUIManager {
             // No profiles selected - show default logo
             let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
             statusItem.autosaveName = Self.defaultLogoAutosaveName
+            // Override any persisted false from a prior cmd-drag.
+            statusItem.isVisible = true
             if let button = statusItem.button {
                 button.action = action
                 button.target = target
@@ -307,6 +317,8 @@ final class StatusBarUIManager {
             for profile in selectedProfiles {
                 let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
                 statusItem.autosaveName = Self.autosaveName(forProfileId: profile.id)
+                // Override any persisted false from a prior cmd-drag.
+                statusItem.isVisible = true
 
                 if let button = statusItem.button {
                     button.action = action
@@ -362,6 +374,8 @@ final class StatusBarUIManager {
             // Need to add default logo
             let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
             statusItem.autosaveName = Self.defaultLogoAutosaveName
+            // Override any persisted false from a prior cmd-drag.
+            statusItem.isVisible = true
             if let button = statusItem.button {
                 button.action = action
                 button.target = target
@@ -374,6 +388,8 @@ final class StatusBarUIManager {
             for profile in selectedProfiles where idsToAdd.contains(profile.id) {
                 let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
                 statusItem.autosaveName = Self.autosaveName(forProfileId: profile.id)
+                // Override any persisted false from a prior cmd-drag.
+                statusItem.isVisible = true
                 if let button = statusItem.button {
                     button.action = action
                     button.target = target
@@ -613,9 +629,11 @@ final class StatusBarUIManager {
         let profile = ProfileManager.shared.activeProfile
         let config = profile?.iconConfig ?? .default
 
-        // Check if we should show default logo (no usage credentials OR no enabled metrics)
-        let hasUsageCredentials = profile?.hasUsageCredentials ?? false
-        if !hasUsageCredentials || config.enabledMetrics.isEmpty {
+        // Keep the render path aligned with ClaudeAPIService/MenuBarManager auth
+        // fallback logic so users authenticated only via `claude login` don't
+        // periodically repaint to the default logo after successful refreshes.
+        let hasAnyCredentials = hasAnyAvailableCredentials(for: profile)
+        if !hasAnyCredentials || config.enabledMetrics.isEmpty {
             // Show default app logo
             if let statusItem = statusItems[.session],  // We use .session as placeholder key
                let button = statusItem.button {
@@ -695,6 +713,26 @@ final class StatusBarUIManager {
         button.image = image
     }
 
+    /// Mirrors the auth fallback used for actual usage fetches so UI gating does
+    /// not disagree with the network layer.
+    private func hasAnyAvailableCredentials(for profile: Profile?) -> Bool {
+        guard let profile else { return false }
+
+        if profile.hasUsageCredentials { return true }
+
+        do {
+            if let systemCreds = try ClaudeCodeSyncService.shared.readSystemCredentials(),
+               !ClaudeCodeSyncService.shared.isTokenExpired(systemCreds),
+               ClaudeCodeSyncService.shared.extractAccessToken(from: systemCreds) != nil {
+                return true
+            }
+        } catch {
+            LoggingService.shared.log("StatusBarUIManager.hasAnyAvailableCredentials: system keychain check failed: \(error.localizedDescription)")
+        }
+
+        return false
+    }
+
     /// Get button for a specific metric (used for popover positioning)
     func button(for metricType: MenuBarMetricType) -> NSStatusBarButton? {
         return statusItems[metricType]?.button
@@ -749,7 +787,10 @@ final class StatusBarUIManager {
     /// This prevents triggering effectiveAppearance KVO when the image is identical.
     private func setButtonImage(_ button: NSStatusBarButton, image: NSImage) {
         let buttonId = ObjectIdentifier(button)
-        guard let newData = image.tiffRepresentation else {
+        // Avoid NSImage.tiffRepresentation: macOS 26 SDK crashes in
+        // SetupTIFFErrorHandler dispatch_once. Hash via CGImage bytes instead.
+        guard let cg = image.cgImage(forProposedRect: nil, context: nil, hints: nil),
+              let newData = cg.dataProvider?.data as Data? else {
             button.image = image
             return
         }

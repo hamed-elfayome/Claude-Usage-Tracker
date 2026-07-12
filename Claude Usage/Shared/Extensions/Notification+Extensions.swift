@@ -29,4 +29,7 @@ extension Notification.Name {
 
     /// Posted when the peak hours indicator setting is toggled
     static let peakHoursSettingChanged = Notification.Name("peakHoursSettingChanged")
+
+    /// Posted when a Claude Code notch HUD setting is toggled (enabled/auto-hide)
+    static let notchHUDSettingChanged = Notification.Name("notchHUDSettingChanged")
 }

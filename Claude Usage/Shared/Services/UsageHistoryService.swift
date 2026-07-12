@@ -31,8 +31,63 @@ class UsageHistoryService {
     private let sessionRecordingInterval: TimeInterval = 10 * 60  // 10 minutes
     private let weeklyRecordingInterval: TimeInterval = 2 * 60 * 60  // 2 hours
 
+    /// UserDefaults key marking that the one-time UserDefaults→file migration ran.
+    private let historyMigrationDoneKey = "usageHistoryMigratedToFiles_v1"
+
     private init() {
         self.defaults = UserDefaults.standard
+        migrateHistoryToFilesIfNeeded()
+    }
+
+    // MARK: - File-Based History Storage (#260)
+
+    /// Directory holding per-profile history JSON files. Usage history can grow to
+    /// several MB per profile; keeping it in UserDefaults pushed the app's domain
+    /// past the 4 MB CFPreferences hard limit, which silently dropped ALL writes to
+    /// the domain — including profile credentials. Storing it as files keeps the
+    /// UserDefaults domain small so credential/profile saves persist reliably.
+    private var historyDirectory: URL {
+        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+            ?? Constants.ClaudePaths.homeDirectory.appendingPathComponent("Library/Application Support")
+        let dir = base
+            .appendingPathComponent("Claude Usage", isDirectory: true)
+            .appendingPathComponent("history", isDirectory: true)
+        if !FileManager.default.fileExists(atPath: dir.path) {
+            try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        }
+        return dir
+    }
+
+    /// File URL for a profile's history JSON.
+    private func historyFileURL(for profileId: UUID) -> URL {
+        historyDirectory.appendingPathComponent("usageHistory_\(profileId.uuidString).json")
+    }
+
+    /// One-time migration: move any existing `usageHistory_*` blobs out of
+    /// UserDefaults into files, then delete the UserDefaults keys to shrink the
+    /// domain back under the 4 MB limit. Safe to call on every launch; it no-ops
+    /// after the first successful run.
+    private func migrateHistoryToFilesIfNeeded() {
+        guard !defaults.bool(forKey: historyMigrationDoneKey) else { return }
+
+        let dict = defaults.dictionaryRepresentation()
+        var migrated = 0
+        for (key, value) in dict where key.hasPrefix(historyKeyPrefix) {
+            if let data = value as? Data {
+                let idString = String(key.dropFirst(historyKeyPrefix.count))
+                if let profileId = UUID(uuidString: idString) {
+                    let url = historyFileURL(for: profileId)
+                    if (try? data.write(to: url, options: [.atomic])) != nil {
+                        migrated += 1
+                    }
+                }
+            }
+            // Remove the oversized key regardless — getting it out of the domain is
+            // the whole point; a failed file write just loses that profile's history.
+            defaults.removeObject(forKey: key)
+        }
+        defaults.set(true, forKey: historyMigrationDoneKey)
+        LoggingService.shared.logInfo("UsageHistory: migrated \(migrated) history blob(s) from UserDefaults to files (#260)")
     }
 
     // MARK: - Persistent Timestamp Tracking
@@ -66,20 +121,21 @@ class UsageHistoryService {
 
     // MARK: - Save/Load History
 
-    /// Saves usage history for a profile
+    /// Saves usage history for a profile (to a JSON file, not UserDefaults — see #260)
     func saveHistory(_ history: UsageHistoryData, for profileId: UUID) {
         do {
             let data = try encoder.encode(history)
-            defaults.set(data, forKey: storageKey(for: profileId))
+            try data.write(to: historyFileURL(for: profileId), options: [.atomic])
             LoggingService.shared.logStorageSave("usageHistory for profile \(profileId.uuidString.prefix(8))")
         } catch {
             LoggingService.shared.logStorageError("saveHistory", error: error)
         }
     }
 
-    /// Loads usage history for a profile
+    /// Loads usage history for a profile (from its JSON file — see #260)
     func loadHistory(for profileId: UUID) -> UsageHistoryData {
-        guard let data = defaults.data(forKey: storageKey(for: profileId)) else {
+        let url = historyFileURL(for: profileId)
+        guard let data = try? Data(contentsOf: url) else {
             return UsageHistoryData()
         }
 
@@ -334,6 +390,8 @@ class UsageHistoryService {
 
     /// Deletes all history for a profile
     func deleteHistory(for profileId: UUID) {
+        try? FileManager.default.removeItem(at: historyFileURL(for: profileId))
+        // Best-effort removal of any legacy UserDefaults blob (pre-migration installs).
         defaults.removeObject(forKey: storageKey(for: profileId))
         // Also delete persisted timestamps
         defaults.removeObject(forKey: "\(lastSessionRecordTimePrefix)\(profileId.uuidString)")

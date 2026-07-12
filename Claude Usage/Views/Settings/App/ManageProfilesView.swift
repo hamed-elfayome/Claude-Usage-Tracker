@@ -54,7 +54,6 @@ struct ManageProfilesView: View {
                         SettingToggle(
                             title: "multiprofile.enable_title".localized,
                             description: "multiprofile.enable_description".localized,
-                            badge: .new,
                             isOn: Binding(
                                 get: { profileManager.displayMode == .multi },
                                 set: { enabled in
@@ -276,7 +275,6 @@ struct ManageProfilesView: View {
                     SettingToggle(
                         title: "auto_switch.enable_title".localized,
                         description: "auto_switch.enable_description".localized,
-                        badge: .new,
                         isOn: Binding(
                             get: { SharedDataStore.shared.loadAutoSwitchProfileEnabled() },
                             set: { enabled in

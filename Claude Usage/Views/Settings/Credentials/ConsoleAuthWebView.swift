@@ -63,19 +63,69 @@ struct ConsoleAuthWebView: NSViewRepresentable {
         weak var parentWebView: WKWebView?
         private var popupWindow: NSWindow?
         private var popupWebView: WKWebView?
+        private var pollTimer: Timer?
 
         init(cookieDomain: String, onCookieFound: @escaping (ConsoleCookieResult) -> Void) {
             self.cookieDomain = cookieDomain
             self.onCookieFound = onCookieFound
         }
 
+        deinit {
+            pollTimer?.invalidate()
+        }
+
         func startObservingCookies(for dataStore: WKWebsiteDataStore) {
             dataStore.httpCookieStore.add(self)
+
+            // WKHTTPCookieStoreObserver doesn't fire for cookies set via
+            // Set-Cookie by the network process on macOS 26+, and claude.ai is
+            // an SPA so didFinish never fires after login — poll as a fallback.
+            // .common mode so the timer keeps firing while the sheet is up.
+            let timer = Timer(timeInterval: 1.0, repeats: true) { [weak self] _ in
+                guard let self = self else { return }
+                if self.foundCookie {
+                    self.pollTimer?.invalidate()
+                    self.pollTimer = nil
+                    return
+                }
+                self.searchForSessionCookie(in: dataStore.httpCookieStore)
+                self.reloadIfLoggedInWithoutCookie()
+            }
+            RunLoop.main.add(timer, forMode: .common)
+            pollTimer = timer
+        }
+
+        // The network process may not expose the fresh sessionKey to
+        // getAllCookies until the next navigation. If the main webview has
+        // left the login page but the cookie still isn't visible, force a
+        // reload (mirrors the manual page-reload workaround).
+        private var pollsSinceLoginLeft = 0
+        private var reloadAttempts = 0
+
+        private func reloadIfLoggedInWithoutCookie() {
+            guard !foundCookie, let webView = parentWebView else { return }
+            guard let url = webView.url,
+                  url.host?.contains(cookieDomain) == true,
+                  !url.path.contains("login") else {
+                pollsSinceLoginLeft = 0
+                return
+            }
+            pollsSinceLoginLeft += 1
+            // Give the observer/poll 3s to see the cookie, then reload; retry up to 3 times.
+            if pollsSinceLoginLeft >= 3 && reloadAttempts < 3 {
+                pollsSinceLoginLeft = 0
+                reloadAttempts += 1
+                webView.reloadFromOrigin()
+            }
         }
 
         // WKHTTPCookieStoreObserver — fires whenever any cookie changes
         func cookiesDidChange(in cookieStore: WKHTTPCookieStore) {
             guard !foundCookie else { return }
+            searchForSessionCookie(in: cookieStore)
+        }
+
+        private func searchForSessionCookie(in cookieStore: WKHTTPCookieStore) {
             cookieStore.getAllCookies { [weak self] cookies in
                 guard let self = self, !self.foundCookie else { return }
                 for cookie in cookies {
@@ -86,6 +136,8 @@ struct ConsoleAuthWebView: NSViewRepresentable {
                             expiryDate: cookie.expiresDate
                         )
                         DispatchQueue.main.async {
+                            self.pollTimer?.invalidate()
+                            self.pollTimer = nil
                             self.onCookieFound(result)
                         }
                         return
@@ -141,23 +193,7 @@ struct ConsoleAuthWebView: NSViewRepresentable {
         }
 
         private func checkForSessionCookie(in webView: WKWebView) {
-            webView.configuration.websiteDataStore.httpCookieStore.getAllCookies { [weak self] cookies in
-                guard let self = self, !self.foundCookie else { return }
-
-                for cookie in cookies {
-                    if cookie.name == "sessionKey" && cookie.domain.contains(self.cookieDomain) {
-                        self.foundCookie = true
-                        let result = ConsoleCookieResult(
-                            sessionKey: cookie.value,
-                            expiryDate: cookie.expiresDate
-                        )
-                        DispatchQueue.main.async {
-                            self.onCookieFound(result)
-                        }
-                        return
-                    }
-                }
-            }
+            searchForSessionCookie(in: webView.configuration.websiteDataStore.httpCookieStore)
         }
     }
 }

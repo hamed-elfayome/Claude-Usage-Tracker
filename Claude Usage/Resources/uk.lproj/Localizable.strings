@@ -61,6 +61,8 @@
 "menubar.weekly_usage" = "Тижневе";
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";
+"menubar.fable_usage" = "Fable";
+"menubar.design_usage" = "Дизайн";
 "menubar.extra_usage" = "Додаткове використання";
 "menubar.api_credits" = "Кредити API";
 "menubar.api_cost" = "Вартість API";
@@ -984,3 +986,42 @@
 "support.open_source_desc" = "Вихідний код публічно доступний на GitHub. Ви можете переглядати, змінювати та робити внески до проекту.";
 "support.no_tracking" = "Без відстеження";
 "support.no_tracking_desc" = "Ваша конфіденційність важлива. Жодної аналітики, телеметрії, збору даних. Все залишається на вашому Mac.";
+
+/* Claude Code Notch HUD */
+"notch.hud.section_title" = "Dynamic Island";
+"notch.hud.section_desc" = "Мінімальний дисплей біля вирізу, що показує, чим зайнятий Claude Code";
+"notch.hud.enable" = "Увімкнути Dynamic Island";
+"notch.hud.enable_desc" = "Встановлює хуки Claude Code та показує активність сеансів наживо біля вирізу";
+"notch.hud.auto_hide" = "Автоматично приховувати в режимі очікування";
+"notch.hud.auto_hide_desc" = "Приховує HUD за кілька секунд після завершення всіх сеансів";
+"notch.hud.expanded_title" = "Claude Code";
+"notch.no_sessions" = "Немає активних сеансів";
+"notch.status.thinking" = "Думає…";
+"notch.status.writing_code" = "Пише…";
+"notch.status.reading_files" = "Читає…";
+"notch.status.running_command" = "Виконує…";
+"notch.status.needs_attention" = "Потрібне введення";
+"notch.status.idle" = "Готово";
+"notch.task.running_command" = "Виконання команди";
+"notch.task.writing" = "Запис %@";
+"notch.task.editing" = "Редагування %@";
+"notch.task.reading" = "Читання %@";
+"notch.task.searching" = "Пошук файлів";
+"notch.task.subagent" = "Виконується субагент";
+"notch.task.web" = "Перегляд вебу";
+"notch.hooks.title" = "Хуки Claude Code";
+"notch.hooks.desc" = "HUD отримує події через хуки в ~/.claude/settings.json";
+"notch.hooks.status_installed" = "Хуки встановлено";
+"notch.hooks.status_partial" = "Хуки встановлено частково";
+"notch.hooks.status_not_installed" = "Хуки не налаштовано";
+"notch.hooks.status_legacy" = "Виявлено хуки попередньої версії — їх буде замінено після ввімкнення HUD.";
+"notch.hooks.install" = "Встановити";
+"notch.hooks.repair" = "Виправити";
+"notch.hooks.remove" = "Видалити";
+"notch.server.listening" = "Прослуховування %@";
+"notch.server.port_busy" = "Порт %@ зайнятий — можливо, запущено іншу копію застосунку?";
+"notch.server.retry" = "Повторити";
+
+/* Sponsor slot */
+"sponsor.slot_title" = "Це місце доступне для спонсорів";
+"sponsor.slot_cta" = "Звʼязатися";
