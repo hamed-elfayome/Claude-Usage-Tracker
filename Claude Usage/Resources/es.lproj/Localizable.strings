@@ -995,3 +995,15 @@
 "notch.server.listening" = "Escuchando en %@";
 "notch.server.port_busy" = "El puerto %@ está en uso. ¿Hay otra copia de la app en ejecución?";
 "notch.server.retry" = "Reintentar";
+
+/* Backfilled keys (localization parity) */
+"about.contributors_failed" = "No se pudieron cargar los colaboradores";
+"appearance.all_metrics_off_title" = "Modo de logotipo";
+"appearance.all_metrics_off_description" = "Todas las métricas están desactivadas. Se mostrará el logotipo de la app en la barra de menús. Haz clic para acceder a perfiles y ajustes.";
+"common.retry" = "Reintentar";
+"menubar.api_cost" = "Costo de API";
+"menubar.cost_source.api" = "API";
+"menubar.cost_source.cli" = "Claude Code";
+"menubar.cost_source.unknown" = "Otro";
+"menubar.this_month" = "Este mes";
+"menubar.total" = "Total";

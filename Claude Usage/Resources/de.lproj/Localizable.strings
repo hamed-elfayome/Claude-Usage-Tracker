@@ -1014,3 +1014,15 @@
 "notch.server.listening" = "Lauscht auf %@";
 "notch.server.port_busy" = "Port %@ ist belegt — läuft eine weitere Instanz der App?";
 "notch.server.retry" = "Erneut versuchen";
+
+/* Backfilled keys (localization parity) */
+"about.contributors_failed" = "Mitwirkende konnten nicht geladen werden";
+"appearance.all_metrics_off_title" = "App-Logo-Modus";
+"appearance.all_metrics_off_description" = "Alle Metriken sind deaktiviert. Stattdessen wird das App-Logo in der Menüleiste angezeigt. Klicke darauf, um Profile und Einstellungen zu öffnen.";
+"common.retry" = "Erneut versuchen";
+"menubar.api_cost" = "API-Kosten";
+"menubar.cost_source.api" = "API";
+"menubar.cost_source.cli" = "Claude Code";
+"menubar.cost_source.unknown" = "Sonstiges";
+"menubar.this_month" = "Diesen Monat";
+"menubar.total" = "Gesamt";

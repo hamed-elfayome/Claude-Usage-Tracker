@@ -1014,3 +1014,15 @@
 "notch.server.listening" = "%@ で待機中";
 "notch.server.port_busy" = "ポート %@ は使用中です。アプリが他にも起動していませんか？";
 "notch.server.retry" = "再試行";
+
+/* Backfilled keys (localization parity) */
+"about.contributors_failed" = "コントリビューターを読み込めませんでした";
+"appearance.all_metrics_off_title" = "アプリロゴモード";
+"appearance.all_metrics_off_description" = "すべてのメトリクスがオフです。メニューバーにはアプリのロゴが表示されます。クリックするとプロファイルと設定にアクセスできます。";
+"common.retry" = "再試行";
+"menubar.api_cost" = "APIコスト";
+"menubar.cost_source.api" = "API";
+"menubar.cost_source.cli" = "Claude Code";
+"menubar.cost_source.unknown" = "その他";
+"menubar.this_month" = "今月";
+"menubar.total" = "合計";

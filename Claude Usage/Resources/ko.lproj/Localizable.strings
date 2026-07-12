@@ -373,10 +373,6 @@
 "personal.placeholder_session_key" = "세션 키를 입력하세요";
 "personal.help_session_key" = "Claude.ai에서 세션 키를 추출해야 합니다";
 "personal.button_test_connection" = "연결 테스트";
-"personal.button_save" = "저장";
-"personal.status_testing" = "테스트 중...";
-"personal.success_connection" = "연결 성공! %d개 조직 발견";
-"personal.error_connection_failed" = "연결 실패. 세션 키를 확인하세요.";
 
 /* ==================== */
 /* MARK: - API Billing */
@@ -398,43 +394,18 @@
 /* ==================== */
 /* MARK: - Session Timer */
 /* ==================== */
-"session.timer_active" = "다음까지 남은 시간";
-"session.timer_inactive" = "타이머가 활성화되지 않음";
-"session.timer_paused" = "일시 중지됨";
-"session.timer_reset" = "재설정됨";
 
 /* ==================== */
 /* MARK: - Status Messages */
 /* ==================== */
-"status.fetching" = "데이터 가져오는 중...";
-"status.error" = "오류가 발생했습니다";
-"status.no_data" = "데이터 없음";
-"status.loading" = "로드 중...";
-"status.syncing" = "동기화 중...";
-"status.success" = "성공";
 
 /* ==================== */
 /* MARK: - Usage Display */
 /* ==================== */
-"usage.session" = "세션";
-"usage.week" = "주간";
-"usage.api_credits" = "API 크레딧";
-"usage.remaining" = "남음";
-"usage.used" = "사용됨";
-"usage.limit" = "한도";
-"usage.unlimited" = "무제한";
-"usage.next_reset" = "다음 재설정";
-"usage.time_until_reset" = "재설정까지";
 
 /* ==================== */
 /* MARK: - Notifications */
 /* ==================== */
-"notification.usage_warning_title" = "사용량 경고";
-"notification.usage_warning_body" = "사용량이 %d%%에 도달했습니다";
-"notification.usage_exceeded_title" = "사용량 초과";
-"notification.usage_exceeded_body" = "월간 한도를 초과했습니다";
-"notification.session_reset_title" = "세션 재설정됨";
-"notification.session_reset_body" = "새 세션이 시작되었습니다";
 "notification.session_auto_started.title" = "세션 자동 시작됨";
 "notification.session_auto_started.message" = "Claude로 새 세션이 자동으로 초기화되었습니다. 새로운 5시간 세션이 준비되었습니다!";
 "notification.session_auto_start_failed.title" = "자동 시작 실패";
@@ -460,13 +431,6 @@
 "error.code_label" = "오류 코드:";
 "error.what_to_do" = "해결 방법:";
 "error.occurred_at" = "발생 시각: %@";
-"error.network" = "네트워크 오류";
-"error.invalid_key" = "잘못된 세션 키";
-"error.unauthorized" = "권한 없음";
-"error.rate_limit" = "속도 제한 초과";
-"error.server" = "서버 오류";
-"error.unknown" = "알 수 없는 오류";
-"error.invalid_response" = "잘못된 응답";
 
 /* ==================== */
 /* MARK: - Validation Messages */
@@ -537,7 +501,6 @@
 /* MARK: - About */
 /* ==================== */
 "about.version" = "버전 %@";
-"about.build" = "빌드";
 "about.created_by" = "제작자";
 "about.contributors" = "기여자 (%d명)";
 "about.contributors_loading" = "기여자";
@@ -627,23 +590,11 @@
 /* ==================== */
 "claudecode.title" = "Claude CLI 상태표시줄";
 "claudecode.subtitle" = "터미널 상태표시줄 통합";
-"claudecode.install_statusline" = "상태표시줄 스크립트 설치";
-"claudecode.uninstall_statusline" = "상태표시줄 스크립트 제거";
-"claudecode.statusline_installed" = "설치됨";
-"claudecode.statusline_not_installed" = "설치되지 않음";
-"claudecode.shell_support" = "지원되는 셸";
-"claudecode.installation_guide" = "설치 가이드";
-"claudecode.component_session" = "세션 사용량 표시";
-"claudecode.component_week" = "주간 사용량 표시";
-"claudecode.component_api" = "API 크레딧 표시";
 "claudecode.component_directory" = "현재 디렉토리 표시";
 "claudecode.component_branch" = "Git 브랜치 표시";
 "claudecode.component_usage" = "사용 통계";
 "claudecode.component_progressbar" = "진행 표시줄";
 "claudecode.component_resettime" = "재설정 시간";
-"claudecode.success_installed" = "상태표시줄이 성공적으로 설치되었습니다";
-"claudecode.success_uninstalled" = "상태표시줄이 제거되었습니다";
-"claudecode.error_installation_failed" = "설치 실패";
 
 /* ==================== */
 /* MARK: - General Settings (Additional) */
@@ -1074,3 +1025,13 @@
 "notch.server.listening" = "%@에서 수신 대기 중";
 "notch.server.port_busy" = "포트 %@이(가) 사용 중입니다. 앱이 이미 실행 중인가요?";
 "notch.server.retry" = "다시 시도";
+
+/* Backfilled keys (localization parity) */
+"about.contributors_failed" = "기여자를 불러올 수 없습니다";
+"common.retry" = "다시 시도";
+"menubar.api_cost" = "API 비용";
+"menubar.cost_source.api" = "API";
+"menubar.cost_source.cli" = "Claude Code";
+"menubar.cost_source.unknown" = "기타";
+"menubar.this_month" = "이번 달";
+"menubar.total" = "합계";
