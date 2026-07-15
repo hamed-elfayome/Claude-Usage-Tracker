@@ -568,14 +568,33 @@ final class StatusBarUIManager {
                 )
             }
 
+            let finalImage: NSImage
             if profile.id == activeProfileId && config.showActiveProfileIndicator {
                 let underlinedImage = addGreenUnderline(to: image)
                 underlinedImage.isTemplate = false
-                button.image = underlinedImage
+                finalImage = underlinedImage
             } else {
                 image.isTemplate = useMonochrome && !config.showPaceMarker
-                button.image = image
+                finalImage = image
             }
+
+            // macOS 26 (Tahoe) crash fix: with NSStatusItem.variableLength, AppKit
+            // recomputes each item's width from its image inside a shared status-bar
+            // NSISEngine layout pass. With 2+ profile items this recurses without
+            // termination — a stack overflow (___chkstk_darwin in NSISEngine
+            // _coreReplaceMarker:withMarkerPlusDelta:). We pin an explicit length so
+            // AppKit skips the recursive variable-width solve.
+            //
+            // Crucially the length must stay CONSTANT across refreshes: *changing* a
+            // status item's length is itself the recursing op (the "PlusDelta"), so a
+            // per-pixel width jitter between updates (e.g. "5%" vs "45%") would still
+            // crash. Round the width up to a coarse grid so ordinary data changes never
+            // move the length, and only assign when it genuinely changes.
+            let stableLength = ceil(finalImage.size.width / 32.0) * 32.0
+            if abs(statusItem.length - stableLength) > 0.5 {
+                statusItem.length = stableLength
+            }
+            button.image = finalImage
         }
     }
 
