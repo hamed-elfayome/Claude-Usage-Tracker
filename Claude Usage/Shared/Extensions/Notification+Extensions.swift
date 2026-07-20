@@ -32,4 +32,7 @@ extension Notification.Name {
 
     /// Posted when a Claude Code notch HUD setting is toggled (enabled/auto-hide)
     static let notchHUDSettingChanged = Notification.Name("notchHUDSettingChanged")
+
+    /// Posted when a Keep Awake setting changes (auto mode, sleep mode, grace period)
+    static let keepAwakeSettingChanged = Notification.Name("keepAwakeSettingChanged")
 }

@@ -129,6 +129,47 @@ class SharedDataStore {
         return token
     }
 
+    // MARK: - Keep Awake
+
+    func saveKeepAwakeAutoEnabled(_ enabled: Bool) {
+        defaults.set(enabled, forKey: Constants.UserDefaultsKeys.keepAwakeAutoEnabled)
+    }
+
+    func loadKeepAwakeAutoEnabled() -> Bool {
+        // Default false: enabling installs hooks into ~/.claude/settings.json,
+        // which must be an explicit user choice.
+        return defaults.bool(forKey: Constants.UserDefaultsKeys.keepAwakeAutoEnabled)
+    }
+
+    func saveKeepAwakeSleepMode(_ rawValue: String) {
+        defaults.set(rawValue, forKey: Constants.UserDefaultsKeys.keepAwakeSleepMode)
+    }
+
+    func loadKeepAwakeSleepMode() -> String? {
+        return defaults.string(forKey: Constants.UserDefaultsKeys.keepAwakeSleepMode)
+    }
+
+    /// Default manual keep-awake duration in seconds. 0 means indefinite.
+    func saveKeepAwakeDefaultDuration(_ duration: TimeInterval) {
+        defaults.set(duration, forKey: Constants.UserDefaultsKeys.keepAwakeDefaultDuration)
+    }
+
+    func loadKeepAwakeDefaultDuration() -> TimeInterval {
+        return defaults.double(forKey: Constants.UserDefaultsKeys.keepAwakeDefaultDuration)
+    }
+
+    /// How long auto mode keeps the Mac awake after Claude Code goes idle.
+    func saveKeepAwakeAutoGracePeriod(_ period: TimeInterval) {
+        defaults.set(period, forKey: Constants.UserDefaultsKeys.keepAwakeAutoGracePeriod)
+    }
+
+    func loadKeepAwakeAutoGracePeriod() -> TimeInterval {
+        if defaults.object(forKey: Constants.UserDefaultsKeys.keepAwakeAutoGracePeriod) == nil {
+            return 15 * 60
+        }
+        return defaults.double(forKey: Constants.UserDefaultsKeys.keepAwakeAutoGracePeriod)
+    }
+
     // MARK: - Statusline Configuration
 
     func saveStatuslineShowModel(_ show: Bool) {
