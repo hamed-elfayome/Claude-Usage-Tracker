@@ -303,6 +303,51 @@ final class KeepAwakeServiceTests: XCTestCase {
         XCTAssertTrue(service.isAutoHolding)
     }
 
+    func testSmartToggleCycleResumesAutoHoldNotManual() {
+        configure(autoEnabled: true, gracePeriod: 15 * 60)
+        store.apply(.sessionStart(id: "s1", cwd: nil))
+        service.reconcile()
+        XCTAssertTrue(service.isAutoHolding)
+
+        service.smartToggle()
+        XCTAssertFalse(service.isAssertionHeld)
+
+        service.smartToggle()
+        XCTAssertTrue(service.isAutoHolding, "cycling off/on returns to the auto hold")
+        XCTAssertFalse(service.isManualOn, "no manual hold should be created")
+    }
+
+    func testSmartToggleCycleResumesAutoGraceWindow() {
+        configure(autoEnabled: true, gracePeriod: 15 * 60)
+        store.apply(.sessionStart(id: "s1", cwd: nil))
+        service.reconcile()
+        store.apply(.stop(id: "s1"))
+        service.reconcile()
+        XCTAssertNotNil(service.autoGraceExpiry)
+
+        service.smartToggle()
+        XCTAssertFalse(service.isAssertionHeld)
+
+        advance(5 * 60)
+        service.smartToggle()
+        XCTAssertTrue(service.isAutoHolding, "still inside the grace window → auto resumes")
+        XCTAssertFalse(service.isManualOn)
+    }
+
+    func testSmartToggleFallsBackToManualWhenAutoHasNothingToHold() {
+        configure(autoEnabled: true, gracePeriod: 15 * 60)
+        store.apply(.sessionStart(id: "s1", cwd: nil))
+        service.reconcile()
+        store.apply(.stop(id: "s1"))
+        service.reconcile()
+
+        service.smartToggle()
+        advance(16 * 60)
+        service.smartToggle()
+        XCTAssertTrue(service.isManualOn, "grace expired while dismissed → manual hold")
+        XCTAssertTrue(service.isAssertionHeld)
+    }
+
     func testMenuDurationOverridesDefault() {
         configure(autoEnabled: false, defaultDuration: 0)
         service.setManual(on: true, duration: 3600)

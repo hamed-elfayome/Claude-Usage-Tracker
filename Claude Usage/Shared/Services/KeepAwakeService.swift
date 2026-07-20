@@ -144,19 +144,24 @@ final class KeepAwakeService: ObservableObject {
     }
 
     /// One-click mental model for the popover button: lit means "your Mac is
-    /// being kept awake", and clicking always flips that. Off → start a manual
-    /// hold. On → end whatever is holding, including dismissing a current auto
-    /// hold (auto resumes on Claude's next activity; the setting stays on).
+    /// being kept awake", and clicking always flips that. On → end whatever is
+    /// holding, including dismissing a current auto hold (the setting stays
+    /// on). Off → resume the dismissed auto hold if it would still be holding;
+    /// only start a manual hold when auto has nothing to hold right now.
     func smartToggle() {
         if isAssertionHeld {
             isManualOn = false
             manualExpiry = nil
             if isAutoHolding {
                 autoSuppressed = true
-                lastActiveDate = nil
             }
             reconcile()
         } else {
+            if autoEnabled, autoSuppressed {
+                autoSuppressed = false
+                reconcile()
+                if isAssertionHeld { return }
+            }
             setManual(on: true)
         }
     }
