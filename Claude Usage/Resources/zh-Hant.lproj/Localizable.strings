@@ -1030,18 +1030,26 @@
 "keep_awake.auto_card_desc" = "建議:僅在 Claude Code 實際工作時讓 Mac 保持喚醒";
 "keep_awake.auto" = "Claude Code 工作時保持喚醒";
 "keep_awake.auto_desc" = "Claude Code 工作階段進行中保持喚醒,結束後恢復允許睡眠。將安裝 Claude Code 掛鉤";
-"keep_awake.grace" = "Claude 完成後,繼續保持喚醒";
-"keep_awake.grace.immediately" = "不延長";
+"keep_awake.grace" = "Claude Code 停止工作後";
+"keep_awake.grace.immediately" = "立即睡眠";
+"keep_awake.grace.stay" = "保持喚醒 %@";
 "keep_awake.hooks_note" = "透過 ~/.claude/settings.json 中的 Claude Code 掛鉤偵測活動";
 "keep_awake.sleep_type" = "睡眠防止方式";
 "keep_awake.sleep_type_desc" = "選擇保持喚醒時螢幕是否維持開啟";
 "keep_awake.sleep_type.system" = "螢幕可睡眠";
 "keep_awake.sleep_type.display" = "保持螢幕開啟";
 "keep_awake.lid_note" = "闔上螢幕後,除非接上電源並使用外接顯示器,Mac 仍會進入睡眠";
-"keep_awake.tooltip_off" = "讓 Mac 保持喚醒 — 按一下開啟";
-"keep_awake.tooltip_on" = "正在讓 Mac 保持喚醒 — 按一下關閉";
-"keep_awake.tooltip_until" = "保持喚醒至 %@ — 按一下關閉";
-"keep_awake.tooltip_auto" = "正在讓 Mac 保持喚醒 — Claude Code 工作中";
+"keep_awake.state_off" = "關閉";
+"keep_awake.state_on_indefinite" = "開啟 — 保持喚醒直到手動關閉(∞)";
+"keep_awake.state_on_remaining" = "開啟 — 剩餘 %@";
+"keep_awake.state_auto_active" = "自動 — Claude Code 工作中";
+"keep_awake.state_auto_grace" = "自動 — Claude 已完成,再保持喚醒 %@";
+"keep_awake.hint_click_on" = "按一下讓 Mac 保持喚醒";
+"keep_awake.hint_click_off" = "按一下關閉";
+"keep_awake.hint_click_pause_auto" = "按一下暫停 — Claude 再次工作時自動恢復";
+"keep_awake.menu_for" = "保持喚醒 %@";
+"keep_awake.menu_indefinite" = "保持喚醒直到關閉";
+"keep_awake.menu_off" = "關閉保持喚醒";
 
 /* Sponsor slot */
 "sponsor.slot_title" = "此位置開放贊助";

@@ -46,15 +46,7 @@ struct KeepAwakeSettingsView: View {
         }
         .onAppear(perform: loadPickerState)
         .onChange(of: autoEnabled) { _, newValue in
-            SharedDataStore.shared.saveKeepAwakeAutoEnabled(newValue)
-            if newValue {
-                NotchHookInstaller.shared.install()
-            } else if !SharedDataStore.shared.loadNotchHUDEnabled() {
-                // The notch HUD shares the hooks — only remove them when no
-                // feature needs session events anymore.
-                NotchHookInstaller.shared.uninstall()
-            }
-            NotificationCenter.default.post(name: .keepAwakeSettingChanged, object: nil)
+            service.setAutoEnabled(newValue)
         }
         .onChange(of: sleepMode) { _, newValue in
             SharedDataStore.shared.saveKeepAwakeSleepMode(newValue.rawValue)
@@ -153,7 +145,7 @@ struct KeepAwakeSettingsView: View {
                         Picker("", selection: $graceChoice) {
                             Text("keep_awake.grace.immediately".localized).tag(TimeInterval(0))
                             ForEach(Self.gracePresets, id: \.self) { preset in
-                                Text(Self.format(preset)).tag(preset)
+                                Text("keep_awake.grace.stay".localized(with: Self.format(preset))).tag(preset)
                             }
                             Text("keep_awake.duration.custom".localized).tag(Self.customTag)
                         }

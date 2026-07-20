@@ -49,6 +49,9 @@ final class KeepAwakeService: ObservableObject {
     @Published private(set) var isAssertionHeld = false
     /// True while the auto branch (active session or grace period) holds the assertion.
     @Published private(set) var isAutoHolding = false
+    /// When the auto branch is in its grace window, the instant it will let go;
+    /// nil while sessions are actively working (or auto isn't holding).
+    @Published private(set) var autoGraceExpiry: Date?
 
     // MARK: - Settings (reloaded via settingsChanged())
 
@@ -94,6 +97,10 @@ final class KeepAwakeService: ObservableObject {
     private var heldMode: SleepMode?
     /// Last instant a Claude Code session was seen actively working.
     private var lastActiveDate: Date?
+    /// Set by smartToggle() while an auto hold is dismissed; cleared when
+    /// activity next resumes so auto mode picks the following task back up.
+    private var autoSuppressed = false
+    private var wereSessionsActive = false
     private var deadlineTimer: Timer?
     private var cancellables: Set<AnyCancellable> = []
     private var started = false
@@ -136,15 +143,48 @@ final class KeepAwakeService: ObservableObject {
         setManual(on: !isManualOn)
     }
 
-    func setManual(on: Bool) {
+    /// One-click mental model for the popover button: lit means "your Mac is
+    /// being kept awake", and clicking always flips that. Off → start a manual
+    /// hold. On → end whatever is holding, including dismissing a current auto
+    /// hold (auto resumes on Claude's next activity; the setting stays on).
+    func smartToggle() {
+        if isAssertionHeld {
+            isManualOn = false
+            manualExpiry = nil
+            if isAutoHolding {
+                autoSuppressed = true
+                lastActiveDate = nil
+            }
+            reconcile()
+        } else {
+            setManual(on: true)
+        }
+    }
+
+    /// `duration` overrides the persisted default (menu quick-picks); 0 = indefinite.
+    func setManual(on: Bool, duration: TimeInterval? = nil) {
         if on {
             isManualOn = true
-            manualExpiry = defaultDuration > 0 ? now().addingTimeInterval(defaultDuration) : nil
+            let holdDuration = duration ?? defaultDuration
+            manualExpiry = holdDuration > 0 ? now().addingTimeInterval(holdDuration) : nil
         } else {
             isManualOn = false
             manualExpiry = nil
         }
         reconcile()
+    }
+
+    /// Single entry point for flipping auto mode (settings pane and the
+    /// button's context menu): persists, manages the shared hooks, and
+    /// notifies AppDelegate to re-gate the hook server.
+    func setAutoEnabled(_ enabled: Bool) {
+        SharedDataStore.shared.saveKeepAwakeAutoEnabled(enabled)
+        if enabled {
+            NotchHookInstaller.shared.install()
+        } else if !SharedDataStore.shared.loadNotchHUDEnabled() {
+            NotchHookInstaller.shared.uninstall()
+        }
+        NotificationCenter.default.post(name: .keepAwakeSettingChanged, object: nil)
     }
 
     /// Re-reads persisted settings and reapplies them (sleep-mode changes
@@ -174,6 +214,11 @@ final class KeepAwakeService: ObservableObject {
         // period keeps holding until it elapses or activity resumes.
         let sessionsActive = !currentSessions.isEmpty
             && !currentSessions.allSatisfy { $0.status == .idle }
+        if sessionsActive, !wereSessionsActive {
+            // A fresh burst of activity lifts any smartToggle dismissal.
+            autoSuppressed = false
+        }
+        wereSessionsActive = sessionsActive
         if sessionsActive {
             lastActiveDate = reference
         }
@@ -181,7 +226,7 @@ final class KeepAwakeService: ObservableObject {
             guard !sessionsActive, gracePeriod > 0, let last = lastActiveDate else { return false }
             return reference.timeIntervalSince(last) < gracePeriod
         }()
-        let autoActive = autoEnabled && (sessionsActive || inGrace)
+        let autoActive = autoEnabled && !autoSuppressed && (sessionsActive || inGrace)
 
         // Apply: at most one assertion, re-acquired when the mode changed.
         let desired = manualActive || autoActive
@@ -199,6 +244,9 @@ final class KeepAwakeService: ObservableObject {
 
         isAssertionHeld = assertionID != nil
         isAutoHolding = autoActive && isAssertionHeld
+        autoGraceExpiry = (isAutoHolding && !sessionsActive && gracePeriod > 0)
+            ? lastActiveDate?.addingTimeInterval(gracePeriod)
+            : nil
         scheduleDeadlineCheck(sessionsActive: sessionsActive, reference: reference)
     }
 

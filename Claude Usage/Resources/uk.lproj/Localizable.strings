@@ -1039,18 +1039,26 @@
 "keep_awake.auto_card_desc" = "Рекомендовано: тримає Mac активним лише тоді, коли Claude Code справді працює";
 "keep_awake.auto" = "Не засинати, поки Claude Code працює";
 "keep_awake.auto_desc" = "Залишається активним під час сеансів Claude Code, а потім знову дозволяє сон. Встановлює хуки Claude Code";
-"keep_awake.grace" = "Після завершення роботи Claude лишатися активним";
-"keep_awake.grace.immediately" = "Без додаткового часу";
+"keep_awake.grace" = "Коли Claude Code завершить роботу";
+"keep_awake.grace.immediately" = "Одразу заснути";
+"keep_awake.grace.stay" = "Лишатися активним %@";
 "keep_awake.hooks_note" = "Активність визначається через хуки Claude Code у ~/.claude/settings.json";
 "keep_awake.sleep_type" = "Запобігання сну";
 "keep_awake.sleep_type_desc" = "Виберіть, чи залишається екран увімкненим, поки Mac активний";
 "keep_awake.sleep_type.system" = "Екран може вимикатися";
 "keep_awake.sleep_type.display" = "Тримати екран увімкненим";
 "keep_awake.lid_note" = "Із закритою кришкою Mac все одно засне, якщо він не підключений до живлення із зовнішнім дисплеєм";
-"keep_awake.tooltip_off" = "Не давати Mac засинати — натисніть, щоб увімкнути";
-"keep_awake.tooltip_on" = "Mac утримується активним — натисніть, щоб вимкнути";
-"keep_awake.tooltip_until" = "Mac активний до %@ — натисніть, щоб вимкнути";
-"keep_awake.tooltip_auto" = "Mac утримується активним — Claude Code працює";
+"keep_awake.state_off" = "Вимкнено";
+"keep_awake.state_on_indefinite" = "Увімкнено — активний, доки не вимкнете (∞)";
+"keep_awake.state_on_remaining" = "Увімкнено — залишилось %@";
+"keep_awake.state_auto_active" = "Авто — Claude Code працює";
+"keep_awake.state_auto_grace" = "Авто — Claude завершив, активний ще %@";
+"keep_awake.hint_click_on" = "Натисніть, щоб не давати Mac засинати";
+"keep_awake.hint_click_off" = "Натисніть, щоб вимкнути";
+"keep_awake.hint_click_pause_auto" = "Натисніть, щоб зупинити — відновиться, коли Claude знову працюватиме";
+"keep_awake.menu_for" = "Не засинати %@";
+"keep_awake.menu_indefinite" = "Не засинати, доки не вимкнено";
+"keep_awake.menu_off" = "Вимкнути утримання";
 
 /* Sponsor slot */
 "sponsor.slot_title" = "Це місце доступне для спонсорів";

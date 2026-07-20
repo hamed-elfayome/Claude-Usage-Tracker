@@ -1022,18 +1022,26 @@
 "keep_awake.auto_card_desc" = "Recommandé : ne maintient le Mac éveillé que lorsque Claude Code travaille réellement";
 "keep_awake.auto" = "Maintenir éveillé pendant que Claude Code travaille";
 "keep_awake.auto_desc" = "Reste éveillé pendant les sessions Claude Code actives, puis autorise à nouveau la veille. Installe les hooks Claude Code";
-"keep_awake.grace" = "Quand Claude a terminé, rester éveillé pendant";
-"keep_awake.grace.immediately" = "Pas de délai supplémentaire";
+"keep_awake.grace" = "Quand Claude Code s'arrête";
+"keep_awake.grace.immediately" = "Dormir aussitôt";
+"keep_awake.grace.stay" = "Rester éveillé %@";
 "keep_awake.hooks_note" = "L'activité est détectée via les hooks Claude Code dans ~/.claude/settings.json";
 "keep_awake.sleep_type" = "Prévention de la veille";
 "keep_awake.sleep_type_desc" = "Choisissez si l'écran reste allumé pendant que le Mac est maintenu éveillé";
 "keep_awake.sleep_type.system" = "L'écran peut s'éteindre";
 "keep_awake.sleep_type.display" = "Garder l'écran allumé";
 "keep_awake.lid_note" = "Capot fermé, le Mac se mettra quand même en veille sauf s'il est branché et relié à un écran externe";
-"keep_awake.tooltip_off" = "Maintenir le Mac éveillé — cliquez pour activer";
-"keep_awake.tooltip_on" = "Mac maintenu éveillé — cliquez pour désactiver";
-"keep_awake.tooltip_until" = "Mac maintenu éveillé jusqu'à %@ — cliquez pour désactiver";
-"keep_awake.tooltip_auto" = "Mac maintenu éveillé — Claude Code travaille";
+"keep_awake.state_off" = "Désactivé";
+"keep_awake.state_on_indefinite" = "Activé — éveillé jusqu'à désactivation (∞)";
+"keep_awake.state_on_remaining" = "Activé — %@ restant";
+"keep_awake.state_auto_active" = "Auto — Claude Code travaille";
+"keep_awake.state_auto_grace" = "Auto — Claude a terminé, éveillé encore %@";
+"keep_awake.hint_click_on" = "Cliquez pour garder le Mac éveillé";
+"keep_awake.hint_click_off" = "Cliquez pour désactiver";
+"keep_awake.hint_click_pause_auto" = "Cliquez pour arrêter — reprend quand Claude retravaille";
+"keep_awake.menu_for" = "Garder éveillé pendant %@";
+"keep_awake.menu_indefinite" = "Garder éveillé jusqu'à désactivation";
+"keep_awake.menu_off" = "Désactiver le maintien éveillé";
 
 /* Sponsor slot */
 "sponsor.slot_title" = "Cet emplacement est disponible pour les sponsors";

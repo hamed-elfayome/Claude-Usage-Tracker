@@ -1025,18 +1025,26 @@
 "keep_awake.auto_card_desc" = "Recomendado: solo mantiene el Mac despierto mientras Claude Code está trabajando";
 "keep_awake.auto" = "Mantener despierto mientras Claude Code trabaja";
 "keep_awake.auto_desc" = "Se mantiene despierto durante las sesiones activas de Claude Code y luego vuelve a permitir el reposo. Instala hooks de Claude Code";
-"keep_awake.grace" = "Cuando Claude termine, seguir despierto durante";
-"keep_awake.grace.immediately" = "Sin tiempo extra";
+"keep_awake.grace" = "Cuando Claude Code deje de trabajar";
+"keep_awake.grace.immediately" = "Dormir enseguida";
+"keep_awake.grace.stay" = "Seguir despierto %@";
 "keep_awake.hooks_note" = "La actividad se detecta mediante hooks de Claude Code en ~/.claude/settings.json";
 "keep_awake.sleep_type" = "Prevención de reposo";
 "keep_awake.sleep_type_desc" = "Elige si la pantalla permanece encendida mientras el Mac se mantiene despierto";
 "keep_awake.sleep_type.system" = "La pantalla puede apagarse";
 "keep_awake.sleep_type.display" = "Mantener pantalla encendida";
 "keep_awake.lid_note" = "Con la tapa cerrada, el Mac entrará en reposo igualmente salvo que esté enchufado y use una pantalla externa";
-"keep_awake.tooltip_off" = "Mantener el Mac despierto — haz clic para activar";
-"keep_awake.tooltip_on" = "Manteniendo el Mac despierto — haz clic para desactivar";
-"keep_awake.tooltip_until" = "Manteniendo el Mac despierto hasta las %@ — haz clic para desactivar";
-"keep_awake.tooltip_auto" = "Manteniendo el Mac despierto — Claude Code está trabajando";
+"keep_awake.state_off" = "Desactivado";
+"keep_awake.state_on_indefinite" = "Activado — despierto hasta que lo desactives (∞)";
+"keep_awake.state_on_remaining" = "Activado — quedan %@";
+"keep_awake.state_auto_active" = "Auto — Claude Code está trabajando";
+"keep_awake.state_auto_grace" = "Auto — Claude terminó, despierto %@ más";
+"keep_awake.hint_click_on" = "Haz clic para mantener el Mac despierto";
+"keep_awake.hint_click_off" = "Haz clic para desactivar";
+"keep_awake.hint_click_pause_auto" = "Haz clic para parar — se reanuda cuando Claude vuelva a trabajar";
+"keep_awake.menu_for" = "Mantener despierto %@";
+"keep_awake.menu_indefinite" = "Mantener despierto hasta desactivar";
+"keep_awake.menu_off" = "Desactivar mantener despierto";
 
 /* Sponsor slot */
 "sponsor.slot_title" = "Este espacio está disponible para patrocinadores";

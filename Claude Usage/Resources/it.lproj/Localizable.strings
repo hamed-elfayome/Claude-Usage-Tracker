@@ -1044,18 +1044,26 @@
 "keep_awake.auto_card_desc" = "Consigliato: mantiene il Mac attivo solo mentre Claude Code sta effettivamente lavorando";
 "keep_awake.auto" = "Mantieni attivo mentre Claude Code lavora";
 "keep_awake.auto_desc" = "Resta attivo durante le sessioni di Claude Code, poi consente di nuovo lo stop. Installa gli hook di Claude Code";
-"keep_awake.grace" = "Quando Claude finisce, resta attivo per";
-"keep_awake.grace.immediately" = "Nessun tempo extra";
+"keep_awake.grace" = "Quando Claude Code smette di lavorare";
+"keep_awake.grace.immediately" = "Dormi subito";
+"keep_awake.grace.stay" = "Resta sveglio %@";
 "keep_awake.hooks_note" = "L'attività viene rilevata tramite gli hook di Claude Code in ~/.claude/settings.json";
 "keep_awake.sleep_type" = "Prevenzione dello stop";
 "keep_awake.sleep_type_desc" = "Scegli se lo schermo resta acceso mentre il Mac viene mantenuto attivo";
 "keep_awake.sleep_type.system" = "Lo schermo può spegnersi";
 "keep_awake.sleep_type.display" = "Mantieni lo schermo acceso";
 "keep_awake.lid_note" = "Con il coperchio chiuso il Mac andrà comunque in stop, a meno che non sia collegato alla corrente con un display esterno";
-"keep_awake.tooltip_off" = "Mantieni il Mac attivo — fai clic per attivare";
-"keep_awake.tooltip_on" = "Mac mantenuto attivo — fai clic per disattivare";
-"keep_awake.tooltip_until" = "Mac mantenuto attivo fino alle %@ — fai clic per disattivare";
-"keep_awake.tooltip_auto" = "Mac mantenuto attivo — Claude Code sta lavorando";
+"keep_awake.state_off" = "Spento";
+"keep_awake.state_on_indefinite" = "Attivo — sveglio finché non lo spegni (∞)";
+"keep_awake.state_on_remaining" = "Attivo — %@ rimanenti";
+"keep_awake.state_auto_active" = "Auto — Claude Code sta lavorando";
+"keep_awake.state_auto_grace" = "Auto — Claude ha finito, sveglio ancora per %@";
+"keep_awake.hint_click_on" = "Fai clic per tenere sveglio il Mac";
+"keep_awake.hint_click_off" = "Fai clic per spegnere";
+"keep_awake.hint_click_pause_auto" = "Fai clic per fermare — riprende quando Claude torna a lavorare";
+"keep_awake.menu_for" = "Tieni sveglio per %@";
+"keep_awake.menu_indefinite" = "Tieni sveglio finché non disattivato";
+"keep_awake.menu_off" = "Disattiva mantieni attivo";
 
 /* Sponsor slot */
 "sponsor.slot_title" = "Questo spazio è disponibile per gli sponsor";

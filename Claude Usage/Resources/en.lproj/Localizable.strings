@@ -1040,18 +1040,26 @@
 "keep_awake.auto_card_desc" = "Recommended: only keeps your Mac awake while Claude Code is actually working";
 "keep_awake.auto" = "Keep Awake While Claude Code Works";
 "keep_awake.auto_desc" = "Stays awake during active Claude Code sessions, then allows sleep again. Installs Claude Code hooks";
-"keep_awake.grace" = "After Claude finishes, stay awake for";
-"keep_awake.grace.immediately" = "No extra time";
+"keep_awake.grace" = "After Claude Code stops working";
+"keep_awake.grace.immediately" = "Sleep right away";
+"keep_awake.grace.stay" = "Stay awake %@";
 "keep_awake.hooks_note" = "Activity is detected through Claude Code hooks in ~/.claude/settings.json";
 "keep_awake.sleep_type" = "Sleep Prevention";
 "keep_awake.sleep_type_desc" = "Choose whether the display stays on while keeping the Mac awake";
 "keep_awake.sleep_type.system" = "Screen may sleep";
 "keep_awake.sleep_type.display" = "Keep screen on";
 "keep_awake.lid_note" = "With the lid closed, your Mac will still sleep unless it's plugged in and using an external display";
-"keep_awake.tooltip_off" = "Keep your Mac awake — click to turn on";
-"keep_awake.tooltip_on" = "Keeping your Mac awake — click to turn off";
-"keep_awake.tooltip_until" = "Keeping your Mac awake until %@ — click to turn off";
-"keep_awake.tooltip_auto" = "Keeping your Mac awake — Claude Code is working";
+"keep_awake.state_off" = "Off";
+"keep_awake.state_on_indefinite" = "On — stays awake until you turn it off (∞)";
+"keep_awake.state_on_remaining" = "On — %@ left";
+"keep_awake.state_auto_active" = "Auto — Claude Code is working";
+"keep_awake.state_auto_grace" = "Auto — Claude finished, staying awake %@ more";
+"keep_awake.hint_click_on" = "Click to keep your Mac awake";
+"keep_awake.hint_click_off" = "Click to turn off";
+"keep_awake.hint_click_pause_auto" = "Click to stop now — resumes when Claude works again";
+"keep_awake.menu_for" = "Keep awake for %@";
+"keep_awake.menu_indefinite" = "Keep awake until turned off";
+"keep_awake.menu_off" = "Turn off keep awake";
 
 /* Sponsor slot */
 "sponsor.slot_title" = "This spot is available for sponsors";

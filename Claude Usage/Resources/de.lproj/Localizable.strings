@@ -1044,18 +1044,26 @@
 "keep_awake.auto_card_desc" = "Empfohlen: hält den Mac nur wach, während Claude Code tatsächlich arbeitet";
 "keep_awake.auto" = "Wachhalten, während Claude Code arbeitet";
 "keep_awake.auto_desc" = "Bleibt während aktiver Claude-Code-Sitzungen wach und erlaubt danach wieder den Ruhezustand. Installiert Claude-Code-Hooks";
-"keep_awake.grace" = "Nach Claudes Arbeit wach bleiben für";
-"keep_awake.grace.immediately" = "Keine zusätzliche Zeit";
+"keep_awake.grace" = "Wenn Claude Code fertig ist";
+"keep_awake.grace.immediately" = "Sofort schlafen";
+"keep_awake.grace.stay" = "%@ wach bleiben";
 "keep_awake.hooks_note" = "Aktivität wird über Claude-Code-Hooks in ~/.claude/settings.json erkannt";
 "keep_awake.sleep_type" = "Ruhezustand-Verhinderung";
 "keep_awake.sleep_type_desc" = "Legt fest, ob der Bildschirm eingeschaltet bleibt, während der Mac wachgehalten wird";
 "keep_awake.sleep_type.system" = "Bildschirm darf ausgehen";
 "keep_awake.sleep_type.display" = "Bildschirm anlassen";
 "keep_awake.lid_note" = "Bei geschlossenem Deckel wechselt der Mac trotzdem in den Ruhezustand, außer er ist am Strom und nutzt ein externes Display";
-"keep_awake.tooltip_off" = "Mac wachhalten — zum Einschalten klicken";
-"keep_awake.tooltip_on" = "Der Mac wird wachgehalten — zum Ausschalten klicken";
-"keep_awake.tooltip_until" = "Der Mac wird bis %@ wachgehalten — zum Ausschalten klicken";
-"keep_awake.tooltip_auto" = "Der Mac wird wachgehalten — Claude Code arbeitet";
+"keep_awake.state_off" = "Aus";
+"keep_awake.state_on_indefinite" = "Ein — bleibt wach, bis du es ausschaltest (∞)";
+"keep_awake.state_on_remaining" = "Ein — noch %@";
+"keep_awake.state_auto_active" = "Auto — Claude Code arbeitet";
+"keep_awake.state_auto_grace" = "Auto — Claude ist fertig, bleibt noch %@ wach";
+"keep_awake.hint_click_on" = "Klicken, um den Mac wachzuhalten";
+"keep_awake.hint_click_off" = "Klicken zum Ausschalten";
+"keep_awake.hint_click_pause_auto" = "Klicken zum Stoppen — startet wieder, wenn Claude arbeitet";
+"keep_awake.menu_for" = "Wachhalten für %@";
+"keep_awake.menu_indefinite" = "Wachhalten bis zum Ausschalten";
+"keep_awake.menu_off" = "Wachhalten ausschalten";
 
 /* Sponsor slot */
 "sponsor.slot_title" = "Dieser Platz ist für Sponsoren verfügbar";

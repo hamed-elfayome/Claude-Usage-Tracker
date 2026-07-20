@@ -562,33 +562,22 @@ struct HeaderIconButton: View {
 /// Header toggle for KeepAwakeService. Lights up (with a one-shot ripple and
 /// a soft breathing glow) whenever the assertion is held — including holds
 /// from auto mode — so it doubles as an "is my Mac staying awake?" indicator.
+/// Hovering shows a live status card; right-click offers durations and auto mode.
 struct KeepAwakeHeaderButton: View {
     @ObservedObject private var service = KeepAwakeService.shared
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var isHovered = false
     @State private var rippleID = 0
     @State private var glowPulse = false
+    @State private var showHoverCard = false
+    @State private var hoverCardTask: DispatchWorkItem?
+
+    private static let menuDurations: [TimeInterval] = [15 * 60, 3600, 2 * 3600, 8 * 3600]
 
     private var isActive: Bool { service.isAssertionHeld }
 
-    /// State-aware tooltip so hovering explains exactly what the cup is doing.
-    private var tooltip: String {
-        if service.isManualOn {
-            if let expiry = service.manualExpiry {
-                let formatter = DateFormatter()
-                formatter.timeStyle = .short
-                return "keep_awake.tooltip_until".localized(with: formatter.string(from: expiry))
-            }
-            return "keep_awake.tooltip_on".localized
-        }
-        if service.isAutoHolding {
-            return "keep_awake.tooltip_auto".localized
-        }
-        return "keep_awake.tooltip_off".localized
-    }
-
     var body: some View {
-        Button(action: { service.toggleManual() }) {
+        Button(action: { service.smartToggle() }) {
             ZStack {
                 if !reduceMotion, rippleID > 0, isActive {
                     KeepAwakeActivationRipple()
@@ -624,10 +613,39 @@ struct KeepAwakeHeaderButton: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .help(tooltip)
+        .contextMenu {
+            if isActive {
+                Button("keep_awake.menu_off".localized) { service.smartToggle() }
+            } else {
+                Button("keep_awake.menu_indefinite".localized) {
+                    service.setManual(on: true, duration: 0)
+                }
+                ForEach(Self.menuDurations, id: \.self) { duration in
+                    Button("keep_awake.menu_for".localized(with: KeepAwakeTimeFormat.interval(duration))) {
+                        service.setManual(on: true, duration: duration)
+                    }
+                }
+            }
+            Divider()
+            Toggle("keep_awake.auto".localized, isOn: Binding(
+                get: { SharedDataStore.shared.loadKeepAwakeAutoEnabled() },
+                set: { service.setAutoEnabled($0) }
+            ))
+        }
+        .popover(isPresented: $showHoverCard, arrowEdge: .bottom) {
+            KeepAwakeHoverCard(service: service)
+        }
         .onHover { hovering in
             withAnimation(.easeInOut(duration: 0.15)) {
                 isHovered = hovering
+            }
+            hoverCardTask?.cancel()
+            if hovering {
+                let task = DispatchWorkItem { showHoverCard = true }
+                hoverCardTask = task
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: task)
+            } else {
+                showHoverCard = false
             }
         }
         .animation(
@@ -647,6 +665,79 @@ struct KeepAwakeHeaderButton: View {
                 glowPulse = false
             }
         }
+    }
+}
+
+/// Live status card shown while hovering the keep-awake button: current mode
+/// (off / on / auto), time remaining or ∞, and what a click will do.
+private struct KeepAwakeHoverCard: View {
+    @ObservedObject var service: KeepAwakeService
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 5) {
+                    Image(systemName: service.isAssertionHeld ? "cup.and.saucer.fill" : "cup.and.saucer")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(service.isAssertionHeld ? .orange : .secondary)
+                    Text("section.keep_awake_title".localized)
+                        .font(.system(size: 11, weight: .semibold))
+                }
+
+                Text(statusText(at: context.date))
+                    .font(.system(size: 11))
+                    .foregroundColor(.primary)
+
+                Text(hintText)
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+            }
+            .padding(10)
+            .frame(width: 230, alignment: .leading)
+        }
+    }
+
+    private func statusText(at reference: Date) -> String {
+        if service.isManualOn {
+            guard let expiry = service.manualExpiry else {
+                return "keep_awake.state_on_indefinite".localized
+            }
+            return "keep_awake.state_on_remaining".localized(
+                with: KeepAwakeTimeFormat.remaining(until: expiry, from: reference))
+        }
+        if service.isAutoHolding {
+            guard let graceEnd = service.autoGraceExpiry else {
+                return "keep_awake.state_auto_active".localized
+            }
+            return "keep_awake.state_auto_grace".localized(
+                with: KeepAwakeTimeFormat.remaining(until: graceEnd, from: reference))
+        }
+        return "keep_awake.state_off".localized
+    }
+
+    private var hintText: String {
+        guard service.isAssertionHeld else { return "keep_awake.hint_click_on".localized }
+        return service.isAutoHolding && !service.isManualOn
+            ? "keep_awake.hint_click_pause_auto".localized
+            : "keep_awake.hint_click_off".localized
+    }
+}
+
+/// Shared duration formatting for the keep-awake button, menu, and hover card.
+enum KeepAwakeTimeFormat {
+    static func interval(_ interval: TimeInterval) -> String {
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = interval < 3600 ? [.minute] : [.hour]
+        formatter.unitsStyle = .abbreviated
+        return formatter.string(from: interval) ?? ""
+    }
+
+    static func remaining(until deadline: Date, from reference: Date) -> String {
+        let remaining = max(0, deadline.timeIntervalSince(reference))
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = remaining < 3600 ? [.minute, .second] : [.hour, .minute]
+        formatter.unitsStyle = .abbreviated
+        return formatter.string(from: remaining) ?? ""
     }
 }
 

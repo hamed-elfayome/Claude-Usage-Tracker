@@ -1053,18 +1053,26 @@
 "keep_awake.auto_card_desc" = "추천: Claude Code가 실제로 작업하는 동안에만 Mac을 깨어 있게 유지합니다";
 "keep_awake.auto" = "Claude Code 작업 중 깨어 있게 유지";
 "keep_awake.auto_desc" = "Claude Code 세션 중에는 깨어 있고, 끝나면 다시 잠자기를 허용합니다. Claude Code 훅을 설치합니다";
-"keep_awake.grace" = "Claude 작업이 끝난 후 깨어 있는 시간";
-"keep_awake.grace.immediately" = "추가 시간 없음";
+"keep_awake.grace" = "Claude Code 작업이 끝나면";
+"keep_awake.grace.immediately" = "바로 잠자기";
+"keep_awake.grace.stay" = "%@ 깨어 있기";
 "keep_awake.hooks_note" = "활동은 ~/.claude/settings.json의 Claude Code 훅을 통해 감지됩니다";
 "keep_awake.sleep_type" = "잠자기 방지 방식";
 "keep_awake.sleep_type_desc" = "Mac을 깨어 있게 유지하는 동안 화면을 켜 둘지 선택합니다";
 "keep_awake.sleep_type.system" = "화면은 꺼질 수 있음";
 "keep_awake.sleep_type.display" = "화면 켜 두기";
 "keep_awake.lid_note" = "덮개를 닫으면 전원에 연결된 상태로 외장 디스플레이를 사용하지 않는 한 Mac이 잠자기 상태가 됩니다";
-"keep_awake.tooltip_off" = "Mac 깨어 있게 유지 — 클릭하여 켜기";
-"keep_awake.tooltip_on" = "Mac을 깨어 있게 유지하는 중 — 클릭하여 끄기";
-"keep_awake.tooltip_until" = "%@까지 깨어 있게 유지 — 클릭하여 끄기";
-"keep_awake.tooltip_auto" = "Mac을 깨어 있게 유지하는 중 — Claude Code 작업 중";
+"keep_awake.state_off" = "꺼짐";
+"keep_awake.state_on_indefinite" = "켜짐 — 끌 때까지 깨어 있음 (∞)";
+"keep_awake.state_on_remaining" = "켜짐 — %@ 남음";
+"keep_awake.state_auto_active" = "자동 — Claude Code 작업 중";
+"keep_awake.state_auto_grace" = "자동 — Claude 작업 완료, %@ 더 깨어 있음";
+"keep_awake.hint_click_on" = "클릭하여 Mac을 깨어 있게 유지";
+"keep_awake.hint_click_off" = "클릭하여 끄기";
+"keep_awake.hint_click_pause_auto" = "클릭하여 지금 중지 — Claude가 다시 작업하면 재개됩니다";
+"keep_awake.menu_for" = "%@ 동안 깨어 있기";
+"keep_awake.menu_indefinite" = "끌 때까지 깨어 있기";
+"keep_awake.menu_off" = "깨어 있기 끄기";
 
 /* Sponsor slot */
 "sponsor.slot_title" = "이 공간은 스폰서에게 제공됩니다";

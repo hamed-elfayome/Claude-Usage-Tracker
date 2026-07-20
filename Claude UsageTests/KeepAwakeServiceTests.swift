@@ -262,6 +262,68 @@ final class KeepAwakeServiceTests: XCTestCase {
         XCTAssertTrue(releasedIDs.isEmpty)
     }
 
+    // MARK: - Smart toggle (popover button)
+
+    func testSmartToggleStartsManualWhenIdle() {
+        service.smartToggle()
+        XCTAssertTrue(service.isManualOn)
+        XCTAssertTrue(service.isAssertionHeld)
+    }
+
+    func testSmartToggleTurnsOffManual() {
+        service.setManual(on: true)
+        service.smartToggle()
+        XCTAssertFalse(service.isManualOn)
+        XCTAssertFalse(service.isAssertionHeld)
+    }
+
+    func testSmartToggleDismissesAutoHoldUntilNextActivity() {
+        configure(autoEnabled: true, gracePeriod: 15 * 60)
+        store.apply(.sessionStart(id: "s1", cwd: nil))
+        service.reconcile()
+        XCTAssertTrue(service.isAutoHolding)
+
+        service.smartToggle()
+        XCTAssertFalse(service.isAssertionHeld)
+
+        // The same continuous burst of work stays dismissed…
+        store.apply(.preToolUse(id: "s1", cwd: nil, status: .runningCommand, task: "build"))
+        service.reconcile()
+        XCTAssertFalse(service.isAssertionHeld)
+
+        // …including its grace window after it stops…
+        store.apply(.stop(id: "s1"))
+        service.reconcile()
+        XCTAssertFalse(service.isAssertionHeld)
+
+        // …but Claude picking work back up resumes auto mode.
+        store.apply(.preToolUse(id: "s1", cwd: nil, status: .writingCode, task: "edit"))
+        service.reconcile()
+        XCTAssertTrue(service.isAssertionHeld)
+        XCTAssertTrue(service.isAutoHolding)
+    }
+
+    func testMenuDurationOverridesDefault() {
+        configure(autoEnabled: false, defaultDuration: 0)
+        service.setManual(on: true, duration: 3600)
+        XCTAssertEqual(service.manualExpiry, fakeNow.addingTimeInterval(3600))
+
+        advance(61 * 60)
+        service.reconcile()
+        XCTAssertFalse(service.isAssertionHeld)
+    }
+
+    func testAutoGraceExpiryPublishedDuringGraceOnly() {
+        configure(autoEnabled: true, gracePeriod: 15 * 60)
+        store.apply(.sessionStart(id: "s1", cwd: nil))
+        service.reconcile()
+        XCTAssertNil(service.autoGraceExpiry, "nil while actively working")
+
+        store.apply(.stop(id: "s1"))
+        service.reconcile()
+        XCTAssertEqual(service.autoGraceExpiry, fakeNow.addingTimeInterval(15 * 60))
+    }
+
     // MARK: - Sleep-mode change
 
     func testSleepModeChangeWhileHeldReacquiresOnce() {
