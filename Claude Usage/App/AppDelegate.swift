@@ -45,13 +45,23 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         // Start 24-hour heartbeat ping to track active app usage
         HeartbeatService.shared.start()
 
+        // Keep Awake: manages the power assertion for manual and auto mode.
+        KeepAwakeService.shared.start()
+
         // Claude Code notch HUD (opt-in): start the hook listener + HUD when
-        // enabled, and react to the settings toggle at runtime.
+        // enabled, and react to the settings toggle at runtime. Keep Awake's
+        // auto mode shares the hook listener, so its toggle re-evaluates too.
         updateNotchHUDServices()
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(handleNotchHUDSettingChanged),
             name: .notchHUDSettingChanged,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleKeepAwakeSettingChanged),
+            name: .keepAwakeSettingChanged,
             object: nil
         )
 
@@ -227,32 +237,50 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
 
     func applicationWillTerminate(_ notification: Notification) {
         // Cleanup
+        KeepAwakeService.shared.stop()
         NotchHookServer.shared.stop()
         NotchHUDController.shared.stop()
         menuBarManager?.cleanup()
     }
 
-    // MARK: - Claude Code Notch HUD
+    // MARK: - Claude Code Notch HUD / Keep Awake hook plumbing
 
     @objc private func handleNotchHUDSettingChanged() {
         updateNotchHUDServices()
     }
 
+    @objc private func handleKeepAwakeSettingChanged() {
+        updateNotchHUDServices()
+        KeepAwakeService.shared.settingsChanged()
+    }
+
+    /// The hook listener (and session store lifecycle) is shared between the
+    /// notch HUD and Keep Awake's auto mode: it runs while EITHER feature
+    /// needs session events. The HUD window itself stays gated on its own toggle.
     private func updateNotchHUDServices() {
-        if SharedDataStore.shared.loadNotchHUDEnabled() {
-            NotchHUDController.shared.start()
+        let hudEnabled = SharedDataStore.shared.loadNotchHUDEnabled()
+        let hooksNeeded = hudEnabled || SharedDataStore.shared.loadKeepAwakeAutoEnabled()
+
+        if hooksNeeded {
             NotchHookServer.shared.start()
+            NotchSessionStore.shared.startStaleSweep()
             // Self-heal hook config drift (e.g. legacy entries from an old build).
             if NotchHookInstaller.shared.checkStatus() != .installed {
                 NotchHookInstaller.shared.install()
             }
+        } else {
+            NotchHookServer.shared.stop()
+            NotchSessionStore.shared.reset()
+        }
+
+        if hudEnabled {
+            NotchHUDController.shared.start()
             #if DEBUG
             if ProcessInfo.processInfo.arguments.contains("--mock-notch") {
                 NotchHUDController.shared.injectMockSessions()
             }
             #endif
         } else {
-            NotchHookServer.shared.stop()
             NotchHUDController.shared.stop()
         }
     }
