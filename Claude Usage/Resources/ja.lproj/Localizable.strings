@@ -1059,9 +1059,9 @@
 "keep_awake.state_auto_active" = "自動 — Claude Codeが作業中";
 "keep_awake.state_auto_grace" = "自動 — Claudeの作業終了、あと%@スリープしません";
 "keep_awake.state_auto_armed" = "自動オン — Claude Codeの作業中はMacをスリープさせません";
-"keep_awake.hint_click_on" = "クリックでMacをスリープさせない";
+"keep_awake.hint_click_on" = "クリックでオン — Claude Codeの作業中はMacをスリープさせません";
 "keep_awake.hint_click_off" = "クリックでオフ";
-"keep_awake.hint_click_pause_auto" = "クリックで停止 — Claudeが再び作業すると再開します";
+"keep_awake.hint_click_auto_off" = "クリックで自動モードをオフ — 再びオンにするまでオフのままです";
 "keep_awake.menu_for" = "%@スリープさせない";
 "keep_awake.menu_indefinite" = "オフにするまでスリープさせない";
 "keep_awake.menu_off" = "スリープ防止をオフ";

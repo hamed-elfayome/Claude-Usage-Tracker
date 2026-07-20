@@ -136,12 +136,10 @@ class SharedDataStore {
     }
 
     func loadKeepAwakeAutoEnabled() -> Bool {
-        // Default true: keep-awake works out of the box while Claude Code is
-        // busy. Note this installs hooks into ~/.claude/settings.json at
-        // launch; the toggle in Settings removes them again.
-        if defaults.object(forKey: Constants.UserDefaultsKeys.keepAwakeAutoEnabled) == nil {
-            return true
-        }
+        // Default false: nothing is active until the user's first click on the
+        // popover button (or the settings toggle), which enables auto mode and
+        // installs the hooks — that click is the explicit opt-in. Once turned
+        // off, it stays off until turned back on.
         return defaults.bool(forKey: Constants.UserDefaultsKeys.keepAwakeAutoEnabled)
     }
 

@@ -37,10 +37,20 @@ final class KeepAwakeServiceTests: XCTestCase {
         service.releaseAssertion = { [unowned self] id in
             releasedIDs.append(id)
         }
+        // setAutoEnabled must not touch real UserDefaults/hooks in tests:
+        // route the persistence seam back into the loadSettings seam.
+        service.persistAutoEnabled = { [unowned self] enabled in
+            configure(autoEnabled: enabled, sleepMode: currentSleepMode,
+                      defaultDuration: currentDuration, gracePeriod: currentGrace)
+        }
         // Neutral defaults; individual tests override via configure().
         configure(autoEnabled: false, sleepMode: .allowDisplaySleep, defaultDuration: 0, gracePeriod: 15 * 60)
         service.start()
     }
+
+    private var currentSleepMode: KeepAwakeService.SleepMode = .allowDisplaySleep
+    private var currentDuration: TimeInterval = 0
+    private var currentGrace: TimeInterval = 15 * 60
 
     private func configure(
         autoEnabled: Bool,
@@ -48,6 +58,9 @@ final class KeepAwakeServiceTests: XCTestCase {
         defaultDuration: TimeInterval = 0,
         gracePeriod: TimeInterval = 15 * 60
     ) {
+        currentSleepMode = sleepMode
+        currentDuration = defaultDuration
+        currentGrace = gracePeriod
         service.loadSettings = {
             (autoEnabled: autoEnabled, sleepMode: sleepMode,
              defaultDuration: defaultDuration, gracePeriod: gracePeriod)
@@ -262,62 +275,56 @@ final class KeepAwakeServiceTests: XCTestCase {
         XCTAssertTrue(releasedIDs.isEmpty)
     }
 
-    // MARK: - Smart toggle (popover button)
+    // MARK: - Smart toggle (popover button = auto-mode switch)
 
-    func testSmartToggleStartsManualWhenIdle() {
+    func testFirstClickEnablesAutoModeNotManual() {
+        XCTAssertFalse(service.autoEnabled)
         service.smartToggle()
-        XCTAssertTrue(service.isManualOn)
-        XCTAssertTrue(service.isAssertionHeld)
+
+        XCTAssertTrue(service.autoEnabled, "first click opts into auto mode")
+        XCTAssertFalse(service.isManualOn, "no manual hold is created")
+        XCTAssertFalse(service.isAssertionHeld, "armed but idle until Claude works")
+
+        store.apply(.sessionStart(id: "s1", cwd: nil))
+        service.reconcile()
+        XCTAssertTrue(service.isAutoHolding, "auto holds as soon as Claude works")
     }
 
-    func testSmartToggleTurnsOffManual() {
-        service.setManual(on: true)
-        service.smartToggle()
-        XCTAssertFalse(service.isManualOn)
-        XCTAssertFalse(service.isAssertionHeld)
-    }
-
-    func testSmartToggleDismissesAutoHoldUntilNextActivity() {
+    func testClickTurnsAutoOffAndItStaysOff() {
         configure(autoEnabled: true, gracePeriod: 15 * 60)
         store.apply(.sessionStart(id: "s1", cwd: nil))
         service.reconcile()
         XCTAssertTrue(service.isAutoHolding)
 
         service.smartToggle()
+        XCTAssertFalse(service.autoEnabled, "click during auto hold turns auto mode off")
         XCTAssertFalse(service.isAssertionHeld)
 
-        // The same continuous burst of work stays dismissed…
+        // Off is remembered: further activity never re-holds on its own.
         store.apply(.preToolUse(id: "s1", cwd: nil, status: .runningCommand, task: "build"))
         service.reconcile()
-        XCTAssertFalse(service.isAssertionHeld)
-
-        // …including its grace window after it stops…
         store.apply(.stop(id: "s1"))
         service.reconcile()
-        XCTAssertFalse(service.isAssertionHeld)
-
-        // …but Claude picking work back up resumes auto mode.
         store.apply(.preToolUse(id: "s1", cwd: nil, status: .writingCode, task: "edit"))
         service.reconcile()
-        XCTAssertTrue(service.isAssertionHeld)
-        XCTAssertTrue(service.isAutoHolding)
+        XCTAssertFalse(service.isAssertionHeld)
     }
 
-    func testSmartToggleCycleResumesAutoHoldNotManual() {
+    func testClickCycleReturnsToAutoDuringWork() {
         configure(autoEnabled: true, gracePeriod: 15 * 60)
         store.apply(.sessionStart(id: "s1", cwd: nil))
         service.reconcile()
-        XCTAssertTrue(service.isAutoHolding)
 
         service.smartToggle()
         XCTAssertFalse(service.isAssertionHeld)
 
         service.smartToggle()
+        XCTAssertTrue(service.autoEnabled)
         XCTAssertTrue(service.isAutoHolding, "cycling off/on returns to the auto hold")
         XCTAssertFalse(service.isManualOn, "no manual hold should be created")
     }
 
-    func testSmartToggleCycleResumesAutoGraceWindow() {
+    func testClickCycleReturnsToAutoGraceWindow() {
         configure(autoEnabled: true, gracePeriod: 15 * 60)
         store.apply(.sessionStart(id: "s1", cwd: nil))
         service.reconcile()
@@ -334,18 +341,20 @@ final class KeepAwakeServiceTests: XCTestCase {
         XCTAssertFalse(service.isManualOn)
     }
 
-    func testSmartToggleFallsBackToManualWhenAutoHasNothingToHold() {
-        configure(autoEnabled: true, gracePeriod: 15 * 60)
+    func testClickCancelsManualHoldFirstThenAuto() {
+        configure(autoEnabled: true, gracePeriod: 0)
         store.apply(.sessionStart(id: "s1", cwd: nil))
         service.reconcile()
-        store.apply(.stop(id: "s1"))
-        service.reconcile()
+        service.setManual(on: true, duration: 3600)
 
         service.smartToggle()
-        advance(16 * 60)
+        XCTAssertFalse(service.isManualOn, "first click cancels the manual hold")
+        XCTAssertTrue(service.autoEnabled, "auto mode untouched")
+        XCTAssertTrue(service.isAutoHolding, "auto still holding — icon stays lit")
+
         service.smartToggle()
-        XCTAssertTrue(service.isManualOn, "grace expired while dismissed → manual hold")
-        XCTAssertTrue(service.isAssertionHeld)
+        XCTAssertFalse(service.autoEnabled, "second click turns auto off")
+        XCTAssertFalse(service.isAssertionHeld)
     }
 
     func testMenuDurationOverridesDefault() {

@@ -1051,9 +1051,9 @@
 "keep_awake.state_auto_active" = "Otomatik — Claude Code çalışıyor";
 "keep_awake.state_auto_grace" = "Otomatik — Claude bitirdi, %@ daha uyanık";
 "keep_awake.state_auto_armed" = "Otomatik açık — Claude Code çalışırken Mac'i uyanık tutar";
-"keep_awake.hint_click_on" = "Mac'i uyanık tutmak için tıklayın";
+"keep_awake.hint_click_on" = "Açmak için tıklayın — Claude Code çalışırken Mac'i uyanık tutar";
 "keep_awake.hint_click_off" = "Kapatmak için tıklayın";
-"keep_awake.hint_click_pause_auto" = "Durdurmak için tıklayın — Claude yeniden çalışınca devam eder";
+"keep_awake.hint_click_auto_off" = "Otomatik modu kapatmak için tıklayın — yeniden açana kadar kapalı kalır";
 "keep_awake.menu_for" = "%@ boyunca uyanık tut";
 "keep_awake.menu_indefinite" = "Kapatana kadar uyanık tut";
 "keep_awake.menu_off" = "Uyanık tutmayı kapat";

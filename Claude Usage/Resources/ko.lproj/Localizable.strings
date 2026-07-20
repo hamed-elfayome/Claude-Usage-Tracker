@@ -1068,9 +1068,9 @@
 "keep_awake.state_auto_active" = "자동 — Claude Code 작업 중";
 "keep_awake.state_auto_grace" = "자동 — Claude 작업 완료, %@ 더 깨어 있음";
 "keep_awake.state_auto_armed" = "자동 켜짐 — Claude Code 작업 중 Mac을 깨어 있게 유지합니다";
-"keep_awake.hint_click_on" = "클릭하여 Mac을 깨어 있게 유지";
+"keep_awake.hint_click_on" = "클릭하여 켜기 — Claude Code 작업 중 Mac을 깨어 있게 유지합니다";
 "keep_awake.hint_click_off" = "클릭하여 끄기";
-"keep_awake.hint_click_pause_auto" = "클릭하여 지금 중지 — Claude가 다시 작업하면 재개됩니다";
+"keep_awake.hint_click_auto_off" = "클릭하여 자동 모드 끄기 — 다시 켤 때까지 꺼진 상태로 유지됩니다";
 "keep_awake.menu_for" = "%@ 동안 깨어 있기";
 "keep_awake.menu_indefinite" = "끌 때까지 깨어 있기";
 "keep_awake.menu_off" = "깨어 있기 끄기";

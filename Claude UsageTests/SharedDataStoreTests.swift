@@ -182,13 +182,14 @@ final class SharedDataStoreTests: XCTestCase {
 
     func testKeepAwakeAutoEnabled() {
         UserDefaults.standard.removeObject(forKey: Constants.UserDefaultsKeys.keepAwakeAutoEnabled)
-        XCTAssertTrue(sharedDataStore.loadKeepAwakeAutoEnabled(), "auto mode defaults on")
-
-        sharedDataStore.saveKeepAwakeAutoEnabled(false)
-        XCTAssertFalse(sharedDataStore.loadKeepAwakeAutoEnabled(), "explicit off survives")
+        XCTAssertFalse(sharedDataStore.loadKeepAwakeAutoEnabled(),
+                       "off until the user's first click/toggle opts in")
 
         sharedDataStore.saveKeepAwakeAutoEnabled(true)
         XCTAssertTrue(sharedDataStore.loadKeepAwakeAutoEnabled())
+
+        sharedDataStore.saveKeepAwakeAutoEnabled(false)
+        XCTAssertFalse(sharedDataStore.loadKeepAwakeAutoEnabled(), "off is remembered")
     }
 
     func testKeepAwakeSleepMode() {

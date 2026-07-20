@@ -1045,9 +1045,9 @@
 "keep_awake.state_auto_active" = "自動 — Claude Code 工作中";
 "keep_awake.state_auto_grace" = "自動 — Claude 已完成,再保持喚醒 %@";
 "keep_awake.state_auto_armed" = "自動已開啟 — Claude Code 工作時讓 Mac 保持喚醒";
-"keep_awake.hint_click_on" = "按一下讓 Mac 保持喚醒";
+"keep_awake.hint_click_on" = "按一下開啟 — Claude Code 工作時讓 Mac 保持喚醒";
 "keep_awake.hint_click_off" = "按一下關閉";
-"keep_awake.hint_click_pause_auto" = "按一下暫停 — Claude 再次工作時自動恢復";
+"keep_awake.hint_click_auto_off" = "按一下關閉自動模式 — 將保持關閉,直到再次開啟";
 "keep_awake.menu_for" = "保持喚醒 %@";
 "keep_awake.menu_indefinite" = "保持喚醒直到關閉";
 "keep_awake.menu_off" = "關閉保持喚醒";

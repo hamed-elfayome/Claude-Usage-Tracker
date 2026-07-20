@@ -688,9 +688,9 @@ private struct KeepAwakeHoverCard: View {
                     .font(.system(size: 11))
                     .foregroundColor(.primary)
 
-                // Auto mode is armed but not currently the reason we're lit:
+                // A manual hold is showing above, but auto is also armed:
                 // say so, so its behavior is never a surprise.
-                if service.autoEnabled, !service.isAutoHolding {
+                if service.autoEnabled, !service.isAutoHolding, service.isManualOn {
                     Text("keep_awake.state_auto_armed".localized)
                         .font(.system(size: 10))
                         .foregroundColor(.secondary)
@@ -720,14 +720,20 @@ private struct KeepAwakeHoverCard: View {
             return "keep_awake.state_auto_grace".localized(
                 with: KeepAwakeTimeFormat.remaining(until: graceEnd, from: reference))
         }
+        if service.autoEnabled {
+            // Armed but idle: auto will hold as soon as Claude Code works.
+            return "keep_awake.state_auto_armed".localized
+        }
         return "keep_awake.state_off".localized
     }
 
     private var hintText: String {
-        guard service.isAssertionHeld else { return "keep_awake.hint_click_on".localized }
-        return service.isAutoHolding && !service.isManualOn
-            ? "keep_awake.hint_click_pause_auto".localized
-            : "keep_awake.hint_click_off".localized
+        if service.isManualOn {
+            return "keep_awake.hint_click_off".localized
+        }
+        return service.autoEnabled
+            ? "keep_awake.hint_click_auto_off".localized
+            : "keep_awake.hint_click_on".localized
     }
 }
 

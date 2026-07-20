@@ -97,10 +97,6 @@ final class KeepAwakeService: ObservableObject {
     private var heldMode: SleepMode?
     /// Last instant a Claude Code session was seen actively working.
     private var lastActiveDate: Date?
-    /// Set by smartToggle() while an auto hold is dismissed; cleared when
-    /// activity next resumes so auto mode picks the following task back up.
-    private var autoSuppressed = false
-    private var wereSessionsActive = false
     private var deadlineTimer: Timer?
     private var cancellables: Set<AnyCancellable> = []
     private var started = false
@@ -143,26 +139,16 @@ final class KeepAwakeService: ObservableObject {
         setManual(on: !isManualOn)
     }
 
-    /// One-click mental model for the popover button: lit means "your Mac is
-    /// being kept awake", and clicking always flips that. On → end whatever is
-    /// holding, including dismissing a current auto hold (the setting stays
-    /// on). Off → resume the dismissed auto hold if it would still be holding;
-    /// only start a manual hold when auto has nothing to hold right now.
+    /// The popover button is primarily an auto-mode switch: the first click a
+    /// user ever makes turns auto mode on (that click is the hooks opt-in),
+    /// and clicking while auto is on turns it off — remembered until turned
+    /// back on. Manual/timed holds only exist when explicitly chosen (menu
+    /// quick-picks or the settings pane); a click cancels those first.
     func smartToggle() {
-        if isAssertionHeld {
-            isManualOn = false
-            manualExpiry = nil
-            if isAutoHolding {
-                autoSuppressed = true
-            }
-            reconcile()
+        if isManualOn {
+            setManual(on: false)
         } else {
-            if autoEnabled, autoSuppressed {
-                autoSuppressed = false
-                reconcile()
-                if isAssertionHeld { return }
-            }
-            setManual(on: true)
+            setAutoEnabled(!autoEnabled)
         }
     }
 
@@ -179,10 +165,16 @@ final class KeepAwakeService: ObservableObject {
         reconcile()
     }
 
-    /// Single entry point for flipping auto mode (settings pane and the
-    /// button's context menu): persists, manages the shared hooks, and
-    /// notifies AppDelegate to re-gate the hook server.
+    /// Single entry point for flipping auto mode (popover click, context menu,
+    /// settings pane): persists + manages hooks via the seam, then reapplies.
     func setAutoEnabled(_ enabled: Bool) {
+        persistAutoEnabled(enabled)
+        settingsChanged()
+    }
+
+    /// Test seam: persists the auto-mode setting, manages the shared hooks,
+    /// and notifies AppDelegate to re-gate the hook server.
+    var persistAutoEnabled: (Bool) -> Void = { enabled in
         SharedDataStore.shared.saveKeepAwakeAutoEnabled(enabled)
         if enabled {
             NotchHookInstaller.shared.install()
@@ -219,11 +211,6 @@ final class KeepAwakeService: ObservableObject {
         // period keeps holding until it elapses or activity resumes.
         let sessionsActive = !currentSessions.isEmpty
             && !currentSessions.allSatisfy { $0.status == .idle }
-        if sessionsActive, !wereSessionsActive {
-            // A fresh burst of activity lifts any smartToggle dismissal.
-            autoSuppressed = false
-        }
-        wereSessionsActive = sessionsActive
         if sessionsActive {
             lastActiveDate = reference
         }
@@ -231,7 +218,7 @@ final class KeepAwakeService: ObservableObject {
             guard !sessionsActive, gracePeriod > 0, let last = lastActiveDate else { return false }
             return reference.timeIntervalSince(last) < gracePeriod
         }()
-        let autoActive = autoEnabled && !autoSuppressed && (sessionsActive || inGrace)
+        let autoActive = autoEnabled && (sessionsActive || inGrace)
 
         // Apply: at most one assertion, re-acquired when the mode changed.
         let desired = manualActive || autoActive

@@ -1059,9 +1059,9 @@
 "keep_awake.state_auto_active" = "Auto — Claude Code sta lavorando";
 "keep_awake.state_auto_grace" = "Auto — Claude ha finito, sveglio ancora per %@";
 "keep_awake.state_auto_armed" = "Auto attivo — tiene sveglio il Mac mentre Claude Code lavora";
-"keep_awake.hint_click_on" = "Fai clic per tenere sveglio il Mac";
+"keep_awake.hint_click_on" = "Fai clic per attivare — tiene sveglio il Mac mentre Claude Code lavora";
 "keep_awake.hint_click_off" = "Fai clic per spegnere";
-"keep_awake.hint_click_pause_auto" = "Fai clic per fermare — riprende quando Claude torna a lavorare";
+"keep_awake.hint_click_auto_off" = "Fai clic per disattivare la modalità automatica — resta disattivata finché non la riattivi";
 "keep_awake.menu_for" = "Tieni sveglio per %@";
 "keep_awake.menu_indefinite" = "Tieni sveglio finché non disattivato";
 "keep_awake.menu_off" = "Disattiva mantieni attivo";
