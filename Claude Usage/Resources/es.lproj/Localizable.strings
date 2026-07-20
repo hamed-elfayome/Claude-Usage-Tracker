@@ -1008,6 +1008,33 @@
 "menubar.this_month" = "Este mes";
 "menubar.total" = "Total";
 
+/* Keep Awake */
+"section.keep_awake_title" = "Mantener despierto";
+"section.keep_awake_desc" = "Evita que el Mac entre en reposo";
+"keep_awake.manual_title" = "Control manual";
+"keep_awake.manual_desc" = "Mantén el Mac despierto cuando quieras, con temporizador opcional";
+"keep_awake.enable" = "Mantener el Mac despierto";
+"keep_awake.enable_desc" = "Evita temporalmente que el Mac entre en reposo";
+"keep_awake.status_active" = "Manteniendo el Mac despierto";
+"keep_awake.remaining" = "Se desactiva en %@";
+"keep_awake.duration" = "Duración";
+"keep_awake.duration.indefinite" = "Hasta desactivarlo";
+"keep_awake.duration.custom" = "Personalizada…";
+"keep_awake.custom_hours" = "%d horas";
+"keep_awake.auto_title" = "Automático";
+"keep_awake.auto_card_desc" = "La actividad de Claude Code controla el reposo";
+"keep_awake.auto" = "Mantener despierto mientras Claude Code trabaja";
+"keep_awake.auto_desc" = "Mantiene el Mac despierto automáticamente mientras hay una sesión de Claude Code activa. Instala hooks de Claude Code";
+"keep_awake.grace" = "Permitir reposo tras inactividad";
+"keep_awake.grace.immediately" = "Inmediatamente";
+"keep_awake.hooks_note" = "La actividad se detecta mediante hooks de Claude Code en ~/.claude/settings.json";
+"keep_awake.sleep_type" = "Prevención de reposo";
+"keep_awake.sleep_type_desc" = "Elige si la pantalla permanece encendida mientras el Mac se mantiene despierto";
+"keep_awake.sleep_type.system" = "La pantalla puede apagarse";
+"keep_awake.sleep_type.display" = "Mantener pantalla encendida";
+"keep_awake.lid_note" = "No evita el reposo con la tapa cerrada";
+"keep_awake.toggle_tooltip" = "Mantener el Mac despierto";
+
 /* Sponsor slot */
 "sponsor.slot_title" = "Este espacio está disponible para patrocinadores";
 "sponsor.slot_cta" = "Contáctame";

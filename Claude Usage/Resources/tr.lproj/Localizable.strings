@@ -1019,6 +1019,33 @@
 "notch.server.port_busy" = "%@ bağlantı noktası kullanımda — uygulamanın başka bir kopyası mı çalışıyor?";
 "notch.server.retry" = "Yeniden dene";
 
+/* Keep Awake */
+"section.keep_awake_title" = "Uyanık Tut";
+"section.keep_awake_desc" = "Mac'in uykuya geçmesini engeller";
+"keep_awake.manual_title" = "Elle denetim";
+"keep_awake.manual_desc" = "Mac'i istediğinizde uyanık tutar, isteğe bağlı zamanlayıcıyla";
+"keep_awake.enable" = "Mac'i uyanık tut";
+"keep_awake.enable_desc" = "Mac'in uykuya geçmesini geçici olarak engeller";
+"keep_awake.status_active" = "Mac şu anda uyanık tutuluyor";
+"keep_awake.remaining" = "%@ sonra kapanır";
+"keep_awake.duration" = "Süre";
+"keep_awake.duration.indefinite" = "Kapatana kadar";
+"keep_awake.duration.custom" = "Özel…";
+"keep_awake.custom_hours" = "%d saat";
+"keep_awake.auto_title" = "Otomatik";
+"keep_awake.auto_card_desc" = "Uyku engellemeyi Claude Code etkinliği denetler";
+"keep_awake.auto" = "Claude Code çalışırken uyanık tut";
+"keep_awake.auto_desc" = "Bir Claude Code oturumu etkinken Mac'i otomatik olarak uyanık tutar. Claude Code kancalarını kurar";
+"keep_awake.grace" = "Etkinlik bittikten sonra uykuya izin ver";
+"keep_awake.grace.immediately" = "Hemen";
+"keep_awake.hooks_note" = "Etkinlik, ~/.claude/settings.json içindeki Claude Code kancalarıyla algılanır";
+"keep_awake.sleep_type" = "Uyku engelleme";
+"keep_awake.sleep_type_desc" = "Mac uyanık tutulurken ekranın açık kalıp kalmayacağını seçin";
+"keep_awake.sleep_type.system" = "Ekran uyuyabilir";
+"keep_awake.sleep_type.display" = "Ekranı açık tut";
+"keep_awake.lid_note" = "Kapak kapalıyken uykuyu engellemez";
+"keep_awake.toggle_tooltip" = "Mac'i uyanık tut";
+
 /* Sponsor slot */
 "sponsor.slot_title" = "Bu alan sponsorlara açıktır";
 "sponsor.slot_cta" = "İletişime geçin";

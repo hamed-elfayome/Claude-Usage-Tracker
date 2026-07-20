@@ -1022,6 +1022,33 @@
 "notch.server.port_busy" = "Порт %@ зайнятий — можливо, запущено іншу копію застосунку?";
 "notch.server.retry" = "Повторити";
 
+/* Keep Awake */
+"section.keep_awake_title" = "Не давати засинати";
+"section.keep_awake_desc" = "Запобігає переходу Mac у режим сну";
+"keep_awake.manual_title" = "Ручне керування";
+"keep_awake.manual_desc" = "Тримає Mac активним за запитом, з необов'язковим таймером";
+"keep_awake.enable" = "Не давати Mac засинати";
+"keep_awake.enable_desc" = "Тимчасово запобігає переходу Mac у режим сну";
+"keep_awake.status_active" = "Зараз Mac утримується активним";
+"keep_awake.remaining" = "Вимкнеться через %@";
+"keep_awake.duration" = "Тривалість";
+"keep_awake.duration.indefinite" = "Доки не вимкнете";
+"keep_awake.duration.custom" = "Власна…";
+"keep_awake.custom_hours" = "%d год";
+"keep_awake.auto_title" = "Автоматично";
+"keep_awake.auto_card_desc" = "Активність Claude Code керує запобіганням сну";
+"keep_awake.auto" = "Не засинати, поки Claude Code працює";
+"keep_awake.auto_desc" = "Автоматично тримає Mac активним, поки триває сеанс Claude Code. Встановлює хуки Claude Code";
+"keep_awake.grace" = "Дозволити сон після бездіяльності";
+"keep_awake.grace.immediately" = "Одразу";
+"keep_awake.hooks_note" = "Активність визначається через хуки Claude Code у ~/.claude/settings.json";
+"keep_awake.sleep_type" = "Запобігання сну";
+"keep_awake.sleep_type_desc" = "Виберіть, чи залишається екран увімкненим, поки Mac активний";
+"keep_awake.sleep_type.system" = "Екран може вимикатися";
+"keep_awake.sleep_type.display" = "Тримати екран увімкненим";
+"keep_awake.lid_note" = "Не запобігає сну із закритою кришкою";
+"keep_awake.toggle_tooltip" = "Не давати Mac засинати";
+
 /* Sponsor slot */
 "sponsor.slot_title" = "Це місце доступне для спонсорів";
 "sponsor.slot_cta" = "Звʼязатися";

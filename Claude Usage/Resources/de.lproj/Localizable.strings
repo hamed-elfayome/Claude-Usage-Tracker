@@ -1027,6 +1027,33 @@
 "menubar.this_month" = "Diesen Monat";
 "menubar.total" = "Gesamt";
 
+/* Keep Awake */
+"section.keep_awake_title" = "Wachhalten";
+"section.keep_awake_desc" = "Verhindert, dass der Mac in den Ruhezustand wechselt";
+"keep_awake.manual_title" = "Manuelle Steuerung";
+"keep_awake.manual_desc" = "Hält den Mac auf Wunsch wach, optional mit Timer";
+"keep_awake.enable" = "Mac wachhalten";
+"keep_awake.enable_desc" = "Verhindert vorübergehend, dass der Mac in den Ruhezustand wechselt";
+"keep_awake.status_active" = "Der Mac wird derzeit wachgehalten";
+"keep_awake.remaining" = "Wird in %@ deaktiviert";
+"keep_awake.duration" = "Dauer";
+"keep_awake.duration.indefinite" = "Bis zum Ausschalten";
+"keep_awake.duration.custom" = "Eigene…";
+"keep_awake.custom_hours" = "%d Stunden";
+"keep_awake.auto_title" = "Automatisch";
+"keep_awake.auto_card_desc" = "Claude-Code-Aktivität steuert das Wachhalten";
+"keep_awake.auto" = "Wachhalten, während Claude Code arbeitet";
+"keep_awake.auto_desc" = "Hält den Mac automatisch wach, solange eine Claude-Code-Sitzung aktiv ist. Installiert Claude-Code-Hooks";
+"keep_awake.grace" = "Ruhezustand erlauben nach Inaktivität";
+"keep_awake.grace.immediately" = "Sofort";
+"keep_awake.hooks_note" = "Aktivität wird über Claude-Code-Hooks in ~/.claude/settings.json erkannt";
+"keep_awake.sleep_type" = "Ruhezustand-Verhinderung";
+"keep_awake.sleep_type_desc" = "Legt fest, ob der Bildschirm eingeschaltet bleibt, während der Mac wachgehalten wird";
+"keep_awake.sleep_type.system" = "Bildschirm darf ausgehen";
+"keep_awake.sleep_type.display" = "Bildschirm anlassen";
+"keep_awake.lid_note" = "Verhindert nicht den Ruhezustand bei geschlossenem Deckel";
+"keep_awake.toggle_tooltip" = "Mac wachhalten";
+
 /* Sponsor slot */
 "sponsor.slot_title" = "Dieser Platz ist für Sponsoren verfügbar";
 "sponsor.slot_cta" = "Kontakt aufnehmen";
