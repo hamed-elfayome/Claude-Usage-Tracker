@@ -494,6 +494,9 @@ struct SmartHeader: View {
             Spacer()
 
             HStack(alignment: .center, spacing: 2) {
+                // Keep awake
+                KeepAwakeHeaderButton()
+
                 // Refresh
                 HeaderIconButton(
                     icon: "arrow.clockwise",
@@ -551,6 +554,96 @@ struct HeaderIconButton: View {
                 isHovered = hovering
             }
         }
+    }
+}
+
+// MARK: - Keep Awake Header Button
+
+/// Header toggle for KeepAwakeService. Lights up (with a one-shot ripple and
+/// a soft breathing glow) whenever the assertion is held — including holds
+/// from auto mode — so it doubles as an "is my Mac staying awake?" indicator.
+struct KeepAwakeHeaderButton: View {
+    @ObservedObject private var service = KeepAwakeService.shared
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var isHovered = false
+    @State private var rippleID = 0
+    @State private var glowPulse = false
+
+    private var isActive: Bool { service.isAssertionHeld }
+
+    var body: some View {
+        Button(action: { service.toggleManual() }) {
+            ZStack {
+                if !reduceMotion, rippleID > 0, isActive {
+                    KeepAwakeActivationRipple()
+                        .id(rippleID)
+                }
+
+                Image(systemName: isActive ? "cup.and.saucer.fill" : "cup.and.saucer")
+                    .font(.system(size: 10.5, weight: .medium))
+                    .imageScale(.medium)
+                    .contentTransition(.symbolEffect(.replace))
+                    .symbolEffect(.bounce, options: .speed(1.3), value: isActive)
+                    .shadow(
+                        color: isActive ? Color.orange.opacity(glowPulse ? 0.55 : 0.25) : .clear,
+                        radius: glowPulse ? 5 : 3
+                    )
+            }
+            .foregroundColor(isActive ? .orange : (isHovered ? .primary : .secondary))
+            .frame(width: 24, height: 24, alignment: .center)
+            .background(
+                RoundedRectangle(cornerRadius: 5)
+                    .fill(
+                        isActive
+                            ? Color.orange.opacity(isHovered ? 0.16 : 0.10)
+                            : (isHovered ? Color.primary.opacity(0.08) : Color.clear)
+                    )
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help("keep_awake.toggle_tooltip".localized)
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.15)) {
+                isHovered = hovering
+            }
+        }
+        .animation(
+            isActive && !reduceMotion
+                ? .easeInOut(duration: 2.0).repeatForever(autoreverses: true)
+                : .easeOut(duration: 0.3),
+            value: glowPulse
+        )
+        .onAppear {
+            if isActive { glowPulse = true }
+        }
+        .onChange(of: isActive) { _, active in
+            if active {
+                rippleID += 1
+                glowPulse = true
+            } else {
+                glowPulse = false
+            }
+        }
+    }
+}
+
+/// One-shot expanding ring played on activation; re-created via `.id` so each
+/// activation replays it from the start.
+private struct KeepAwakeActivationRipple: View {
+    @State private var expanded = false
+
+    var body: some View {
+        Circle()
+            .stroke(Color.orange.opacity(expanded ? 0 : 0.6), lineWidth: 1.5)
+            .frame(width: 18, height: 18)
+            .scaleEffect(expanded ? 1.9 : 0.7)
+            .allowsHitTesting(false)
+            .onAppear {
+                withAnimation(.easeOut(duration: 0.6)) {
+                    expanded = true
+                }
+            }
     }
 }
 
