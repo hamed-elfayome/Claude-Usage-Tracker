@@ -55,7 +55,9 @@ final class KeepAwakeService: ObservableObject {
 
     // MARK: - Settings (reloaded via settingsChanged())
 
-    private(set) var autoEnabled = false
+    /// Published: the popover button renders an "armed" state from this, and
+    /// flipping it while idle changes no other published property.
+    @Published private(set) var autoEnabled = false
     private(set) var sleepMode: SleepMode = .allowDisplaySleep
     /// Manual duration in seconds; 0 = indefinite.
     private(set) var defaultDuration: TimeInterval = 0

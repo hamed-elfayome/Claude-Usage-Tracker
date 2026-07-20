@@ -575,11 +575,20 @@ struct KeepAwakeHeaderButton: View {
     private static let menuDurations: [TimeInterval] = [15 * 60, 3600, 2 * 3600, 8 * 3600]
 
     private var isActive: Bool { service.isAssertionHeld }
+    /// Auto mode is on but not currently holding: dimmed-orange filled cup so
+    /// the first click (and every armed idle state) has visible feedback.
+    private var isArmed: Bool { service.autoEnabled && !isActive }
+
+    private var iconColor: Color {
+        if isActive { return .orange }
+        if isArmed { return Color.orange.opacity(0.55) }
+        return isHovered ? .primary : .secondary
+    }
 
     var body: some View {
         Button(action: { service.smartToggle() }) {
             ZStack {
-                if !reduceMotion, rippleID > 0, isActive {
+                if !reduceMotion, rippleID > 0, isActive || isArmed {
                     KeepAwakeActivationRipple()
                         .id(rippleID)
                     KeepAwakeActivationRipple(delay: 0.18)
@@ -590,24 +599,27 @@ struct KeepAwakeHeaderButton: View {
                     KeepAwakeSteamView()
                 }
 
-                Image(systemName: isActive ? "cup.and.saucer.fill" : "cup.and.saucer")
+                Image(systemName: isActive || isArmed ? "cup.and.saucer.fill" : "cup.and.saucer")
                     .font(.system(size: 10.5, weight: .medium))
                     .imageScale(.medium)
                     .contentTransition(.symbolEffect(.replace))
                     .symbolEffect(.bounce, options: .speed(1.3), value: isActive)
+                    .symbolEffect(.bounce, options: .speed(1.3), value: service.autoEnabled)
                     .shadow(
                         color: isActive ? Color.orange.opacity(glowPulse ? 0.55 : 0.25) : .clear,
                         radius: glowPulse ? 5 : 3
                     )
             }
-            .foregroundColor(isActive ? .orange : (isHovered ? .primary : .secondary))
+            .foregroundColor(iconColor)
             .frame(width: 24, height: 24, alignment: .center)
             .background(
                 RoundedRectangle(cornerRadius: 5)
                     .fill(
                         isActive
                             ? Color.orange.opacity(isHovered ? 0.16 : 0.10)
-                            : (isHovered ? Color.primary.opacity(0.08) : Color.clear)
+                            : (isArmed
+                                ? Color.orange.opacity(isHovered ? 0.12 : 0.06)
+                                : (isHovered ? Color.primary.opacity(0.08) : Color.clear))
                     )
             )
             .contentShape(Rectangle())
@@ -663,6 +675,13 @@ struct KeepAwakeHeaderButton: View {
                 glowPulse = true
             } else {
                 glowPulse = false
+            }
+        }
+        .onChange(of: service.autoEnabled) { _, enabled in
+            // Arming auto (usually the first-ever click) plays the ripple even
+            // though no assertion is held yet — the click must feel received.
+            if enabled, !isActive {
+                rippleID += 1
             }
         }
     }
