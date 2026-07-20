@@ -688,6 +688,14 @@ private struct KeepAwakeHoverCard: View {
                     .font(.system(size: 11))
                     .foregroundColor(.primary)
 
+                // Auto mode is armed but not currently the reason we're lit:
+                // say so, so its behavior is never a surprise.
+                if service.autoEnabled, !service.isAutoHolding {
+                    Text("keep_awake.state_auto_armed".localized)
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                }
+
                 Text(hintText)
                     .font(.system(size: 10))
                     .foregroundColor(.secondary)

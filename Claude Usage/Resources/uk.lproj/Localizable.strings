@@ -1053,6 +1053,7 @@
 "keep_awake.state_on_remaining" = "Увімкнено — залишилось %@";
 "keep_awake.state_auto_active" = "Авто — Claude Code працює";
 "keep_awake.state_auto_grace" = "Авто — Claude завершив, активний ще %@";
+"keep_awake.state_auto_armed" = "Авто увімкнено — тримає Mac активним, поки Claude Code працює";
 "keep_awake.hint_click_on" = "Натисніть, щоб не давати Mac засинати";
 "keep_awake.hint_click_off" = "Натисніть, щоб вимкнути";
 "keep_awake.hint_click_pause_auto" = "Натисніть, щоб зупинити — відновиться, коли Claude знову працюватиме";

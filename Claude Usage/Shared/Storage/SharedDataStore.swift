@@ -136,8 +136,12 @@ class SharedDataStore {
     }
 
     func loadKeepAwakeAutoEnabled() -> Bool {
-        // Default false: enabling installs hooks into ~/.claude/settings.json,
-        // which must be an explicit user choice.
+        // Default true: keep-awake works out of the box while Claude Code is
+        // busy. Note this installs hooks into ~/.claude/settings.json at
+        // launch; the toggle in Settings removes them again.
+        if defaults.object(forKey: Constants.UserDefaultsKeys.keepAwakeAutoEnabled) == nil {
+            return true
+        }
         return defaults.bool(forKey: Constants.UserDefaultsKeys.keepAwakeAutoEnabled)
     }
 
@@ -165,7 +169,7 @@ class SharedDataStore {
 
     func loadKeepAwakeAutoGracePeriod() -> TimeInterval {
         if defaults.object(forKey: Constants.UserDefaultsKeys.keepAwakeAutoGracePeriod) == nil {
-            return 15 * 60
+            return 30 * 60
         }
         return defaults.double(forKey: Constants.UserDefaultsKeys.keepAwakeAutoGracePeriod)
     }

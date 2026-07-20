@@ -1054,6 +1054,7 @@
 "keep_awake.state_on_remaining" = "On — %@ left";
 "keep_awake.state_auto_active" = "Auto — Claude Code is working";
 "keep_awake.state_auto_grace" = "Auto — Claude finished, staying awake %@ more";
+"keep_awake.state_auto_armed" = "Auto is on — keeps your Mac awake while Claude Code works";
 "keep_awake.hint_click_on" = "Click to keep your Mac awake";
 "keep_awake.hint_click_off" = "Click to turn off";
 "keep_awake.hint_click_pause_auto" = "Click to stop now — resumes when Claude works again";

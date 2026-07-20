@@ -1039,6 +1039,7 @@
 "keep_awake.state_on_remaining" = "Activado — quedan %@";
 "keep_awake.state_auto_active" = "Auto — Claude Code está trabajando";
 "keep_awake.state_auto_grace" = "Auto — Claude terminó, despierto %@ más";
+"keep_awake.state_auto_armed" = "Auto activado — mantiene el Mac despierto mientras Claude Code trabaja";
 "keep_awake.hint_click_on" = "Haz clic para mantener el Mac despierto";
 "keep_awake.hint_click_off" = "Haz clic para desactivar";
 "keep_awake.hint_click_pause_auto" = "Haz clic para parar — se reanuda cuando Claude vuelva a trabajar";

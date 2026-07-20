@@ -182,13 +182,13 @@ final class SharedDataStoreTests: XCTestCase {
 
     func testKeepAwakeAutoEnabled() {
         UserDefaults.standard.removeObject(forKey: Constants.UserDefaultsKeys.keepAwakeAutoEnabled)
-        XCTAssertFalse(sharedDataStore.loadKeepAwakeAutoEnabled(), "must default off (installs hooks)")
+        XCTAssertTrue(sharedDataStore.loadKeepAwakeAutoEnabled(), "auto mode defaults on")
+
+        sharedDataStore.saveKeepAwakeAutoEnabled(false)
+        XCTAssertFalse(sharedDataStore.loadKeepAwakeAutoEnabled(), "explicit off survives")
 
         sharedDataStore.saveKeepAwakeAutoEnabled(true)
         XCTAssertTrue(sharedDataStore.loadKeepAwakeAutoEnabled())
-
-        sharedDataStore.saveKeepAwakeAutoEnabled(false)
-        XCTAssertFalse(sharedDataStore.loadKeepAwakeAutoEnabled())
     }
 
     func testKeepAwakeSleepMode() {
@@ -212,7 +212,7 @@ final class SharedDataStoreTests: XCTestCase {
 
     func testKeepAwakeAutoGracePeriod() {
         UserDefaults.standard.removeObject(forKey: Constants.UserDefaultsKeys.keepAwakeAutoGracePeriod)
-        XCTAssertEqual(sharedDataStore.loadKeepAwakeAutoGracePeriod(), 15 * 60, "defaults to 15 minutes")
+        XCTAssertEqual(sharedDataStore.loadKeepAwakeAutoGracePeriod(), 30 * 60, "defaults to 30 minutes")
 
         sharedDataStore.saveKeepAwakeAutoGracePeriod(60 * 60)
         XCTAssertEqual(sharedDataStore.loadKeepAwakeAutoGracePeriod(), 60 * 60)

@@ -1036,6 +1036,7 @@
 "keep_awake.state_on_remaining" = "Activé — %@ restant";
 "keep_awake.state_auto_active" = "Auto — Claude Code travaille";
 "keep_awake.state_auto_grace" = "Auto — Claude a terminé, éveillé encore %@";
+"keep_awake.state_auto_armed" = "Auto activé — garde le Mac éveillé quand Claude Code travaille";
 "keep_awake.hint_click_on" = "Cliquez pour garder le Mac éveillé";
 "keep_awake.hint_click_off" = "Cliquez pour désactiver";
 "keep_awake.hint_click_pause_auto" = "Cliquez pour arrêter — reprend quand Claude retravaille";

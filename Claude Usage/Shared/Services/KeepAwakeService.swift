@@ -60,7 +60,7 @@ final class KeepAwakeService: ObservableObject {
     /// Manual duration in seconds; 0 = indefinite.
     private(set) var defaultDuration: TimeInterval = 0
     /// Auto mode keeps the assertion this long after sessions go idle; 0 = release immediately.
-    private(set) var gracePeriod: TimeInterval = 15 * 60
+    private(set) var gracePeriod: TimeInterval = 30 * 60
 
     // MARK: - Test seams
 
