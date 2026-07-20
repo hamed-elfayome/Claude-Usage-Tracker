@@ -1026,7 +1026,7 @@
 "section.keep_awake_title" = "Не давати засинати";
 "section.keep_awake_desc" = "Запобігає переходу Mac у режим сну";
 "keep_awake.manual_title" = "Ручне керування";
-"keep_awake.manual_desc" = "Тримає Mac активним за запитом, з необов'язковим таймером";
+"keep_awake.manual_desc" = "Вмикайте самостійно, з необов'язковим таймером";
 "keep_awake.enable" = "Не давати Mac засинати";
 "keep_awake.enable_desc" = "Тимчасово запобігає переходу Mac у режим сну";
 "keep_awake.status_active" = "Зараз Mac утримується активним";
@@ -1036,18 +1036,21 @@
 "keep_awake.duration.custom" = "Власна…";
 "keep_awake.custom_hours" = "%d год";
 "keep_awake.auto_title" = "Автоматично";
-"keep_awake.auto_card_desc" = "Активність Claude Code керує запобіганням сну";
+"keep_awake.auto_card_desc" = "Рекомендовано: тримає Mac активним лише тоді, коли Claude Code справді працює";
 "keep_awake.auto" = "Не засинати, поки Claude Code працює";
-"keep_awake.auto_desc" = "Автоматично тримає Mac активним, поки триває сеанс Claude Code. Встановлює хуки Claude Code";
-"keep_awake.grace" = "Дозволити сон після бездіяльності";
-"keep_awake.grace.immediately" = "Одразу";
+"keep_awake.auto_desc" = "Залишається активним під час сеансів Claude Code, а потім знову дозволяє сон. Встановлює хуки Claude Code";
+"keep_awake.grace" = "Після завершення роботи Claude лишатися активним";
+"keep_awake.grace.immediately" = "Без додаткового часу";
 "keep_awake.hooks_note" = "Активність визначається через хуки Claude Code у ~/.claude/settings.json";
 "keep_awake.sleep_type" = "Запобігання сну";
 "keep_awake.sleep_type_desc" = "Виберіть, чи залишається екран увімкненим, поки Mac активний";
 "keep_awake.sleep_type.system" = "Екран може вимикатися";
 "keep_awake.sleep_type.display" = "Тримати екран увімкненим";
-"keep_awake.lid_note" = "Не запобігає сну із закритою кришкою";
-"keep_awake.toggle_tooltip" = "Не давати Mac засинати";
+"keep_awake.lid_note" = "Із закритою кришкою Mac все одно засне, якщо він не підключений до живлення із зовнішнім дисплеєм";
+"keep_awake.tooltip_off" = "Не давати Mac засинати — натисніть, щоб увімкнути";
+"keep_awake.tooltip_on" = "Mac утримується активним — натисніть, щоб вимкнути";
+"keep_awake.tooltip_until" = "Mac активний до %@ — натисніть, щоб вимкнути";
+"keep_awake.tooltip_auto" = "Mac утримується активним — Claude Code працює";
 
 /* Sponsor slot */
 "sponsor.slot_title" = "Це місце доступне для спонсорів";

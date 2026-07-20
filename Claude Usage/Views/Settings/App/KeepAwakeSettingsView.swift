@@ -38,8 +38,8 @@ struct KeepAwakeSettingsView: View {
                     subtitle: "section.keep_awake_desc".localized
                 )
 
-                manualCard
                 autoCard
+                manualCard
                 sleepTypeCard
             }
             .padding()

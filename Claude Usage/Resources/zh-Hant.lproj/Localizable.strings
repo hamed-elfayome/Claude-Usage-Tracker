@@ -1017,7 +1017,7 @@
 "section.keep_awake_title" = "保持喚醒";
 "section.keep_awake_desc" = "防止 Mac 進入睡眠";
 "keep_awake.manual_title" = "手動控制";
-"keep_awake.manual_desc" = "隨時讓 Mac 保持喚醒,可選擇計時器";
+"keep_awake.manual_desc" = "自行開啟保持喚醒,可選擇計時器";
 "keep_awake.enable" = "讓 Mac 保持喚醒";
 "keep_awake.enable_desc" = "暫時防止 Mac 進入睡眠";
 "keep_awake.status_active" = "目前正在讓 Mac 保持喚醒";
@@ -1027,18 +1027,21 @@
 "keep_awake.duration.custom" = "自訂…";
 "keep_awake.custom_hours" = "%d 小時";
 "keep_awake.auto_title" = "自動";
-"keep_awake.auto_card_desc" = "由 Claude Code 的活動控制睡眠防止";
+"keep_awake.auto_card_desc" = "建議:僅在 Claude Code 實際工作時讓 Mac 保持喚醒";
 "keep_awake.auto" = "Claude Code 工作時保持喚醒";
-"keep_awake.auto_desc" = "當 Claude Code 工作階段進行中時,自動讓 Mac 保持喚醒。將安裝 Claude Code 掛鉤";
-"keep_awake.grace" = "閒置後允許睡眠";
-"keep_awake.grace.immediately" = "立即";
+"keep_awake.auto_desc" = "Claude Code 工作階段進行中保持喚醒,結束後恢復允許睡眠。將安裝 Claude Code 掛鉤";
+"keep_awake.grace" = "Claude 完成後,繼續保持喚醒";
+"keep_awake.grace.immediately" = "不延長";
 "keep_awake.hooks_note" = "透過 ~/.claude/settings.json 中的 Claude Code 掛鉤偵測活動";
 "keep_awake.sleep_type" = "睡眠防止方式";
 "keep_awake.sleep_type_desc" = "選擇保持喚醒時螢幕是否維持開啟";
 "keep_awake.sleep_type.system" = "螢幕可睡眠";
 "keep_awake.sleep_type.display" = "保持螢幕開啟";
-"keep_awake.lid_note" = "闔上螢幕時無法防止睡眠";
-"keep_awake.toggle_tooltip" = "讓 Mac 保持喚醒";
+"keep_awake.lid_note" = "闔上螢幕後,除非接上電源並使用外接顯示器,Mac 仍會進入睡眠";
+"keep_awake.tooltip_off" = "讓 Mac 保持喚醒 — 按一下開啟";
+"keep_awake.tooltip_on" = "正在讓 Mac 保持喚醒 — 按一下關閉";
+"keep_awake.tooltip_until" = "保持喚醒至 %@ — 按一下關閉";
+"keep_awake.tooltip_auto" = "正在讓 Mac 保持喚醒 — Claude Code 工作中";
 
 /* Sponsor slot */
 "sponsor.slot_title" = "此位置開放贊助";

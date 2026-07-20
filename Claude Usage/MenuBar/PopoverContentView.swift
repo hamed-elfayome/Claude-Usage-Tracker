@@ -571,12 +571,34 @@ struct KeepAwakeHeaderButton: View {
 
     private var isActive: Bool { service.isAssertionHeld }
 
+    /// State-aware tooltip so hovering explains exactly what the cup is doing.
+    private var tooltip: String {
+        if service.isManualOn {
+            if let expiry = service.manualExpiry {
+                let formatter = DateFormatter()
+                formatter.timeStyle = .short
+                return "keep_awake.tooltip_until".localized(with: formatter.string(from: expiry))
+            }
+            return "keep_awake.tooltip_on".localized
+        }
+        if service.isAutoHolding {
+            return "keep_awake.tooltip_auto".localized
+        }
+        return "keep_awake.tooltip_off".localized
+    }
+
     var body: some View {
         Button(action: { service.toggleManual() }) {
             ZStack {
                 if !reduceMotion, rippleID > 0, isActive {
                     KeepAwakeActivationRipple()
                         .id(rippleID)
+                    KeepAwakeActivationRipple(delay: 0.18)
+                        .id(-rippleID)
+                }
+
+                if isActive, !reduceMotion {
+                    KeepAwakeSteamView()
                 }
 
                 Image(systemName: isActive ? "cup.and.saucer.fill" : "cup.and.saucer")
@@ -602,7 +624,7 @@ struct KeepAwakeHeaderButton: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .help("keep_awake.toggle_tooltip".localized)
+        .help(tooltip)
         .onHover { hovering in
             withAnimation(.easeInOut(duration: 0.15)) {
                 isHovered = hovering
@@ -629,8 +651,10 @@ struct KeepAwakeHeaderButton: View {
 }
 
 /// One-shot expanding ring played on activation; re-created via `.id` so each
-/// activation replays it from the start.
+/// activation replays it from the start. Two staggered rings give the "drop
+/// in water" feel.
 private struct KeepAwakeActivationRipple: View {
+    var delay: Double = 0
     @State private var expanded = false
 
     var body: some View {
@@ -640,10 +664,38 @@ private struct KeepAwakeActivationRipple: View {
             .scaleEffect(expanded ? 1.9 : 0.7)
             .allowsHitTesting(false)
             .onAppear {
-                withAnimation(.easeOut(duration: 0.6)) {
+                withAnimation(.easeOut(duration: 0.6).delay(delay)) {
                     expanded = true
                 }
             }
+    }
+}
+
+/// Three tiny steam wisps drifting up from the cup while keep-awake is active.
+/// Each dot fades out as it rises, then loops; staggered delays keep the
+/// motion organic. Only shown when Reduce Motion is off.
+private struct KeepAwakeSteamView: View {
+    @State private var rising = false
+
+    var body: some View {
+        ZStack {
+            steamDot(x: -2.5, delay: 0.0)
+            steamDot(x: 0.5, delay: 0.55)
+            steamDot(x: 3.0, delay: 1.1)
+        }
+        .allowsHitTesting(false)
+        .onAppear { rising = true }
+    }
+
+    private func steamDot(x: CGFloat, delay: Double) -> some View {
+        Circle()
+            .fill(Color.orange.opacity(rising ? 0 : 0.5))
+            .frame(width: 2.5, height: 2.5)
+            .offset(x: x, y: rising ? -12 : -5)
+            .animation(
+                .easeOut(duration: 1.7).repeatForever(autoreverses: false).delay(delay),
+                value: rising
+            )
     }
 }
 

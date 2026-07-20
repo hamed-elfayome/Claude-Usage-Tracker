@@ -1017,7 +1017,7 @@
 "section.keep_awake_title" = "保持唤醒";
 "section.keep_awake_desc" = "防止 Mac 进入睡眠";
 "keep_awake.manual_title" = "手动控制";
-"keep_awake.manual_desc" = "随时让 Mac 保持唤醒,可选择计时器";
+"keep_awake.manual_desc" = "自行开启保持唤醒,可选择计时器";
 "keep_awake.enable" = "让 Mac 保持唤醒";
 "keep_awake.enable_desc" = "暂时防止 Mac 进入睡眠";
 "keep_awake.status_active" = "当前正在让 Mac 保持唤醒";
@@ -1027,18 +1027,21 @@
 "keep_awake.duration.custom" = "自定义…";
 "keep_awake.custom_hours" = "%d 小时";
 "keep_awake.auto_title" = "自动";
-"keep_awake.auto_card_desc" = "由 Claude Code 的活动控制睡眠防止";
+"keep_awake.auto_card_desc" = "推荐:仅在 Claude Code 实际工作时让 Mac 保持唤醒";
 "keep_awake.auto" = "Claude Code 工作时保持唤醒";
-"keep_awake.auto_desc" = "当 Claude Code 会话进行中时,自动让 Mac 保持唤醒。将安装 Claude Code 钩子";
-"keep_awake.grace" = "空闲后允许睡眠";
-"keep_awake.grace.immediately" = "立即";
+"keep_awake.auto_desc" = "Claude Code 会话进行中保持唤醒,结束后恢复允许睡眠。将安装 Claude Code 钩子";
+"keep_awake.grace" = "Claude 完成后,继续保持唤醒";
+"keep_awake.grace.immediately" = "不延长";
 "keep_awake.hooks_note" = "通过 ~/.claude/settings.json 中的 Claude Code 钩子检测活动";
 "keep_awake.sleep_type" = "睡眠防止方式";
 "keep_awake.sleep_type_desc" = "选择保持唤醒时屏幕是否保持开启";
 "keep_awake.sleep_type.system" = "屏幕可睡眠";
 "keep_awake.sleep_type.display" = "保持屏幕开启";
-"keep_awake.lid_note" = "合盖时无法防止睡眠";
-"keep_awake.toggle_tooltip" = "让 Mac 保持唤醒";
+"keep_awake.lid_note" = "合盖后,除非接通电源并使用外接显示器,Mac 仍会进入睡眠";
+"keep_awake.tooltip_off" = "让 Mac 保持唤醒 — 点按开启";
+"keep_awake.tooltip_on" = "正在让 Mac 保持唤醒 — 点按关闭";
+"keep_awake.tooltip_until" = "保持唤醒至 %@ — 点按关闭";
+"keep_awake.tooltip_auto" = "正在让 Mac 保持唤醒 — Claude Code 工作中";
 
 /* Sponsor slot */
 "sponsor.slot_title" = "此位置开放赞助";

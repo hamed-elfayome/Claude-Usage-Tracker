@@ -1031,7 +1031,7 @@
 "section.keep_awake_title" = "Mantieni attivo";
 "section.keep_awake_desc" = "Impedisce al Mac di andare in stop";
 "keep_awake.manual_title" = "Controllo manuale";
-"keep_awake.manual_desc" = "Mantiene il Mac attivo su richiesta, con timer opzionale";
+"keep_awake.manual_desc" = "Attiva tu stesso il mantenimento, con timer opzionale";
 "keep_awake.enable" = "Mantieni il Mac attivo";
 "keep_awake.enable_desc" = "Impedisce temporaneamente al Mac di andare in stop";
 "keep_awake.status_active" = "Il Mac viene mantenuto attivo";
@@ -1041,18 +1041,21 @@
 "keep_awake.duration.custom" = "Personalizzata…";
 "keep_awake.custom_hours" = "%d ore";
 "keep_awake.auto_title" = "Automatico";
-"keep_awake.auto_card_desc" = "L'attività di Claude Code controlla lo stop";
+"keep_awake.auto_card_desc" = "Consigliato: mantiene il Mac attivo solo mentre Claude Code sta effettivamente lavorando";
 "keep_awake.auto" = "Mantieni attivo mentre Claude Code lavora";
-"keep_awake.auto_desc" = "Mantiene automaticamente il Mac attivo mentre una sessione di Claude Code è in corso. Installa gli hook di Claude Code";
-"keep_awake.grace" = "Consenti lo stop dopo l'inattività";
-"keep_awake.grace.immediately" = "Immediatamente";
+"keep_awake.auto_desc" = "Resta attivo durante le sessioni di Claude Code, poi consente di nuovo lo stop. Installa gli hook di Claude Code";
+"keep_awake.grace" = "Quando Claude finisce, resta attivo per";
+"keep_awake.grace.immediately" = "Nessun tempo extra";
 "keep_awake.hooks_note" = "L'attività viene rilevata tramite gli hook di Claude Code in ~/.claude/settings.json";
 "keep_awake.sleep_type" = "Prevenzione dello stop";
 "keep_awake.sleep_type_desc" = "Scegli se lo schermo resta acceso mentre il Mac viene mantenuto attivo";
 "keep_awake.sleep_type.system" = "Lo schermo può spegnersi";
 "keep_awake.sleep_type.display" = "Mantieni lo schermo acceso";
-"keep_awake.lid_note" = "Non impedisce lo stop quando il coperchio è chiuso";
-"keep_awake.toggle_tooltip" = "Mantieni il Mac attivo";
+"keep_awake.lid_note" = "Con il coperchio chiuso il Mac andrà comunque in stop, a meno che non sia collegato alla corrente con un display esterno";
+"keep_awake.tooltip_off" = "Mantieni il Mac attivo — fai clic per attivare";
+"keep_awake.tooltip_on" = "Mac mantenuto attivo — fai clic per disattivare";
+"keep_awake.tooltip_until" = "Mac mantenuto attivo fino alle %@ — fai clic per disattivare";
+"keep_awake.tooltip_auto" = "Mac mantenuto attivo — Claude Code sta lavorando";
 
 /* Sponsor slot */
 "sponsor.slot_title" = "Questo spazio è disponibile per gli sponsor";

@@ -1023,7 +1023,7 @@
 "section.keep_awake_title" = "Uyanık Tut";
 "section.keep_awake_desc" = "Mac'in uykuya geçmesini engeller";
 "keep_awake.manual_title" = "Elle denetim";
-"keep_awake.manual_desc" = "Mac'i istediğinizde uyanık tutar, isteğe bağlı zamanlayıcıyla";
+"keep_awake.manual_desc" = "İstediğinizde kendiniz açın, isteğe bağlı zamanlayıcıyla";
 "keep_awake.enable" = "Mac'i uyanık tut";
 "keep_awake.enable_desc" = "Mac'in uykuya geçmesini geçici olarak engeller";
 "keep_awake.status_active" = "Mac şu anda uyanık tutuluyor";
@@ -1033,18 +1033,21 @@
 "keep_awake.duration.custom" = "Özel…";
 "keep_awake.custom_hours" = "%d saat";
 "keep_awake.auto_title" = "Otomatik";
-"keep_awake.auto_card_desc" = "Uyku engellemeyi Claude Code etkinliği denetler";
+"keep_awake.auto_card_desc" = "Önerilen: Mac'i yalnızca Claude Code gerçekten çalışırken uyanık tutar";
 "keep_awake.auto" = "Claude Code çalışırken uyanık tut";
-"keep_awake.auto_desc" = "Bir Claude Code oturumu etkinken Mac'i otomatik olarak uyanık tutar. Claude Code kancalarını kurar";
-"keep_awake.grace" = "Etkinlik bittikten sonra uykuya izin ver";
-"keep_awake.grace.immediately" = "Hemen";
+"keep_awake.auto_desc" = "Etkin Claude Code oturumları sırasında uyanık kalır, ardından uykuya yeniden izin verir. Claude Code kancalarını kurar";
+"keep_awake.grace" = "Claude bittikten sonra uyanık kalma süresi";
+"keep_awake.grace.immediately" = "Ek süre yok";
 "keep_awake.hooks_note" = "Etkinlik, ~/.claude/settings.json içindeki Claude Code kancalarıyla algılanır";
 "keep_awake.sleep_type" = "Uyku engelleme";
 "keep_awake.sleep_type_desc" = "Mac uyanık tutulurken ekranın açık kalıp kalmayacağını seçin";
 "keep_awake.sleep_type.system" = "Ekran uyuyabilir";
 "keep_awake.sleep_type.display" = "Ekranı açık tut";
-"keep_awake.lid_note" = "Kapak kapalıyken uykuyu engellemez";
-"keep_awake.toggle_tooltip" = "Mac'i uyanık tut";
+"keep_awake.lid_note" = "Kapak kapalıyken Mac, güce bağlı ve harici ekran kullanmıyorsa yine de uykuya geçer";
+"keep_awake.tooltip_off" = "Mac'i uyanık tut — açmak için tıklayın";
+"keep_awake.tooltip_on" = "Mac uyanık tutuluyor — kapatmak için tıklayın";
+"keep_awake.tooltip_until" = "Mac %@ saatine kadar uyanık tutuluyor — kapatmak için tıklayın";
+"keep_awake.tooltip_auto" = "Mac uyanık tutuluyor — Claude Code çalışıyor";
 
 /* Sponsor slot */
 "sponsor.slot_title" = "Bu alan sponsorlara açıktır";

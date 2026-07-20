@@ -1009,7 +1009,7 @@
 "section.keep_awake_title" = "Maintien éveillé";
 "section.keep_awake_desc" = "Empêche le Mac de se mettre en veille";
 "keep_awake.manual_title" = "Contrôle manuel";
-"keep_awake.manual_desc" = "Maintient le Mac éveillé à la demande, avec minuteur facultatif";
+"keep_awake.manual_desc" = "Activez vous-même le maintien éveillé, avec minuteur facultatif";
 "keep_awake.enable" = "Maintenir le Mac éveillé";
 "keep_awake.enable_desc" = "Empêche temporairement le Mac de se mettre en veille";
 "keep_awake.status_active" = "Le Mac est actuellement maintenu éveillé";
@@ -1019,18 +1019,21 @@
 "keep_awake.duration.custom" = "Personnalisée…";
 "keep_awake.custom_hours" = "%d heures";
 "keep_awake.auto_title" = "Automatique";
-"keep_awake.auto_card_desc" = "L'activité de Claude Code contrôle la mise en veille";
+"keep_awake.auto_card_desc" = "Recommandé : ne maintient le Mac éveillé que lorsque Claude Code travaille réellement";
 "keep_awake.auto" = "Maintenir éveillé pendant que Claude Code travaille";
-"keep_awake.auto_desc" = "Maintient automatiquement le Mac éveillé tant qu'une session Claude Code est active. Installe les hooks Claude Code";
-"keep_awake.grace" = "Autoriser la veille après inactivité";
-"keep_awake.grace.immediately" = "Immédiatement";
+"keep_awake.auto_desc" = "Reste éveillé pendant les sessions Claude Code actives, puis autorise à nouveau la veille. Installe les hooks Claude Code";
+"keep_awake.grace" = "Quand Claude a terminé, rester éveillé pendant";
+"keep_awake.grace.immediately" = "Pas de délai supplémentaire";
 "keep_awake.hooks_note" = "L'activité est détectée via les hooks Claude Code dans ~/.claude/settings.json";
 "keep_awake.sleep_type" = "Prévention de la veille";
 "keep_awake.sleep_type_desc" = "Choisissez si l'écran reste allumé pendant que le Mac est maintenu éveillé";
 "keep_awake.sleep_type.system" = "L'écran peut s'éteindre";
 "keep_awake.sleep_type.display" = "Garder l'écran allumé";
-"keep_awake.lid_note" = "N'empêche pas la mise en veille lorsque le capot est fermé";
-"keep_awake.toggle_tooltip" = "Maintenir le Mac éveillé";
+"keep_awake.lid_note" = "Capot fermé, le Mac se mettra quand même en veille sauf s'il est branché et relié à un écran externe";
+"keep_awake.tooltip_off" = "Maintenir le Mac éveillé — cliquez pour activer";
+"keep_awake.tooltip_on" = "Mac maintenu éveillé — cliquez pour désactiver";
+"keep_awake.tooltip_until" = "Mac maintenu éveillé jusqu'à %@ — cliquez pour désactiver";
+"keep_awake.tooltip_auto" = "Mac maintenu éveillé — Claude Code travaille";
 
 /* Sponsor slot */
 "sponsor.slot_title" = "Cet emplacement est disponible pour les sponsors";

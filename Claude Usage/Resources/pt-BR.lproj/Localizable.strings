@@ -1031,7 +1031,7 @@
 "section.keep_awake_title" = "Manter acordado";
 "section.keep_awake_desc" = "Impede que o Mac entre em repouso";
 "keep_awake.manual_title" = "Controle manual";
-"keep_awake.manual_desc" = "Mantém o Mac acordado quando você quiser, com timer opcional";
+"keep_awake.manual_desc" = "Ative você mesmo, com timer opcional";
 "keep_awake.enable" = "Manter o Mac acordado";
 "keep_awake.enable_desc" = "Impede temporariamente que o Mac entre em repouso";
 "keep_awake.status_active" = "Mantendo o Mac acordado";
@@ -1041,18 +1041,21 @@
 "keep_awake.duration.custom" = "Personalizada…";
 "keep_awake.custom_hours" = "%d horas";
 "keep_awake.auto_title" = "Automático";
-"keep_awake.auto_card_desc" = "A atividade do Claude Code controla o repouso";
+"keep_awake.auto_card_desc" = "Recomendado: mantém o Mac acordado apenas enquanto o Claude Code está realmente trabalhando";
 "keep_awake.auto" = "Manter acordado enquanto o Claude Code trabalha";
-"keep_awake.auto_desc" = "Mantém o Mac acordado automaticamente enquanto uma sessão do Claude Code estiver ativa. Instala hooks do Claude Code";
-"keep_awake.grace" = "Permitir repouso após inatividade";
-"keep_awake.grace.immediately" = "Imediatamente";
+"keep_awake.auto_desc" = "Fica acordado durante sessões ativas do Claude Code e depois volta a permitir o repouso. Instala hooks do Claude Code";
+"keep_awake.grace" = "Quando o Claude terminar, ficar acordado por";
+"keep_awake.grace.immediately" = "Sem tempo extra";
 "keep_awake.hooks_note" = "A atividade é detectada por hooks do Claude Code em ~/.claude/settings.json";
 "keep_awake.sleep_type" = "Prevenção de repouso";
 "keep_awake.sleep_type_desc" = "Escolha se a tela permanece ligada enquanto o Mac fica acordado";
 "keep_awake.sleep_type.system" = "A tela pode desligar";
 "keep_awake.sleep_type.display" = "Manter a tela ligada";
-"keep_awake.lid_note" = "Não impede o repouso com a tampa fechada";
-"keep_awake.toggle_tooltip" = "Manter o Mac acordado";
+"keep_awake.lid_note" = "Com a tampa fechada, o Mac ainda entrará em repouso, a menos que esteja na tomada usando um monitor externo";
+"keep_awake.tooltip_off" = "Manter o Mac acordado — clique para ativar";
+"keep_awake.tooltip_on" = "Mantendo o Mac acordado — clique para desativar";
+"keep_awake.tooltip_until" = "Mantendo o Mac acordado até %@ — clique para desativar";
+"keep_awake.tooltip_auto" = "Mantendo o Mac acordado — o Claude Code está trabalhando";
 
 /* Sponsor slot */
 "sponsor.slot_title" = "Este espaço está disponível para patrocinadores";
