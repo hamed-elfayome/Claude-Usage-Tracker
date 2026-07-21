@@ -771,7 +771,7 @@ class ClaudeAPIService: APIServiceProtocol {
         }
     }
 
-    // MARK: - Response Parsing
+    // MARK: - Personal Spend
 
     /// Fetches the authenticated member's OWN month-to-date spend from
     /// `/organizations/{org}/usage/spend`. The URL is org-scoped but claude.ai
@@ -780,7 +780,7 @@ class ClaudeAPIService: APIServiceProtocol {
     /// analytics" enabled. Non-throwing: any failure (no such endpoint for the
     /// plan, analytics disabled, network/parse error) resolves to `nil` so it can
     /// never break the primary usage fetch. Returns spend in minor units (cents).
-    func fetchPersonalSpend(organizationId: String, sessionKey: String) async -> (usedMinorUnits: Double, currency: String)? {
+    private func fetchPersonalSpend(organizationId: String, sessionKey: String) async -> (usedMinorUnits: Double, currency: String)? {
         do {
             let calendar = Calendar.current
             let now = Date()
@@ -806,6 +806,17 @@ class ClaudeAPIService: APIServiceProtocol {
             request.httpMethod = "GET"
             request.timeoutInterval = 30
 
+            // Include Cloudflare clearance cookies captured by the sign-in webview
+            // (shared cookie storage) — without them claude.ai intermittently
+            // answers with a 403 "Just a moment..." challenge page.
+            var cookiePairs = ["sessionKey=\(sessionKey)"]
+            if let stored = HTTPCookieStorage.shared.cookies(for: url) {
+                for cookie in stored where ["cf_clearance", "__cf_bm"].contains(cookie.name) {
+                    cookiePairs.append("\(cookie.name)=\(cookie.value)")
+                }
+            }
+            request.setValue(cookiePairs.joined(separator: "; "), forHTTPHeaderField: "Cookie")
+
             LoggingService.shared.logAPIRequest("/organizations/\(organizationId)/usage/spend")
             let (data, response) = try await URLSession.shared.data(for: request)
 
@@ -826,6 +837,8 @@ class ClaudeAPIService: APIServiceProtocol {
             return nil
         }
     }
+
+    // MARK: - Response Parsing
 
     private func parseUsageResponse(_ data: Data) throws -> ClaudeUsage {
         // Parse Claude's actual API response structure
