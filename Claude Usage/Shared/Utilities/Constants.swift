@@ -76,6 +76,9 @@ enum Constants {
         static let attentionStaleTimeout: TimeInterval = 600
         /// Delay before the HUD hides once every session is idle (auto-hide on).
         static let idleHideDelay: TimeInterval = 5
+        /// Expanded HUD collapses back to compact after this long without the
+        /// pointer over it (expansion is transient, like the iOS island).
+        static let expandedAutoCollapseDelay: TimeInterval = 8
         static let maxBodyBytes = 65_536
         static let maxHeaderBytes = 8_192
     }
