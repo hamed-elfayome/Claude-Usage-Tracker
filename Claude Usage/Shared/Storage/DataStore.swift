@@ -89,6 +89,30 @@ class DataStore: StorageProvider {
         }
     }
 
+    /// Saves the latest machine-scoped Codex account snapshot.
+    func saveCodexUsage(_ usage: CodexUsage) {
+        do {
+            let data = try encoder.encode(usage)
+            defaults.set(data, forKey: Constants.UserDefaultsKeys.codexUsageData)
+            LoggingService.shared.logStorageSave("codexUsageData")
+        } catch {
+            LoggingService.shared.logStorageError("saveCodexUsage", error: error)
+        }
+    }
+
+    /// Loads the last successful Codex snapshot for immediate tray rendering.
+    func loadCodexUsage() -> CodexUsage? {
+        guard let data = defaults.data(forKey: Constants.UserDefaultsKeys.codexUsageData) else {
+            return nil
+        }
+        do {
+            return try decoder.decode(CodexUsage.self, from: data)
+        } catch {
+            LoggingService.shared.logStorageError("loadCodexUsage", error: error)
+            return nil
+        }
+    }
+
     // MARK: - User Preferences
 
     /// Saves notification preferences

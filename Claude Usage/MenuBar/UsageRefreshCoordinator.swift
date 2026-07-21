@@ -9,6 +9,7 @@ import Foundation
 import Combine
 
 /// Coordinates usage data refresh from API services
+@MainActor
 final class UsageRefreshCoordinator {
     private var refreshTimer: Timer?
     private var refreshIntervalObserver: NSKeyValueObservation?
@@ -23,12 +24,12 @@ final class UsageRefreshCoordinator {
     // MARK: - Initialization
 
     init(
-        apiService: APIServiceProtocol = ClaudeAPIService(),
+        apiService: APIServiceProtocol? = nil,
         statusService: ClaudeStatusService = ClaudeStatusService(),
         dataStore: StorageProvider = DataStore.shared,
         notificationService: NotificationServiceProtocol = NotificationManager.shared
     ) {
-        self.apiService = apiService
+        self.apiService = apiService ?? ClaudeAPIService()
         self.statusService = statusService
         self.dataStore = dataStore
         self.notificationService = notificationService

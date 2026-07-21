@@ -19,6 +19,8 @@ final class MenuBarIconRenderer {
         globalConfig: MenuBarIconConfiguration,
         usage: ClaudeUsage,
         apiUsage: APIUsage?,
+        codexUsage: CodexUsage?,
+        codexRateLimitID: String? = nil,
         isDarkMode: Bool,
         colorMode: MenuBarColorMode,
         singleColorHex: String,
@@ -31,6 +33,8 @@ final class MenuBarIconRenderer {
             config: config,
             usage: usage,
             apiUsage: apiUsage,
+            codexUsage: codexUsage,
+            codexRateLimitID: codexRateLimitID,
             showRemaining: globalConfig.showRemainingPercentage,
             usePaceColoring: globalConfig.usePaceColoring
         )
@@ -40,6 +44,8 @@ final class MenuBarIconRenderer {
             ? calculateTimeMarkerFraction(
                 metricType: metricType,
                 usage: usage,
+                codexUsage: codexUsage,
+                codexRateLimitID: codexRateLimitID,
                 showRemaining: globalConfig.showRemainingPercentage
             )
             : nil
@@ -49,12 +55,20 @@ final class MenuBarIconRenderer {
             guard globalConfig.showPaceMarker, metricType != .api else { return nil }
             // Get raw elapsed fraction (always non-inverted)
             guard let rawElapsed = calculateTimeMarkerFraction(
-                metricType: metricType, usage: usage, showRemaining: false
+                metricType: metricType,
+                usage: usage,
+                codexUsage: codexUsage,
+                codexRateLimitID: codexRateLimitID,
+                showRemaining: false
             ) else { return nil }
             // Get raw used percentage
-            let rawUsed: Double = metricType == .session
-                ? usage.sessionPercentage
-                : usage.weeklyPercentage
+            let rawUsed: Double
+            switch metricType {
+            case .session: rawUsed = usage.sessionPercentage
+            case .week: rawUsed = usage.weeklyPercentage
+            case .codex: rawUsed = codexUsage?.rateLimit(preferredID: codexRateLimitID)?.primary?.usedPercent ?? 0
+            case .api: return nil
+            }
             return PaceStatus.calculate(
                 usedPercentage: rawUsed,
                 elapsedFraction: Double(rawElapsed)
@@ -154,6 +168,8 @@ final class MenuBarIconRenderer {
         config: MetricIconConfig,
         usage: ClaudeUsage,
         apiUsage: APIUsage?,
+        codexUsage: CodexUsage?,
+        codexRateLimitID: String?,
         showRemaining: Bool,
         usePaceColoring: Bool = true
     ) -> MetricData {
@@ -252,6 +268,40 @@ final class MenuBarIconRenderer {
                 percentage: displayPercentage,
                 displayText: displayText,
                 statusLevel: statusLevel,
+                sessionResetTime: nil
+            )
+
+        case .codex:
+            guard let window = codexUsage?.rateLimit(preferredID: codexRateLimitID)?.primary else {
+                return MetricData(
+                    percentage: showRemaining ? 100 : 0,
+                    displayText: "N/A",
+                    statusLevel: .safe,
+                    sessionResetTime: nil
+                )
+            }
+            let displayPercentage = UsageStatusCalculator.getDisplayPercentage(
+                usedPercentage: window.usedPercent,
+                showRemaining: showRemaining
+            )
+            let elapsed: Double?
+            if usePaceColoring, let reset = window.resetsAt, let duration = window.duration {
+                elapsed = UsageStatusCalculator.elapsedFraction(
+                    resetTime: reset,
+                    duration: duration,
+                    showRemaining: false
+                )
+            } else {
+                elapsed = nil
+            }
+            return MetricData(
+                percentage: displayPercentage,
+                displayText: "\(Int(displayPercentage))%",
+                statusLevel: UsageStatusCalculator.calculateStatus(
+                    usedPercentage: window.usedPercent,
+                    showRemaining: showRemaining,
+                    elapsedFraction: elapsed
+                ),
                 sessionResetTime: nil
             )
         }
@@ -1391,6 +1441,8 @@ final class MenuBarIconRenderer {
     private func calculateTimeMarkerFraction(
         metricType: MenuBarMetricType,
         usage: ClaudeUsage,
+        codexUsage: CodexUsage?,
+        codexRateLimitID: String?,
         showRemaining: Bool
     ) -> CGFloat? {
         let resetTime: Date?
@@ -1405,6 +1457,12 @@ final class MenuBarIconRenderer {
             duration = Constants.weeklyWindow
         case .api:
             return nil
+        case .codex:
+            guard let window = codexUsage?.rateLimit(preferredID: codexRateLimitID)?.primary,
+                  let windowReset = window.resetsAt,
+                  let windowDuration = window.duration else { return nil }
+            resetTime = windowReset
+            duration = windowDuration
         }
 
         guard let f = UsageStatusCalculator.elapsedFraction(

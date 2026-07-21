@@ -8,6 +8,7 @@ enum Constants {
     // UserDefaults keys
     enum UserDefaultsKeys {
         static let claudeUsageData = "claudeUsageData"
+        static let codexUsageData = "codexUsageData"
         static let notificationsEnabled = "notificationsEnabled"
         static let refreshInterval = "refreshInterval"
         static let autoStartSessionEnabled = "autoStartSessionEnabled"

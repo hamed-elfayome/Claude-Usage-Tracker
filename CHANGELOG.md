@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Added app-wide OpenAI Codex usage monitoring through the local Codex app server.
+- Added a dedicated Codex settings page with CLI/login diagnostics, executable selection, account and plan details, manual refresh, rate-limit bucket selection, credits, lifetime tokens, tray customization, privacy controls, and threshold notifications.
+- Added Codex setup guidance to onboarding and the README. Codex authentication remains owned by the Codex CLI.
+
 All notable changes to Claude Usage Tracker will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),

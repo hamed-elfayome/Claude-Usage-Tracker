@@ -76,6 +76,9 @@ class SharedDataStore {
         static let timeFormatPreference = "timeFormatPreference"
         static let peakHoursIndicatorEnabled = "peakHoursIndicatorEnabled"
         static let peakHoursMenuIconEnabled = "peakHoursMenuIconEnabled"
+
+        // OpenAI Codex integration (machine-scoped)
+        static let codexSettings = "codexSettings"
     }
 
     init() {
@@ -92,6 +95,32 @@ class SharedDataStore {
 
     func loadLanguageCode() -> String? {
         return defaults.string(forKey: Keys.languageCode)
+    }
+
+    // MARK: - OpenAI Codex
+
+    func saveCodexSettings(_ settings: CodexSettings) {
+        do {
+            defaults.set(try JSONEncoder().encode(settings), forKey: Keys.codexSettings)
+        } catch {
+            LoggingService.shared.logStorageError("saveCodexSettings", error: error)
+        }
+    }
+
+    /// Loads app-wide Codex settings, migrating the former per-profile tray
+    /// metric the first time this version runs.
+    func loadCodexSettings(legacyMetric: MetricIconConfig? = nil) -> CodexSettings {
+        if let data = defaults.data(forKey: Keys.codexSettings) {
+            do {
+                return try JSONDecoder().decode(CodexSettings.self, from: data)
+            } catch {
+                LoggingService.shared.logStorageError("loadCodexSettings", error: error)
+            }
+        }
+
+        let migrated = CodexSettings.migratingLegacyMetric(legacyMetric)
+        saveCodexSettings(migrated)
+        return migrated
     }
 
     // MARK: - Claude Code Notch HUD

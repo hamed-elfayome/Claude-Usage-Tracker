@@ -9,6 +9,7 @@ import Cocoa
 import Combine
 
 /// Manages multiple menu bar status items for different metrics
+@MainActor
 final class StatusBarUIManager {
     // Dictionary to hold multiple status items keyed by metric type (single profile mode)
     private var statusItems: [MenuBarMetricType: NSStatusItem] = [:]
@@ -403,6 +404,30 @@ final class StatusBarUIManager {
         LoggingService.shared.logUIEvent("Multi-profile config updated: removed=\(idsToRemove.count), added=\(idsToAdd.count), kept=\(currentProfileIds.intersection(newProfileIds).count)")
     }
 
+    /// Adds or removes the machine-scoped Codex item without disturbing the
+    /// profile items used by multi-profile mode.
+    func updateCodexStatusItem(enabled: Bool, target: AnyObject, action: Selector) {
+        if enabled {
+            guard statusItems[.codex] == nil else { return }
+            let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+            statusItem.autosaveName = Self.autosaveName(for: .codex)
+            statusItem.isVisible = true
+            if let button = statusItem.button {
+                button.action = action
+                button.target = target
+                button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+            }
+            statusItems[.codex] = statusItem
+        } else if let statusItem = statusItems.removeValue(forKey: .codex) {
+            if let button = statusItem.button {
+                button.image = nil
+                button.action = nil
+                button.target = nil
+            }
+            NSStatusBar.system.removeStatusItem(statusItem)
+        }
+    }
+
     /// Adds a thin green underline to an image to indicate the active profile
     private func addGreenUnderline(to image: NSImage) -> NSImage {
         let newImage = NSImage(size: image.size)
@@ -623,17 +648,12 @@ final class StatusBarUIManager {
     /// Updates all status bar buttons based on current usage data
     func updateAllButtons(
         usage: ClaudeUsage,
-        apiUsage: APIUsage?
+        apiUsage: APIUsage?,
+        codexUsage: CodexUsage?,
+        config: MenuBarIconConfiguration,
+        codexSettings: CodexSettings
     ) {
-        // Get config from active profile
-        let profile = ProfileManager.shared.activeProfile
-        let config = profile?.iconConfig ?? .default
-
-        // Keep the render path aligned with ClaudeAPIService/MenuBarManager auth
-        // fallback logic so users authenticated only via `claude login` don't
-        // periodically repaint to the default logo after successful refreshes.
-        let hasAnyCredentials = hasAnyAvailableCredentials(for: profile)
-        if !hasAnyCredentials || config.enabledMetrics.isEmpty {
+        if config.enabledMetrics.isEmpty {
             // Show default app logo
             if let statusItem = statusItems[.session],  // We use .session as placeholder key
                let button = statusItem.button {
@@ -663,6 +683,8 @@ final class StatusBarUIManager {
                 globalConfig: config,
                 usage: usage,
                 apiUsage: apiUsage,
+                codexUsage: codexUsage,
+                codexRateLimitID: codexSettings.selectedRateLimitID,
                 isDarkMode: menuBarIsDark,
                 colorMode: config.colorMode,
                 singleColorHex: config.singleColorHex,
@@ -679,15 +701,16 @@ final class StatusBarUIManager {
     func updateButton(
         for metricType: MenuBarMetricType,
         usage: ClaudeUsage,
-        apiUsage: APIUsage?
+        apiUsage: APIUsage?,
+        codexUsage: CodexUsage?,
+        config: MenuBarIconConfiguration,
+        codexSettings: CodexSettings
     ) {
         guard let statusItem = statusItems[metricType],
               let button = statusItem.button else {
             return
         }
 
-        // Get config from active profile
-        let config = ProfileManager.shared.activeProfile?.iconConfig ?? .default
         guard let metricConfig = config.config(for: metricType) else {
             return
         }
@@ -702,6 +725,8 @@ final class StatusBarUIManager {
             globalConfig: config,
             usage: usage,
             apiUsage: apiUsage,
+            codexUsage: codexUsage,
+            codexRateLimitID: codexSettings.selectedRateLimitID,
             isDarkMode: menuBarIsDark,
             colorMode: config.colorMode,
             singleColorHex: config.singleColorHex,
@@ -713,26 +738,6 @@ final class StatusBarUIManager {
         button.image = image
     }
 
-    /// Mirrors the auth fallback used for actual usage fetches so UI gating does
-    /// not disagree with the network layer.
-    private func hasAnyAvailableCredentials(for profile: Profile?) -> Bool {
-        guard let profile else { return false }
-
-        if profile.hasUsageCredentials { return true }
-
-        do {
-            if let systemCreds = try ClaudeCodeSyncService.shared.readSystemCredentials(),
-               !ClaudeCodeSyncService.shared.isTokenExpired(systemCreds),
-               ClaudeCodeSyncService.shared.extractAccessToken(from: systemCreds) != nil {
-                return true
-            }
-        } catch {
-            LoggingService.shared.log("StatusBarUIManager.hasAnyAvailableCredentials: system keychain check failed: \(error.localizedDescription)")
-        }
-
-        return false
-    }
-
     /// Get button for a specific metric (used for popover positioning)
     func button(for metricType: MenuBarMetricType) -> NSStatusBarButton? {
         return statusItems[metricType]?.button
@@ -740,11 +745,12 @@ final class StatusBarUIManager {
 
     /// Get the first enabled metric's button (for backwards compatibility)
     var primaryButton: NSStatusBarButton? {
-        let config = DataStore.shared.loadMenuBarIconConfiguration()
-        guard let firstMetric = config.enabledMetrics.first else {
-            return nil
+        for metricType in [MenuBarMetricType.session, .week, .api, .codex] {
+            if let button = statusItems[metricType]?.button {
+                return button
+            }
         }
-        return statusItems[firstMetric.metricType]?.button
+        return nil
     }
 
     /// Find which metric type owns the given button (sender)

@@ -2,13 +2,20 @@ import Cocoa
 import SwiftUI
 import Combine
 
+@MainActor
 class MenuBarManager: NSObject, ObservableObject {
+    static weak var current: MenuBarManager?
+
     private var statusItem: NSStatusItem?  // Legacy - kept for backwards compatibility
     private var statusBarUIManager: StatusBarUIManager?
     private var refreshTimer: Timer?
     @Published private(set) var usage: ClaudeUsage = .empty
     @Published private(set) var status: ClaudeStatus = .unknown
     @Published private(set) var apiUsage: APIUsage?
+    @Published private(set) var codexUsage: CodexUsage?
+    @Published private(set) var codexSettings = CodexSettings()
+    @Published private(set) var codexRefreshError: String?
+    @Published private(set) var isCodexRefreshing = false
     @Published private(set) var isRefreshing: Bool = false
 
     // Error tracking for stale data / credential banners
@@ -65,6 +72,7 @@ class MenuBarManager: NSObject, ObservableObject {
     private weak var currentPopoverButton: NSStatusBarButton?
 
     private let apiService = ClaudeAPIService()
+    private let codexService = CodexAppServerService.shared
     private let statusService = ClaudeStatusService()
     private let dataStore = DataStore.shared
     private let networkMonitor = NetworkMonitor.shared
@@ -106,12 +114,18 @@ class MenuBarManager: NSObject, ObservableObject {
     private var peakHoursObserver: NSObjectProtocol?
 
     private var multiProfileConfigObserver: NSObjectProtocol?
+    private var codexSettingsObserver: NSObjectProtocol?
 
     // MARK: - Image Caching (CPU Optimization)
     private var cachedImage: NSImage?
     private var cachedImageKey: String = ""
     private var updateDebounceTimer: Timer?
     private var cachedIsDarkMode: Bool = false
+
+    override init() {
+        super.init()
+        Self.current = self
+    }
 
     func setup() {
         // Initialize cached appearance to avoid layout recursion
@@ -124,6 +138,17 @@ class MenuBarManager: NSObject, ObservableObject {
         statusBarUIManager = StatusBarUIManager()
         statusBarUIManager?.delegate = self
 
+        // Load the machine-scoped Codex state before deciding which status
+        // items to create. The legacy metric is migrated from the active Claude
+        // profile once, then ignored in profile appearance settings.
+        codexUsage = dataStore.loadCodexUsage()
+        codexSettings = SharedDataStore.shared.loadCodexSettings(
+            legacyMetric: profileManager.activeProfile?.iconConfig.config(for: .codex)
+        )
+        if !codexSettings.monitoringEnabled {
+            codexUsage = nil
+        }
+
         // Check if we should use multi-profile mode
         if profileManager.displayMode == .multi {
             // Multi-profile mode - setup with selected profiles
@@ -131,26 +156,7 @@ class MenuBarManager: NSObject, ObservableObject {
         } else {
             // Single profile mode - setup with active profile's config
             let config = profileManager.activeProfile?.iconConfig ?? .default
-            // Includes system Keychain CLI credentials as a fallback so users who
-            // only authenticated via `claude login` still get metrics enabled.
-            let hasCredentials = hasAnyAvailableCredentials()
-
-            // If no credentials anywhere, create empty config to show default logo
-            let displayConfig: MenuBarIconConfiguration
-            if !hasCredentials {
-                displayConfig = MenuBarIconConfiguration(
-                    colorMode: config.colorMode,
-                    singleColorHex: config.singleColorHex,
-                    showIconNames: config.showIconNames,
-                    metrics: config.metrics.map { metric in
-                        var updatedMetric = metric
-                        updatedMetric.isEnabled = false
-                        return updatedMetric
-                    }
-                )
-            } else {
-                displayConfig = config
-            }
+            let displayConfig = effectiveMenuBarConfiguration(from: config)
 
             statusBarUIManager?.setup(target: self, action: #selector(togglePopover), config: displayConfig)
         }
@@ -185,7 +191,7 @@ class MenuBarManager: NSObject, ObservableObject {
             guard let self = self else { return }
 
             // Skip only if no credentials exist anywhere (profile or system keychain)
-            guard self.hasAnyAvailableCredentials() else {
+            guard self.hasAnyAvailableCredentials() || self.isCodexMonitoringAvailable else {
                 LoggingService.shared.log("Skipping network-available refresh (no credentials available)")
                 return
             }
@@ -201,7 +207,7 @@ class MenuBarManager: NSObject, ObservableObject {
 
         // Initial data fetch (with small delay for launch-at-login scenarios).
         // Includes system Keychain CLI credentials as a fallback.
-        if hasAnyAvailableCredentials() {
+        if hasAnyAvailableCredentials() || isCodexMonitoringAvailable {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                 self?.refreshUsage()
             }
@@ -224,6 +230,7 @@ class MenuBarManager: NSObject, ObservableObject {
         // Observe display mode changes (single/multi profile)
         observeDisplayModeChanges()
         observeMultiProfileConfigChanges()
+        observeCodexSettingsChanges()
 
         // Setup headless mode observer if enabled (for Remote Desktop support)
         setupHeadlessModeObserver()
@@ -296,6 +303,10 @@ class MenuBarManager: NSObject, ObservableObject {
         if let multiProfileConfigObserver = multiProfileConfigObserver {
             NotificationCenter.default.removeObserver(multiProfileConfigObserver)
             self.multiProfileConfigObserver = nil
+        }
+        if let codexSettingsObserver = codexSettingsObserver {
+            NotificationCenter.default.removeObserver(codexSettingsObserver)
+            self.codexSettingsObserver = nil
         }
         if let peakHoursObserver = peakHoursObserver {
             NotificationCenter.default.removeObserver(peakHoursObserver)
@@ -444,27 +455,7 @@ class MenuBarManager: NSObject, ObservableObject {
             return
         }
 
-        // Keep configuration decisions aligned with the fetch path so users with
-        // only system Keychain CLI credentials keep their configured metric items.
-        let hasUsageCredentials = hasAnyAvailableCredentials()
-
-        // If no usage credentials, use an empty config (will show default logo)
-        let displayConfig: MenuBarIconConfiguration
-        if !hasUsageCredentials {
-            // Create config with no enabled metrics (will trigger default logo)
-            displayConfig = MenuBarIconConfiguration(
-                colorMode: config.colorMode,
-                singleColorHex: config.singleColorHex,
-                showIconNames: config.showIconNames,
-                metrics: config.metrics.map { metric in
-                    var updatedMetric = metric
-                    updatedMetric.isEnabled = false
-                    return updatedMetric
-                }
-            )
-        } else {
-            displayConfig = config
-        }
+        let displayConfig = effectiveMenuBarConfiguration(from: config)
 
         statusBarUIManager?.updateConfiguration(
             target: self,
@@ -722,6 +713,9 @@ class MenuBarManager: NSObject, ObservableObject {
 
     /// Updates all enabled status bar icons
     private func updateAllStatusBarIcons() {
+        let baseConfig = profileManager.activeProfile?.iconConfig ?? .default
+        let effectiveConfig = effectiveMenuBarConfiguration(from: baseConfig)
+
         // Check if in multi-profile mode
         if profileManager.displayMode == .multi {
             // Update multi-profile icons using profiles from profileManager
@@ -731,11 +725,27 @@ class MenuBarManager: NSObject, ObservableObject {
                 config: config,
                 activeProfileId: profileManager.activeProfile?.id
             )
+            statusBarUIManager?.updateCodexStatusItem(
+                enabled: effectiveConfig.config(for: .codex)?.isEnabled == true,
+                target: self,
+                action: #selector(togglePopover)
+            )
+            statusBarUIManager?.updateButton(
+                for: .codex,
+                usage: usage,
+                apiUsage: apiUsage,
+                codexUsage: codexUsage,
+                config: effectiveConfig,
+                codexSettings: codexSettings
+            )
         } else {
             // Single profile mode - use the standard update
             statusBarUIManager?.updateAllButtons(
                 usage: usage,
-                apiUsage: apiUsage
+                apiUsage: apiUsage,
+                codexUsage: codexUsage,
+                config: effectiveConfig,
+                codexSettings: codexSettings
             )
         }
     }
@@ -745,7 +755,10 @@ class MenuBarManager: NSObject, ObservableObject {
         statusBarUIManager?.updateButton(
             for: metricType,
             usage: usage,
-            apiUsage: apiUsage
+            apiUsage: apiUsage,
+            codexUsage: codexUsage,
+            config: effectiveMenuBarConfiguration(from: profileManager.activeProfile?.iconConfig ?? .default),
+            codexSettings: codexSettings
         )
     }
 
@@ -913,6 +926,41 @@ class MenuBarManager: NSObject, ObservableObject {
         }
     }
 
+    private func observeCodexSettingsChanges() {
+        codexSettingsObserver = NotificationCenter.default.addObserver(
+            forName: .codexSettingsChanged,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self else { return }
+            Task { @MainActor in
+                let previousSettings = self.codexSettings
+                self.codexSettings = SharedDataStore.shared.loadCodexSettings()
+                let connectionChanged = previousSettings.monitoringEnabled != self.codexSettings.monitoringEnabled
+                    || previousSettings.executablePath != self.codexSettings.executablePath
+
+                if !self.codexSettings.monitoringEnabled || previousSettings.executablePath != self.codexSettings.executablePath {
+                    self.codexService.stop()
+                }
+                if !self.codexSettings.monitoringEnabled {
+                    self.codexUsage = nil
+                    self.codexRefreshError = nil
+                    self.isCodexRefreshing = false
+                }
+
+                if self.profileManager.displayMode == .multi {
+                    self.updateMultiProfileDisplay()
+                } else {
+                    self.updateMenuBarDisplay(with: self.profileManager.activeProfile?.iconConfig ?? .default)
+                }
+
+                if self.codexSettings.monitoringEnabled && (connectionChanged || self.codexUsage == nil) {
+                    self.refreshCodexUsage(reportUnavailable: true)
+                }
+            }
+        }
+    }
+
     private func observePeakHoursSettingChanges() {
         peakHoursObserver = NotificationCenter.default.addObserver(
             forName: .peakHoursSettingChanged,
@@ -991,6 +1039,42 @@ class MenuBarManager: NSObject, ObservableObject {
             || ClaudeCodeSyncService.shared.hasUsableSystemCredentials()
     }
 
+    private var isCodexMonitoringAvailable: Bool {
+        codexSettings.monitoringEnabled
+            && codexService.isAvailable(customExecutablePath: codexSettings.executablePath)
+    }
+
+    /// Combines per-profile Claude appearance with the one app-wide Codex
+    /// metric. Legacy Codex entries inside profiles are intentionally ignored.
+    private func effectiveMenuBarConfiguration(from profileConfig: MenuBarIconConfiguration) -> MenuBarIconConfiguration {
+        let hasClaudeCredentials = hasAnyAvailableCredentials()
+        var metrics = profileConfig.metrics
+            .filter { $0.metricType != .codex }
+            .map { metric -> MetricIconConfig in
+                var metric = metric
+                if !hasClaudeCredentials { metric.isEnabled = false }
+                return metric
+            }
+
+        var codexMetric = codexSettings.menuBarMetric
+        codexMetric.metricType = .codex
+        codexMetric.isEnabled = codexSettings.monitoringEnabled
+            && codexMetric.isEnabled
+            && (isCodexMonitoringAvailable || codexUsage != nil)
+        metrics.append(codexMetric)
+
+        return MenuBarIconConfiguration(
+            colorMode: profileConfig.colorMode,
+            singleColorHex: profileConfig.singleColorHex,
+            showIconNames: profileConfig.showIconNames,
+            showRemainingPercentage: profileConfig.showRemainingPercentage,
+            showTimeMarker: profileConfig.showTimeMarker,
+            showPaceMarker: profileConfig.showPaceMarker,
+            usePaceColoring: profileConfig.usePaceColoring,
+            metrics: metrics
+        )
+    }
+
     private func setupMultiProfileMode() {
         let selectedProfiles = profileManager.getSelectedProfiles()
         let config = profileManager.multiProfileConfig
@@ -1000,11 +1084,18 @@ class MenuBarManager: NSObject, ObservableObject {
             target: self,
             action: #selector(togglePopover)
         )
+        let effectiveConfig = effectiveMenuBarConfiguration(from: profileManager.activeProfile?.iconConfig ?? .default)
+        statusBarUIManager?.updateCodexStatusItem(
+            enabled: effectiveConfig.config(for: .codex)?.isEnabled == true,
+            target: self,
+            action: #selector(togglePopover)
+        )
 
         // Defer icon update to next run loop iteration to let NSStatusBar finalize layout
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             self.statusBarUIManager?.updateMultiProfileButtons(profiles: self.profileManager.profiles, config: config, activeProfileId: self.profileManager.activeProfile?.id)
+            self.updateStatusBarIcon(for: .codex)
         }
 
         LoggingService.shared.log("MenuBarManager: Multi-profile mode enabled with \(selectedProfiles.count) profiles, style=\(config.iconStyle.rawValue)")
@@ -1024,6 +1115,12 @@ class MenuBarManager: NSObject, ObservableObject {
             target: self,
             action: #selector(togglePopover)
         )
+        let effectiveConfig = effectiveMenuBarConfiguration(from: profileManager.activeProfile?.iconConfig ?? .default)
+        statusBarUIManager?.updateCodexStatusItem(
+            enabled: effectiveConfig.config(for: .codex)?.isEnabled == true,
+            target: self,
+            action: #selector(togglePopover)
+        )
 
         // WORKAROUND: Defer icon update to next run loop iteration to avoid race condition
         // where NSStatusBar layout hasn't finalized yet after status item creation.
@@ -1031,6 +1128,7 @@ class MenuBarManager: NSObject, ObservableObject {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             self.statusBarUIManager?.updateMultiProfileButtons(profiles: self.profileManager.profiles, config: config, activeProfileId: self.profileManager.activeProfile?.id)
+            self.updateStatusBarIcon(for: .codex)
         }
 
         LoggingService.shared.log("MenuBarManager: Multi-profile display updated incrementally with \(selectedProfiles.count) profiles")
@@ -1220,25 +1318,7 @@ class MenuBarManager: NSObject, ObservableObject {
     private func setupSingleProfileMode() {
         guard let profile = profileManager.activeProfile else { return }
 
-        let hasUsageCredentials = hasAnyAvailableCredentials()
-        let config = profile.iconConfig
-
-        // If no usage credentials, create empty config to show default logo
-        let displayConfig: MenuBarIconConfiguration
-        if !hasUsageCredentials {
-            displayConfig = MenuBarIconConfiguration(
-                colorMode: config.colorMode,
-                singleColorHex: config.singleColorHex,
-                showIconNames: config.showIconNames,
-                metrics: config.metrics.map { metric in
-                    var updatedMetric = metric
-                    updatedMetric.isEnabled = false
-                    return updatedMetric
-                }
-            )
-        } else {
-            displayConfig = config
-        }
+        let displayConfig = effectiveMenuBarConfiguration(from: profile.iconConfig)
 
         statusBarUIManager?.setup(target: self, action: #selector(togglePopover), config: displayConfig)
 
@@ -1251,6 +1331,10 @@ class MenuBarManager: NSObject, ObservableObject {
     }
 
     func refreshUsage() {
+        // This must run before the profile branches: Codex is independent of
+        // Claude credentials and is shared across single/multi-profile modes.
+        refreshCodexUsage()
+
         // In multi-profile mode, refresh ALL selected profiles
         if profileManager.displayMode == .multi {
             refreshAllSelectedProfiles()
@@ -1445,6 +1529,48 @@ class MenuBarManager: NSObject, ObservableObject {
                 // Show success notification if this was user-triggered and successful
                 if usageSuccess && abs(self.lastRefreshTriggerTime.timeIntervalSinceNow) < 5 {
                     self.showSuccessNotification()
+                }
+            }
+        }
+    }
+
+    func refreshCodexUsageNow() {
+        refreshCodexUsage(reportUnavailable: true)
+    }
+
+    private func refreshCodexUsage(reportUnavailable: Bool = false) {
+        guard codexSettings.monitoringEnabled else {
+            if reportUnavailable { codexRefreshError = "Codex monitoring is disabled" }
+            return
+        }
+        guard codexService.isAvailable(customExecutablePath: codexSettings.executablePath) else {
+            if reportUnavailable { codexRefreshError = CodexAppServerError.executableNotFound.localizedDescription }
+            return
+        }
+        guard !isCodexRefreshing else { return }
+        isCodexRefreshing = true
+
+        Task {
+            do {
+                let snapshot = try await codexService.fetchUsage(executablePath: codexSettings.executablePath)
+                await MainActor.run {
+                    self.codexUsage = snapshot
+                    self.codexRefreshError = nil
+                    self.dataStore.saveCodexUsage(snapshot)
+                    NotificationManager.shared.checkAndNotify(
+                        codexUsage: snapshot,
+                        settings: self.codexSettings
+                    )
+                    self.updateAllStatusBarIcons()
+                    self.isCodexRefreshing = false
+                }
+            } catch {
+                LoggingService.shared.log("MenuBarManager: Codex usage refresh failed: \(error.localizedDescription)")
+                await MainActor.run {
+                    if self.codexSettings.monitoringEnabled {
+                        self.codexRefreshError = error.localizedDescription
+                    }
+                    self.isCodexRefreshing = false
                 }
             }
         }

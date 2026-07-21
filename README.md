@@ -37,6 +37,7 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 - **Multi-Profile Support**: Manage unlimited Claude accounts with isolated credentials and settings
 - **Multi-Profile Display**: Monitor all profiles simultaneously in the menu bar
 - **Claude Code Integration**: Sync CLI accounts and auto-switch credentials when changing profiles
+- **OpenAI Codex Usage**: Monitor Codex rate-limit windows, credits, account plan, and lifetime tokens through the locally installed Codex CLI
 - **Real-Time Monitoring**: Track session, weekly, and per-model usage (Fable, Opus, Sonnet, Design), API console usage, and API costs per profile
 - **Usage History**: Interactive charts tracking session, weekly, and billing data over time
 - **Global Shortcuts**: System-wide keyboard shortcuts (no Accessibility permission)
@@ -98,6 +99,24 @@ Before installing Claude Usage Tracker, ensure you have:
 - **Manual**: Web browser access to extract session key from claude.ai (Chrome, Safari, Firefox, etc.)
 
 **Note**: For terminal statusline integration, you'll still need to manually configure a session key even if using Claude Code OAuth
+
+### OpenAI Codex usage monitoring
+
+Codex monitoring is optional and app-wide. It uses the active login from your
+local Codex CLI; Claude Usage Tracker does not read or copy Codex credential
+files.
+
+1. Install the CLI: `npm install --global @openai/codex`
+2. Sign in: `codex login`
+3. Confirm the login: `codex login status`
+4. Open **Settings → OpenAI Codex** to enable monitoring, inspect the detected
+   executable and account, choose the tray rate-limit bucket, and configure
+   alerts.
+
+The app detects Homebrew, `/usr/local/bin`, and `PATH` installations. A custom
+executable can be selected in settings or supplied with `CODEX_EXECUTABLE`.
+Codex authentication remains managed by the CLI, and the app communicates with
+the local `codex app-server --stdio` process.
 
 ### Installation
 

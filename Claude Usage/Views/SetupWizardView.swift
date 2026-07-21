@@ -141,6 +141,10 @@ struct SetupWizardView: View {
 
             Divider()
 
+            CodexOnboardingBanner()
+
+            Divider()
+
             // Claude Code info section - compact (only show if credentials exist)
             if hasClaudeCodeCredentials {
                 HStack(spacing: 12) {
@@ -956,6 +960,9 @@ struct CLIDetectedSetupView: View {
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 60)
 
+                CodexOnboardingBanner()
+                    .padding(.horizontal, 40)
+
                 // Start tracking button
                 Button(action: onStartTracking) {
                     HStack(spacing: 8) {
@@ -981,6 +988,41 @@ struct CLIDetectedSetupView: View {
             Spacer()
         }
         .frame(width: 580, height: 680)
+    }
+}
+
+private struct CodexOnboardingBanner: View {
+    private var isInstalled: Bool { CodexAppServerService.shared.isAvailable }
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "chevron.left.forwardslash.chevron.right")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(.accentColor)
+                .frame(width: 22)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text("codex.onboarding.title".localized)
+                    .font(.system(size: 11, weight: .semibold))
+                Text(isInstalled ? "codex.onboarding.detected".localized : "codex.onboarding.optional".localized)
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer()
+
+            Button("codex.onboarding.copy_command".localized) {
+                let command = isInstalled ? "codex login" : "npm install --global @openai/codex"
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(command, forType: .string)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 10)
+        .background(Color.accentColor.opacity(0.06))
     }
 }
 

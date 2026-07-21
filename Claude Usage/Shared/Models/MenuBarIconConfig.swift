@@ -12,6 +12,7 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
     case session
     case week
     case api
+    case codex
 
     var id: String { rawValue }
 
@@ -23,6 +24,8 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
             return "Week Usage"
         case .api:
             return "API Credits"
+        case .codex:
+            return "Codex Usage"
         }
     }
 
@@ -34,6 +37,8 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
             return "W:"
         case .api:
             return "API:"
+        case .codex:
+            return "CX:"
         }
     }
 
@@ -45,6 +50,8 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
             return "Weekly token usage (all models)"
         case .api:
             return "API Console billing credits"
+        case .codex:
+            return "OpenAI Codex account usage"
         }
     }
 
@@ -56,6 +63,8 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
             return "calendar.badge.clock"
         case .api:
             return "dollarsign.circle.fill"
+        case .codex:
+            return "chevron.left.forwardslash.chevron.right"
         }
     }
 }
@@ -219,6 +228,17 @@ struct MetricIconConfig: Codable, Equatable {
             apiDisplayMode: .remaining
         )
     }
+
+    /// Codex is opt-in so existing users do not gain another menu bar item
+    /// merely because the Codex CLI happens to be installed.
+    static var codexDefault: MetricIconConfig {
+        MetricIconConfig(
+            metricType: .codex,
+            isEnabled: false,
+            iconStyle: .battery,
+            order: 3
+        )
+    }
 }
 
 /// Icon style for multi-profile display
@@ -372,7 +392,8 @@ struct MenuBarIconConfiguration: Codable, Equatable {
         metrics: [MetricIconConfig] = [
             .sessionDefault,
             .weekDefault,
-            .apiDefault
+            .apiDefault,
+            .codexDefault
         ]
     ) {
         self.colorMode = colorMode
@@ -416,6 +437,9 @@ struct MenuBarIconConfiguration: Codable, Equatable {
         showPaceMarker = try container.decodeIfPresent(Bool.self, forKey: .showPaceMarker) ?? false
         usePaceColoring = try container.decodeIfPresent(Bool.self, forKey: .usePaceColoring) ?? false
         metrics = try container.decode([MetricIconConfig].self, forKey: .metrics)
+        if !metrics.contains(where: { $0.metricType == .codex }) {
+            metrics.append(.codexDefault)
+        }
     }
 
     func encode(to encoder: Encoder) throws {

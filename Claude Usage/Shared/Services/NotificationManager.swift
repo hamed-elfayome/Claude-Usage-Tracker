@@ -193,6 +193,52 @@ class NotificationManager: NotificationServiceProtocol {
         checkAndNotify(usage: usage, profileName: "Default", settings: settings)
     }
 
+    /// Sends app-wide Codex alerts for the rate-limit bucket selected in Codex
+    /// settings. Identifiers include the bucket and threshold so each level is
+    /// delivered once per window and becomes eligible again after a reset.
+    func checkAndNotify(codexUsage: CodexUsage, settings: CodexSettings) {
+        guard settings.monitoringEnabled,
+              settings.notificationsEnabled,
+              let limit = codexUsage.rateLimit(preferredID: settings.selectedRateLimitID),
+              let window = limit.primary else { return }
+
+        let thresholds = settings.notificationThresholds.sorted()
+        guard !thresholds.isEmpty else { return }
+        let identifierPrefix = "Codex_\(limit.id)_"
+
+        if window.usedPercent < Double(thresholds[0]) {
+            sentNotifications = sentNotifications.filter { !$0.hasPrefix(identifierPrefix) }
+            return
+        }
+
+        guard let threshold = thresholds.reversed().first(where: { window.usedPercent >= Double($0) }) else {
+            return
+        }
+        let identifier = "\(identifierPrefix)\(threshold)"
+        guard !sentNotifications.contains(identifier) else { return }
+
+        let content = UNMutableNotificationContent()
+        content.title = "Codex usage: \(Int(window.usedPercent.rounded()))%"
+        var body = "\(limit.displayName) usage crossed the \(threshold)% alert threshold."
+        if let resetsAt = window.resetsAt {
+            body += " Resets \(resetsAt.formatted(date: .abbreviated, time: .shortened))."
+        }
+        content.body = body
+        content.sound = .default
+        content.categoryIdentifier = "USAGE_ALERT"
+
+        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: nil)
+        UNUserNotificationCenter.current().add(request) { [weak self] error in
+            if let error {
+                LoggingService.shared.logNotificationError(error)
+                return
+            }
+            var updated = self?.sentNotifications ?? []
+            updated.insert(identifier)
+            self?.sentNotifications = updated
+        }
+    }
+
     /// Sends a profile-specific usage alert
     private func sendProfileAlert(profileName: String, type: AlertType, percentage: Double, thresholdLevel: Int? = nil, resetTime: Date?, soundName: String = "default") {
         // Use the configured threshold level (not current percentage) to prevent duplicate notifications

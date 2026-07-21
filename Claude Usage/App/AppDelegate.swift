@@ -2,6 +2,7 @@ import Cocoa
 import SwiftUI
 import UserNotifications
 
+@MainActor
 class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate {
     private var menuBarManager: MenuBarManager?
     private var setupWindow: NSWindow?
@@ -229,6 +230,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         // Cleanup
         NotchHookServer.shared.stop()
         NotchHUDController.shared.stop()
+        CodexAppServerService.shared.stop()
         menuBarManager?.cleanup()
     }
 

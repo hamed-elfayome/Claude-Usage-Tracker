@@ -194,7 +194,26 @@ struct PopoverContentView: View {
             }
 
             // Usage
-            SmartUsageDashboard(usage: displayUsage, apiUsage: displayAPIUsage)
+            SmartUsageDashboard(
+                usage: displayUsage,
+                apiUsage: displayAPIUsage,
+                codexUsage: manager.codexUsage,
+                codexSettings: manager.codexSettings
+            )
+
+            if manager.codexSettings.monitoringEnabled, let error = manager.codexRefreshError {
+                HStack(alignment: .top, spacing: 7) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.orange)
+                    Text(error)
+                        .font(.system(size: 9))
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 7)
+            }
 
             // Contextual Insights
             if showInsights {
@@ -558,6 +577,8 @@ struct HeaderIconButton: View {
 struct SmartUsageDashboard: View {
     let usage: ClaudeUsage
     let apiUsage: APIUsage?
+    let codexUsage: CodexUsage?
+    let codexSettings: CodexSettings
     @StateObject private var profileManager = ProfileManager.shared
     @ObservedObject private var peakHoursService = PeakHoursService.shared
 
@@ -714,9 +735,101 @@ struct SmartUsageDashboard: View {
                     APICostCard(apiUsage: apiUsage)
                 }
             }
+
+            if let codexUsage, !codexUsage.rateLimits.isEmpty {
+                Divider()
+                    .padding(.vertical, 3)
+
+                HStack(spacing: 6) {
+                    Image(systemName: "chevron.left.forwardslash.chevron.right")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundColor(.accentColor)
+                    Text("Codex")
+                        .font(.system(size: 11, weight: .semibold))
+                    if let plan = codexUsage.rateLimit(preferredID: codexSettings.selectedRateLimitID)?.planType
+                        ?? codexUsage.account?.planType {
+                        Text(plan.capitalized)
+                            .font(.system(size: 8, weight: .semibold))
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2)
+                            .background(Capsule().fill(Color.secondary.opacity(0.12)))
+                    }
+                    Spacer()
+                }
+
+                ForEach(codexUsage.rateLimits) { limit in
+                    if let window = limit.primary {
+                        UsageRow(
+                            title: limit.displayName,
+                            subtitle: codexWindowDescription(window.windowDurationMinutes),
+                            usedPercentage: window.usedPercent,
+                            showRemaining: showRemainingPercentage,
+                            resetTime: window.resetsAt,
+                            periodDuration: window.duration,
+                            showTimeMarker: showTimeMarker,
+                            showPaceMarker: showPaceMarker,
+                            usePaceColoring: usePaceColoring,
+                            timeDisplay: timeDisplay
+                        )
+                    }
+                    if let window = limit.secondary {
+                        UsageRow(
+                            title: "\(limit.displayName) secondary",
+                            subtitle: codexWindowDescription(window.windowDurationMinutes),
+                            usedPercentage: window.usedPercent,
+                            showRemaining: showRemainingPercentage,
+                            resetTime: window.resetsAt,
+                            periodDuration: window.duration,
+                            showTimeMarker: showTimeMarker,
+                            showPaceMarker: showPaceMarker,
+                            usePaceColoring: usePaceColoring,
+                            timeDisplay: timeDisplay
+                        )
+                    }
+                    if let credits = limit.credits, credits.hasCredits {
+                        HStack {
+                            Text("\(limit.displayName) credits")
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Text(credits.unlimited ? "Unlimited" : (credits.balance ?? "Available"))
+                                .font(.system(size: 10, weight: .semibold, design: .rounded))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+
+                if let lifetimeTokens = codexUsage.tokenUsage?.lifetimeTokens {
+                    HStack {
+                        Text("Lifetime tokens")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Text(lifetimeTokens.formatted(.number.notation(.compactName)))
+                            .font(.system(size: 10, weight: .semibold, design: .rounded))
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
+    }
+
+    private func codexWindowDescription(_ minutes: Int?) -> String? {
+        guard let minutes else { return nil }
+        if minutes % (7 * 24 * 60) == 0 {
+            let weeks = minutes / (7 * 24 * 60)
+            return weeks == 1 ? "7-day window" : "\(weeks)-week window"
+        }
+        if minutes % (24 * 60) == 0 {
+            return "\(minutes / (24 * 60))-day window"
+        }
+        if minutes % 60 == 0 {
+            return "\(minutes / 60)-hour window"
+        }
+        return "\(minutes)-minute window"
     }
 }
 

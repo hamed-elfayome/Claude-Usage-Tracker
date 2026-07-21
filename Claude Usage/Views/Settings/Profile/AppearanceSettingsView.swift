@@ -190,6 +190,7 @@ struct AppearanceSettingsView: View {
                                 onConfigChanged: { saveConfiguration() }
                             )
                         }
+
                     }
                 }
                 .disabled(isMultiProfileMode)
