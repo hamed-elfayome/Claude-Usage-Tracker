@@ -426,6 +426,7 @@ class ClaudeAPIService: APIServiceProtocol {
         async let usageDataTask = performRequest(endpoint: "/organizations/\(organizationId)/usage", sessionKey: sessionKey)
         async let overageDataTask: Data? = performRequest(endpoint: "/organizations/\(organizationId)/overage_spend_limit", sessionKey: sessionKey)
         async let creditGrantTask: Data? = performRequest(endpoint: "/organizations/\(organizationId)/overage_credit_grant", sessionKey: sessionKey)
+        async let personalSpendTask = fetchPersonalSpend(organizationId: organizationId, sessionKey: sessionKey)
 
         let usageData = try await usageDataTask
         var claudeUsage = try parseUsageResponse(usageData)
@@ -442,6 +443,11 @@ class ClaudeAPIService: APIServiceProtocol {
            let creditGrant = try? JSONDecoder().decode(OverageCreditGrantResponse.self, from: creditData) {
             claudeUsage.overageBalance = creditGrant.remainingBalance
             claudeUsage.overageBalanceCurrency = creditGrant.currency
+        }
+
+        if let personal = await personalSpendTask {
+            claudeUsage.personalSpendUsed = personal.usedMinorUnits
+            claudeUsage.personalSpendCurrency = personal.currency
         }
 
         return claudeUsage
@@ -490,6 +496,7 @@ class ClaudeAPIService: APIServiceProtocol {
             let checkOverage = ProfileManager.shared.activeProfile?.checkOverageLimitEnabled ?? true
             async let overageDataTask: Data? = checkOverage ? performRequest(endpoint: "/organizations/\(orgId)/overage_spend_limit", sessionKey: sessionKey) : nil
             async let creditGrantTask: Data? = checkOverage ? performRequest(endpoint: "/organizations/\(orgId)/overage_credit_grant", sessionKey: sessionKey) : nil
+            async let personalSpendTask = fetchPersonalSpend(organizationId: orgId, sessionKey: sessionKey)
 
             let usageData = try await usageDataTask
             var claudeUsage = try parseUsageResponse(usageData)
@@ -508,6 +515,11 @@ class ClaudeAPIService: APIServiceProtocol {
                let creditGrant = try? JSONDecoder().decode(OverageCreditGrantResponse.self, from: creditData) {
                 claudeUsage.overageBalance = creditGrant.remainingBalance
                 claudeUsage.overageBalanceCurrency = creditGrant.currency
+            }
+
+            if let personal = await personalSpendTask {
+                claudeUsage.personalSpendUsed = personal.usedMinorUnits
+                claudeUsage.personalSpendCurrency = personal.currency
             }
 
             return claudeUsage
@@ -760,6 +772,60 @@ class ClaudeAPIService: APIServiceProtocol {
     }
 
     // MARK: - Response Parsing
+
+    /// Fetches the authenticated member's OWN month-to-date spend from
+    /// `/organizations/{org}/usage/spend`. The URL is org-scoped but claude.ai
+    /// returns only the calling member's figures (the same number shown on
+    /// claude.ai/settings/usage), provided the org has "individual usage
+    /// analytics" enabled. Non-throwing: any failure (no such endpoint for the
+    /// plan, analytics disabled, network/parse error) resolves to `nil` so it can
+    /// never break the primary usage fetch. Returns spend in minor units (cents).
+    func fetchPersonalSpend(organizationId: String, sessionKey: String) async -> (usedMinorUnits: Double, currency: String)? {
+        do {
+            let calendar = Calendar.current
+            let now = Date()
+            guard let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: now)) else {
+                return nil
+            }
+
+            // Match claude.ai's Settings → Usage query: calendar month-to-date.
+            let dateFormatter = DateFormatter()
+            dateFormatter.calendar = Calendar(identifier: .gregorian)
+            dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+            dateFormatter.dateFormat = "yyyy-MM-dd"
+
+            let url = try URLBuilder(baseURL: baseURL)
+                .appendingPathComponents(["/organizations", organizationId, "/usage/spend"])
+                .addingQueryParameter(name: "start_date", value: dateFormatter.string(from: startOfMonth))
+                .addingQueryParameter(name: "end_date", value: dateFormatter.string(from: now))
+                .addingQueryParameter(name: "group_by", value: "product_surface")
+                .addingQueryParameter(name: "granularity", value: "daily")
+                .build()
+
+            var request = buildAuthenticatedRequest(url: url, auth: .claudeAISession(sessionKey))
+            request.httpMethod = "GET"
+            request.timeoutInterval = 30
+
+            LoggingService.shared.logAPIRequest("/organizations/\(organizationId)/usage/spend")
+            let (data, response) = try await URLSession.shared.data(for: request)
+
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                return nil
+            }
+
+            guard let spend = try? JSONDecoder().decode(UsageSpendResponse.self, from: data),
+                  let totals = spend.totals, !totals.isEmpty else {
+                return nil
+            }
+
+            // Sum across every group (e.g. all product surfaces) for the grand total.
+            let usedMinorUnits = totals.reduce(0.0) { $0 + ($1.costMinorUnits ?? 0) }
+            return (usedMinorUnits, spend.currency?.uppercased() ?? "USD")
+        } catch {
+            LoggingService.shared.logAPIError("/organizations/\(organizationId)/usage/spend", error: error)
+            return nil
+        }
+    }
 
     private func parseUsageResponse(_ data: Data) throws -> ClaudeUsage {
         // Parse Claude's actual API response structure

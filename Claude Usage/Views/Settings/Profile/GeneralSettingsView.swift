@@ -65,6 +65,50 @@ struct GeneralSettingsView: View {
                         }
                     }
 
+                    // Monthly Spend Target (denominator for the Personal Usage bar)
+                    SettingsSectionCard(
+                        title: "general.spend_target_title".localized,
+                        subtitle: "general.spend_target_subtitle".localized
+                    ) {
+                        HStack(spacing: DesignTokens.Spacing.iconText) {
+                            Image(systemName: "dollarsign.circle")
+                                .font(.system(size: DesignTokens.Icons.standard))
+                                .foregroundColor(DesignTokens.Colors.accent)
+                                .frame(width: DesignTokens.Spacing.iconFrame)
+
+                            TextField(
+                                "general.spend_target_placeholder".localized,
+                                text: Binding(
+                                    get: {
+                                        guard let cents = profile.monthlySpendLimitCents, cents > 0 else { return "" }
+                                        return String(format: "%.2f", cents / 100.0)
+                                    },
+                                    set: { newValue in
+                                        var updated = profile
+                                        let cleaned = newValue
+                                            .replacingOccurrences(of: ",", with: "")
+                                            .replacingOccurrences(of: "$", with: "")
+                                            .trimmingCharacters(in: .whitespaces)
+                                        if let dollars = Double(cleaned), dollars > 0 {
+                                            updated.monthlySpendLimitCents = dollars * 100.0
+                                        } else {
+                                            updated.monthlySpendLimitCents = nil
+                                        }
+                                        profileManager.updateProfile(updated)
+                                    }
+                                )
+                            )
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 120)
+
+                            Text("USD")
+                                .font(DesignTokens.Typography.caption)
+                                .foregroundColor(.secondary)
+
+                            Spacer()
+                        }
+                    }
+
                     // Auto-Start Session
                     SettingsSectionCard(
                         title: "general.autostart_title".localized,

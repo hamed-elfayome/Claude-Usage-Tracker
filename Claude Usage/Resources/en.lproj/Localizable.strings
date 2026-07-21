@@ -64,6 +64,7 @@
 "menubar.fable_usage" = "Fable";
 "menubar.design_usage" = "Design";
 "menubar.extra_usage" = "Extra Usage";
+"menubar.personal_usage" = "Personal Usage";
 "menubar.api_credits" = "API Credits";
 "menubar.api_cost" = "API Cost";
 "menubar.this_month" = "This Month";
@@ -550,6 +551,9 @@
 "general.refresh_seconds" = "%d seconds";
 "general.refresh_min" = "10s";
 "general.refresh_max" = "300s";
+"general.spend_target_title" = "Monthly Spend Target";
+"general.spend_target_subtitle" = "Optional personal budget for the month. Set it to show a Personal Usage bar in the popover; leave blank to just show the amount.";
+"general.spend_target_placeholder" = "e.g. 1500";
 "general.autostart_title" = "Auto-Start Session";
 "general.autostart_subtitle" = "Automatically start a new session when needed";
 "general.autostart_toggle" = "Auto-Start New Session";
@@ -970,6 +974,9 @@
 
 // MARK: - Overage Balance
 "popover.overage_balance" = "Balance";
+
+// MARK: - Personal Usage
+"popover.personal_usage_period" = "This month";
 
 // MARK: - Setup Wizard CLI Detection
 "setup.cli_detecting" = "Checking for CLI credentials...";

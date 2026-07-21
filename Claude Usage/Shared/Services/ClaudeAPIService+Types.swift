@@ -57,6 +57,25 @@ extension ClaudeAPIService {
         }
     }
 
+    /// Response from `/organizations/{org}/usage/spend`. Although the URL is
+    /// org-scoped, claude.ai returns only the calling member's own figures when
+    /// the org has "individual usage analytics" enabled — the same data shown on
+    /// the Settings → Usage page. `totals` holds one entry per group (e.g. per
+    /// product surface); summing their `cost_minor_units` gives the member's
+    /// spend for the requested date range, in minor units of `currency`.
+    struct UsageSpendResponse: Codable {
+        let currency: String?
+        let totals: [Total]?
+
+        struct Total: Codable {
+            let costMinorUnits: Double?
+
+            enum CodingKeys: String, CodingKey {
+                case costMinorUnits = "cost_minor_units"
+            }
+        }
+    }
+
     struct CurrentSpendResponse: Codable {
         let amount: Int
         let resetsAt: String

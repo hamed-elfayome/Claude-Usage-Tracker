@@ -1022,3 +1022,10 @@
 /* Sponsor slot */
 "sponsor.slot_title" = "Bu alan sponsorlara açıktır";
 "sponsor.slot_cta" = "İletişime geçin";
+
+// MARK: - Personal Usage (English fallback — pending translation)
+"menubar.personal_usage" = "Personal Usage";
+"popover.personal_usage_period" = "This month";
+"general.spend_target_title" = "Monthly Spend Target";
+"general.spend_target_subtitle" = "Optional personal budget for the month. Set it to show a Personal Usage bar in the popover; leave blank to just show the amount.";
+"general.spend_target_placeholder" = "e.g. 1500";

@@ -47,6 +47,15 @@ struct ClaudeUsage: Codable, Equatable {
     var overageBalance: Double?
     var overageBalanceCurrency: String?
 
+    // Personal usage — the authenticated member's OWN month-to-date spend, from
+    // the /usage/spend endpoint. Minor units (cents) of `personalSpendCurrency`.
+    // Distinct from the org-wide `costUsed`/`costLimit` overage figures above:
+    // this is what *this account* has spent, matching the number shown on
+    // claude.ai/settings/usage. Declared last (with defaults) so the synthesized
+    // memberwise initializer stays source-compatible with existing call sites.
+    var personalSpendUsed: Double? = nil
+    var personalSpendCurrency: String? = nil
+
     // Metadata
     var lastUpdated: Date
     var userTimezone: TimeZone
@@ -136,6 +145,7 @@ extension ClaudeUsage {
         case fableWeeklyTokensUsed, fableWeeklyPercentage, fableWeeklyResetTime
         case costUsed, costLimit, costCurrency
         case overageBalance, overageBalanceCurrency
+        case personalSpendUsed, personalSpendCurrency
         case lastUpdated, userTimezone
     }
 
@@ -166,6 +176,8 @@ extension ClaudeUsage {
             costCurrency: try c.decodeIfPresent(String.self, forKey: .costCurrency),
             overageBalance: try c.decodeIfPresent(Double.self, forKey: .overageBalance),
             overageBalanceCurrency: try c.decodeIfPresent(String.self, forKey: .overageBalanceCurrency),
+            personalSpendUsed: try c.decodeIfPresent(Double.self, forKey: .personalSpendUsed),
+            personalSpendCurrency: try c.decodeIfPresent(String.self, forKey: .personalSpendCurrency),
             lastUpdated: try c.decodeIfPresent(Date.self, forKey: .lastUpdated) ?? Date(),
             userTimezone: try c.decodeIfPresent(TimeZone.self, forKey: .userTimezone) ?? .current
         )
