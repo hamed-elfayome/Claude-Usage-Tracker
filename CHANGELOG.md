@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Bug Fixes
 
-- **Popover layout-recursion crash on macOS 26/27** (PR #265): native popover animation fed an unbounded layout loop; replaced with a SwiftUI entrance animation + click-race debounce — thanks @Leewallace017
+- **Popover layout-recursion crash on macOS 26/27** (PR #265): native popover animation fed an unbounded layout loop; replaced with a SwiftUI entrance animation + click-race debounce — thanks @wmwallace
 - **macOS 26 crash in menu bar icon refresh** (PR #231): `NSImage.tiffRepresentation` replaced with a `CGImage`-based equality hash — thanks @hbourget
 - **Menu bar item disappears after Cmd-drag-out** (PR #251, fixes #222): `isVisible` forced true at creation so a persisted `false` can't suppress the item — thanks @mlarocque
 - **Popover hidden behind full-screen apps** (PR #257, fixes #256): activate before showing + `.fullScreenAuxiliary` on the detached panel — thanks @ernestjsf
@@ -48,7 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **@yelloduxx** (Duxxie) — limits[] format, Fable tracking, macOS 26 sign-in fixes, profile-wipe guard, perf fixes
 - **@Taeknology** — per-profile keychain source pin + OAuth auto-refresh
 - **@AlvaroTena** (Alvaro Tena) — profile-switching identity-guard diagnosis and fix
-- **@Leewallace017** (Lee Wallace) — popover layout-recursion crash fix
+- **@wmwallace** (William Wallace) — popover layout-recursion crash fix
 - **@hbourget** (Hugo) — macOS 26 crash fix, color thresholds
 - **@mlarocque** (Michael Larocque) — menu bar visibility fix
 - **@ernestjsf** (Ernest Jusuf) — popover over full-screen apps
