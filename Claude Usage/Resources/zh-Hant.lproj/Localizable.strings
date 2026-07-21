@@ -1017,9 +1017,9 @@
 "sponsor.slot_title" = "此位置開放贊助";
 "sponsor.slot_cta" = "與我聯繫";
 
-// MARK: - Personal Usage (English fallback — pending translation)
-"menubar.personal_usage" = "Personal Usage";
-"popover.personal_usage_period" = "This month";
-"general.spend_target_title" = "Monthly Spend Target";
-"general.spend_target_subtitle" = "Optional personal budget for the month. Set it to show a Personal Usage bar in the popover; leave blank to just show the amount.";
-"general.spend_target_placeholder" = "e.g. 1500";
+// MARK: - Personal Usage
+"menubar.personal_usage" = "個人使用量";
+"popover.personal_usage_period" = "本月";
+"general.spend_target_title" = "每月支出目標";
+"general.spend_target_subtitle" = "選填的每月個人預算。設定後會在彈出視窗中顯示個人使用量進度條；留空則僅顯示金額。";
+"general.spend_target_placeholder" = "例如 1500";

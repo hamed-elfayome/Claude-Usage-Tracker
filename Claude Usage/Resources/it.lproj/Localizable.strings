@@ -1031,9 +1031,9 @@
 "sponsor.slot_title" = "Questo spazio è disponibile per gli sponsor";
 "sponsor.slot_cta" = "Contattami";
 
-// MARK: - Personal Usage (English fallback — pending translation)
-"menubar.personal_usage" = "Personal Usage";
-"popover.personal_usage_period" = "This month";
-"general.spend_target_title" = "Monthly Spend Target";
-"general.spend_target_subtitle" = "Optional personal budget for the month. Set it to show a Personal Usage bar in the popover; leave blank to just show the amount.";
-"general.spend_target_placeholder" = "e.g. 1500";
+// MARK: - Personal Usage
+"menubar.personal_usage" = "Utilizzo Personale";
+"popover.personal_usage_period" = "Questo mese";
+"general.spend_target_title" = "Obiettivo di Spesa Mensile";
+"general.spend_target_subtitle" = "Budget personale mensile opzionale. Impostalo per mostrare una barra di Utilizzo Personale nel popover; lascia vuoto per mostrare solo l'importo.";
+"general.spend_target_placeholder" = "es. 1500";

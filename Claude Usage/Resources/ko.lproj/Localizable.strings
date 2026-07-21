@@ -1040,9 +1040,9 @@
 "sponsor.slot_title" = "이 공간은 스폰서에게 제공됩니다";
 "sponsor.slot_cta" = "문의하기";
 
-// MARK: - Personal Usage (English fallback — pending translation)
-"menubar.personal_usage" = "Personal Usage";
-"popover.personal_usage_period" = "This month";
-"general.spend_target_title" = "Monthly Spend Target";
-"general.spend_target_subtitle" = "Optional personal budget for the month. Set it to show a Personal Usage bar in the popover; leave blank to just show the amount.";
-"general.spend_target_placeholder" = "e.g. 1500";
+// MARK: - Personal Usage
+"menubar.personal_usage" = "개인 사용량";
+"popover.personal_usage_period" = "이번 달";
+"general.spend_target_title" = "월간 지출 목표";
+"general.spend_target_subtitle" = "선택적 월간 개인 예산. 설정하면 팝오버에 개인 사용량 막대가 표시됩니다. 비워두면 금액만 표시됩니다.";
+"general.spend_target_placeholder" = "예: 1500";

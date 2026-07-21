@@ -1031,9 +1031,9 @@
 "sponsor.slot_title" = "スポンサー募集中のスペースです";
 "sponsor.slot_cta" = "お問い合わせ";
 
-// MARK: - Personal Usage (English fallback — pending translation)
-"menubar.personal_usage" = "Personal Usage";
-"popover.personal_usage_period" = "This month";
-"general.spend_target_title" = "Monthly Spend Target";
-"general.spend_target_subtitle" = "Optional personal budget for the month. Set it to show a Personal Usage bar in the popover; leave blank to just show the amount.";
-"general.spend_target_placeholder" = "e.g. 1500";
+// MARK: - Personal Usage
+"menubar.personal_usage" = "個人の使用量";
+"popover.personal_usage_period" = "今月";
+"general.spend_target_title" = "月間支出目標";
+"general.spend_target_subtitle" = "任意の月間個人予算。設定するとポップオーバーに個人の使用量バーが表示されます。空欄の場合は金額のみ表示されます。";
+"general.spend_target_placeholder" = "例: 1500";

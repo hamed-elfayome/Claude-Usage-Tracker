@@ -1026,9 +1026,9 @@
 "sponsor.slot_title" = "Це місце доступне для спонсорів";
 "sponsor.slot_cta" = "Звʼязатися";
 
-// MARK: - Personal Usage (English fallback — pending translation)
-"menubar.personal_usage" = "Personal Usage";
-"popover.personal_usage_period" = "This month";
-"general.spend_target_title" = "Monthly Spend Target";
-"general.spend_target_subtitle" = "Optional personal budget for the month. Set it to show a Personal Usage bar in the popover; leave blank to just show the amount.";
-"general.spend_target_placeholder" = "e.g. 1500";
+// MARK: - Personal Usage
+"menubar.personal_usage" = "Особисте використання";
+"popover.personal_usage_period" = "Цей місяць";
+"general.spend_target_title" = "Місячна ціль витрат";
+"general.spend_target_subtitle" = "Необов'язковий особистий бюджет на місяць. Установіть, щоб показати смугу особистого використання у спливаючому вікні; залиште порожнім, щоб показувати лише суму.";
+"general.spend_target_placeholder" = "напр. 1500";
