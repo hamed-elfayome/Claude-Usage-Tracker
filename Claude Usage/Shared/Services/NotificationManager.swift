@@ -255,7 +255,12 @@ class NotificationManager: NotificationServiceProtocol {
     }
 
     /// Sends auto-start session notification
-    func sendAutoStartNotification(profileName: String, success: Bool, error: String?) {
+    func sendAutoStartNotification(profileName: String, success: Bool, error: String?, settings: NotificationSettings) {
+        // Check if notifications are enabled for this profile
+        guard settings.enabled else {
+            return
+        }
+
         let content = UNMutableNotificationContent()
 
         if success {
@@ -289,7 +294,15 @@ class NotificationManager: NotificationServiceProtocol {
     }
 
     /// Sends a notification when auto-switching profiles due to session limit
-    func sendAutoSwitchNotification(fromProfile: String, toProfile: String) {
+    ///
+    /// - Parameter settings: Notification settings of the profile being switched away from,
+    ///   i.e. the one whose session hit the limit and triggered the switch.
+    func sendAutoSwitchNotification(fromProfile: String, toProfile: String, settings: NotificationSettings) {
+        // Check if notifications are enabled for this profile
+        guard settings.enabled else {
+            return
+        }
+
         let content = UNMutableNotificationContent()
         content.title = "notification.profile_auto_switched.title".localized
         content.body = "notification.profile_auto_switched.message".localized(with: fromProfile, toProfile)

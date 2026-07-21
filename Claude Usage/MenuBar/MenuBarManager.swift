@@ -1494,12 +1494,17 @@ class MenuBarManager: NSObject, ObservableObject {
         // Activate the next profile
         let fromName = currentProfile.name
         let toName = nextProfile.name
+        let notificationSettings = currentProfile.notificationSettings
         Task {
             await profileManager.activateProfile(nextProfile.id)
 
             await MainActor.run {
                 // Send notification
-                NotificationManager.shared.sendAutoSwitchNotification(fromProfile: fromName, toProfile: toName)
+                NotificationManager.shared.sendAutoSwitchNotification(
+                    fromProfile: fromName,
+                    toProfile: toName,
+                    settings: notificationSettings
+                )
 
                 // Post notification for UI reactivity
                 NotificationCenter.default.post(name: .autoSwitchProfileTriggered, object: nil)
