@@ -53,7 +53,7 @@ struct Profile: Codable, Identifiable, Equatable {
     var checkOverageLimitEnabled: Bool
 
     /// Optional personal monthly spend target, in minor units (cents), used as the
-    /// denominator for the "Personal Usage" bar in the popover. `nil` (or 0) means
+    /// denominator for the "Monthly Spend" bar in the popover. `nil` (or 0) means
     /// no target set — the popover then shows the spend amount without a bar.
     var monthlySpendLimitCents: Double?
 

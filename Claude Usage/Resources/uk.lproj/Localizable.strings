@@ -1026,9 +1026,9 @@
 "sponsor.slot_title" = "Це місце доступне для спонсорів";
 "sponsor.slot_cta" = "Звʼязатися";
 
-// MARK: - Personal Usage
-"menubar.personal_usage" = "Особисте використання";
-"popover.personal_usage_period" = "Цей місяць";
+// MARK: - Monthly Spend
+"menubar.monthly_spend" = "Місячні витрати";
+"popover.monthly_spend_period" = "Цей місяць";
 "general.spend_target_title" = "Місячна ціль витрат";
-"general.spend_target_subtitle" = "Необов'язковий особистий бюджет на місяць. Установіть, щоб показати смугу особистого використання у спливаючому вікні; залиште порожнім, щоб показувати лише суму.";
+"general.spend_target_subtitle" = "Необов'язковий особистий бюджет на місяць. Установіть, щоб показати смугу місячних витрат у спливаючому вікні; залиште порожнім, щоб показувати лише суму.";
 "general.spend_target_placeholder" = "напр. 1500";

@@ -705,11 +705,11 @@ struct SmartUsageDashboard: View {
                 }
             }
 
-            // Personal usage — this member's own month-to-date spend (the number
+            // Monthly spend — this member's own month-to-date spend (the number
             // shown on claude.ai/settings/usage), distinct from the org-wide
             // Extra Usage above. Only rendered when the endpoint returned a value.
             if let personalUsed = usage.personalSpendUsed {
-                PersonalUsageRow(
+                MonthlySpendRow(
                     usedMinorUnits: personalUsed,
                     currency: usage.personalSpendCurrency ?? "USD",
                     limitCents: profileManager.activeProfile?.monthlySpendLimitCents,
@@ -884,13 +884,12 @@ struct UsageRow: View {
     }
 }
 
-// MARK: - Contextual Insights
-// MARK: - Personal Usage Row
+// MARK: - Monthly Spend Row
 
 /// The authenticated member's own month-to-date spend. When a monthly target is
 /// set on the profile this renders as a progress bar (matching Extra Usage);
 /// otherwise it shows just the amount, since the API exposes no per-member limit.
-struct PersonalUsageRow: View {
+struct MonthlySpendRow: View {
     let usedMinorUnits: Double
     let currency: String
     let limitCents: Double?
@@ -901,7 +900,7 @@ struct PersonalUsageRow: View {
     var body: some View {
         if let limit = limitCents, limit > 0 {
             UsageRow(
-                title: "menubar.personal_usage".localized,
+                title: "menubar.monthly_spend".localized,
                 subtitle: String(format: "%.2f / %.2f %@", usedDollars, limit / 100.0, currency),
                 usedPercentage: (usedMinorUnits / limit) * 100.0,
                 showRemaining: showRemaining,
@@ -911,10 +910,10 @@ struct PersonalUsageRow: View {
         } else {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 1) {
-                    Text("menubar.personal_usage".localized)
+                    Text("menubar.monthly_spend".localized)
                         .font(.system(size: 13, weight: .medium))
                         .foregroundColor(.primary)
-                    Text("popover.personal_usage_period".localized)
+                    Text("popover.monthly_spend_period".localized)
                         .font(.system(size: 10))
                         .foregroundColor(.secondary)
                 }

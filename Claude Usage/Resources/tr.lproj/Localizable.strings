@@ -1023,9 +1023,9 @@
 "sponsor.slot_title" = "Bu alan sponsorlara açıktır";
 "sponsor.slot_cta" = "İletişime geçin";
 
-// MARK: - Personal Usage
-"menubar.personal_usage" = "Kişisel Kullanım";
-"popover.personal_usage_period" = "Bu ay";
+// MARK: - Monthly Spend
+"menubar.monthly_spend" = "Aylık Harcama";
+"popover.monthly_spend_period" = "Bu ay";
 "general.spend_target_title" = "Aylık Harcama Hedefi";
-"general.spend_target_subtitle" = "İsteğe bağlı aylık kişisel bütçe. Açılır pencerede bir Kişisel Kullanım çubuğu göstermek için ayarlayın; yalnızca tutarı göstermek için boş bırakın.";
+"general.spend_target_subtitle" = "İsteğe bağlı aylık kişisel bütçe. Açılır pencerede bir Aylık Harcama çubuğu göstermek için ayarlayın; yalnızca tutarı göstermek için boş bırakın.";
 "general.spend_target_placeholder" = "örn. 1500";

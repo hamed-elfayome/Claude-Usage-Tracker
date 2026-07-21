@@ -1031,9 +1031,9 @@
 "sponsor.slot_title" = "Dieser Platz ist für Sponsoren verfügbar";
 "sponsor.slot_cta" = "Kontakt aufnehmen";
 
-// MARK: - Personal Usage
-"menubar.personal_usage" = "Persönliche Nutzung";
-"popover.personal_usage_period" = "Diesen Monat";
+// MARK: - Monthly Spend
+"menubar.monthly_spend" = "Monatliche Ausgaben";
+"popover.monthly_spend_period" = "Diesen Monat";
 "general.spend_target_title" = "Monatliches Ausgabenziel";
-"general.spend_target_subtitle" = "Optionales persönliches Monatsbudget. Festlegen, um im Popover einen Balken für die persönliche Nutzung anzuzeigen; leer lassen, um nur den Betrag anzuzeigen.";
+"general.spend_target_subtitle" = "Optionales persönliches Monatsbudget. Festlegen, um im Popover einen Balken für die monatlichen Ausgaben anzuzeigen; leer lassen, um nur den Betrag anzuzeigen.";
 "general.spend_target_placeholder" = "z. B. 1500";
