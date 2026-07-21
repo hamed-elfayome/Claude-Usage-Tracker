@@ -49,8 +49,8 @@ final class NotchSessionStore: ObservableObject {
         case let .sessionEnd(id):
             sessions.removeAll { $0.id == id }
 
-        case let .userPromptSubmit(id, prompt):
-            upsert(id: id) { session in
+        case let .userPromptSubmit(id, cwd, prompt):
+            upsert(id: id, cwd: cwd) { session in
                 session.status = .thinking
                 session.currentTask = nil
                 if let prompt = prompt, !prompt.isEmpty {
@@ -64,25 +64,25 @@ final class NotchSessionStore: ObservableObject {
                 session.currentTask = task
             }
 
-        case let .postToolUse(id):
-            upsert(id: id) { session in
+        case let .postToolUse(id, cwd):
+            upsert(id: id, cwd: cwd) { session in
                 session.status = .thinking
                 session.hasRecentError = false
             }
 
-        case let .toolFailure(id):
-            upsert(id: id) { session in
+        case let .toolFailure(id, cwd):
+            upsert(id: id, cwd: cwd) { session in
                 session.hasRecentError = true
             }
 
-        case let .stop(id):
-            upsert(id: id) { session in
+        case let .stop(id, cwd):
+            upsert(id: id, cwd: cwd) { session in
                 session.status = .idle
                 session.currentTask = nil
             }
 
-        case let .notification(id, message):
-            upsert(id: id) { session in
+        case let .notification(id, cwd, message):
+            upsert(id: id, cwd: cwd) { session in
                 session.status = .needsAttention
                 if let message = message, !message.isEmpty {
                     session.currentTask = String(message.prefix(80))

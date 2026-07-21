@@ -173,7 +173,7 @@ final class NotchHUDController {
         store.apply(.sessionStart(id: "mock-1", cwd: "/Users/dev/api-server"))
         store.apply(.preToolUse(id: "mock-1", cwd: nil, status: .runningCommand, task: "swift build"))
         store.apply(.sessionStart(id: "mock-2", cwd: "/Users/dev/webapp"))
-        store.apply(.notification(id: "mock-2", message: "Claude needs your permission to use Bash"))
+        store.apply(.notification(id: "mock-2", cwd: nil, message: "Claude needs your permission to use Bash"))
     }
     #endif
 }
