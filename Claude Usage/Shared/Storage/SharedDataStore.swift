@@ -167,7 +167,10 @@ class SharedDataStore {
 
     func loadKeepAwakeAutoGracePeriod() -> TimeInterval {
         if defaults.object(forKey: Constants.UserDefaultsKeys.keepAwakeAutoGracePeriod) == nil {
-            return 30 * 60
+            // Hooks emit no events while Claude Code compacts or streams a long
+            // response without tool calls, so sessions can look idle mid-work;
+            // a generous default bridges those gaps.
+            return 60 * 60
         }
         return defaults.double(forKey: Constants.UserDefaultsKeys.keepAwakeAutoGracePeriod)
     }

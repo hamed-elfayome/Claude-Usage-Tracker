@@ -213,7 +213,7 @@ final class SharedDataStoreTests: XCTestCase {
 
     func testKeepAwakeAutoGracePeriod() {
         UserDefaults.standard.removeObject(forKey: Constants.UserDefaultsKeys.keepAwakeAutoGracePeriod)
-        XCTAssertEqual(sharedDataStore.loadKeepAwakeAutoGracePeriod(), 30 * 60, "defaults to 30 minutes")
+        XCTAssertEqual(sharedDataStore.loadKeepAwakeAutoGracePeriod(), 60 * 60, "defaults to 1 hour")
 
         sharedDataStore.saveKeepAwakeAutoGracePeriod(60 * 60)
         XCTAssertEqual(sharedDataStore.loadKeepAwakeAutoGracePeriod(), 60 * 60)
