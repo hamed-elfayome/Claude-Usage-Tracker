@@ -52,6 +52,11 @@ struct Profile: Codable, Identifiable, Equatable {
     var autoStartSessionEnabled: Bool
     var checkOverageLimitEnabled: Bool
 
+    /// Optional personal monthly spend target, in minor units (cents), used as the
+    /// denominator for the "Monthly Spend" bar in the popover. `nil` (or 0) means
+    /// no target set — the popover then shows the spend amount without a bar.
+    var monthlySpendLimitCents: Double?
+
     // MARK: - Notification Settings (Per-Profile)
     var notificationSettings: NotificationSettings
 
@@ -81,6 +86,7 @@ struct Profile: Codable, Identifiable, Equatable {
         refreshInterval: TimeInterval = 30.0,
         autoStartSessionEnabled: Bool = false,
         checkOverageLimitEnabled: Bool = true,
+        monthlySpendLimitCents: Double? = nil,
         notificationSettings: NotificationSettings = NotificationSettings(),
         isSelectedForDisplay: Bool = true,
         createdAt: Date = Date(),
@@ -104,6 +110,7 @@ struct Profile: Codable, Identifiable, Equatable {
         self.refreshInterval = refreshInterval
         self.autoStartSessionEnabled = autoStartSessionEnabled
         self.checkOverageLimitEnabled = checkOverageLimitEnabled
+        self.monthlySpendLimitCents = monthlySpendLimitCents
         self.notificationSettings = notificationSettings
         self.isSelectedForDisplay = isSelectedForDisplay
         self.createdAt = createdAt
@@ -128,6 +135,7 @@ struct Profile: Codable, Identifiable, Equatable {
         case claudeUsage, apiUsage
         case iconConfig
         case refreshInterval, autoStartSessionEnabled, checkOverageLimitEnabled
+        case monthlySpendLimitCents
         case notificationSettings
         case isSelectedForDisplay
         case createdAt, lastUsedAt
@@ -158,6 +166,7 @@ struct Profile: Codable, Identifiable, Equatable {
         refreshInterval = try c.decodeIfPresent(TimeInterval.self, forKey: .refreshInterval) ?? 30.0
         autoStartSessionEnabled = try c.decodeIfPresent(Bool.self, forKey: .autoStartSessionEnabled) ?? false
         checkOverageLimitEnabled = try c.decodeIfPresent(Bool.self, forKey: .checkOverageLimitEnabled) ?? true
+        monthlySpendLimitCents = try c.decodeIfPresent(Double.self, forKey: .monthlySpendLimitCents)
         notificationSettings = try c.decodeIfPresent(NotificationSettings.self, forKey: .notificationSettings) ?? NotificationSettings()
         isSelectedForDisplay = try c.decodeIfPresent(Bool.self, forKey: .isSelectedForDisplay) ?? true
         createdAt = try c.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date()
@@ -188,6 +197,7 @@ struct Profile: Codable, Identifiable, Equatable {
         try c.encode(refreshInterval, forKey: .refreshInterval)
         try c.encode(autoStartSessionEnabled, forKey: .autoStartSessionEnabled)
         try c.encode(checkOverageLimitEnabled, forKey: .checkOverageLimitEnabled)
+        try c.encodeIfPresent(monthlySpendLimitCents, forKey: .monthlySpendLimitCents)
         try c.encode(notificationSettings, forKey: .notificationSettings)
         try c.encode(isSelectedForDisplay, forKey: .isSelectedForDisplay)
         try c.encode(createdAt, forKey: .createdAt)

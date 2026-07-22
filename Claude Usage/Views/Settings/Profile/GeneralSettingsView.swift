@@ -11,6 +11,7 @@ import UserNotifications
 /// General profile settings: Refresh interval, Auto-start, Notifications
 struct GeneralSettingsView: View {
     @StateObject private var profileManager = ProfileManager.shared
+    @State private var spendTargetText = ""
 
     var body: some View {
         ScrollView {
@@ -62,6 +63,37 @@ struct GeneralSettingsView: View {
                                     .font(DesignTokens.Typography.caption)
                                     .foregroundColor(.secondary)
                             }
+                        }
+                    }
+
+                    // Monthly Spend Target (denominator for the Monthly Spend bar)
+                    SettingsSectionCard(
+                        title: "general.spend_target_title".localized,
+                        subtitle: "general.spend_target_subtitle".localized
+                    ) {
+                        HStack(spacing: DesignTokens.Spacing.iconText) {
+                            Image(systemName: "dollarsign.circle")
+                                .font(.system(size: DesignTokens.Icons.standard))
+                                .foregroundColor(DesignTokens.Colors.accent)
+                                .frame(width: DesignTokens.Spacing.iconFrame)
+
+                            TextField("general.spend_target_placeholder".localized, text: $spendTargetText)
+                                .textFieldStyle(.roundedBorder)
+                                .frame(width: 120)
+                                .onAppear {
+                                    if let cents = profile.monthlySpendLimitCents, cents > 0 {
+                                        spendTargetText = String(Int(cents / 100))
+                                    }
+                                }
+                                .onChange(of: spendTargetText) { _, newValue in
+                                    saveSpendTarget(newValue)
+                                }
+
+                            Text(profile.claudeUsage?.personalSpendCurrency ?? "USD")
+                                .font(DesignTokens.Typography.caption)
+                                .foregroundColor(.secondary)
+
+                            Spacer()
                         }
                     }
 
@@ -222,6 +254,23 @@ struct GeneralSettingsView: View {
     }
 
     // MARK: - Helper Methods
+
+    /// Parses the spend-target field as whole dollars and stores it as cents
+    /// (matching the minor-units convention of `costUsed`/`costLimit`).
+    /// Anything non-numeric or zero clears the target.
+    private func saveSpendTarget(_ text: String) {
+        guard var updated = profileManager.activeProfile else { return }
+        let cleaned = text
+            .replacingOccurrences(of: ",", with: "")
+            .replacingOccurrences(of: "$", with: "")
+            .trimmingCharacters(in: .whitespaces)
+        if let dollars = Int(cleaned), dollars > 0 {
+            updated.monthlySpendLimitCents = Double(dollars) * 100.0
+        } else {
+            updated.monthlySpendLimitCents = nil
+        }
+        profileManager.updateProfile(updated)
+    }
 
     private func requestNotificationPermission() {
         Task {

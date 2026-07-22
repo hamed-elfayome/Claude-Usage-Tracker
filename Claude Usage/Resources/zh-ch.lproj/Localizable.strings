@@ -1016,3 +1016,10 @@
 /* Sponsor slot */
 "sponsor.slot_title" = "此位置开放赞助";
 "sponsor.slot_cta" = "与我联系";
+
+// MARK: - Monthly Spend
+"menubar.monthly_spend" = "每月支出";
+"popover.monthly_spend_period" = "本月";
+"general.spend_target_title" = "每月支出目标";
+"general.spend_target_subtitle" = "可选的每月个人预算。设置后会在弹出窗口中显示每月支出进度条；留空则仅显示金额。";
+"general.spend_target_placeholder" = "例如 1500";

@@ -1008,3 +1008,10 @@
 /* Sponsor slot */
 "sponsor.slot_title" = "Cet emplacement est disponible pour les sponsors";
 "sponsor.slot_cta" = "Me contacter";
+
+// MARK: - Monthly Spend
+"menubar.monthly_spend" = "Dépenses Mensuelles";
+"popover.monthly_spend_period" = "Ce mois-ci";
+"general.spend_target_title" = "Objectif de Dépense Mensuel";
+"general.spend_target_subtitle" = "Budget personnel mensuel facultatif. Définissez-le pour afficher une barre de Dépenses Mensuelles dans le popover ; laissez vide pour n'afficher que le montant.";
+"general.spend_target_placeholder" = "p. ex. 1500";

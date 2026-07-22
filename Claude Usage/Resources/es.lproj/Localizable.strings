@@ -1011,3 +1011,10 @@
 /* Sponsor slot */
 "sponsor.slot_title" = "Este espacio está disponible para patrocinadores";
 "sponsor.slot_cta" = "Contáctame";
+
+// MARK: - Monthly Spend
+"menubar.monthly_spend" = "Gasto Mensual";
+"popover.monthly_spend_period" = "Este mes";
+"general.spend_target_title" = "Objetivo de Gasto Mensual";
+"general.spend_target_subtitle" = "Presupuesto personal opcional para el mes. Configúralo para mostrar una barra de Gasto Mensual en la ventana emergente; déjalo en blanco para mostrar solo el importe.";
+"general.spend_target_placeholder" = "p. ej. 1500";
