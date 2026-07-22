@@ -22,7 +22,7 @@ struct KeepAwakeSettingsView: View {
     @State private var autoEnabled: Bool = SharedDataStore.shared.loadKeepAwakeAutoEnabled()
     @State private var sleepMode: KeepAwakeService.SleepMode =
         SharedDataStore.shared.loadKeepAwakeSleepMode()
-            .flatMap(KeepAwakeService.SleepMode.init(rawValue:)) ?? .allowDisplaySleep
+            .flatMap(KeepAwakeService.SleepMode.init(rawValue:)) ?? .preventDisplaySleep
 
     @State private var durationChoice: TimeInterval = 0
     @State private var customDurationHours: Int = 3
@@ -175,10 +175,10 @@ struct KeepAwakeSettingsView: View {
         ) {
             VStack(alignment: .leading, spacing: DesignTokens.Spacing.cardPadding) {
                 Picker("", selection: $sleepMode) {
-                    Text("keep_awake.sleep_type.system".localized)
-                        .tag(KeepAwakeService.SleepMode.allowDisplaySleep)
                     Text("keep_awake.sleep_type.display".localized)
                         .tag(KeepAwakeService.SleepMode.preventDisplaySleep)
+                    Text("keep_awake.sleep_type.system".localized)
+                        .tag(KeepAwakeService.SleepMode.allowDisplaySleep)
                 }
                 .pickerStyle(.segmented)
                 .labelsHidden()

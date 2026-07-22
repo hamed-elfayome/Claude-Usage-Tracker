@@ -2,7 +2,7 @@
 //  KeepAwakeService.swift
 //  Claude Usage
 //
-//  Amphetamine-style sleep prevention. Holds a single named IOKit power
+//  Keep Awake sleep prevention. Holds a single named IOKit power
 //  assertion while either the manual toggle is on (optionally time-limited)
 //  or auto mode detects an active Claude Code session (with a configurable
 //  grace period after activity stops). Assertion lifecycle is centralized
@@ -58,7 +58,7 @@ final class KeepAwakeService: ObservableObject {
     /// Published: the popover button renders an "armed" state from this, and
     /// flipping it while idle changes no other published property.
     @Published private(set) var autoEnabled = false
-    private(set) var sleepMode: SleepMode = .allowDisplaySleep
+    private(set) var sleepMode: SleepMode = .preventDisplaySleep
     /// Manual duration in seconds; 0 = indefinite.
     private(set) var defaultDuration: TimeInterval = 0
     /// Auto mode keeps the assertion this long after sessions go idle; 0 = release immediately.
@@ -83,7 +83,7 @@ final class KeepAwakeService: ObservableObject {
     }
     var loadSettings: () -> (autoEnabled: Bool, sleepMode: SleepMode, defaultDuration: TimeInterval, gracePeriod: TimeInterval) = {
         let store = SharedDataStore.shared
-        let mode = store.loadKeepAwakeSleepMode().flatMap(SleepMode.init(rawValue:)) ?? .allowDisplaySleep
+        let mode = store.loadKeepAwakeSleepMode().flatMap(SleepMode.init(rawValue:)) ?? .preventDisplaySleep
         return (
             autoEnabled: store.loadKeepAwakeAutoEnabled(),
             sleepMode: mode,

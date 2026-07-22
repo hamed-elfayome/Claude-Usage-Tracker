@@ -44,17 +44,17 @@ final class KeepAwakeServiceTests: XCTestCase {
                       defaultDuration: currentDuration, gracePeriod: currentGrace)
         }
         // Neutral defaults; individual tests override via configure().
-        configure(autoEnabled: false, sleepMode: .allowDisplaySleep, defaultDuration: 0, gracePeriod: 15 * 60)
+        configure(autoEnabled: false, sleepMode: .preventDisplaySleep, defaultDuration: 0, gracePeriod: 15 * 60)
         service.start()
     }
 
-    private var currentSleepMode: KeepAwakeService.SleepMode = .allowDisplaySleep
+    private var currentSleepMode: KeepAwakeService.SleepMode = .preventDisplaySleep
     private var currentDuration: TimeInterval = 0
     private var currentGrace: TimeInterval = 15 * 60
 
     private func configure(
         autoEnabled: Bool,
-        sleepMode: KeepAwakeService.SleepMode = .allowDisplaySleep,
+        sleepMode: KeepAwakeService.SleepMode = .preventDisplaySleep,
         defaultDuration: TimeInterval = 0,
         gracePeriod: TimeInterval = 15 * 60
     ) {
@@ -78,7 +78,7 @@ final class KeepAwakeServiceTests: XCTestCase {
         service.setManual(on: true)
 
         XCTAssertTrue(service.isAssertionHeld)
-        XCTAssertEqual(createdModes, [.allowDisplaySleep])
+        XCTAssertEqual(createdModes, [.preventDisplaySleep])
         XCTAssertNil(service.manualExpiry, "indefinite by default")
 
         service.setManual(on: false)
@@ -95,10 +95,10 @@ final class KeepAwakeServiceTests: XCTestCase {
         XCTAssertTrue(releasedIDs.isEmpty)
     }
 
-    func testManualUsesPreventDisplaySleepWhenConfigured() {
-        configure(autoEnabled: false, sleepMode: .preventDisplaySleep)
+    func testManualUsesAllowDisplaySleepWhenConfigured() {
+        configure(autoEnabled: false, sleepMode: .allowDisplaySleep)
         service.setManual(on: true)
-        XCTAssertEqual(createdModes, [.preventDisplaySleep])
+        XCTAssertEqual(createdModes, [.allowDisplaySleep])
     }
 
     // MARK: - Timed manual hold
@@ -382,11 +382,11 @@ final class KeepAwakeServiceTests: XCTestCase {
 
     func testSleepModeChangeWhileHeldReacquiresOnce() {
         service.setManual(on: true)
-        XCTAssertEqual(createdModes, [.allowDisplaySleep])
+        XCTAssertEqual(createdModes, [.preventDisplaySleep])
 
-        configure(autoEnabled: false, sleepMode: .preventDisplaySleep)
+        configure(autoEnabled: false, sleepMode: .allowDisplaySleep)
 
-        XCTAssertEqual(createdModes, [.allowDisplaySleep, .preventDisplaySleep])
+        XCTAssertEqual(createdModes, [.preventDisplaySleep, .allowDisplaySleep])
         XCTAssertEqual(releasedIDs, [1], "exactly one release + one re-create")
         XCTAssertTrue(service.isAssertionHeld)
     }
