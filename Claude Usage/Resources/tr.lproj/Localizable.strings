@@ -1019,6 +1019,45 @@
 "notch.server.port_busy" = "%@ bağlantı noktası kullanımda — uygulamanın başka bir kopyası mı çalışıyor?";
 "notch.server.retry" = "Yeniden dene";
 
+/* Keep Awake */
+"section.keep_awake_title" = "Uyanık Tut";
+"section.keep_awake_desc" = "Mac'in uykuya geçmesini engeller";
+"keep_awake.manual_title" = "Elle denetim";
+"keep_awake.manual_desc" = "İstediğinizde kendiniz açın, isteğe bağlı zamanlayıcıyla";
+"keep_awake.enable" = "Mac'i uyanık tut";
+"keep_awake.enable_desc" = "Mac'in uykuya geçmesini geçici olarak engeller";
+"keep_awake.status_active" = "Mac şu anda uyanık tutuluyor";
+"keep_awake.remaining" = "%@ sonra kapanır";
+"keep_awake.duration" = "Süre";
+"keep_awake.duration.indefinite" = "Kapatana kadar";
+"keep_awake.duration.custom" = "Özel…";
+"keep_awake.custom_hours" = "%d saat";
+"keep_awake.auto_title" = "Otomatik";
+"keep_awake.auto_card_desc" = "Önerilen: Mac'i yalnızca Claude Code gerçekten çalışırken uyanık tutar";
+"keep_awake.auto" = "Claude Code çalışırken uyanık tut";
+"keep_awake.auto_desc" = "Etkin Claude Code oturumları sırasında uyanık kalır, ardından uykuya yeniden izin verir. Claude Code kancalarını kurar";
+"keep_awake.grace" = "Claude Code çalışmayı bıraktığında";
+"keep_awake.grace.immediately" = "Hemen uykuya geç";
+"keep_awake.grace.stay" = "%@ uyanık kal";
+"keep_awake.hooks_note" = "Etkinlik, ~/.claude/settings.json içindeki Claude Code kancalarıyla algılanır";
+"keep_awake.sleep_type" = "Uyku engelleme";
+"keep_awake.sleep_type_desc" = "Mac uyanık tutulurken ekranın açık kalıp kalmayacağını seçin";
+"keep_awake.sleep_type.system" = "Ekran uyuyabilir";
+"keep_awake.sleep_type.display" = "Ekranı açık tut";
+"keep_awake.lid_note" = "Kapak kapalıyken Mac, güce bağlı ve harici ekran kullanmıyorsa yine de uykuya geçer";
+"keep_awake.state_off" = "Kapalı";
+"keep_awake.state_on_indefinite" = "Açık — siz kapatana kadar uyanık (∞)";
+"keep_awake.state_on_remaining" = "Açık — %@ kaldı";
+"keep_awake.state_auto_active" = "Otomatik — Claude Code çalışıyor";
+"keep_awake.state_auto_grace" = "Otomatik — Claude bitirdi, %@ daha uyanık";
+"keep_awake.state_auto_armed" = "Otomatik açık — Claude Code çalışırken Mac'i uyanık tutar";
+"keep_awake.hint_click_on" = "Açmak için tıklayın — Claude Code çalışırken Mac'i uyanık tutar";
+"keep_awake.hint_click_off" = "Kapatmak için tıklayın";
+"keep_awake.hint_click_auto_off" = "Otomatik modu kapatmak için tıklayın — yeniden açana kadar kapalı kalır";
+"keep_awake.menu_for" = "%@ boyunca uyanık tut";
+"keep_awake.menu_indefinite" = "Kapatana kadar uyanık tut";
+"keep_awake.menu_off" = "Uyanık tutmayı kapat";
+
 /* Sponsor slot */
 "sponsor.slot_title" = "Bu alan sponsorlara açıktır";
 "sponsor.slot_cta" = "İletişime geçin";

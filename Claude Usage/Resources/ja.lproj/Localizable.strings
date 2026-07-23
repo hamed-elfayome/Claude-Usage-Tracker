@@ -1027,6 +1027,45 @@
 "menubar.this_month" = "今月";
 "menubar.total" = "合計";
 
+/* Keep Awake */
+"section.keep_awake_title" = "スリープ防止";
+"section.keep_awake_desc" = "Macがスリープするのを防ぎます";
+"keep_awake.manual_title" = "手動コントロール";
+"keep_awake.manual_desc" = "必要なときに自分でオンにできます(タイマー設定可)";
+"keep_awake.enable" = "Macをスリープさせない";
+"keep_awake.enable_desc" = "一時的にMacがスリープするのを防ぎます";
+"keep_awake.status_active" = "現在Macのスリープを防止中です";
+"keep_awake.remaining" = "%@後にオフになります";
+"keep_awake.duration" = "継続時間";
+"keep_awake.duration.indefinite" = "オフにするまで";
+"keep_awake.duration.custom" = "カスタム…";
+"keep_awake.custom_hours" = "%d時間";
+"keep_awake.auto_title" = "自動";
+"keep_awake.auto_card_desc" = "おすすめ:Claude Codeが実際に作業している間だけMacをスリープさせません";
+"keep_awake.auto" = "Claude Codeの作業中はスリープさせない";
+"keep_awake.auto_desc" = "Claude Codeのセッション中はスリープせず、終了後は再びスリープを許可します。Claude Codeのフックをインストールします";
+"keep_awake.grace" = "Claude Codeの作業終了後";
+"keep_awake.grace.immediately" = "すぐにスリープ";
+"keep_awake.grace.stay" = "%@スリープしない";
+"keep_awake.hooks_note" = "アクティビティは ~/.claude/settings.json のClaude Codeフックで検出されます";
+"keep_awake.sleep_type" = "スリープ防止の種類";
+"keep_awake.sleep_type_desc" = "スリープ防止中に画面を点けたままにするかを選択します";
+"keep_awake.sleep_type.system" = "画面はスリープ可";
+"keep_awake.sleep_type.display" = "画面を点けたまま";
+"keep_awake.lid_note" = "蓋を閉じると、電源接続中に外部ディスプレイを使用している場合を除き、Macはスリープします";
+"keep_awake.state_off" = "オフ";
+"keep_awake.state_on_indefinite" = "オン — オフにするまでスリープしません(∞)";
+"keep_awake.state_on_remaining" = "オン — 残り%@";
+"keep_awake.state_auto_active" = "自動 — Claude Codeが作業中";
+"keep_awake.state_auto_grace" = "自動 — Claudeの作業終了、あと%@スリープしません";
+"keep_awake.state_auto_armed" = "自動オン — Claude Codeの作業中はMacをスリープさせません";
+"keep_awake.hint_click_on" = "クリックでオン — Claude Codeの作業中はMacをスリープさせません";
+"keep_awake.hint_click_off" = "クリックでオフ";
+"keep_awake.hint_click_auto_off" = "クリックで自動モードをオフ — 再びオンにするまでオフのままです";
+"keep_awake.menu_for" = "%@スリープさせない";
+"keep_awake.menu_indefinite" = "オフにするまでスリープさせない";
+"keep_awake.menu_off" = "スリープ防止をオフ";
+
 /* Sponsor slot */
 "sponsor.slot_title" = "スポンサー募集中のスペースです";
 "sponsor.slot_cta" = "お問い合わせ";

@@ -494,6 +494,9 @@ struct SmartHeader: View {
             Spacer()
 
             HStack(alignment: .center, spacing: 2) {
+                // Keep awake
+                KeepAwakeHeaderButton()
+
                 // Refresh
                 HeaderIconButton(
                     icon: "arrow.clockwise",
@@ -551,6 +554,272 @@ struct HeaderIconButton: View {
                 isHovered = hovering
             }
         }
+    }
+}
+
+// MARK: - Keep Awake Header Button
+
+/// Header toggle for KeepAwakeService. Lights up (with a one-shot ripple and
+/// a soft breathing glow) whenever the assertion is held — including holds
+/// from auto mode — so it doubles as an "is my Mac staying awake?" indicator.
+/// Hovering shows a live status card; right-click offers durations and auto mode.
+struct KeepAwakeHeaderButton: View {
+    @ObservedObject private var service = KeepAwakeService.shared
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var isHovered = false
+    @State private var rippleID = 0
+    @State private var glowPulse = false
+    @State private var showHoverCard = false
+    @State private var hoverCardTask: DispatchWorkItem?
+
+    private static let menuDurations: [TimeInterval] = [15 * 60, 3600, 2 * 3600, 8 * 3600]
+
+    private var isActive: Bool { service.isAssertionHeld }
+    /// Auto mode is on but not currently holding: dimmed-orange filled cup so
+    /// the first click (and every armed idle state) has visible feedback.
+    private var isArmed: Bool { service.autoEnabled && !isActive }
+
+    private var iconColor: Color {
+        if isActive { return .orange }
+        if isArmed { return Color.orange.opacity(0.55) }
+        return isHovered ? .primary : .secondary
+    }
+
+    var body: some View {
+        Button(action: { service.smartToggle() }) {
+            ZStack {
+                if !reduceMotion, rippleID > 0, isActive || isArmed {
+                    KeepAwakeActivationRipple()
+                        .id(rippleID)
+                    KeepAwakeActivationRipple(delay: 0.18)
+                        .id(-rippleID)
+                }
+
+                if isActive, !reduceMotion {
+                    KeepAwakeSteamView()
+                }
+
+                Image(systemName: isActive || isArmed ? "cup.and.saucer.fill" : "cup.and.saucer")
+                    .font(.system(size: 10.5, weight: .medium))
+                    .imageScale(.medium)
+                    .contentTransition(.symbolEffect(.replace))
+                    .symbolEffect(.bounce, options: .speed(1.3), value: isActive)
+                    .symbolEffect(.bounce, options: .speed(1.3), value: service.autoEnabled)
+                    .shadow(
+                        color: isActive ? Color.orange.opacity(glowPulse ? 0.55 : 0.25) : .clear,
+                        radius: glowPulse ? 5 : 3
+                    )
+            }
+            .foregroundColor(iconColor)
+            .frame(width: 24, height: 24, alignment: .center)
+            .background(
+                RoundedRectangle(cornerRadius: 5)
+                    .fill(
+                        isActive
+                            ? Color.orange.opacity(isHovered ? 0.16 : 0.10)
+                            : (isArmed
+                                ? Color.orange.opacity(isHovered ? 0.12 : 0.06)
+                                : (isHovered ? Color.primary.opacity(0.08) : Color.clear))
+                    )
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .contextMenu {
+            if isActive {
+                Button("keep_awake.menu_off".localized) { service.smartToggle() }
+            } else {
+                Button("keep_awake.menu_indefinite".localized) {
+                    service.setManual(on: true, duration: 0)
+                }
+                ForEach(Self.menuDurations, id: \.self) { duration in
+                    Button("keep_awake.menu_for".localized(with: KeepAwakeTimeFormat.interval(duration))) {
+                        service.setManual(on: true, duration: duration)
+                    }
+                }
+            }
+            Divider()
+            Toggle("keep_awake.auto".localized, isOn: Binding(
+                get: { SharedDataStore.shared.loadKeepAwakeAutoEnabled() },
+                set: { service.setAutoEnabled($0) }
+            ))
+        }
+        .popover(isPresented: $showHoverCard, arrowEdge: .bottom) {
+            KeepAwakeHoverCard(service: service)
+        }
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.15)) {
+                isHovered = hovering
+            }
+            hoverCardTask?.cancel()
+            if hovering {
+                let task = DispatchWorkItem { showHoverCard = true }
+                hoverCardTask = task
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: task)
+            } else {
+                showHoverCard = false
+            }
+        }
+        .animation(
+            isActive && !reduceMotion
+                ? .easeInOut(duration: 2.0).repeatForever(autoreverses: true)
+                : .easeOut(duration: 0.3),
+            value: glowPulse
+        )
+        .onAppear {
+            if isActive { glowPulse = true }
+        }
+        .onChange(of: isActive) { _, active in
+            if active {
+                rippleID += 1
+                glowPulse = true
+            } else {
+                glowPulse = false
+            }
+        }
+        .onChange(of: service.autoEnabled) { _, enabled in
+            // Arming auto (usually the first-ever click) plays the ripple even
+            // though no assertion is held yet — the click must feel received.
+            if enabled, !isActive {
+                rippleID += 1
+            }
+        }
+    }
+}
+
+/// Live status card shown while hovering the keep-awake button: current mode
+/// (off / on / auto), time remaining or ∞, and what a click will do.
+private struct KeepAwakeHoverCard: View {
+    @ObservedObject var service: KeepAwakeService
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 5) {
+                    Image(systemName: service.isAssertionHeld ? "cup.and.saucer.fill" : "cup.and.saucer")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(service.isAssertionHeld ? .orange : .secondary)
+                    Text("section.keep_awake_title".localized)
+                        .font(.system(size: 11, weight: .semibold))
+                }
+
+                Text(statusText(at: context.date))
+                    .font(.system(size: 11))
+                    .foregroundColor(.primary)
+
+                // A manual hold is showing above, but auto is also armed:
+                // say so, so its behavior is never a surprise.
+                if service.autoEnabled, !service.isAutoHolding, service.isManualOn {
+                    Text("keep_awake.state_auto_armed".localized)
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                }
+
+                Text(hintText)
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+            }
+            .padding(10)
+            .frame(width: 230, alignment: .leading)
+        }
+    }
+
+    private func statusText(at reference: Date) -> String {
+        if service.isManualOn {
+            guard let expiry = service.manualExpiry else {
+                return "keep_awake.state_on_indefinite".localized
+            }
+            return "keep_awake.state_on_remaining".localized(
+                with: KeepAwakeTimeFormat.remaining(until: expiry, from: reference))
+        }
+        if service.isAutoHolding {
+            guard let graceEnd = service.autoGraceExpiry else {
+                return "keep_awake.state_auto_active".localized
+            }
+            return "keep_awake.state_auto_grace".localized(
+                with: KeepAwakeTimeFormat.remaining(until: graceEnd, from: reference))
+        }
+        if service.autoEnabled {
+            // Armed but idle: auto will hold as soon as Claude Code works.
+            return "keep_awake.state_auto_armed".localized
+        }
+        return "keep_awake.state_off".localized
+    }
+
+    private var hintText: String {
+        if service.isManualOn {
+            return "keep_awake.hint_click_off".localized
+        }
+        return service.autoEnabled
+            ? "keep_awake.hint_click_auto_off".localized
+            : "keep_awake.hint_click_on".localized
+    }
+}
+
+/// Shared duration formatting for the keep-awake button, menu, and hover card.
+enum KeepAwakeTimeFormat {
+    static func interval(_ interval: TimeInterval) -> String {
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = interval < 3600 ? [.minute] : [.hour]
+        formatter.unitsStyle = .abbreviated
+        return formatter.string(from: interval) ?? ""
+    }
+
+    static func remaining(until deadline: Date, from reference: Date) -> String {
+        let remaining = max(0, deadline.timeIntervalSince(reference))
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = remaining < 3600 ? [.minute, .second] : [.hour, .minute]
+        formatter.unitsStyle = .abbreviated
+        return formatter.string(from: remaining) ?? ""
+    }
+}
+
+/// One-shot expanding ring played on activation; re-created via `.id` so each
+/// activation replays it from the start. Two staggered rings give the "drop
+/// in water" feel.
+private struct KeepAwakeActivationRipple: View {
+    var delay: Double = 0
+    @State private var expanded = false
+
+    var body: some View {
+        Circle()
+            .stroke(Color.orange.opacity(expanded ? 0 : 0.6), lineWidth: 1.5)
+            .frame(width: 18, height: 18)
+            .scaleEffect(expanded ? 1.9 : 0.7)
+            .allowsHitTesting(false)
+            .onAppear {
+                withAnimation(.easeOut(duration: 0.6).delay(delay)) {
+                    expanded = true
+                }
+            }
+    }
+}
+
+/// Three tiny steam wisps drifting up from the cup while keep-awake is active.
+/// Each dot fades out as it rises, then loops; staggered delays keep the
+/// motion organic. Only shown when Reduce Motion is off.
+private struct KeepAwakeSteamView: View {
+    @State private var rising = false
+
+    var body: some View {
+        ZStack {
+            steamDot(x: -2.5, delay: 0.0)
+            steamDot(x: 0.5, delay: 0.55)
+            steamDot(x: 3.0, delay: 1.1)
+        }
+        .allowsHitTesting(false)
+        .onAppear { rising = true }
+    }
+
+    private func steamDot(x: CGFloat, delay: Double) -> some View {
+        Circle()
+            .fill(Color.orange.opacity(rising ? 0 : 0.5))
+            .frame(width: 2.5, height: 2.5)
+            .offset(x: x, y: rising ? -12 : -5)
+            .animation(
+                .easeOut(duration: 1.7).repeatForever(autoreverses: false).delay(delay),
+                value: rising
+            )
     }
 }
 

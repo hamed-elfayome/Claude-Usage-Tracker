@@ -1023,6 +1023,45 @@
 "notch.server.port_busy" = "Port %@ is in use — is another copy of the app running?";
 "notch.server.retry" = "Retry";
 
+/* Keep Awake */
+"section.keep_awake_title" = "Keep Awake";
+"section.keep_awake_desc" = "Prevent your Mac from sleeping";
+"keep_awake.manual_title" = "Manual Control";
+"keep_awake.manual_desc" = "Turn keep-awake on yourself, with an optional timer";
+"keep_awake.enable" = "Keep Mac Awake";
+"keep_awake.enable_desc" = "Temporarily prevent your Mac from going to sleep";
+"keep_awake.status_active" = "Currently keeping your Mac awake";
+"keep_awake.remaining" = "Turns off in %@";
+"keep_awake.duration" = "Duration";
+"keep_awake.duration.indefinite" = "Until turned off";
+"keep_awake.duration.custom" = "Custom…";
+"keep_awake.custom_hours" = "%d hours";
+"keep_awake.auto_title" = "Automatic";
+"keep_awake.auto_card_desc" = "Recommended: only keeps your Mac awake while Claude Code is actually working";
+"keep_awake.auto" = "Keep Awake While Claude Code Works";
+"keep_awake.auto_desc" = "Stays awake during active Claude Code sessions, then allows sleep again. Installs Claude Code hooks";
+"keep_awake.grace" = "After Claude Code stops working";
+"keep_awake.grace.immediately" = "Sleep right away";
+"keep_awake.grace.stay" = "Stay awake %@";
+"keep_awake.hooks_note" = "Activity is detected through Claude Code hooks in ~/.claude/settings.json";
+"keep_awake.sleep_type" = "Sleep Prevention";
+"keep_awake.sleep_type_desc" = "Choose whether the display stays on while keeping the Mac awake";
+"keep_awake.sleep_type.system" = "Screen may sleep";
+"keep_awake.sleep_type.display" = "Keep screen on";
+"keep_awake.lid_note" = "With the lid closed, your Mac will still sleep unless it's plugged in and using an external display";
+"keep_awake.state_off" = "Off";
+"keep_awake.state_on_indefinite" = "On — stays awake until you turn it off (∞)";
+"keep_awake.state_on_remaining" = "On — %@ left";
+"keep_awake.state_auto_active" = "Auto — Claude Code is working";
+"keep_awake.state_auto_grace" = "Auto — Claude finished, staying awake %@ more";
+"keep_awake.state_auto_armed" = "Auto is on — keeps your Mac awake while Claude Code works";
+"keep_awake.hint_click_on" = "Click to turn on — keeps your Mac awake while Claude Code works";
+"keep_awake.hint_click_off" = "Click to turn off";
+"keep_awake.hint_click_auto_off" = "Click to turn auto mode off — stays off until you turn it back on";
+"keep_awake.menu_for" = "Keep awake for %@";
+"keep_awake.menu_indefinite" = "Keep awake until turned off";
+"keep_awake.menu_off" = "Turn off keep awake";
+
 /* Sponsor slot */
 "sponsor.slot_title" = "This spot is available for sponsors";
 "sponsor.slot_cta" = "Get in touch";

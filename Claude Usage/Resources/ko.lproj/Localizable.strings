@@ -1036,6 +1036,45 @@
 "menubar.this_month" = "이번 달";
 "menubar.total" = "합계";
 
+/* Keep Awake */
+"section.keep_awake_title" = "깨어 있기";
+"section.keep_awake_desc" = "Mac이 잠자기 상태로 전환되는 것을 방지합니다";
+"keep_awake.manual_title" = "수동 제어";
+"keep_awake.manual_desc" = "필요할 때 직접 켤 수 있습니다(타이머 선택 가능)";
+"keep_awake.enable" = "Mac 깨어 있게 유지";
+"keep_awake.enable_desc" = "일시적으로 Mac이 잠자기 상태로 전환되는 것을 방지합니다";
+"keep_awake.status_active" = "현재 Mac을 깨어 있게 유지하는 중입니다";
+"keep_awake.remaining" = "%@ 후 꺼짐";
+"keep_awake.duration" = "지속 시간";
+"keep_awake.duration.indefinite" = "끌 때까지";
+"keep_awake.duration.custom" = "사용자화…";
+"keep_awake.custom_hours" = "%d시간";
+"keep_awake.auto_title" = "자동";
+"keep_awake.auto_card_desc" = "추천: Claude Code가 실제로 작업하는 동안에만 Mac을 깨어 있게 유지합니다";
+"keep_awake.auto" = "Claude Code 작업 중 깨어 있게 유지";
+"keep_awake.auto_desc" = "Claude Code 세션 중에는 깨어 있고, 끝나면 다시 잠자기를 허용합니다. Claude Code 훅을 설치합니다";
+"keep_awake.grace" = "Claude Code 작업이 끝나면";
+"keep_awake.grace.immediately" = "바로 잠자기";
+"keep_awake.grace.stay" = "%@ 깨어 있기";
+"keep_awake.hooks_note" = "활동은 ~/.claude/settings.json의 Claude Code 훅을 통해 감지됩니다";
+"keep_awake.sleep_type" = "잠자기 방지 방식";
+"keep_awake.sleep_type_desc" = "Mac을 깨어 있게 유지하는 동안 화면을 켜 둘지 선택합니다";
+"keep_awake.sleep_type.system" = "화면은 꺼질 수 있음";
+"keep_awake.sleep_type.display" = "화면 켜 두기";
+"keep_awake.lid_note" = "덮개를 닫으면 전원에 연결된 상태로 외장 디스플레이를 사용하지 않는 한 Mac이 잠자기 상태가 됩니다";
+"keep_awake.state_off" = "꺼짐";
+"keep_awake.state_on_indefinite" = "켜짐 — 끌 때까지 깨어 있음 (∞)";
+"keep_awake.state_on_remaining" = "켜짐 — %@ 남음";
+"keep_awake.state_auto_active" = "자동 — Claude Code 작업 중";
+"keep_awake.state_auto_grace" = "자동 — Claude 작업 완료, %@ 더 깨어 있음";
+"keep_awake.state_auto_armed" = "자동 켜짐 — Claude Code 작업 중 Mac을 깨어 있게 유지합니다";
+"keep_awake.hint_click_on" = "클릭하여 켜기 — Claude Code 작업 중 Mac을 깨어 있게 유지합니다";
+"keep_awake.hint_click_off" = "클릭하여 끄기";
+"keep_awake.hint_click_auto_off" = "클릭하여 자동 모드 끄기 — 다시 켤 때까지 꺼진 상태로 유지됩니다";
+"keep_awake.menu_for" = "%@ 동안 깨어 있기";
+"keep_awake.menu_indefinite" = "끌 때까지 깨어 있기";
+"keep_awake.menu_off" = "깨어 있기 끄기";
+
 /* Sponsor slot */
 "sponsor.slot_title" = "이 공간은 스폰서에게 제공됩니다";
 "sponsor.slot_cta" = "문의하기";

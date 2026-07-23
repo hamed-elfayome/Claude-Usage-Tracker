@@ -61,6 +61,12 @@ enum Constants {
         static let notchHUDEnabled = "notchHUDEnabled"
         static let notchHUDAutoHide = "notchHUDAutoHide"
         static let notchHUDPathToken = "notchHUDPathToken"
+
+        // Keep Awake
+        static let keepAwakeAutoEnabled = "keepAwakeAutoEnabled"
+        static let keepAwakeSleepMode = "keepAwakeSleepMode"
+        static let keepAwakeDefaultDuration = "keepAwakeDefaultDuration"
+        static let keepAwakeAutoGracePeriod = "keepAwakeAutoGracePeriod"
     }
 
     // Claude Code notch HUD (hook listener + display)

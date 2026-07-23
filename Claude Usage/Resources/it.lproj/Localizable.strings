@@ -1027,6 +1027,45 @@
 "settings.updates" = "Aggiornamenti";
 "settings.updates.description" = "Mantieni l'app aggiornata";
 
+/* Keep Awake */
+"section.keep_awake_title" = "Mantieni attivo";
+"section.keep_awake_desc" = "Impedisce al Mac di andare in stop";
+"keep_awake.manual_title" = "Controllo manuale";
+"keep_awake.manual_desc" = "Attiva tu stesso il mantenimento, con timer opzionale";
+"keep_awake.enable" = "Mantieni il Mac attivo";
+"keep_awake.enable_desc" = "Impedisce temporaneamente al Mac di andare in stop";
+"keep_awake.status_active" = "Il Mac viene mantenuto attivo";
+"keep_awake.remaining" = "Si disattiva tra %@";
+"keep_awake.duration" = "Durata";
+"keep_awake.duration.indefinite" = "Finché non lo disattivi";
+"keep_awake.duration.custom" = "Personalizzata…";
+"keep_awake.custom_hours" = "%d ore";
+"keep_awake.auto_title" = "Automatico";
+"keep_awake.auto_card_desc" = "Consigliato: mantiene il Mac attivo solo mentre Claude Code sta effettivamente lavorando";
+"keep_awake.auto" = "Mantieni attivo mentre Claude Code lavora";
+"keep_awake.auto_desc" = "Resta attivo durante le sessioni di Claude Code, poi consente di nuovo lo stop. Installa gli hook di Claude Code";
+"keep_awake.grace" = "Quando Claude Code smette di lavorare";
+"keep_awake.grace.immediately" = "Dormi subito";
+"keep_awake.grace.stay" = "Resta sveglio %@";
+"keep_awake.hooks_note" = "L'attività viene rilevata tramite gli hook di Claude Code in ~/.claude/settings.json";
+"keep_awake.sleep_type" = "Prevenzione dello stop";
+"keep_awake.sleep_type_desc" = "Scegli se lo schermo resta acceso mentre il Mac viene mantenuto attivo";
+"keep_awake.sleep_type.system" = "Lo schermo può spegnersi";
+"keep_awake.sleep_type.display" = "Mantieni lo schermo acceso";
+"keep_awake.lid_note" = "Con il coperchio chiuso il Mac andrà comunque in stop, a meno che non sia collegato alla corrente con un display esterno";
+"keep_awake.state_off" = "Spento";
+"keep_awake.state_on_indefinite" = "Attivo — sveglio finché non lo spegni (∞)";
+"keep_awake.state_on_remaining" = "Attivo — %@ rimanenti";
+"keep_awake.state_auto_active" = "Auto — Claude Code sta lavorando";
+"keep_awake.state_auto_grace" = "Auto — Claude ha finito, sveglio ancora per %@";
+"keep_awake.state_auto_armed" = "Auto attivo — tiene sveglio il Mac mentre Claude Code lavora";
+"keep_awake.hint_click_on" = "Fai clic per attivare — tiene sveglio il Mac mentre Claude Code lavora";
+"keep_awake.hint_click_off" = "Fai clic per spegnere";
+"keep_awake.hint_click_auto_off" = "Fai clic per disattivare la modalità automatica — resta disattivata finché non la riattivi";
+"keep_awake.menu_for" = "Tieni sveglio per %@";
+"keep_awake.menu_indefinite" = "Tieni sveglio finché non disattivato";
+"keep_awake.menu_off" = "Disattiva mantieni attivo";
+
 /* Sponsor slot */
 "sponsor.slot_title" = "Questo spazio è disponibile per gli sponsor";
 "sponsor.slot_cta" = "Contattami";

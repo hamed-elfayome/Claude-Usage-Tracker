@@ -48,7 +48,8 @@ final class NotchHUDController {
             compactTrailing: { NotchCompactTrailingView() }
         )
 
-        NotchSessionStore.shared.startStaleSweep()
+        // Stale-sweep and store reset are owned by AppDelegate: the session
+        // store outlives the HUD when Keep Awake's auto mode still needs it.
         NotchSessionStore.shared.$sessions
             .receive(on: DispatchQueue.main)
             .sink { [weak self] sessions in
@@ -69,7 +70,6 @@ final class NotchHUDController {
         dynamicNotch = nil
         isVisible = false
         isExpanded = false
-        NotchSessionStore.shared.reset()
         Task { await notch?.hide() }
     }
 
