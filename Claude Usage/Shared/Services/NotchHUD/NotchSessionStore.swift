@@ -83,6 +83,14 @@ final class NotchSessionStore: ObservableObject {
 
         case let .notification(id, cwd, message):
             upsert(id: id, cwd: cwd) { session in
+                // A notification arriving while the session is already .idle is
+                // Claude Code's "waiting for your input" nudge, fired ~60s after
+                // the Stop hook: the task is finished, not blocked. Re-raising
+                // attention here would let auto keep-awake re-arm on a done
+                // session and hold the Mac awake until the terminal closes. A
+                // genuine permission prompt arrives mid-work (the session is
+                // never .idle then) and still raises the cue.
+                guard session.status != .idle else { return }
                 session.status = .needsAttention
                 if let message = message, !message.isEmpty {
                     session.currentTask = String(message.prefix(80))
