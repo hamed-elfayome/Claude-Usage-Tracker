@@ -1001,7 +1001,7 @@ class ClaudeCodeSyncService {
     /// On a successful refresh, the new credentials are written back to BOTH the profile's
     /// cached JSON AND (when applicable) the custom keychain entry, so Claude Code and the
     /// Tracker stay in sync.
-    func ensureFreshCredentials(for profileId: UUID) async -> String? {
+    func ensureFreshCredentials(for profileId: UUID, allowRotation: Bool = false) async -> String? {
         let profiles = ProfileStore.shared.loadProfiles()
         guard let profile = profiles.first(where: { $0.id == profileId }) else {
             return nil
@@ -1100,7 +1100,15 @@ class ClaudeCodeSyncService {
         // Never rotate a lineage we don't own: return the cached snapshot (even if expired) and
         // let the display fall back to last-known usage. Pinned profiles are safe to refresh
         // because we write the rotated tokens back to the shared keychain entry below.
-        if customSvc == nil {
+        // Exception: an *explicit* activation (allowRotation) must refresh even here.
+        // When the user switches to this profile, activateProfile() calls us before the
+        // profile becomes the active one, so it lands in this non-active branch. Skipping
+        // the refresh there applies a stale access token and surfaces a transient E1000
+        // ("session key not found") on every switch. Rotating is fine for an explicit
+        // switch — applyProfileCredentials writes the fresh token straight to the system
+        // keychain that Claude Code / cux read. Only *background* monitoring passes
+        // allowRotation=false to avoid churning idle accounts.
+        if customSvc == nil && !allowRotation {
             LoggingService.shared.log("ensureFreshCredentials: '\(profile.name)' is non-active & unpinned; skipping refresh to avoid rotating an externally-owned token")
             return cliJSON
         }
