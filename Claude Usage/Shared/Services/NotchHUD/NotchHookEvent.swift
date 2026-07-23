@@ -10,15 +10,20 @@
 import Foundation
 
 /// A passive observation event from a Claude Code hook.
+///
+/// Every hook payload carries `cwd`, so every mutating event forwards it: a
+/// session first observed mid-flight (tracker restarted, or a sub-process
+/// that never fires SessionStart) still gets named after its project instead
+/// of falling back to a bare session id.
 enum NotchHookEvent: Equatable {
     case sessionStart(id: String, cwd: String?)
     case sessionEnd(id: String)
-    case userPromptSubmit(id: String, prompt: String?)
+    case userPromptSubmit(id: String, cwd: String?, prompt: String?)
     case preToolUse(id: String, cwd: String?, status: SessionStatus, task: String)
-    case postToolUse(id: String)
-    case toolFailure(id: String)
-    case stop(id: String)
-    case notification(id: String, message: String?)
+    case postToolUse(id: String, cwd: String?)
+    case toolFailure(id: String, cwd: String?)
+    case stop(id: String, cwd: String?)
+    case notification(id: String, cwd: String?, message: String?)
 
     /// The hook URL path suffix each event is received on (after the token segment).
     static let pathSuffixes: [String] = [
@@ -40,7 +45,7 @@ enum NotchHookEvent: Equatable {
         case "session-end":
             return .sessionEnd(id: sessionId)
         case "user-prompt-submit":
-            return .userPromptSubmit(id: sessionId, prompt: payload["prompt"] as? String)
+            return .userPromptSubmit(id: sessionId, cwd: cwd, prompt: payload["prompt"] as? String)
         case "pre-tool-use":
             let activity = ToolActivityMapper.map(
                 toolName: payload["tool_name"] as? String ?? "",
@@ -48,13 +53,13 @@ enum NotchHookEvent: Equatable {
             )
             return .preToolUse(id: sessionId, cwd: cwd, status: activity.status, task: activity.task)
         case "post-tool-use":
-            return .postToolUse(id: sessionId)
+            return .postToolUse(id: sessionId, cwd: cwd)
         case "post-tool-use-failure":
-            return .toolFailure(id: sessionId)
+            return .toolFailure(id: sessionId, cwd: cwd)
         case "stop":
-            return .stop(id: sessionId)
+            return .stop(id: sessionId, cwd: cwd)
         case "notification":
-            return .notification(id: sessionId, message: payload["message"] as? String)
+            return .notification(id: sessionId, cwd: cwd, message: payload["message"] as? String)
         default:
             return nil
         }

@@ -19,6 +19,7 @@ final class NotchHUDController {
     private var dynamicNotch: DynamicNotch<NotchExpandedView, NotchCompactLeadingView, NotchCompactTrailingView>?
     private var cancellables: Set<AnyCancellable> = []
     private var idleHideTask: Task<Void, Never>?
+    private var autoCollapseTask: Task<Void, Never>?
     private var screenObserver: NSObjectProtocol?
 
     private var isVisible = false
@@ -61,6 +62,8 @@ final class NotchHUDController {
         cancellables.removeAll()
         idleHideTask?.cancel()
         idleHideTask = nil
+        autoCollapseTask?.cancel()
+        autoCollapseTask = nil
         if let observer = screenObserver {
             NotificationCenter.default.removeObserver(observer)
             screenObserver = nil
@@ -80,12 +83,30 @@ final class NotchHUDController {
         guard let notch = dynamicNotch, isVisible else { return }
         let expand = !isExpanded
         isExpanded = expand
+        autoCollapseTask?.cancel()
         Task {
             if expand {
                 await notch.expand()
+                self.startAutoCollapse()
             } else {
                 await self.showCompactState(notch)
             }
+        }
+    }
+
+    /// Expansion is transient, like the iOS island: once the pointer has left
+    /// the panel for a while, fall back to compact so the expanded window
+    /// doesn't linger as an invisible click shield over the menu bar area.
+    private func startAutoCollapse() {
+        autoCollapseTask?.cancel()
+        autoCollapseTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: UInt64(Constants.NotchHUD.expandedAutoCollapseDelay * 1_000_000_000))
+            while !Task.isCancelled, self?.dynamicNotch?.isHovering == true {
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+            }
+            guard !Task.isCancelled, let self, self.isExpanded, let notch = self.dynamicNotch else { return }
+            self.isExpanded = false
+            await self.showCompactState(notch)
         }
     }
 
@@ -129,6 +150,7 @@ final class NotchHUDController {
     private func hideNow(_ notch: DynamicNotch<NotchExpandedView, NotchCompactLeadingView, NotchCompactTrailingView>) {
         isVisible = false
         isExpanded = false
+        autoCollapseTask?.cancel()
         Task { await notch.hide() }
     }
 
@@ -173,7 +195,7 @@ final class NotchHUDController {
         store.apply(.sessionStart(id: "mock-1", cwd: "/Users/dev/api-server"))
         store.apply(.preToolUse(id: "mock-1", cwd: nil, status: .runningCommand, task: "swift build"))
         store.apply(.sessionStart(id: "mock-2", cwd: "/Users/dev/webapp"))
-        store.apply(.notification(id: "mock-2", message: "Claude needs your permission to use Bash"))
+        store.apply(.notification(id: "mock-2", cwd: nil, message: "Claude needs your permission to use Bash"))
     }
     #endif
 }
