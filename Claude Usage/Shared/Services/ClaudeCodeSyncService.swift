@@ -1091,6 +1091,20 @@ class ClaudeCodeSyncService {
             return cliJSON
         }
 
+        // At this point the profile is EITHER pinned to a keychain entry (customSvc != nil)
+        // OR non-active & unpinned — the active/unpinned case already returned above via the
+        // system-keychain branch. For a non-active, unpinned profile the refresh_token lineage
+        // is owned by an external tool (e.g. the `cux` account switcher, or Claude Code's own
+        // keychain rotation). Refreshing here would consume that refresh token out from under
+        // the other tool, forcing its next use to fail with invalid_grant ("Please run /login").
+        // Never rotate a lineage we don't own: return the cached snapshot (even if expired) and
+        // let the display fall back to last-known usage. Pinned profiles are safe to refresh
+        // because we write the rotated tokens back to the shared keychain entry below.
+        if customSvc == nil {
+            LoggingService.shared.log("ensureFreshCredentials: '\(profile.name)' is non-active & unpinned; skipping refresh to avoid rotating an externally-owned token")
+            return cliJSON
+        }
+
         guard let refreshToken = extractRefreshToken(from: cliJSON) else {
             LoggingService.shared.log("ensureFreshCredentials: profile '\(profile.name)' has no refresh token; cannot auto-refresh")
             return nil

@@ -1210,6 +1210,17 @@ class MenuBarManager: NSObject, ObservableObject {
             return try await apiService.fetchUsageData(oauthAccessToken: accessToken)
         }
 
+        // No usable live credential (e.g. a non-active profile whose CLI token expired and
+        // must not be refreshed independently — that would rotate a token another tool such as
+        // `cux` owns). Rather than surfacing a blocking "session key not found" dialog on every
+        // profile switch, fall back to the profile's last-known usage snapshot. Per-model weekly
+        // quotas (Fable/Opus/Sonnet) change slowly, so a slightly stale reading is far better UX
+        // than an error popup — and the active profile still refreshes live every cycle.
+        if let cached = profile.claudeUsage {
+            LoggingService.shared.log("fetchUsageForProfile: no live credential for '\(profile.name)'; showing last-known cached usage")
+            return cached
+        }
+
         throw AppError(
             code: .sessionKeyNotFound,
             message: "Missing credentials for profile '\(profile.name)'",
