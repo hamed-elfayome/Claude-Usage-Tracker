@@ -1,55 +1,32 @@
 import SwiftUI
 import Charts
 
-// MARK: - Always-active vibrancy background
+// MARK: - Popover background
+// NOTE: This used to host an NSVisualEffectView(.hudWindow) vibrancy layer. On macOS 26
+// (Tahoe) the system's SwiftUI material pipeline segfaults while resolving that material
+// inside the popover — the faulting stack is entirely in DesignLibrary / SwiftUICore
+// (MaterialProviderBox.resolveLayers → MaterialEffectResolvedData.updateValue), with no
+// app frames, and it reproduces every time the popover re-renders (e.g. switching
+// profiles). Rendering a plain, opaque, theme-aware layer avoids the material-resolution
+// path entirely: no vibrancy, but no crash.
 struct VisualEffectBackground: NSViewRepresentable {
     func makeNSView(context: Context) -> NSView {
-        let container = NSView()
-
-        // Base vibrancy layer
-        let effectView = NSVisualEffectView()
-        effectView.material = .hudWindow
-        effectView.blendingMode = .behindWindow
-        effectView.state = .active
-        effectView.isEmphasized = true
-        effectView.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(effectView)
-
-        // Solid tint overlay for more density
-        let tintView = NSView()
-        tintView.wantsLayer = true
-        if NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua {
-            tintView.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.25).cgColor
-        } else {
-            tintView.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.4).cgColor
-        }
-        tintView.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(tintView)
-
-        NSLayoutConstraint.activate([
-            effectView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            effectView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            effectView.topAnchor.constraint(equalTo: container.topAnchor),
-            effectView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-            tintView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            tintView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            tintView.topAnchor.constraint(equalTo: container.topAnchor),
-            tintView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-        ])
-
-        return container
+        let view = NSView()
+        view.wantsLayer = true
+        applyBackground(to: view)
+        return view
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {
-        // Update tint for appearance changes
-        if let tintView = nsView.subviews.last {
-            tintView.wantsLayer = true
-            if NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua {
-                tintView.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.25).cgColor
-            } else {
-                tintView.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.4).cgColor
-            }
-        }
+        applyBackground(to: nsView)
+    }
+
+    private func applyBackground(to view: NSView) {
+        view.wantsLayer = true
+        let isDark = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        view.layer?.backgroundColor = (isDark
+            ? NSColor(calibratedWhite: 0.12, alpha: 1.0)
+            : NSColor(calibratedWhite: 0.96, alpha: 1.0)).cgColor
     }
 }
 
