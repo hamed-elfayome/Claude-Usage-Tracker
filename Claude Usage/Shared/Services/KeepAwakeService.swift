@@ -22,10 +22,11 @@ final class KeepAwakeService: ObservableObject {
     static let shared = KeepAwakeService()
 
     enum SleepMode: String, CaseIterable {
-        /// System stays awake, display may sleep (default — long Claude Code
-        /// runs keep going with the screen off).
+        /// System stays awake, display may sleep. Battery-friendlier, but a
+        /// dark, locked display can look like the Mac actually slept.
         case allowDisplaySleep
-        /// Display and system both stay awake.
+        /// Display and system both stay awake (default — keeps the awake state
+        /// visible at a glance).
         case preventDisplaySleep
 
         var assertionType: String {
