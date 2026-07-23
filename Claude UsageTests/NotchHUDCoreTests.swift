@@ -152,6 +152,18 @@ final class NotchSessionStoreTests: XCTestCase {
         XCTAssertEqual(store.sessions[0].status, .runningCommand)
     }
 
+    func testNotificationAfterStopKeepsSessionIdle() {
+        store.apply(.sessionStart(id: "s1", cwd: nil))
+        store.apply(.stop(id: "s1", cwd: nil))
+        XCTAssertEqual(store.sessions[0].status, .idle)
+
+        // Claude Code's "waiting for your input" nudge fires ~60s after Stop.
+        // A finished session must stay idle so auto keep-awake doesn't re-arm
+        // and hold the Mac awake until the terminal closes.
+        store.apply(.notification(id: "s1", cwd: nil, message: "Claude is waiting for your input"))
+        XCTAssertEqual(store.sessions[0].status, .idle)
+    }
+
     func testStopSetsIdleAndSessionEndRemoves() {
         store.apply(.sessionStart(id: "s1", cwd: nil))
         store.apply(.stop(id: "s1", cwd: nil))
