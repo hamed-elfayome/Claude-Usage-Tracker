@@ -58,6 +58,12 @@ final class StatusBarUIManager {
     /// Returns a stable autosaveName for the default logo (no credentials)
     private static let defaultLogoAutosaveName: NSStatusItem.AutosaveName = "\(autosavePrefix).defaultLogo"
 
+    /// Fixed placeholder length for freshly-created multi-profile status items. Creating
+    /// them at a concrete length (rather than .variableLength) avoids the macOS 26 (Tahoe)
+    /// recursive variable-width NSISEngine solve during a multi-item rebuild (profile
+    /// switch). updateMultiProfileButtons replaces it with the real coarse-rounded width.
+    private static let multiProfilePlaceholderLength: CGFloat = 32
+
     // MARK: - Multi-profile identity helpers
 
     /// Well-known placeholder UUID used for the default logo in multi-profile mode
@@ -313,9 +319,14 @@ final class StatusBarUIManager {
             multiProfileStatusItems[Self.defaultLogoPlaceholderUUID] = statusItem
             LoggingService.shared.logUIEvent("Multi-profile: No profiles selected, showing default logo")
         } else {
-            // Create one status item per selected profile
+            // Create one status item per selected profile.
+            // macOS 26 (Tahoe): creating these with .variableLength makes AppKit run a
+            // recursive multi-item variable-width solve (NSISEngine) that overflows the
+            // stack when a full setup rebuilds 2+ items — e.g. on profile switch. Start
+            // them at a fixed placeholder length; updateMultiProfileButtons then pins the
+            // real (coarse-rounded, stable) width. No variable-width solve, no recursion.
             for profile in selectedProfiles {
-                let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+                let statusItem = NSStatusBar.system.statusItem(withLength: Self.multiProfilePlaceholderLength)
                 statusItem.autosaveName = Self.autosaveName(forProfileId: profile.id)
                 // Override any persisted false from a prior cmd-drag.
                 statusItem.isVisible = true
@@ -386,7 +397,9 @@ final class StatusBarUIManager {
             LoggingService.shared.logUIEvent("Multi-profile: Added default logo")
         } else {
             for profile in selectedProfiles where idsToAdd.contains(profile.id) {
-                let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+                // Fixed placeholder length (see setupMultiProfile) — avoids the macOS 26
+                // recursive variable-width solve; updateMultiProfileButtons pins the real width.
+                let statusItem = NSStatusBar.system.statusItem(withLength: Self.multiProfilePlaceholderLength)
                 statusItem.autosaveName = Self.autosaveName(forProfileId: profile.id)
                 // Override any persisted false from a prior cmd-drag.
                 statusItem.isVisible = true
