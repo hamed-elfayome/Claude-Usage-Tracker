@@ -1383,7 +1383,24 @@ class MenuBarManager: NSObject, ObservableObject {
                     // Check if this refresh was triggered within last 5 seconds
                     // (indicates user-initiated action like saving session key)
                     if abs(self.lastRefreshTriggerTime.timeIntervalSinceNow) < 5 {
-                        ErrorPresenter.shared.showAlert(for: appError)
+                        // Suppress the transient "session key not found" (E1000) modal that
+                        // fires on every account switch: activating a profile kicks off a
+                        // user-initiated refresh, and if the stored access token is expired
+                        // the very first fetch fails *before* the refresh_token grant lands.
+                        // When the active profile carries a refresh_token the state self-heals
+                        // on the next cycle, so a scary modal is pure noise. Only surface
+                        // credential errors that are genuinely unrecoverable (no refresh_token
+                        // to recover from). Non-credential errors still alert as before.
+                        let isCredMiss = appError.code == .sessionKeyNotFound
+                            || appError.code == .sessionKeyExpired
+                            || appError.code == .apiUnauthorized
+                        let canSelfHeal = self.profileManager.activeProfile?.cliCredentialsJSON
+                            .flatMap { ClaudeCodeSyncService.shared.extractRefreshToken(from: $0) } != nil
+                        if isCredMiss && canSelfHeal {
+                            LoggingService.shared.log("MenuBarManager: suppressing transient credential error [\(appError.code.rawValue)] — active profile has a refresh_token; will self-heal on next refresh")
+                        } else {
+                            ErrorPresenter.shared.showAlert(for: appError)
+                        }
                     } else {
                         // Background refresh - just log
                         LoggingService.shared.logError("MenuBarManager: Failed to fetch usage - [\(appError.code.rawValue)] \(appError.message)")
