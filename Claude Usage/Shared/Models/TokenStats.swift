@@ -9,4 +9,14 @@ struct TokenStats: Codable, Equatable {
     let isAvailable: Bool
 
     static let unavailable = TokenStats(allTime: 0, last7Days: 0, last30Days: 0, isAvailable: false)
+
+    /// Token count for a token metric type, or nil for non-token metrics.
+    func value(for metricType: MenuBarMetricType) -> Int? {
+        switch metricType {
+        case .tokensAllTime: return allTime
+        case .tokens7Days: return last7Days
+        case .tokens30Days: return last30Days
+        case .session, .week, .api: return nil
+        }
+    }
 }

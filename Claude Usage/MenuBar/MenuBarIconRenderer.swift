@@ -19,6 +19,7 @@ final class MenuBarIconRenderer {
         globalConfig: MenuBarIconConfiguration,
         usage: ClaudeUsage,
         apiUsage: APIUsage?,
+        tokenStats: TokenStats?,
         isDarkMode: Bool,
         colorMode: MenuBarColorMode,
         singleColorHex: String,
@@ -31,6 +32,7 @@ final class MenuBarIconRenderer {
             config: config,
             usage: usage,
             apiUsage: apiUsage,
+            tokenStats: tokenStats,
             showRemaining: globalConfig.showRemainingPercentage,
             usePaceColoring: globalConfig.usePaceColoring
         )
@@ -46,7 +48,7 @@ final class MenuBarIconRenderer {
 
         // Compute pace status from RAW values (not display-adjusted)
         let paceStatus: PaceStatus? = {
-            guard globalConfig.showPaceMarker, metricType != .api else { return nil }
+            guard globalConfig.showPaceMarker, metricType != .api, !metricType.isTokenMetric else { return nil }
             // Get raw elapsed fraction (always non-inverted)
             guard let rawElapsed = calculateTimeMarkerFraction(
                 metricType: metricType, usage: usage, showRemaining: false
@@ -69,6 +71,16 @@ final class MenuBarIconRenderer {
                 isDarkMode: isDarkMode,
                 colorMode: colorMode,
                 singleColorHex: singleColorHex,
+                showIconName: showIconName
+            )
+        }
+
+        // Token metrics are ALWAYS text-based numbers (no icon styles)
+        if metricType.isTokenMetric {
+            return createPrefixedTextStyle(
+                prefix: metricType.prefixText,
+                displayText: metricData.displayText,
+                isDarkMode: isDarkMode,
                 showIconName: showIconName
             )
         }
@@ -154,6 +166,7 @@ final class MenuBarIconRenderer {
         config: MetricIconConfig,
         usage: ClaudeUsage,
         apiUsage: APIUsage?,
+        tokenStats: TokenStats?,
         showRemaining: Bool,
         usePaceColoring: Bool = true
     ) -> MetricData {
@@ -252,6 +265,20 @@ final class MenuBarIconRenderer {
                 percentage: displayPercentage,
                 displayText: displayText,
                 statusLevel: statusLevel,
+                sessionResetTime: nil
+            )
+
+        case .tokensAllTime, .tokens7Days, .tokens30Days:
+            let text: String
+            if let stats = tokenStats, stats.isAvailable, let value = stats.value(for: metricType) {
+                text = FormatterHelper.abbreviatedCount(value)
+            } else {
+                text = "—"
+            }
+            return MetricData(
+                percentage: 0,
+                displayText: text,
+                statusLevel: .safe,
                 sessionResetTime: nil
             )
         }
@@ -684,13 +711,15 @@ final class MenuBarIconRenderer {
         return image
     }
 
-    // MARK: - API Text Style (Always Text-Based)
+    // MARK: - Prefixed Text Style (Always Text-Based)
 
-    private func createAPITextStyle(
-        metricData: MetricData,
+    /// Shared text-drawing routine for metrics that are always rendered as plain
+    /// text (API credits, token counts). `prefix` is only prepended when
+    /// `showIconName` is true.
+    private func createPrefixedTextStyle(
+        prefix: String,
+        displayText: String,
         isDarkMode: Bool,
-        colorMode: MenuBarColorMode,
-        singleColorHex: String,
         showIconName: Bool
     ) -> NSImage {
         let font = NSFont.systemFont(ofSize: 11, weight: .medium)
@@ -698,13 +727,7 @@ final class MenuBarIconRenderer {
         // Use isDarkMode to determine correct foreground color for menu bar
         let textColor: NSColor = menuBarForegroundColor(isDarkMode: isDarkMode)
 
-        var fullText = ""
-
-        if showIconName {
-            fullText = "API: \(metricData.displayText)"
-        } else {
-            fullText = metricData.displayText
-        }
+        let fullText = showIconName ? "\(prefix) \(displayText)" : displayText
 
         let attributes: [NSAttributedString.Key: Any] = [
             .font: font,
@@ -721,6 +744,21 @@ final class MenuBarIconRenderer {
         fullText.draw(at: NSPoint(x: 2, y: textY), withAttributes: attributes)
 
         return image
+    }
+
+    private func createAPITextStyle(
+        metricData: MetricData,
+        isDarkMode: Bool,
+        colorMode: MenuBarColorMode,
+        singleColorHex: String,
+        showIconName: Bool
+    ) -> NSImage {
+        return createPrefixedTextStyle(
+            prefix: "API:",
+            displayText: metricData.displayText,
+            isDarkMode: isDarkMode,
+            showIconName: showIconName
+        )
     }
 
     // MARK: - Multi-Profile Concentric Icon
@@ -1404,6 +1442,8 @@ final class MenuBarIconRenderer {
             resetTime = usage.weeklyResetTime
             duration = Constants.weeklyWindow
         case .api:
+            return nil
+        case .tokensAllTime, .tokens7Days, .tokens30Days:
             return nil
         }
 

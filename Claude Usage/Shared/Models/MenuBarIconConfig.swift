@@ -12,6 +12,9 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
     case session
     case week
     case api
+    case tokensAllTime
+    case tokens7Days
+    case tokens30Days
 
     var id: String { rawValue }
 
@@ -23,6 +26,12 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
             return "Week Usage"
         case .api:
             return "API Credits"
+        case .tokensAllTime:
+            return "Total Tokens (All Time)"
+        case .tokens7Days:
+            return "Total Tokens (7 Days)"
+        case .tokens30Days:
+            return "Total Tokens (30 Days)"
         }
     }
 
@@ -34,6 +43,12 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
             return "W:"
         case .api:
             return "API:"
+        case .tokensAllTime:
+            return "∑"
+        case .tokens7Days:
+            return "7d"
+        case .tokens30Days:
+            return "30d"
         }
     }
 
@@ -45,6 +60,12 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
             return "Weekly token usage (all models)"
         case .api:
             return "API Console billing credits"
+        case .tokensAllTime:
+            return "Claude Code lifetime tokens (input+output)"
+        case .tokens7Days:
+            return "Claude Code tokens, last 7 days"
+        case .tokens30Days:
+            return "Claude Code tokens, last 30 days"
         }
     }
 
@@ -56,6 +77,22 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
             return "calendar.badge.clock"
         case .api:
             return "dollarsign.circle.fill"
+        case .tokensAllTime:
+            return "sum"
+        case .tokens7Days:
+            return "7.circle"
+        case .tokens30Days:
+            return "30.circle"
+        }
+    }
+
+    /// True for the numeric Claude Code token metrics (text-only, no bar styles).
+    var isTokenMetric: Bool {
+        switch self {
+        case .tokensAllTime, .tokens7Days, .tokens30Days:
+            return true
+        case .session, .week, .api:
+            return false
         }
     }
 }
@@ -219,6 +256,21 @@ struct MetricIconConfig: Codable, Equatable {
             apiDisplayMode: .remaining
         )
     }
+
+    /// Default config for total tokens - all time (disabled by default)
+    static var tokensAllTimeDefault: MetricIconConfig {
+        MetricIconConfig(metricType: .tokensAllTime, isEnabled: false, iconStyle: .percentageOnly, order: 3)
+    }
+
+    /// Default config for total tokens - 7 days (disabled by default)
+    static var tokens7DaysDefault: MetricIconConfig {
+        MetricIconConfig(metricType: .tokens7Days, isEnabled: false, iconStyle: .percentageOnly, order: 4)
+    }
+
+    /// Default config for total tokens - 30 days (disabled by default)
+    static var tokens30DaysDefault: MetricIconConfig {
+        MetricIconConfig(metricType: .tokens30Days, isEnabled: false, iconStyle: .percentageOnly, order: 5)
+    }
 }
 
 /// Icon style for multi-profile display
@@ -372,7 +424,10 @@ struct MenuBarIconConfiguration: Codable, Equatable {
         metrics: [MetricIconConfig] = [
             .sessionDefault,
             .weekDefault,
-            .apiDefault
+            .apiDefault,
+            .tokensAllTimeDefault,
+            .tokens7DaysDefault,
+            .tokens30DaysDefault
         ]
     ) {
         self.colorMode = colorMode
@@ -416,6 +471,11 @@ struct MenuBarIconConfiguration: Codable, Equatable {
         showPaceMarker = try container.decodeIfPresent(Bool.self, forKey: .showPaceMarker) ?? false
         usePaceColoring = try container.decodeIfPresent(Bool.self, forKey: .usePaceColoring) ?? false
         metrics = try container.decode([MetricIconConfig].self, forKey: .metrics)
+        // Backfill token metrics for configs saved before this feature existed.
+        let tokenDefaults: [MetricIconConfig] = [.tokensAllTimeDefault, .tokens7DaysDefault, .tokens30DaysDefault]
+        for def in tokenDefaults where !metrics.contains(where: { $0.metricType == def.metricType }) {
+            metrics.append(def)
+        }
     }
 
     func encode(to encoder: Encoder) throws {

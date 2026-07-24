@@ -9,6 +9,8 @@ class MenuBarManager: NSObject, ObservableObject {
     @Published private(set) var usage: ClaudeUsage = .empty
     @Published private(set) var status: ClaudeStatus = .unknown
     @Published private(set) var apiUsage: APIUsage?
+    @Published private(set) var tokenStats: TokenStats?
+    private let tokenStatsService = TokenStatsService()
     @Published private(set) var isRefreshing: Bool = false
 
     // Error tracking for stale data / credential banners
@@ -735,7 +737,8 @@ class MenuBarManager: NSObject, ObservableObject {
             // Single profile mode - use the standard update
             statusBarUIManager?.updateAllButtons(
                 usage: usage,
-                apiUsage: apiUsage
+                apiUsage: apiUsage,
+                tokenStats: tokenStats
             )
         }
     }
@@ -745,7 +748,8 @@ class MenuBarManager: NSObject, ObservableObject {
         statusBarUIManager?.updateButton(
             for: metricType,
             usage: usage,
-            apiUsage: apiUsage
+            apiUsage: apiUsage,
+            tokenStats: tokenStats
         )
     }
 
@@ -1436,6 +1440,11 @@ class MenuBarManager: NSObject, ObservableObject {
 
                     LoggingService.shared.log("MenuBarManager: Failed to fetch API usage - [\(appError.code.rawValue)] \(appError.message)")
                 }
+            }
+
+            // Load Claude Code token stats (local stats-cache.json, not a network call)
+            await MainActor.run {
+                self.tokenStats = self.tokenStatsService.load()
             }
 
             // Clear loading state
