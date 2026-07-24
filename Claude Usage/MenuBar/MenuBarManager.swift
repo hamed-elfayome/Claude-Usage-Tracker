@@ -1442,8 +1442,15 @@ class MenuBarManager: NSObject, ObservableObject {
                 }
             }
 
-            // Load Claude Code token stats (local stats-cache.json, not a network call)
-            let loadedTokenStats = self.tokenStatsService.load()
+            // Load Claude Code token stats (local files, not a network call).
+            // Only the enabled frames are computed, to bound the JSONL scan.
+            let enabledTokenFrames: Set<MenuBarMetricType> = await MainActor.run {
+                let cfg = self.profileManager.activeProfile?.iconConfig ?? .default
+                return Set(cfg.enabledMetrics.map { $0.metricType }.filter { $0.isTokenMetric })
+            }
+            let loadedTokenStats = enabledTokenFrames.isEmpty
+                ? TokenStats.unavailable
+                : self.tokenStatsService.load(enabledFrames: enabledTokenFrames)
             await MainActor.run {
                 self.tokenStats = loadedTokenStats
             }
