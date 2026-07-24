@@ -17,6 +17,12 @@ final class MenuBarTokenMetricTests: XCTestCase {
         XCTAssertFalse(MenuBarMetricType.session.isTokenMetric)
     }
 
+    func testTokenTopLabel() {
+        XCTAssertEqual(MenuBarMetricType.tokensAllTime.tokenTopLabel, "ALL")
+        XCTAssertEqual(MenuBarMetricType.tokens7Days.tokenTopLabel, "7D")
+        XCTAssertEqual(MenuBarMetricType.tokens30Days.tokenTopLabel, "30D")
+    }
+
     func testTokenStatsValueSelection() {
         let s = TokenStats(allTime: 100, last7Days: 20, last30Days: 30, isAvailable: true)
         XCTAssertEqual(s.value(for: .tokensAllTime), 100)

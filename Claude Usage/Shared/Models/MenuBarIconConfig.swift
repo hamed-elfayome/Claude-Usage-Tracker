@@ -95,6 +95,20 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
             return false
         }
     }
+
+    /// Uppercase caption drawn above the number for stacked token metrics (CPU/RAM widget style).
+    var tokenTopLabel: String {
+        switch self {
+        case .tokensAllTime:
+            return "ALL"
+        case .tokens7Days:
+            return "7D"
+        case .tokens30Days:
+            return "30D"
+        case .session, .week, .api:
+            return prefixText
+        }
+    }
 }
 
 /// Color mode for menu bar icons

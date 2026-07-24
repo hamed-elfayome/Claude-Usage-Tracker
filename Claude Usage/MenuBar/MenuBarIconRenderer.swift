@@ -75,11 +75,11 @@ final class MenuBarIconRenderer {
             )
         }
 
-        // Token metrics are ALWAYS text-based numbers (no icon styles)
+        // Token metrics render as a stacked number (uppercase label above, number below)
         if metricType.isTokenMetric {
-            return createPrefixedTextStyle(
-                prefix: metricType.prefixText,
-                displayText: metricData.displayText,
+            return createStackedTokenStyle(
+                topLabel: metricType.tokenTopLabel,
+                bottomText: metricData.displayText,
                 isDarkMode: isDarkMode,
                 showIconName: showIconName
             )
@@ -759,6 +759,54 @@ final class MenuBarIconRenderer {
             isDarkMode: isDarkMode,
             showIconName: showIconName
         )
+    }
+
+    /// Renders a token metric as a compact vertical stack: a small uppercase
+    /// label on top and the abbreviated number below (CPU/RAM widget style).
+    /// Falls back to a single centered number line when the label is hidden.
+    private func createStackedTokenStyle(
+        topLabel: String,
+        bottomText: String,
+        isDarkMode: Bool,
+        showIconName: Bool
+    ) -> NSImage {
+        let textColor: NSColor = menuBarForegroundColor(isDarkMode: isDarkMode)
+
+        // Label hidden → single centered number line (matches other text styles).
+        guard showIconName else {
+            let font = NSFont.systemFont(ofSize: 11, weight: .medium)
+            let attrs: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: textColor]
+            let size = bottomText.size(withAttributes: attrs)
+            let image = NSImage(size: NSSize(width: size.width + 4, height: 18))
+            image.lockFocus()
+            defer { image.unlockFocus() }
+            bottomText.draw(at: NSPoint(x: 2, y: (18 - size.height) / 2), withAttributes: attrs)
+            return image
+        }
+
+        // Crisp, legible caption on top; larger number below (CPU/RAM widget style).
+        let labelFont = NSFont.systemFont(ofSize: 7.5, weight: .medium)
+        let valueFont = NSFont.systemFont(ofSize: 11, weight: .medium)
+        let labelAttrs: [NSAttributedString.Key: Any] = [.font: labelFont, .foregroundColor: textColor]
+        let valueAttrs: [NSAttributedString.Key: Any] = [.font: valueFont, .foregroundColor: textColor]
+
+        let labelSize = topLabel.size(withAttributes: labelAttrs)
+        let valueSize = bottomText.size(withAttributes: valueAttrs)
+
+        let height: CGFloat = 22
+        let width = max(labelSize.width, valueSize.width) + 4
+
+        let image = NSImage(size: NSSize(width: width, height: height))
+        image.lockFocus()
+        defer { image.unlockFocus() }
+
+        // Number sits at the bottom (larger, prominent); thin label hugs the top.
+        let labelY = height - labelSize.height + 0.5
+        let valueY: CGFloat = -0.5
+        topLabel.draw(at: NSPoint(x: (width - labelSize.width) / 2, y: labelY), withAttributes: labelAttrs)
+        bottomText.draw(at: NSPoint(x: (width - valueSize.width) / 2, y: valueY), withAttributes: valueAttrs)
+
+        return image
     }
 
     // MARK: - Multi-Profile Concentric Icon
