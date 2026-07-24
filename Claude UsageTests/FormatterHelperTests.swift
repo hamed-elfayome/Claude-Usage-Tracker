@@ -10,5 +10,8 @@ final class FormatterHelperTests: XCTestCase {
         XCTAssertEqual(FormatterHelper.abbreviatedCount(21_062_418), "21.1M")
         XCTAssertEqual(FormatterHelper.abbreviatedCount(10_000_000), "10M")
         XCTAssertEqual(FormatterHelper.abbreviatedCount(1_200_000_000), "1.2B")
+        XCTAssertEqual(FormatterHelper.abbreviatedCount(999_500), "1M")
+        XCTAssertEqual(FormatterHelper.abbreviatedCount(999_999), "1M")
+        XCTAssertEqual(FormatterHelper.abbreviatedCount(999_950_000), "1B")
     }
 }

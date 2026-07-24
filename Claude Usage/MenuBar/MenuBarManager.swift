@@ -1443,8 +1443,9 @@ class MenuBarManager: NSObject, ObservableObject {
             }
 
             // Load Claude Code token stats (local stats-cache.json, not a network call)
+            let loadedTokenStats = self.tokenStatsService.load()
             await MainActor.run {
-                self.tokenStats = self.tokenStatsService.load()
+                self.tokenStats = loadedTokenStats
             }
 
             // Clear loading state
