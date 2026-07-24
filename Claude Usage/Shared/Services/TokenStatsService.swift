@@ -158,6 +158,18 @@ struct TokenStatsService {
             return (0, [:], nil, false)
         }
 
+        let lastComputed = cache.lastComputedDate
+            .flatMap { Self.dayFormatter.date(from: $0) }
+            .map(startOfDay)
+
+        // Without a valid cutoff we can't safely combine cache aggregates with a JSONL delta
+        // (every day would route to JSONL while the cache's lifetime total still got added,
+        // double-counting everything). Fail safe to pure JSONL: report no cache aggregates, and
+        // let cacheAvailable be false so availability falls through to "did JSONL parse anything."
+        guard let lastComputed else {
+            return (0, [:], nil, false)
+        }
+
         let allTime = (cache.modelUsage ?? [:]).values.reduce(0) {
             $0 + ($1.inputTokens ?? 0) + ($1.outputTokens ?? 0)
         }
@@ -166,10 +178,6 @@ struct TokenStatsService {
         for entry in cache.dailyModelTokens ?? [] {
             daily[entry.date, default: 0] += entry.tokensByModel.values.reduce(0, +)
         }
-
-        let lastComputed = cache.lastComputedDate
-            .flatMap { Self.dayFormatter.date(from: $0) }
-            .map(startOfDay)
 
         return (allTime, daily, lastComputed, true)
     }
@@ -205,6 +213,8 @@ struct TokenStatsService {
         for case let fileURL as URL in enumerator {
             guard fileURL.pathExtension == "jsonl" else { continue }
 
+            // Assumes a JSONL file's mtime tracks its latest appended line (true for normal CLI
+            // writes); an externally-reset mtime could under-scan.
             if let values = try? fileURL.resourceValues(forKeys: [.contentModificationDateKey]),
                let mtime = values.contentModificationDate,
                mtime < scanFrom {

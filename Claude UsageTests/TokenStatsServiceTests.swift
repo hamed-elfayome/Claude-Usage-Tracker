@@ -212,6 +212,37 @@ final class TokenStatsServiceTests: XCTestCase {
         XCTAssertEqual(stats.allTime, 175)
     }
 
+    func testDecodedCacheWithoutLastComputedDateFallsBackToFullJSONLSum() {
+        // Cache decodes fine and has real aggregates (modelUsage summing to 1000, plus a
+        // dailyModelTokens entry), but lastComputedDate is absent. Without a valid cutoff we
+        // cannot safely combine the cache's totals with a JSONL delta (that would either double-
+        // count the cache's lifetime total on top of the full JSONL history, or silently ignore
+        // the cache's daily entries in window sums). The fix must fall back to pure JSONL: only
+        // the JSONL line's 150 tokens should count, not 1000, and not 1150.
+        let json = """
+        {
+          "modelUsage": {
+            "claude-sonnet-4-5": { "inputTokens": 700, "outputTokens": 300 }
+          },
+          "dailyModelTokens": [
+            { "date": "\(day(offsetFromToday: -5))", "tokensByModel": { "a": 40 } }
+          ]
+        }
+        """
+        let statsURL = writeStatsCache(json)
+        let projectsDir = writeJSONL([(day: day(offsetFromToday: -1), input: 100, output: 50)])
+
+        let stats = TokenStatsService().load(
+            enabledFrames: [.tokensAllTime],
+            statsURL: statsURL,
+            projectsDir: projectsDir,
+            referenceDate: referenceDate
+        )
+
+        XCTAssertTrue(stats.isAvailable)
+        XCTAssertEqual(stats.allTime, 150, "no valid cutoff -> pure JSONL, not 1150 (double-count) or 1000 (cache-only)")
+    }
+
     func testNothingAvailableReturnsUnavailable() {
         let stats = TokenStatsService().load(
             enabledFrames: [.tokensAllTime],
