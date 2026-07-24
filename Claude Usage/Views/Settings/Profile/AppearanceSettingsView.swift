@@ -190,6 +190,42 @@ struct AppearanceSettingsView: View {
                                 onConfigChanged: { saveConfiguration() }
                             )
                         }
+
+                        // Total Tokens - All Time
+                        if let idx = configuration.metrics.firstIndex(where: { $0.metricType == .tokensAllTime }) {
+                            MetricIconCard(
+                                metricType: .tokensAllTime,
+                                config: Binding(
+                                    get: { configuration.metrics[idx] },
+                                    set: { newValue in configuration.metrics[idx] = newValue }
+                                ),
+                                onConfigChanged: { saveConfiguration() }
+                            )
+                        }
+
+                        // Total Tokens - 7 Days
+                        if let idx = configuration.metrics.firstIndex(where: { $0.metricType == .tokens7Days }) {
+                            MetricIconCard(
+                                metricType: .tokens7Days,
+                                config: Binding(
+                                    get: { configuration.metrics[idx] },
+                                    set: { newValue in configuration.metrics[idx] = newValue }
+                                ),
+                                onConfigChanged: { saveConfiguration() }
+                            )
+                        }
+
+                        // Total Tokens - 30 Days
+                        if let idx = configuration.metrics.firstIndex(where: { $0.metricType == .tokens30Days }) {
+                            MetricIconCard(
+                                metricType: .tokens30Days,
+                                config: Binding(
+                                    get: { configuration.metrics[idx] },
+                                    set: { newValue in configuration.metrics[idx] = newValue }
+                                ),
+                                onConfigChanged: { saveConfiguration() }
+                            )
+                        }
                     }
                 }
                 .disabled(isMultiProfileMode)

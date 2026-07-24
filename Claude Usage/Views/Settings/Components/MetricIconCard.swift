@@ -46,7 +46,7 @@ struct MetricIconCard: View {
 
             if config.isEnabled {
                 // Icon style selector (only for Session and Week, not API)
-                if metricType != .api {
+                if metricType != .api && !metricType.isTokenMetric {
                     Divider()
                         .padding(.vertical, Spacing.xs)
 
