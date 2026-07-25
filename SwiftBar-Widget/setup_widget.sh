@@ -2,7 +2,7 @@
 
 # Configuration
 PLUGIN_DIR="$HOME/Documents/SwiftBar_Plugins"
-CURRENT_DIR="$(pwd)"
+CURRENT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PYTHON_SCRIPT="agy_usage.30s.py"
 BASH_SCRIPT="get_agy_usage.sh"
 
