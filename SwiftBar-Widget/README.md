@@ -14,6 +14,14 @@ This directory contains a lightweight SwiftBar widget that allows you to monitor
 
 ## Installation
 
+**One-line install via Homebrew** (recommended):
+```bash
+brew install shempaiii/claude-usage/agy-swiftbar-widget
+```
+*Note: After installing via Homebrew, you will need to run the setup script provided in the brew caveats.*
+
+### Automated Setup Script
+
 You can automatically set up the widget by running the included setup script:
 
 ```bash
@@ -38,3 +46,6 @@ chmod +x setup_widget.sh
 
 ## How it Works
 Since `agy` requires a pseudo-terminal (TTY) to properly output formatted usage data without ANSI artifacts, the widget uses `tmux` in the background to launch `agy limits`, capture the output, and parse it in Python for SwiftBar.
+
+## Acknowledgments
+This widget was heavily inspired by the native [Claude-Usage-Tracker](https://github.com/hamed-elfayome/Claude-Usage-Tracker) macOS app by Hamed Elfayome.
