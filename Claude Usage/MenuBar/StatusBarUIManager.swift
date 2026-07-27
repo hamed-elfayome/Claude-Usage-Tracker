@@ -8,11 +8,47 @@
 import Cocoa
 import Combine
 
+/// Describes the smallest set of mutations needed to change the metrics displayed
+/// in single-profile mode. Removed and added metrics are paired first so their
+/// existing NSStatusItems can be reassigned instead of removed from the menu bar.
+struct StatusBarMetricTransition: Equatable {
+    struct Reassignment: Equatable {
+        let from: MenuBarMetricType
+        let to: MenuBarMetricType
+    }
+
+    let reassignments: [Reassignment]
+    let removals: [MenuBarMetricType]
+    let additions: [MenuBarMetricType]
+
+    static func calculate(
+        currentOrder: [MenuBarMetricType],
+        newOrder: [MenuBarMetricType]
+    ) -> StatusBarMetricTransition {
+        let current = Set(currentOrder)
+        let new = Set(newOrder)
+        let removed = currentOrder.filter { !new.contains($0) }
+        let added = newOrder.filter { !current.contains($0) }
+        let replacementCount = min(removed.count, added.count)
+
+        let reassignments = (0..<replacementCount).map {
+            Reassignment(from: removed[$0], to: added[$0])
+        }
+
+        return StatusBarMetricTransition(
+            reassignments: reassignments,
+            removals: Array(removed.dropFirst(replacementCount)),
+            additions: Array(added.dropFirst(replacementCount))
+        )
+    }
+}
+
 /// Manages multiple menu bar status items for different metrics
 @MainActor
 final class StatusBarUIManager {
     // Dictionary to hold multiple status items keyed by metric type (single profile mode)
     private var statusItems: [MenuBarMetricType: NSStatusItem] = [:]
+    private var singleProfileMetricOrder: [MenuBarMetricType] = []
 
     // Dictionary to hold status items keyed by profile ID (multi-profile mode)
     private var multiProfileStatusItems: [UUID: NSStatusItem] = [:]
@@ -95,6 +131,7 @@ final class StatusBarUIManager {
 
             // Use a special key to identify the default icon
             statusItems[.session] = statusItem  // Use session as placeholder key
+            singleProfileMetricOrder = [.session]
             LoggingService.shared.logUIEvent("Status bar initialized with default app logo (no credentials)")
         } else {
             // Create status items for enabled metrics
@@ -114,6 +151,7 @@ final class StatusBarUIManager {
 
                 statusItems[metricConfig.metricType] = statusItem
             }
+            singleProfileMetricOrder = config.enabledMetrics.map(\.metricType)
 
             LoggingService.shared.logUIEvent("Status bar initialized with \(config.enabledMetrics.count) metrics")
         }
@@ -124,19 +162,46 @@ final class StatusBarUIManager {
     /// Updates status bar items based on new configuration (incremental approach)
     func updateConfiguration(target: AnyObject, action: Selector, config: MenuBarIconConfiguration) {
         // Determine what the new set of items should be
-        let newMetricTypes: Set<MenuBarMetricType>
+        let newMetricOrder: [MenuBarMetricType]
         if config.enabledMetrics.isEmpty {
             // No credentials/metrics - show default app logo using .session as placeholder
-            newMetricTypes = [.session]
+            newMetricOrder = [.session]
         } else {
-            newMetricTypes = Set(config.enabledMetrics.map { $0.metricType })
+            newMetricOrder = config.enabledMetrics.map(\.metricType)
         }
 
-        let currentMetricTypes = Set(statusItems.keys)
+        let currentOrder = singleProfileMetricOrder.isEmpty
+            ? MenuBarMetricType.allCases.filter { statusItems[$0] != nil }
+            : singleProfileMetricOrder
+        let transition = StatusBarMetricTransition.calculate(
+            currentOrder: currentOrder,
+            newOrder: newMetricOrder
+        )
 
-        // Step 1: Remove items that are no longer needed
-        let itemsToRemove = currentMetricTypes.subtracting(newMetricTypes)
-        for metricType in itemsToRemove {
+        // Step 1: Reassign existing items before adding/removing anything. This is
+        // the common path for Claude <-> Codex profile switches and preserves the
+        // NSStatusItem identity, position, and autosaveName.
+        for reassignment in transition.reassignments {
+            guard let statusItem = statusItems.removeValue(forKey: reassignment.from) else {
+                continue
+            }
+            statusItems[reassignment.to] = statusItem
+
+            if let button = statusItem.button {
+                button.action = action
+                button.target = target
+                button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+                button.title = ""
+                lastImageData.removeValue(forKey: ObjectIdentifier(button))
+            }
+
+            LoggingService.shared.logUIEvent(
+                "Reassigned status item from \(reassignment.from.displayName) to \(reassignment.to.displayName)"
+            )
+        }
+
+        // Step 2: Remove only surplus items when the new profile displays fewer metrics.
+        for metricType in transition.removals {
             if let statusItem = statusItems[metricType] {
                 if let button = statusItem.button {
                     button.image = nil
@@ -149,11 +214,10 @@ final class StatusBarUIManager {
             statusItems.removeValue(forKey: metricType)
         }
 
-        // Step 2: Add items that are new
-        let itemsToAdd = newMetricTypes.subtracting(currentMetricTypes)
-        for metricType in itemsToAdd {
+        // Step 3: Add only surplus items when the new profile displays more metrics.
+        for metricType in transition.additions {
             let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-            // When enabledMetrics is empty, only .session is in newMetricTypes, so this is safe
+            // When enabledMetrics is empty, only .session is in newMetricOrder, so this is safe.
             statusItem.autosaveName = config.enabledMetrics.isEmpty
                 ? Self.defaultLogoAutosaveName
                 : Self.autosaveName(for: metricType)
@@ -174,10 +238,10 @@ final class StatusBarUIManager {
             LoggingService.shared.logUIEvent("Created status item for \(metricType.displayName)")
         }
 
-        // Step 3: Items that already exist don't need recreation, just keep them
-        // Their images will be updated by updateAllButtons() or updateButton()
-
-        LoggingService.shared.logUIEvent("Status bar configuration updated: removed=\(itemsToRemove.count), added=\(itemsToAdd.count), kept=\(currentMetricTypes.intersection(newMetricTypes).count)")
+        singleProfileMetricOrder = newMetricOrder
+        LoggingService.shared.logUIEvent(
+            "Status bar configuration updated: reassigned=\(transition.reassignments.count), removed=\(transition.removals.count), added=\(transition.additions.count)"
+        )
     }
 
     func cleanup() {
@@ -196,6 +260,7 @@ final class StatusBarUIManager {
             NSStatusBar.system.removeStatusItem(statusItem)
         }
         statusItems.removeAll()
+        singleProfileMetricOrder.removeAll()
 
         // Clean up multi-profile status items
         for (_, statusItem) in multiProfileStatusItems {
@@ -287,7 +352,11 @@ final class StatusBarUIManager {
     // MARK: - Multi-Profile Mode
 
     /// Sets up status bar for multi-profile display mode
-    func setupMultiProfile(profiles: [Profile], target: AnyObject, action: Selector) {
+    func setupMultiProfile(
+        profiles: [Profile],
+        target: AnyObject,
+        action: Selector
+    ) {
         // Clean up existing items
         cleanup()
 
@@ -340,17 +409,26 @@ final class StatusBarUIManager {
 
     /// Incrementally updates multi-profile status items without destroying existing ones.
     /// Only adds/removes items when the set of selected profiles changes.
-    func updateMultiProfileConfiguration(profiles: [Profile], target: AnyObject, action: Selector) {
+    func updateMultiProfileConfiguration(
+        profiles: [Profile],
+        target: AnyObject,
+        action: Selector
+    ) {
         guard isMultiProfileMode else {
             // Not in multi-profile mode yet - do a full setup
-            setupMultiProfile(profiles: profiles, target: target, action: action)
+            setupMultiProfile(
+                profiles: profiles,
+                target: target,
+                action: action
+            )
             return
         }
 
         let selectedProfiles = profiles.filter { $0.isSelectedForDisplay }
-        let newProfileIds: Set<UUID> = selectedProfiles.isEmpty
-            ? [Self.defaultLogoPlaceholderUUID]
-            : Set(selectedProfiles.map { $0.id })
+        var newProfileIds = Set(selectedProfiles.map { $0.id })
+        if newProfileIds.isEmpty {
+            newProfileIds.insert(Self.defaultLogoPlaceholderUUID)
+        }
         let currentProfileIds = Set(multiProfileStatusItems.keys)
 
         // Step 1: Remove items that are no longer needed
@@ -399,33 +477,10 @@ final class StatusBarUIManager {
                 multiProfileStatusItems[profile.id] = statusItem
                 LoggingService.shared.logUIEvent("Multi-profile: Added status item for profile \(profile.name)")
             }
+
         }
 
         LoggingService.shared.logUIEvent("Multi-profile config updated: removed=\(idsToRemove.count), added=\(idsToAdd.count), kept=\(currentProfileIds.intersection(newProfileIds).count)")
-    }
-
-    /// Adds or removes the machine-scoped Codex item without disturbing the
-    /// profile items used by multi-profile mode.
-    func updateCodexStatusItem(enabled: Bool, target: AnyObject, action: Selector) {
-        if enabled {
-            guard statusItems[.codex] == nil else { return }
-            let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-            statusItem.autosaveName = Self.autosaveName(for: .codex)
-            statusItem.isVisible = true
-            if let button = statusItem.button {
-                button.action = action
-                button.target = target
-                button.sendAction(on: [.leftMouseUp, .rightMouseUp])
-            }
-            statusItems[.codex] = statusItem
-        } else if let statusItem = statusItems.removeValue(forKey: .codex) {
-            if let button = statusItem.button {
-                button.image = nil
-                button.action = nil
-                button.target = nil
-            }
-            NSStatusBar.system.removeStatusItem(statusItem)
-        }
     }
 
     /// Adds a thin green underline to an image to indicate the active profile
@@ -441,12 +496,27 @@ final class StatusBarUIManager {
     }
 
     /// Updates all multi-profile status items
-    func updateMultiProfileButtons(profiles: [Profile], config: MultiProfileDisplayConfig, activeProfileId: UUID? = nil) {
+    func updateMultiProfileButtons(
+        profiles: [Profile],
+        config: MultiProfileDisplayConfig,
+        activeProfileId: UUID? = nil,
+        codexRefreshErrors: [UUID: String] = [:]
+    ) {
         guard isMultiProfileMode else { return }
 
         for profile in profiles where profile.isSelectedForDisplay {
             guard let statusItem = multiProfileStatusItems[profile.id],
                   let button = statusItem.button else {
+                continue
+            }
+
+            if profile.provider == .codex {
+                updateCodexProfileButton(
+                    profile: profile,
+                    config: config,
+                    activeProfileId: activeProfileId,
+                    refreshError: codexRefreshErrors[profile.id]
+                )
                 continue
             }
 
@@ -604,6 +674,192 @@ final class StatusBarUIManager {
         }
     }
 
+    /// Renders Codex as a peer of the selected Claude profiles. The selected
+    /// Codex bucket is the primary value; its secondary window (or the next
+    /// available bucket) supplies the optional second ring/bar.
+    func updateCodexProfileButton(
+        profile: Profile,
+        config: MultiProfileDisplayConfig,
+        activeProfileId: UUID? = nil,
+        refreshError: String? = nil
+    ) {
+        guard isMultiProfileMode,
+              profile.provider == .codex,
+              let statusItem = multiProfileStatusItems[profile.id],
+              let button = statusItem.button else {
+            return
+        }
+
+        guard let usage = profile.codexUsage,
+              let selectedLimit = usage.rateLimit(
+                preferredID: profile.codexConfiguration.selectedRateLimitID
+              ),
+              let primaryWindow = selectedLimit.primary else {
+            let menuBarIsDark = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            let image = renderer.createDefaultAppLogo(isDarkMode: menuBarIsDark)
+            button.toolTip = "\(profile.name): \(refreshError ?? "Codex usage unavailable")"
+            if profile.id == activeProfileId && config.showActiveProfileIndicator {
+                let underlined = addGreenUnderline(to: image)
+                underlined.isTemplate = false
+                setButtonImage(button, image: underlined)
+            } else {
+                image.isTemplate = false
+                setButtonImage(button, image: image)
+            }
+            return
+        }
+        if let refreshError {
+            button.toolTip = "\(profile.name): \(refreshError) · Showing data from \(usage.lastUpdated.formatted(date: .abbreviated, time: .shortened))"
+        } else {
+            button.toolTip = nil
+        }
+
+        let secondaryWindow = selectedLimit.secondary
+            ?? usage.rateLimits.first(where: { $0.id != selectedLimit.id })?.primary
+
+        let primaryUsed = primaryWindow.usedPercent
+        let secondaryUsed = secondaryWindow?.usedPercent ?? 0
+        let showSecondary = config.showWeek && secondaryWindow != nil
+        let showRemaining = config.showRemainingPercentage
+
+        let primaryDisplay = UsageStatusCalculator.getDisplayPercentage(
+            usedPercentage: primaryUsed,
+            showRemaining: showRemaining
+        )
+        let secondaryDisplay = UsageStatusCalculator.getDisplayPercentage(
+            usedPercentage: secondaryUsed,
+            showRemaining: showRemaining
+        )
+        let primaryElapsed: Double? = {
+            guard let duration = primaryWindow.duration else { return nil }
+            return UsageStatusCalculator.elapsedFraction(
+                resetTime: primaryWindow.resetsAt,
+                duration: duration,
+                showRemaining: false
+            )
+        }()
+        let secondaryElapsed = secondaryWindow.flatMap { window -> Double? in
+            guard let duration = window.duration else { return nil }
+            return UsageStatusCalculator.elapsedFraction(
+                resetTime: window.resetsAt,
+                duration: duration,
+                showRemaining: false
+            )
+        }
+        let primaryStatus = UsageStatusCalculator.calculateStatus(
+            usedPercentage: primaryUsed,
+            showRemaining: showRemaining,
+            elapsedFraction: config.usePaceColoring ? primaryElapsed : nil
+        )
+        let secondaryStatus = UsageStatusCalculator.calculateStatus(
+            usedPercentage: secondaryUsed,
+            showRemaining: showRemaining,
+            elapsedFraction: config.usePaceColoring ? secondaryElapsed : nil
+        )
+        let primaryMarker: CGFloat? = config.showTimeMarker
+            ? primaryElapsed.map { CGFloat(showRemaining ? 1 - $0 : $0) }
+            : nil
+        let secondaryMarker: CGFloat? = config.showTimeMarker
+            ? secondaryElapsed.map { CGFloat(showRemaining ? 1 - $0 : $0) }
+            : nil
+        let primaryPace = config.showPaceMarker
+            ? primaryElapsed.flatMap { PaceStatus.calculate(usedPercentage: primaryUsed, elapsedFraction: $0) }
+            : nil
+        let secondaryPace = config.showPaceMarker
+            ? secondaryElapsed.flatMap { PaceStatus.calculate(usedPercentage: secondaryUsed, elapsedFraction: $0) }
+            : nil
+        let menuBarIsDark = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        let monochrome = config.useSystemColor
+
+        let image: NSImage
+        switch config.iconStyle {
+        case .concentric:
+            if config.showProfileLabel {
+                image = renderer.createConcentricIconWithLabel(
+                    sessionPercentage: primaryDisplay,
+                    weekPercentage: showSecondary ? secondaryDisplay : 0,
+                    sessionStatus: primaryStatus,
+                    weekStatus: secondaryStatus,
+                    profileName: profile.name,
+                    monochromeMode: monochrome,
+                    isDarkMode: menuBarIsDark,
+                    useSystemColor: false,
+                    sessionTimeMarker: primaryMarker,
+                    weekTimeMarker: showSecondary ? secondaryMarker : nil,
+                    sessionPaceStatus: primaryPace,
+                    weekPaceStatus: showSecondary ? secondaryPace : nil,
+                    showPaceMarker: config.showPaceMarker
+                )
+            } else {
+                image = renderer.createConcentricIcon(
+                    sessionPercentage: primaryDisplay,
+                    weekPercentage: showSecondary ? secondaryDisplay : 0,
+                    sessionStatus: primaryStatus,
+                    weekStatus: secondaryStatus,
+                    profileInitial: String(profile.name.prefix(1)),
+                    monochromeMode: monochrome,
+                    isDarkMode: menuBarIsDark,
+                    useSystemColor: false,
+                    sessionTimeMarker: primaryMarker,
+                    weekTimeMarker: showSecondary ? secondaryMarker : nil,
+                    sessionPaceStatus: primaryPace,
+                    weekPaceStatus: showSecondary ? secondaryPace : nil,
+                    showPaceMarker: config.showPaceMarker
+                )
+            }
+        case .progressBar:
+            image = renderer.createMultiProfileProgressBar(
+                sessionPercentage: primaryDisplay,
+                weekPercentage: showSecondary ? secondaryDisplay : nil,
+                sessionStatus: primaryStatus,
+                weekStatus: secondaryStatus,
+                profileName: config.showProfileLabel ? profile.name : nil,
+                monochromeMode: monochrome,
+                isDarkMode: menuBarIsDark,
+                useSystemColor: false,
+                sessionTimeMarker: primaryMarker,
+                weekTimeMarker: showSecondary ? secondaryMarker : nil,
+                sessionPaceStatus: primaryPace,
+                weekPaceStatus: showSecondary ? secondaryPace : nil,
+                showPaceMarker: config.showPaceMarker
+            )
+        case .compact:
+            image = renderer.createCompactDot(
+                percentage: primaryDisplay,
+                status: primaryStatus,
+                profileInitial: config.showProfileLabel ? String(profile.name.prefix(1)) : nil,
+                monochromeMode: monochrome,
+                isDarkMode: menuBarIsDark,
+                useSystemColor: false,
+                paceStatus: primaryPace,
+                showPaceMarker: config.showPaceMarker
+            )
+        case .percentage:
+            image = renderer.createMultiProfilePercentage(
+                sessionPercentage: primaryDisplay,
+                weekPercentage: showSecondary ? secondaryDisplay : nil,
+                sessionStatus: primaryStatus,
+                weekStatus: secondaryStatus,
+                profileName: config.showProfileLabel ? profile.name : nil,
+                monochromeMode: monochrome,
+                isDarkMode: menuBarIsDark,
+                useSystemColor: false,
+                sessionPaceStatus: primaryPace,
+                weekPaceStatus: showSecondary ? secondaryPace : nil,
+                showPaceMarker: config.showPaceMarker
+            )
+        }
+
+        if profile.id == activeProfileId && config.showActiveProfileIndicator {
+            let underlined = addGreenUnderline(to: image)
+            underlined.isTemplate = false
+            setButtonImage(button, image: underlined)
+        } else {
+            image.isTemplate = monochrome && !config.showPaceMarker
+            setButtonImage(button, image: image)
+        }
+    }
+
     /// Checks if currently in multi-profile mode
     var isInMultiProfileMode: Bool {
         return isMultiProfileMode
@@ -651,7 +907,7 @@ final class StatusBarUIManager {
         apiUsage: APIUsage?,
         codexUsage: CodexUsage?,
         config: MenuBarIconConfiguration,
-        codexSettings: CodexSettings
+        codexSettings: CodexProfileConfiguration
     ) {
         if config.enabledMetrics.isEmpty {
             // Show default app logo
@@ -704,7 +960,7 @@ final class StatusBarUIManager {
         apiUsage: APIUsage?,
         codexUsage: CodexUsage?,
         config: MenuBarIconConfiguration,
-        codexSettings: CodexSettings
+        codexSettings: CodexProfileConfiguration
     ) {
         guard let statusItem = statusItems[metricType],
               let button = statusItem.button else {

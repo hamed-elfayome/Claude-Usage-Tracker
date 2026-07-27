@@ -2,9 +2,11 @@
 
 ## Unreleased
 
-- Added app-wide OpenAI Codex usage monitoring through the local Codex app server.
-- Added a dedicated Codex settings page with CLI/login diagnostics, executable selection, account and plan details, manual refresh, rate-limit bucket selection, credits, lifetime tokens, tray customization, privacy controls, and threshold notifications.
-- Added Codex setup guidance to onboarding and the README. Codex authentication remains owned by the Codex CLI.
+- Added OpenAI Codex as a user-created profile provider, sharing the existing profile selector, appearance, refresh, notification, and multi-profile UX.
+- Added per-profile local Codex connections with optional executable and `CODEX_HOME`, plus remote connections through existing macOS SSH host aliases and key/agent authentication.
+- Added Codex app-server diagnostics, rate-limit selection, account and plan details, credits, lifetime tokens, OpenAI service status, and provider-correct links and popovers.
+- Added one-time migration from the earlier app-wide Codex configuration into a real Codex profile.
+- Added Codex setup and remote-connection guidance to onboarding, settings, and the README. Codex and SSH authentication remain owned by their respective CLIs.
 
 All notable changes to Claude Usage Tracker will be documented in this file.
 

@@ -23,6 +23,9 @@ struct ProfileSelectionRow: View {
                     .foregroundColor(isSelected ? .accentColor : .secondary)
 
                 // Profile name (truncated)
+                Image(systemName: profile.provider.icon)
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
                 Text(profile.name)
                     .font(DesignTokens.Typography.body)
                     .lineLimit(1)
@@ -43,7 +46,9 @@ struct ProfileSelectionRow: View {
 
                 // Metric indicators (compact badges showing enabled metrics)
                 HStack(spacing: 4) {
-                    if hasSessionMetric {
+                    if profile.provider == .codex {
+                        MetricBadge(letter: "CX", color: .green)
+                    } else if hasSessionMetric {
                         MetricBadge(letter: "S", color: .blue)
                     }
                     if hasWeekMetric {
@@ -84,7 +89,7 @@ private struct MetricBadge: View {
 
     var body: some View {
         Text(letter)
-            .font(.system(size: 9, weight: .semibold))
+            .font(.system(size: letter.count > 1 ? 7 : 9, weight: .semibold))
             .foregroundColor(color)
             .frame(width: 16, height: 16)
             .background(

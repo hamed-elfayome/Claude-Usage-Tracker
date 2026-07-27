@@ -12,6 +12,7 @@ struct Profile: Codable, Identifiable, Equatable {
     // MARK: - Identity
     let id: UUID
     var name: String
+    var provider: ProfileProvider
 
     // MARK: - Credentials (stored directly in profile)
     var claudeSessionKey: String?
@@ -43,6 +44,8 @@ struct Profile: Codable, Identifiable, Equatable {
     // MARK: - Usage Data (Per-Profile)
     var claudeUsage: ClaudeUsage?
     var apiUsage: APIUsage?
+    var codexUsage: CodexUsage?
+    var codexConfiguration: CodexProfileConfiguration
 
     // MARK: - Appearance Settings (Per-Profile)
     var iconConfig: MenuBarIconConfiguration
@@ -65,6 +68,7 @@ struct Profile: Codable, Identifiable, Equatable {
     init(
         id: UUID = UUID(),
         name: String,
+        provider: ProfileProvider = .claude,
         claudeSessionKey: String? = nil,
         organizationId: String? = nil,
         apiSessionKey: String? = nil,
@@ -77,6 +81,8 @@ struct Profile: Codable, Identifiable, Equatable {
         oauthAccountJSON: String? = nil,
         claudeUsage: ClaudeUsage? = nil,
         apiUsage: APIUsage? = nil,
+        codexUsage: CodexUsage? = nil,
+        codexConfiguration: CodexProfileConfiguration = CodexProfileConfiguration(),
         iconConfig: MenuBarIconConfiguration = .default,
         refreshInterval: TimeInterval = 30.0,
         autoStartSessionEnabled: Bool = false,
@@ -88,6 +94,7 @@ struct Profile: Codable, Identifiable, Equatable {
     ) {
         self.id = id
         self.name = name
+        self.provider = provider
         self.claudeSessionKey = claudeSessionKey
         self.organizationId = organizationId
         self.apiSessionKey = apiSessionKey
@@ -100,6 +107,8 @@ struct Profile: Codable, Identifiable, Equatable {
         self.oauthAccountJSON = oauthAccountJSON
         self.claudeUsage = claudeUsage
         self.apiUsage = apiUsage
+        self.codexUsage = codexUsage
+        self.codexConfiguration = codexConfiguration
         self.iconConfig = iconConfig
         self.refreshInterval = refreshInterval
         self.autoStartSessionEnabled = autoStartSessionEnabled
@@ -118,14 +127,14 @@ struct Profile: Codable, Identifiable, Equatable {
     static let includeSecretsKey = CodingUserInfoKey(rawValue: "profileIncludeSecrets")!
 
     private enum CodingKeys: String, CodingKey {
-        case id, name
+        case id, name, provider
         case claudeSessionKey, organizationId
         case apiSessionKey, apiOrganizationId, apiSessionKeyExpiry
         case cliCredentialsJSON
         case hasCliAccount, cliAccountSyncedAt
         case customKeychainServiceName
         case oauthAccountJSON
-        case claudeUsage, apiUsage
+        case claudeUsage, apiUsage, codexUsage, codexConfiguration
         case iconConfig
         case refreshInterval, autoStartSessionEnabled, checkOverageLimitEnabled
         case notificationSettings
@@ -137,6 +146,7 @@ struct Profile: Codable, Identifiable, Equatable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(UUID.self, forKey: .id)
         name = try c.decode(String.self, forKey: .name)
+        provider = try c.decodeIfPresent(ProfileProvider.self, forKey: .provider) ?? .claude
         // Secrets: present only in legacy (pre-Keychain-migration) plists; hydrated
         // from the Keychain by ProfileStore after decoding.
         claudeSessionKey = try c.decodeIfPresent(String.self, forKey: .claudeSessionKey)
@@ -154,6 +164,11 @@ struct Profile: Codable, Identifiable, Equatable {
         // profile decode and wipe the profile list.
         claudeUsage = (try? c.decodeIfPresent(ClaudeUsage.self, forKey: .claudeUsage)) ?? nil
         apiUsage = (try? c.decodeIfPresent(APIUsage.self, forKey: .apiUsage)) ?? nil
+        codexUsage = (try? c.decodeIfPresent(CodexUsage.self, forKey: .codexUsage)) ?? nil
+        codexConfiguration = try c.decodeIfPresent(
+            CodexProfileConfiguration.self,
+            forKey: .codexConfiguration
+        ) ?? CodexProfileConfiguration()
         iconConfig = try c.decodeIfPresent(MenuBarIconConfiguration.self, forKey: .iconConfig) ?? .default
         refreshInterval = try c.decodeIfPresent(TimeInterval.self, forKey: .refreshInterval) ?? 30.0
         autoStartSessionEnabled = try c.decodeIfPresent(Bool.self, forKey: .autoStartSessionEnabled) ?? false
@@ -168,6 +183,7 @@ struct Profile: Codable, Identifiable, Equatable {
         var c = encoder.container(keyedBy: CodingKeys.self)
         try c.encode(id, forKey: .id)
         try c.encode(name, forKey: .name)
+        try c.encode(provider, forKey: .provider)
         // Credentials live in the Keychain (per-profile items), NOT in the plist.
         // The plist on disk is world-readable cleartext — see #267.
         if (encoder.userInfo[Profile.includeSecretsKey] as? Bool) == true {
@@ -184,6 +200,8 @@ struct Profile: Codable, Identifiable, Equatable {
         try c.encodeIfPresent(oauthAccountJSON, forKey: .oauthAccountJSON)
         try c.encodeIfPresent(claudeUsage, forKey: .claudeUsage)
         try c.encodeIfPresent(apiUsage, forKey: .apiUsage)
+        try c.encodeIfPresent(codexUsage, forKey: .codexUsage)
+        try c.encode(codexConfiguration, forKey: .codexConfiguration)
         try c.encode(iconConfig, forKey: .iconConfig)
         try c.encode(refreshInterval, forKey: .refreshInterval)
         try c.encode(autoStartSessionEnabled, forKey: .autoStartSessionEnabled)
@@ -196,27 +214,40 @@ struct Profile: Codable, Identifiable, Equatable {
 
     // MARK: - Computed Properties
     var hasClaudeAI: Bool {
-        claudeSessionKey != nil && organizationId != nil
+        guard provider == .claude else { return false }
+        return claudeSessionKey != nil && organizationId != nil
     }
 
     var hasAPIConsole: Bool {
-        apiSessionKey != nil && apiOrganizationId != nil
+        guard provider == .claude else { return false }
+        return apiSessionKey != nil && apiOrganizationId != nil
     }
 
     /// True if profile has credentials that can fetch usage data (Claude.ai, CLI OAuth, or API Console)
     /// Note: System keychain fallback is handled in ClaudeAPIService.getAuthentication() during actual API calls
     var hasUsageCredentials: Bool {
-        hasClaudeAI || hasAPIConsole || hasValidCLIOAuth
+        switch provider {
+        case .claude:
+            return hasClaudeAI || hasAPIConsole || hasValidCLIOAuth
+        case .codex:
+            return codexConfiguration.validationError == nil
+        }
     }
 
     /// True if profile has CLI OAuth credentials that are not expired
     var hasValidCLIOAuth: Bool {
+        guard provider == .claude else { return false }
         guard let cliJSON = cliCredentialsJSON else { return false }
         return !ClaudeCodeSyncService.shared.isTokenExpired(cliJSON)
     }
 
     var hasAnyCredentials: Bool {
-        hasClaudeAI || hasAPIConsole || cliCredentialsJSON != nil || customKeychainServiceName != nil
+        switch provider {
+        case .claude:
+            return hasClaudeAI || hasAPIConsole || cliCredentialsJSON != nil || customKeychainServiceName != nil
+        case .codex:
+            return codexConfiguration.validationError == nil
+        }
     }
 }
 

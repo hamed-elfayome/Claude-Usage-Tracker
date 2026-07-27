@@ -1,10 +1,98 @@
 import Foundation
 
-/// Machine-scoped settings for the local OpenAI Codex CLI integration.
+enum ProfileProvider: String, Codable, CaseIterable, Identifiable {
+    case claude
+    case codex
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .claude: return "Claude"
+        case .codex: return "OpenAI Codex"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .claude: return "person.crop.circle.fill"
+        case .codex: return "chevron.left.forwardslash.chevron.right"
+        }
+    }
+}
+
+enum CodexConnectionType: String, Codable, CaseIterable, Identifiable {
+    case local
+    case ssh
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .local: return "This Mac"
+        case .ssh: return "SSH"
+        }
+    }
+}
+
+/// Per-profile connection details for an OpenAI Codex profile.
 ///
-/// These settings deliberately live outside `Profile`: Codex owns one active
-/// local login, while Claude Usage Tracker profiles model independent Claude
-/// accounts.
+/// SSH authentication deliberately remains in the user's standard macOS SSH
+/// configuration and keychain/agent. No passwords or private keys are stored.
+struct CodexProfileConfiguration: Codable, Equatable {
+    var connectionType: CodexConnectionType
+    var executablePath: String?
+    var codexHome: String?
+    var sshHost: String?
+    var selectedRateLimitID: String?
+    var showAccountEmail: Bool
+
+    init(
+        connectionType: CodexConnectionType = .local,
+        executablePath: String? = nil,
+        codexHome: String? = nil,
+        sshHost: String? = nil,
+        selectedRateLimitID: String? = nil,
+        showAccountEmail: Bool = true
+    ) {
+        self.connectionType = connectionType
+        self.executablePath = executablePath?.nilIfBlank
+        self.codexHome = codexHome?.nilIfBlank
+        self.sshHost = sshHost?.nilIfBlank
+        self.selectedRateLimitID = selectedRateLimitID?.nilIfBlank
+        self.showAccountEmail = showAccountEmail
+    }
+
+    var connectionSummary: String {
+        switch connectionType {
+        case .local:
+            return codexHome.map { "This Mac · \($0)" } ?? "This Mac"
+        case .ssh:
+            return sshHost.map { "SSH · \($0)" } ?? "SSH host not configured"
+        }
+    }
+
+    var validationError: String? {
+        guard connectionType == .ssh else { return nil }
+        guard let host = sshHost?.nilIfBlank else { return "Enter an SSH host alias." }
+        if host.hasPrefix("-") || host.unicodeScalars.contains(where: { CharacterSet.controlCharacters.contains($0) }) {
+            return "The SSH host alias is invalid."
+        }
+        return nil
+    }
+
+    /// Settings that select the Codex installation/account producing a usage
+    /// snapshot. Presentation-only choices must not invalidate cached usage.
+    func targetsSameInstallation(as other: CodexProfileConfiguration) -> Bool {
+        connectionType == other.connectionType
+            && executablePath?.nilIfBlank == other.executablePath?.nilIfBlank
+            && codexHome?.nilIfBlank == other.codexHome?.nilIfBlank
+            && sshHost?.nilIfBlank == other.sshHost?.nilIfBlank
+    }
+}
+
+/// Legacy machine-scoped settings retained only to migrate the first Codex
+/// integration into a real profile. New runtime state belongs to `Profile`.
 struct CodexSettings: Codable, Equatable {
     var monitoringEnabled: Bool
     var executablePath: String?
@@ -81,7 +169,7 @@ struct CodexInstallationDiagnostics: Equatable, Sendable {
     var isInstalled: Bool { executablePath != nil }
 }
 
-private extension String {
+extension String {
     var nilIfBlank: String? {
         let trimmed = trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? nil : trimmed

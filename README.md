@@ -102,21 +102,27 @@ Before installing Claude Usage Tracker, ensure you have:
 
 ### OpenAI Codex usage monitoring
 
-Codex monitoring is optional and app-wide. It uses the active login from your
-local Codex CLI; Claude Usage Tracker does not read or copy Codex credential
-files.
+Codex monitoring is optional and uses the login owned by the Codex CLI; Claude
+Usage Tracker does not read or copy Codex credential files. Codex accounts are
+created and selected through the same profile UX as Claude accounts.
 
 1. Install the CLI: `npm install --global @openai/codex`
 2. Sign in: `codex login`
 3. Confirm the login: `codex login status`
-4. Open **Settings → OpenAI Codex** to enable monitoring, inspect the detected
-   executable and account, choose the tray rate-limit bucket, and configure
-   alerts.
+4. Open **Settings → Manage Profiles**, create a profile, and choose
+   **OpenAI Codex** as its provider.
+5. Select that profile and open **Codex Connection** to configure its local or
+   SSH connection. Appearance, refresh interval, alerts, and multi-profile
+   selection use the same settings as Claude profiles.
 
-The app detects Homebrew, `/usr/local/bin`, and `PATH` installations. A custom
-executable can be selected in settings or supplied with `CODEX_EXECUTABLE`.
-Codex authentication remains managed by the CLI, and the app communicates with
-the local `codex app-server --stdio` process.
+For local profiles, the app detects Homebrew, `/usr/local/bin`, and `PATH`
+installations. An optional `CODEX_HOME` lets each profile use a separate Codex
+login. Remote profiles use a host alias from your existing `~/.ssh/config` and
+start `codex app-server --stdio` over encrypted SSH. SSH keys and agent
+configuration remain managed by macOS/OpenSSH. Because background
+refreshes are non-interactive, `ssh <alias>` must work with a key, agent, or
+Keychain-backed credential and without a password prompt. App-server is never
+exposed directly on the network.
 
 ### Installation
 

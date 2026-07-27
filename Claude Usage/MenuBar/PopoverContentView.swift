@@ -93,24 +93,32 @@ struct PopoverContentView: View {
         return manager.apiUsage
     }
 
+    private var displayProfile: Profile? {
+        manager.clickedProfileId.flatMap { id in
+            profileManager.profiles.first { $0.id == id }
+        } ?? profileManager.activeProfile
+    }
+
+    private var isCodexProfile: Bool {
+        displayProfile?.provider == .codex
+    }
+
+    private var displayCodexUsage: CodexUsage? {
+        if profileManager.displayMode == .multi, manager.clickedProfileId != nil {
+            return displayProfile?.codexUsage
+        }
+        return manager.codexUsage
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Header
             SmartHeader(
                 usage: displayUsage,
-                status: manager.status,
+                status: isCodexProfile ? manager.openAIStatus : manager.status,
+                profile: displayProfile,
                 isRefreshing: isRefreshing,
-                onRefresh: {
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        isRefreshing = true
-                    }
-                    onRefresh()
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            isRefreshing = false
-                        }
-                    }
-                },
+                onRefresh: refresh,
                 onManageProfiles: onPreferences,
                 onPreferences: onPreferences,
                 clickedProfileId: manager.clickedProfileId
@@ -119,7 +127,17 @@ struct PopoverContentView: View {
             PopoverDivider()
 
             // Error / stale data banners
-            if manager.hasCredentialError {
+            if isCodexProfile,
+               displayProfile?.id == profileManager.activeProfile?.id,
+               let refreshError = manager.codexRefreshError {
+                StatusBannerView(
+                    icon: "exclamationmark.triangle.fill",
+                    message: refreshError,
+                    color: .orange
+                ) {
+                    onRefresh()
+                }
+            } else if !isCodexProfile && manager.hasCredentialError {
                 StatusBannerView(
                     icon: "exclamationmark.triangle.fill",
                     message: "popover.banner.credentials_expired".localized,
@@ -127,7 +145,7 @@ struct PopoverContentView: View {
                 ) {
                     onPreferences()
                 }
-            } else if manager.consecutiveRefreshFailures >= 3 {
+            } else if !isCodexProfile && manager.consecutiveRefreshFailures >= 3 {
                 StatusBannerView(
                     icon: "arrow.clockwise.circle.fill",
                     message: String(format: "popover.banner.refresh_failed".localized, manager.consecutiveRefreshFailures),
@@ -135,7 +153,7 @@ struct PopoverContentView: View {
                 ) {
                     onRefresh()
                 }
-            } else if let lastRefresh = manager.lastSuccessfulRefreshTime,
+            } else if !isCodexProfile, let lastRefresh = manager.lastSuccessfulRefreshTime,
                       Date().timeIntervalSince(lastRefresh) > 300 {
                 let minutesAgo = Int(Date().timeIntervalSince(lastRefresh) / 60)
                 StatusBannerView(
@@ -194,14 +212,22 @@ struct PopoverContentView: View {
             }
 
             // Usage
-            SmartUsageDashboard(
-                usage: displayUsage,
-                apiUsage: displayAPIUsage,
-                codexUsage: manager.codexUsage,
-                codexSettings: manager.codexSettings
-            )
+            if isCodexProfile {
+                CodexUsageDashboard(
+                    usage: displayCodexUsage,
+                    settings: displayProfile?.codexConfiguration ?? CodexProfileConfiguration(),
+                    profile: displayProfile
+                )
+            } else {
+                SmartUsageDashboard(
+                    usage: displayUsage,
+                    apiUsage: displayAPIUsage
+                )
+            }
 
-            if manager.codexSettings.monitoringEnabled, let error = manager.codexRefreshError {
+            if isCodexProfile,
+               displayProfile?.id == profileManager.activeProfile?.id,
+               let error = manager.codexRefreshError {
                 HStack(alignment: .top, spacing: 7) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundColor(.orange)
@@ -216,7 +242,7 @@ struct PopoverContentView: View {
             }
 
             // Contextual Insights
-            if showInsights {
+            if !isCodexProfile && showInsights {
                 PopoverDivider()
                 ContextualInsights(usage: displayUsage)
                     .transition(.opacity)
@@ -232,6 +258,18 @@ struct PopoverContentView: View {
             appeared = false
             withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
                 appeared = true
+            }
+        }
+    }
+
+    private func refresh() {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            isRefreshing = true
+        }
+        onRefresh()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                isRefreshing = false
             }
         }
     }
@@ -252,6 +290,7 @@ struct ProfileSwitcherCompact: View {
     @StateObject private var profileManager = ProfileManager.shared
     @State private var isHovered = false
     let onManageProfiles: () -> Void
+    var displayedProfile: Profile? = nil
 
     var body: some View {
         Menu {
@@ -262,7 +301,7 @@ struct ProfileSwitcherCompact: View {
                     }
                 }) {
                     HStack(spacing: 8) {
-                        Image(systemName: "person.circle.fill")
+                        Image(systemName: profile.provider.icon)
                             .font(.system(size: 12))
 
                         Text(profile.name)
@@ -271,13 +310,13 @@ struct ProfileSwitcherCompact: View {
                         Spacer()
 
                         HStack(spacing: 4) {
-                            if profile.hasCliAccount {
+                            if profile.provider == .claude && profile.hasCliAccount {
                                 Image(systemName: "terminal.fill")
                                     .font(.system(size: 9))
                                     .foregroundColor(.adaptiveGreen)
                             }
 
-                            if profile.claudeSessionKey != nil {
+                            if profile.provider == .claude && profile.claudeSessionKey != nil {
                                 Image(systemName: "checkmark.circle.fill")
                                     .font(.system(size: 9))
                                     .foregroundColor(.blue)
@@ -304,7 +343,7 @@ struct ProfileSwitcherCompact: View {
                 }
             }
         } label: {
-            Text(profileManager.activeProfile?.name ?? "popover.no_profile".localized)
+            Text(displayedProfile?.name ?? profileManager.activeProfile?.name ?? "popover.no_profile".localized)
                 .font(.system(size: 13, weight: .bold))
                 .foregroundColor(.primary)
                 .lineLimit(1)
@@ -330,7 +369,7 @@ struct ProfileSwitcherBar: View {
                     }
                 }) {
                     HStack(spacing: 8) {
-                        Image(systemName: "person.circle.fill")
+                        Image(systemName: profile.provider.icon)
                             .font(.system(size: 12))
 
                         Text(profile.name)
@@ -339,13 +378,13 @@ struct ProfileSwitcherBar: View {
                         Spacer()
 
                         HStack(spacing: 4) {
-                            if profile.hasCliAccount {
+                            if profile.provider == .claude && profile.hasCliAccount {
                                 Image(systemName: "terminal.fill")
                                     .font(.system(size: 9))
                                     .foregroundColor(.adaptiveGreen)
                             }
 
-                            if profile.claudeSessionKey != nil {
+                            if profile.provider == .claude && profile.claudeSessionKey != nil {
                                 Image(systemName: "checkmark.circle.fill")
                                     .font(.system(size: 9))
                                     .foregroundColor(.blue)
@@ -448,6 +487,7 @@ struct ProfileSwitcherBar: View {
 struct SmartHeader: View {
     let usage: ClaudeUsage
     let status: ClaudeStatus
+    let profile: Profile?
     let isRefreshing: Bool
     let onRefresh: () -> Void
     let onManageProfiles: () -> Void
@@ -475,6 +515,18 @@ struct SmartHeader: View {
         return profileManager.profiles.first { $0.id == id }
     }
 
+    private var statusURL: URL? {
+        URL(string: profile?.provider == .codex
+            ? "https://status.openai.com"
+            : "https://status.claude.com")
+    }
+
+    private var statusHelp: String {
+        profile?.provider == .codex
+            ? "Click to open status.openai.com"
+            : "Click to open status.claude.com"
+    }
+
     private func profileInitials(for name: String) -> String {
         let words = name.split(separator: " ")
         if words.count >= 2 {
@@ -488,11 +540,14 @@ struct SmartHeader: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                ProfileSwitcherCompact(onManageProfiles: onManageProfiles)
+                ProfileSwitcherCompact(
+                    onManageProfiles: onManageProfiles,
+                    displayedProfile: profile
+                )
 
                 // Status
                 Button(action: {
-                    if let url = URL(string: "https://status.claude.com") {
+                    if let url = statusURL {
                         NSWorkspace.shared.open(url)
                     }
                 }) {
@@ -507,7 +562,7 @@ struct SmartHeader: View {
                     }
                 }
                 .buttonStyle(.plain)
-                .help("Click to open status.claude.com")
+                .help(statusHelp)
             }
 
             Spacer()
@@ -577,8 +632,6 @@ struct HeaderIconButton: View {
 struct SmartUsageDashboard: View {
     let usage: ClaudeUsage
     let apiUsage: APIUsage?
-    let codexUsage: CodexUsage?
-    let codexSettings: CodexSettings
     @StateObject private var profileManager = ProfileManager.shared
     @ObservedObject private var peakHoursService = PeakHoursService.shared
 
@@ -736,29 +789,65 @@ struct SmartUsageDashboard: View {
                 }
             }
 
-            if let codexUsage, !codexUsage.rateLimits.isEmpty {
-                Divider()
-                    .padding(.vertical, 3)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+    }
+}
 
-                HStack(spacing: 6) {
-                    Image(systemName: "chevron.left.forwardslash.chevron.right")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundColor(.accentColor)
-                    Text("Codex")
-                        .font(.system(size: 11, weight: .semibold))
-                    if let plan = codexUsage.rateLimit(preferredID: codexSettings.selectedRateLimitID)?.planType
-                        ?? codexUsage.account?.planType {
-                        Text(plan.capitalized)
-                            .font(.system(size: 8, weight: .semibold))
-                            .foregroundColor(.secondary)
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 2)
-                            .background(Capsule().fill(Color.secondary.opacity(0.12)))
-                    }
-                    Spacer()
-                }
+// MARK: - Codex Provider Dashboard
 
-                ForEach(codexUsage.rateLimits) { limit in
+struct CodexUsageDashboard: View {
+    let usage: CodexUsage?
+    let settings: CodexProfileConfiguration
+    let profile: Profile?
+
+    @StateObject private var profileManager = ProfileManager.shared
+
+    private var showRemainingPercentage: Bool {
+        if profileManager.displayMode == .multi {
+            return profileManager.multiProfileConfig.showRemainingPercentage
+        }
+        return profile?.iconConfig.showRemainingPercentage ?? false
+    }
+
+    private var showTimeMarker: Bool {
+        if profileManager.displayMode == .multi {
+            return profileManager.multiProfileConfig.showTimeMarker
+        }
+        return profile?.iconConfig.showTimeMarker ?? true
+    }
+
+    private var usePaceColoring: Bool {
+        if profileManager.displayMode == .multi {
+            return profileManager.multiProfileConfig.usePaceColoring
+        }
+        return profile?.iconConfig.usePaceColoring ?? true
+    }
+
+    private var showPaceMarker: Bool {
+        if profileManager.displayMode == .multi {
+            return profileManager.multiProfileConfig.showPaceMarker
+        }
+        return profile?.iconConfig.showPaceMarker ?? true
+    }
+
+    private var timeDisplay: PopoverTimeDisplay {
+        SharedDataStore.shared.loadPopoverTimeDisplay()
+    }
+
+    private func orderedRateLimits(_ usage: CodexUsage) -> [CodexRateLimit] {
+        guard let selectedID = settings.selectedRateLimitID,
+              let selected = usage.rateLimits.first(where: { $0.id == selectedID }) else {
+            return usage.rateLimits
+        }
+        return [selected] + usage.rateLimits.filter { $0.id != selectedID }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if let usage, !usage.rateLimits.isEmpty {
+                ForEach(orderedRateLimits(usage)) { limit in
                     if let window = limit.primary {
                         UsageRow(
                             title: limit.displayName,
@@ -789,20 +878,24 @@ struct SmartUsageDashboard: View {
                     }
                     if let credits = limit.credits, credits.hasCredits {
                         HStack {
-                            Text("\(limit.displayName) credits")
+                            Text("\(limit.displayName) \("codex.settings.credits".localized.lowercased())")
                                 .font(.system(size: 10, weight: .medium))
                                 .foregroundColor(.secondary)
                             Spacer()
-                            Text(credits.unlimited ? "Unlimited" : (credits.balance ?? "Available"))
-                                .font(.system(size: 10, weight: .semibold, design: .rounded))
-                                .foregroundColor(.secondary)
+                            Text(
+                                credits.unlimited
+                                    ? "codex.settings.unlimited".localized
+                                    : (credits.balance ?? "codex.settings.available".localized)
+                            )
+                            .font(.system(size: 10, weight: .semibold, design: .rounded))
+                            .foregroundColor(.secondary)
                         }
                     }
                 }
 
-                if let lifetimeTokens = codexUsage.tokenUsage?.lifetimeTokens {
+                if let lifetimeTokens = usage.tokenUsage?.lifetimeTokens {
                     HStack {
-                        Text("Lifetime tokens")
+                        Text("codex.settings.lifetime_tokens".localized)
                             .font(.system(size: 10, weight: .medium))
                             .foregroundColor(.secondary)
                         Spacer()
@@ -811,6 +904,12 @@ struct SmartUsageDashboard: View {
                             .foregroundColor(.secondary)
                     }
                 }
+            } else {
+                Text("codex.settings.no_usage".localized)
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 8)
             }
         }
         .padding(.horizontal, 14)

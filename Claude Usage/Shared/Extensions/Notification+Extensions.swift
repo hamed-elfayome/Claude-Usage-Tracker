@@ -33,6 +33,9 @@ extension Notification.Name {
     /// Posted when a Claude Code notch HUD setting is toggled (enabled/auto-hide)
     static let notchHUDSettingChanged = Notification.Name("notchHUDSettingChanged")
 
-    /// Posted when machine-scoped OpenAI Codex monitoring or tray settings change.
+    /// Posted when an OpenAI Codex profile's connection settings change.
     static let codexSettingsChanged = Notification.Name("codexSettingsChanged")
+
+    /// Posted after a profile is deleted so runtime resources can be released.
+    static let profileDeleted = Notification.Name("profileDeleted")
 }

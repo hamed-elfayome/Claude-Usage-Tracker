@@ -333,6 +333,15 @@ struct SettingsView: View {
         }
         .frame(minWidth: 720, maxWidth: 720, maxHeight: .infinity)
         .background(SettingsBackground())
+        .onChange(of: profileManager.activeProfile?.id) { _, _ in
+            guard let profile = profileManager.activeProfile else { return }
+            if profile.provider == .codex,
+               [.claudeAI, .apiConsole, .cliAccount, .history].contains(selectedSection) {
+                selectedSection = .openAICodex
+            } else if profile.provider == .claude, selectedSection == .openAICodex {
+                selectedSection = .claudeAI
+            }
+        }
     }
 }
 
@@ -343,7 +352,11 @@ struct ProfileSectionContainer: View {
     @StateObject private var profileManager = ProfileManager.shared
 
     var profileSections: [SettingsSection] {
-        SettingsSection.allCases.filter { $0.isProfileSetting && !$0.isCredential }
+        SettingsSection.allCases.filter {
+            $0.isProfileSetting
+                && !$0.isCredential
+                && (profileManager.activeProfile?.provider == .claude || $0 != .history)
+        }
     }
 
     var body: some View {
@@ -364,8 +377,9 @@ struct ProfileSectionContainer: View {
                 )) {
                     ForEach(profileManager.profiles) { profile in
                         HStack {
+                            Image(systemName: profile.provider.icon)
                             Text(profile.name)
-                            if profile.hasCliAccount {
+                            if profile.provider == .claude && profile.hasCliAccount {
                                 Image(systemName: "checkmark.seal.fill")
                                     .font(.system(size: 9))
                                     .foregroundColor(.green)
@@ -694,7 +708,7 @@ enum SettingsSection: String, CaseIterable {
 
     var isCredential: Bool {
         switch self {
-        case .claudeAI, .apiConsole, .cliAccount:
+        case .claudeAI, .apiConsole, .cliAccount, .openAICodex:
             return true
         default:
             return false
@@ -771,44 +785,55 @@ struct ProfileCredentialCardsRow: View {
 
     var body: some View {
         VStack(spacing: 4) {
-            // Claude.ai Card
-            Button {
-                selectedSection = .claudeAI
-            } label: {
-                CredentialMiniCard(
-                    icon: "key.fill",
-                    title: "Claude.ai",
-                    isConnected: credentials?.hasClaudeAI ?? false,
-                    isSelected: selectedSection == .claudeAI
-                )
-            }
-            .buttonStyle(.plain)
+            if let profile = profileManager.activeProfile, profile.provider == .codex {
+                Button {
+                    selectedSection = .openAICodex
+                } label: {
+                    CredentialMiniCard(
+                        icon: ProfileProvider.codex.icon,
+                        title: "Codex Connection",
+                        isConnected: profile.codexUsage != nil,
+                        isSelected: selectedSection == .openAICodex
+                    )
+                }
+                .buttonStyle(.plain)
+            } else {
+                Button {
+                    selectedSection = .claudeAI
+                } label: {
+                    CredentialMiniCard(
+                        icon: "key.fill",
+                        title: "Claude.ai",
+                        isConnected: credentials?.hasClaudeAI ?? false,
+                        isSelected: selectedSection == .claudeAI
+                    )
+                }
+                .buttonStyle(.plain)
 
-            // API Console Card
-            Button {
-                selectedSection = .apiConsole
-            } label: {
-                CredentialMiniCard(
-                    icon: "dollarsign.circle.fill",
-                    title: "API Console",
-                    isConnected: credentials?.apiSessionKey != nil,
-                    isSelected: selectedSection == .apiConsole
-                )
-            }
-            .buttonStyle(.plain)
+                Button {
+                    selectedSection = .apiConsole
+                } label: {
+                    CredentialMiniCard(
+                        icon: "dollarsign.circle.fill",
+                        title: "API Console",
+                        isConnected: credentials?.apiSessionKey != nil,
+                        isSelected: selectedSection == .apiConsole
+                    )
+                }
+                .buttonStyle(.plain)
 
-            // CLI Account Card
-            Button {
-                selectedSection = .cliAccount
-            } label: {
-                CredentialMiniCard(
-                    icon: "terminal.fill",
-                    title: "CLI Account",
-                    isConnected: profileManager.activeProfile?.hasCliAccount ?? false,
-                    isSelected: selectedSection == .cliAccount
-                )
+                Button {
+                    selectedSection = .cliAccount
+                } label: {
+                    CredentialMiniCard(
+                        icon: "terminal.fill",
+                        title: "CLI Account",
+                        isConnected: profileManager.activeProfile?.hasCliAccount ?? false,
+                        isSelected: selectedSection == .cliAccount
+                    )
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
         }
         .onAppear {
             loadCredentials()
@@ -819,7 +844,10 @@ struct ProfileCredentialCardsRow: View {
     }
 
     private func loadCredentials() {
-        guard let profile = profileManager.activeProfile else { return }
+        guard let profile = profileManager.activeProfile, profile.provider == .claude else {
+            credentials = nil
+            return
+        }
         credentials = try? ProfileStore.shared.loadProfileCredentials(profile.id)
     }
 }

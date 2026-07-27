@@ -11,6 +11,7 @@ struct ManageProfilesView: View {
     @StateObject private var profileManager = ProfileManager.shared
     @State private var showingCreateProfile = false
     @State private var newProfileName = ""
+    @State private var newProfileProvider: ProfileProvider = .claude
     @State private var errorMessage: String?
 
     var body: some View {
@@ -80,20 +81,22 @@ struct ManageProfilesView: View {
                                         isActive: profileManager.activeProfile?.id == profile.id,
                                         onToggle: {
                                             // Ensure at least one profile stays selected
-                                            let selectedCount = profileManager.profiles.filter { $0.isSelectedForDisplay }.count
-                                            if profile.isSelectedForDisplay && selectedCount <= 1 {
+                                            if profile.isSelectedForDisplay && selectedDisplayProfileCount <= 1 {
                                                 // Can't deselect the last one
                                                 return
                                             }
                                             profileManager.toggleProfileSelection(profile.id)
-                                            // Post notification for menu bar to update (incremental, not full recreate)
-                                            NotificationCenter.default.post(name: .multiProfileConfigChanged, object: nil)
+                                            // ProfileManager applies the toggle on the next main-loop
+                                            // turn, so notify after that mutation is visible.
+                                            DispatchQueue.main.async {
+                                                NotificationCenter.default.post(name: .multiProfileConfigChanged, object: nil)
+                                            }
                                         }
                                     )
                                 }
 
                                 // Warning if trying to deselect last profile
-                                if profileManager.profiles.filter({ $0.isSelectedForDisplay }).count == 1 {
+                                if selectedDisplayProfileCount == 1 {
                                     HStack(alignment: .top, spacing: 6) {
                                         Image(systemName: "exclamationmark.triangle.fill")
                                             .font(.system(size: 10))
@@ -324,22 +327,32 @@ struct ManageProfilesView: View {
         .sheet(isPresented: $showingCreateProfile) {
             CreateProfileSheet(
                 profileName: $newProfileName,
+                provider: $newProfileProvider,
                 onSave: {
                     createNewProfile()
                 },
                 onCancel: {
                     showingCreateProfile = false
                     newProfileName = ""
+                    newProfileProvider = .claude
                 }
             )
         }
     }
 
+    private var selectedDisplayProfileCount: Int {
+        profileManager.profiles.filter(\.isSelectedForDisplay).count
+    }
+
     private func createNewProfile() {
         let name = newProfileName.isEmpty ? nil : newProfileName
-        _ = profileManager.createProfile(name: name)
+        let profile = profileManager.createProfile(name: name, provider: newProfileProvider)
         showingCreateProfile = false
         newProfileName = ""
+        newProfileProvider = .claude
+        Task {
+            await profileManager.activateProfile(profile.id)
+        }
     }
 }
 
@@ -355,7 +368,9 @@ struct ProfileRow: View {
     var body: some View {
         HStack(spacing: 12) {
             // Profile Icon
-            Image(systemName: profile.hasCliAccount ? "person.crop.circle.fill.badge.checkmark" : "person.crop.circle.fill")
+            Image(systemName: profile.provider == .codex
+                ? ProfileProvider.codex.icon
+                : (profile.hasCliAccount ? "person.crop.circle.fill.badge.checkmark" : ProfileProvider.claude.icon))
                 .font(.system(size: 24))
                 .foregroundColor(profileManager.activeProfile?.id == profile.id ? .accentColor : .secondary)
 
@@ -463,9 +478,11 @@ struct ProfileRow: View {
     }
 
     private var profileInfo: String {
-        var parts: [String] = []
+        var parts: [String] = [profile.provider.displayName]
 
-        if profile.hasCliAccount {
+        if profile.provider == .codex {
+            parts.append(profile.codexConfiguration.connectionSummary)
+        } else if profile.hasCliAccount {
             parts.append("profiles.cli_synced".localized)
         }
 
@@ -496,6 +513,7 @@ struct ProfileRow: View {
 
 struct CreateProfileSheet: View {
     @Binding var profileName: String
+    @Binding var provider: ProfileProvider
     let onSave: () -> Void
     let onCancel: () -> Void
 
@@ -505,6 +523,19 @@ struct CreateProfileSheet: View {
                 .font(.system(size: 18, weight: .semibold))
 
             VStack(alignment: .leading, spacing: 8) {
+                Text("Provider")
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
+
+                Picker("", selection: $provider) {
+                    ForEach(ProfileProvider.allCases) { provider in
+                        Label(provider.displayName, systemImage: provider.icon)
+                            .tag(provider)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+
                 Text("profiles.name_label".localized)
                     .font(.system(size: 12))
                     .foregroundColor(.secondary)

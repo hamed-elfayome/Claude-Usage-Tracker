@@ -1,9 +1,9 @@
 import Foundation
 
-/// A cached snapshot of the active local Codex account.
+/// A cached snapshot for one Codex profile.
 ///
-/// Codex is machine-scoped rather than Claude-profile-scoped: the app-server
-/// reuses whichever account the local `codex` CLI is currently signed in with.
+/// Each profile starts an app-server on its configured local or SSH machine and
+/// reuses whichever Codex account is signed in for that connection.
 struct CodexUsage: Codable, Equatable {
     var account: CodexAccount?
     var rateLimits: [CodexRateLimit]

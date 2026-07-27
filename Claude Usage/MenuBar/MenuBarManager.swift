@@ -11,9 +11,10 @@ class MenuBarManager: NSObject, ObservableObject {
     private var refreshTimer: Timer?
     @Published private(set) var usage: ClaudeUsage = .empty
     @Published private(set) var status: ClaudeStatus = .unknown
+    @Published private(set) var openAIStatus: ClaudeStatus = .unknown
     @Published private(set) var apiUsage: APIUsage?
     @Published private(set) var codexUsage: CodexUsage?
-    @Published private(set) var codexSettings = CodexSettings()
+    @Published private(set) var codexSettings = CodexProfileConfiguration()
     @Published private(set) var codexRefreshError: String?
     @Published private(set) var isCodexRefreshing = false
     @Published private(set) var isRefreshing: Bool = false
@@ -72,8 +73,11 @@ class MenuBarManager: NSObject, ObservableObject {
     private weak var currentPopoverButton: NSStatusBarButton?
 
     private let apiService = ClaudeAPIService()
-    private let codexService = CodexAppServerService.shared
+    private var codexServices: [UUID: CodexAppServerService] = [:]
+    private var codexRefreshTokens: [UUID: UUID] = [:]
+    private var codexRefreshErrorsByProfile: [UUID: String] = [:]
     private let statusService = ClaudeStatusService()
+    private let openAIStatusService = OpenAIStatusService()
     private let dataStore = DataStore.shared
     private let networkMonitor = NetworkMonitor.shared
     private let profileManager = ProfileManager.shared
@@ -115,6 +119,7 @@ class MenuBarManager: NSObject, ObservableObject {
 
     private var multiProfileConfigObserver: NSObjectProtocol?
     private var codexSettingsObserver: NSObjectProtocol?
+    private var profileDeletedObserver: NSObjectProtocol?
 
     // MARK: - Image Caching (CPU Optimization)
     private var cachedImage: NSImage?
@@ -138,16 +143,9 @@ class MenuBarManager: NSObject, ObservableObject {
         statusBarUIManager = StatusBarUIManager()
         statusBarUIManager?.delegate = self
 
-        // Load the machine-scoped Codex state before deciding which status
-        // items to create. The legacy metric is migrated from the active Claude
-        // profile once, then ignored in profile appearance settings.
-        codexUsage = dataStore.loadCodexUsage()
-        codexSettings = SharedDataStore.shared.loadCodexSettings(
-            legacyMetric: profileManager.activeProfile?.iconConfig.config(for: .codex)
-        )
-        if !codexSettings.monitoringEnabled {
-            codexUsage = nil
-        }
+        codexUsage = profileManager.activeProfile?.codexUsage
+        codexSettings = profileManager.activeProfile?.codexConfiguration
+            ?? CodexProfileConfiguration()
 
         // Check if we should use multi-profile mode
         if profileManager.displayMode == .multi {
@@ -191,7 +189,7 @@ class MenuBarManager: NSObject, ObservableObject {
             guard let self = self else { return }
 
             // Skip only if no credentials exist anywhere (profile or system keychain)
-            guard self.hasAnyAvailableCredentials() || self.isCodexMonitoringAvailable else {
+            guard self.hasAnyAvailableCredentials() else {
                 LoggingService.shared.log("Skipping network-available refresh (no credentials available)")
                 return
             }
@@ -207,7 +205,7 @@ class MenuBarManager: NSObject, ObservableObject {
 
         // Initial data fetch (with small delay for launch-at-login scenarios).
         // Includes system Keychain CLI credentials as a fallback.
-        if hasAnyAvailableCredentials() || isCodexMonitoringAvailable {
+        if hasAnyAvailableCredentials() {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                 self?.refreshUsage()
             }
@@ -231,6 +229,7 @@ class MenuBarManager: NSObject, ObservableObject {
         observeDisplayModeChanges()
         observeMultiProfileConfigChanges()
         observeCodexSettingsChanges()
+        observeProfileDeletion()
 
         // Setup headless mode observer if enabled (for Remote Desktop support)
         setupHeadlessModeObserver()
@@ -308,6 +307,10 @@ class MenuBarManager: NSObject, ObservableObject {
             NotificationCenter.default.removeObserver(codexSettingsObserver)
             self.codexSettingsObserver = nil
         }
+        if let profileDeletedObserver = profileDeletedObserver {
+            NotificationCenter.default.removeObserver(profileDeletedObserver)
+            self.profileDeletedObserver = nil
+        }
         if let peakHoursObserver = peakHoursObserver {
             NotificationCenter.default.removeObserver(peakHoursObserver)
             self.peakHoursObserver = nil
@@ -318,6 +321,11 @@ class MenuBarManager: NSObject, ObservableObject {
         }
         detachedWindow?.close()
         detachedWindow = nil
+        codexServices.values.forEach { $0.stop() }
+        codexServices.removeAll()
+        codexRefreshTokens.removeAll()
+        codexRefreshErrorsByProfile.removeAll()
+        isCodexRefreshing = false
         statusItem = nil
         statusBarUIManager?.cleanup()
         statusBarUIManager = nil
@@ -336,6 +344,10 @@ class MenuBarManager: NSObject, ObservableObject {
         lastKnownAPIResetTime.removeValue(forKey: profileId)
         resetJustRecorded.removeValue(forKey: profileId)
         autoSwitchedProfileIds.remove(profileId)
+        codexServices.removeValue(forKey: profileId)?.stop()
+        codexRefreshTokens.removeValue(forKey: profileId)
+        codexRefreshErrorsByProfile.removeValue(forKey: profileId)
+        updateCodexRefreshingState()
     }
 
     // MARK: - Profile Observation
@@ -394,10 +406,16 @@ class MenuBarManager: NSObject, ObservableObject {
             } else {
                 self.apiUsage = nil
             }
+            self.codexUsage = profile.codexUsage
+            self.codexSettings = profile.codexConfiguration
+            self.codexRefreshError = self.codexRefreshErrorsByProfile[profile.id]
+            self.isRefreshing = false
+            self.updateCodexRefreshingState()
         }
 
         // 2. Update refresh interval with profile's setting
         restartAutoRefreshWithInterval(profile.refreshInterval)
+        reconcileCodexServices()
 
         // 3. Update menu bar based on current display mode
         // IMPORTANT: In multi-profile mode, we update all icons, not just switch config
@@ -540,10 +558,9 @@ class MenuBarManager: NSObject, ObservableObject {
 
         guard let button = clickedButton else { return }
 
-        // In multi-profile mode, determine which profile was clicked
         if statusBarUIManager?.isInMultiProfileMode == true,
-           let profileId = statusBarUIManager?.profileId(for: button),
-           let profile = profileManager.profiles.first(where: { $0.id == profileId }) {
+                  let profileId = statusBarUIManager?.profileId(for: button),
+                  let profile = profileManager.profiles.first(where: { $0.id == profileId }) {
             // Set the clicked profile data
             clickedProfileId = profileId
             clickedProfileUsage = profile.claudeUsage ?? .empty
@@ -723,20 +740,8 @@ class MenuBarManager: NSObject, ObservableObject {
             statusBarUIManager?.updateMultiProfileButtons(
                 profiles: profileManager.profiles,
                 config: config,
-                activeProfileId: profileManager.activeProfile?.id
-            )
-            statusBarUIManager?.updateCodexStatusItem(
-                enabled: effectiveConfig.config(for: .codex)?.isEnabled == true,
-                target: self,
-                action: #selector(togglePopover)
-            )
-            statusBarUIManager?.updateButton(
-                for: .codex,
-                usage: usage,
-                apiUsage: apiUsage,
-                codexUsage: codexUsage,
-                config: effectiveConfig,
-                codexSettings: codexSettings
+                activeProfileId: profileManager.activeProfile?.id,
+                codexRefreshErrors: codexRefreshErrorsByProfile
             )
         } else {
             // Single profile mode - use the standard update
@@ -934,19 +939,20 @@ class MenuBarManager: NSObject, ObservableObject {
         ) { [weak self] _ in
             guard let self else { return }
             Task { @MainActor in
-                let previousSettings = self.codexSettings
-                self.codexSettings = SharedDataStore.shared.loadCodexSettings()
-                let connectionChanged = previousSettings.monitoringEnabled != self.codexSettings.monitoringEnabled
-                    || previousSettings.executablePath != self.codexSettings.executablePath
-
-                if !self.codexSettings.monitoringEnabled || previousSettings.executablePath != self.codexSettings.executablePath {
-                    self.codexService.stop()
+                guard let profile = self.profileManager.activeProfile,
+                      profile.provider == .codex else { return }
+                let targetChanged = !self.codexSettings.targetsSameInstallation(
+                    as: profile.codexConfiguration
+                )
+                if targetChanged {
+                    self.codexServices.removeValue(forKey: profile.id)?.stop()
+                    self.codexRefreshTokens.removeValue(forKey: profile.id)
+                    self.codexRefreshErrorsByProfile.removeValue(forKey: profile.id)
+                    self.updateCodexRefreshingState()
                 }
-                if !self.codexSettings.monitoringEnabled {
-                    self.codexUsage = nil
-                    self.codexRefreshError = nil
-                    self.isCodexRefreshing = false
-                }
+                self.codexSettings = profile.codexConfiguration
+                self.codexUsage = profile.codexUsage
+                self.codexRefreshError = self.codexRefreshErrorsByProfile[profile.id]
 
                 if self.profileManager.displayMode == .multi {
                     self.updateMultiProfileDisplay()
@@ -954,8 +960,30 @@ class MenuBarManager: NSObject, ObservableObject {
                     self.updateMenuBarDisplay(with: self.profileManager.activeProfile?.iconConfig ?? .default)
                 }
 
-                if self.codexSettings.monitoringEnabled && (connectionChanged || self.codexUsage == nil) {
-                    self.refreshCodexUsage(reportUnavailable: true)
+                if targetChanged {
+                    self.refreshCodexUsage(profileID: profile.id, reportUnavailable: true)
+                }
+            }
+        }
+    }
+
+    private func observeProfileDeletion() {
+        profileDeletedObserver = NotificationCenter.default.addObserver(
+            forName: .profileDeleted,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let self, let profileID = notification.object as? UUID else { return }
+            Task { @MainActor in
+                self.cleanupProfile(profileID)
+                if self.clickedProfileId == profileID {
+                    self.clickedProfileId = nil
+                    self.clickedProfileUsage = nil
+                    self.clickedProfileAPIUsage = nil
+                    self.closePopoverOrWindow()
+                }
+                if self.profileManager.displayMode == .multi {
+                    self.updateMultiProfileDisplay()
                 }
             }
         }
@@ -983,6 +1011,7 @@ class MenuBarManager: NSObject, ObservableObject {
         let displayMode = profileManager.displayMode
 
         LoggingService.shared.log("MenuBarManager: Display mode changed to \(displayMode.rawValue)")
+        reconcileCodexServices()
 
         if displayMode == .multi {
             // Switch to multi-profile mode
@@ -1033,35 +1062,26 @@ class MenuBarManager: NSObject, ObservableObject {
     private func hasAnyAvailableCredentials() -> Bool {
         guard let profile = profileManager.activeProfile else { return false }
 
-        // Profile-local credentials (Claude.ai, API Console, saved CLI OAuth),
-        // then the cached system Keychain CLI fallback.
+        if profile.provider == .codex {
+            return profile.codexConfiguration.validationError == nil
+        }
         return profile.hasUsageCredentials
             || ClaudeCodeSyncService.shared.hasUsableSystemCredentials()
     }
 
-    private var isCodexMonitoringAvailable: Bool {
-        codexSettings.monitoringEnabled
-            && codexService.isAvailable(customExecutablePath: codexSettings.executablePath)
-    }
-
-    /// Combines per-profile Claude appearance with the one app-wide Codex
-    /// metric. Legacy Codex entries inside profiles are intentionally ignored.
     private func effectiveMenuBarConfiguration(from profileConfig: MenuBarIconConfiguration) -> MenuBarIconConfiguration {
-        let hasClaudeCredentials = hasAnyAvailableCredentials()
-        var metrics = profileConfig.metrics
-            .filter { $0.metricType != .codex }
-            .map { metric -> MetricIconConfig in
-                var metric = metric
-                if !hasClaudeCredentials { metric.isEnabled = false }
-                return metric
+        let provider = profileManager.activeProfile?.provider ?? .claude
+        let hasCredentials = hasAnyAvailableCredentials()
+        let metrics = profileConfig.metrics.map { metric -> MetricIconConfig in
+            var metric = metric
+            switch provider {
+            case .claude:
+                if metric.metricType == .codex || !hasCredentials { metric.isEnabled = false }
+            case .codex:
+                if metric.metricType != .codex { metric.isEnabled = false }
             }
-
-        var codexMetric = codexSettings.menuBarMetric
-        codexMetric.metricType = .codex
-        codexMetric.isEnabled = codexSettings.monitoringEnabled
-            && codexMetric.isEnabled
-            && (isCodexMonitoringAvailable || codexUsage != nil)
-        metrics.append(codexMetric)
+            return metric
+        }
 
         return MenuBarIconConfiguration(
             colorMode: profileConfig.colorMode,
@@ -1076,6 +1096,7 @@ class MenuBarManager: NSObject, ObservableObject {
     }
 
     private func setupMultiProfileMode() {
+        reconcileCodexServices()
         let selectedProfiles = profileManager.getSelectedProfiles()
         let config = profileManager.multiProfileConfig
 
@@ -1084,18 +1105,16 @@ class MenuBarManager: NSObject, ObservableObject {
             target: self,
             action: #selector(togglePopover)
         )
-        let effectiveConfig = effectiveMenuBarConfiguration(from: profileManager.activeProfile?.iconConfig ?? .default)
-        statusBarUIManager?.updateCodexStatusItem(
-            enabled: effectiveConfig.config(for: .codex)?.isEnabled == true,
-            target: self,
-            action: #selector(togglePopover)
-        )
 
         // Defer icon update to next run loop iteration to let NSStatusBar finalize layout
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-            self.statusBarUIManager?.updateMultiProfileButtons(profiles: self.profileManager.profiles, config: config, activeProfileId: self.profileManager.activeProfile?.id)
-            self.updateStatusBarIcon(for: .codex)
+            self.statusBarUIManager?.updateMultiProfileButtons(
+                profiles: self.profileManager.profiles,
+                config: config,
+                activeProfileId: self.profileManager.activeProfile?.id,
+                codexRefreshErrors: self.codexRefreshErrorsByProfile
+            )
         }
 
         LoggingService.shared.log("MenuBarManager: Multi-profile mode enabled with \(selectedProfiles.count) profiles, style=\(config.iconStyle.rawValue)")
@@ -1107,17 +1126,12 @@ class MenuBarManager: NSObject, ObservableObject {
     /// Incrementally updates multi-profile status items (without destroying/recreating them)
     /// Use this when only icon config changed but the set of profiles may or may not have changed.
     private func updateMultiProfileDisplay() {
+        reconcileCodexServices()
         let selectedProfiles = profileManager.getSelectedProfiles()
         let config = profileManager.multiProfileConfig
 
         statusBarUIManager?.updateMultiProfileConfiguration(
             profiles: selectedProfiles,
-            target: self,
-            action: #selector(togglePopover)
-        )
-        let effectiveConfig = effectiveMenuBarConfiguration(from: profileManager.activeProfile?.iconConfig ?? .default)
-        statusBarUIManager?.updateCodexStatusItem(
-            enabled: effectiveConfig.config(for: .codex)?.isEnabled == true,
             target: self,
             action: #selector(togglePopover)
         )
@@ -1127,11 +1141,43 @@ class MenuBarManager: NSObject, ObservableObject {
         // This prevents potential flicker or layout issues during incremental updates.
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-            self.statusBarUIManager?.updateMultiProfileButtons(profiles: self.profileManager.profiles, config: config, activeProfileId: self.profileManager.activeProfile?.id)
-            self.updateStatusBarIcon(for: .codex)
+            self.statusBarUIManager?.updateMultiProfileButtons(
+                profiles: self.profileManager.profiles,
+                config: config,
+                activeProfileId: self.profileManager.activeProfile?.id,
+                codexRefreshErrors: self.codexRefreshErrorsByProfile
+            )
         }
 
         LoggingService.shared.log("MenuBarManager: Multi-profile display updated incrementally with \(selectedProfiles.count) profiles")
+    }
+
+    /// Keeps long-lived local/SSH app-server processes only for profiles that
+    /// can currently be refreshed or displayed.
+    private func reconcileCodexServices() {
+        let retainedProfileIDs: Set<UUID>
+        if profileManager.displayMode == .multi {
+            retainedProfileIDs = Set(
+                profileManager.profiles
+                    .filter { $0.provider == .codex && $0.isSelectedForDisplay }
+                    .map(\.id)
+            )
+        } else if let active = profileManager.activeProfile, active.provider == .codex {
+            retainedProfileIDs = [active.id]
+        } else {
+            retainedProfileIDs = []
+        }
+
+        let retiredProfileIDs = Set(codexServices.keys)
+            .union(codexRefreshTokens.keys)
+            .union(codexRefreshErrorsByProfile.keys)
+            .subtracting(retainedProfileIDs)
+        for profileID in retiredProfileIDs {
+            codexServices.removeValue(forKey: profileID)?.stop()
+            codexRefreshTokens.removeValue(forKey: profileID)
+            codexRefreshErrorsByProfile.removeValue(forKey: profileID)
+        }
+        updateCodexRefreshingState()
     }
 
     /// Refreshes usage data for all profiles selected for multi-profile display
@@ -1140,7 +1186,12 @@ class MenuBarManager: NSObject, ObservableObject {
         // whose CLI OAuth token has expired are still polled — `fetchUsageForProfile`
         // will transparently refresh expired tokens via the refresh_token grant.
         // Excluding them here would prevent the refresh path from ever running.
-        let selectedProfiles = profileManager.profiles.filter { $0.isSelectedForDisplay && $0.hasAnyCredentials }
+        let selectedProfiles = profileManager.profiles.filter {
+            $0.isSelectedForDisplay
+                && ($0.provider == .codex
+                    ? $0.codexConfiguration.validationError == nil
+                    : $0.hasAnyCredentials)
+        }
 
         guard !selectedProfiles.isEmpty else {
             LoggingService.shared.log("MenuBarManager: No selected profiles with usage credentials to refresh")
@@ -1150,25 +1201,114 @@ class MenuBarManager: NSObject, ObservableObject {
 
         LoggingService.shared.log("MenuBarManager: Refreshing \(selectedProfiles.count) selected profiles for multi-profile mode")
 
+        if selectedProfiles.contains(where: { $0.provider == .claude }) {
+            Task {
+                do {
+                    let newStatus = try await self.statusService.fetchStatus()
+                    await MainActor.run { self.status = newStatus }
+                } catch {
+                    await MainActor.run {
+                        self.status = ClaudeStatus(
+                            indicator: .unknown,
+                            description: "Claude status unavailable"
+                        )
+                    }
+                }
+            }
+        }
+        if selectedProfiles.contains(where: { $0.provider == .codex }) {
+            Task {
+                do {
+                    let newStatus = try await self.openAIStatusService.fetchStatus()
+                    await MainActor.run { self.openAIStatus = newStatus }
+                } catch {
+                    await MainActor.run {
+                        self.openAIStatus = ClaudeStatus(
+                            indicator: .unknown,
+                            description: "OpenAI status unavailable"
+                        )
+                    }
+                }
+            }
+        }
+
         Task {
             await MainActor.run {
                 self.isRefreshing = true
             }
 
-            // Fetch Claude status (same as single profile mode)
-            do {
-                let newStatus = try await statusService.fetchStatus()
-                await MainActor.run {
-                    self.status = newStatus
-                }
-            } catch {
-                let appError = AppError.wrap(error)
-                LoggingService.shared.log("MenuBarManager: Failed to fetch status - [\(appError.code.rawValue)] \(appError.message)")
-            }
-
             // Fetch usage for each selected profile
             for profile in selectedProfiles {
                 LoggingService.shared.log("MenuBarManager: Fetching usage for profile '\(profile.name)'")
+
+                if profile.provider == .codex {
+                    guard let refreshToken = await MainActor.run(body: {
+                        self.beginCodexRefresh(profileID: profile.id)
+                    }) else {
+                        continue
+                    }
+                    do {
+                        let snapshot = try await self.fetchCodexUsage(
+                            for: profile,
+                            refreshToken: refreshToken
+                        )
+                        await MainActor.run {
+                            guard self.codexRefreshTokens[profile.id] == refreshToken else {
+                                return
+                            }
+                            guard let currentProfile = self.profileManager.profiles.first(where: {
+                                      $0.id == profile.id && $0.provider == .codex
+                                  }),
+                                  currentProfile.codexConfiguration.targetsSameInstallation(
+                                      as: profile.codexConfiguration
+                                  ) else {
+                                self.codexRefreshTokens.removeValue(forKey: profile.id)
+                                self.updateCodexRefreshingState()
+                                return
+                            }
+                            self.codexRefreshTokens.removeValue(forKey: profile.id)
+                            self.codexRefreshErrorsByProfile.removeValue(forKey: profile.id)
+                            self.profileManager.saveCodexUsage(snapshot, for: profile.id)
+                            if profile.id == self.profileManager.activeProfile?.id {
+                                self.codexUsage = snapshot
+                                self.codexSettings = currentProfile.codexConfiguration
+                                self.codexRefreshError = nil
+                            }
+                            NotificationManager.shared.checkAndNotify(
+                                codexUsage: snapshot,
+                                profileID: profile.id,
+                                profileName: currentProfile.name,
+                                settings: currentProfile.notificationSettings,
+                                selectedRateLimitID: currentProfile.codexConfiguration.selectedRateLimitID
+                            )
+                            self.updateCodexRefreshingState()
+                        }
+                    } catch {
+                        LoggingService.shared.logError("Failed to refresh Codex profile '\(profile.name)': \(error.localizedDescription)")
+                        await MainActor.run {
+                            guard self.codexRefreshTokens[profile.id] == refreshToken else {
+                                return
+                            }
+                            guard let currentProfile = self.profileManager.profiles.first(where: {
+                                      $0.id == profile.id && $0.provider == .codex
+                                  }),
+                                  currentProfile.codexConfiguration.targetsSameInstallation(
+                                      as: profile.codexConfiguration
+                                  ) else {
+                                self.codexRefreshTokens.removeValue(forKey: profile.id)
+                                self.updateCodexRefreshingState()
+                                return
+                            }
+                            self.codexRefreshTokens.removeValue(forKey: profile.id)
+                            self.codexRefreshErrorsByProfile[profile.id] = error.localizedDescription
+                            if profile.id == self.profileManager.activeProfile?.id {
+                                self.codexRefreshError = error.localizedDescription
+                            }
+                            self.updateCodexRefreshingState()
+                        }
+                    }
+                    continue
+                }
 
                 // Capture previous usage for reset detection
                 let previousUsage = profile.claudeUsage
@@ -1253,7 +1393,8 @@ class MenuBarManager: NSObject, ObservableObject {
                 self.statusBarUIManager?.updateMultiProfileButtons(
                     profiles: self.profileManager.profiles,
                     config: config,
-                    activeProfileId: self.profileManager.activeProfile?.id
+                    activeProfileId: self.profileManager.activeProfile?.id,
+                    codexRefreshErrors: self.codexRefreshErrorsByProfile
                 )
                 self.consecutiveRefreshFailures = 0
                 self.lastRefreshError = nil
@@ -1331,10 +1472,6 @@ class MenuBarManager: NSObject, ObservableObject {
     }
 
     func refreshUsage() {
-        // This must run before the profile branches: Codex is independent of
-        // Claude credentials and is shared across single/multi-profile modes.
-        refreshCodexUsage()
-
         // In multi-profile mode, refresh ALL selected profiles
         if profileManager.displayMode == .multi {
             refreshAllSelectedProfiles()
@@ -1344,6 +1481,27 @@ class MenuBarManager: NSObject, ObservableObject {
         // Single profile mode - refresh only active profile
         guard let profile = profileManager.activeProfile else {
             LoggingService.shared.log("MenuBarManager.refreshUsage: No active profile")
+            return
+        }
+
+        if profile.provider == .codex {
+            refreshCodexUsage(profileID: profile.id, reportUnavailable: true)
+            Task {
+                do {
+                    let newStatus = try await openAIStatusService.fetchStatus()
+                    await MainActor.run { self.openAIStatus = newStatus }
+                } catch {
+                    LoggingService.shared.log(
+                        "MenuBarManager: Failed to fetch OpenAI status: \(error.localizedDescription)"
+                    )
+                    await MainActor.run {
+                        self.openAIStatus = ClaudeStatus(
+                            indicator: .unknown,
+                            description: "OpenAI status unavailable"
+                        )
+                    }
+                }
+            }
             return
         }
 
@@ -1364,6 +1522,8 @@ class MenuBarManager: NSObject, ObservableObject {
         }
 
         LoggingService.shared.log("MenuBarManager: Proceeding with refresh")
+        let sourceProfile = profile
+        let sourceProfileID = profile.id
         Task {
             // Set loading state (keep existing data visible during refresh)
             await MainActor.run {
@@ -1371,12 +1531,11 @@ class MenuBarManager: NSObject, ObservableObject {
             }
 
             // Capture previous usage BEFORE fetching new data (for reset detection)
-            let previousUsage = await MainActor.run { self.usage }
-            let previousAPIUsage = await MainActor.run { self.apiUsage }
-            let currentProfileId = await MainActor.run { self.profileManager.activeProfile?.id }
+            let previousUsage = sourceProfile.claudeUsage
+            let previousAPIUsage = sourceProfile.apiUsage
 
             // Fetch usage and status in parallel
-            async let usageResult = apiService.fetchUsageData()
+            async let usageResult = fetchUsageForProfile(sourceProfile)
             async let statusResult = statusService.fetchStatus()
 
             var usageSuccess = false
@@ -1387,52 +1546,38 @@ class MenuBarManager: NSObject, ObservableObject {
 
                 await MainActor.run {
                     // Check for resets before updating usage
-                    if let profileId = currentProfileId {
-                        self.checkAndRecordSessionReset(
-                            profileId: profileId,
-                            previousUsage: previousUsage,
-                            newUsage: newUsage
-                        )
-                        self.checkAndRecordWeeklyReset(
-                            profileId: profileId,
-                            previousUsage: previousUsage,
-                            newUsage: newUsage
-                        )
+                    self.checkAndRecordSessionReset(
+                        profileId: sourceProfileID,
+                        previousUsage: previousUsage,
+                        newUsage: newUsage
+                    )
+                    self.checkAndRecordWeeklyReset(
+                        profileId: sourceProfileID,
+                        previousUsage: previousUsage,
+                        newUsage: newUsage
+                    )
+                    UsageHistoryService.shared.recordSessionPeriodic(for: sourceProfileID, usage: newUsage)
+                    UsageHistoryService.shared.recordWeeklyPeriodic(for: sourceProfileID, usage: newUsage)
+                    self.profileManager.saveClaudeUsage(newUsage, for: sourceProfileID)
 
-                        // Record periodic snapshots for history charts
-                        UsageHistoryService.shared.recordSessionPeriodic(for: profileId, usage: newUsage)
-                        UsageHistoryService.shared.recordWeeklyPeriodic(for: profileId, usage: newUsage)
-                    }
+                    NotificationManager.shared.checkAndNotify(
+                        usage: newUsage,
+                        profileName: sourceProfile.name,
+                        settings: sourceProfile.notificationSettings
+                    )
 
+                    // Visible state and profile-switch side effects belong only
+                    // to the profile that initiated this request.
+                    guard self.profileManager.activeProfile?.id == sourceProfileID else { return }
                     self.usage = newUsage
-
-                    // Save to active profile instead of global DataStore
-                    if let profileId = self.profileManager.activeProfile?.id {
-                        self.profileManager.saveClaudeUsage(newUsage, for: profileId)
-                    }
-
-                    // Write statusline cache for instant CLI rendering
                     if StatuslineService.shared.isInstalled {
                         StatuslineService.shared.writeUsageCache(
                             usage: newUsage,
-                            profileName: self.profileManager.activeProfile?.name
+                            profileName: sourceProfile.name
                         )
                     }
-
-                    // Update all menu bar icons
                     self.updateAllStatusBarIcons()
-
-                    // Check if we should send notifications (using active profile's settings)
-                    if let profile = self.profileManager.activeProfile {
-                        NotificationManager.shared.checkAndNotify(
-                            usage: newUsage,
-                            profileName: profile.name,
-                            settings: profile.notificationSettings
-                        )
-
-                        // Check if auto-switch should trigger
-                        self.checkAutoSwitchIfNeeded(usage: newUsage, currentProfile: profile)
-                    }
+                    self.checkAutoSwitchIfNeeded(usage: newUsage, currentProfile: sourceProfile)
                 }
 
                 // Record success for circuit breaker
@@ -1440,6 +1585,7 @@ class MenuBarManager: NSObject, ObservableObject {
                 usageSuccess = true
 
                 await MainActor.run {
+                    guard self.profileManager.activeProfile?.id == sourceProfileID else { return }
                     self.consecutiveRefreshFailures = 0
                     self.lastRefreshError = nil
                     self.hasCredentialError = false
@@ -1456,6 +1602,7 @@ class MenuBarManager: NSObject, ObservableObject {
 
                 // Track error state for UI banners
                 await MainActor.run {
+                    guard self.profileManager.activeProfile?.id == sourceProfileID else { return }
                     self.consecutiveRefreshFailures += 1
                     self.lastRefreshError = appError.message
 
@@ -1488,29 +1635,28 @@ class MenuBarManager: NSObject, ObservableObject {
 
                 // Don't show error for status - it's not critical
                 LoggingService.shared.log("MenuBarManager: Failed to fetch status - [\(appError.code.rawValue)] \(appError.message)")
+                await MainActor.run {
+                    self.status = ClaudeStatus(
+                        indicator: .unknown,
+                        description: "Claude status unavailable"
+                    )
+                }
             }
 
-            // Fetch API usage (using active profile's API credentials)
-            if let profile = await MainActor.run(body: { self.profileManager.activeProfile }),
-               let apiSessionKey = profile.apiSessionKey,
-               let orgId = profile.apiOrganizationId {
+            // Fetch API usage using the same source profile captured above.
+            if let apiSessionKey = sourceProfile.apiSessionKey,
+               let orgId = sourceProfile.apiOrganizationId {
                 do {
                     let newAPIUsage = try await apiService.fetchAPIUsageData(organizationId: orgId, apiSessionKey: apiSessionKey)
                     await MainActor.run {
-                        // Check for billing cycle reset before updating usage
-                        if let profileId = currentProfileId {
-                            self.checkAndRecordBillingCycleReset(
-                                profileId: profileId,
-                                previousUsage: previousAPIUsage,
-                                newUsage: newAPIUsage
-                            )
-                        }
-
-                        self.apiUsage = newAPIUsage
-
-                        // Save to active profile instead of global DataStore
-                        if let profileId = self.profileManager.activeProfile?.id {
-                            self.profileManager.saveAPIUsage(newAPIUsage, for: profileId)
+                        self.checkAndRecordBillingCycleReset(
+                            profileId: sourceProfileID,
+                            previousUsage: previousAPIUsage,
+                            newUsage: newAPIUsage
+                        )
+                        self.profileManager.saveAPIUsage(newAPIUsage, for: sourceProfileID)
+                        if self.profileManager.activeProfile?.id == sourceProfileID {
+                            self.apiUsage = newAPIUsage
                         }
                     }
                 } catch {
@@ -1524,10 +1670,14 @@ class MenuBarManager: NSObject, ObservableObject {
 
             // Clear loading state
             await MainActor.run {
-                self.isRefreshing = false
+                if self.profileManager.activeProfile?.id == sourceProfileID {
+                    self.isRefreshing = false
+                }
 
                 // Show success notification if this was user-triggered and successful
-                if usageSuccess && abs(self.lastRefreshTriggerTime.timeIntervalSinceNow) < 5 {
+                if self.profileManager.activeProfile?.id == sourceProfileID,
+                   usageSuccess,
+                   abs(self.lastRefreshTriggerTime.timeIntervalSinceNow) < 5 {
                     self.showSuccessNotification()
                 }
             }
@@ -1535,45 +1685,131 @@ class MenuBarManager: NSObject, ObservableObject {
     }
 
     func refreshCodexUsageNow() {
-        refreshCodexUsage(reportUnavailable: true)
+        guard let profile = profileManager.activeProfile, profile.provider == .codex else { return }
+        refreshCodexUsage(profileID: profile.id, reportUnavailable: true)
     }
 
-    private func refreshCodexUsage(reportUnavailable: Bool = false) {
-        guard codexSettings.monitoringEnabled else {
-            if reportUnavailable { codexRefreshError = "Codex monitoring is disabled" }
+    private func refreshCodexUsage(profileID: UUID, reportUnavailable: Bool = false) {
+        guard let profile = profileManager.profiles.first(where: {
+            $0.id == profileID && $0.provider == .codex
+        }) else { return }
+        if let validationError = profile.codexConfiguration.validationError {
+            if reportUnavailable {
+                codexRefreshErrorsByProfile[profile.id] = validationError
+                if profileManager.activeProfile?.id == profile.id {
+                    codexRefreshError = validationError
+                }
+            }
             return
         }
-        guard codexService.isAvailable(customExecutablePath: codexSettings.executablePath) else {
-            if reportUnavailable { codexRefreshError = CodexAppServerError.executableNotFound.localizedDescription }
-            return
-        }
-        guard !isCodexRefreshing else { return }
-        isCodexRefreshing = true
+        guard let refreshToken = beginCodexRefresh(profileID: profileID) else { return }
 
         Task {
             do {
-                let snapshot = try await codexService.fetchUsage(executablePath: codexSettings.executablePath)
+                let snapshot = try await fetchCodexUsage(
+                    for: profile,
+                    refreshToken: refreshToken
+                )
                 await MainActor.run {
-                    self.codexUsage = snapshot
-                    self.codexRefreshError = nil
-                    self.dataStore.saveCodexUsage(snapshot)
+                    guard self.codexRefreshTokens[profile.id] == refreshToken else {
+                        return
+                    }
+                    guard let currentProfile = self.profileManager.profiles.first(where: {
+                              $0.id == profile.id && $0.provider == .codex
+                          }),
+                          currentProfile.codexConfiguration.targetsSameInstallation(
+                              as: profile.codexConfiguration
+                          ) else {
+                        self.codexRefreshTokens.removeValue(forKey: profile.id)
+                        self.updateCodexRefreshingState()
+                        return
+                    }
+                    self.codexRefreshTokens.removeValue(forKey: profile.id)
+                    self.codexRefreshErrorsByProfile.removeValue(forKey: profile.id)
+                    self.profileManager.saveCodexUsage(snapshot, for: profile.id)
+                    if self.profileManager.activeProfile?.id == profile.id {
+                        self.codexUsage = snapshot
+                        self.codexSettings = currentProfile.codexConfiguration
+                        self.codexRefreshError = nil
+                    }
                     NotificationManager.shared.checkAndNotify(
                         codexUsage: snapshot,
-                        settings: self.codexSettings
+                        profileID: profile.id,
+                        profileName: currentProfile.name,
+                        settings: currentProfile.notificationSettings,
+                        selectedRateLimitID: currentProfile.codexConfiguration.selectedRateLimitID
                     )
                     self.updateAllStatusBarIcons()
-                    self.isCodexRefreshing = false
+                    self.updateCodexRefreshingState()
                 }
             } catch {
                 LoggingService.shared.log("MenuBarManager: Codex usage refresh failed: \(error.localizedDescription)")
                 await MainActor.run {
-                    if self.codexSettings.monitoringEnabled {
+                    guard self.codexRefreshTokens[profile.id] == refreshToken else {
+                        return
+                    }
+                    guard let currentProfile = self.profileManager.profiles.first(where: {
+                              $0.id == profile.id && $0.provider == .codex
+                          }),
+                          currentProfile.codexConfiguration.targetsSameInstallation(
+                              as: profile.codexConfiguration
+                          ) else {
+                        self.codexRefreshTokens.removeValue(forKey: profile.id)
+                        self.updateCodexRefreshingState()
+                        return
+                    }
+                    self.codexRefreshTokens.removeValue(forKey: profile.id)
+                    self.codexRefreshErrorsByProfile[profile.id] = error.localizedDescription
+                    if self.profileManager.activeProfile?.id == profile.id {
                         self.codexRefreshError = error.localizedDescription
                     }
-                    self.isCodexRefreshing = false
+                    self.updateCodexRefreshingState()
+                    self.updateAllStatusBarIcons()
                 }
             }
         }
+    }
+
+    private func beginCodexRefresh(profileID: UUID) -> UUID? {
+        guard codexRefreshTokens[profileID] == nil else { return nil }
+        let refreshToken = UUID()
+        codexRefreshTokens[profileID] = refreshToken
+        updateCodexRefreshingState()
+        return refreshToken
+    }
+
+    private func updateCodexRefreshingState() {
+        guard let profile = profileManager.activeProfile, profile.provider == .codex else {
+            isCodexRefreshing = false
+            return
+        }
+        isCodexRefreshing = codexRefreshTokens[profile.id] != nil
+    }
+
+    private func fetchCodexUsage(
+        for profile: Profile,
+        refreshToken: UUID
+    ) async throws -> CodexUsage {
+        guard let service = await MainActor.run(body: { () -> CodexAppServerService? in
+            guard self.codexRefreshTokens[profile.id] == refreshToken,
+                  let currentProfile = self.profileManager.profiles.first(where: {
+                      $0.id == profile.id && $0.provider == .codex
+                  }),
+                  currentProfile.codexConfiguration.targetsSameInstallation(
+                      as: profile.codexConfiguration
+                  ) else {
+                return nil
+            }
+            if let existing = self.codexServices[profile.id] {
+                return existing
+            }
+            let created = CodexAppServerService()
+            self.codexServices[profile.id] = created
+            return created
+        }) else {
+            throw CancellationError()
+        }
+        return try await service.fetchUsage(configuration: profile.codexConfiguration)
     }
 
     /// Shows a brief success notification for user-triggered refreshes
@@ -1585,12 +1821,15 @@ class MenuBarManager: NSObject, ObservableObject {
 
     /// Checks if the current profile hit 100% and switches to the next available one
     private func checkAutoSwitchIfNeeded(usage: ClaudeUsage, currentProfile: Profile) {
+        guard currentProfile.provider == .claude else { return }
+
         // Guard: feature must be enabled
         guard SharedDataStore.shared.loadAutoSwitchProfileEnabled() else { return }
 
-        // Guard: need more than 1 profile
+        // Auto-switch changes Claude Code credentials, so Codex provider
+        // profiles are never eligible targets.
         let profiles = profileManager.profiles
-        guard profiles.count > 1 else { return }
+        guard profiles.filter({ $0.provider == .claude }).count > 1 else { return }
 
         let profileId = currentProfile.id
 
@@ -1610,7 +1849,10 @@ class MenuBarManager: NSObject, ObservableObject {
         autoSwitchedProfileIds.insert(profileId)
 
         // Find the next available profile
-        guard let nextProfile = findNextAvailableProfile(after: currentProfile) else {
+        guard let nextProfile = Self.nextClaudeAutoSwitchProfile(
+            in: profiles,
+            after: currentProfile.id
+        ) else {
             LoggingService.shared.log("AutoSwitch: All profiles at 100% or unavailable, staying on '\(currentProfile.name)'")
             return
         }
@@ -1633,18 +1875,21 @@ class MenuBarManager: NSObject, ObservableObject {
         }
     }
 
-    /// Finds the next profile with available session capacity, wrapping around
-    private func findNextAvailableProfile(after currentProfile: Profile) -> Profile? {
-        let profiles = profileManager.profiles
-        guard let currentIndex = profiles.firstIndex(where: { $0.id == currentProfile.id }) else { return nil }
+    /// Finds the next Claude profile with available session capacity, wrapping around.
+    nonisolated static func nextClaudeAutoSwitchProfile(
+        in profiles: [Profile],
+        after currentProfileID: UUID
+    ) -> Profile? {
+        guard let currentIndex = profiles.firstIndex(where: { $0.id == currentProfileID }) else {
+            return nil
+        }
 
         let count = profiles.count
         for offset in 1..<count {
             let index = (currentIndex + offset) % count
             let candidate = profiles[index]
 
-            // Must have usage credentials
-            guard candidate.hasUsageCredentials else { continue }
+            guard candidate.provider == .claude, candidate.hasUsageCredentials else { continue }
 
             // If no saved usage data, treat as available
             guard let candidateUsage = candidate.claudeUsage else { return candidate }

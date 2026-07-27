@@ -239,6 +239,21 @@ struct MetricIconConfig: Codable, Equatable {
             order: 3
         )
     }
+
+    static var codexProfileDefault: MetricIconConfig {
+        MetricIconConfig(
+            metricType: .codex,
+            isEnabled: true,
+            iconStyle: .battery,
+            order: 0
+        )
+    }
+
+    var disabled: MetricIconConfig {
+        var copy = self
+        copy.isEnabled = false
+        return copy
+    }
 }
 
 /// Icon style for multi-profile display
@@ -404,6 +419,15 @@ struct MenuBarIconConfiguration: Codable, Equatable {
         self.showPaceMarker = showPaceMarker
         self.usePaceColoring = usePaceColoring
         self.metrics = metrics
+    }
+
+    static var codexProfileDefault: MenuBarIconConfiguration {
+        MenuBarIconConfiguration(metrics: [
+            .codexProfileDefault,
+            .sessionDefault.disabled,
+            .weekDefault,
+            .apiDefault
+        ])
     }
 
     // MARK: - Codable (Custom decoder for backwards compatibility)

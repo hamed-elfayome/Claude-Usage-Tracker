@@ -79,6 +79,7 @@ class SharedDataStore {
 
         // OpenAI Codex integration (machine-scoped)
         static let codexSettings = "codexSettings"
+        static let codexProfileMigrationCompleted = "codexProfileMigrationCompleted"
     }
 
     init() {
@@ -107,8 +108,7 @@ class SharedDataStore {
         }
     }
 
-    /// Loads app-wide Codex settings, migrating the former per-profile tray
-    /// metric the first time this version runs.
+    /// Loads legacy app-wide Codex settings for one-time profile migration.
     func loadCodexSettings(legacyMetric: MetricIconConfig? = nil) -> CodexSettings {
         if let data = defaults.data(forKey: Keys.codexSettings) {
             do {
@@ -121,6 +121,15 @@ class SharedDataStore {
         let migrated = CodexSettings.migratingLegacyMetric(legacyMetric)
         saveCodexSettings(migrated)
         return migrated
+    }
+
+    var hasStoredCodexSettings: Bool {
+        defaults.data(forKey: Keys.codexSettings) != nil
+    }
+
+    var codexProfileMigrationCompleted: Bool {
+        get { defaults.bool(forKey: Keys.codexProfileMigrationCompleted) }
+        set { defaults.set(newValue, forKey: Keys.codexProfileMigrationCompleted) }
     }
 
     // MARK: - Claude Code Notch HUD

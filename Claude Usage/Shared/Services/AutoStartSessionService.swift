@@ -119,7 +119,9 @@ final class AutoStartSessionService {
         LoggingService.shared.logDebug("AutoStartSessionService: Checking all profiles for auto-start (source: \(source))")
 
         // Get all profiles with auto-start enabled
-        let profilesWithAutoStart = profileManager.profiles.filter { $0.autoStartSessionEnabled }
+        let profilesWithAutoStart = profileManager.profiles.filter {
+            $0.provider == .claude && $0.autoStartSessionEnabled
+        }
 
         guard !profilesWithAutoStart.isEmpty else {
             LoggingService.shared.logDebug("No profiles with auto-start enabled")

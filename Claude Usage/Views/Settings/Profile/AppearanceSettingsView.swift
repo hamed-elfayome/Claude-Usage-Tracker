@@ -17,6 +17,10 @@ struct AppearanceSettingsView: View {
         profileManager.displayMode == .multi
     }
 
+    private var isCodexProfile: Bool {
+        profileManager.activeProfile?.provider == .codex
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: DesignTokens.Spacing.section) {
@@ -149,8 +153,21 @@ struct AppearanceSettingsView: View {
                             )
                         }
 
+                        if isCodexProfile,
+                           let codexIndex = configuration.metrics.firstIndex(where: { $0.metricType == .codex }) {
+                            MetricIconCard(
+                                metricType: .codex,
+                                config: Binding(
+                                    get: { configuration.metrics[codexIndex] },
+                                    set: { configuration.metrics[codexIndex] = $0 }
+                                ),
+                                onConfigChanged: { saveConfiguration() }
+                            )
+                        }
+
                         // Session Usage
-                        if let sessionIndex = configuration.metrics.firstIndex(where: { $0.metricType == .session }) {
+                        if !isCodexProfile,
+                           let sessionIndex = configuration.metrics.firstIndex(where: { $0.metricType == .session }) {
                             MetricIconCard(
                                 metricType: .session,
                                 config: Binding(
@@ -164,7 +181,8 @@ struct AppearanceSettingsView: View {
                         }
 
                         // Week Usage
-                        if let weekIndex = configuration.metrics.firstIndex(where: { $0.metricType == .week }) {
+                        if !isCodexProfile,
+                           let weekIndex = configuration.metrics.firstIndex(where: { $0.metricType == .week }) {
                             MetricIconCard(
                                 metricType: .week,
                                 config: Binding(
@@ -178,7 +196,8 @@ struct AppearanceSettingsView: View {
                         }
 
                         // API Credits
-                        if let apiIndex = configuration.metrics.firstIndex(where: { $0.metricType == .api }) {
+                        if !isCodexProfile,
+                           let apiIndex = configuration.metrics.firstIndex(where: { $0.metricType == .api }) {
                             MetricIconCard(
                                 metricType: .api,
                                 config: Binding(

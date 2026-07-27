@@ -89,7 +89,7 @@ class DataStore: StorageProvider {
         }
     }
 
-    /// Saves the latest machine-scoped Codex account snapshot.
+    /// Saves the legacy machine-scoped Codex snapshot for profile migration.
     func saveCodexUsage(_ usage: CodexUsage) {
         do {
             let data = try encoder.encode(usage)

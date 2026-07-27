@@ -9,15 +9,23 @@ class NotificationManager: NotificationServiceProtocol {
     // Track previous session percentage per profile to detect resets
     private var previousSessionPercentages: [String: Double] = [:]
 
-    // Track which notifications have been sent to prevent duplicates
-    // Persisted to UserDefaults to survive app restarts
-    private var sentNotifications: Set<String> {
-        get {
-            Set(UserDefaults.standard.array(forKey: "sentNotifications") as? [String] ?? [])
-        }
-        set {
-            UserDefaults.standard.set(Array(newValue), forKey: "sentNotifications")
-        }
+    // Notification delivery completions run on an unspecified queue. Keep
+    // deduplication updates atomic so concurrent profile alerts cannot erase
+    // one another's markers.
+    private let sentNotificationsLock = NSLock()
+
+    @discardableResult
+    private func updateSentNotifications<T>(
+        _ update: (inout Set<String>) -> T
+    ) -> T {
+        sentNotificationsLock.lock()
+        defer { sentNotificationsLock.unlock() }
+        var sent = Set(
+            UserDefaults.standard.array(forKey: "sentNotifications") as? [String] ?? []
+        )
+        let result = update(&sent)
+        UserDefaults.standard.set(Array(sent), forKey: "sentNotifications")
+        return result
     }
 
     private init() {}
@@ -44,10 +52,9 @@ class NotificationManager: NotificationServiceProtocol {
         // Create unique identifier based on threshold level, not actual percentage
         let identifier = "\(type.rawValue)_\(thresholdLevel)"
 
-        // Check if we've already sent this notification
-        guard !sentNotifications.contains(identifier) else {
-            return
-        }
+        // Reserve before handing off to the notification center so concurrent
+        // callers cannot enqueue the same alert twice.
+        guard updateSentNotifications({ $0.insert(identifier).inserted }) else { return }
 
         let content = UNMutableNotificationContent()
         content.title = type.title
@@ -62,11 +69,8 @@ class NotificationManager: NotificationServiceProtocol {
         )
 
         UNUserNotificationCenter.current().add(request) { [weak self] error in
-            if error == nil {
-                // Mark this notification as sent
-                var updated = self?.sentNotifications ?? []
-                updated.insert(identifier)
-                self?.sentNotifications = updated
+            if error != nil {
+                self?.updateSentNotifications { $0.remove(identifier) }
             }
         }
     }
@@ -134,7 +138,9 @@ class NotificationManager: NotificationServiceProtocol {
         // Check for session reset (went from >0% to 0%)
         if previousPercentage > 0.0 && sessionPercentage == 0.0 {
             // Clear all sent notifications for this profile to allow re-notification in new session
-            sentNotifications = sentNotifications.filter { !$0.hasPrefix(profileName) }
+            updateSentNotifications { sent in
+                sent = sent.filter { !$0.hasPrefix(profileName) }
+            }
 
             sendProfileAlert(
                 profileName: profileName,
@@ -193,21 +199,40 @@ class NotificationManager: NotificationServiceProtocol {
         checkAndNotify(usage: usage, profileName: "Default", settings: settings)
     }
 
-    /// Sends app-wide Codex alerts for the rate-limit bucket selected in Codex
-    /// settings. Identifiers include the bucket and threshold so each level is
+    /// Sends profile-specific Codex alerts for the selected rate-limit bucket.
+    /// Identifiers include the profile, bucket, and threshold so each level is
     /// delivered once per window and becomes eligible again after a reset.
-    func checkAndNotify(codexUsage: CodexUsage, settings: CodexSettings) {
-        guard settings.monitoringEnabled,
-              settings.notificationsEnabled,
-              let limit = codexUsage.rateLimit(preferredID: settings.selectedRateLimitID),
+    func checkAndNotify(
+        codexUsage: CodexUsage,
+        profileID: UUID,
+        profileName: String,
+        settings: NotificationSettings,
+        selectedRateLimitID: String?
+    ) {
+        guard settings.enabled,
+              let limit = codexUsage.rateLimit(preferredID: selectedRateLimitID),
               let window = limit.primary else { return }
 
-        let thresholds = settings.notificationThresholds.sorted()
+        let thresholds = settings.sortedThresholds
         guard !thresholds.isEmpty else { return }
-        let identifierPrefix = "Codex_\(limit.id)_"
+        let identifierBase = "codex_\(profileID.uuidString)_\(limit.id)_"
+        let windowID = window.resetsAt.map {
+            String(Int64($0.timeIntervalSince1970.rounded()))
+        } ?? "unknown"
+        let identifierPrefix = "\(identifierBase)\(windowID)_"
+
+        // Discard deduplication markers from older windows while retaining
+        // markers for the current one.
+        updateSentNotifications { sent in
+            sent = sent.filter {
+                !$0.hasPrefix(identifierBase) || $0.hasPrefix(identifierPrefix)
+            }
+        }
 
         if window.usedPercent < Double(thresholds[0]) {
-            sentNotifications = sentNotifications.filter { !$0.hasPrefix(identifierPrefix) }
+            updateSentNotifications { sent in
+                sent = sent.filter { !$0.hasPrefix(identifierBase) }
+            }
             return
         }
 
@@ -215,27 +240,45 @@ class NotificationManager: NotificationServiceProtocol {
             return
         }
         let identifier = "\(identifierPrefix)\(threshold)"
-        guard !sentNotifications.contains(identifier) else { return }
+        guard updateSentNotifications({ $0.insert(identifier).inserted }) else { return }
 
         let content = UNMutableNotificationContent()
-        content.title = "Codex usage: \(Int(window.usedPercent.rounded()))%"
+        content.title = "\(profileName) – Codex usage: \(Int(window.usedPercent.rounded()))%"
         var body = "\(limit.displayName) usage crossed the \(threshold)% alert threshold."
         if let resetsAt = window.resetsAt {
             body += " Resets \(resetsAt.formatted(date: .abbreviated, time: .shortened))."
         }
         content.body = body
-        content.sound = .default
         content.categoryIdentifier = "USAGE_ALERT"
+        let customSoundName: String?
+        switch settings.soundName {
+        case "none":
+            customSoundName = nil
+        case "default":
+            content.sound = .default
+            customSoundName = nil
+        default:
+            // System sounds are not bundle notification resources, so play
+            // them through NSSound after the notification is accepted.
+            customSoundName = settings.soundName
+        }
 
         let request = UNNotificationRequest(identifier: identifier, content: content, trigger: nil)
         UNUserNotificationCenter.current().add(request) { [weak self] error in
             if let error {
+                self?.updateSentNotifications { $0.remove(identifier) }
                 LoggingService.shared.logNotificationError(error)
                 return
             }
-            var updated = self?.sentNotifications ?? []
-            updated.insert(identifier)
-            self?.sentNotifications = updated
+            if let name = customSoundName {
+                DispatchQueue.main.async {
+                    if let sound = NSSound(named: NSSound.Name(name)) {
+                        sound.play()
+                    } else {
+                        NSSound.beep()
+                    }
+                }
+            }
         }
     }
 
@@ -247,10 +290,7 @@ class NotificationManager: NotificationServiceProtocol {
         // Create unique identifier based on alert type and threshold level
         let identifier = "\(profileName)_\(type.rawValue)_\(level)"
 
-        // Check if we've already sent this notification
-        guard !sentNotifications.contains(identifier) else {
-            return
-        }
+        guard updateSentNotifications({ $0.insert(identifier).inserted }) else { return }
 
         let content = UNMutableNotificationContent()
         content.title = "\(profileName) - \(type.title)"
@@ -291,11 +331,8 @@ class NotificationManager: NotificationServiceProtocol {
                         }
                     }
                 }
-
-                // Mark this notification as sent
-                var updated = self?.sentNotifications ?? []
-                updated.insert(identifier)
-                self?.sentNotifications = updated
+            } else {
+                self?.updateSentNotifications { $0.remove(identifier) }
             }
         }
     }
@@ -358,7 +395,9 @@ class NotificationManager: NotificationServiceProtocol {
 
     /// Clears notification tracking state for a specific profile
     func clearNotificationsForProfile(_ profileName: String) {
-        sentNotifications = sentNotifications.filter { !$0.hasPrefix(profileName) }
+        updateSentNotifications { sent in
+            sent = sent.filter { !$0.hasPrefix(profileName) }
+        }
         previousSessionPercentages.removeValue(forKey: profileName)
     }
 

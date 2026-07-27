@@ -40,6 +40,8 @@ class ProfileManager: ObservableObject {
             syncCLICredentialsToDefaultProfile(defaultProfile.id)
         }
 
+        migrateLegacyCodexProfileIfNeeded()
+
         // Load active profile
         if let activeId = profileStore.loadActiveProfileId(),
            let profile = profiles.first(where: { $0.id == activeId }) {
@@ -59,19 +61,29 @@ class ProfileManager: ObservableObject {
 
     // MARK: - Profile Operations
 
-    func createProfile(name: String? = nil, copySettingsFrom: Profile? = nil) -> Profile {
+    func createProfile(
+        name: String? = nil,
+        provider: ProfileProvider = .claude,
+        copySettingsFrom: Profile? = nil
+    ) -> Profile {
         let usedNames = profiles.map { $0.name }
         let profileName = name ?? FunnyNameGenerator.getRandomName(excluding: usedNames)
+        let copiedProfile = copySettingsFrom?.provider == provider ? copySettingsFrom : nil
 
         let newProfile = Profile(
             id: UUID(),
             name: profileName,
+            provider: provider,
             hasCliAccount: false,
-            iconConfig: copySettingsFrom?.iconConfig ?? .default,
-            refreshInterval: copySettingsFrom?.refreshInterval ?? 30.0,
-            autoStartSessionEnabled: copySettingsFrom?.autoStartSessionEnabled ?? false,
-            checkOverageLimitEnabled: copySettingsFrom?.checkOverageLimitEnabled ?? true,
-            notificationSettings: copySettingsFrom?.notificationSettings ?? NotificationSettings(),
+            codexConfiguration: copiedProfile?.codexConfiguration ?? CodexProfileConfiguration(),
+            iconConfig: copiedProfile?.iconConfig
+                ?? (provider == .codex ? .codexProfileDefault : .default),
+            refreshInterval: copiedProfile?.refreshInterval ?? 30.0,
+            autoStartSessionEnabled: provider == .claude
+                ? (copiedProfile?.autoStartSessionEnabled ?? false)
+                : false,
+            checkOverageLimitEnabled: copiedProfile?.checkOverageLimitEnabled ?? true,
+            notificationSettings: copiedProfile?.notificationSettings ?? NotificationSettings(),
             isSelectedForDisplay: true
         )
 
@@ -131,6 +143,7 @@ class ProfileManager: ObservableObject {
         }
 
         profileStore.saveProfiles(profiles)
+        NotificationCenter.default.post(name: .profileDeleted, object: id)
         LoggingService.shared.log("Deleted profile: \(profileName)")
     }
 
@@ -193,7 +206,9 @@ class ProfileManager: ObservableObject {
         LoggingService.shared.log("Switching to profile: \(profile.name)")
 
         // Re-sync current profile before leaving (if CLI credentials exist)
-        if let currentProfile = activeProfile, currentProfile.cliCredentialsJSON != nil {
+        if let currentProfile = activeProfile,
+           currentProfile.provider == .claude,
+           currentProfile.cliCredentialsJSON != nil {
             do {
                 try cliSyncService.resyncBeforeSwitching(for: currentProfile.id)
                 // Reload profiles to get the updated data in memory
@@ -218,7 +233,7 @@ class ProfileManager: ObservableObject {
         // Apply new profile's CLI credentials (if available)
         LoggingService.shared.log("Checking CLI credentials for profile '\(updatedProfile.name)': hasJSON=\(updatedProfile.cliCredentialsJSON != nil)")
 
-        if updatedProfile.cliCredentialsJSON != nil {
+        if updatedProfile.provider == .claude, updatedProfile.cliCredentialsJSON != nil {
             // Refresh the OAuth token before applying. Stored tokens expire (~8h),
             // so applying a stale snapshot would write a dead access token to the
             // keychain and Claude Code would 401 ("Please run /login"). This refreshes
@@ -236,8 +251,10 @@ class ProfileManager: ObservableObject {
             } catch {
                 LoggingService.shared.logError("Failed to apply CLI credentials (non-fatal)", error: error)
             }
-        } else {
+        } else if updatedProfile.provider == .claude {
             LoggingService.shared.log("⚠️ Profile '\(updatedProfile.name)' has no CLI credentials JSON")
+        } else {
+            LoggingService.shared.log("Codex profile activation does not change Claude Code credentials")
         }
 
         // Update last used timestamp
@@ -253,7 +270,9 @@ class ProfileManager: ObservableObject {
         profileStore.saveProfiles(profiles)
 
         // Update statusline script if the new profile has credentials
-        if updated.claudeSessionKey != nil && updated.organizationId != nil {
+        if updated.provider == .claude,
+           updated.claudeSessionKey != nil,
+           updated.organizationId != nil {
             do {
                 try StatuslineService.shared.updateScriptsIfInstalled()
                 LoggingService.shared.log("✓ Updated statusline for profile: \(updated.name)")
@@ -263,10 +282,12 @@ class ProfileManager: ObservableObject {
         }
 
         // Update profile name in statusline config
-        do {
-            try StatuslineService.shared.updateProfileNameInConfig(updated.name)
-        } catch {
-            LoggingService.shared.logError("Failed to update statusline profile name (non-fatal)", error: error)
+        if updated.provider == .claude {
+            do {
+                try StatuslineService.shared.updateProfileNameInConfig(updated.name)
+            } catch {
+                LoggingService.shared.logError("Failed to update statusline profile name (non-fatal)", error: error)
+            }
         }
 
         switchingSemaphore = false
@@ -400,6 +421,19 @@ class ProfileManager: ObservableObject {
     /// Loads API usage data for a specific profile
     func loadAPIUsage(for profileId: UUID) -> APIUsage? {
         return profiles.first(where: { $0.id == profileId })?.apiUsage
+    }
+
+    func saveCodexUsage(_ usage: CodexUsage, for profileId: UUID) {
+        guard let index = profiles.firstIndex(where: { $0.id == profileId }) else {
+            LoggingService.shared.logError("saveCodexUsage: Profile not found with ID: \(profileId)")
+            return
+        }
+        profiles[index].codexUsage = usage
+        if activeProfile?.id == profileId {
+            activeProfile = profiles[index]
+        }
+        profileStore.saveProfiles(profiles)
+        LoggingService.shared.log("Saved Codex usage for profile: \(profiles[index].name)")
     }
 
     // MARK: - Profile Settings
@@ -536,12 +570,57 @@ class ProfileManager: ObservableObject {
     private func createDefaultProfile() -> Profile {
         Profile(
             name: FunnyNameGenerator.getRandomName(excluding: []),
+            provider: .claude,
             iconConfig: .default,
             refreshInterval: 30.0,
             autoStartSessionEnabled: false,
             checkOverageLimitEnabled: true,
             notificationSettings: NotificationSettings()
         )
+    }
+
+    private func migrateLegacyCodexProfileIfNeeded() {
+        let sharedStore = SharedDataStore.shared
+        guard !sharedStore.codexProfileMigrationCompleted else { return }
+        defer { sharedStore.codexProfileMigrationCompleted = true }
+        guard !profiles.contains(where: { $0.provider == .codex }),
+              sharedStore.hasStoredCodexSettings else { return }
+
+        let legacy = sharedStore.loadCodexSettings()
+        guard legacy.monitoringEnabled,
+              legacy.menuBarMetric.isEnabled || DataStore.shared.loadCodexUsage() != nil else {
+            return
+        }
+
+        var iconConfig = MenuBarIconConfiguration.codexProfileDefault
+        if let index = iconConfig.metrics.firstIndex(where: { $0.metricType == .codex }) {
+            var metric = legacy.menuBarMetric
+            metric.metricType = .codex
+            metric.isEnabled = true
+            iconConfig.metrics[index] = metric
+        }
+        let notificationSettings = NotificationSettings(
+            enabled: legacy.notificationsEnabled,
+            threshold75Enabled: legacy.notificationThresholds.contains(75),
+            threshold90Enabled: legacy.notificationThresholds.contains(90),
+            threshold95Enabled: legacy.notificationThresholds.contains(95),
+            customThresholds: legacy.notificationThresholds.filter { ![75, 90, 95].contains($0) }
+        )
+        let profile = Profile(
+            name: "Codex",
+            provider: .codex,
+            codexUsage: DataStore.shared.loadCodexUsage(),
+            codexConfiguration: CodexProfileConfiguration(
+                executablePath: legacy.executablePath,
+                selectedRateLimitID: legacy.selectedRateLimitID,
+                showAccountEmail: legacy.showAccountEmail
+            ),
+            iconConfig: iconConfig,
+            notificationSettings: notificationSettings
+        )
+        profiles.append(profile)
+        profileStore.saveProfiles(profiles)
+        LoggingService.shared.log("Migrated legacy Codex monitoring into profile '\(profile.name)'")
     }
 
 }

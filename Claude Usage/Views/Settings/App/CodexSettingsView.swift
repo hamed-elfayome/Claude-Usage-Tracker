@@ -1,31 +1,49 @@
 import AppKit
 import SwiftUI
 
+/// Connection settings for the active Codex profile. Appearance, refresh
+/// interval, notifications, and multi-profile selection intentionally remain
+/// in the same shared profile settings used by Claude profiles.
 struct CodexSettingsView: View {
+    @StateObject private var profileManager = ProfileManager.shared
+
     var body: some View {
-        if let manager = MenuBarManager.current {
-            CodexSettingsContentView(manager: manager)
+        if let profile = profileManager.activeProfile, profile.provider == .codex {
+            CodexProfileSettingsContent(profileID: profile.id)
         } else {
             ContentUnavailableView(
-                "Codex integration unavailable",
-                systemImage: "exclamationmark.triangle",
-                description: Text("Restart Claude Usage Tracker and try again.")
+                "Select a Codex profile",
+                systemImage: ProfileProvider.codex.icon,
+                description: Text("Create or select an OpenAI Codex profile under Manage Profiles.")
             )
         }
     }
 }
 
 @MainActor
-private struct CodexSettingsContentView: View {
-    @ObservedObject var manager: MenuBarManager
+private struct CodexProfileSettingsContent: View {
+    let profileID: UUID
 
-    @State private var settings = CodexSettings()
+    @StateObject private var profileManager = ProfileManager.shared
+    @State private var configuration = CodexProfileConfiguration()
     @State private var executablePath = ""
+    @State private var codexHome = ""
+    @State private var sshHost = ""
     @State private var diagnostics: CodexInstallationDiagnostics?
-    @State private var isCheckingInstallation = false
-    @State private var copiedCommand: String?
+    @State private var isChecking = false
+    @State private var diagnosticsTask: Task<Void, Never>?
 
-    private let store = SharedDataStore.shared
+    private var profile: Profile? {
+        profileManager.profiles.first { $0.id == profileID }
+    }
+
+    private var usage: CodexUsage? {
+        profile?.codexUsage
+    }
+
+    private var manager: MenuBarManager? {
+        MenuBarManager.current
+    }
 
     var body: some View {
         ScrollView {
@@ -35,16 +53,22 @@ private struct CodexSettingsContentView: View {
                     subtitle: "codex.settings.subtitle".localized
                 )
 
-                monitoringCard
                 connectionCard
 
                 if diagnostics?.isInstalled != true || diagnostics?.isSignedIn != true {
                     setupGuideCard
                 }
 
-                trayCard
-                notificationsCard
-                dataCard
+                if let usage, !usage.rateLimits.isEmpty {
+                    rateLimitCard(usage)
+                }
+
+                usageCard
+
+                Text("codex.settings.privacy".localized)
+                    .font(DesignTokens.Typography.caption)
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 Text("codex.settings.experimental_note".localized)
                     .font(DesignTokens.Typography.caption)
@@ -53,35 +77,12 @@ private struct CodexSettingsContentView: View {
             }
             .padding()
         }
-        .onAppear {
-            settings = store.loadCodexSettings(
-                legacyMetric: ProfileManager.shared.activeProfile?.iconConfig.config(for: .codex)
-            )
-            executablePath = settings.executablePath ?? ""
-            inspectInstallation()
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .codexSettingsChanged)) { _ in
-            settings = store.loadCodexSettings()
-            executablePath = settings.executablePath ?? ""
-        }
-    }
-
-    private var monitoringCard: some View {
-        SettingsSectionCard(
-            title: "codex.settings.monitoring_title".localized,
-            subtitle: "codex.settings.monitoring_desc".localized
-        ) {
-            SettingToggle(
-                title: "codex.settings.monitoring_toggle".localized,
-                description: "codex.settings.monitoring_toggle_desc".localized,
-                isOn: Binding(
-                    get: { settings.monitoringEnabled },
-                    set: { value in
-                        settings.monitoringEnabled = value
-                        saveSettings()
-                    }
-                )
-            )
+        .onAppear(perform: load)
+        .onChange(of: profileID) { _, _ in load() }
+        .onDisappear {
+            persistFields()
+            diagnosticsTask?.cancel()
+            diagnosticsTask = nil
         }
     }
 
@@ -106,43 +107,77 @@ private struct CodexSettingsContentView: View {
                         }
                     }
                     Spacer()
-                    if isCheckingInstallation || manager.isCodexRefreshing {
+                    if isChecking || manager?.isCodexRefreshing == true {
                         ProgressView().controlSize(.small)
                     }
                 }
 
                 Divider()
 
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("codex.settings.executable".localized)
-                        .font(.system(size: 11, weight: .medium))
+                Picker("Connection", selection: Binding(
+                    get: { configuration.connectionType },
+                    set: {
+                        configuration.connectionType = $0
+                        save()
+                    }
+                )) {
+                    ForEach(CodexConnectionType.allCases) { type in
+                        Text(type.displayName).tag(type)
+                    }
+                }
+                .pickerStyle(.segmented)
 
-                    HStack(spacing: 8) {
-                        TextField("codex.settings.executable_auto".localized, text: $executablePath)
-                            .textFieldStyle(.roundedBorder)
-                            .font(.system(size: 10, design: .monospaced))
-                            .onSubmit { applyExecutablePath() }
+                if configuration.connectionType == .ssh {
+                    field(
+                        title: "SSH host alias",
+                        value: $sshHost,
+                        placeholder: "codex-vm",
+                        help: "Uses a Host entry from ~/.ssh/config. Key-based, agent, and macOS Keychain authentication are supported by /usr/bin/ssh."
+                    )
+                }
 
-                        SettingsButton(title: "codex.settings.choose".localized, icon: "folder") {
-                            chooseExecutable()
-                        }
-                        if settings.executablePath != nil {
-                            SettingsButton(title: "codex.settings.auto".localized) {
-                                executablePath = ""
-                                applyExecutablePath()
-                            }
-                        }
+                field(
+                    title: configuration.connectionType == .local
+                        ? "Codex executable"
+                        : "Remote Codex executable",
+                    value: $executablePath,
+                    placeholder: configuration.connectionType == .local
+                        ? "Automatically detected"
+                        : "codex",
+                    help: configuration.connectionType == .local
+                        ? "Leave blank to search common install locations and PATH."
+                        : "Leave blank to run codex from the remote shell PATH."
+                )
+
+                field(
+                    title: configuration.connectionType == .local
+                        ? "CODEX_HOME"
+                        : "Remote CODEX_HOME",
+                    value: $codexHome,
+                    placeholder: "Default Codex home",
+                    help: "Optional. Use a different Codex home to monitor another signed-in Codex account."
+                )
+
+                if configuration.connectionType == .local {
+                    SettingsButton(title: "codex.settings.choose".localized, icon: "folder") {
+                        chooseExecutable()
                     }
                 }
 
-                if let account = manager.codexUsage?.account {
+                if let validationError = configuration.validationError {
+                    Label(validationError, systemImage: "exclamationmark.triangle.fill")
+                        .font(.system(size: 10))
+                        .foregroundColor(.orange)
+                }
+
+                if let account = usage?.account {
                     Divider()
                     HStack {
                         VStack(alignment: .leading, spacing: 3) {
                             Text("codex.settings.account".localized)
                                 .font(.system(size: 10, weight: .medium))
                                 .foregroundColor(.secondary)
-                            if settings.showAccountEmail, let email = account.email {
+                            if configuration.showAccountEmail, let email = account.email {
                                 Text(email).font(.system(size: 11)).textSelection(.enabled)
                             }
                         }
@@ -160,16 +195,16 @@ private struct CodexSettingsContentView: View {
                         title: "codex.settings.show_email".localized,
                         description: "codex.settings.show_email_desc".localized,
                         isOn: Binding(
-                            get: { settings.showAccountEmail },
-                            set: { settings.showAccountEmail = $0; saveSettings(refresh: false) }
+                            get: { configuration.showAccountEmail },
+                            set: {
+                                configuration.showAccountEmail = $0
+                                save(inspect: false)
+                            }
                         )
                     )
                 }
 
-                if let updated = manager.codexUsage?.lastUpdated {
-                    infoRow(label: "codex.settings.last_refresh".localized, value: updated.formatted(date: .abbreviated, time: .standard))
-                }
-                if let error = manager.codexRefreshError {
+                if let error = manager?.codexRefreshError {
                     Label(error, systemImage: "exclamationmark.triangle.fill")
                         .font(.system(size: 10))
                         .foregroundColor(.orange)
@@ -178,12 +213,14 @@ private struct CodexSettingsContentView: View {
 
                 HStack(spacing: 8) {
                     SettingsButton(title: "codex.settings.recheck".localized, icon: "stethoscope") {
+                        persistFields()
                         inspectInstallation()
                     }
                     SettingsButton(title: "codex.settings.refresh".localized, icon: "arrow.clockwise") {
-                        manager.refreshCodexUsageNow()
+                        persistFields()
+                        manager?.refreshCodexUsageNow()
                     }
-                    .disabled(!settings.monitoringEnabled || diagnostics?.isInstalled != true)
+                    .disabled(configuration.validationError != nil)
                 }
             }
         }
@@ -194,119 +231,65 @@ private struct CodexSettingsContentView: View {
             title: "codex.settings.setup_title".localized,
             subtitle: "codex.settings.setup_desc".localized
         ) {
-            VStack(alignment: .leading, spacing: 10) {
-                commandRow(command: "npm install --global @openai/codex")
-                commandRow(command: "codex login")
-                commandRow(command: "codex login status")
+            VStack(alignment: .leading, spacing: 8) {
+                Text(configuration.connectionType == .local
+                     ? "npm install --global @openai/codex\ncodex login\ncodex login status"
+                     : "ssh \(sshHost.isEmpty ? "codex-vm" : sshHost) 'codex login status'")
+                    .font(.system(size: 10, design: .monospaced))
+                    .textSelection(.enabled)
+                    .padding(8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(RoundedRectangle(cornerRadius: 6).fill(Color.primary.opacity(0.04)))
 
-                SettingsButton(title: "codex.settings.open_docs".localized, icon: "arrow.up.right.square") {
-                    if let url = URL(string: "https://developers.openai.com/codex/cli/") {
-                        NSWorkspace.shared.open(url)
+                HStack {
+                    SettingsButton(title: "codex.settings.open_docs".localized, icon: "arrow.up.right.square") {
+                        NSWorkspace.shared.open(URL(string: "https://developers.openai.com/codex/cli/")!)
                     }
-                }
-            }
-        }
-    }
-
-    private var trayCard: some View {
-        SettingsSectionCard(
-            title: "codex.settings.tray_title".localized,
-            subtitle: "codex.settings.tray_desc".localized
-        ) {
-            VStack(alignment: .leading, spacing: DesignTokens.Spacing.medium) {
-                MetricIconCard(
-                    metricType: .codex,
-                    config: Binding(
-                        get: { settings.menuBarMetric },
-                        set: { settings.menuBarMetric = $0 }
-                    ),
-                    onConfigChanged: { saveSettings(refresh: false) }
-                )
-
-                if let usage = manager.codexUsage, !usage.rateLimits.isEmpty {
-                    Divider()
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("codex.settings.bucket".localized)
-                                .font(.system(size: 11, weight: .medium))
-                            Text("codex.settings.bucket_desc".localized)
-                                .font(.system(size: 10))
-                                .foregroundColor(.secondary)
+                    if configuration.connectionType == .ssh {
+                        SettingsButton(title: "Remote connection guide", icon: "network") {
+                            NSWorkspace.shared.open(URL(string: "https://learn.chatgpt.com/docs/remote-connections")!)
                         }
-                        Spacer()
-                        Picker("", selection: Binding(
-                            get: { settings.selectedRateLimitID ?? "" },
-                            set: { value in
-                                settings.selectedRateLimitID = value.isEmpty ? nil : value
-                                saveSettings(refresh: false)
-                            }
-                        )) {
-                            Text("codex.settings.automatic".localized).tag("")
-                            ForEach(usage.rateLimits) { limit in
-                                Text(limit.displayName).tag(limit.id)
-                            }
-                        }
-                        .labelsHidden()
-                        .frame(width: 180)
                     }
                 }
             }
         }
-        .disabled(!settings.monitoringEnabled)
-        .opacity(settings.monitoringEnabled ? 1 : 0.55)
     }
 
-    private var notificationsCard: some View {
+    private func rateLimitCard(_ usage: CodexUsage) -> some View {
         SettingsSectionCard(
-            title: "codex.settings.notifications_title".localized,
-            subtitle: "codex.settings.notifications_desc".localized
+            title: "codex.settings.bucket".localized,
+            subtitle: "codex.settings.bucket_desc".localized
         ) {
-            VStack(alignment: .leading, spacing: 12) {
-                SettingToggle(
-                    title: "codex.settings.notifications_toggle".localized,
-                    description: "codex.settings.notifications_toggle_desc".localized,
-                    isOn: Binding(
-                        get: { settings.notificationsEnabled },
-                        set: { settings.notificationsEnabled = $0; saveSettings(refresh: false) }
-                    )
-                )
-
-                HStack(spacing: 18) {
-                    ForEach([75, 90, 95], id: \.self) { threshold in
-                        Toggle("\(threshold)%", isOn: thresholdBinding(threshold))
-                            .toggleStyle(.checkbox)
-                            .font(.system(size: 11))
-                    }
+            Picker("", selection: Binding(
+                get: { configuration.selectedRateLimitID ?? "" },
+                set: {
+                    configuration.selectedRateLimitID = $0.isEmpty ? nil : $0
+                    save(inspect: false)
                 }
-                .disabled(!settings.notificationsEnabled)
-                .opacity(settings.notificationsEnabled ? 1 : 0.55)
+            )) {
+                Text("codex.settings.automatic".localized).tag("")
+                ForEach(usage.rateLimits) { limit in
+                    Text(limit.displayName).tag(limit.id)
+                }
             }
+            .labelsHidden()
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .disabled(!settings.monitoringEnabled)
-        .opacity(settings.monitoringEnabled ? 1 : 0.55)
     }
 
-    private var dataCard: some View {
+    private var usageCard: some View {
         SettingsSectionCard(
             title: "codex.settings.usage_title".localized,
             subtitle: "codex.settings.usage_desc".localized
         ) {
             VStack(alignment: .leading, spacing: 8) {
-                if let usage = manager.codexUsage {
-                    if let limit = usage.rateLimit(preferredID: settings.selectedRateLimitID),
-                       let credits = limit.credits {
-                        infoRow(
-                            label: "codex.settings.credits".localized,
-                            value: credits.unlimited ? "codex.settings.unlimited".localized : (credits.balance ?? "codex.settings.available".localized)
-                        )
+                if let usage {
+                    if let updated = usage.lastUpdated as Date? {
+                        infoRow("codex.settings.last_refresh".localized, updated.formatted(date: .abbreviated, time: .standard))
                     }
                     if let tokens = usage.tokenUsage?.lifetimeTokens {
-                        infoRow(label: "codex.settings.lifetime_tokens".localized, value: tokens.formatted(.number.notation(.compactName)))
+                        infoRow("codex.settings.lifetime_tokens".localized, tokens.formatted(.number.notation(.compactName)))
                     }
-                    Text("codex.settings.privacy".localized)
-                        .font(.system(size: 10))
-                        .foregroundColor(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
                 } else {
                     Text("codex.settings.no_usage".localized)
                         .font(.system(size: 11))
@@ -316,16 +299,47 @@ private struct CodexSettingsContentView: View {
         }
     }
 
+    private func field(
+        title: String,
+        value: Binding<String>,
+        placeholder: String,
+        help: String
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title).font(.system(size: 11, weight: .medium))
+            TextField(placeholder, text: value)
+                .textFieldStyle(.roundedBorder)
+                .font(.system(size: 10, design: .monospaced))
+                .onSubmit { persistFields() }
+            Text(help)
+                .font(.system(size: 9))
+                .foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func infoRow(_ label: String, _ value: String) -> some View {
+        HStack {
+            Text(label).font(.system(size: 10, weight: .medium)).foregroundColor(.secondary)
+            Spacer()
+            Text(value).font(.system(size: 10, weight: .semibold, design: .rounded)).textSelection(.enabled)
+        }
+    }
+
     private var connectionColor: Color {
         guard let diagnostics else { return .secondary }
         if !diagnostics.isInstalled { return .red }
         if !diagnostics.isSignedIn { return .orange }
-        return manager.codexRefreshError == nil ? .green : .orange
+        return manager?.codexRefreshError == nil ? .green : .orange
     }
 
     private var connectionTitle: String {
         guard let diagnostics else { return "codex.settings.checking".localized }
-        if !diagnostics.isInstalled { return "codex.settings.not_installed".localized }
+        if !diagnostics.isInstalled {
+            return configuration.connectionType == .ssh
+                ? "SSH connection failed"
+                : "codex.settings.not_installed".localized
+        }
         if !diagnostics.isSignedIn { return "codex.settings.signed_out".localized }
         return "codex.settings.connected".localized
     }
@@ -340,60 +354,47 @@ private struct CodexSettingsContentView: View {
         return diagnostics?.loginStatus ?? diagnostics?.error
     }
 
-    private func infoRow(label: String, value: String) -> some View {
-        HStack {
-            Text(label).font(.system(size: 10, weight: .medium)).foregroundColor(.secondary)
-            Spacer()
-            Text(value).font(.system(size: 10, weight: .semibold, design: .rounded)).textSelection(.enabled)
+    private func load() {
+        guard let profile else { return }
+        configuration = profile.codexConfiguration
+        executablePath = configuration.executablePath ?? ""
+        codexHome = configuration.codexHome ?? ""
+        sshHost = configuration.sshHost ?? ""
+        inspectInstallation()
+    }
+
+    private func persistFields() {
+        configuration.executablePath = executablePath.nilIfBlank
+        configuration.codexHome = codexHome.nilIfBlank
+        configuration.sshHost = sshHost.nilIfBlank
+        save()
+    }
+
+    private func save(inspect: Bool = true) {
+        guard var updated = profile else { return }
+        if !updated.codexConfiguration.targetsSameInstallation(as: configuration) {
+            // Never present one machine/account's cached limits under a newly
+            // selected connection if that connection cannot refresh.
+            updated.codexUsage = nil
+            diagnostics = nil
         }
+        updated.codexConfiguration = configuration
+        profileManager.updateProfile(updated)
+        NotificationCenter.default.post(name: .codexSettingsChanged, object: profileID)
+        if inspect { inspectInstallation() }
     }
 
-    private func commandRow(command: String) -> some View {
-        HStack(spacing: 8) {
-            Text(command)
-                .font(.system(size: 10, design: .monospaced))
-                .textSelection(.enabled)
-            Spacer()
-            Button {
-                NSPasteboard.general.clearContents()
-                NSPasteboard.general.setString(command, forType: .string)
-                copiedCommand = command
-            } label: {
-                Image(systemName: copiedCommand == command ? "checkmark" : "doc.on.doc")
-            }
-            .buttonStyle(.borderless)
-            .help("codex.settings.copy".localized)
+    private func inspectInstallation() {
+        diagnosticsTask?.cancel()
+        isChecking = true
+        let current = configuration
+        diagnosticsTask = Task {
+            let result = await CodexAppServerService.inspectInstallation(configuration: current)
+            guard !Task.isCancelled,
+                  current.targetsSameInstallation(as: configuration) else { return }
+            diagnostics = result
+            isChecking = false
         }
-        .padding(8)
-        .background(RoundedRectangle(cornerRadius: 6).fill(Color.primary.opacity(0.04)))
-    }
-
-    private func thresholdBinding(_ threshold: Int) -> Binding<Bool> {
-        Binding(
-            get: { settings.notificationThresholds.contains(threshold) },
-            set: { enabled in
-                if enabled {
-                    settings.notificationThresholds.append(threshold)
-                } else {
-                    settings.notificationThresholds.removeAll { $0 == threshold }
-                }
-                settings.notificationThresholds = Array(Set(settings.notificationThresholds)).sorted()
-                saveSettings(refresh: false)
-            }
-        )
-    }
-
-    private func saveSettings(refresh: Bool = true) {
-        store.saveCodexSettings(settings)
-        NotificationCenter.default.post(name: .codexSettingsChanged, object: nil)
-        if refresh { inspectInstallation() }
-    }
-
-    private func applyExecutablePath() {
-        let trimmed = executablePath.trimmingCharacters(in: .whitespacesAndNewlines)
-        settings.executablePath = trimmed.isEmpty ? nil : trimmed
-        executablePath = settings.executablePath ?? ""
-        saveSettings()
     }
 
     private func chooseExecutable() {
@@ -406,20 +407,7 @@ private struct CodexSettingsContentView: View {
         panel.allowsMultipleSelection = false
         if panel.runModal() == .OK, let url = panel.url {
             executablePath = url.path
-            applyExecutablePath()
-        }
-    }
-
-    private func inspectInstallation() {
-        guard !isCheckingInstallation else { return }
-        isCheckingInstallation = true
-        let selectedPath = settings.executablePath
-        Task {
-            let result = await CodexAppServerService.inspectInstallation(customExecutablePath: selectedPath)
-            await MainActor.run {
-                diagnostics = result
-                isCheckingInstallation = false
-            }
+            persistFields()
         }
     }
 }
