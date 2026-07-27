@@ -179,6 +179,28 @@ final class CodexUsageTests: XCTestCase {
         XCTAssertTrue(decoded.showAccountEmail)
     }
 
+    func testCodexProfileConfigurationBackwardCompatibleDefaults() throws {
+        let local = try JSONDecoder().decode(
+            CodexProfileConfiguration.self,
+            from: try XCTUnwrap(
+                #"{"executablePath":"/usr/local/bin/codex"}"#.data(using: .utf8)
+            )
+        )
+        XCTAssertEqual(local.connectionType, .local)
+        XCTAssertEqual(local.executablePath, "/usr/local/bin/codex")
+        XCTAssertTrue(local.showAccountEmail)
+
+        let remote = try JSONDecoder().decode(
+            CodexProfileConfiguration.self,
+            from: try XCTUnwrap(
+                #"{"sshHost":"codex-vm","codexHome":"/srv/codex"}"#.data(using: .utf8)
+            )
+        )
+        XCTAssertEqual(remote.connectionType, .ssh)
+        XCTAssertEqual(remote.sshHost, "codex-vm")
+        XCTAssertEqual(remote.codexHome, "/srv/codex")
+    }
+
     func testCodexProfileRoundTripsProviderConnectionAndUsage() throws {
         let usage = CodexUsage(
             account: CodexAccount(email: "codex@example.com", planType: "pro"),
@@ -242,6 +264,30 @@ final class CodexUsageTests: XCTestCase {
         )
     }
 
+    func testSetupCommandsAuthenticateConfiguredCodexHome() {
+        let local = CodexProfileConfiguration(
+            executablePath: "/opt/homebrew/bin/codex",
+            codexHome: "/tmp/Codex Account"
+        )
+        XCTAssertEqual(
+            local.setupCommands,
+            """
+            mkdir -p '/tmp/Codex Account'
+            env CODEX_HOME='/tmp/Codex Account' '/opt/homebrew/bin/codex' login
+            env CODEX_HOME='/tmp/Codex Account' '/opt/homebrew/bin/codex' login status
+            """
+        )
+
+        let remote = CodexProfileConfiguration(
+            connectionType: .ssh,
+            codexHome: "/srv/codex-account",
+            sshHost: "codex-vm"
+        )
+        XCTAssertTrue(remote.setupCommands.contains("ssh -t 'codex-vm'"))
+        XCTAssertTrue(remote.setupCommands.contains("login --device-auth"))
+        XCTAssertTrue(remote.setupCommands.contains("CODEX_HOME"))
+    }
+
     func testCustomExecutablePathTakesPriority() {
         XCTAssertEqual(
             CodexAppServerService.resolveExecutable(customExecutablePath: "/bin/sh")?.path,
@@ -280,6 +326,33 @@ final class CodexUsageTests: XCTestCase {
 
         let usage = try await service.fetchUsage(configuration: configuration)
 
+        XCTAssertEqual(usage.primaryRateLimit?.primary?.usedPercent, 12)
+        XCTAssertEqual(factory.transportCount, 2)
+        service.stop()
+    }
+
+    func testAppServerWriteFailureStopsTransportAndNextRefreshRestarts() async throws {
+        let factory = FakeCodexTransportFactory(responseModes: [.failingSend, .automatic])
+        let service = CodexAppServerService(
+            requestTimeout: 1,
+            transportFactory: factory.makeTransport
+        )
+        let configuration = CodexProfileConfiguration(executablePath: "/bin/sh")
+
+        do {
+            _ = try await service.fetchUsage(configuration: configuration)
+            XCTFail("Expected the app-server stdin write to fail")
+        } catch {
+            guard case CodexAppServerError.requestFailed = error else {
+                return XCTFail("Expected requestFailed, got \(error)")
+            }
+        }
+
+        let failedTransport = try XCTUnwrap(factory.transport(at: 0))
+        XCTAssertEqual(failedTransport.stopCount, 1)
+        XCTAssertFalse(failedTransport.isRunning)
+
+        let usage = try await service.fetchUsage(configuration: configuration)
         XCTAssertEqual(usage.primaryRateLimit?.primary?.usedPercent, 12)
         XCTAssertEqual(factory.transportCount, 2)
         service.stop()
@@ -386,6 +459,29 @@ final class CodexUsageTests: XCTestCase {
         XCTAssertTrue(backToClaude.additions.isEmpty)
     }
 
+    func testPopoverFollowsActiveProviderInSingleProfileMode() throws {
+        let claude = Profile(name: "Claude", provider: .claude)
+        let codex = Profile(name: "Codex", provider: .codex)
+
+        let single = PopoverContentView.resolveDisplayProfile(
+            displayMode: .single,
+            clickedProfileID: claude.id,
+            profiles: [claude, codex],
+            activeProfile: codex
+        )
+        XCTAssertEqual(single?.id, codex.id)
+        XCTAssertEqual(single?.provider, .codex)
+
+        let multi = PopoverContentView.resolveDisplayProfile(
+            displayMode: .multi,
+            clickedProfileID: claude.id,
+            profiles: [claude, codex],
+            activeProfile: codex
+        )
+        XCTAssertEqual(multi?.id, claude.id)
+        XCTAssertEqual(multi?.provider, .claude)
+    }
+
     func testOpenAIStatusFeedDetectsActiveGenericIncidentAffectingCodex() throws {
         let feed = """
         <?xml version="1.0" encoding="utf-8"?>
@@ -484,6 +580,27 @@ final class CodexUsageTests: XCTestCase {
 
         XCTAssertEqual(status.indicator, .major)
         XCTAssertEqual(status.description, "Codex unavailable · Identified")
+    }
+
+    func testOpenAISummaryToleratesMissingImpact() throws {
+        let summary = try XCTUnwrap(
+            """
+            {
+              "incidents": [
+                {
+                  "id": "codex-no-impact",
+                  "name": "Codex unavailable",
+                  "status": "investigating"
+                }
+              ]
+            }
+            """.data(using: .utf8)
+        )
+
+        let status = OpenAIStatusService.status(feedData: nil, summaryData: summary)
+
+        XCTAssertEqual(status?.indicator, .minor)
+        XCTAssertEqual(status?.description, "Codex unavailable · Investigating")
     }
 
     func testOpenAISummaryWithNoIncidentsIsAuthoritativeWhenFeedFails() throws {
@@ -694,6 +811,7 @@ private final class FakeCodexTransportFactory: @unchecked Sendable {
     enum ResponseMode: Equatable {
         case silent
         case automatic
+        case failingSend
     }
 
     private let lock = NSLock()
@@ -765,6 +883,9 @@ private final class FakeCodexAppServerTransport: CodexAppServerTransport, @unche
 
     func send(_ data: Data) throws {
         guard isRunning else {
+            throw CodexAppServerError.processTerminated
+        }
+        if responseMode == .failingSend {
             throw CodexAppServerError.processTerminated
         }
         guard responseMode == .automatic,

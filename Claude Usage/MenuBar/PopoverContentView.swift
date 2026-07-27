@@ -94,9 +94,12 @@ struct PopoverContentView: View {
     }
 
     private var displayProfile: Profile? {
-        manager.clickedProfileId.flatMap { id in
-            profileManager.profiles.first { $0.id == id }
-        } ?? profileManager.activeProfile
+        Self.resolveDisplayProfile(
+            displayMode: profileManager.displayMode,
+            clickedProfileID: manager.clickedProfileId,
+            profiles: profileManager.profiles,
+            activeProfile: profileManager.activeProfile
+        )
     }
 
     private var isCodexProfile: Bool {
@@ -225,22 +228,6 @@ struct PopoverContentView: View {
                 )
             }
 
-            if isCodexProfile,
-               displayProfile?.id == profileManager.activeProfile?.id,
-               let error = manager.codexRefreshError {
-                HStack(alignment: .top, spacing: 7) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundColor(.orange)
-                    Text(error)
-                        .font(.system(size: 9))
-                        .foregroundColor(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Spacer(minLength: 0)
-                }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 7)
-            }
-
             // Contextual Insights
             if !isCodexProfile && showInsights {
                 PopoverDivider()
@@ -272,6 +259,18 @@ struct PopoverContentView: View {
                 isRefreshing = false
             }
         }
+    }
+
+    static func resolveDisplayProfile(
+        displayMode: ProfileDisplayMode,
+        clickedProfileID: UUID?,
+        profiles: [Profile],
+        activeProfile: Profile?
+    ) -> Profile? {
+        guard displayMode == .multi, let clickedProfileID else {
+            return activeProfile
+        }
+        return profiles.first { $0.id == clickedProfileID } ?? activeProfile
     }
 }
 

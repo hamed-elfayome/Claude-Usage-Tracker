@@ -103,7 +103,9 @@ final class UsageRefreshCoordinator {
         let interval = dataStore.loadRefreshInterval()
         refreshTimer?.invalidate()
         refreshTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-            self?.refreshUsage()
+            Task { @MainActor [weak self] in
+                self?.refreshUsage()
+            }
         }
         LoggingService.shared.logInfo("Auto-refresh started with interval: \(interval)s")
     }
@@ -111,7 +113,8 @@ final class UsageRefreshCoordinator {
     private func observeRefreshIntervalChanges() {
         // Observe using DataStore.shared directly for KVO
         refreshIntervalObserver = DataStore.shared.userDefaults.observe(\.refreshIntervalValue, options: [.new]) { [weak self] _, change in
-            if let newInterval = change.newValue, newInterval > 0 {
+            guard let newInterval = change.newValue, newInterval > 0 else { return }
+            Task { @MainActor [weak self] in
                 self?.startAutoRefresh()
                 LoggingService.shared.logInfo("Refresh interval changed to: \(newInterval)s")
             }
@@ -129,6 +132,7 @@ private extension UserDefaults {
 
 // MARK: - Delegate Protocol
 
+@MainActor
 protocol UsageRefreshCoordinatorDelegate: AnyObject {
     func usageRefreshDidComplete(usage: ClaudeUsage)
     func statusRefreshDidComplete(status: ClaudeStatus)

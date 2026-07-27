@@ -79,6 +79,17 @@ private struct CodexProfileSettingsContent: View {
         }
         .onAppear(perform: load)
         .onChange(of: profileID) { _, _ in load() }
+        .onChange(of: executablePath) { _, value in
+            configuration.executablePath = value.nilIfBlank
+        }
+        .onChange(of: codexHome) { _, value in
+            configuration.codexHome = value.nilIfBlank
+        }
+        .onChange(of: sshHost) { _, value in
+            // Keep validation current while the user types. Persistence still
+            // happens on submit, refresh/recheck, or when leaving the view.
+            configuration.sshHost = value.nilIfBlank
+        }
         .onDisappear {
             persistFields()
             diagnosticsTask?.cancel()
@@ -155,7 +166,7 @@ private struct CodexProfileSettingsContent: View {
                         : "Remote CODEX_HOME",
                     value: $codexHome,
                     placeholder: "Default Codex home",
-                    help: "Optional. Use a different Codex home to monitor another signed-in Codex account."
+                    help: "Optional. Use an existing Codex home to monitor another signed-in Codex account. The setup commands below create it when needed."
                 )
 
                 if configuration.connectionType == .local {
@@ -232,9 +243,7 @@ private struct CodexProfileSettingsContent: View {
             subtitle: "codex.settings.setup_desc".localized
         ) {
             VStack(alignment: .leading, spacing: 8) {
-                Text(configuration.connectionType == .local
-                     ? "npm install --global @openai/codex\ncodex login\ncodex login status"
-                     : "ssh \(sshHost.isEmpty ? "codex-vm" : sshHost) 'codex login status'")
+                Text(setupCommands)
                     .font(.system(size: 10, design: .monospaced))
                     .textSelection(.enabled)
                     .padding(8)
@@ -297,6 +306,15 @@ private struct CodexProfileSettingsContent: View {
                 }
             }
         }
+    }
+
+    private var setupCommands: String {
+        let authentication = configuration.setupCommands
+        guard configuration.connectionType == .local,
+              diagnostics?.isInstalled == false else {
+            return authentication
+        }
+        return "npm install --global @openai/codex\n\(authentication)"
     }
 
     private func field(

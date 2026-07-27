@@ -120,8 +120,17 @@ private final class ProcessCodexAppServerTransport: CodexAppServerTransport, @un
         process?.terminationHandler = nil
         try? inputHandle?.close()
 
-        if process?.isRunning == true {
-            process?.terminate()
+        if let process, process.isRunning {
+            let processIdentifier = process.processIdentifier
+            process.terminate()
+
+            // SSH or a wedged app-server can ignore SIGTERM. Keep the Process
+            // alive long enough to verify termination, then force cleanup so a
+            // timed-out/deleted profile cannot leave an orphan behind.
+            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 1) {
+                guard process.isRunning else { return }
+                Darwin.kill(processIdentifier, SIGKILL)
+            }
         }
     }
 }
@@ -374,7 +383,15 @@ final class CodexAppServerService: @unchecked Sendable {
                 } catch {
                     timeout.cancel()
                     self.pending.removeValue(forKey: requestID)
-                    continuation.resume(throwing: error)
+                    let requestError = CodexAppServerError.requestFailed(
+                        error.localizedDescription
+                    )
+                    continuation.resume(throwing: requestError)
+                    // A failed stdin write means the transport is no longer
+                    // usable even if Process has not observed termination yet.
+                    // Fail any sibling requests and force a clean launch next
+                    // time instead of repeatedly writing to a broken pipe.
+                    self.stopLocked(error: requestError)
                 }
             }
         }

@@ -211,14 +211,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             object: window,
             queue: .main
         ) { [weak self] _ in
-            NSApp.setActivationPolicy(.accessory)
-            self?.setupWindow = nil
+            Task { @MainActor [weak self] in
+                NSApp.setActivationPolicy(.accessory)
+                self?.setupWindow = nil
 
-            // Initialize status bar after setup completes. `menuBarManager` is
-            // now always created in `applicationDidFinishLaunching`, so we only
-            // need to call `setup()` if the status bar hasn't been configured yet.
-            if self?.menuBarManager?.hasValidStatusBar() != true {
-                self?.menuBarManager?.setup()
+                // Initialize status bar after setup completes. `menuBarManager` is
+                // now always created in `applicationDidFinishLaunching`, so we only
+                // need to call `setup()` if the status bar hasn't been configured yet.
+                if self?.menuBarManager?.hasValidStatusBar() != true {
+                    self?.menuBarManager?.setup()
+                }
             }
         }
 
@@ -275,7 +277,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
 
     // MARK: - UNUserNotificationCenterDelegate
 
-    func userNotificationCenter(
+    nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void

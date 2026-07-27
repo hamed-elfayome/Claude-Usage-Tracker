@@ -492,7 +492,9 @@ class MenuBarManager: NSObject, ObservableObject {
         refreshTimer = nil
 
         refreshTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-            self?.refreshUsage()
+            Task { @MainActor [weak self] in
+                self?.refreshUsage()
+            }
         }
 
         LoggingService.shared.log("Updated refresh interval to \(interval)s")
@@ -779,8 +781,10 @@ class MenuBarManager: NSObject, ObservableObject {
     private func startAutoRefresh() {
         let interval = profileManager.activeProfile?.refreshInterval ?? 30.0
         refreshTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-            self?.lastAutoRefreshTime = Date()
-            self?.refreshUsage()
+            Task { @MainActor [weak self] in
+                self?.lastAutoRefreshTime = Date()
+                self?.refreshUsage()
+            }
         }
         refreshTimer?.tolerance = interval * 0.1  // 10% tolerance for energy efficiency
         LoggingService.shared.log("Started auto-refresh with interval: \(interval)s")
@@ -792,17 +796,19 @@ class MenuBarManager: NSObject, ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            guard let self = self else { return }
-            // Debounce: only refresh if at least 10 seconds since last auto-refresh
-            let timeSinceLastRefresh = Date().timeIntervalSince(self.lastAutoRefreshTime)
-            guard timeSinceLastRefresh > 10 else {
-                LoggingService.shared.log("MenuBarManager: Skipping wake refresh (debounce)")
-                return
-            }
-            LoggingService.shared.log("MenuBarManager: Wake from sleep detected, refreshing after delay")
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
-                self?.lastAutoRefreshTime = Date()
-                self?.refreshUsage()
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                // Debounce: only refresh if at least 10 seconds since last auto-refresh
+                let timeSinceLastRefresh = Date().timeIntervalSince(self.lastAutoRefreshTime)
+                guard timeSinceLastRefresh > 10 else {
+                    LoggingService.shared.log("MenuBarManager: Skipping wake refresh (debounce)")
+                    return
+                }
+                LoggingService.shared.log("MenuBarManager: Wake from sleep detected, refreshing after delay")
+                try? await Task.sleep(for: .seconds(3))
+                guard !Task.isCancelled else { return }
+                self.lastAutoRefreshTime = Date()
+                self.refreshUsage()
             }
         }
     }
@@ -834,10 +840,12 @@ class MenuBarManager: NSObject, ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            guard let self = self else { return }
-            // Clear cache to force redraw with new style
-            self.cachedImageKey = ""
-            self.updateAllStatusBarIcons()
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                // Clear cache to force redraw with new style
+                self.cachedImageKey = ""
+                self.updateAllStatusBarIcons()
+            }
         }
     }
 
@@ -995,14 +1003,16 @@ class MenuBarManager: NSObject, ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            guard let self = self else { return }
-            let store = SharedDataStore.shared
-            if store.loadPeakHoursIndicatorEnabled() && store.loadPeakHoursMenuIconEnabled() {
-                self.statusBarUIManager?.setupPeakHoursIndicator(
-                    target: self, action: #selector(self.togglePeakHoursPopover)
-                )
-            } else {
-                self.statusBarUIManager?.removePeakHoursIndicator()
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                let store = SharedDataStore.shared
+                if store.loadPeakHoursIndicatorEnabled() && store.loadPeakHoursMenuIconEnabled() {
+                    self.statusBarUIManager?.setupPeakHoursIndicator(
+                        target: self, action: #selector(self.togglePeakHoursPopover)
+                    )
+                } else {
+                    self.statusBarUIManager?.removePeakHoursIndicator()
+                }
             }
         }
     }
@@ -1033,7 +1043,9 @@ class MenuBarManager: NSObject, ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.handleScreenChange()
+            Task { @MainActor [weak self] in
+                self?.handleScreenChange()
+            }
         }
     }
 

@@ -63,6 +63,38 @@ struct CodexProfileConfiguration: Codable, Equatable {
         self.showAccountEmail = showAccountEmail
     }
 
+    private enum CodingKeys: String, CodingKey {
+        case connectionType
+        case executablePath
+        case codexHome
+        case sshHost
+        case selectedRateLimitID
+        case showAccountEmail
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        executablePath = try container.decodeIfPresent(String.self, forKey: .executablePath)?.nilIfBlank
+        codexHome = try container.decodeIfPresent(String.self, forKey: .codexHome)?.nilIfBlank
+        sshHost = try container.decodeIfPresent(String.self, forKey: .sshHost)?.nilIfBlank
+        selectedRateLimitID = try container.decodeIfPresent(
+            String.self,
+            forKey: .selectedRateLimitID
+        )?.nilIfBlank
+        showAccountEmail = try container.decodeIfPresent(
+            Bool.self,
+            forKey: .showAccountEmail
+        ) ?? true
+
+        // Early experimental builds predated connectionType. Preserve an SSH
+        // target if they already stored a host; otherwise retain the original
+        // local behavior.
+        connectionType = try container.decodeIfPresent(
+            CodexConnectionType.self,
+            forKey: .connectionType
+        ) ?? (sshHost == nil ? .local : .ssh)
+    }
+
     var connectionSummary: String {
         switch connectionType {
         case .local:
@@ -81,6 +113,44 @@ struct CodexProfileConfiguration: Codable, Equatable {
         return nil
     }
 
+    /// Shell commands users can copy to authenticate the exact Codex
+    /// installation selected by this profile. In particular, a custom
+    /// `CODEX_HOME` must exist and must also be present during `codex login`;
+    /// logging into the default home would configure a different account.
+    var setupCommands: String {
+        let executable = executablePath?.nilIfBlank ?? "codex"
+        var commands: [String] = []
+
+        switch connectionType {
+        case .local:
+            if let codexHome = codexHome?.nilIfBlank {
+                commands.append("mkdir -p \(Self.shellQuote(codexHome))")
+            }
+            let prefix = codexHome?.nilIfBlank.map {
+                "env CODEX_HOME=\(Self.shellQuote($0)) "
+            } ?? ""
+            commands.append("\(prefix)\(Self.shellQuote(executable)) login")
+            commands.append("\(prefix)\(Self.shellQuote(executable)) login status")
+
+        case .ssh:
+            let host = sshHost?.nilIfBlank ?? "codex-vm"
+            let quotedHost = Self.shellQuote(host)
+            let prefix = codexHome?.nilIfBlank.map {
+                "env CODEX_HOME=\(Self.shellQuote($0)) "
+            } ?? ""
+            if let codexHome = codexHome?.nilIfBlank {
+                let createHome = "mkdir -p \(Self.shellQuote(codexHome))"
+                commands.append("ssh \(quotedHost) \(Self.shellQuote(createHome))")
+            }
+            let login = "\(prefix)\(Self.shellQuote(executable)) login --device-auth"
+            let status = "\(prefix)\(Self.shellQuote(executable)) login status"
+            commands.append("ssh -t \(quotedHost) \(Self.shellQuote(login))")
+            commands.append("ssh \(quotedHost) \(Self.shellQuote(status))")
+        }
+
+        return commands.joined(separator: "\n")
+    }
+
     /// Settings that select the Codex installation/account producing a usage
     /// snapshot. Presentation-only choices must not invalidate cached usage.
     func targetsSameInstallation(as other: CodexProfileConfiguration) -> Bool {
@@ -88,6 +158,10 @@ struct CodexProfileConfiguration: Codable, Equatable {
             && executablePath?.nilIfBlank == other.executablePath?.nilIfBlank
             && codexHome?.nilIfBlank == other.codexHome?.nilIfBlank
             && sshHost?.nilIfBlank == other.sshHost?.nilIfBlank
+    }
+
+    private static func shellQuote(_ value: String) -> String {
+        "'\(value.replacingOccurrences(of: "'", with: "'\"'\"'"))'"
     }
 }
 

@@ -23,7 +23,7 @@ final class OpenAIStatusService {
             let id: String
             let name: String?
             let status: String
-            let impact: String
+            let impact: String?
         }
     }
 
@@ -145,8 +145,9 @@ final class OpenAIStatusService {
         let impacts: [String: String]
         if let summary {
             impacts = summary.incidents.reduce(into: [:]) { result, incident in
-                guard incident.status.lowercased() != "resolved" else { return }
-                result[normalizedIncidentID(incident.id)] = incident.impact
+                guard incident.status.lowercased() != "resolved",
+                      let impact = incident.impact else { return }
+                result[normalizedIncidentID(incident.id)] = impact
             }
         } else {
             impacts = [:]

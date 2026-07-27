@@ -293,7 +293,9 @@ final class StatusBarUIManager {
         updatePeakHoursIcon()
 
         peakHoursTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
-            self?.updatePeakHoursIcon()
+            Task { @MainActor [weak self] in
+                self?.updatePeakHoursIcon()
+            }
         }
         peakHoursTimer?.tolerance = 10
     }
@@ -1034,13 +1036,14 @@ final class StatusBarUIManager {
         // Setting button.image triggers effectiveAppearance KVO on the button,
         // which causes an infinite redraw loop.
         let appObserver = NSApp.observe(\.effectiveAppearance, options: [.new]) { [weak self] _, change in
-            guard let self = self else { return }
             let newName = change.newValue?.name
-            guard newName != self.lastObservedAppearanceName else { return }
-            self.lastObservedAppearanceName = newName
-            // Clear image cache so next update re-renders with new appearance
-            self.lastImageData.removeAll()
-            self.delegate?.statusBarAppearanceDidChange()
+            Task { @MainActor [weak self] in
+                guard let self, newName != self.lastObservedAppearanceName else { return }
+                self.lastObservedAppearanceName = newName
+                // Clear image cache so next update re-renders with new appearance
+                self.lastImageData.removeAll()
+                self.delegate?.statusBarAppearanceDidChange()
+            }
         }
         appearanceObservers.append(appObserver)
     }
@@ -1066,13 +1069,16 @@ final class StatusBarUIManager {
     private func scheduleAppearanceUpdate() {
         appearanceDebounceTimer?.invalidate()
         appearanceDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: false) { [weak self] _ in
-            self?.delegate?.statusBarAppearanceDidChange()
+            Task { @MainActor [weak self] in
+                self?.delegate?.statusBarAppearanceDidChange()
+            }
         }
     }
 }
 
 // MARK: - Delegate Protocol
 
+@MainActor
 protocol StatusBarUIManagerDelegate: AnyObject {
     func statusBarAppearanceDidChange()
 }
