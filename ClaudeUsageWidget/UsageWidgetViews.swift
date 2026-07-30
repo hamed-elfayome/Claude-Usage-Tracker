@@ -59,7 +59,10 @@ struct SessionUsageWidgetView: View {
     let entry: UsageEntry
 
     private var profile: WidgetSnapshot.ProfileEntry? {
-        entry.snapshot?.profiles.first(where: \.isActive) ?? entry.snapshot?.profiles.first
+        let profiles = entry.snapshot?.profiles ?? []
+        return profiles.first(where: \.isActive)
+            ?? profiles.first(where: \.isDisplayed)
+            ?? profiles.first
     }
 
     var body: some View {
@@ -89,7 +92,7 @@ struct SessionUsageWidgetView: View {
                             .frame(maxWidth: .infinity, alignment: .center)
                     }
                 }
-                .opacity(entry.isStale ? 0.4 : 1)
+                .opacity(entry.isProfileStale(profile) ? 0.4 : 1)
             } else {
                 NoDataView()
             }
@@ -115,7 +118,7 @@ struct UsageOverviewWidgetView: View {
     let entry: UsageEntry
 
     private var profiles: [WidgetSnapshot.ProfileEntry] {
-        Array((entry.snapshot?.profiles ?? []).prefix(4))
+        Array((entry.snapshot?.profiles ?? []).filter(\.isDisplayed).prefix(4))
     }
 
     var body: some View {
@@ -141,9 +144,12 @@ struct UsageOverviewWidgetView: View {
                                 resetTime: profile.weeklyResetTime
                             )
                         }
+                        // Per-row: a profile can go stale on its own — the
+                        // single-profile refresh path only updates the
+                        // active profile.
+                        .opacity(entry.isProfileStale(profile) ? 0.4 : 1)
                     }
                 }
-                .opacity(entry.isStale ? 0.4 : 1)
             }
         }
         .containerBackground(.fill.tertiary, for: .widget)

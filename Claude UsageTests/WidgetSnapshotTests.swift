@@ -6,6 +6,7 @@ final class WidgetSnapshotTests: XCTestCase {
     private func makeEntry(
         name: String = "Test",
         isActive: Bool = true,
+        isDisplayed: Bool = true,
         sessionPercentage: Double = 42,
         weeklyPercentage: Double = 61
     ) -> WidgetSnapshot.ProfileEntry {
@@ -13,6 +14,7 @@ final class WidgetSnapshotTests: XCTestCase {
             id: UUID(),
             name: name,
             isActive: isActive,
+            isDisplayed: isDisplayed,
             sessionPercentage: sessionPercentage,
             sessionResetTime: Date().addingTimeInterval(3600),
             weeklyPercentage: weeklyPercentage,

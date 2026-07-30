@@ -14,10 +14,18 @@ struct WidgetSnapshot: Codable {
         let id: UUID
         let name: String
         let isActive: Bool
+        /// Whether the profile is selected for menu bar display. The active
+        /// profile is always included in the snapshot even when deselected
+        /// (the small widget needs it); the overview widget shows only
+        /// displayed profiles.
+        let isDisplayed: Bool
         let sessionPercentage: Double
         let sessionResetTime: Date
         let weeklyPercentage: Double
         let weeklyResetTime: Date
+        /// When this profile's usage was last fetched. Can lag behind
+        /// `generatedAt`: the single-profile refresh path only updates the
+        /// active profile, so per-profile staleness must use this value.
         let lastUpdated: Date
     }
 
