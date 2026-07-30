@@ -841,6 +841,14 @@ class MenuBarManager: NSObject, ObservableObject {
                     // Reconfigure menu bar to show default logo
                     let config = self.profileManager.activeProfile?.iconConfig ?? .default
                     self.updateMenuBarDisplay(with: config)
+
+                    // No refresh will run, so publish directly: this clears
+                    // (or trims) the widget snapshot instead of letting stale
+                    // usage linger until the widget's stale threshold.
+                    WidgetSnapshotService.shared.publish(
+                        profiles: self.profileManager.profiles,
+                        activeProfileId: self.profileManager.activeProfile?.id
+                    )
                     return
                 }
 

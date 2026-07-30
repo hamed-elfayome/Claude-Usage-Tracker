@@ -49,8 +49,9 @@ final class WidgetSnapshotService {
             )
         }
 
-        guard !entries.isEmpty else { return }
-
+        // An empty entries list is still published: it clears the widget to
+        // its no-data state (e.g. after the last credentials were removed).
+        // Old data must not linger on disk until the stale threshold.
         let changed = hasMeaningfulChange(entries)
         let heartbeatDue = Date().timeIntervalSince(lastWriteTime) >= Self.heartbeatInterval
         guard changed || heartbeatDue else { return }
