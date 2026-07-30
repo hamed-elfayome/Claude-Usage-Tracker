@@ -18,16 +18,19 @@ private struct UsageBar: View {
     /// The timeline entry's date — comparisons must use it (not `Date()`)
     /// so pre-rendered future entries evaluate correctly.
     let now: Date
+    /// Compact sizing for the medium family's tight rows; the large family
+    /// has room for more legible type.
+    var compact = true
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: compact ? 2 : 3) {
             HStack {
                 Text(label)
-                    .font(.caption2)
+                    .font(compact ? .caption2 : .caption)
                     .foregroundStyle(.secondary)
                 Spacer()
                 Text("\(Int(percentage))%")
-                    .font(.caption2.monospacedDigit().bold())
+                    .font((compact ? Font.caption2 : .caption).monospacedDigit().bold())
                     .foregroundStyle(usageColor(percentage))
             }
             ProgressView(value: min(max(percentage, 0), 100), total: 100)
@@ -35,7 +38,7 @@ private struct UsageBar: View {
                 .tint(usageColor(percentage))
             if resetTime > now {
                 Text(resetTime, style: .relative)
-                    .font(.system(size: 9))
+                    .font(compact ? .system(size: 9) : .caption2)
                     .foregroundStyle(.tertiary)
             }
         }
@@ -115,49 +118,106 @@ struct SessionUsageWidget: Widget {
     }
 }
 
-// MARK: - Medium widget: all display-selected profiles
+// MARK: - Medium/large widget: all display-selected profiles
 
 struct UsageOverviewWidgetView: View {
+    @Environment(\.widgetFamily) private var family
     let entry: UsageEntry
 
     private var profiles: [WidgetSnapshot.ProfileEntry] {
-        Array((entry.snapshot?.profiles ?? []).filter(\.isDisplayed).prefix(4))
+        let selected = (entry.snapshot?.profiles ?? []).filter(\.isDisplayed)
+        return Array(selected.prefix(family == .systemLarge ? 6 : 4))
     }
 
     var body: some View {
         Group {
             if profiles.isEmpty {
                 NoDataView()
+            } else if family == .systemLarge {
+                largeLayout
             } else {
-                VStack(alignment: .leading, spacing: 8) {
-                    ForEach(profiles) { profile in
-                        HStack(alignment: .top, spacing: 10) {
-                            Text(profile.name)
-                                .font(.caption.bold())
-                                .lineLimit(1)
-                                .frame(width: 78, alignment: .leading)
-                            UsageBar(
-                                label: "widget.session",
-                                percentage: profile.sessionPercentage,
-                                resetTime: profile.sessionResetTime,
-                                now: entry.date
-                            )
-                            UsageBar(
-                                label: "widget.weekly",
-                                percentage: profile.weeklyPercentage,
-                                resetTime: profile.weeklyResetTime,
-                                now: entry.date
-                            )
-                        }
-                        // Per-row: a profile can go stale on its own — the
-                        // single-profile refresh path only updates the
-                        // active profile.
-                        .opacity(entry.isProfileStale(profile) ? 0.4 : 1)
-                    }
-                }
+                mediumLayout
             }
         }
         .containerBackground(.fill.tertiary, for: .widget)
+    }
+
+    /// Large: one card per profile — name as a header line, both bars at
+    /// full width beneath it. Rows share the vertical space equally so the
+    /// content fills the widget instead of clustering in the center.
+    private var largeLayout: some View {
+        VStack(spacing: 6) {
+            ForEach(Array(profiles.enumerated()), id: \.element.id) { index, profile in
+                if index > 0 {
+                    Divider()
+                }
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 4) {
+                        Text(profile.name)
+                            .font(.subheadline.bold())
+                            .lineLimit(1)
+                        if profile.isActive {
+                            Image(systemName: "sparkle")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer(minLength: 0)
+                    }
+                    HStack(alignment: .top, spacing: 16) {
+                        UsageBar(
+                            label: "widget.session",
+                            percentage: profile.sessionPercentage,
+                            resetTime: profile.sessionResetTime,
+                            now: entry.date,
+                            compact: false
+                        )
+                        UsageBar(
+                            label: "widget.weekly",
+                            percentage: profile.weeklyPercentage,
+                            resetTime: profile.weeklyResetTime,
+                            now: entry.date,
+                            compact: false
+                        )
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                // Per-row: a profile can go stale on its own — the
+                // single-profile refresh path only updates the
+                // active profile.
+                .opacity(entry.isProfileStale(profile) ? 0.4 : 1)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    /// Medium: one compact line per profile, name in a fixed column so the
+    /// bars align across rows. Rows share the vertical space equally.
+    private var mediumLayout: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            ForEach(profiles) { profile in
+                HStack(alignment: .top, spacing: 10) {
+                    Text(profile.name)
+                        .font(.caption.bold())
+                        .lineLimit(1)
+                        .frame(width: 78, alignment: .leading)
+                    UsageBar(
+                        label: "widget.session",
+                        percentage: profile.sessionPercentage,
+                        resetTime: profile.sessionResetTime,
+                        now: entry.date
+                    )
+                    UsageBar(
+                        label: "widget.weekly",
+                        percentage: profile.weeklyPercentage,
+                        resetTime: profile.weeklyResetTime,
+                        now: entry.date
+                    )
+                }
+                .frame(maxHeight: .infinity)
+                .opacity(entry.isProfileStale(profile) ? 0.4 : 1)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
