@@ -31,7 +31,10 @@ struct WidgetSnapshot: Codable {
 
     /// Bump when the on-disk format changes so an old widget build can
     /// detect a snapshot written by a newer app (and vice versa).
-    var schemaVersion: Int = 1
+    /// `load` rejects snapshots whose version doesn't match.
+    static let currentSchemaVersion = 1
+
+    var schemaVersion: Int = WidgetSnapshot.currentSchemaVersion
     let generatedAt: Date
     let profiles: [ProfileEntry]
 
@@ -84,7 +87,9 @@ struct WidgetSnapshot: Codable {
     }
 
     static func load(from url: URL = snapshotURL) -> WidgetSnapshot? {
-        guard let data = try? Data(contentsOf: url) else { return nil }
-        return try? decoder.decode(WidgetSnapshot.self, from: data)
+        guard let data = try? Data(contentsOf: url),
+              let snapshot = try? decoder.decode(WidgetSnapshot.self, from: data),
+              snapshot.schemaVersion == currentSchemaVersion else { return nil }
+        return snapshot
     }
 }

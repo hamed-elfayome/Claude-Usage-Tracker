@@ -13,19 +13,40 @@ import WidgetKit
 final class WidgetSnapshotService {
     static let shared = WidgetSnapshotService()
 
+    /// Serializes all publish state; `publish` may be called from any thread.
+    private let lock = NSLock()
     private var lastPublishedProfiles: [WidgetSnapshot.ProfileEntry]?
     private var lastWriteTime: Date = .distantPast
     private var lastReloadTime: Date = .distantPast
+    private var pendingReload: DispatchWorkItem?
 
     /// Maximum age of the on-disk snapshot while the app is running. Must be
     /// comfortably below the widget's stale threshold (15 min).
-    private static let heartbeatInterval: TimeInterval = 5 * 60
+    private let heartbeatInterval: TimeInterval
 
     /// Minimum spacing between WidgetKit reload requests, so frequent
     /// refresh cycles don't exhaust the system's reload budget.
-    private static let reloadInterval: TimeInterval = 60
+    private let reloadInterval: TimeInterval
 
-    private init() {}
+    private let now: () -> Date
+    private let writeSnapshot: (WidgetSnapshot) throws -> Void
+    private let requestReload: () -> Void
+
+    /// Dependency-injecting initializer; production code uses `shared`,
+    /// tests substitute the clock, writer, and reload hook.
+    init(
+        now: @escaping () -> Date = Date.init,
+        writeSnapshot: @escaping (WidgetSnapshot) throws -> Void = { try $0.write() },
+        requestReload: @escaping () -> Void = { WidgetCenter.shared.reloadAllTimelines() },
+        heartbeatInterval: TimeInterval = 5 * 60,
+        reloadInterval: TimeInterval = 60
+    ) {
+        self.now = now
+        self.writeSnapshot = writeSnapshot
+        self.requestReload = requestReload
+        self.heartbeatInterval = heartbeatInterval
+        self.reloadInterval = reloadInterval
+    }
 
     /// Builds a snapshot from the given profiles and publishes it if it
     /// differs from the last published one or the heartbeat is due.
@@ -48,25 +69,56 @@ final class WidgetSnapshotService {
                 lastUpdated: usage.lastUpdated
             )
         }
+        publish(entries: entries)
+    }
 
-        // An empty entries list is still published: it clears the widget to
-        // its no-data state (e.g. after the last credentials were removed).
-        // Old data must not linger on disk until the stale threshold.
+    /// An empty entries list is still published: it clears the widget to
+    /// its no-data state (e.g. after the last credentials were removed).
+    /// Old data must not linger on disk until the stale threshold.
+    func publish(entries: [WidgetSnapshot.ProfileEntry]) {
+        lock.lock()
+        defer { lock.unlock() }
+
         let changed = hasMeaningfulChange(entries)
-        let heartbeatDue = Date().timeIntervalSince(lastWriteTime) >= Self.heartbeatInterval
+        let heartbeatDue = now().timeIntervalSince(lastWriteTime) >= heartbeatInterval
         guard changed || heartbeatDue else { return }
 
-        let snapshot = WidgetSnapshot(generatedAt: Date(), profiles: entries)
+        let snapshot = WidgetSnapshot(generatedAt: now(), profiles: entries)
         do {
-            try snapshot.write()
-            lastWriteTime = Date()
+            try writeSnapshot(snapshot)
+            lastWriteTime = now()
             lastPublishedProfiles = entries
-            if changed, Date().timeIntervalSince(lastReloadTime) >= Self.reloadInterval {
-                lastReloadTime = Date()
-                WidgetCenter.shared.reloadAllTimelines()
+            if changed {
+                requestOrDeferReloadLocked()
             }
         } catch {
             LoggingService.shared.log("WidgetSnapshotService: Failed to write snapshot - \(error.localizedDescription)")
+        }
+    }
+
+    /// Reloads immediately when outside the throttle window; otherwise
+    /// schedules a single deferred reload for when the window reopens, so a
+    /// throttled change is never silently dropped until the next one.
+    /// Must be called with `lock` held.
+    private func requestOrDeferReloadLocked() {
+        let remaining = reloadInterval - now().timeIntervalSince(lastReloadTime)
+        if remaining <= 0 {
+            pendingReload?.cancel()
+            pendingReload = nil
+            lastReloadTime = now()
+            requestReload()
+        } else if pendingReload == nil {
+            let work = DispatchWorkItem { [weak self] in
+                guard let self else { return }
+                self.lock.lock()
+                defer { self.lock.unlock() }
+                guard self.pendingReload != nil else { return }
+                self.pendingReload = nil
+                self.lastReloadTime = self.now()
+                self.requestReload()
+            }
+            pendingReload = work
+            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + remaining, execute: work)
         }
     }
 

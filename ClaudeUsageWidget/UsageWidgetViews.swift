@@ -15,6 +15,9 @@ private struct UsageBar: View {
     let label: LocalizedStringKey
     let percentage: Double
     let resetTime: Date
+    /// The timeline entry's date — comparisons must use it (not `Date()`)
+    /// so pre-rendered future entries evaluate correctly.
+    let now: Date
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
@@ -30,7 +33,7 @@ private struct UsageBar: View {
             ProgressView(value: min(max(percentage, 0), 100), total: 100)
                 .progressViewStyle(.linear)
                 .tint(usageColor(percentage))
-            if resetTime > Date() {
+            if resetTime > now {
                 Text(resetTime, style: .relative)
                     .font(.system(size: 9))
                     .foregroundStyle(.tertiary)
@@ -136,12 +139,14 @@ struct UsageOverviewWidgetView: View {
                             UsageBar(
                                 label: "widget.session",
                                 percentage: profile.sessionPercentage,
-                                resetTime: profile.sessionResetTime
+                                resetTime: profile.sessionResetTime,
+                                now: entry.date
                             )
                             UsageBar(
                                 label: "widget.weekly",
                                 percentage: profile.weeklyPercentage,
-                                resetTime: profile.weeklyResetTime
+                                resetTime: profile.weeklyResetTime,
+                                now: entry.date
                             )
                         }
                         // Per-row: a profile can go stale on its own — the

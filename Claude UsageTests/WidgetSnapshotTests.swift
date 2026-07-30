@@ -59,6 +59,21 @@ final class WidgetSnapshotTests: XCTestCase {
         XCTAssertTrue(path.hasSuffix("Library/Application Support/Claude Usage/widget/snapshot.json"))
     }
 
+    // MARK: - Schema version
+
+    func testLoadRejectsUnknownSchemaVersion() throws {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("WidgetSnapshotTests-\(UUID().uuidString)")
+            .appendingPathComponent("snapshot.json")
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+
+        var snapshot = WidgetSnapshot(generatedAt: Date(), profiles: [makeEntry()])
+        snapshot.schemaVersion = WidgetSnapshot.currentSchemaVersion + 1
+        try snapshot.write(to: url)
+
+        XCTAssertNil(WidgetSnapshot.load(from: url))
+    }
+
     // MARK: - Write and load
 
     func testWriteAndLoad() throws {
