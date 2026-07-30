@@ -1,0 +1,8 @@
+/* Claude Usage Widget */
+"widget.no_data" = "開啟 Claude Usage 以載入使用資料";
+"widget.session" = "工作階段";
+"widget.weekly" = "每週";
+"widget.session.name" = "工作階段用量";
+"widget.session.desc" = "目前使用中設定檔的 5 小時工作階段用量。";
+"widget.overview.name" = "用量總覽";
+"widget.overview.desc" = "所有顯示設定檔的工作階段與每週用量。";

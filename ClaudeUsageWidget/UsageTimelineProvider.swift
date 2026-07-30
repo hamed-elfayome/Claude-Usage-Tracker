@@ -1,0 +1,57 @@
+import Foundation
+import WidgetKit
+
+struct UsageEntry: TimelineEntry {
+    let date: Date
+    let snapshot: WidgetSnapshot?
+
+    /// Snapshots older than this are rendered dimmed — the app is probably
+    /// not running, so the numbers can no longer be trusted.
+    static let staleInterval: TimeInterval = 15 * 60
+
+    var isStale: Bool {
+        guard let snapshot else { return true }
+        return Date().timeIntervalSince(snapshot.generatedAt) > Self.staleInterval
+    }
+
+    static func placeholderSnapshot() -> WidgetSnapshot {
+        WidgetSnapshot(
+            generatedAt: Date(),
+            profiles: [
+                WidgetSnapshot.ProfileEntry(
+                    id: UUID(),
+                    name: "Claude",
+                    isActive: true,
+                    sessionPercentage: 42,
+                    sessionResetTime: Date().addingTimeInterval(3 * 3600),
+                    weeklyPercentage: 61,
+                    weeklyResetTime: Date().addingTimeInterval(2 * 86400),
+                    lastUpdated: Date()
+                )
+            ]
+        )
+    }
+}
+
+/// Reads the snapshot the main app publishes to Application Support.
+///
+/// The app requests a timeline reload after every refresh cycle, so entries
+/// here only need a coarse fallback cadence for the case where the app quit.
+struct UsageTimelineProvider: TimelineProvider {
+    func placeholder(in context: Context) -> UsageEntry {
+        UsageEntry(date: Date(), snapshot: UsageEntry.placeholderSnapshot())
+    }
+
+    func getSnapshot(in context: Context, completion: @escaping (UsageEntry) -> Void) {
+        let snapshot = context.isPreview
+            ? UsageEntry.placeholderSnapshot()
+            : WidgetSnapshot.load()
+        completion(UsageEntry(date: Date(), snapshot: snapshot))
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<UsageEntry>) -> Void) {
+        let entry = UsageEntry(date: Date(), snapshot: WidgetSnapshot.load())
+        let refresh = Date().addingTimeInterval(15 * 60)
+        completion(Timeline(entries: [entry], policy: .after(refresh)))
+    }
+}
