@@ -48,6 +48,25 @@ final class WidgetSnapshotService {
         self.reloadInterval = reloadInterval
     }
 
+    /// The snapshot file is readable outside the sandbox (the widget reaches
+    /// it through a read-only path exception, not an App Group), so profile
+    /// names are reduced before persisting: an email-shaped name — the usual
+    /// case for credential-derived profiles — keeps only its local part, and
+    /// the result is stripped of control characters and length-capped.
+    static let maxProfileNameLength = 64
+
+    static func sanitizedProfileName(_ raw: String) -> String {
+        var name = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let at = name.firstIndex(of: "@"),
+           at != name.startIndex,
+           name[name.index(after: at)...].contains(".") {
+            name = String(name[..<at])
+        }
+        let scalars = name.unicodeScalars.filter { !CharacterSet.controlCharacters.contains($0) }
+        name = String(String.UnicodeScalarView(scalars))
+        return String(name.prefix(maxProfileNameLength))
+    }
+
     /// Builds a snapshot from the given profiles and publishes it if it
     /// differs from the last published one or the heartbeat is due.
     func publish(profiles: [Profile], activeProfileId: UUID?) {
@@ -59,7 +78,7 @@ final class WidgetSnapshotService {
             guard let usage = profile.claudeUsage else { return nil }
             return WidgetSnapshot.ProfileEntry(
                 id: profile.id,
-                name: profile.name,
+                name: Self.sanitizedProfileName(profile.name),
                 isActive: isActive,
                 isDisplayed: profile.isSelectedForDisplay,
                 sessionPercentage: usage.effectiveSessionPercentage,

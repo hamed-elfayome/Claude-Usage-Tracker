@@ -120,4 +120,31 @@ final class WidgetSnapshotServiceTests: XCTestCase {
         }
         XCTAssertEqual(reloadCount, 2, "throttled reload must fire once the window reopens")
     }
+
+    // MARK: - Profile name sanitization
+
+    func testEmailShapedNameKeepsOnlyLocalPart() {
+        XCTAssertEqual(WidgetSnapshotService.sanitizedProfileName("user@example.com"), "user")
+    }
+
+    func testPlainNameIsUnchanged() {
+        XCTAssertEqual(WidgetSnapshotService.sanitizedProfileName("Work laptop"), "Work laptop")
+    }
+
+    func testAtWithoutDomainDotIsNotTreatedAsEmail() {
+        XCTAssertEqual(WidgetSnapshotService.sanitizedProfileName("team@lab"), "team@lab")
+    }
+
+    func testLeadingAtIsNotTreatedAsEmail() {
+        XCTAssertEqual(WidgetSnapshotService.sanitizedProfileName("@handle.dev"), "@handle.dev")
+    }
+
+    func testControlCharactersAreStrippedAndLengthCapped() {
+        let raw = "bad\u{0000}name\n" + String(repeating: "x", count: 100)
+        let sanitized = WidgetSnapshotService.sanitizedProfileName(raw)
+        XCTAssertFalse(sanitized.contains("\u{0000}"))
+        XCTAssertFalse(sanitized.contains("\n"))
+        XCTAssertEqual(sanitized.count, 64)
+        XCTAssertTrue(sanitized.hasPrefix("badname"))
+    }
 }
