@@ -6,7 +6,22 @@ final class WidgetSnapshotServiceTests: XCTestCase {
     /// Fixed reference clock so heartbeat/throttle behavior is deterministic.
     private var currentDate = Date(timeIntervalSince1970: 1_700_000_000)
     private var writtenSnapshots: [WidgetSnapshot] = []
-    private var reloadCount = 0
+
+    /// Incremented from the deferred-reload utility queue while the test
+    /// thread reads it, so all access goes through a lock.
+    private let reloadCountLock = NSLock()
+    private var _reloadCount = 0
+    private var reloadCount: Int {
+        reloadCountLock.lock()
+        defer { reloadCountLock.unlock() }
+        return _reloadCount
+    }
+
+    private func incrementReloadCount() {
+        reloadCountLock.lock()
+        defer { reloadCountLock.unlock() }
+        _reloadCount += 1
+    }
 
     private func makeService(
         heartbeatInterval: TimeInterval = 300,
@@ -15,7 +30,7 @@ final class WidgetSnapshotServiceTests: XCTestCase {
         WidgetSnapshotService(
             now: { self.currentDate },
             writeSnapshot: { self.writtenSnapshots.append($0) },
-            requestReload: { self.reloadCount += 1 },
+            requestReload: { self.incrementReloadCount() },
             heartbeatInterval: heartbeatInterval,
             reloadInterval: reloadInterval
         )
@@ -99,6 +114,16 @@ final class WidgetSnapshotServiceTests: XCTestCase {
     }
 
     // MARK: - Reload throttling
+
+    func testEmptyEntriesClearSnapshot() {
+        let service = makeService(reloadInterval: 0)
+        service.publish(entries: [makeEntry()])
+        service.publish(entries: [])
+
+        XCTAssertEqual(writtenSnapshots.count, 2)
+        XCTAssertTrue(writtenSnapshots[1].profiles.isEmpty)
+        XCTAssertEqual(reloadCount, 2)
+    }
 
     func testThrottledReloadIsDeferredNotDropped() {
         // Real (non-mocked) delay: the deferred reload is scheduled with
