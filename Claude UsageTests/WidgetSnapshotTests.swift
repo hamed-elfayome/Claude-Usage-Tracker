@@ -36,14 +36,15 @@ final class WidgetSnapshotTests: XCTestCase {
         decoder.dateDecodingStrategy = .iso8601
         let decoded = try decoder.decode(WidgetSnapshot.self, from: data)
 
-        XCTAssertEqual(decoded.schemaVersion, 1)
+        XCTAssertEqual(decoded.schemaVersion, WidgetSnapshot.currentSchemaVersion)
         XCTAssertEqual(decoded.profiles.count, 1)
         XCTAssertEqual(decoded.profiles[0].name, "Test")
+        XCTAssertEqual(decoded.profiles[0].provider, .claude)
         XCTAssertEqual(decoded.profiles[0].sessionPercentage, 42, accuracy: 0.01)
         // ISO8601 has second precision; anything closer is fine
         XCTAssertEqual(
-            decoded.profiles[0].sessionResetTime.timeIntervalSince1970,
-            snapshot.profiles[0].sessionResetTime.timeIntervalSince1970,
+            try XCTUnwrap(decoded.profiles[0].sessionResetTime).timeIntervalSince1970,
+            try XCTUnwrap(snapshot.profiles[0].sessionResetTime).timeIntervalSince1970,
             accuracy: 1.0
         )
     }
@@ -88,5 +89,80 @@ final class WidgetSnapshotTests: XCTestCase {
         let loaded = WidgetSnapshot.load(from: url)
         XCTAssertNotNil(loaded)
         XCTAssertEqual(loaded?.profiles.first?.name, "RoundTrip")
+    }
+
+    func testWriteUsesOwnerOnlyPermissions() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("WidgetSnapshotPermissions-\(UUID().uuidString)")
+        let url = directory.appendingPathComponent("snapshot.json")
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        try WidgetSnapshot(generatedAt: Date(), profiles: [makeEntry()]).write(to: url)
+
+        let directoryAttributes = try FileManager.default.attributesOfItem(atPath: directory.path)
+        let fileAttributes = try FileManager.default.attributesOfItem(atPath: url.path)
+        let directoryMode = try XCTUnwrap(directoryAttributes[.posixPermissions] as? NSNumber).intValue
+        let fileMode = try XCTUnwrap(fileAttributes[.posixPermissions] as? NSNumber).intValue
+        XCTAssertEqual(directoryMode & 0o777, 0o700)
+        XCTAssertEqual(fileMode & 0o777, 0o600)
+    }
+
+    func testLoadRejectsOversizedSnapshotBeforeDecoding() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("WidgetSnapshotOversized-\(UUID().uuidString)")
+        let url = directory.appendingPathComponent("snapshot.json")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        try Data(repeating: 0x20, count: WidgetSnapshot.maximumFileSize + 1).write(to: url)
+
+        XCTAssertNil(WidgetSnapshot.load(from: url))
+    }
+
+    func testWriteRejectsUnsafeNumericValues() {
+        let unsafe = makeEntry(sessionPercentage: Double.greatestFiniteMagnitude)
+        let snapshot = WidgetSnapshot(generatedAt: Date(), profiles: [unsafe])
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("WidgetSnapshotUnsafe-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        XCTAssertThrowsError(try snapshot.write(to: directory.appendingPathComponent("snapshot.json")))
+    }
+
+    func testLoadRejectsUnsafeDecodedValues() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("WidgetSnapshotUntrusted-\(UUID().uuidString)")
+        let url = directory.appendingPathComponent("snapshot.json")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+
+        let unsafe = makeEntry(sessionPercentage: 10_001)
+        let snapshot = WidgetSnapshot(generatedAt: Date(), profiles: [unsafe])
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        try encoder.encode(snapshot).write(to: url)
+
+        XCTAssertNil(WidgetSnapshot.load(from: url))
+    }
+
+    func testStalenessStartsAtExactBoundary() {
+        let generatedAt = Date(timeIntervalSince1970: 1_000)
+        let interval: TimeInterval = 900
+        let snapshot = WidgetSnapshot(generatedAt: generatedAt, profiles: [])
+        let profile = WidgetSnapshot.ProfileEntry(
+            id: UUID(),
+            name: "Test",
+            isActive: true,
+            isDisplayed: true,
+            sessionPercentage: 42,
+            sessionResetTime: nil,
+            weeklyPercentage: nil,
+            weeklyResetTime: nil,
+            lastUpdated: generatedAt
+        )
+
+        XCTAssertFalse(snapshot.isStale(at: generatedAt.addingTimeInterval(interval - 0.001), interval: interval))
+        XCTAssertTrue(snapshot.isStale(at: generatedAt.addingTimeInterval(interval), interval: interval))
+        XCTAssertFalse(profile.isStale(at: generatedAt.addingTimeInterval(interval - 0.001), interval: interval))
+        XCTAssertTrue(profile.isStale(at: generatedAt.addingTimeInterval(interval), interval: interval))
     }
 }

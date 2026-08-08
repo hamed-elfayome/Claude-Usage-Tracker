@@ -15,14 +15,14 @@ struct UsageEntry: TimelineEntry {
     /// the timeline flips the dimming at the right moment.
     var isStale: Bool {
         guard let snapshot else { return true }
-        return date.timeIntervalSince(snapshot.generatedAt) > Self.staleInterval
+        return snapshot.isStale(at: date, interval: Self.staleInterval)
     }
 
     /// Per-profile staleness. The single-profile refresh path only updates
     /// the active profile, so other profiles can be stale even while the
     /// snapshot itself is fresh.
     func isProfileStale(_ profile: WidgetSnapshot.ProfileEntry) -> Bool {
-        isStale || date.timeIntervalSince(profile.lastUpdated) > Self.staleInterval
+        isStale || profile.isStale(at: date, interval: Self.staleInterval)
     }
 
     static func placeholderSnapshot() -> WidgetSnapshot {
@@ -77,8 +77,12 @@ struct UsageTimelineProvider: TimelineProvider {
             var boundaries = [snapshot.generatedAt.addingTimeInterval(UsageEntry.staleInterval)]
             for profile in snapshot.profiles {
                 boundaries.append(profile.lastUpdated.addingTimeInterval(UsageEntry.staleInterval))
-                boundaries.append(profile.sessionResetTime)
-                boundaries.append(profile.weeklyResetTime)
+                if let sessionResetTime = profile.sessionResetTime {
+                    boundaries.append(sessionResetTime)
+                }
+                if let weeklyResetTime = profile.weeklyResetTime {
+                    boundaries.append(weeklyResetTime)
+                }
             }
             for boundary in boundaries where boundary > now && boundary < refresh {
                 dates.insert(boundary)

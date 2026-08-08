@@ -11,10 +11,17 @@ private func usageColor(_ percentage: Double) -> Color {
     }
 }
 
+private func providerIcon(_ provider: WidgetSnapshot.ProfileEntry.Provider) -> String {
+    switch provider {
+    case .claude: return "sparkle"
+    case .codex: return "chevron.left.forwardslash.chevron.right"
+    }
+}
+
 private struct UsageBar: View {
     let label: LocalizedStringKey
     let percentage: Double
-    let resetTime: Date
+    let resetTime: Date?
     /// The timeline entry's date — comparisons must use it (not `Date()`)
     /// so pre-rendered future entries evaluate correctly.
     let now: Date
@@ -36,7 +43,7 @@ private struct UsageBar: View {
             ProgressView(value: min(max(percentage, 0), 100), total: 100)
                 .progressViewStyle(.linear)
                 .tint(usageColor(percentage))
-            if resetTime > now {
+            if let resetTime, resetTime > now {
                 Text(resetTime, style: .relative)
                     .font(compact ? .system(size: 9) : .caption2)
                     .foregroundStyle(.tertiary)
@@ -76,7 +83,7 @@ struct SessionUsageWidgetView: View {
             if let profile {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(spacing: 4) {
-                        Image(systemName: "sparkle")
+                        Image(systemName: providerIcon(profile.provider))
                             .font(.caption2)
                         Text(profile.name)
                             .font(.caption.bold())
@@ -91,8 +98,9 @@ struct SessionUsageWidgetView: View {
                     .gaugeStyle(.accessoryCircularCapacity)
                     .tint(usageColor(profile.sessionPercentage))
                     .frame(maxWidth: .infinity)
-                    if profile.sessionResetTime > entry.date {
-                        Text(profile.sessionResetTime, style: .relative)
+                    if let sessionResetTime = profile.sessionResetTime,
+                       sessionResetTime > entry.date {
+                        Text(sessionResetTime, style: .relative)
                             .font(.system(size: 9))
                             .foregroundStyle(.tertiary)
                             .frame(maxWidth: .infinity, alignment: .center)
@@ -157,7 +165,7 @@ struct UsageOverviewWidgetView: View {
                             .font(.subheadline.bold())
                             .lineLimit(1)
                         if profile.isActive {
-                            Image(systemName: "sparkle")
+                            Image(systemName: providerIcon(profile.provider))
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
@@ -171,13 +179,15 @@ struct UsageOverviewWidgetView: View {
                             now: entry.date,
                             compact: false
                         )
-                        UsageBar(
-                            label: "widget.weekly",
-                            percentage: profile.weeklyPercentage,
-                            resetTime: profile.weeklyResetTime,
-                            now: entry.date,
-                            compact: false
-                        )
+                        if let weeklyPercentage = profile.weeklyPercentage {
+                            UsageBar(
+                                label: "widget.weekly",
+                                percentage: weeklyPercentage,
+                                resetTime: profile.weeklyResetTime,
+                                now: entry.date,
+                                compact: false
+                            )
+                        }
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -206,12 +216,14 @@ struct UsageOverviewWidgetView: View {
                         resetTime: profile.sessionResetTime,
                         now: entry.date
                     )
-                    UsageBar(
-                        label: "widget.weekly",
-                        percentage: profile.weeklyPercentage,
-                        resetTime: profile.weeklyResetTime,
-                        now: entry.date
-                    )
+                    if let weeklyPercentage = profile.weeklyPercentage {
+                        UsageBar(
+                            label: "widget.weekly",
+                            percentage: weeklyPercentage,
+                            resetTime: profile.weeklyResetTime,
+                            now: entry.date
+                        )
+                    }
                 }
                 .frame(maxHeight: .infinity)
                 .opacity(entry.isProfileStale(profile) ? 0.4 : 1)

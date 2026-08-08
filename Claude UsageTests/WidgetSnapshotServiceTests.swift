@@ -172,4 +172,46 @@ final class WidgetSnapshotServiceTests: XCTestCase {
         XCTAssertEqual(sanitized.count, 64)
         XCTAssertTrue(sanitized.hasPrefix("badname"))
     }
+
+    // MARK: - Providers
+
+    func testCodexProfilePublishesSelectedRateLimit() throws {
+        let primaryReset = currentDate.addingTimeInterval(3600)
+        let weeklyReset = currentDate.addingTimeInterval(86400)
+        let usage = CodexUsage(
+            account: nil,
+            rateLimits: [
+                CodexRateLimit(
+                    id: "codex",
+                    name: "Codex",
+                    primary: CodexRateLimitWindow(
+                        usedPercent: 23,
+                        windowDurationMinutes: 300,
+                        resetsAt: primaryReset
+                    ),
+                    secondary: CodexRateLimitWindow(
+                        usedPercent: 47,
+                        windowDurationMinutes: 10_080,
+                        resetsAt: weeklyReset
+                    ),
+                    credits: nil,
+                    planType: "pro",
+                    reachedType: nil
+                )
+            ],
+            tokenUsage: nil,
+            lastUpdated: currentDate
+        )
+        let profile = Profile(name: "Codex", provider: .codex, codexUsage: usage)
+        let service = makeService()
+
+        service.publish(profiles: [profile], activeProfileId: profile.id)
+
+        let entry = try XCTUnwrap(writtenSnapshots.first?.profiles.first)
+        XCTAssertEqual(entry.provider, .codex)
+        XCTAssertEqual(entry.sessionPercentage, 23)
+        XCTAssertEqual(entry.sessionResetTime, primaryReset)
+        XCTAssertEqual(entry.weeklyPercentage, 47)
+        XCTAssertEqual(entry.weeklyResetTime, weeklyReset)
+    }
 }

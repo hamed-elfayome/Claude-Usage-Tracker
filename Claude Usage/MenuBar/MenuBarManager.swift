@@ -1757,6 +1757,10 @@ class MenuBarManager: NSObject, ObservableObject {
                     self.codexRefreshTokens.removeValue(forKey: profile.id)
                     self.codexRefreshErrorsByProfile.removeValue(forKey: profile.id)
                     self.profileManager.saveCodexUsage(snapshot, for: profile.id)
+                    WidgetSnapshotService.shared.publish(
+                        profiles: self.profileManager.profiles,
+                        activeProfileId: self.profileManager.activeProfile?.id
+                    )
                     if self.profileManager.activeProfile?.id == profile.id {
                         self.codexUsage = snapshot
                         self.codexSettings = currentProfile.codexConfiguration

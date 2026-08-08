@@ -53,7 +53,7 @@ final class WidgetSnapshotService {
     /// names are reduced before persisting: an email-shaped name — the usual
     /// case for credential-derived profiles — keeps only its local part, and
     /// the result is stripped of control characters and length-capped.
-    static let maxProfileNameLength = 64
+    static let maxProfileNameLength = WidgetSnapshot.maximumProfileNameLength
 
     static func sanitizedProfileName(_ raw: String) -> String {
         var name = raw.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -75,18 +75,43 @@ final class WidgetSnapshotService {
             // The active profile is always included so the small widget can
             // show it even when it is deselected from menu bar display.
             guard profile.isSelectedForDisplay || isActive else { return nil }
-            guard let usage = profile.claudeUsage else { return nil }
-            return WidgetSnapshot.ProfileEntry(
-                id: profile.id,
-                name: Self.sanitizedProfileName(profile.name),
-                isActive: isActive,
-                isDisplayed: profile.isSelectedForDisplay,
-                sessionPercentage: usage.effectiveSessionPercentage,
-                sessionResetTime: usage.sessionResetTime,
-                weeklyPercentage: usage.weeklyPercentage,
-                weeklyResetTime: usage.weeklyResetTime,
-                lastUpdated: usage.lastUpdated
-            )
+            let name = Self.sanitizedProfileName(profile.name)
+
+            switch profile.provider {
+            case .claude:
+                guard let usage = profile.claudeUsage else { return nil }
+                return WidgetSnapshot.ProfileEntry(
+                    id: profile.id,
+                    name: name,
+                    provider: .claude,
+                    isActive: isActive,
+                    isDisplayed: profile.isSelectedForDisplay,
+                    sessionPercentage: usage.effectiveSessionPercentage,
+                    sessionResetTime: usage.sessionResetTime,
+                    weeklyPercentage: usage.weeklyPercentage,
+                    weeklyResetTime: usage.weeklyResetTime,
+                    lastUpdated: usage.lastUpdated
+                )
+
+            case .codex:
+                guard let usage = profile.codexUsage,
+                      let rateLimit = usage.rateLimit(
+                          preferredID: profile.codexConfiguration.selectedRateLimitID
+                      ),
+                      let primary = rateLimit.primary else { return nil }
+                return WidgetSnapshot.ProfileEntry(
+                    id: profile.id,
+                    name: name,
+                    provider: .codex,
+                    isActive: isActive,
+                    isDisplayed: profile.isSelectedForDisplay,
+                    sessionPercentage: primary.usedPercent,
+                    sessionResetTime: primary.resetsAt,
+                    weeklyPercentage: rateLimit.secondary?.usedPercent,
+                    weeklyResetTime: rateLimit.secondary?.resetsAt,
+                    lastUpdated: usage.lastUpdated
+                )
+            }
         }
         publish(entries: entries)
     }
@@ -150,14 +175,33 @@ final class WidgetSnapshotService {
         for (old, new) in zip(previous, entries) {
             let identityChanged = old.id != new.id || old.name != new.name
                 || old.isActive != new.isActive || old.isDisplayed != new.isDisplayed
-            let sessionChanged = Int(old.sessionPercentage) != Int(new.sessionPercentage)
-                || Int(old.sessionResetTime.timeIntervalSince1970) != Int(new.sessionResetTime.timeIntervalSince1970)
-            let weeklyChanged = Int(old.weeklyPercentage) != Int(new.weeklyPercentage)
-                || Int(old.weeklyResetTime.timeIntervalSince1970) != Int(new.weeklyResetTime.timeIntervalSince1970)
-            if identityChanged || sessionChanged || weeklyChanged {
+            let providerChanged = old.provider != new.provider
+            let sessionChanged = normalizedPercentage(old.sessionPercentage)
+                != normalizedPercentage(new.sessionPercentage)
+                || normalizedReset(old.sessionResetTime) != normalizedReset(new.sessionResetTime)
+            let weeklyChanged = normalizedPercentage(old.weeklyPercentage)
+                != normalizedPercentage(new.weeklyPercentage)
+                || normalizedReset(old.weeklyResetTime) != normalizedReset(new.weeklyResetTime)
+            if identityChanged || providerChanged || sessionChanged || weeklyChanged {
                 return true
             }
         }
         return false
+    }
+
+    private func normalizedPercentage(_ value: Double?) -> Int? {
+        guard let value,
+              value.isFinite,
+              value >= Double(Int.min),
+              value <= Double(Int.max) else { return nil }
+        return Int(value)
+    }
+
+    private func normalizedReset(_ value: Date?) -> Int? {
+        guard let seconds = value?.timeIntervalSince1970,
+              seconds.isFinite,
+              seconds >= Double(Int.min),
+              seconds <= Double(Int.max) else { return nil }
+        return Int(seconds)
     }
 }
