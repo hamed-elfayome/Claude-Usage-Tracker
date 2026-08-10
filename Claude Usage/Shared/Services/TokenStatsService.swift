@@ -1,7 +1,16 @@
 import Foundation
 
-/// Reads and aggregates Claude Code CLI token usage (input + output tokens, excluding all
-/// cache tokens) to match what `claude`'s live "Stats" view reports.
+/// Reads and aggregates Claude Code CLI token usage to match what `claude`'s live "Stats" view
+/// reports: input + output + cache-read + cache-creation tokens.
+///
+/// Including cache tokens is what the CLI does, not an editorial choice. CLI 2.1.221 changed
+/// `stats-cache.json`'s `dailyModelTokens` from `input + output` to all four kinds, and added a
+/// `dailyModelTokensVersion` field whose bump makes the CLI rebuild that history under the new
+/// definition. Since `dailyModelTokens` is the only per-day source available, the 7D/30D windows
+/// are cache-inclusive whether we like it or not - so the all-time aggregate and the JSONL delta
+/// must count the same four kinds, or the frames would report different quantities and a 7-day
+/// window could exceed all-time. Cache reads dominate the total (often >90%); this is a volume
+/// figure, not a proxy for cost, since cache reads bill at a fraction of input tokens.
 ///
 /// `~/.claude/stats-cache.json` is only refreshed periodically by the CLI, so reading it alone
 /// lags behind the live number by however many days have passed since its `lastComputedDate`.
@@ -22,6 +31,13 @@ struct TokenStatsService {
         struct Model: Decodable {
             let inputTokens: Int?
             let outputTokens: Int?
+            let cacheReadInputTokens: Int?
+            let cacheCreationInputTokens: Int?
+
+            var total: Int {
+                (inputTokens ?? 0) + (outputTokens ?? 0)
+                    + (cacheReadInputTokens ?? 0) + (cacheCreationInputTokens ?? 0)
+            }
         }
         struct Daily: Decodable {
             let date: String
@@ -42,6 +58,13 @@ struct TokenStatsService {
             struct Usage: Decodable {
                 let inputTokens: Int?
                 let outputTokens: Int?
+                let cacheReadInputTokens: Int?
+                let cacheCreationInputTokens: Int?
+
+                var total: Int {
+                    (inputTokens ?? 0) + (outputTokens ?? 0)
+                        + (cacheReadInputTokens ?? 0) + (cacheCreationInputTokens ?? 0)
+                }
             }
             let usage: Usage?
         }
@@ -170,9 +193,7 @@ struct TokenStatsService {
             return (0, [:], nil, false)
         }
 
-        let allTime = (cache.modelUsage ?? [:]).values.reduce(0) {
-            $0 + ($1.inputTokens ?? 0) + ($1.outputTokens ?? 0)
-        }
+        let allTime = (cache.modelUsage ?? [:]).values.reduce(0) { $0 + $1.total }
 
         var daily: [String: Int] = [:]
         for entry in cache.dailyModelTokens ?? [] {
@@ -184,7 +205,7 @@ struct TokenStatsService {
 
     // MARK: - JSONL scanning
 
-    /// Walks `projectsDir` for `*.jsonl` files and sums input+output tokens per day, restricted
+    /// Walks `projectsDir` for `*.jsonl` files and sums all four token kinds per day, restricted
     /// to days strictly after `cacheCutoff`, within `[scanFrom, today]`.
     ///
     /// Perf: files whose content-modification date predates `scanFrom` are skipped without being
@@ -235,7 +256,7 @@ struct TokenStatsService {
 
                 guard day > cacheCutoff, day >= scanFrom, day <= today else { continue }
 
-                daily[dayKey(day), default: 0] += (usage.inputTokens ?? 0) + (usage.outputTokens ?? 0)
+                daily[dayKey(day), default: 0] += usage.total
             }
         }
 
