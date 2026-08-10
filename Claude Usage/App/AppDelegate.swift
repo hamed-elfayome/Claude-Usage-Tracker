@@ -21,6 +21,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         // Load profiles into ProfileManager (synchronously)
         ProfileManager.shared.loadProfiles()
 
+        // Regenerate installed statusline scripts so they pick up format changes
+        // across app updates and re-embed fresh Cloudflare clearance cookies.
+        try? StatuslineService.shared.updateScriptsIfInstalled()
+
         // Initialize update manager to enable automatic update checks
         _ = UpdateManager.shared
 
