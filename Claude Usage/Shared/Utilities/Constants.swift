@@ -76,8 +76,20 @@ enum Constants {
         static let attentionStaleTimeout: TimeInterval = 600
         /// Delay before the HUD hides once every session is idle (auto-hide on).
         static let idleHideDelay: TimeInterval = 5
-        static let maxBodyBytes = 65_536
+        /// Hook body cap. Sized off a sample of real Claude Code hook
+        /// traffic: the median over-cap body was ~210 KB and the max
+        /// ~680 KB (image Reads dominate; Claude Code downscales images before
+        /// base64, so multi-MB bodies don't occur). 1 MiB covers 100% of the
+        /// measured population with headroom. Over-cap bodies from an
+        /// authorized sender are drained and answered 200, never 413.
+        static let maxBodyBytes = 1_048_576
         static let maxHeaderBytes = 8_192
+        /// Upper bound on draining an over-cap body before acknowledging.
+        static let maxDrainBytes = 8_388_608
+        /// A connection may live at most this long, whatever state it is in.
+        static let connectionDeadline: TimeInterval = 10
+        /// Concurrent connection cap; real hook connections are millisecond-lived.
+        static let maxConcurrentConnections = 64
     }
 
     // Claude Code paths
