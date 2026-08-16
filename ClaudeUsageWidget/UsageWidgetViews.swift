@@ -107,7 +107,7 @@ struct SessionUsageWidgetView: View {
                             .frame(maxWidth: .infinity, alignment: .center)
                     }
                 }
-                .opacity(entry.isProfileStale(profile) ? 0.4 : 1)
+                .opacity(entry.isProfileStale(profile) ? 0.55 : 1)
             } else {
                 NoDataView()
             }
@@ -195,7 +195,7 @@ struct UsageOverviewWidgetView: View {
                 // Per-row: a profile can go stale on its own — the
                 // single-profile refresh path only updates the
                 // active profile.
-                .opacity(entry.isProfileStale(profile) ? 0.4 : 1)
+                .opacity(entry.isProfileStale(profile) ? 0.55 : 1)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -227,7 +227,7 @@ struct UsageOverviewWidgetView: View {
                     }
                 }
                 .frame(maxHeight: .infinity)
-                .opacity(entry.isProfileStale(profile) ? 0.4 : 1)
+                .opacity(entry.isProfileStale(profile) ? 0.55 : 1)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

@@ -10,6 +10,15 @@ struct UsageEntry: TimelineEntry {
     /// longer be trusted. The app writes a heartbeat snapshot every 5 min.
     static let staleInterval: TimeInterval = 15 * 60
 
+    /// Per-profile staleness uses a much longer horizon than the whole-
+    /// snapshot check: in single-profile display mode the app only
+    /// refreshes the active profile, so every other profile's cached data
+    /// is routinely older than the heartbeat. Ghosting those rows at the
+    /// snapshot threshold made most of the overview widget unreadable.
+    /// This window only flags genuinely abandoned profiles (e.g. a profile
+    /// whose provider has been failing to refresh for hours in multi mode).
+    static let perProfileStaleInterval: TimeInterval = 6 * 60 * 60
+
     /// Whole-snapshot staleness: the app stopped publishing entirely.
     /// Evaluated against the entry's own date so that a boundary entry in
     /// the timeline flips the dimming at the right moment.
@@ -20,9 +29,9 @@ struct UsageEntry: TimelineEntry {
 
     /// Per-profile staleness. The single-profile refresh path only updates
     /// the active profile, so other profiles can be stale even while the
-    /// snapshot itself is fresh.
+    /// snapshot itself is fresh — but only after the long horizon above.
     func isProfileStale(_ profile: WidgetSnapshot.ProfileEntry) -> Bool {
-        isStale || profile.isStale(at: date, interval: Self.staleInterval)
+        isStale || profile.isStale(at: date, interval: Self.perProfileStaleInterval)
     }
 
     static func placeholderSnapshot() -> WidgetSnapshot {
@@ -76,7 +85,7 @@ struct UsageTimelineProvider: TimelineProvider {
         if let snapshot {
             var boundaries = [snapshot.generatedAt.addingTimeInterval(UsageEntry.staleInterval)]
             for profile in snapshot.profiles {
-                boundaries.append(profile.lastUpdated.addingTimeInterval(UsageEntry.staleInterval))
+                boundaries.append(profile.lastUpdated.addingTimeInterval(UsageEntry.perProfileStaleInterval))
                 if let sessionResetTime = profile.sessionResetTime {
                     boundaries.append(sessionResetTime)
                 }
