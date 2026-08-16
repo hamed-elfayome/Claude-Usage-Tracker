@@ -282,6 +282,89 @@ class NotificationManager: NotificationServiceProtocol {
         }
     }
 
+    /// Sends profile-specific z.ai alerts for the selected quota window.
+    /// Identifiers include the profile, window, and threshold so each level is
+    /// delivered once per window and becomes eligible again after a reset.
+    func checkAndNotify(
+        zaiUsage: ZAIUsage,
+        profileID: UUID,
+        profileName: String,
+        settings: NotificationSettings,
+        selectedLimitID: String?
+    ) {
+        guard settings.enabled,
+              let limit = zaiUsage.rateLimit(preferredID: selectedLimitID),
+              let window = limit.primary else { return }
+
+        let thresholds = settings.sortedThresholds
+        guard !thresholds.isEmpty else { return }
+        let identifierBase = "zai_\(profileID.uuidString)_\(limit.id)_"
+        let windowID = window.resetsAt.map {
+            String(Int64($0.timeIntervalSince1970.rounded()))
+        } ?? "unknown"
+        let identifierPrefix = "\(identifierBase)\(windowID)_"
+
+        // Discard deduplication markers from older windows while retaining
+        // markers for the current one.
+        updateSentNotifications { sent in
+            sent = sent.filter {
+                !$0.hasPrefix(identifierBase) || $0.hasPrefix(identifierPrefix)
+            }
+        }
+
+        if window.usedPercent < Double(thresholds[0]) {
+            updateSentNotifications { sent in
+                sent = sent.filter { !$0.hasPrefix(identifierBase) }
+            }
+            return
+        }
+
+        guard let threshold = thresholds.reversed().first(where: { window.usedPercent >= Double($0) }) else {
+            return
+        }
+        let identifier = "\(identifierPrefix)\(threshold)"
+        guard updateSentNotifications({ $0.insert(identifier).inserted }) else { return }
+
+        let content = UNMutableNotificationContent()
+        content.title = "\(profileName) – Z.ai usage: \(Int(window.usedPercent.rounded()))%"
+        var body = "\(limit.displayName) usage crossed the \(threshold)% alert threshold."
+        if let resetsAt = window.resetsAt {
+            body += " Resets \(resetsAt.formatted(date: .abbreviated, time: .shortened))."
+        }
+        content.body = body
+        content.categoryIdentifier = "USAGE_ALERT"
+        let customSoundName: String?
+        switch settings.soundName {
+        case "none":
+            customSoundName = nil
+        case "default":
+            content.sound = .default
+            customSoundName = nil
+        default:
+            // System sounds are not bundle notification resources, so play
+            // them through NSSound after the notification is accepted.
+            customSoundName = settings.soundName
+        }
+
+        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: nil)
+        UNUserNotificationCenter.current().add(request) { [weak self] error in
+            if let error {
+                self?.updateSentNotifications { $0.remove(identifier) }
+                LoggingService.shared.logNotificationError(error)
+                return
+            }
+            if let name = customSoundName {
+                DispatchQueue.main.async {
+                    if let sound = NSSound(named: NSSound.Name(name)) {
+                        sound.play()
+                    } else {
+                        NSSound.beep()
+                    }
+                }
+            }
+        }
+    }
+
     /// Sends a profile-specific usage alert
     private func sendProfileAlert(profileName: String, type: AlertType, percentage: Double, thresholdLevel: Int? = nil, resetTime: Date?, soundName: String = "default") {
         // Use the configured threshold level (not current percentage) to prevent duplicate notifications

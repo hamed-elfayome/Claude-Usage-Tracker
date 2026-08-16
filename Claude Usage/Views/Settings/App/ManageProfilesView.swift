@@ -368,8 +368,8 @@ struct ProfileRow: View {
     var body: some View {
         HStack(spacing: 12) {
             // Profile Icon
-            Image(systemName: profile.provider == .codex
-                ? ProfileProvider.codex.icon
+            Image(systemName: profile.provider == .codex || profile.provider == .zai
+                ? profile.provider.icon
                 : (profile.hasCliAccount ? "person.crop.circle.fill.badge.checkmark" : ProfileProvider.claude.icon))
                 .font(.system(size: 24))
                 .foregroundColor(profileManager.activeProfile?.id == profile.id ? .accentColor : .secondary)
@@ -482,6 +482,12 @@ struct ProfileRow: View {
 
         if profile.provider == .codex {
             parts.append(profile.codexConfiguration.connectionSummary)
+        } else if profile.provider == .zai {
+            parts.append(
+                profile.zaiAPIKey != nil
+                    ? "zai.settings.key_configured".localized
+                    : "zai.settings.no_key".localized
+            )
         } else if profile.hasCliAccount {
             parts.append("profiles.cli_synced".localized)
         }

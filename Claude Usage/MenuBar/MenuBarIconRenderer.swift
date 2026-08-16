@@ -21,6 +21,8 @@ final class MenuBarIconRenderer {
         apiUsage: APIUsage?,
         codexUsage: CodexUsage?,
         codexRateLimitID: String? = nil,
+        zaiUsage: ZAIUsage? = nil,
+        zaiRateLimitID: String? = nil,
         isDarkMode: Bool,
         colorMode: MenuBarColorMode,
         singleColorHex: String,
@@ -35,6 +37,8 @@ final class MenuBarIconRenderer {
             apiUsage: apiUsage,
             codexUsage: codexUsage,
             codexRateLimitID: codexRateLimitID,
+            zaiUsage: zaiUsage,
+            zaiRateLimitID: zaiRateLimitID,
             showRemaining: globalConfig.showRemainingPercentage,
             usePaceColoring: globalConfig.usePaceColoring
         )
@@ -46,6 +50,8 @@ final class MenuBarIconRenderer {
                 usage: usage,
                 codexUsage: codexUsage,
                 codexRateLimitID: codexRateLimitID,
+                zaiUsage: zaiUsage,
+                zaiRateLimitID: zaiRateLimitID,
                 showRemaining: globalConfig.showRemainingPercentage
             )
             : nil
@@ -59,6 +65,8 @@ final class MenuBarIconRenderer {
                 usage: usage,
                 codexUsage: codexUsage,
                 codexRateLimitID: codexRateLimitID,
+                zaiUsage: zaiUsage,
+                zaiRateLimitID: zaiRateLimitID,
                 showRemaining: false
             ) else { return nil }
             // Get raw used percentage
@@ -67,6 +75,7 @@ final class MenuBarIconRenderer {
             case .session: rawUsed = usage.sessionPercentage
             case .week: rawUsed = usage.weeklyPercentage
             case .codex: rawUsed = codexUsage?.rateLimit(preferredID: codexRateLimitID)?.primary?.usedPercent ?? 0
+            case .zai: rawUsed = zaiUsage?.rateLimit(preferredID: zaiRateLimitID)?.primary?.usedPercent ?? 0
             case .api: return nil
             }
             return PaceStatus.calculate(
@@ -162,6 +171,10 @@ final class MenuBarIconRenderer {
         let statusLevel: UsageStatusLevel
         let sessionResetTime: Date?  // Only populated for session metric
         var isAvailable: Bool = true
+        /// Short glyph drawn inside/next to the bar ("S", "W", "CX", "Z").
+        var shortLabel: String = ""
+        /// Full word drawn under the battery bar ("Session", "Week", ...).
+        var fullLabel: String = ""
     }
 
     private func getMetricData(
@@ -171,6 +184,8 @@ final class MenuBarIconRenderer {
         apiUsage: APIUsage?,
         codexUsage: CodexUsage?,
         codexRateLimitID: String?,
+        zaiUsage: ZAIUsage?,
+        zaiRateLimitID: String?,
         showRemaining: Bool,
         usePaceColoring: Bool = true
     ) -> MetricData {
@@ -198,7 +213,9 @@ final class MenuBarIconRenderer {
                 percentage: displayPercentage,
                 displayText: "\(Int(displayPercentage))%",
                 statusLevel: statusLevel,
-                sessionResetTime: usage.sessionResetTime
+                sessionResetTime: usage.sessionResetTime,
+                shortLabel: "S",
+                fullLabel: "Session"
             )
 
         case .week:
@@ -232,7 +249,9 @@ final class MenuBarIconRenderer {
                 percentage: displayPercentage,
                 displayText: displayText,
                 statusLevel: statusLevel,
-                sessionResetTime: nil
+                sessionResetTime: nil,
+                shortLabel: "W",
+                fullLabel: "Week"
             )
 
         case .api:
@@ -269,7 +288,9 @@ final class MenuBarIconRenderer {
                 percentage: displayPercentage,
                 displayText: displayText,
                 statusLevel: statusLevel,
-                sessionResetTime: nil
+                sessionResetTime: nil,
+                shortLabel: "API",
+                fullLabel: "API"
             )
 
         case .codex:
@@ -279,7 +300,9 @@ final class MenuBarIconRenderer {
                     displayText: "N/A",
                     statusLevel: .safe,
                     sessionResetTime: nil,
-                    isAvailable: false
+                    isAvailable: false,
+                    shortLabel: "CX",
+                    fullLabel: "Codex"
                 )
             }
             let displayPercentage = UsageStatusCalculator.getDisplayPercentage(
@@ -304,9 +327,64 @@ final class MenuBarIconRenderer {
                     showRemaining: showRemaining,
                     elapsedFraction: elapsed
                 ),
-                sessionResetTime: nil
+                sessionResetTime: nil,
+                shortLabel: "CX",
+                fullLabel: "Codex"
+            )
+
+        case .zai:
+            let selectedWindow = zaiUsage?.rateLimit(preferredID: zaiRateLimitID)?.primary
+            guard let window = selectedWindow else {
+                return MetricData(
+                    percentage: 0,
+                    displayText: "N/A",
+                    statusLevel: .safe,
+                    sessionResetTime: nil,
+                    isAvailable: false,
+                    shortLabel: "Z",
+                    fullLabel: "Z.ai"
+                )
+            }
+            let displayPercentage = UsageStatusCalculator.getDisplayPercentage(
+                usedPercentage: window.usedPercent,
+                showRemaining: showRemaining
+            )
+            let elapsed: Double?
+            if usePaceColoring, let reset = window.resetsAt, let duration = window.duration {
+                elapsed = UsageStatusCalculator.elapsedFraction(
+                    resetTime: reset,
+                    duration: duration,
+                    showRemaining: false
+                )
+            } else {
+                elapsed = nil
+            }
+            // Label follows the window actually being shown: the 5-hour quota
+            // is the z.ai session equivalent, the 7-day quota is its weekly.
+            let labels = Self.zaiWindowLabels(for: window.windowDurationMinutes)
+            return MetricData(
+                percentage: displayPercentage,
+                displayText: "\(Int(displayPercentage))%",
+                statusLevel: UsageStatusCalculator.calculateStatus(
+                    usedPercentage: window.usedPercent,
+                    showRemaining: showRemaining,
+                    elapsedFraction: elapsed
+                ),
+                sessionResetTime: nil,
+                shortLabel: labels.short,
+                fullLabel: labels.full
             )
         }
+    }
+
+    /// Maps a z.ai quota window to the tray label pair users expect: the
+    /// 5-hour window reads as the session metric ("S"), the weekly window as
+    /// "W", and anything else (e.g. monthly tool calls) as "Z" for Z.ai.
+    private static func zaiWindowLabels(for windowDurationMinutes: Int?) -> (short: String, full: String) {
+        guard let minutes = windowDurationMinutes else { return ("Z", "Z.ai") }
+        if minutes <= 24 * 60 { return ("S", "Session") }
+        if minutes == 7 * 24 * 60 { return ("W", "Week") }
+        return ("Z", "Z.ai")
     }
 
     // MARK: - Icon Style Renderers
@@ -403,8 +481,8 @@ final class MenuBarIconRenderer {
                 text = resetTime.timeRemainingHoursString() as NSString
             }
         } else if showIconName {
-            // Show full word: "Session" or "Week"
-            text = (metricType == .session ? "Session" : "Week") as NSString
+            // Show the metric's full word ("Session", "Week", "Codex", "Z.ai")
+            text = metricData.fullLabel as NSString
         } else {
             // No label mode - show percentage instead
             text = "\(Int(metricData.percentage))%" as NSString
@@ -431,8 +509,13 @@ final class MenuBarIconRenderer {
         paceStatus: PaceStatus? = nil,
         showPaceMarker: Bool = false
     ) -> NSImage {
-        // For progress bar: show "S" or "W" before the bar (not full prefix)
-        let labelWidth: CGFloat = showIconName ? 10 : 0
+        // For progress bar: show the metric's short glyph ("S", "W", "CX", "Z")
+        // before the bar (not full prefix)
+        let labelAttributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: 10, weight: .semibold)
+        ]
+        let label = metricData.shortLabel as NSString
+        let labelWidth: CGFloat = showIconName ? ceil(label.size(withAttributes: labelAttributes).width) : 0
         let barWidth: CGFloat = 40
         let spacing: CGFloat = showIconName ? 2 : 0
         let totalWidth = labelWidth + spacing + barWidth + 2
@@ -451,16 +534,14 @@ final class MenuBarIconRenderer {
 
         var xOffset: CGFloat = 1
 
-        // Draw label before bar (just "S" or "W")
+        // Draw label before bar (the metric's short glyph)
         if showIconName {
             let labelAttributes: [NSAttributedString.Key: Any] = [
                 .font: NSFont.systemFont(ofSize: 10, weight: .semibold),
                 .foregroundColor: textColor.withAlphaComponent(0.9)
             ]
-            let label = (metricType == .session ? "S" : "W") as NSString
-            let labelSize = label.size(withAttributes: labelAttributes)
             label.draw(
-                at: NSPoint(x: xOffset, y: (height - labelSize.height) / 2),
+                at: NSPoint(x: xOffset, y: (height - label.size(withAttributes: labelAttributes).height) / 2),
                 withAttributes: labelAttributes
             )
             xOffset += labelWidth + spacing
@@ -655,13 +736,13 @@ final class MenuBarIconRenderer {
             drawPaceMarkerTick(tickPath, paceStatus: paceStatus, showPaceMarker: showPaceMarker, isDarkMode: isDarkMode)
         }
 
-        // Draw S/W in the CENTER of the circle
+        // Draw the metric's short glyph in the CENTER of the circle
         if showIconName {
             let labelAttributes: [NSAttributedString.Key: Any] = [
                 .font: NSFont.systemFont(ofSize: 9, weight: .bold),
                 .foregroundColor: textColor
             ]
-            let label = (metricType == .session ? "S" : "W") as NSString
+            let label = metricData.shortLabel as NSString
             let labelSize = label.size(withAttributes: labelAttributes)
             let labelX = center.x - labelSize.width / 2
             let labelY = center.y - labelSize.height / 2
@@ -1452,6 +1533,8 @@ final class MenuBarIconRenderer {
         usage: ClaudeUsage,
         codexUsage: CodexUsage?,
         codexRateLimitID: String?,
+        zaiUsage: ZAIUsage?,
+        zaiRateLimitID: String?,
         showRemaining: Bool
     ) -> CGFloat? {
         let resetTime: Date?
@@ -1468,6 +1551,12 @@ final class MenuBarIconRenderer {
             return nil
         case .codex:
             guard let window = codexUsage?.rateLimit(preferredID: codexRateLimitID)?.primary,
+                  let windowReset = window.resetsAt,
+                  let windowDuration = window.duration else { return nil }
+            resetTime = windowReset
+            duration = windowDuration
+        case .zai:
+            guard let window = zaiUsage?.rateLimit(preferredID: zaiRateLimitID)?.primary,
                   let windowReset = window.resetsAt,
                   let windowDuration = window.duration else { return nil }
             resetTime = windowReset

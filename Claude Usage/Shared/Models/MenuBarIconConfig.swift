@@ -13,6 +13,7 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
     case week
     case api
     case codex
+    case zai
 
     var id: String { rawValue }
 
@@ -26,6 +27,8 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
             return "API Credits"
         case .codex:
             return "Codex Usage"
+        case .zai:
+            return "Z.ai Usage"
         }
     }
 
@@ -39,6 +42,8 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
             return "API:"
         case .codex:
             return "CX:"
+        case .zai:
+            return "Z:"
         }
     }
 
@@ -52,6 +57,8 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
             return "API Console billing credits"
         case .codex:
             return "OpenAI Codex account usage"
+        case .zai:
+            return "Z.ai GLM Coding Plan usage"
         }
     }
 
@@ -65,6 +72,8 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
             return "dollarsign.circle.fill"
         case .codex:
             return "chevron.left.forwardslash.chevron.right"
+        case .zai:
+            return "z.square.fill"
         }
     }
 }
@@ -249,6 +258,26 @@ struct MetricIconConfig: Codable, Equatable {
         )
     }
 
+    /// Z.ai is opt-in so existing users do not gain another menu bar item
+    /// merely because a GLM Coding Plan profile exists.
+    static var zaiDefault: MetricIconConfig {
+        MetricIconConfig(
+            metricType: .zai,
+            isEnabled: false,
+            iconStyle: .battery,
+            order: 4
+        )
+    }
+
+    static var zaiProfileDefault: MetricIconConfig {
+        MetricIconConfig(
+            metricType: .zai,
+            isEnabled: true,
+            iconStyle: .battery,
+            order: 0
+        )
+    }
+
     var disabled: MetricIconConfig {
         var copy = self
         copy.isEnabled = false
@@ -408,7 +437,8 @@ struct MenuBarIconConfiguration: Codable, Equatable {
             .sessionDefault,
             .weekDefault,
             .apiDefault,
-            .codexDefault
+            .codexDefault,
+            .zaiDefault
         ]
     ) {
         self.colorMode = colorMode
@@ -424,6 +454,15 @@ struct MenuBarIconConfiguration: Codable, Equatable {
     static var codexProfileDefault: MenuBarIconConfiguration {
         MenuBarIconConfiguration(metrics: [
             .codexProfileDefault,
+            .sessionDefault.disabled,
+            .weekDefault,
+            .apiDefault
+        ])
+    }
+
+    static var zaiProfileDefault: MenuBarIconConfiguration {
+        MenuBarIconConfiguration(metrics: [
+            .zaiProfileDefault,
             .sessionDefault.disabled,
             .weekDefault,
             .apiDefault
@@ -463,6 +502,9 @@ struct MenuBarIconConfiguration: Codable, Equatable {
         metrics = try container.decode([MetricIconConfig].self, forKey: .metrics)
         if !metrics.contains(where: { $0.metricType == .codex }) {
             metrics.append(.codexDefault)
+        }
+        if !metrics.contains(where: { $0.metricType == .zai }) {
+            metrics.append(.zaiDefault)
         }
     }
 

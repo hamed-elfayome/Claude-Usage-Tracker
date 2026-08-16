@@ -17,6 +17,13 @@ class MenuBarManager: NSObject, ObservableObject {
     @Published private(set) var codexSettings = CodexProfileConfiguration()
     @Published private(set) var codexRefreshError: String?
     @Published private(set) var isCodexRefreshing = false
+    @Published private(set) var zaiUsage: ZAIUsage?
+    @Published private(set) var zaiSettings = ZAIProfileConfiguration()
+    @Published private(set) var zaiRefreshError: String?
+    @Published private(set) var isZAIRefreshing = false
+    /// z.ai publishes no public status feed; a neutral placeholder keeps the
+    /// popover header honest without implying an outage.
+    @Published private(set) var zaiStatus = ClaudeStatus(indicator: .unknown, description: "z.ai")
     @Published private(set) var isRefreshing: Bool = false
 
     // Error tracking for stale data / credential banners
@@ -76,6 +83,9 @@ class MenuBarManager: NSObject, ObservableObject {
     private var codexServices: [UUID: CodexAppServerService] = [:]
     private var codexRefreshTokens: [UUID: UUID] = [:]
     private var codexRefreshErrorsByProfile: [UUID: String] = [:]
+    private let zaiAPIService = ZAIAPIService()
+    private var zaiRefreshTokens: [UUID: UUID] = [:]
+    private var zaiRefreshErrorsByProfile: [UUID: String] = [:]
     private let statusService = ClaudeStatusService()
     private let openAIStatusService = OpenAIStatusService()
     private let dataStore = DataStore.shared
@@ -119,6 +129,7 @@ class MenuBarManager: NSObject, ObservableObject {
 
     private var multiProfileConfigObserver: NSObjectProtocol?
     private var codexSettingsObserver: NSObjectProtocol?
+    private var zaiSettingsObserver: NSObjectProtocol?
     private var profileDeletedObserver: NSObjectProtocol?
 
     // MARK: - Image Caching (CPU Optimization)
@@ -146,6 +157,9 @@ class MenuBarManager: NSObject, ObservableObject {
         codexUsage = profileManager.activeProfile?.codexUsage
         codexSettings = profileManager.activeProfile?.codexConfiguration
             ?? CodexProfileConfiguration()
+        zaiUsage = profileManager.activeProfile?.zaiUsage
+        zaiSettings = profileManager.activeProfile?.zaiConfiguration
+            ?? ZAIProfileConfiguration()
 
         // Check if we should use multi-profile mode
         if profileManager.displayMode == .multi {
@@ -229,6 +243,7 @@ class MenuBarManager: NSObject, ObservableObject {
         observeDisplayModeChanges()
         observeMultiProfileConfigChanges()
         observeCodexSettingsChanges()
+        observeZAISettingsChanges()
         observeProfileDeletion()
 
         // Setup headless mode observer if enabled (for Remote Desktop support)
@@ -307,6 +322,10 @@ class MenuBarManager: NSObject, ObservableObject {
             NotificationCenter.default.removeObserver(codexSettingsObserver)
             self.codexSettingsObserver = nil
         }
+        if let zaiSettingsObserver = zaiSettingsObserver {
+            NotificationCenter.default.removeObserver(zaiSettingsObserver)
+            self.zaiSettingsObserver = nil
+        }
         if let profileDeletedObserver = profileDeletedObserver {
             NotificationCenter.default.removeObserver(profileDeletedObserver)
             self.profileDeletedObserver = nil
@@ -326,6 +345,9 @@ class MenuBarManager: NSObject, ObservableObject {
         codexRefreshTokens.removeAll()
         codexRefreshErrorsByProfile.removeAll()
         isCodexRefreshing = false
+        zaiRefreshTokens.removeAll()
+        zaiRefreshErrorsByProfile.removeAll()
+        isZAIRefreshing = false
         statusItem = nil
         statusBarUIManager?.cleanup()
         statusBarUIManager = nil
@@ -348,6 +370,9 @@ class MenuBarManager: NSObject, ObservableObject {
         codexRefreshTokens.removeValue(forKey: profileId)
         codexRefreshErrorsByProfile.removeValue(forKey: profileId)
         updateCodexRefreshingState()
+        zaiRefreshTokens.removeValue(forKey: profileId)
+        zaiRefreshErrorsByProfile.removeValue(forKey: profileId)
+        updateZAIRefreshingState()
     }
 
     // MARK: - Profile Observation
@@ -409,13 +434,18 @@ class MenuBarManager: NSObject, ObservableObject {
             self.codexUsage = profile.codexUsage
             self.codexSettings = profile.codexConfiguration
             self.codexRefreshError = self.codexRefreshErrorsByProfile[profile.id]
+            self.zaiUsage = profile.zaiUsage
+            self.zaiSettings = profile.zaiConfiguration
+            self.zaiRefreshError = self.zaiRefreshErrorsByProfile[profile.id]
             self.isRefreshing = false
             self.updateCodexRefreshingState()
+            self.updateZAIRefreshingState()
         }
 
         // 2. Update refresh interval with profile's setting
         restartAutoRefreshWithInterval(profile.refreshInterval)
         reconcileCodexServices()
+        reconcileZAIRefreshState()
 
         // 3. Update menu bar based on current display mode
         // IMPORTANT: In multi-profile mode, we update all icons, not just switch config
@@ -743,7 +773,8 @@ class MenuBarManager: NSObject, ObservableObject {
                 profiles: profileManager.profiles,
                 config: config,
                 activeProfileId: profileManager.activeProfile?.id,
-                codexRefreshErrors: codexRefreshErrorsByProfile
+                codexRefreshErrors: codexRefreshErrorsByProfile,
+                zaiRefreshErrors: zaiRefreshErrorsByProfile
             )
         } else {
             // Single profile mode - use the standard update
@@ -752,7 +783,9 @@ class MenuBarManager: NSObject, ObservableObject {
                 apiUsage: apiUsage,
                 codexUsage: codexUsage,
                 config: effectiveConfig,
-                codexSettings: codexSettings
+                codexSettings: codexSettings,
+                zaiUsage: zaiUsage,
+                zaiSettings: zaiSettings
             )
         }
     }
@@ -765,7 +798,9 @@ class MenuBarManager: NSObject, ObservableObject {
             apiUsage: apiUsage,
             codexUsage: codexUsage,
             config: effectiveMenuBarConfiguration(from: profileManager.activeProfile?.iconConfig ?? .default),
-            codexSettings: codexSettings
+            codexSettings: codexSettings,
+            zaiUsage: zaiUsage,
+            zaiSettings: zaiSettings
         )
     }
 
@@ -983,6 +1018,31 @@ class MenuBarManager: NSObject, ObservableObject {
         }
     }
 
+    private func observeZAISettingsChanges() {
+        zaiSettingsObserver = NotificationCenter.default.addObserver(
+            forName: .zaiSettingsChanged,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self else { return }
+            Task { @MainActor in
+                guard let profile = self.profileManager.activeProfile,
+                      profile.provider == .zai else { return }
+                self.zaiSettings = profile.zaiConfiguration
+                self.zaiUsage = profile.zaiUsage
+                self.zaiRefreshError = self.zaiRefreshErrorsByProfile[profile.id]
+
+                if self.profileManager.displayMode == .multi {
+                    self.updateMultiProfileDisplay()
+                } else {
+                    self.updateMenuBarDisplay(with: self.profileManager.activeProfile?.iconConfig ?? .default)
+                }
+
+                self.refreshZAIUsage(profileID: profile.id, reportUnavailable: true)
+            }
+        }
+    }
+
     private func observeProfileDeletion() {
         profileDeletedObserver = NotificationCenter.default.addObserver(
             forName: .profileDeleted,
@@ -1030,6 +1090,7 @@ class MenuBarManager: NSObject, ObservableObject {
 
         LoggingService.shared.log("MenuBarManager: Display mode changed to \(displayMode.rawValue)")
         reconcileCodexServices()
+        reconcileZAIRefreshState()
 
         if displayMode == .multi {
             // Switch to multi-profile mode
@@ -1085,6 +1146,9 @@ class MenuBarManager: NSObject, ObservableObject {
         if profile.provider == .codex {
             return profile.codexConfiguration.validationError == nil
         }
+        if profile.provider == .zai {
+            return profile.zaiAPIKey != nil
+        }
         return profile.hasUsageCredentials
             || ClaudeCodeSyncService.shared.hasUsableSystemCredentials()
     }
@@ -1096,9 +1160,11 @@ class MenuBarManager: NSObject, ObservableObject {
             var metric = metric
             switch provider {
             case .claude:
-                if metric.metricType == .codex || !hasCredentials { metric.isEnabled = false }
+                if metric.metricType == .codex || metric.metricType == .zai || !hasCredentials { metric.isEnabled = false }
             case .codex:
                 if metric.metricType != .codex { metric.isEnabled = false }
+            case .zai:
+                if metric.metricType != .zai { metric.isEnabled = false }
             }
             return metric
         }
@@ -1117,6 +1183,7 @@ class MenuBarManager: NSObject, ObservableObject {
 
     private func setupMultiProfileMode() {
         reconcileCodexServices()
+        reconcileZAIRefreshState()
         let selectedProfiles = profileManager.getSelectedProfiles()
         let config = profileManager.multiProfileConfig
 
@@ -1133,7 +1200,8 @@ class MenuBarManager: NSObject, ObservableObject {
                 profiles: self.profileManager.profiles,
                 config: config,
                 activeProfileId: self.profileManager.activeProfile?.id,
-                codexRefreshErrors: self.codexRefreshErrorsByProfile
+                codexRefreshErrors: self.codexRefreshErrorsByProfile,
+                zaiRefreshErrors: self.zaiRefreshErrorsByProfile
             )
         }
 
@@ -1147,6 +1215,7 @@ class MenuBarManager: NSObject, ObservableObject {
     /// Use this when only icon config changed but the set of profiles may or may not have changed.
     private func updateMultiProfileDisplay() {
         reconcileCodexServices()
+        reconcileZAIRefreshState()
         let selectedProfiles = profileManager.getSelectedProfiles()
         let config = profileManager.multiProfileConfig
 
@@ -1165,7 +1234,8 @@ class MenuBarManager: NSObject, ObservableObject {
                 profiles: self.profileManager.profiles,
                 config: config,
                 activeProfileId: self.profileManager.activeProfile?.id,
-                codexRefreshErrors: self.codexRefreshErrorsByProfile
+                codexRefreshErrors: self.codexRefreshErrorsByProfile,
+                zaiRefreshErrors: self.zaiRefreshErrorsByProfile
             )
         }
 
@@ -1198,6 +1268,34 @@ class MenuBarManager: NSObject, ObservableObject {
             codexRefreshErrorsByProfile.removeValue(forKey: profileID)
         }
         updateCodexRefreshingState()
+    }
+
+    /// Drops z.ai refresh bookkeeping for profiles that are no longer
+    /// displayed or active. Unlike Codex there is no app-server process to
+    /// stop — z.ai is a plain HTTP fetch — so only tokens and error state
+    /// need pruning.
+    private func reconcileZAIRefreshState() {
+        let retainedProfileIDs: Set<UUID>
+        if profileManager.displayMode == .multi {
+            retainedProfileIDs = Set(
+                profileManager.profiles
+                    .filter { $0.provider == .zai && $0.isSelectedForDisplay }
+                    .map(\.id)
+            )
+        } else if let active = profileManager.activeProfile, active.provider == .zai {
+            retainedProfileIDs = [active.id]
+        } else {
+            retainedProfileIDs = []
+        }
+
+        let retiredProfileIDs = Set(zaiRefreshTokens.keys)
+            .union(zaiRefreshErrorsByProfile.keys)
+            .subtracting(retainedProfileIDs)
+        for profileID in retiredProfileIDs {
+            zaiRefreshTokens.removeValue(forKey: profileID)
+            zaiRefreshErrorsByProfile.removeValue(forKey: profileID)
+        }
+        updateZAIRefreshingState()
     }
 
     /// Refreshes usage data for all profiles selected for multi-profile display
@@ -1330,6 +1428,11 @@ class MenuBarManager: NSObject, ObservableObject {
                     continue
                 }
 
+                if profile.provider == .zai {
+                    await self.refreshZAISelectedProfile(profile)
+                    continue
+                }
+
                 // Capture previous usage for reset detection
                 let previousUsage = profile.claudeUsage
 
@@ -1414,7 +1517,8 @@ class MenuBarManager: NSObject, ObservableObject {
                     profiles: self.profileManager.profiles,
                     config: config,
                     activeProfileId: self.profileManager.activeProfile?.id,
-                    codexRefreshErrors: self.codexRefreshErrorsByProfile
+                    codexRefreshErrors: self.codexRefreshErrorsByProfile,
+                    zaiRefreshErrors: self.zaiRefreshErrorsByProfile
                 )
                 self.consecutiveRefreshFailures = 0
                 self.lastRefreshError = nil
@@ -1527,6 +1631,11 @@ class MenuBarManager: NSObject, ObservableObject {
                     }
                 }
             }
+            return
+        }
+
+        if profile.provider == .zai {
+            refreshZAIUsage(profileID: profile.id, reportUnavailable: true)
             return
         }
 
@@ -1719,6 +1828,11 @@ class MenuBarManager: NSObject, ObservableObject {
         refreshCodexUsage(profileID: profile.id, reportUnavailable: true)
     }
 
+    func refreshZAIUsageNow() {
+        guard let profile = profileManager.activeProfile, profile.provider == .zai else { return }
+        refreshZAIUsage(profileID: profile.id, reportUnavailable: true)
+    }
+
     private func refreshCodexUsage(profileID: UUID, reportUnavailable: Bool = false) {
         guard let profile = profileManager.profiles.first(where: {
             $0.id == profileID && $0.provider == .codex
@@ -1844,6 +1958,177 @@ class MenuBarManager: NSObject, ObservableObject {
             throw CancellationError()
         }
         return try await service.fetchUsage(configuration: profile.codexConfiguration)
+    }
+
+    private func refreshZAIUsage(profileID: UUID, reportUnavailable: Bool = false) {
+        guard let profile = profileManager.profiles.first(where: {
+            $0.id == profileID && $0.provider == .zai
+        }) else { return }
+        guard let apiKey = profile.zaiAPIKey else {
+            if reportUnavailable {
+                zaiRefreshErrorsByProfile[profile.id] = "No z.ai API key configured."
+                if profileManager.activeProfile?.id == profile.id {
+                    zaiRefreshError = "No z.ai API key configured."
+                }
+            }
+            return
+        }
+        guard let refreshToken = beginZAIRefresh(profileID: profileID) else { return }
+
+        Task {
+            do {
+                let snapshot = try await fetchZAIUsage(
+                    for: profile,
+                    apiKey: apiKey,
+                    refreshToken: refreshToken
+                )
+                await MainActor.run {
+                    guard self.zaiRefreshTokens[profile.id] == refreshToken else {
+                        return
+                    }
+                    guard let currentProfile = self.profileManager.profiles.first(where: {
+                              $0.id == profile.id && $0.provider == .zai
+                          }),
+                          currentProfile.zaiAPIKey == apiKey else {
+                        self.zaiRefreshTokens.removeValue(forKey: profile.id)
+                        self.updateZAIRefreshingState()
+                        return
+                    }
+                    self.zaiRefreshTokens.removeValue(forKey: profile.id)
+                    self.zaiRefreshErrorsByProfile.removeValue(forKey: profile.id)
+                    self.profileManager.saveZAIUsage(snapshot, for: profile.id)
+                    WidgetSnapshotService.shared.publish(
+                        profiles: self.profileManager.profiles,
+                        activeProfileId: self.profileManager.activeProfile?.id
+                    )
+                    if self.profileManager.activeProfile?.id == profile.id {
+                        self.zaiUsage = snapshot
+                        self.zaiSettings = currentProfile.zaiConfiguration
+                        self.zaiRefreshError = nil
+                    }
+                    NotificationManager.shared.checkAndNotify(
+                        zaiUsage: snapshot,
+                        profileID: profile.id,
+                        profileName: currentProfile.name,
+                        settings: currentProfile.notificationSettings,
+                        selectedLimitID: currentProfile.zaiConfiguration.selectedLimitID
+                    )
+                    self.updateAllStatusBarIcons()
+                    self.updateZAIRefreshingState()
+                }
+            } catch {
+                LoggingService.shared.log("MenuBarManager: z.ai usage refresh failed: \(error.localizedDescription)")
+                await MainActor.run {
+                    guard self.zaiRefreshTokens[profile.id] == refreshToken else {
+                        return
+                    }
+                    guard let currentProfile = self.profileManager.profiles.first(where: {
+                              $0.id == profile.id && $0.provider == .zai
+                          }),
+                          currentProfile.zaiAPIKey == apiKey else {
+                        self.zaiRefreshTokens.removeValue(forKey: profile.id)
+                        self.updateZAIRefreshingState()
+                        return
+                    }
+                    self.zaiRefreshTokens.removeValue(forKey: profile.id)
+                    self.zaiRefreshErrorsByProfile[profile.id] = error.localizedDescription
+                    if self.profileManager.activeProfile?.id == profile.id {
+                        self.zaiRefreshError = error.localizedDescription
+                    }
+                    self.updateZAIRefreshingState()
+                    self.updateAllStatusBarIcons()
+                }
+            }
+        }
+    }
+
+    private func beginZAIRefresh(profileID: UUID) -> UUID? {
+        guard zaiRefreshTokens[profileID] == nil else { return nil }
+        let refreshToken = UUID()
+        zaiRefreshTokens[profileID] = refreshToken
+        updateZAIRefreshingState()
+        return refreshToken
+    }
+
+    /// Refreshes one z.ai profile as part of the multi-profile refresh loop.
+    /// Re-validates the refresh token and the profile's API key after every
+    /// suspension so racing profile edits can't apply one key's quota to
+    /// another profile.
+    private func refreshZAISelectedProfile(_ profile: Profile) async {
+        guard let apiKey = profile.zaiAPIKey else { return }
+        guard let refreshToken = beginZAIRefresh(profileID: profile.id) else { return }
+
+        do {
+            let snapshot = try await fetchZAIUsage(
+                for: profile,
+                apiKey: apiKey,
+                refreshToken: refreshToken
+            )
+            guard zaiRefreshTokens[profile.id] == refreshToken else { return }
+            guard let currentProfile = profileManager.profiles.first(where: {
+                $0.id == profile.id && $0.provider == .zai
+            }), currentProfile.zaiAPIKey == apiKey else {
+                zaiRefreshTokens.removeValue(forKey: profile.id)
+                updateZAIRefreshingState()
+                return
+            }
+            zaiRefreshTokens.removeValue(forKey: profile.id)
+            zaiRefreshErrorsByProfile.removeValue(forKey: profile.id)
+            profileManager.saveZAIUsage(snapshot, for: profile.id)
+            if profile.id == profileManager.activeProfile?.id {
+                zaiUsage = snapshot
+                zaiSettings = currentProfile.zaiConfiguration
+                zaiRefreshError = nil
+            }
+            NotificationManager.shared.checkAndNotify(
+                zaiUsage: snapshot,
+                profileID: profile.id,
+                profileName: currentProfile.name,
+                settings: currentProfile.notificationSettings,
+                selectedLimitID: currentProfile.zaiConfiguration.selectedLimitID
+            )
+            updateZAIRefreshingState()
+        } catch {
+            LoggingService.shared.logError("Failed to refresh z.ai profile '\(profile.name)': \(error.localizedDescription)")
+            guard zaiRefreshTokens[profile.id] == refreshToken else { return }
+            guard let currentProfile = profileManager.profiles.first(where: {
+                $0.id == profile.id && $0.provider == .zai
+            }), currentProfile.zaiAPIKey == apiKey else {
+                zaiRefreshTokens.removeValue(forKey: profile.id)
+                updateZAIRefreshingState()
+                return
+            }
+            zaiRefreshTokens.removeValue(forKey: profile.id)
+            zaiRefreshErrorsByProfile[profile.id] = error.localizedDescription
+            if profile.id == profileManager.activeProfile?.id {
+                zaiRefreshError = error.localizedDescription
+            }
+            updateZAIRefreshingState()
+        }
+    }
+
+    private func updateZAIRefreshingState() {
+        guard let profile = profileManager.activeProfile, profile.provider == .zai else {
+            isZAIRefreshing = false
+            return
+        }
+        isZAIRefreshing = zaiRefreshTokens[profile.id] != nil
+    }
+
+    private func fetchZAIUsage(
+        for profile: Profile,
+        apiKey: String,
+        refreshToken: UUID
+    ) async throws -> ZAIUsage {
+        guard await MainActor.run(body: {
+            self.zaiRefreshTokens[profile.id] == refreshToken
+                && self.profileManager.profiles.contains(where: {
+                    $0.id == profile.id && $0.provider == .zai
+                })
+        }) else {
+            throw CancellationError()
+        }
+        return try await zaiAPIService.fetchUsage(apiKey: apiKey)
     }
 
     /// Shows a brief success notification for user-triggered refreshes

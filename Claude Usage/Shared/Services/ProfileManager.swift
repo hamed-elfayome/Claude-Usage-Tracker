@@ -76,8 +76,9 @@ class ProfileManager: ObservableObject {
             provider: provider,
             hasCliAccount: false,
             codexConfiguration: copiedProfile?.codexConfiguration ?? CodexProfileConfiguration(),
+            zaiConfiguration: copiedProfile?.zaiConfiguration ?? ZAIProfileConfiguration(),
             iconConfig: copiedProfile?.iconConfig
-                ?? (provider == .codex ? .codexProfileDefault : .default),
+                ?? (provider == .codex ? .codexProfileDefault : (provider == .zai ? .zaiProfileDefault : .default)),
             refreshInterval: copiedProfile?.refreshInterval ?? 30.0,
             autoStartSessionEnabled: provider == .claude
                 ? (copiedProfile?.autoStartSessionEnabled ?? false)
@@ -254,7 +255,7 @@ class ProfileManager: ObservableObject {
         } else if updatedProfile.provider == .claude {
             LoggingService.shared.log("⚠️ Profile '\(updatedProfile.name)' has no CLI credentials JSON")
         } else {
-            LoggingService.shared.log("Codex profile activation does not change Claude Code credentials")
+            LoggingService.shared.log("\(updatedProfile.provider.displayName) profile activation does not change Claude Code credentials")
         }
 
         // Update last used timestamp
@@ -434,6 +435,19 @@ class ProfileManager: ObservableObject {
         }
         profileStore.saveProfiles(profiles)
         LoggingService.shared.log("Saved Codex usage for profile: \(profiles[index].name)")
+    }
+
+    func saveZAIUsage(_ usage: ZAIUsage, for profileId: UUID) {
+        guard let index = profiles.firstIndex(where: { $0.id == profileId }) else {
+            LoggingService.shared.logError("saveZAIUsage: Profile not found with ID: \(profileId)")
+            return
+        }
+        profiles[index].zaiUsage = usage
+        if activeProfile?.id == profileId {
+            activeProfile = profiles[index]
+        }
+        profileStore.saveProfiles(profiles)
+        LoggingService.shared.log("Saved z.ai usage for profile: \(profiles[index].name)")
     }
 
     // MARK: - Profile Settings

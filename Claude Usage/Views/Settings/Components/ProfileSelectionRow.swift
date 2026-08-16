@@ -48,6 +48,8 @@ struct ProfileSelectionRow: View {
                 HStack(spacing: 4) {
                     if profile.provider == .codex {
                         MetricBadge(letter: "CX", color: .green)
+                    } else if profile.provider == .zai {
+                        MetricBadge(letter: "Z", color: .teal)
                     } else if hasSessionMetric {
                         MetricBadge(letter: "S", color: .blue)
                     }

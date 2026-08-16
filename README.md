@@ -38,6 +38,7 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 - **Multi-Profile Display**: Monitor all profiles simultaneously in the menu bar
 - **Claude Code Integration**: Sync CLI accounts and auto-switch credentials when changing profiles
 - **OpenAI Codex Usage**: Monitor Codex rate-limit windows, credits, account plan, and lifetime tokens through the locally installed Codex CLI
+- **Z.ai GLM Usage**: Monitor GLM Coding Plan quotas — the 5-hour token window, weekly tokens, and monthly web-tool calls — with a z.ai API key
 - **Real-Time Monitoring**: Track session, weekly, and per-model usage (Fable, Opus, Sonnet, Design), API console usage, and API costs per profile
 - **Usage History**: Interactive charts tracking session, weekly, and billing data over time
 - **Global Shortcuts**: System-wide keyboard shortcuts (no Accessibility permission)
@@ -123,6 +124,25 @@ configuration remain managed by macOS/OpenSSH. Because background
 refreshes are non-interactive, `ssh <alias>` must work with a key, agent, or
 Keychain-backed credential and without a password prompt. App-server is never
 exposed directly on the network.
+
+### Z.ai GLM Coding Plan usage monitoring
+
+z.ai monitoring is optional and needs an API key from a GLM Coding Plan
+subscription. The key is stored in the macOS Keychain and is only ever sent to
+`api.z.ai` over HTTPS.
+
+1. Subscribe to a GLM Coding Plan (Lite, Pro, or Max) at [z.ai](https://z.ai).
+2. Create an API key under **z.ai → API Keys**.
+3. Open **Settings → Manage Profiles**, create a profile, and choose
+   **Z.ai GLM** as its provider.
+4. Select that profile and open **Z.ai Connection** to paste the API key.
+
+The tracker polls the z.ai quota API on the profile's refresh interval and
+shows every quota window it reports — typically the 5-hour token window, the
+weekly token window, and the monthly web-tool (MCP) call allowance. You can
+pick which window drives the menu bar icon and threshold alerts. Usage
+percentages follow z.ai's weighted credit calculation, so they already account
+for the higher cost of GLM-5.3 output tokens and off-peak discounts.
 
 ### Installation
 

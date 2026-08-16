@@ -3,6 +3,7 @@ import Foundation
 enum ProfileProvider: String, Codable, CaseIterable, Identifiable {
     case claude
     case codex
+    case zai
 
     var id: String { rawValue }
 
@@ -10,6 +11,7 @@ enum ProfileProvider: String, Codable, CaseIterable, Identifiable {
         switch self {
         case .claude: return "Claude"
         case .codex: return "OpenAI Codex"
+        case .zai: return "Z.ai GLM"
         }
     }
 
@@ -17,6 +19,7 @@ enum ProfileProvider: String, Codable, CaseIterable, Identifiable {
         switch self {
         case .claude: return "person.crop.circle.fill"
         case .codex: return "chevron.left.forwardslash.chevron.right"
+        case .zai: return "z.square.fill"
         }
     }
 }

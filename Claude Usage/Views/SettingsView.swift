@@ -300,6 +300,8 @@ struct SettingsView: View {
                     AppSettingsView()
                 case .openAICodex:
                     CodexSettingsView()
+                case .zaiGLM:
+                    ZAISettingsView()
                 case .manageProfiles:
                     ManageProfilesView()
                 case .language:
@@ -335,10 +337,15 @@ struct SettingsView: View {
         .background(SettingsBackground())
         .onChange(of: profileManager.activeProfile?.id) { _, _ in
             guard let profile = profileManager.activeProfile else { return }
-            if profile.provider == .codex,
+            if profile.provider != .claude,
                [.claudeAI, .apiConsole, .cliAccount, .history].contains(selectedSection) {
+                selectedSection = profile.provider == .codex ? .openAICodex : .zaiGLM
+            } else if profile.provider == .codex, selectedSection == .zaiGLM {
                 selectedSection = .openAICodex
-            } else if profile.provider == .claude, selectedSection == .openAICodex {
+            } else if profile.provider == .zai, selectedSection == .openAICodex {
+                selectedSection = .zaiGLM
+            } else if profile.provider == .claude,
+                      selectedSection == .openAICodex || selectedSection == .zaiGLM {
                 selectedSection = .claudeAI
             }
         }
@@ -613,6 +620,7 @@ enum SettingsSection: String, CaseIterable {
     // Shared Settings
     case appSettings
     case openAICodex
+    case zaiGLM
     case manageProfiles
     case language
     case claudeCode
@@ -635,6 +643,7 @@ enum SettingsSection: String, CaseIterable {
         case .history: return "section.history_title".localized
         case .appSettings: return "section.app_settings_title".localized
         case .openAICodex: return "codex.settings.nav_title".localized
+        case .zaiGLM: return "zai.settings.nav_title".localized
         case .manageProfiles: return "section.manage_profiles_title".localized
         case .language: return "language.title".localized
         case .claudeCode: return "settings.claude_cli".localized
@@ -659,6 +668,7 @@ enum SettingsSection: String, CaseIterable {
         case .history: return "chart.bar.xaxis"
         case .appSettings: return "gearshape.2.fill"
         case .openAICodex: return "chevron.left.forwardslash.chevron.right"
+        case .zaiGLM: return "z.square.fill"
         case .manageProfiles: return "person.2.fill"
         case .language: return "globe"
         case .claudeCode: return "chevron.left.forwardslash.chevron.right"
@@ -683,6 +693,7 @@ enum SettingsSection: String, CaseIterable {
         case .history: return "section.history_desc".localized
         case .appSettings: return "section.app_settings_desc".localized
         case .openAICodex: return "codex.settings.nav_desc".localized
+        case .zaiGLM: return "zai.settings.nav_desc".localized
         case .manageProfiles: return "section.manage_profiles_desc".localized
         case .language: return "language.subtitle".localized
         case .claudeCode: return "settings.claude_cli.description".localized
@@ -708,7 +719,7 @@ enum SettingsSection: String, CaseIterable {
 
     var isCredential: Bool {
         switch self {
-        case .claudeAI, .apiConsole, .cliAccount, .openAICodex:
+        case .claudeAI, .apiConsole, .cliAccount, .openAICodex, .zaiGLM:
             return true
         default:
             return false
@@ -794,6 +805,18 @@ struct ProfileCredentialCardsRow: View {
                         title: "Codex Connection",
                         isConnected: profile.codexUsage != nil,
                         isSelected: selectedSection == .openAICodex
+                    )
+                }
+                .buttonStyle(.plain)
+            } else if let profile = profileManager.activeProfile, profile.provider == .zai {
+                Button {
+                    selectedSection = .zaiGLM
+                } label: {
+                    CredentialMiniCard(
+                        icon: ProfileProvider.zai.icon,
+                        title: "Z.ai Connection",
+                        isConnected: profile.zaiAPIKey != nil,
+                        isSelected: selectedSection == .zaiGLM
                     )
                 }
                 .buttonStyle(.plain)

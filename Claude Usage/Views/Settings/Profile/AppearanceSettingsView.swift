@@ -21,6 +21,10 @@ struct AppearanceSettingsView: View {
         profileManager.activeProfile?.provider == .codex
     }
 
+    private var isZAIProfile: Bool {
+        profileManager.activeProfile?.provider == .zai
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: DesignTokens.Spacing.section) {
@@ -165,8 +169,20 @@ struct AppearanceSettingsView: View {
                             )
                         }
 
+                        if isZAIProfile,
+                           let zaiIndex = configuration.metrics.firstIndex(where: { $0.metricType == .zai }) {
+                            MetricIconCard(
+                                metricType: .zai,
+                                config: Binding(
+                                    get: { configuration.metrics[zaiIndex] },
+                                    set: { configuration.metrics[zaiIndex] = $0 }
+                                ),
+                                onConfigChanged: { saveConfiguration() }
+                            )
+                        }
+
                         // Session Usage
-                        if !isCodexProfile,
+                        if !isCodexProfile && !isZAIProfile,
                            let sessionIndex = configuration.metrics.firstIndex(where: { $0.metricType == .session }) {
                             MetricIconCard(
                                 metricType: .session,
@@ -181,7 +197,7 @@ struct AppearanceSettingsView: View {
                         }
 
                         // Week Usage
-                        if !isCodexProfile,
+                        if !isCodexProfile && !isZAIProfile,
                            let weekIndex = configuration.metrics.firstIndex(where: { $0.metricType == .week }) {
                             MetricIconCard(
                                 metricType: .week,
@@ -196,7 +212,7 @@ struct AppearanceSettingsView: View {
                         }
 
                         // API Credits
-                        if !isCodexProfile,
+                        if !isCodexProfile && !isZAIProfile,
                            let apiIndex = configuration.metrics.firstIndex(where: { $0.metricType == .api }) {
                             MetricIconCard(
                                 metricType: .api,

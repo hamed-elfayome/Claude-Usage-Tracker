@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added Z.ai as a user-created profile provider for GLM Coding Plan subscriptions, sharing the existing profile selector, appearance, refresh, notification, and multi-profile UX.
+- Added per-profile z.ai API key storage in the macOS Keychain (never in the cleartext profile plist), used to poll the z.ai monitor quota API.
+- Added z.ai quota windows (5-hour tokens, weekly tokens, monthly web-tool calls) to the menu bar icon, popover dashboard, notifications, and desktop widgets, with a selectable tray quota window per profile.
+- Added invalid-key and no-active-plan error reporting, plan-tier display, and z.ai setup guidance to onboarding, settings, and the README.
 - Added OpenAI Codex as a user-created profile provider, sharing the existing profile selector, appearance, refresh, notification, and multi-profile UX.
 - Added per-profile local Codex connections with optional executable and `CODEX_HOME`, plus remote connections through existing macOS SSH host aliases and key/agent authentication.
 - Added Codex app-server diagnostics, rate-limit selection, account and plan details, credits, lifetime tokens, OpenAI service status, and provider-correct links and popovers.

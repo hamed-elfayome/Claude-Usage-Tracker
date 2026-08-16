@@ -36,6 +36,9 @@ extension Notification.Name {
     /// Posted when an OpenAI Codex profile's connection settings change.
     static let codexSettingsChanged = Notification.Name("codexSettingsChanged")
 
+    /// Posted when a z.ai profile's settings or API key change.
+    static let zaiSettingsChanged = Notification.Name("zaiSettingsChanged")
+
     /// Posted after a profile is deleted so runtime resources can be released.
     static let profileDeleted = Notification.Name("profileDeleted")
 }

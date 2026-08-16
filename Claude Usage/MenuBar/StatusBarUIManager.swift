@@ -502,7 +502,8 @@ final class StatusBarUIManager {
         profiles: [Profile],
         config: MultiProfileDisplayConfig,
         activeProfileId: UUID? = nil,
-        codexRefreshErrors: [UUID: String] = [:]
+        codexRefreshErrors: [UUID: String] = [:],
+        zaiRefreshErrors: [UUID: String] = [:]
     ) {
         guard isMultiProfileMode else { return }
 
@@ -518,6 +519,16 @@ final class StatusBarUIManager {
                     config: config,
                     activeProfileId: activeProfileId,
                     refreshError: codexRefreshErrors[profile.id]
+                )
+                continue
+            }
+
+            if profile.provider == .zai {
+                updateZAIProfileButton(
+                    profile: profile,
+                    config: config,
+                    activeProfileId: activeProfileId,
+                    refreshError: zaiRefreshErrors[profile.id]
                 )
                 continue
             }
@@ -862,6 +873,193 @@ final class StatusBarUIManager {
         }
     }
 
+    /// Renders a z.ai profile as a peer of the selected Claude profiles. The
+    /// selected quota window is the primary value; the weekly window supplies
+    /// the optional second ring/bar.
+    func updateZAIProfileButton(
+        profile: Profile,
+        config: MultiProfileDisplayConfig,
+        activeProfileId: UUID? = nil,
+        refreshError: String? = nil
+    ) {
+        guard isMultiProfileMode,
+              profile.provider == .zai,
+              let statusItem = multiProfileStatusItems[profile.id],
+              let button = statusItem.button else {
+            return
+        }
+
+        guard let usage = profile.zaiUsage,
+              let selectedLimit = usage.rateLimit(
+                  preferredID: profile.zaiConfiguration.selectedLimitID
+              ),
+              let primaryWindow = selectedLimit.primary else {
+            let menuBarIsDark = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            let image = renderer.createDefaultAppLogo(isDarkMode: menuBarIsDark)
+            button.toolTip = "\(profile.name): \(refreshError ?? "Z.ai usage unavailable")"
+            if profile.id == activeProfileId && config.showActiveProfileIndicator {
+                let underlined = addGreenUnderline(to: image)
+                underlined.isTemplate = false
+                setButtonImage(button, image: underlined)
+            } else {
+                image.isTemplate = false
+                setButtonImage(button, image: image)
+            }
+            return
+        }
+        if let refreshError {
+            button.toolTip = "\(profile.name): \(refreshError) · Showing data from \(usage.lastUpdated.formatted(date: .abbreviated, time: .shortened))"
+        } else {
+            button.toolTip = nil
+        }
+
+        let secondaryWindow = usage.rateLimits
+            .first(where: { $0.id != selectedLimit.id && $0.kind == .tokens })?
+            .primary
+
+        let primaryUsed = primaryWindow.usedPercent
+        let secondaryUsed = secondaryWindow?.usedPercent ?? 0
+        let showSecondary = config.showWeek && secondaryWindow != nil
+        let showRemaining = config.showRemainingPercentage
+
+        let primaryDisplay = UsageStatusCalculator.getDisplayPercentage(
+            usedPercentage: primaryUsed,
+            showRemaining: showRemaining
+        )
+        let secondaryDisplay = UsageStatusCalculator.getDisplayPercentage(
+            usedPercentage: secondaryUsed,
+            showRemaining: showRemaining
+        )
+        let primaryElapsed: Double? = {
+            guard let duration = primaryWindow.duration else { return nil }
+            return UsageStatusCalculator.elapsedFraction(
+                resetTime: primaryWindow.resetsAt,
+                duration: duration,
+                showRemaining: false
+            )
+        }()
+        let secondaryElapsed = secondaryWindow.flatMap { window -> Double? in
+            guard let duration = window.duration else { return nil }
+            return UsageStatusCalculator.elapsedFraction(
+                resetTime: window.resetsAt,
+                duration: duration,
+                showRemaining: false
+            )
+        }
+        let primaryStatus = UsageStatusCalculator.calculateStatus(
+            usedPercentage: primaryUsed,
+            showRemaining: showRemaining,
+            elapsedFraction: config.usePaceColoring ? primaryElapsed : nil
+        )
+        let secondaryStatus = UsageStatusCalculator.calculateStatus(
+            usedPercentage: secondaryUsed,
+            showRemaining: showRemaining,
+            elapsedFraction: config.usePaceColoring ? secondaryElapsed : nil
+        )
+        let primaryMarker: CGFloat? = config.showTimeMarker
+            ? primaryElapsed.map { CGFloat(showRemaining ? 1 - $0 : $0) }
+            : nil
+        let secondaryMarker: CGFloat? = config.showTimeMarker
+            ? secondaryElapsed.map { CGFloat(showRemaining ? 1 - $0 : $0) }
+            : nil
+        let primaryPace = config.showPaceMarker
+            ? primaryElapsed.flatMap { PaceStatus.calculate(usedPercentage: primaryUsed, elapsedFraction: $0) }
+            : nil
+        let secondaryPace = config.showPaceMarker
+            ? secondaryElapsed.flatMap { PaceStatus.calculate(usedPercentage: secondaryUsed, elapsedFraction: $0) }
+            : nil
+        let menuBarIsDark = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        let monochrome = config.useSystemColor
+
+        let image: NSImage
+        switch config.iconStyle {
+        case .concentric:
+            if config.showProfileLabel {
+                image = renderer.createConcentricIconWithLabel(
+                    sessionPercentage: primaryDisplay,
+                    weekPercentage: showSecondary ? secondaryDisplay : 0,
+                    sessionStatus: primaryStatus,
+                    weekStatus: secondaryStatus,
+                    profileName: profile.name,
+                    monochromeMode: monochrome,
+                    isDarkMode: menuBarIsDark,
+                    useSystemColor: false,
+                    sessionTimeMarker: primaryMarker,
+                    weekTimeMarker: showSecondary ? secondaryMarker : nil,
+                    sessionPaceStatus: primaryPace,
+                    weekPaceStatus: showSecondary ? secondaryPace : nil,
+                    showPaceMarker: config.showPaceMarker
+                )
+            } else {
+                image = renderer.createConcentricIcon(
+                    sessionPercentage: primaryDisplay,
+                    weekPercentage: showSecondary ? secondaryDisplay : 0,
+                    sessionStatus: primaryStatus,
+                    weekStatus: secondaryStatus,
+                    profileInitial: String(profile.name.prefix(1)),
+                    monochromeMode: monochrome,
+                    isDarkMode: menuBarIsDark,
+                    useSystemColor: false,
+                    sessionTimeMarker: primaryMarker,
+                    weekTimeMarker: showSecondary ? secondaryMarker : nil,
+                    sessionPaceStatus: primaryPace,
+                    weekPaceStatus: showSecondary ? secondaryPace : nil,
+                    showPaceMarker: config.showPaceMarker
+                )
+            }
+        case .progressBar:
+            image = renderer.createMultiProfileProgressBar(
+                sessionPercentage: primaryDisplay,
+                weekPercentage: showSecondary ? secondaryDisplay : nil,
+                sessionStatus: primaryStatus,
+                weekStatus: secondaryStatus,
+                profileName: config.showProfileLabel ? profile.name : nil,
+                monochromeMode: monochrome,
+                isDarkMode: menuBarIsDark,
+                useSystemColor: false,
+                sessionTimeMarker: primaryMarker,
+                weekTimeMarker: showSecondary ? secondaryMarker : nil,
+                sessionPaceStatus: primaryPace,
+                weekPaceStatus: showSecondary ? secondaryPace : nil,
+                showPaceMarker: config.showPaceMarker
+            )
+        case .compact:
+            image = renderer.createCompactDot(
+                percentage: primaryDisplay,
+                status: primaryStatus,
+                profileInitial: config.showProfileLabel ? String(profile.name.prefix(1)) : nil,
+                monochromeMode: monochrome,
+                isDarkMode: menuBarIsDark,
+                useSystemColor: false,
+                paceStatus: primaryPace,
+                showPaceMarker: config.showPaceMarker
+            )
+        case .percentage:
+            image = renderer.createMultiProfilePercentage(
+                sessionPercentage: primaryDisplay,
+                weekPercentage: showSecondary ? secondaryDisplay : nil,
+                sessionStatus: primaryStatus,
+                weekStatus: secondaryStatus,
+                profileName: config.showProfileLabel ? profile.name : nil,
+                monochromeMode: monochrome,
+                isDarkMode: menuBarIsDark,
+                useSystemColor: false,
+                sessionPaceStatus: primaryPace,
+                weekPaceStatus: showSecondary ? secondaryPace : nil,
+                showPaceMarker: config.showPaceMarker
+            )
+        }
+
+        if profile.id == activeProfileId && config.showActiveProfileIndicator {
+            let underlined = addGreenUnderline(to: image)
+            underlined.isTemplate = false
+            setButtonImage(button, image: underlined)
+        } else {
+            image.isTemplate = monochrome && !config.showPaceMarker
+            setButtonImage(button, image: image)
+        }
+    }
+
     /// Checks if currently in multi-profile mode
     var isInMultiProfileMode: Bool {
         return isMultiProfileMode
@@ -909,7 +1107,9 @@ final class StatusBarUIManager {
         apiUsage: APIUsage?,
         codexUsage: CodexUsage?,
         config: MenuBarIconConfiguration,
-        codexSettings: CodexProfileConfiguration
+        codexSettings: CodexProfileConfiguration,
+        zaiUsage: ZAIUsage? = nil,
+        zaiSettings: ZAIProfileConfiguration = ZAIProfileConfiguration()
     ) {
         if config.enabledMetrics.isEmpty {
             // Show default app logo
@@ -943,6 +1143,8 @@ final class StatusBarUIManager {
                 apiUsage: apiUsage,
                 codexUsage: codexUsage,
                 codexRateLimitID: codexSettings.selectedRateLimitID,
+                zaiUsage: zaiUsage,
+                zaiRateLimitID: zaiSettings.selectedLimitID,
                 isDarkMode: menuBarIsDark,
                 colorMode: config.colorMode,
                 singleColorHex: config.singleColorHex,
@@ -962,7 +1164,9 @@ final class StatusBarUIManager {
         apiUsage: APIUsage?,
         codexUsage: CodexUsage?,
         config: MenuBarIconConfiguration,
-        codexSettings: CodexProfileConfiguration
+        codexSettings: CodexProfileConfiguration,
+        zaiUsage: ZAIUsage? = nil,
+        zaiSettings: ZAIProfileConfiguration = ZAIProfileConfiguration()
     ) {
         guard let statusItem = statusItems[metricType],
               let button = statusItem.button else {
@@ -985,6 +1189,8 @@ final class StatusBarUIManager {
             apiUsage: apiUsage,
             codexUsage: codexUsage,
             codexRateLimitID: codexSettings.selectedRateLimitID,
+            zaiUsage: zaiUsage,
+            zaiRateLimitID: zaiSettings.selectedLimitID,
             isDarkMode: menuBarIsDark,
             colorMode: config.colorMode,
             singleColorHex: config.singleColorHex,
@@ -1003,7 +1209,7 @@ final class StatusBarUIManager {
 
     /// Get the first enabled metric's button (for backwards compatibility)
     var primaryButton: NSStatusBarButton? {
-        for metricType in [MenuBarMetricType.session, .week, .api, .codex] {
+        for metricType in [MenuBarMetricType.session, .week, .api, .codex, .zai] {
             if let button = statusItems[metricType]?.button {
                 return button
             }

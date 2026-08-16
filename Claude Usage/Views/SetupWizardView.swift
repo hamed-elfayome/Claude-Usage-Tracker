@@ -143,6 +143,8 @@ struct SetupWizardView: View {
 
             CodexOnboardingBanner()
 
+            ZAIOnboardingBanner()
+
             Divider()
 
             // Claude Code info section - compact (only show if credentials exist)
@@ -963,6 +965,9 @@ struct CLIDetectedSetupView: View {
                 CodexOnboardingBanner()
                     .padding(.horizontal, 40)
 
+                ZAIOnboardingBanner()
+                    .padding(.horizontal, 40)
+
                 // Start tracking button
                 Button(action: onStartTracking) {
                     HStack(spacing: 8) {
@@ -1016,6 +1021,39 @@ private struct CodexOnboardingBanner: View {
                 let command = isInstalled ? "codex login" : "npm install --global @openai/codex"
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(command, forType: .string)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 10)
+        .background(Color.accentColor.opacity(0.06))
+    }
+}
+
+private struct ZAIOnboardingBanner: View {
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: ProfileProvider.zai.icon)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(.accentColor)
+                .frame(width: 22)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text("zai.onboarding.title".localized)
+                    .font(.system(size: 11, weight: .semibold))
+                Text("zai.onboarding.optional".localized)
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer()
+
+            Button("zai.onboarding.open_console".localized) {
+                if let url = URL(string: "https://z.ai/manage-apikey/apikey") {
+                    NSWorkspace.shared.open(url)
+                }
             }
             .buttonStyle(.bordered)
             .controlSize(.small)

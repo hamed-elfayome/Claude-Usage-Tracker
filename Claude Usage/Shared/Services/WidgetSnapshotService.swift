@@ -111,6 +111,28 @@ final class WidgetSnapshotService {
                     weeklyResetTime: rateLimit.secondary?.resetsAt,
                     lastUpdated: usage.lastUpdated
                 )
+
+            case .zai:
+                guard let usage = profile.zaiUsage,
+                      let rateLimit = usage.rateLimit(
+                          preferredID: profile.zaiConfiguration.selectedLimitID
+                      ),
+                      let primary = rateLimit.primary else { return nil }
+                let weekly = usage.rateLimits
+                    .first(where: { $0.id != rateLimit.id && $0.kind == .tokens })?
+                    .primary
+                return WidgetSnapshot.ProfileEntry(
+                    id: profile.id,
+                    name: name,
+                    provider: .zai,
+                    isActive: isActive,
+                    isDisplayed: profile.isSelectedForDisplay,
+                    sessionPercentage: primary.usedPercent,
+                    sessionResetTime: primary.resetsAt,
+                    weeklyPercentage: weekly?.usedPercent,
+                    weeklyResetTime: weekly?.resetsAt,
+                    lastUpdated: usage.lastUpdated
+                )
             }
         }
         publish(entries: entries)

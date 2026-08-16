@@ -106,6 +106,10 @@ struct PopoverContentView: View {
         displayProfile?.provider == .codex
     }
 
+    private var isZAIProfile: Bool {
+        displayProfile?.provider == .zai
+    }
+
     private var displayCodexUsage: CodexUsage? {
         if profileManager.displayMode == .multi, manager.clickedProfileId != nil {
             return displayProfile?.codexUsage
@@ -113,12 +117,25 @@ struct PopoverContentView: View {
         return manager.codexUsage
     }
 
+    private var displayZAIUsage: ZAIUsage? {
+        if profileManager.displayMode == .multi, manager.clickedProfileId != nil {
+            return displayProfile?.zaiUsage
+        }
+        return manager.zaiUsage
+    }
+
+    private var displayStatus: ClaudeStatus {
+        if isCodexProfile { return manager.openAIStatus }
+        if isZAIProfile { return manager.zaiStatus }
+        return manager.status
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Header
             SmartHeader(
                 usage: displayUsage,
-                status: isCodexProfile ? manager.openAIStatus : manager.status,
+                status: displayStatus,
                 profile: displayProfile,
                 isRefreshing: isRefreshing,
                 onRefresh: refresh,
@@ -130,7 +147,17 @@ struct PopoverContentView: View {
             PopoverDivider()
 
             // Error / stale data banners
-            if isCodexProfile,
+            if isZAIProfile,
+               displayProfile?.id == profileManager.activeProfile?.id,
+               let refreshError = manager.zaiRefreshError {
+                StatusBannerView(
+                    icon: "exclamationmark.triangle.fill",
+                    message: refreshError,
+                    color: .orange
+                ) {
+                    onRefresh()
+                }
+            } else if isCodexProfile,
                displayProfile?.id == profileManager.activeProfile?.id,
                let refreshError = manager.codexRefreshError {
                 StatusBannerView(
@@ -140,7 +167,7 @@ struct PopoverContentView: View {
                 ) {
                     onRefresh()
                 }
-            } else if !isCodexProfile && manager.hasCredentialError {
+            } else if !isCodexProfile && !isZAIProfile && manager.hasCredentialError {
                 StatusBannerView(
                     icon: "exclamationmark.triangle.fill",
                     message: "popover.banner.credentials_expired".localized,
@@ -148,7 +175,7 @@ struct PopoverContentView: View {
                 ) {
                     onPreferences()
                 }
-            } else if !isCodexProfile && manager.consecutiveRefreshFailures >= 3 {
+            } else if !isCodexProfile && !isZAIProfile && manager.consecutiveRefreshFailures >= 3 {
                 StatusBannerView(
                     icon: "arrow.clockwise.circle.fill",
                     message: String(format: "popover.banner.refresh_failed".localized, manager.consecutiveRefreshFailures),
@@ -156,7 +183,7 @@ struct PopoverContentView: View {
                 ) {
                     onRefresh()
                 }
-            } else if !isCodexProfile, let lastRefresh = manager.lastSuccessfulRefreshTime,
+            } else if !isCodexProfile && !isZAIProfile, let lastRefresh = manager.lastSuccessfulRefreshTime,
                       Date().timeIntervalSince(lastRefresh) > 300 {
                 let minutesAgo = Int(Date().timeIntervalSince(lastRefresh) / 60)
                 StatusBannerView(
@@ -215,7 +242,13 @@ struct PopoverContentView: View {
             }
 
             // Usage
-            if isCodexProfile {
+            if isZAIProfile {
+                ZAIUsageDashboard(
+                    usage: displayZAIUsage,
+                    settings: displayProfile?.zaiConfiguration ?? ZAIProfileConfiguration(),
+                    profile: displayProfile
+                )
+            } else if isCodexProfile {
                 CodexUsageDashboard(
                     usage: displayCodexUsage,
                     settings: displayProfile?.codexConfiguration ?? CodexProfileConfiguration(),
@@ -229,7 +262,7 @@ struct PopoverContentView: View {
             }
 
             // Contextual Insights
-            if !isCodexProfile && showInsights {
+            if !isCodexProfile && !isZAIProfile && showInsights {
                 PopoverDivider()
                 ContextualInsights(usage: displayUsage)
                     .transition(.opacity)
@@ -515,15 +548,23 @@ struct SmartHeader: View {
     }
 
     private var statusURL: URL? {
-        URL(string: profile?.provider == .codex
-            ? "https://status.openai.com"
-            : "https://status.claude.com")
+        if profile?.provider == .codex {
+            return URL(string: "https://status.openai.com")
+        }
+        if profile?.provider == .zai {
+            return URL(string: "https://z.ai/manage-apikey/subscription")
+        }
+        return URL(string: "https://status.claude.com")
     }
 
     private var statusHelp: String {
-        profile?.provider == .codex
-            ? "Click to open status.openai.com"
-            : "Click to open status.claude.com"
+        if profile?.provider == .codex {
+            return "Click to open status.openai.com"
+        }
+        if profile?.provider == .zai {
+            return "Click to open your z.ai subscription"
+        }
+        return "Click to open status.claude.com"
     }
 
     private func profileInitials(for name: String) -> String {
@@ -928,6 +969,130 @@ struct CodexUsageDashboard: View {
             return "\(minutes / 60)-hour window"
         }
         return "\(minutes)-minute window"
+    }
+}
+
+// MARK: - Z.ai Provider Dashboard
+
+struct ZAIUsageDashboard: View {
+    let usage: ZAIUsage?
+    let settings: ZAIProfileConfiguration
+    let profile: Profile?
+
+    @StateObject private var profileManager = ProfileManager.shared
+
+    private var showRemainingPercentage: Bool {
+        if profileManager.displayMode == .multi {
+            return profileManager.multiProfileConfig.showRemainingPercentage
+        }
+        return profile?.iconConfig.showRemainingPercentage ?? false
+    }
+
+    private var showTimeMarker: Bool {
+        if profileManager.displayMode == .multi {
+            return profileManager.multiProfileConfig.showTimeMarker
+        }
+        return profile?.iconConfig.showTimeMarker ?? true
+    }
+
+    private var usePaceColoring: Bool {
+        if profileManager.displayMode == .multi {
+            return profileManager.multiProfileConfig.usePaceColoring
+        }
+        return profile?.iconConfig.usePaceColoring ?? true
+    }
+
+    private var showPaceMarker: Bool {
+        if profileManager.displayMode == .multi {
+            return profileManager.multiProfileConfig.showPaceMarker
+        }
+        return profile?.iconConfig.showPaceMarker ?? true
+    }
+
+    private var timeDisplay: PopoverTimeDisplay {
+        SharedDataStore.shared.loadPopoverTimeDisplay()
+    }
+
+    private func orderedRateLimits(_ usage: ZAIUsage) -> [ZAIRateLimit] {
+        guard let selectedID = settings.selectedLimitID,
+              let selected = usage.rateLimits.first(where: { $0.id == selectedID }) else {
+            return usage.rateLimits
+        }
+        return [selected] + usage.rateLimits.filter { $0.id != selectedID }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if let usage, !usage.rateLimits.isEmpty {
+                ForEach(orderedRateLimits(usage)) { limit in
+                    if let window = limit.primary {
+                        UsageRow(
+                            title: rowTitle(for: limit),
+                            tag: creditsText(window),
+                            subtitle: zaiWindowDescription(limit),
+                            usedPercentage: window.usedPercent,
+                            showRemaining: showRemainingPercentage,
+                            resetTime: window.resetsAt,
+                            periodDuration: window.duration,
+                            showTimeMarker: showTimeMarker,
+                            showPaceMarker: showPaceMarker,
+                            usePaceColoring: usePaceColoring,
+                            timeDisplay: timeDisplay
+                        )
+                    }
+                }
+
+                if let plan = usage.account?.planType {
+                    HStack {
+                        Text("zai.settings.plan".localized)
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Text(plan.capitalized)
+                            .font(.system(size: 10, weight: .semibold, design: .rounded))
+                            .foregroundColor(.secondary)
+                    }
+                }
+            } else {
+                Text("zai.settings.no_usage".localized)
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 8)
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+    }
+
+    /// Row headline in the user's terms: the 5-hour quota is the session
+    /// metric, the 7-day quota is the weekly one, mirroring Claude rows.
+    private func rowTitle(for limit: ZAIRateLimit) -> String {
+        if limit.isFiveHourSessionWindow { return "menubar.session_usage".localized }
+        if limit.isWeeklyWindow { return "menubar.weekly_usage".localized }
+        if limit.kind == .toolCalls { return "zai.window.tools_title".localized }
+        return limit.displayName
+    }
+
+    /// Compact "used/total" credit summary shown as the row tag.
+    private func creditsText(_ window: ZAIRateLimitWindow) -> String? {
+        guard let used = window.usedCredits else { return nil }
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 1
+        guard let usedText = formatter.string(from: NSNumber(value: used)) else { return nil }
+        if let total = window.totalCredits,
+           let totalText = formatter.string(from: NSNumber(value: total)) {
+            return "\(usedText)/\(totalText)"
+        }
+        return usedText
+    }
+
+    private func zaiWindowDescription(_ limit: ZAIRateLimit) -> String? {
+        if limit.isFiveHourSessionWindow { return "zai.window.session".localized }
+        if limit.isWeeklyWindow { return "zai.window.weekly".localized }
+        if limit.kind == .toolCalls { return "zai.window.tools".localized }
+        return nil
     }
 }
 

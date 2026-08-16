@@ -46,6 +46,11 @@ struct Profile: Codable, Identifiable, Equatable {
     var apiUsage: APIUsage?
     var codexUsage: CodexUsage?
     var codexConfiguration: CodexProfileConfiguration
+    var zaiUsage: ZAIUsage?
+    var zaiConfiguration: ZAIProfileConfiguration
+
+    // MARK: - z.ai Credentials (stored in the Keychain, like other secrets)
+    var zaiAPIKey: String?
 
     // MARK: - Appearance Settings (Per-Profile)
     var iconConfig: MenuBarIconConfiguration
@@ -83,6 +88,9 @@ struct Profile: Codable, Identifiable, Equatable {
         apiUsage: APIUsage? = nil,
         codexUsage: CodexUsage? = nil,
         codexConfiguration: CodexProfileConfiguration = CodexProfileConfiguration(),
+        zaiUsage: ZAIUsage? = nil,
+        zaiConfiguration: ZAIProfileConfiguration = ZAIProfileConfiguration(),
+        zaiAPIKey: String? = nil,
         iconConfig: MenuBarIconConfiguration = .default,
         refreshInterval: TimeInterval = 30.0,
         autoStartSessionEnabled: Bool = false,
@@ -109,6 +117,9 @@ struct Profile: Codable, Identifiable, Equatable {
         self.apiUsage = apiUsage
         self.codexUsage = codexUsage
         self.codexConfiguration = codexConfiguration
+        self.zaiUsage = zaiUsage
+        self.zaiConfiguration = zaiConfiguration
+        self.zaiAPIKey = zaiAPIKey?.nilIfBlank
         self.iconConfig = iconConfig
         self.refreshInterval = refreshInterval
         self.autoStartSessionEnabled = autoStartSessionEnabled
@@ -135,6 +146,7 @@ struct Profile: Codable, Identifiable, Equatable {
         case customKeychainServiceName
         case oauthAccountJSON
         case claudeUsage, apiUsage, codexUsage, codexConfiguration
+        case zaiUsage, zaiConfiguration, zaiAPIKey
         case iconConfig
         case refreshInterval, autoStartSessionEnabled, checkOverageLimitEnabled
         case notificationSettings
@@ -169,6 +181,14 @@ struct Profile: Codable, Identifiable, Equatable {
             CodexProfileConfiguration.self,
             forKey: .codexConfiguration
         ) ?? CodexProfileConfiguration()
+        zaiUsage = (try? c.decodeIfPresent(ZAIUsage.self, forKey: .zaiUsage)) ?? nil
+        zaiConfiguration = try c.decodeIfPresent(
+            ZAIProfileConfiguration.self,
+            forKey: .zaiConfiguration
+        ) ?? ZAIProfileConfiguration()
+        // Secret: present only in legacy (pre-Keychain-migration) plists;
+        // hydrated from the Keychain by ProfileStore after decoding.
+        zaiAPIKey = try c.decodeIfPresent(String.self, forKey: .zaiAPIKey)
         iconConfig = try c.decodeIfPresent(MenuBarIconConfiguration.self, forKey: .iconConfig) ?? .default
         refreshInterval = try c.decodeIfPresent(TimeInterval.self, forKey: .refreshInterval) ?? 30.0
         autoStartSessionEnabled = try c.decodeIfPresent(Bool.self, forKey: .autoStartSessionEnabled) ?? false
@@ -190,6 +210,7 @@ struct Profile: Codable, Identifiable, Equatable {
             try c.encodeIfPresent(claudeSessionKey, forKey: .claudeSessionKey)
             try c.encodeIfPresent(apiSessionKey, forKey: .apiSessionKey)
             try c.encodeIfPresent(cliCredentialsJSON, forKey: .cliCredentialsJSON)
+            try c.encodeIfPresent(zaiAPIKey, forKey: .zaiAPIKey)
         }
         try c.encodeIfPresent(organizationId, forKey: .organizationId)
         try c.encodeIfPresent(apiOrganizationId, forKey: .apiOrganizationId)
@@ -202,6 +223,8 @@ struct Profile: Codable, Identifiable, Equatable {
         try c.encodeIfPresent(apiUsage, forKey: .apiUsage)
         try c.encodeIfPresent(codexUsage, forKey: .codexUsage)
         try c.encode(codexConfiguration, forKey: .codexConfiguration)
+        try c.encodeIfPresent(zaiUsage, forKey: .zaiUsage)
+        try c.encode(zaiConfiguration, forKey: .zaiConfiguration)
         try c.encode(iconConfig, forKey: .iconConfig)
         try c.encode(refreshInterval, forKey: .refreshInterval)
         try c.encode(autoStartSessionEnabled, forKey: .autoStartSessionEnabled)
@@ -231,6 +254,8 @@ struct Profile: Codable, Identifiable, Equatable {
             return hasClaudeAI || hasAPIConsole || hasValidCLIOAuth
         case .codex:
             return codexConfiguration.validationError == nil
+        case .zai:
+            return zaiAPIKey != nil
         }
     }
 
@@ -247,6 +272,8 @@ struct Profile: Codable, Identifiable, Equatable {
             return hasClaudeAI || hasAPIConsole || cliCredentialsJSON != nil || customKeychainServiceName != nil
         case .codex:
             return codexConfiguration.validationError == nil
+        case .zai:
+            return zaiAPIKey != nil
         }
     }
 }
