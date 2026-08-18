@@ -923,12 +923,6 @@
 "popover.time_format_system" = "系統";
 "popover.time_format_12h" = "12 小時";
 "popover.time_format_24h" = "24 小時";
-"popover.peak_hours" = "尖峰時段指示器";
-"popover.peak_hours_desc" = "顯示 Claude 處於尖峰時段時（平日 %@）";
-"popover.peak_hours_toggle" = "顯示尖峰時段指示器";
-"popover.peak_hours_toggle_desc" = "尖峰時段時在選單列顯示火焰圖示，並標示 Session 卡片";
-"popover.peak_hours_menu_icon" = "在選單列顯示火焰圖示";
-"popover.peak_hours_menu_icon_desc" = "尖峰時段時在用量指示器旁顯示火焰圖示";
 
 /* ==================== */
 /* MARK: - Feedback Prompt */
