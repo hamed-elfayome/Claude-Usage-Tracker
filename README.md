@@ -2,7 +2,7 @@
   <a href="mailto:hamedelfayome@gmail.com?subject=Claude%20Usage%20Tracker%20%E2%80%94%20Sponsorship"><img src=".github/sponsor-slot.svg" alt="This spot is available for sponsors — get in touch: hamedelfayome@gmail.com" width="420"></a>
 </div>
 
-# Claude Usage Tracker
+---
 
 <div align="center">
   <a href="https://claudetracker.com/#fleet"><img src="https://claudetracker.com/map.svg" alt="Claude Usage Tracker — a native macOS menu bar app for real-time monitoring of Claude AI usage limits. Live worldwide distribution map." width="100%"></a>
