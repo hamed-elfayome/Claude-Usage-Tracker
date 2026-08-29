@@ -584,16 +584,8 @@ struct SmartUsageDashboard: View {
     let apiUsage: APIUsage?
     var provider: Provider = .anthropic
     @StateObject private var profileManager = ProfileManager.shared
-    @ObservedObject private var peakHoursService = PeakHoursService.shared
-
     private var capabilities: ProviderCapabilities {
         provider.descriptor.capabilities
-    }
-
-    private var isPeakHours: Bool {
-        capabilities.peakHours
-            && SharedDataStore.shared.loadPeakHoursIndicatorEnabled()
-            && peakHoursService.isPeakHours
     }
 
     private var showRemainingPercentage: Bool {
@@ -641,8 +633,7 @@ struct SmartUsageDashboard: View {
                 showTimeMarker: showTimeMarker,
                 showPaceMarker: showPaceMarker,
                 usePaceColoring: usePaceColoring,
-                timeDisplay: timeDisplay,
-                isPeakHighlighted: isPeakHours
+                timeDisplay: timeDisplay
             )
 
             if usage.designWeeklyTokensUsed > 0 {
@@ -791,7 +782,6 @@ struct UsageRow: View {
     var showPaceMarker: Bool = true
     var usePaceColoring: Bool = true
     var timeDisplay: PopoverTimeDisplay = .resetTime
-    var isPeakHighlighted: Bool = false
 
     private var displayPercentage: Double {
         UsageStatusCalculator.getDisplayPercentage(
@@ -911,10 +901,7 @@ struct UsageRow: View {
         .padding(.vertical, 8)
         .background(
             RoundedRectangle(cornerRadius: 8)
-                .strokeBorder(
-                    isPeakHighlighted ? Color.red.opacity(0.6) : Color.primary.opacity(0.1),
-                    lineWidth: isPeakHighlighted ? 1.5 : 0.5
-                )
+                .strokeBorder(Color.primary.opacity(0.1), lineWidth: 0.5)
         )
     }
 
@@ -1444,6 +1431,20 @@ struct StatusBannerView: View {
     var onTap: (() -> Void)? = nil
 
     var body: some View {
+        // A Button rather than a tap gesture: the popover belongs to an inactive
+        // accessory app, and AppKit only delivers a click-through mouse-down to views
+        // that accept first mouse, which a bare tap gesture does not.
+        if let onTap {
+            Button(action: onTap) {
+                bannerContent
+            }
+            .buttonStyle(.plain)
+        } else {
+            bannerContent
+        }
+    }
+
+    private var bannerContent: some View {
         HStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.system(size: 11))
@@ -1463,8 +1464,8 @@ struct StatusBannerView: View {
         .padding(.vertical, 6)
         .background(color.opacity(0.12))
         .cornerRadius(6)
+        .contentShape(Rectangle())
         .padding(.horizontal, 10)
         .padding(.top, 4)
-        .onTapGesture { onTap?() }
     }
 }

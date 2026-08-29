@@ -210,7 +210,7 @@ final class AutoStartSessionService {
             .build()
 
         var request = URLRequest(url: url)
-        request.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
+        request.setValue(ClaudeAPIService.sessionCookieHeader(sessionKey: sessionKey, url: url), forHTTPHeaderField: "Cookie")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.httpMethod = "GET"
         request.timeoutInterval = 30
@@ -415,7 +415,7 @@ final class AutoStartSessionService {
             .build()
 
         var conversationRequest = URLRequest(url: conversationURL)
-        conversationRequest.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
+        conversationRequest.setValue(ClaudeAPIService.sessionCookieHeader(sessionKey: sessionKey, url: conversationURL), forHTTPHeaderField: "Cookie")
         conversationRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         conversationRequest.httpMethod = "POST"
 
@@ -444,7 +444,7 @@ final class AutoStartSessionService {
             .build()
 
         var messageRequest = URLRequest(url: messageURL)
-        messageRequest.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
+        messageRequest.setValue(ClaudeAPIService.sessionCookieHeader(sessionKey: sessionKey, url: messageURL), forHTTPHeaderField: "Cookie")
         messageRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         messageRequest.httpMethod = "POST"
 
@@ -471,7 +471,7 @@ final class AutoStartSessionService {
             .build()
 
         var deleteRequest = URLRequest(url: deleteURL)
-        deleteRequest.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
+        deleteRequest.setValue(ClaudeAPIService.sessionCookieHeader(sessionKey: sessionKey, url: deleteURL), forHTTPHeaderField: "Cookie")
         deleteRequest.httpMethod = "DELETE"
 
         // Attempt to delete, but don't fail if deletion fails

@@ -16,11 +16,6 @@ final class StatusBarUIManager {
     // Dictionary to hold status items keyed by profile ID (multi-profile mode)
     private var multiProfileStatusItems: [UUID: NSStatusItem] = [:]
 
-    // Peak hours indicator (independent of metric system)
-    private var peakHoursStatusItem: NSStatusItem?
-    private var peakHoursTimer: Timer?
-    private weak var peakHoursTarget: AnyObject?
-    private var peakHoursAction: Selector?
 
     // Current display mode
     private var isMultiProfileMode: Bool = false
@@ -51,12 +46,14 @@ final class StatusBarUIManager {
     private static func autosaveName(forProfileId id: UUID) -> NSStatusItem.AutosaveName {
         return "\(autosavePrefix).multiProfile.\(id.uuidString)"
     }
-
-    /// Returns a stable autosaveName for the peak hours indicator
-    private static let peakHoursAutosaveName: NSStatusItem.AutosaveName = "\(autosavePrefix).peakHours"
-
     /// Returns a stable autosaveName for the default logo (no credentials)
     private static let defaultLogoAutosaveName: NSStatusItem.AutosaveName = "\(autosavePrefix).defaultLogo"
+
+    /// Fixed placeholder length for freshly-created multi-profile status items. Creating
+    /// them at a concrete length (rather than .variableLength) avoids the macOS 26 (Tahoe)
+    /// recursive variable-width NSISEngine solve during a multi-item rebuild (profile
+    /// switch). updateMultiProfileButtons replaces it with the real coarse-rounded width.
+    private static let multiProfilePlaceholderLength: CGFloat = 32
 
     // MARK: - Multi-profile identity helpers
 
@@ -209,78 +206,7 @@ final class StatusBarUIManager {
 
         isMultiProfileMode = false
 
-        removePeakHoursIndicator()
-
         LoggingService.shared.logUIEvent("Status bar cleaned up")
-    }
-
-    // MARK: - Peak Hours Indicator
-
-    /// Starts monitoring peak hours. Shows the flame icon only during peak hours.
-    func setupPeakHoursIndicator(target: AnyObject, action: Selector) {
-        removePeakHoursIndicator()
-
-        peakHoursTarget = target
-        peakHoursAction = action
-
-        // Show immediately if currently peak
-        updatePeakHoursIcon()
-
-        peakHoursTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
-            self?.updatePeakHoursIcon()
-        }
-        peakHoursTimer?.tolerance = 10
-    }
-
-    /// Removes the peak hours status item and stops monitoring.
-    func removePeakHoursIndicator() {
-        peakHoursTimer?.invalidate()
-        peakHoursTimer = nil
-        peakHoursTarget = nil
-        peakHoursAction = nil
-        removePeakHoursStatusItem()
-    }
-
-    /// Updates the peak hours icon: shows during peak, hides when off-peak.
-    func updatePeakHoursIcon() {
-        let isPeak = PeakHoursService.checkIsPeakHours()
-
-        if isPeak {
-            // Create the status item if not already showing
-            if peakHoursStatusItem == nil, let target = peakHoursTarget, let action = peakHoursAction {
-                let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-                statusItem.autosaveName = Self.peakHoursAutosaveName
-                // Override any persisted false from a prior cmd-drag.
-                statusItem.isVisible = true
-                if let button = statusItem.button {
-                    button.action = action
-                    button.target = target
-                    button.sendAction(on: [.leftMouseUp, .rightMouseUp])
-                }
-                peakHoursStatusItem = statusItem
-            }
-            if let button = peakHoursStatusItem?.button {
-                let menuBarIsDark = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-                let image = renderer.createPeakHoursIcon(isPeak: true, isDarkMode: menuBarIsDark)
-                image.isTemplate = false
-                setButtonImage(button, image: image)
-            }
-        } else {
-            // Remove the icon when off-peak
-            removePeakHoursStatusItem()
-        }
-    }
-
-    private func removePeakHoursStatusItem() {
-        if let item = peakHoursStatusItem {
-            if let button = item.button {
-                button.image = nil
-                button.action = nil
-                button.target = nil
-            }
-            NSStatusBar.system.removeStatusItem(item)
-        }
-        peakHoursStatusItem = nil
     }
 
     // MARK: - Multi-Profile Mode
@@ -313,9 +239,14 @@ final class StatusBarUIManager {
             multiProfileStatusItems[Self.defaultLogoPlaceholderUUID] = statusItem
             LoggingService.shared.logUIEvent("Multi-profile: No profiles selected, showing default logo")
         } else {
-            // Create one status item per selected profile
+            // Create one status item per selected profile.
+            // macOS 26 (Tahoe): creating these with .variableLength makes AppKit run a
+            // recursive multi-item variable-width solve (NSISEngine) that overflows the
+            // stack when a full setup rebuilds 2+ items — e.g. on profile switch. Start
+            // them at a fixed placeholder length; updateMultiProfileButtons then pins the
+            // real (coarse-rounded, stable) width. No variable-width solve, no recursion.
             for profile in selectedProfiles {
-                let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+                let statusItem = NSStatusBar.system.statusItem(withLength: Self.multiProfilePlaceholderLength)
                 statusItem.autosaveName = Self.autosaveName(forProfileId: profile.id)
                 // Override any persisted false from a prior cmd-drag.
                 statusItem.isVisible = true
@@ -386,7 +317,9 @@ final class StatusBarUIManager {
             LoggingService.shared.logUIEvent("Multi-profile: Added default logo")
         } else {
             for profile in selectedProfiles where idsToAdd.contains(profile.id) {
-                let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+                // Fixed placeholder length (see setupMultiProfile) — avoids the macOS 26
+                // recursive variable-width solve; updateMultiProfileButtons pins the real width.
+                let statusItem = NSStatusBar.system.statusItem(withLength: Self.multiProfilePlaceholderLength)
                 statusItem.autosaveName = Self.autosaveName(forProfileId: profile.id)
                 // Override any persisted false from a prior cmd-drag.
                 statusItem.isVisible = true
@@ -568,14 +501,33 @@ final class StatusBarUIManager {
                 )
             }
 
+            let finalImage: NSImage
             if profile.id == activeProfileId && config.showActiveProfileIndicator {
                 let underlinedImage = addGreenUnderline(to: image)
                 underlinedImage.isTemplate = false
-                button.image = underlinedImage
+                finalImage = underlinedImage
             } else {
                 image.isTemplate = useMonochrome && !config.showPaceMarker
-                button.image = image
+                finalImage = image
             }
+
+            // macOS 26 (Tahoe) crash fix: with NSStatusItem.variableLength, AppKit
+            // recomputes each item's width from its image inside a shared status-bar
+            // NSISEngine layout pass. With 2+ profile items this recurses without
+            // termination — a stack overflow (___chkstk_darwin in NSISEngine
+            // _coreReplaceMarker:withMarkerPlusDelta:). We pin an explicit length so
+            // AppKit skips the recursive variable-width solve.
+            //
+            // Crucially the length must stay CONSTANT across refreshes: *changing* a
+            // status item's length is itself the recursing op (the "PlusDelta"), so a
+            // per-pixel width jitter between updates (e.g. "5%" vs "45%") would still
+            // crash. Round the width up to a coarse grid so ordinary data changes never
+            // move the length, and only assign when it genuinely changes.
+            let stableLength = ceil(finalImage.size.width / 32.0) * 32.0
+            if abs(statusItem.length - stableLength) > 0.5 {
+                statusItem.length = stableLength
+            }
+            button.image = finalImage
         }
     }
 

@@ -13,16 +13,18 @@ class StatuslineService {
     /// Swift script that fetches Claude usage data from the API.
     /// Installed to ~/.claude/fetch-claude-usage.swift and executed by the bash statusline script.
     /// The session key and organization ID are injected into this script when statusline is enabled.
-    private func generateSwiftScript(sessionKey: String, organizationId: String) -> String {
+    private func generateSwiftScript(cookieHeader: String, organizationId: String) -> String {
         return """
 #!/usr/bin/env swift
 
 import Foundation
-func readSessionKey() -> String? {
-    // Session key injected from Keychain by Claude Usage app
-    let injectedKey = "\(sessionKey)"
-    let trimmedKey = injectedKey.trimmingCharacters(in: .whitespacesAndNewlines)
-    return trimmedKey.isEmpty ? nil : trimmedKey
+func readCookieHeader() -> String? {
+    // Cookie header (sessionKey + Cloudflare clearance cookies) injected by Claude Usage app.
+    // claude.ai rejects bare-sessionKey requests, so the app's current clearance
+    // cookies ride along; they refresh whenever the statusline is reinstalled.
+    let injectedHeader = "\(cookieHeader)"
+    let trimmedHeader = injectedHeader.trimmingCharacters(in: .whitespacesAndNewlines)
+    return trimmedHeader.isEmpty ? nil : trimmedHeader
 }
 func readOrganizationId() -> String? {
     // Organization ID injected from settings by Claude Usage app
@@ -30,7 +32,7 @@ func readOrganizationId() -> String? {
     let trimmedOrgId = injectedOrgId.trimmingCharacters(in: .whitespacesAndNewlines)
     return trimmedOrgId.isEmpty ? nil : trimmedOrgId
 }
-func fetchUsageData(sessionKey: String, orgId: String) async throws -> (utilization: Int, resetsAt: String?) {
+func fetchUsageData(cookieHeader: String, orgId: String) async throws -> (utilization: Int, resetsAt: String?) {
     // Build URL safely - validate orgId doesn't contain path traversal
     guard !orgId.contains(".."), !orgId.contains("/") else {
         throw NSError(domain: "ClaudeAPI", code: 5, userInfo: [NSLocalizedDescriptionKey: "Invalid organization ID"])
@@ -41,8 +43,9 @@ func fetchUsageData(sessionKey: String, orgId: String) async throws -> (utilizat
     }
 
     var request = URLRequest(url: url)
-    request.setValue("sessionKey=\\(sessionKey)", forHTTPHeaderField: "Cookie")
+    request.setValue(cookieHeader, forHTTPHeaderField: "Cookie")
     request.setValue("application/json", forHTTPHeaderField: "Accept")
+    request.setValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15", forHTTPHeaderField: "User-Agent")
     request.httpMethod = "GET"
 
     let (data, response) = try await URLSession.shared.data(for: request)
@@ -65,7 +68,7 @@ func fetchUsageData(sessionKey: String, orgId: String) async throws -> (utilizat
 // Main execution
 // Use Task to run async code, RunLoop keeps script alive until exit() is called
 Task {
-    guard let sessionKey = readSessionKey() else {
+    guard let cookieHeader = readCookieHeader() else {
         print("ERROR:NO_SESSION_KEY")
         exit(1)
     }
@@ -76,7 +79,7 @@ Task {
     }
 
     do {
-        let (utilization, resetsAt) = try await fetchUsageData(sessionKey: sessionKey, orgId: orgId)
+        let (utilization, resetsAt) = try await fetchUsageData(cookieHeader: cookieHeader, orgId: orgId)
 
         // Output format: UTILIZATION|RESETS_AT
         if let resets = resetsAt {
@@ -870,7 +873,11 @@ printf "%s\\n" "$output"
                 throw StatuslineError.organizationNotConfigured
             }
 
-            swiftScriptContent = generateSwiftScript(sessionKey: sessionKey, organizationId: organizationId)
+            // Inject the full cookie header, not a bare sessionKey: claude.ai's
+            // Cloudflare config rejects cookie-less-looking requests (#277 class).
+            let usageURL = URL(string: "https://claude.ai/api/organizations/\(organizationId)/usage")!
+            let cookieHeader = ClaudeAPIService.sessionCookieHeader(sessionKey: sessionKey, url: usageURL)
+            swiftScriptContent = generateSwiftScript(cookieHeader: cookieHeader, organizationId: organizationId)
             LoggingService.shared.log("Injected session key and org ID from profile '\(activeProfile.name)' into statusline")
         } else {
             // Install placeholder script

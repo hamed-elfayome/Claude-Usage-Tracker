@@ -63,9 +63,6 @@ struct ProviderCapabilities {
     /// Provider supports overage/extra-usage spend checks.
     let overageChecks: Bool
 
-    /// Provider has published peak-hours windows worth highlighting.
-    let peakHours: Bool
-
     /// Provider reports a prepaid credits balance.
     let credits: Bool
 }

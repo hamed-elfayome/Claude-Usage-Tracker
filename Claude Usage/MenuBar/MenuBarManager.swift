@@ -58,8 +58,6 @@ class MenuBarManager: NSObject, ObservableObject {
     // Feedback prompt window reference
     private var feedbackWindow: NSWindow?
 
-    // Peak hours popover (separate from main popover)
-    private var peakHoursPopover: NSPopover?
 
     // Track which button is currently showing the popover
     private weak var currentPopoverButton: NSStatusBarButton?
@@ -111,8 +109,6 @@ class MenuBarManager: NSObject, ObservableObject {
     private var wakeObserver: NSObjectProtocol?
     private var lastAutoRefreshTime: Date = .distantPast
 
-    // Observer for peak hours setting changes
-    private var peakHoursObserver: NSObjectProtocol?
 
     private var multiProfileConfigObserver: NSObjectProtocol?
 
@@ -243,13 +239,6 @@ class MenuBarManager: NSObject, ObservableObject {
         // Setup global keyboard shortcuts
         setupShortcuts()
 
-        // Start peak hours service and indicator
-        PeakHoursService.shared.start()
-        let store = SharedDataStore.shared
-        if store.loadPeakHoursIndicatorEnabled() && store.loadPeakHoursMenuIconEnabled() {
-            statusBarUIManager?.setupPeakHoursIndicator(target: self, action: #selector(togglePeakHoursPopover))
-        }
-        observePeakHoursSettingChanges()
     }
 
     private func setupShortcuts() {
@@ -305,10 +294,6 @@ class MenuBarManager: NSObject, ObservableObject {
         if let multiProfileConfigObserver = multiProfileConfigObserver {
             NotificationCenter.default.removeObserver(multiProfileConfigObserver)
             self.multiProfileConfigObserver = nil
-        }
-        if let peakHoursObserver = peakHoursObserver {
-            NotificationCenter.default.removeObserver(peakHoursObserver)
-            self.peakHoursObserver = nil
         }
         if let monitor = eventMonitor {
             NSEvent.removeMonitor(monitor)
@@ -596,11 +581,7 @@ class MenuBarManager: NSObject, ObservableObject {
                     // the @Published profile properties set earlier in this method
                     popover.close()
                     stopMonitoringForOutsideClicks()
-                    // Activate first so the popover appears over a full-screen Space.
-                    // An .accessory app that isn't active renders the popover on the
-                    // desktop Space, hidden behind any frontmost full-screen app.
-                    NSApp.activate(ignoringOtherApps: true)
-                    popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+                    showPopover(popover, from: button)
                     currentPopoverButton = button
                     startMonitoringForOutsideClicks()
                 }
@@ -620,39 +601,18 @@ class MenuBarManager: NSObject, ObservableObject {
                 stopMonitoringForOutsideClicks()
                 // Update content view controller for current profile data
                 popover.contentViewController = createContentViewController()
-                // Activate first so the popover appears over a full-screen Space
-                // (otherwise an inactive .accessory app draws it on the desktop Space).
-                NSApp.activate(ignoringOtherApps: true)
-                popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+                showPopover(popover, from: button)
                 currentPopoverButton = button
                 startMonitoringForOutsideClicks()
             }
         }
     }
 
-    @objc private func togglePeakHoursPopover(_ sender: Any?) {
-        guard let button = sender as? NSStatusBarButton else { return }
-
-        if let popover = peakHoursPopover, popover.isShown {
-            popover.close()
-            peakHoursPopover = nil
-            return
-        }
-
-        // Close the main popover if open
-        if let mainPopover = popover, mainPopover.isShown {
-            closePopover()
-        }
-
-        let popover = NSPopover()
-        popover.contentSize = NSSize(width: 260, height: 140)
-        popover.behavior = .transient
-        popover.animates = true
-        popover.contentViewController = NSHostingController(rootView: PeakHoursPopoverView())
-        // Activate first so the popover appears over a full-screen Space.
-        NSApp.activate(ignoringOtherApps: true)
+    /// Shows `popover` anchored to a status bar button and gives its backing window
+    /// the Space placement a menu bar popover needs to appear over a full-screen app.
+    private func showPopover(_ popover: NSPopover, from button: NSStatusBarButton) {
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-        peakHoursPopover = popover
+        popover.contentViewController?.view.window?.enableDisplayOnFullScreenSpaces()
     }
 
     /// Shows a lightweight context menu (Refresh / Settings / Quit) anchored to the
@@ -918,24 +878,6 @@ class MenuBarManager: NSObject, ObservableObject {
 
             Task { @MainActor in
                 self.updateMultiProfileDisplay()
-            }
-        }
-    }
-
-    private func observePeakHoursSettingChanges() {
-        peakHoursObserver = NotificationCenter.default.addObserver(
-            forName: .peakHoursSettingChanged,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            guard let self = self else { return }
-            let store = SharedDataStore.shared
-            if store.loadPeakHoursIndicatorEnabled() && store.loadPeakHoursMenuIconEnabled() {
-                self.statusBarUIManager?.setupPeakHoursIndicator(
-                    target: self, action: #selector(self.togglePeakHoursPopover)
-                )
-            } else {
-                self.statusBarUIManager?.removePeakHoursIndicator()
             }
         }
     }
@@ -1911,7 +1853,6 @@ extension MenuBarManager: StatusBarUIManagerDelegate {
         cachedIsDarkMode = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
         cachedImageKey = ""
         updateAllStatusBarIcons()
-        statusBarUIManager?.updatePeakHoursIcon()
     }
 }
 
