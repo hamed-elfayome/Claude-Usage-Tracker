@@ -88,6 +88,9 @@ final class SupportReminderService {
         )
 
         let hosting = NSHostingController(rootView: view)
+        // Remove the titlebar safe-area at the source: the glow owns the full
+        // window and the fitting size stops including a phantom titlebar band.
+        hosting.safeAreaRegions = []
         let window = NSWindow(contentViewController: hosting)
         window.styleMask = [.titled, .closable, .fullSizeContentView]
         window.titlebarAppearsTransparent = true
@@ -103,11 +106,19 @@ final class SupportReminderService {
         // look like it never appeared.
         window.collectionBehavior = [.moveToActiveSpace, .fullScreenAuxiliary]
         window.isReleasedWhenClosed = false
+        // The window was sized before fullSizeContentView/ignoresSafeArea took
+        // effect, leaving a titlebar-height dead band at the bottom. Re-fit to
+        // the SwiftUI content's real size.
+        hosting.view.layoutSubtreeIfNeeded()
+        window.setContentSize(hosting.view.fittingSize)
         window.center()
         self.window = window
 
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
+        // No control needs initial keyboard focus; without this the CTA gets a
+        // focus ring the moment the window becomes key.
+        window.makeFirstResponder(nil)
         LoggingService.shared.log("SupportReminder: shown monthly support window")
     }
 
@@ -132,79 +143,132 @@ private struct SupportReminderView: View {
         return Int(Date().timeIntervalSince(first) / 86_400)
     }
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Maker's-note header: cup badge + hand-signed feel, left aligned —
-            // a note from a person, not a marketing card.
-            HStack(spacing: 10) {
-                ZStack {
-                    Circle()
-                        .fill(LinearGradient(
-                            colors: [Self.coffeeYellow, Self.coffeeYellow.opacity(0.65)],
-                            startPoint: .topLeading, endPoint: .bottomTrailing))
-                        .frame(width: 36, height: 36)
-                    Image(systemName: "cup.and.saucer.fill")
-                        .font(.system(size: 16))
-                        .foregroundColor(.black.opacity(0.8))
-                }
+    @State private var hoveringCTA = false
 
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("support.popup_title".localized)
-                        .font(.system(size: 14, weight: .bold))
-                    Text("support.popup_signature".localized)
-                        .font(.system(size: 10.5))
-                        .foregroundColor(.secondary)
+    var body: some View {
+        VStack(spacing: 0) {
+            // Warm "coffee break" header: amber glow washing down from the very
+            // top of the window (safe area ignored), steam drifting off the cup.
+            // endRadius stays INSIDE the frame so the gradient reaches clear
+            // before the clip — no hard cropped edge.
+            ZStack(alignment: .top) {
+                RadialGradient(
+                    colors: [Self.coffeeYellow.opacity(0.28), .clear],
+                    center: .init(x: 0.5, y: 0.0),
+                    startRadius: 4, endRadius: 92
+                )
+                .frame(height: 96)
+
+                VStack(spacing: 2) {
+                    SteamView(color: Self.coffeeYellow)
+                        .padding(.top, 20)
+                    Image(systemName: "cup.and.saucer.fill")
+                        .font(.system(size: 25))
+                        .foregroundStyle(LinearGradient(
+                            colors: [Self.coffeeYellow, Self.coffeeYellow.opacity(0.72)],
+                            startPoint: .top, endPoint: .bottom))
+                        .shadow(color: Self.coffeeYellow.opacity(0.4), radius: 10)
                 }
+            }
+            .frame(height: 92)
+
+            VStack(spacing: 4) {
+                Text("support.popup_title".localized)
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                Text("support.popup_signature".localized)
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
             }
             .padding(.bottom, 10)
 
             Text("support.popup_body".localized)
                 .font(.system(size: 12))
-                .foregroundColor(.primary.opacity(0.85))
-                .lineSpacing(2)
+                .foregroundColor(.primary.opacity(0.78))
+                .lineSpacing(2.5)
+                .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
-                .padding(.bottom, 12)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 14)
 
-            HStack(spacing: 8) {
-                Button(action: onCoffee) {
-                    HStack(spacing: 7) {
-                        Image(systemName: "cup.and.saucer.fill")
-                            .font(.system(size: 13))
-                        Text("support.buy_coffee".localized)
-                            .font(.system(size: 13, weight: .bold))
-                    }
-                    .foregroundColor(.black)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 10)
-                    .background(Self.coffeeYellow)
-                    .cornerRadius(8)
+            if daysTogether >= 14 {
+                HStack(spacing: 5) {
+                    Image(systemName: "heart.fill")
+                        .font(.system(size: 9))
+                        .foregroundColor(Self.coffeeYellow)
+                    Text(String(format: "support.popup_days".localized, daysTogether))
+                        .font(.system(size: 10.5, weight: .medium))
+                        .foregroundColor(.secondary)
                 }
-                .buttonStyle(.plain)
-                .keyboardShortcut(.defaultAction)
+                .padding(.horizontal, 11)
+                .padding(.vertical, 5)
+                .background(Capsule().fill(Self.coffeeYellow.opacity(0.10)))
+                .overlay(Capsule().strokeBorder(Self.coffeeYellow.opacity(0.25), lineWidth: 1))
+                .padding(.bottom, 14)
             }
-            .padding(.bottom, 8)
 
-            HStack {
-                if daysTogether >= 14 {
-                    HStack(spacing: 4) {
-                        Image(systemName: "heart.fill")
-                            .font(.system(size: 9))
-                            .foregroundColor(Self.coffeeYellow)
-                        Text(String(format: "support.popup_days".localized, daysTogether))
-                            .font(.system(size: 10))
-                            .foregroundColor(.secondary)
-                    }
+            Button(action: onCoffee) {
+                HStack(spacing: 8) {
+                    Image(systemName: "cup.and.saucer.fill")
+                        .font(.system(size: 13, weight: .semibold))
+                    Text("support.buy_coffee".localized)
+                        .font(.system(size: 13.5, weight: .bold, design: .rounded))
                 }
-                Spacer()
-                Button("support.popup_later".localized, action: onLater)
-                    .buttonStyle(.plain)
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
-                    .keyboardShortcut(.cancelAction)
+                .foregroundColor(.black.opacity(0.88))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 11)
+                .background(
+                    LinearGradient(
+                        colors: [Color(red: 1.0, green: 0.91, blue: 0.30), Color(red: 1.0, green: 0.80, blue: 0.0)],
+                        startPoint: .top, endPoint: .bottom)
+                )
+                .cornerRadius(10)
+                .shadow(color: Self.coffeeYellow.opacity(hoveringCTA ? 0.55 : 0.30),
+                        radius: hoveringCTA ? 14 : 8, y: 3)
+                .scaleEffect(hoveringCTA ? 1.02 : 1.0)
+            }
+            .buttonStyle(.plain)
+            .keyboardShortcut(.defaultAction)
+            .focusEffectDisabled()
+            .onHover { hovering in
+                withAnimation(.easeOut(duration: 0.15)) { hoveringCTA = hovering }
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 10)
+
+            Button("support.popup_later".localized, action: onLater)
+                .buttonStyle(.plain)
+                .font(.system(size: 11))
+                .foregroundColor(.secondary.opacity(0.85))
+                .keyboardShortcut(.cancelAction)
+                .padding(.bottom, 14)
+        }
+        .frame(width: 316)
+    }
+}
+
+/// Three steam wisps drifting up off the cup — one gentle looping animation,
+/// staggered per wisp.
+private struct SteamView: View {
+    let color: Color
+    @State private var rising = false
+
+    var body: some View {
+        HStack(spacing: 6) {
+            ForEach(0..<3, id: \.self) { i in
+                Capsule()
+                    .fill(color.opacity(0.6))
+                    .frame(width: 2.5, height: i == 1 ? 13 : 9)
+                    .offset(y: rising ? -7 : 3)
+                    .opacity(rising ? 0 : 0.8)
+                    .animation(
+                        .easeOut(duration: 1.7)
+                            .repeatForever(autoreverses: false)
+                            .delay(Double(i) * 0.4),
+                        value: rising
+                    )
             }
         }
-        .padding(.top, 26)   // clears the (transparent) titlebar close button
-        .padding([.horizontal, .bottom], 18)
-        .frame(width: 320)
+        .frame(height: 14)
+        .onAppear { rising = true }
     }
 }
