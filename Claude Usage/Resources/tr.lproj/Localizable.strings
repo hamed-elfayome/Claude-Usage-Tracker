@@ -1080,5 +1080,8 @@
 "launcher.verify" = "Oturumu Kontrol Et";
 "launcher.path_warning" = "~/.local/bin PATH içinde değil. Bu satırı kabuk profilinize ekleyin:";
 "launcher.install_failed" = "Başlatıcı yüklenemedi: %@";
-"support.popup_title" = "Claude Usage hoşunuza gidiyor mu?";
+"support.popup_title" = "Merhaba, ben Hamed 👋";
 "support.popup_later" = "Belki sonra";
+"support.popup_signature" = "Claude Usage'ın arkasındaki tek kişilik ekip";
+"support.popup_body" = "Bu uygulama ücretsiz ve açık kaynak — reklam yok, izleme yok, ödeme duvarı yok. Her güncelleme akşamlarımda ve hafta sonlarımda yapılıyor. Claude Usage sizi bir oturum limitini yakmaktan kurtardıysa, bir kahve onu canlı tutan ve geliştiren şeydir.";
+"support.popup_days" = "%d gündür limitlerinizi izliyor — her zaman ücretsiz";

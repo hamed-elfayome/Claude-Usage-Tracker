@@ -1074,5 +1074,8 @@
 "launcher.verify" = "檢查登入";
 "launcher.path_warning" = "~/.local/bin 不在你的 PATH 中。請將此行加入你的 shell 設定檔：";
 "launcher.install_failed" = "無法安裝啟動器：%@";
-"support.popup_title" = "喜歡 Claude Usage 嗎？";
+"support.popup_title" = "你好，我是 Hamed 👋";
 "support.popup_later" = "下次再說";
+"support.popup_signature" = "Claude Usage 背後的一人團隊";
+"support.popup_body" = "這款 App 免費且開源——沒有廣告、沒有追蹤、沒有付費牆。每次更新都誕生於我的夜晚與週末。如果 Claude Usage 曾幫你避免燒掉一次工作階段額度，一杯咖啡就是它持續存活與進步的動力。";
+"support.popup_days" = "已守護你的額度 %d 天 — 永遠免費";

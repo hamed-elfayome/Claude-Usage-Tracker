@@ -1069,5 +1069,8 @@
 "launcher.verify" = "Comprobar sesión";
 "launcher.path_warning" = "~/.local/bin no está en tu PATH. Añade esta línea a tu perfil de shell:";
 "launcher.install_failed" = "No se pudo instalar el lanzador: %@";
-"support.popup_title" = "¿Te gusta Claude Usage?";
+"support.popup_title" = "Hola, soy Hamed 👋";
 "support.popup_later" = "Quizás más tarde";
+"support.popup_signature" = "el equipo unipersonal detrás de Claude Usage";
+"support.popup_body" = "Esta app es gratuita y de código abierto: sin anuncios, sin rastreo, sin muros de pago. Cada actualización se construye en mis tardes y fines de semana. Si Claude Usage te ha salvado alguna vez de quemar un límite de sesión, un café es lo que la mantiene viva y mejorando.";
+"support.popup_days" = "Vigilando tus límites desde hace %d días — siempre gratis";

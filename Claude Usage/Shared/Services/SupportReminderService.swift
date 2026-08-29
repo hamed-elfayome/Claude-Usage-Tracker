@@ -115,44 +115,89 @@ private struct SupportReminderView: View {
     let onCoffee: () -> Void
     let onLater: () -> Void
 
+    private static let coffeeYellow = Color(red: 1.0, green: 0.87, blue: 0.0)
+
+    /// Whole days this install has been around; the stat line is hidden while
+    /// the number is too small to feel meaningful.
+    private var daysTogether: Int {
+        let first = SharedDataStore.shared.supportReminderFirstLaunchAt()
+        return Int(Date().timeIntervalSince(first) / 86_400)
+    }
+
     var body: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "cup.and.saucer.fill")
-                .font(.system(size: 34))
-                .foregroundColor(Color(red: 1.0, green: 0.87, blue: 0.0))
-                .padding(.top, 8)
+        VStack(alignment: .leading, spacing: 0) {
+            // Maker's-note header: cup badge + hand-signed feel, left aligned —
+            // a note from a person, not a marketing card.
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(LinearGradient(
+                            colors: [Self.coffeeYellow, Self.coffeeYellow.opacity(0.65)],
+                            startPoint: .topLeading, endPoint: .bottomTrailing))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "cup.and.saucer.fill")
+                        .font(.system(size: 19))
+                        .foregroundColor(.black.opacity(0.8))
+                }
 
-            Text("support.popup_title".localized)
-                .font(.system(size: 16, weight: .semibold))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("support.popup_title".localized)
+                        .font(.system(size: 15, weight: .bold))
+                    Text("support.popup_signature".localized)
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+            }
+            .padding(.bottom, 14)
 
-            Text("support.message".localized)
-                .font(.system(size: 12))
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
+            Text("support.popup_body".localized)
+                .font(.system(size: 12.5))
+                .foregroundColor(.primary.opacity(0.85))
+                .lineSpacing(3)
                 .fixedSize(horizontal: false, vertical: true)
+                .padding(.bottom, 14)
+
+            if daysTogether >= 14 {
+                HStack(spacing: 6) {
+                    Image(systemName: "heart.fill")
+                        .font(.system(size: 10))
+                        .foregroundColor(Self.coffeeYellow)
+                    Text(String(format: "support.popup_days".localized, daysTogether))
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(Capsule().fill(Color.primary.opacity(0.06)))
+                .padding(.bottom, 16)
+            }
 
             Button(action: onCoffee) {
                 HStack(spacing: 8) {
                     Image(systemName: "cup.and.saucer.fill")
-                        .font(.system(size: 13))
+                        .font(.system(size: 14))
                     Text("support.buy_coffee".localized)
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: 13.5, weight: .bold))
                 }
                 .foregroundColor(.black)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 10)
-                .background(Color(red: 1.0, green: 0.87, blue: 0.0))
-                .cornerRadius(8)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(Self.coffeeYellow)
+                .cornerRadius(9)
             }
             .buttonStyle(.plain)
+            .padding(.bottom, 10)
 
-            Button("support.popup_later".localized, action: onLater)
-                .buttonStyle(.plain)
-                .font(.system(size: 11))
-                .foregroundColor(.secondary)
-                .padding(.bottom, 4)
+            HStack {
+                Spacer()
+                Button("support.popup_later".localized, action: onLater)
+                    .buttonStyle(.plain)
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+                Spacer()
+            }
         }
-        .padding(24)
-        .frame(width: 320)
+        .padding(22)
+        .frame(width: 340)
     }
 }

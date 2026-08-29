@@ -1066,5 +1066,8 @@
 "launcher.verify" = "Vérifier la connexion";
 "launcher.path_warning" = "~/.local/bin n'est pas dans votre PATH. Ajoutez cette ligne à votre profil shell :";
 "launcher.install_failed" = "Impossible d'installer le lanceur : %@";
-"support.popup_title" = "Claude Usage vous plaît ?";
+"support.popup_title" = "Bonjour, moi c'est Hamed 👋";
 "support.popup_later" = "Peut-être plus tard";
+"support.popup_signature" = "l'équipe d'une seule personne derrière Claude Usage";
+"support.popup_body" = "Cette app est gratuite et open source — sans pubs, sans pistage, sans paywall. Chaque mise à jour est construite sur mes soirées et week-ends. Si Claude Usage vous a déjà évité de griller une limite de session, un café est ce qui la maintient en vie et en progrès.";
+"support.popup_days" = "Veille sur vos limites depuis %d jours — toujours gratuit";

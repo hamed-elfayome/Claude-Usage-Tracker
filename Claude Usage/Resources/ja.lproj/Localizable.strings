@@ -1088,5 +1088,8 @@
 "launcher.verify" = "ログインを確認";
 "launcher.path_warning" = "~/.local/bin が PATH にありません。シェルのプロファイルに次の行を追加してください:";
 "launcher.install_failed" = "ランチャーをインストールできませんでした: %@";
-"support.popup_title" = "Claude Usage を気に入っていますか？";
+"support.popup_title" = "こんにちは、Hamed です 👋";
 "support.popup_later" = "また今度";
+"support.popup_signature" = "Claude Usage を一人で作っています";
+"support.popup_body" = "このアプリは無料でオープンソース。広告もトラッキングも課金の壁もありません。すべてのアップデートは私の夜と週末に生まれています。Claude Usage がセッション上限の浪費を防いだことがあるなら、一杯のコーヒーがこのアプリを支え、進化させます。";
+"support.popup_days" = "あなたの上限を見守って %d 日 — ずっと無料";

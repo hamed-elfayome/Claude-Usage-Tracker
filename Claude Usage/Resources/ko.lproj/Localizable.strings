@@ -1097,5 +1097,8 @@
 "launcher.verify" = "로그인 확인";
 "launcher.path_warning" = "~/.local/bin이 PATH에 없습니다. 셸 프로필에 다음 줄을 추가하세요:";
 "launcher.install_failed" = "런처를 설치할 수 없습니다: %@";
-"support.popup_title" = "Claude Usage가 마음에 드시나요?";
+"support.popup_title" = "안녕하세요, Hamed입니다 👋";
 "support.popup_later" = "나중에";
+"support.popup_signature" = "Claude Usage를 혼자 만드는 1인 팀";
+"support.popup_body" = "이 앱은 무료 오픈소스입니다. 광고도, 추적도, 유료 장벽도 없습니다. 모든 업데이트는 저의 저녁과 주말에 만들어집니다. Claude Usage가 세션 한도를 태우는 걸 막아준 적이 있다면, 커피 한 잔이 이 앱을 계속 살아있게 합니다.";
+"support.popup_days" = "%d일째 당신의 한도를 지키는 중 — 언제나 무료";
