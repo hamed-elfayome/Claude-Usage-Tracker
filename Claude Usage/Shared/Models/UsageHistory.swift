@@ -31,6 +31,11 @@ struct UsageSnapshot: Codable, Identifiable, Equatable {
     let timestamp: Date           // When the snapshot was recorded
     let resetType: ResetType      // Type of reset that triggered this snapshot
 
+    /// Provider raw value the snapshot was recorded from (nil = pre-provider
+    /// data, i.e. Anthropic). Stored as a raw string so history written by a
+    /// future app version with more providers still decodes here.
+    let provider: String?
+
     // Claude.ai session usage data (captured before reset)
     let sessionTokensUsed: Int?
     let sessionPercentage: Double?
@@ -59,6 +64,7 @@ struct UsageSnapshot: Codable, Identifiable, Equatable {
         id: UUID = UUID(),
         timestamp: Date = Date(),
         resetType: ResetType,
+        provider: String? = nil,
         sessionTokensUsed: Int? = nil,
         sessionPercentage: Double? = nil,
         weeklyTokensUsed: Int? = nil,
@@ -79,6 +85,7 @@ struct UsageSnapshot: Codable, Identifiable, Equatable {
         self.id = id
         self.timestamp = timestamp
         self.resetType = resetType
+        self.provider = provider
         self.sessionTokensUsed = sessionTokensUsed
         self.sessionPercentage = sessionPercentage
         self.weeklyTokensUsed = weeklyTokensUsed
@@ -97,30 +104,38 @@ struct UsageSnapshot: Codable, Identifiable, Equatable {
         self.triggeringResetTime = triggeringResetTime
     }
 
-    /// Creates a snapshot from ClaudeUsage data (for session reset)
-    static func fromSessionReset(_ usage: ClaudeUsage, resetTime: Date) -> UsageSnapshot {
-        UsageSnapshot(
+    /// Creates a snapshot from ClaudeUsage data (for session reset).
+    /// Token counts are omitted for providers that only report percentages,
+    /// so exports show blanks instead of misleading zeros.
+    static func fromSessionReset(_ usage: ClaudeUsage, resetTime: Date, provider: Provider = .anthropic) -> UsageSnapshot {
+        let hasTokens = provider.descriptor.capabilities.tokenCounts
+        return UsageSnapshot(
             resetType: .sessionReset,
-            sessionTokensUsed: usage.sessionTokensUsed,
+            provider: provider.rawValue,
+            sessionTokensUsed: hasTokens ? usage.sessionTokensUsed : nil,
             sessionPercentage: usage.sessionPercentage,
             triggeringResetTime: resetTime
         )
     }
 
     /// Creates a snapshot from ClaudeUsage data (for weekly reset)
-    static func fromWeeklyReset(_ usage: ClaudeUsage, resetTime: Date) -> UsageSnapshot {
-        UsageSnapshot(
+    static func fromWeeklyReset(_ usage: ClaudeUsage, resetTime: Date, provider: Provider = .anthropic) -> UsageSnapshot {
+        let capabilities = provider.descriptor.capabilities
+        let hasTokens = capabilities.tokenCounts
+        let hasModels = capabilities.perModelBreakdown
+        return UsageSnapshot(
             resetType: .weeklyReset,
-            weeklyTokensUsed: usage.weeklyTokensUsed,
+            provider: provider.rawValue,
+            weeklyTokensUsed: hasTokens ? usage.weeklyTokensUsed : nil,
             weeklyPercentage: usage.weeklyPercentage,
-            opusWeeklyTokensUsed: usage.opusWeeklyTokensUsed,
-            opusWeeklyPercentage: usage.opusWeeklyPercentage,
-            sonnetWeeklyTokensUsed: usage.sonnetWeeklyTokensUsed,
-            sonnetWeeklyPercentage: usage.sonnetWeeklyPercentage,
-            designWeeklyTokensUsed: usage.designWeeklyTokensUsed,
-            designWeeklyPercentage: usage.designWeeklyPercentage,
-            fableWeeklyTokensUsed: usage.fableWeeklyTokensUsed,
-            fableWeeklyPercentage: usage.fableWeeklyPercentage,
+            opusWeeklyTokensUsed: hasModels ? usage.opusWeeklyTokensUsed : nil,
+            opusWeeklyPercentage: hasModels ? usage.opusWeeklyPercentage : nil,
+            sonnetWeeklyTokensUsed: hasModels ? usage.sonnetWeeklyTokensUsed : nil,
+            sonnetWeeklyPercentage: hasModels ? usage.sonnetWeeklyPercentage : nil,
+            designWeeklyTokensUsed: hasModels ? usage.designWeeklyTokensUsed : nil,
+            designWeeklyPercentage: hasModels ? usage.designWeeklyPercentage : nil,
+            fableWeeklyTokensUsed: hasModels ? usage.fableWeeklyTokensUsed : nil,
+            fableWeeklyPercentage: hasModels ? usage.fableWeeklyPercentage : nil,
             triggeringResetTime: resetTime
         )
     }

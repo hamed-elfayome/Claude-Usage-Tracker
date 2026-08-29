@@ -835,6 +835,17 @@ printf "%s\\n" "$output"
     /// Installs statusline scripts with session key injection from active profile
     /// - Parameter injectSessionKey: If true, injects the session key from active profile into the Swift script
     func installScripts(injectSessionKey: Bool = false) throws {
+        // Statusline is Claude Code infrastructure. When the active profile's
+        // provider has no CLI account sync (e.g. Codex), THROW rather than
+        // silently return: callers rely on the install-or-throw invariant —
+        // updateClaudeCodeSettings(enabled: true) would otherwise proceed to
+        // point ~/.claude/settings.json at a script that was never installed.
+        if injectSessionKey,
+           let activeProfile = ProfileManager.shared.activeProfile,
+           !activeProfile.provider.descriptor.capabilities.cliAccountSync {
+            throw StatuslineError.providerNotSupported
+        }
+
         let claudeDir = Constants.ClaudePaths.claudeDirectory
 
         if !FileManager.default.fileExists(atPath: claudeDir.path) {
@@ -1130,6 +1141,7 @@ enum StatuslineError: Error, LocalizedError {
     case noActiveProfile
     case sessionKeyNotFound
     case organizationNotConfigured
+    case providerNotSupported
 
     var errorDescription: String? {
         switch self {
@@ -1139,6 +1151,8 @@ enum StatuslineError: Error, LocalizedError {
             return "Session key not found in active profile. Please configure your session key first."
         case .organizationNotConfigured:
             return "Organization not configured in active profile. Please select an organization in the app settings."
+        case .providerNotSupported:
+            return "The statusline requires a profile on a provider with Claude Code support. Switch to an Anthropic profile and try again."
         }
     }
 }

@@ -66,6 +66,15 @@ class MenuBarManager: NSObject, ObservableObject {
 
     private let apiService = ClaudeAPIService()
     private let statusService = ClaudeStatusService()
+
+    /// Status service for the active profile's provider (Statuspage-compatible
+    /// endpoints across providers; falls back to the Anthropic default).
+    private var statusServiceForActiveProfile: ClaudeStatusService {
+        guard let url = profileManager.activeProfile?.provider.descriptor.statusPageURL else {
+            return statusService
+        }
+        return ClaudeStatusService(statusURL: url)
+    }
     private let dataStore = DataStore.shared
     private let networkMonitor = NetworkMonitor.shared
     private let profileManager = ProfileManager.shared
@@ -979,16 +988,11 @@ class MenuBarManager: NSObject, ObservableObject {
     }
 
     /// Checks if ANY credentials are available for the active profile, including
-    /// system Keychain CLI credentials. Mirrors the fallback logic in
-    /// `ClaudeAPIService.getAuthentication()` so the refresh path isn't gated off
-    /// before the API service has a chance to discover system-level credentials.
+    /// provider-specific system-level fallbacks (e.g. Anthropic's system Keychain
+    /// CLI credentials, mirroring `ClaudeAPIService.getAuthentication()`).
     private func hasAnyAvailableCredentials() -> Bool {
         guard let profile = profileManager.activeProfile else { return false }
-
-        // Profile-local credentials (Claude.ai, API Console, saved CLI OAuth),
-        // then the cached system Keychain CLI fallback.
-        return profile.hasUsageCredentials
-            || ClaudeCodeSyncService.shared.hasUsableSystemCredentials()
+        return ProviderRegistry.service(for: profile.provider).hasCredentials(for: profile)
     }
 
     private func setupMultiProfileMode() {
@@ -1059,7 +1063,7 @@ class MenuBarManager: NSObject, ObservableObject {
 
             // Fetch Claude status (same as single profile mode)
             do {
-                let newStatus = try await statusService.fetchStatus()
+                let newStatus = try await statusServiceForActiveProfile.fetchStatus()
                 await MainActor.run {
                     self.status = newStatus
                 }
@@ -1095,11 +1099,11 @@ class MenuBarManager: NSObject, ObservableObject {
                         let flags = self.resetJustRecorded[profile.id] ?? (session: false, weekly: false)
 
                         if !flags.session {
-                            UsageHistoryService.shared.recordSessionPeriodic(for: profile.id, usage: newUsage)
+                            UsageHistoryService.shared.recordSessionPeriodic(for: profile.id, usage: newUsage, provider: profile.provider)
                         }
 
                         if !flags.weekly {
-                            UsageHistoryService.shared.recordWeeklyPeriodic(for: profile.id, usage: newUsage)
+                            UsageHistoryService.shared.recordWeeklyPeriodic(for: profile.id, usage: newUsage, provider: profile.provider)
                         }
 
                         // Clear reset flags for next cycle
@@ -1113,8 +1117,9 @@ class MenuBarManager: NSObject, ObservableObject {
                         if profile.id == self.profileManager.activeProfile?.id {
                             self.usage = newUsage
 
-                            // Write statusline cache for instant CLI rendering
-                            if StatuslineService.shared.isInstalled {
+                            // Write statusline cache for instant CLI rendering (Claude Code only)
+                            if profile.provider.descriptor.capabilities.cliAccountSync,
+                               StatuslineService.shared.isInstalled {
                                 StatuslineService.shared.writeUsageCache(
                                     usage: newUsage,
                                     profileName: profile.name
@@ -1126,8 +1131,10 @@ class MenuBarManager: NSObject, ObservableObject {
                     LoggingService.shared.logError("Failed to refresh profile '\(profile.name)': \(error.localizedDescription)")
                 }
 
-                // Fetch API usage if this profile has API console credentials
-                if let apiSessionKey = profile.apiSessionKey,
+                // Fetch API usage if this profile's provider has console billing
+                // and the profile has API console credentials
+                if profile.provider.descriptor.capabilities.consoleBilling,
+                   let apiSessionKey = profile.apiSessionKey,
                    let orgId = profile.apiOrganizationId {
                     do {
                         let previousAPIUsage = profile.apiUsage
@@ -1172,49 +1179,11 @@ class MenuBarManager: NSObject, ObservableObject {
         }
     }
 
-    /// Fetches usage data for a specific profile using its credentials
+    /// Fetches usage data for a specific profile using its provider's service.
+    /// (The Anthropic 3-source chain that used to live here moved verbatim to
+    /// `AnthropicUsageProvider.fetchUsage(for:)`.)
     private func fetchUsageForProfile(_ profile: Profile) async throws -> ClaudeUsage {
-        // Priority 1: claude.ai session key (cookie-based)
-        if let sessionKey = profile.claudeSessionKey,
-           let orgId = profile.organizationId {
-            return try await apiService.fetchUsageData(sessionKey: sessionKey, organizationId: orgId)
-        }
-
-        // Priority 2: CLI OAuth credentials.
-        // `ensureFreshCredentials` picks the source automatically:
-        //   - If `profile.customKeychainServiceName` is set → pull fresh from that keychain entry
-        //     (which Claude Code rotates during normal CLI use). No network refresh needed when
-        //     the token there is still valid; otherwise transparently refresh via the
-        //     refresh_token grant and write back to both keychain and profile cache.
-        //   - Otherwise → use the profile's cached `cliCredentialsJSON`, refreshing if expired.
-        // If `ensureFreshCredentials` returns nil (e.g. network failure during refresh), fall
-        // back to the stored cliCredentialsJSON so a still-valid cached token isn't wasted.
-        if profile.cliCredentialsJSON != nil || profile.customKeychainServiceName != nil {
-            let usableJSON = await ClaudeCodeSyncService.shared.ensureFreshCredentials(for: profile.id)
-                ?? profile.cliCredentialsJSON
-            if let usableJSON = usableJSON,
-               !ClaudeCodeSyncService.shared.isTokenExpired(usableJSON),
-               let accessToken = ClaudeCodeSyncService.shared.extractAccessToken(from: usableJSON) {
-                return try await apiService.fetchUsageData(oauthAccessToken: accessToken)
-            }
-        }
-
-        // Priority 3: System Keychain CLI OAuth token
-        // Only use system keychain for the active profile — the keychain/credentials file
-        // reflects the currently active `claude` CLI session. Using it for a non-active
-        // profile would silently return the active profile's stats.
-        if profile.id == profileManager.activeProfile?.id,
-           let systemCredentials = try? ClaudeCodeSyncService.shared.readSystemCredentials(),
-           !ClaudeCodeSyncService.shared.isTokenExpired(systemCredentials),
-           let accessToken = ClaudeCodeSyncService.shared.extractAccessToken(from: systemCredentials) {
-            return try await apiService.fetchUsageData(oauthAccessToken: accessToken)
-        }
-
-        throw AppError(
-            code: .sessionKeyNotFound,
-            message: "Missing credentials for profile '\(profile.name)'",
-            isRecoverable: false
-        )
+        try await ProviderRegistry.service(for: profile.provider).fetchUsage(for: profile)
     }
 
     private func setupSingleProfileMode() {
@@ -1291,9 +1260,11 @@ class MenuBarManager: NSObject, ObservableObject {
             let previousAPIUsage = await MainActor.run { self.apiUsage }
             let currentProfileId = await MainActor.run { self.profileManager.activeProfile?.id }
 
-            // Fetch usage and status in parallel
-            async let usageResult = apiService.fetchUsageData()
-            async let statusResult = statusService.fetchStatus()
+            // Fetch usage and status in parallel (usage via the profile's provider;
+            // for Anthropic this is the same no-arg fetchUsageData() chain as before)
+            let providerService = ProviderRegistry.service(for: profile.provider)
+            async let usageResult = providerService.fetchUsageForActiveProfile(profile)
+            async let statusResult = statusServiceForActiveProfile.fetchStatus()
 
             var usageSuccess = false
 
@@ -1316,8 +1287,8 @@ class MenuBarManager: NSObject, ObservableObject {
                         )
 
                         // Record periodic snapshots for history charts
-                        UsageHistoryService.shared.recordSessionPeriodic(for: profileId, usage: newUsage)
-                        UsageHistoryService.shared.recordWeeklyPeriodic(for: profileId, usage: newUsage)
+                        UsageHistoryService.shared.recordSessionPeriodic(for: profileId, usage: newUsage, provider: profile.provider)
+                        UsageHistoryService.shared.recordWeeklyPeriodic(for: profileId, usage: newUsage, provider: profile.provider)
                     }
 
                     self.usage = newUsage
@@ -1327,8 +1298,9 @@ class MenuBarManager: NSObject, ObservableObject {
                         self.profileManager.saveClaudeUsage(newUsage, for: profileId)
                     }
 
-                    // Write statusline cache for instant CLI rendering
-                    if StatuslineService.shared.isInstalled {
+                    // Write statusline cache for instant CLI rendering (Claude Code only)
+                    if profile.provider.descriptor.capabilities.cliAccountSync,
+                       StatuslineService.shared.isInstalled {
                         StatuslineService.shared.writeUsageCache(
                             usage: newUsage,
                             profileName: self.profileManager.activeProfile?.name
@@ -1406,8 +1378,10 @@ class MenuBarManager: NSObject, ObservableObject {
                 LoggingService.shared.log("MenuBarManager: Failed to fetch status - [\(appError.code.rawValue)] \(appError.message)")
             }
 
-            // Fetch API usage (using active profile's API credentials)
+            // Fetch API usage (using active profile's API credentials; console
+            // billing is provider-gated)
             if let profile = await MainActor.run(body: { self.profileManager.activeProfile }),
+               profile.provider.descriptor.capabilities.consoleBilling,
                let apiSessionKey = profile.apiSessionKey,
                let orgId = profile.apiOrganizationId {
                 do {
@@ -1565,11 +1539,13 @@ class MenuBarManager: NSObject, ObservableObject {
             // Reset detected! Record snapshot of the previous usage
             LoggingService.shared.log("History: Session reset detected for profile \(profileId.uuidString.prefix(8)). Old: \(normalizedLastKnown), New: \(newResetTime)")
             if let prevUsage = previousUsage {
+                let provider = profileManager.profiles.first(where: { $0.id == profileId })?.provider ?? .anthropic
                 Task { @MainActor in
                     UsageHistoryService.shared.recordSessionReset(
                         for: profileId,
                         previousUsage: prevUsage,
-                        resetTime: prevUsage.sessionResetTime  // Use original reset time, not normalized
+                        resetTime: prevUsage.sessionResetTime,  // Use original reset time, not normalized
+                        provider: provider
                     )
                 }
             }
@@ -1609,11 +1585,13 @@ class MenuBarManager: NSObject, ObservableObject {
             // Reset detected! Record snapshot of the previous usage
             LoggingService.shared.log("History: Weekly reset detected for profile \(profileId.uuidString.prefix(8)). Old: \(normalizedLastKnown), New: \(newResetTime)")
             if let prevUsage = previousUsage {
+                let provider = profileManager.profiles.first(where: { $0.id == profileId })?.provider ?? .anthropic
                 Task { @MainActor in
                     UsageHistoryService.shared.recordWeeklyReset(
                         for: profileId,
                         previousUsage: prevUsage,
-                        resetTime: prevUsage.weeklyResetTime  // Use original reset time, not normalized
+                        resetTime: prevUsage.weeklyResetTime,  // Use original reset time, not normalized
+                        provider: provider
                     )
                 }
             }

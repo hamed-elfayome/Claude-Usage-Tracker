@@ -135,6 +135,14 @@ final class AutoStartSessionService {
     }
 
     private func checkProfile(_ profile: Profile) async {
+        // Explicit capability gate: auto-start burns tokens via the claude.ai
+        // conversation API — providers without it must be skipped by design,
+        // not just incidentally via the credentials check below.
+        guard profile.provider.descriptor.capabilities.autoStartSession else {
+            LoggingService.shared.logDebug("Skipping profile '\(profile.name)' - provider does not support auto-start")
+            return
+        }
+
         // Skip if profile doesn't have Claude.ai credentials
         guard profile.hasClaudeAI else {
             LoggingService.shared.logDebug("Skipping profile '\(profile.name)' - no Claude.ai credentials")

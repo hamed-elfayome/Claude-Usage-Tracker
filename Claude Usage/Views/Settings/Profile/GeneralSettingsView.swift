@@ -65,7 +65,9 @@ struct GeneralSettingsView: View {
                         }
                     }
 
-                    // Auto-Start Session
+                    // Auto-Start Session (capability-gated: burns tokens via
+                    // the claude.ai conversation API)
+                    if profile.provider.descriptor.capabilities.autoStartSession {
                     SettingsSectionCard(
                         title: "general.autostart_title".localized,
                         subtitle: "general.autostart_subtitle".localized
@@ -96,6 +98,7 @@ struct GeneralSettingsView: View {
                                     .foregroundColor(.secondary)
                             }
                         }
+                    }
                     }
 
                     // Notifications

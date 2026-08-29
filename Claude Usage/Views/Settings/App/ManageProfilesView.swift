@@ -11,6 +11,7 @@ struct ManageProfilesView: View {
     @StateObject private var profileManager = ProfileManager.shared
     @State private var showingCreateProfile = false
     @State private var newProfileName = ""
+    @State private var newProfileProvider: Provider = .anthropic
     @State private var errorMessage: String?
 
     var body: some View {
@@ -324,12 +325,14 @@ struct ManageProfilesView: View {
         .sheet(isPresented: $showingCreateProfile) {
             CreateProfileSheet(
                 profileName: $newProfileName,
+                selectedProvider: $newProfileProvider,
                 onSave: {
                     createNewProfile()
                 },
                 onCancel: {
                     showingCreateProfile = false
                     newProfileName = ""
+                    newProfileProvider = .anthropic
                 }
             )
         }
@@ -337,9 +340,10 @@ struct ManageProfilesView: View {
 
     private func createNewProfile() {
         let name = newProfileName.isEmpty ? nil : newProfileName
-        _ = profileManager.createProfile(name: name)
+        _ = profileManager.createProfile(name: name, provider: newProfileProvider)
         showingCreateProfile = false
         newProfileName = ""
+        newProfileProvider = .anthropic
     }
 }
 
@@ -465,6 +469,8 @@ struct ProfileRow: View {
     private var profileInfo: String {
         var parts: [String] = []
 
+        parts.append(profile.provider.descriptor.displayName)
+
         if profile.hasCliAccount {
             parts.append("profiles.cli_synced".localized)
         }
@@ -496,6 +502,7 @@ struct ProfileRow: View {
 
 struct CreateProfileSheet: View {
     @Binding var profileName: String
+    @Binding var selectedProvider: Provider
     let onSave: () -> Void
     let onCancel: () -> Void
 
@@ -517,6 +524,29 @@ struct CreateProfileSheet: View {
                     .foregroundColor(.secondary)
             }
 
+            VStack(alignment: .leading, spacing: 8) {
+                Text("profiles.provider_label".localized)
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
+
+                // Provider cards from the registry — new providers appear here
+                // automatically once registered.
+                HStack(spacing: 8) {
+                    ForEach(Provider.allCases, id: \.self) { provider in
+                        ProviderChoiceCard(
+                            provider: provider,
+                            isSelected: selectedProvider == provider
+                        ) {
+                            selectedProvider = provider
+                        }
+                    }
+                }
+
+                Text("profiles.provider_hint".localized)
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+            }
+
             HStack(spacing: 12) {
                 Button("common.cancel".localized) {
                     onCancel()
@@ -531,5 +561,58 @@ struct CreateProfileSheet: View {
         }
         .padding(24)
         .frame(width: 400)
+    }
+}
+
+/// Selectable provider card used in profile creation and the setup wizard.
+struct ProviderChoiceCard: View {
+    let provider: Provider
+    let isSelected: Bool
+    let action: () -> Void
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 6) {
+                ProviderLogoView(provider: provider, size: 20)
+                Text(provider.descriptor.displayName)
+                    .font(.system(size: 11, weight: isSelected ? .semibold : .regular))
+                    .foregroundColor(.primary)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(isSelected ? Color.accentColor.opacity(0.15) : (isHovered ? Color.primary.opacity(0.06) : Color.primary.opacity(0.03)))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 6)
+                    .strokeBorder(isSelected ? Color.accentColor : Color.primary.opacity(0.1), lineWidth: isSelected ? 1.5 : 1)
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+    }
+}
+
+/// Provider mark: asset catalog image when present, SF Symbol fallback otherwise.
+struct ProviderLogoView: View {
+    let provider: Provider
+    var size: CGFloat = 14
+
+    var body: some View {
+        if let image = NSImage(named: provider.descriptor.logoAssetName) {
+            Image(nsImage: image)
+                .resizable()
+                .renderingMode(.template)
+                .aspectRatio(contentMode: .fit)
+                .frame(width: size, height: size)
+        } else {
+            Image(systemName: provider.descriptor.logoSystemSymbolFallback)
+                .font(.system(size: size * 0.85, weight: .medium))
+                .frame(width: size, height: size)
+        }
     }
 }

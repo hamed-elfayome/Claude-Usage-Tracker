@@ -93,6 +93,15 @@ struct PopoverContentView: View {
         return manager.apiUsage
     }
 
+    /// Provider of the profile being viewed (clicked profile in multi-profile
+    /// mode, else the active profile).
+    private var displayProvider: Provider {
+        let viewingProfile = manager.clickedProfileId.flatMap { id in
+            profileManager.profiles.first(where: { $0.id == id })
+        } ?? profileManager.activeProfile
+        return viewingProfile?.provider ?? .anthropic
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Header
@@ -169,6 +178,11 @@ struct PopoverContentView: View {
                         .foregroundColor(.primary)
                         .lineLimit(1)
 
+                    if viewingProfile.provider != .anthropic {
+                        ProviderLogoView(provider: viewingProfile.provider, size: 10)
+                            .foregroundColor(.secondary)
+                    }
+
                     Spacer()
 
                     if viewingProfile.id == profileManager.activeProfile?.id {
@@ -194,7 +208,7 @@ struct PopoverContentView: View {
             }
 
             // Usage
-            SmartUsageDashboard(usage: displayUsage, apiUsage: displayAPIUsage)
+            SmartUsageDashboard(usage: displayUsage, apiUsage: displayAPIUsage, provider: displayProvider)
 
             // Contextual Insights
             if showInsights {
@@ -252,6 +266,11 @@ struct ProfileSwitcherCompact: View {
                         Spacer()
 
                         HStack(spacing: 4) {
+                            if profile.provider != .anthropic {
+                                ProviderLogoView(provider: profile.provider, size: 9)
+                                    .foregroundColor(.secondary)
+                            }
+
                             if profile.hasCliAccount {
                                 Image(systemName: "terminal.fill")
                                     .font(.system(size: 9))
@@ -320,6 +339,11 @@ struct ProfileSwitcherBar: View {
                         Spacer()
 
                         HStack(spacing: 4) {
+                            if profile.provider != .anthropic {
+                                ProviderLogoView(provider: profile.provider, size: 9)
+                                    .foregroundColor(.secondary)
+                            }
+
                             if profile.hasCliAccount {
                                 Image(systemName: "terminal.fill")
                                     .font(.system(size: 9))
@@ -558,11 +582,18 @@ struct HeaderIconButton: View {
 struct SmartUsageDashboard: View {
     let usage: ClaudeUsage
     let apiUsage: APIUsage?
+    var provider: Provider = .anthropic
     @StateObject private var profileManager = ProfileManager.shared
     @ObservedObject private var peakHoursService = PeakHoursService.shared
 
+    private var capabilities: ProviderCapabilities {
+        provider.descriptor.capabilities
+    }
+
     private var isPeakHours: Bool {
-        SharedDataStore.shared.loadPeakHoursIndicatorEnabled() && peakHoursService.isPeakHours
+        capabilities.peakHours
+            && SharedDataStore.shared.loadPeakHoursIndicatorEnabled()
+            && peakHoursService.isPeakHours
     }
 
     private var showRemainingPercentage: Bool {
@@ -705,8 +736,35 @@ struct SmartUsageDashboard: View {
                 }
             }
 
-            // API Usage
-            if let apiUsage = apiUsage {
+            // Plan / credits (providers that report them, e.g. Codex)
+            if usage.planType != nil || usage.creditsUnlimited == true || usage.creditsBalance != nil {
+                HStack(spacing: 6) {
+                    if let plan = usage.planType {
+                        Text(plan.replacingOccurrences(of: "_", with: " ").capitalized)
+                            .font(.system(size: 9, weight: .semibold))
+                            .foregroundColor(.accentColor)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Capsule().fill(Color.accentColor.opacity(0.12)))
+                    }
+
+                    Spacer()
+
+                    if usage.creditsUnlimited == true {
+                        Text("popover.credits_unlimited".localized)
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundColor(.adaptiveGreen)
+                    } else if let balance = usage.creditsBalance {
+                        Text("popover.credits_balance".localized(with: String(format: "%.2f", balance)))
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .padding(.top, 2)
+            }
+
+            // API Usage (console-billing providers only)
+            if capabilities.consoleBilling, let apiUsage = apiUsage {
                 APIUsageCard(apiUsage: apiUsage, showRemaining: showRemainingPercentage, timeDisplay: timeDisplay)
 
                 // API Cost Card (only if cost data is available)

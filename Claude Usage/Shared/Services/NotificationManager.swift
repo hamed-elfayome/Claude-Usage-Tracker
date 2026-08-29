@@ -96,8 +96,8 @@ class NotificationManager: NotificationServiceProtocol {
 
         // Create notification content
         let content = UNMutableNotificationContent()
-        content.title = "Claude Usage Updated"
-        content.body = "Successfully loaded usage data"
+        content.title = "notification.usage_updated.title".localized
+        content.body = "notification.usage_updated.body".localized
         // Silent notification (no sound)
         content.categoryIdentifier = "SUCCESS_ALERT"
 

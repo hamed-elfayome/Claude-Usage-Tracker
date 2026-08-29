@@ -59,15 +59,25 @@ class ProfileManager: ObservableObject {
 
     // MARK: - Profile Operations
 
-    func createProfile(name: String? = nil, copySettingsFrom: Profile? = nil) -> Profile {
+    func createProfile(name: String? = nil, provider: Provider = .anthropic, copySettingsFrom: Profile? = nil) -> Profile {
         let usedNames = profiles.map { $0.name }
         let profileName = name ?? FunnyNameGenerator.getRandomName(excluding: usedNames)
+
+        // Copied icon settings may reference displays the new provider can't
+        // render (e.g. token counts) — sanitize against its capabilities.
+        var iconConfig = copySettingsFrom?.iconConfig ?? .default
+        if !provider.descriptor.capabilities.tokenCounts {
+            for index in iconConfig.metrics.indices where iconConfig.metrics[index].weekDisplayMode == .tokens {
+                iconConfig.metrics[index].weekDisplayMode = .percentage
+            }
+        }
 
         let newProfile = Profile(
             id: UUID(),
             name: profileName,
+            provider: provider,
             hasCliAccount: false,
-            iconConfig: copySettingsFrom?.iconConfig ?? .default,
+            iconConfig: iconConfig,
             refreshInterval: copySettingsFrom?.refreshInterval ?? 30.0,
             autoStartSessionEnabled: copySettingsFrom?.autoStartSessionEnabled ?? false,
             checkOverageLimitEnabled: copySettingsFrom?.checkOverageLimitEnabled ?? true,
@@ -192,8 +202,11 @@ class ProfileManager: ObservableObject {
 
         LoggingService.shared.log("Switching to profile: \(profile.name)")
 
-        // Re-sync current profile before leaving (if CLI credentials exist)
-        if let currentProfile = activeProfile, currentProfile.cliCredentialsJSON != nil {
+        // Re-sync current profile before leaving (Anthropic-only: providers
+        // without CLI account sync never touch the Claude Code keychain)
+        if let currentProfile = activeProfile,
+           currentProfile.provider.descriptor.capabilities.cliAccountSync,
+           currentProfile.cliCredentialsJSON != nil {
             do {
                 try cliSyncService.resyncBeforeSwitching(for: currentProfile.id)
                 // Reload profiles to get the updated data in memory
@@ -215,10 +228,13 @@ class ProfileManager: ObservableObject {
             return
         }
 
-        // Apply new profile's CLI credentials (if available)
+        // Apply new profile's CLI credentials (if available; Anthropic-only —
+        // switching to e.g. a Codex profile must not rewrite ~/.claude.json
+        // or the Claude Code keychain entry)
         LoggingService.shared.log("Checking CLI credentials for profile '\(updatedProfile.name)': hasJSON=\(updatedProfile.cliCredentialsJSON != nil)")
 
-        if updatedProfile.cliCredentialsJSON != nil {
+        if updatedProfile.provider.descriptor.capabilities.cliAccountSync,
+           updatedProfile.cliCredentialsJSON != nil {
             // Refresh the OAuth token before applying. Stored tokens expire (~8h),
             // so applying a stale snapshot would write a dead access token to the
             // keychain and Claude Code would 401 ("Please run /login"). This refreshes
@@ -253,7 +269,9 @@ class ProfileManager: ObservableObject {
         profileStore.saveProfiles(profiles)
 
         // Update statusline script if the new profile has credentials
-        if updated.claudeSessionKey != nil && updated.organizationId != nil {
+        // (statusline is Claude Code infrastructure — capability-gated)
+        if updated.provider.descriptor.capabilities.cliAccountSync,
+           updated.claudeSessionKey != nil && updated.organizationId != nil {
             do {
                 try StatuslineService.shared.updateScriptsIfInstalled()
                 LoggingService.shared.log("✓ Updated statusline for profile: \(updated.name)")

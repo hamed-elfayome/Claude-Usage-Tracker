@@ -169,6 +169,10 @@ enum Constants {
     enum APIEndpoints {
         static let claudeBase = "https://claude.ai/api"
         static let consoleBase = "https://console.anthropic.com/api"
+        /// Default ChatGPT backend base for Codex usage. Overridable per-user
+        /// via `chatgpt_base_url` in `~/.codex/config.toml`.
+        static let codexBase = "https://chatgpt.com/backend-api"
+        static let codexTokenRefresh = "https://auth.openai.com/oauth/token"
     }
 
     // UI Timing

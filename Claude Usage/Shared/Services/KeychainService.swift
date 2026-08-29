@@ -172,6 +172,7 @@ class KeychainService {
         case claudeSessionKey = "claude-session-key"
         case apiSessionKey = "api-session-key"
         case cliCredentialsJSON = "cli-credentials"
+        case codexCredentialsJSON = "codex-credentials"
     }
 
     /// Single service for all per-profile secrets; the account encodes profile + field.

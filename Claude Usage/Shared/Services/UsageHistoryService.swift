@@ -151,7 +151,7 @@ class UsageHistoryService {
     // MARK: - Record Resets
 
     /// Records a session reset snapshot
-    func recordSessionReset(for profileId: UUID, previousUsage: ClaudeUsage?, resetTime: Date) {
+    func recordSessionReset(for profileId: UUID, previousUsage: ClaudeUsage?, resetTime: Date, provider: Provider = .anthropic) {
         guard let usage = previousUsage else {
             LoggingService.shared.logInfo("recordSessionReset: No previous usage data to record")
             return
@@ -163,7 +163,7 @@ class UsageHistoryService {
             return
         }
 
-        let snapshot = UsageSnapshot.fromSessionReset(usage, resetTime: resetTime)
+        let snapshot = UsageSnapshot.fromSessionReset(usage, resetTime: resetTime, provider: provider)
 
         var history = loadHistory(for: profileId)
         history.addSnapshot(snapshot)
@@ -182,7 +182,7 @@ class UsageHistoryService {
     }
 
     /// Records a weekly reset snapshot
-    func recordWeeklyReset(for profileId: UUID, previousUsage: ClaudeUsage?, resetTime: Date) {
+    func recordWeeklyReset(for profileId: UUID, previousUsage: ClaudeUsage?, resetTime: Date, provider: Provider = .anthropic) {
         guard let usage = previousUsage else {
             LoggingService.shared.logInfo("recordWeeklyReset: No previous usage data to record")
             return
@@ -194,7 +194,7 @@ class UsageHistoryService {
             return
         }
 
-        let snapshot = UsageSnapshot.fromWeeklyReset(usage, resetTime: resetTime)
+        let snapshot = UsageSnapshot.fromWeeklyReset(usage, resetTime: resetTime, provider: provider)
 
         var history = loadHistory(for: profileId)
         history.addSnapshot(snapshot)
@@ -228,7 +228,7 @@ class UsageHistoryService {
     // MARK: - Periodic Recording
 
     /// Records session usage periodically (every 10 minutes)
-    func recordSessionPeriodic(for profileId: UUID, usage: ClaudeUsage) {
+    func recordSessionPeriodic(for profileId: UUID, usage: ClaudeUsage, provider: Provider = .anthropic) {
         let now = Date()
 
         // Check if enough time has passed since last recording (using persisted timestamp)
@@ -240,9 +240,11 @@ class UsageHistoryService {
         }
 
         // Create periodic snapshot
+        let hasTokens = provider.descriptor.capabilities.tokenCounts
         let snapshot = UsageSnapshot(
             resetType: .sessionReset,
-            sessionTokensUsed: usage.sessionTokensUsed,
+            provider: provider.rawValue,
+            sessionTokensUsed: hasTokens ? usage.sessionTokensUsed : nil,
             sessionPercentage: usage.sessionPercentage,
             triggeringResetTime: now
         )
@@ -265,7 +267,7 @@ class UsageHistoryService {
     }
 
     /// Records weekly usage periodically (every 2 hours)
-    func recordWeeklyPeriodic(for profileId: UUID, usage: ClaudeUsage) {
+    func recordWeeklyPeriodic(for profileId: UUID, usage: ClaudeUsage, provider: Provider = .anthropic) {
         let now = Date()
 
         // Check if enough time has passed since last recording (using persisted timestamp)
@@ -277,14 +279,18 @@ class UsageHistoryService {
         }
 
         // Create periodic snapshot
+        let capabilities = provider.descriptor.capabilities
+        let hasTokens = capabilities.tokenCounts
+        let hasModels = capabilities.perModelBreakdown
         let snapshot = UsageSnapshot(
             resetType: .weeklyReset,
-            weeklyTokensUsed: usage.weeklyTokensUsed,
+            provider: provider.rawValue,
+            weeklyTokensUsed: hasTokens ? usage.weeklyTokensUsed : nil,
             weeklyPercentage: usage.weeklyPercentage,
-            opusWeeklyTokensUsed: usage.opusWeeklyTokensUsed,
-            opusWeeklyPercentage: usage.opusWeeklyPercentage,
-            sonnetWeeklyTokensUsed: usage.sonnetWeeklyTokensUsed,
-            sonnetWeeklyPercentage: usage.sonnetWeeklyPercentage,
+            opusWeeklyTokensUsed: hasModels ? usage.opusWeeklyTokensUsed : nil,
+            opusWeeklyPercentage: hasModels ? usage.opusWeeklyPercentage : nil,
+            sonnetWeeklyTokensUsed: hasModels ? usage.sonnetWeeklyTokensUsed : nil,
+            sonnetWeeklyPercentage: hasModels ? usage.sonnetWeeklyPercentage : nil,
             triggeringResetTime: now
         )
 

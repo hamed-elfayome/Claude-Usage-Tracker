@@ -13,6 +13,10 @@ struct Profile: Codable, Identifiable, Equatable {
     let id: UUID
     var name: String
 
+    /// Which usage provider this profile tracks. Existing (pre-provider)
+    /// profiles decode as `.anthropic`. Immutable after creation in the UI.
+    var provider: Provider
+
     // MARK: - Credentials (stored directly in profile)
     var claudeSessionKey: String?
     var organizationId: String?
@@ -20,6 +24,11 @@ struct Profile: Codable, Identifiable, Equatable {
     var apiOrganizationId: String?
     var apiSessionKeyExpiry: Date?
     var cliCredentialsJSON: String?
+
+    /// Manually pasted Codex credentials (same JSON shape as `~/.codex/auth.json`).
+    /// When nil, Codex profiles read the auth.json file live. Secret — stored in
+    /// the Keychain, excluded from the plist like the other credential fields.
+    var codexCredentialsJSON: String?
 
     // MARK: - CLI Account Sync Metadata
     var hasCliAccount: Bool
@@ -65,12 +74,14 @@ struct Profile: Codable, Identifiable, Equatable {
     init(
         id: UUID = UUID(),
         name: String,
+        provider: Provider = .anthropic,
         claudeSessionKey: String? = nil,
         organizationId: String? = nil,
         apiSessionKey: String? = nil,
         apiOrganizationId: String? = nil,
         apiSessionKeyExpiry: Date? = nil,
         cliCredentialsJSON: String? = nil,
+        codexCredentialsJSON: String? = nil,
         hasCliAccount: Bool = false,
         cliAccountSyncedAt: Date? = nil,
         customKeychainServiceName: String? = nil,
@@ -88,12 +99,14 @@ struct Profile: Codable, Identifiable, Equatable {
     ) {
         self.id = id
         self.name = name
+        self.provider = provider
         self.claudeSessionKey = claudeSessionKey
         self.organizationId = organizationId
         self.apiSessionKey = apiSessionKey
         self.apiOrganizationId = apiOrganizationId
         self.apiSessionKeyExpiry = apiSessionKeyExpiry
         self.cliCredentialsJSON = cliCredentialsJSON
+        self.codexCredentialsJSON = codexCredentialsJSON
         self.hasCliAccount = hasCliAccount
         self.cliAccountSyncedAt = cliAccountSyncedAt
         self.customKeychainServiceName = customKeychainServiceName
@@ -119,9 +132,11 @@ struct Profile: Codable, Identifiable, Equatable {
 
     private enum CodingKeys: String, CodingKey {
         case id, name
+        case provider
         case claudeSessionKey, organizationId
         case apiSessionKey, apiOrganizationId, apiSessionKeyExpiry
         case cliCredentialsJSON
+        case codexCredentialsJSON
         case hasCliAccount, cliAccountSyncedAt
         case customKeychainServiceName
         case oauthAccountJSON
@@ -137,6 +152,10 @@ struct Profile: Codable, Identifiable, Equatable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decode(UUID.self, forKey: .id)
         name = try c.decode(String.self, forKey: .name)
+        // Pre-provider profiles have no key; an unknown raw value (written by a
+        // FUTURE app version with more providers) must degrade to .anthropic,
+        // never throw — a throw here wipes the whole profile list.
+        provider = (try? c.decodeIfPresent(Provider.self, forKey: .provider)) ?? .anthropic
         // Secrets: present only in legacy (pre-Keychain-migration) plists; hydrated
         // from the Keychain by ProfileStore after decoding.
         claudeSessionKey = try c.decodeIfPresent(String.self, forKey: .claudeSessionKey)
@@ -145,6 +164,7 @@ struct Profile: Codable, Identifiable, Equatable {
         apiOrganizationId = try c.decodeIfPresent(String.self, forKey: .apiOrganizationId)
         apiSessionKeyExpiry = try c.decodeIfPresent(Date.self, forKey: .apiSessionKeyExpiry)
         cliCredentialsJSON = try c.decodeIfPresent(String.self, forKey: .cliCredentialsJSON)
+        codexCredentialsJSON = try c.decodeIfPresent(String.self, forKey: .codexCredentialsJSON)
         hasCliAccount = try c.decodeIfPresent(Bool.self, forKey: .hasCliAccount) ?? false
         cliAccountSyncedAt = try c.decodeIfPresent(Date.self, forKey: .cliAccountSyncedAt)
         customKeychainServiceName = try c.decodeIfPresent(String.self, forKey: .customKeychainServiceName)
@@ -168,12 +188,14 @@ struct Profile: Codable, Identifiable, Equatable {
         var c = encoder.container(keyedBy: CodingKeys.self)
         try c.encode(id, forKey: .id)
         try c.encode(name, forKey: .name)
+        try c.encode(provider, forKey: .provider)
         // Credentials live in the Keychain (per-profile items), NOT in the plist.
         // The plist on disk is world-readable cleartext — see #267.
         if (encoder.userInfo[Profile.includeSecretsKey] as? Bool) == true {
             try c.encodeIfPresent(claudeSessionKey, forKey: .claudeSessionKey)
             try c.encodeIfPresent(apiSessionKey, forKey: .apiSessionKey)
             try c.encodeIfPresent(cliCredentialsJSON, forKey: .cliCredentialsJSON)
+            try c.encodeIfPresent(codexCredentialsJSON, forKey: .codexCredentialsJSON)
         }
         try c.encodeIfPresent(organizationId, forKey: .organizationId)
         try c.encodeIfPresent(apiOrganizationId, forKey: .apiOrganizationId)
@@ -203,10 +225,17 @@ struct Profile: Codable, Identifiable, Equatable {
         apiSessionKey != nil && apiOrganizationId != nil
     }
 
-    /// True if profile has credentials that can fetch usage data (Claude.ai, CLI OAuth, or API Console)
-    /// Note: System keychain fallback is handled in ClaudeAPIService.getAuthentication() during actual API calls
+    /// True if profile has credentials that can fetch usage data for its provider.
+    /// Anthropic: Claude.ai, CLI OAuth, or API Console (system keychain fallback is
+    /// handled in ClaudeAPIService.getAuthentication() during actual API calls).
+    /// Codex: manually pasted credentials or a readable `~/.codex/auth.json`.
     var hasUsageCredentials: Bool {
-        hasClaudeAI || hasAPIConsole || hasValidCLIOAuth
+        switch provider {
+        case .anthropic:
+            return hasClaudeAI || hasAPIConsole || hasValidCLIOAuth
+        case .codex:
+            return codexCredentialsJSON != nil || CodexAuthService.shared.authFileExists()
+        }
     }
 
     /// True if profile has CLI OAuth credentials that are not expired
@@ -216,7 +245,12 @@ struct Profile: Codable, Identifiable, Equatable {
     }
 
     var hasAnyCredentials: Bool {
-        hasClaudeAI || hasAPIConsole || cliCredentialsJSON != nil || customKeychainServiceName != nil
+        switch provider {
+        case .anthropic:
+            return hasClaudeAI || hasAPIConsole || cliCredentialsJSON != nil || customKeychainServiceName != nil
+        case .codex:
+            return codexCredentialsJSON != nil || CodexAuthService.shared.authFileExists()
+        }
     }
 }
 

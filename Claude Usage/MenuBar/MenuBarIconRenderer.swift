@@ -206,9 +206,13 @@ final class MenuBarIconRenderer {
             let displayText: String
             if config.weekDisplayMode == .percentage {
                 displayText = "\(Int(displayPercentage))%"
-            } else {
+            } else if usage.weeklyLimit > 0 {
                 // Token display mode - smart formatting
                 displayText = formatTokenCount(usage.weeklyTokensUsed, usage.weeklyLimit)
+            } else {
+                // Percentage-only providers (e.g. Codex) report no token limit —
+                // falling through to formatTokenCount would render "0/0".
+                displayText = "\(Int(displayPercentage))%"
             }
 
             return MetricData(

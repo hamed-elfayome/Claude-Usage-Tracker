@@ -193,6 +193,15 @@ enum ErrorCode: String, CaseIterable {
     case githubServerError = "E6002"
     case githubGenericError = "E6099"
 
+    // MARK: - Provider Auth Errors (7000-7099)
+    // Provider-neutral (OAuth/token-file based providers like Codex — the
+    // E1xxx family is Anthropic-session-key-shaped and its recovery text
+    // would be wrong here)
+
+    case providerCredentialsNotFound = "E7000"
+    case providerAuthExpired = "E7001"
+    case providerAuthRefreshFailed = "E7002"
+
     // MARK: - Unknown Errors (9000-9999)
 
     case unknown = "E9999"
@@ -208,6 +217,7 @@ enum ErrorCode: String, CaseIterable {
         case "E4": return .urlConstruction
         case "E5": return .dataStorage
         case "E6": return .github
+        case "E7": return .providerAuth
         default: return .unknown
         }
     }
@@ -222,6 +232,7 @@ enum ErrorCategory: String {
     case urlConstruction = "URL Construction"
     case dataStorage = "Data Storage"
     case github = "GitHub"
+    case providerAuth = "Provider Auth"
     case unknown = "Unknown"
 }
 

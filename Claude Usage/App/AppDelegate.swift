@@ -139,7 +139,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         }
 
         // Check if valid CLI credentials exist in system Keychain
-        if hasValidSystemCLICredentials() {
+        // (Claude Code specific — only relevant for providers with CLI sync)
+        if activeProfile.provider.descriptor.capabilities.cliAccountSync,
+           hasValidSystemCLICredentials() {
             LoggingService.shared.log("AppDelegate: Found valid CLI credentials, skipping wizard")
             return false
         }
