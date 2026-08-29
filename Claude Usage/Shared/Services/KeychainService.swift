@@ -266,10 +266,37 @@ class KeychainService {
     // is exactly what #267 / GHSA-mfxh-xpwm-23c7 set out to eliminate. Reads
     // check the data-protection store first and fall through to the file-based
     // store, so secrets survive moving between entitled and unentitled builds.
+    // The fallback is additionally gated on `fileBasedFallbackAllowed`: only
+    // stably-signed builds may touch the login keychain (see that property).
 
     /// Set to true after any operation returns errSecMissingEntitlement so we
     /// stop retrying the data-protection keychain on every call.
     private var dataProtectionUnavailable = false
+
+    /// The file-based fallback is only safe for builds with a STABLE signing
+    /// identity (a Team ID: Developer ID / App Store). Login-keychain item ACLs
+    /// match on the app's designated requirement, which survives updates for
+    /// stably-signed builds — but ad-hoc dev/test builds get a fresh identity on
+    /// every rebuild, so the very next build reading an item the previous one
+    /// wrote throws the "wants to use your confidential information" password
+    /// dialog. Ad-hoc builds therefore skip the file-based store entirely and
+    /// keep the legacy plist fallback (pre-#292 behavior, zero prompts).
+    private lazy var fileBasedFallbackAllowed: Bool = {
+        var code: SecCode?
+        guard SecCodeCopySelf([], &code) == errSecSuccess, let code = code else { return false }
+        var staticCode: SecStaticCode?
+        guard SecCodeCopyStaticCode(code, [], &staticCode) == errSecSuccess,
+              let staticCode = staticCode else { return false }
+        var info: CFDictionary?
+        guard SecCodeCopySigningInformation(staticCode, SecCSFlags(rawValue: kSecCSSigningInformation),
+                                            &info) == errSecSuccess,
+              let dict = info as? [String: Any] else { return false }
+        guard let teamId = dict[kSecCodeInfoTeamIdentifier as String] as? String, !teamId.isEmpty else {
+            LoggingService.shared.log("Keychain: ad-hoc signing identity — file-based login keychain fallback disabled to avoid ACL password prompts")
+            return false
+        }
+        return true
+    }()
 
     /// Whether per-profile secret storage is usable in this build.
     /// Probes with a throwaway item; with the file-based fallback this only
@@ -299,10 +326,14 @@ class KeychainService {
             do {
                 try saveItem(value, service: service, account: account, dataProtection: true)
                 return
-            } catch KeychainError.saveFailed(let status) where status == errSecMissingEntitlement {
+            } catch KeychainError.saveFailed(let status)
+                where status == errSecMissingEntitlement && fileBasedFallbackAllowed {
                 // noteStatus flagged the store; retry below file-based so the
                 // FIRST save already lands in a keychain, not the plist.
             }
+        }
+        guard fileBasedFallbackAllowed else {
+            throw KeychainError.saveFailed(status: errSecMissingEntitlement)
         }
         try saveItem(value, service: service, account: account, dataProtection: false)
     }
@@ -359,6 +390,7 @@ class KeychainService {
             // Fall through on not-found too: secrets written by an unentitled
             // build must stay readable if this build gained the entitlement.
         }
+        guard fileBasedFallbackAllowed else { return nil }
         return try loadItem(service: service, account: account, dataProtection: false)
     }
 
@@ -390,6 +422,11 @@ class KeychainService {
         var goneFromDataProtection = true
         if !dataProtectionUnavailable {
             goneFromDataProtection = deleteItem(service: service, account: account, dataProtection: true)
+        }
+        guard fileBasedFallbackAllowed else {
+            // No file-based store in play; without a reachable store there is
+            // nothing this build could be holding (pre-fallback behavior).
+            return dataProtectionUnavailable ? false : goneFromDataProtection
         }
         let goneFromFileBased = deleteItem(service: service, account: account, dataProtection: false)
         return goneFromDataProtection && goneFromFileBased
