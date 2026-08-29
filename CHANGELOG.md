@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Major Features
 
+- **Per-profile terminal launchers** (partially addresses #235): Settings → General can now install a `claude-<profile>` command that runs Claude Code with that profile's own `CLAUDE_CONFIG_DIR` — so `claude` keeps following the active profile while `claude-work` always opens your work account. After a one-time `/login` in the launcher session, the app detects the new keychain entry and pins the profile to it, so usage tracking follows that account without ever rotating its tokens.
 - **Multi-provider architecture with OpenAI Codex support** (#229): profiles can now track OpenAI Codex usage alongside Anthropic. Codex profiles read `~/.codex/auth.json` (OAuth or API-key shapes), refresh tokens automatically with an atomic `0600` write-back, and map the 5-hour/weekly rate windows onto the familiar session/weekly rows. Built on a provider registry (`docs/ADDING_A_PROVIDER.md`) so future providers are additive. *Codex support is covered by mocked tests only and has not yet been verified against a live Codex account.*
 
 ### Security
