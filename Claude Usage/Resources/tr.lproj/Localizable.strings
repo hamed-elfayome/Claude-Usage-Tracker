@@ -929,12 +929,6 @@
 "popover.time_format_system" = "Sistem";
 "popover.time_format_12h" = "12 saat";
 "popover.time_format_24h" = "24 saat";
-"popover.peak_hours" = "Peak Hours Indicator";
-"popover.peak_hours_desc" = "Show when Claude is in peak hours (weekdays %@)";
-"popover.peak_hours_toggle" = "Show peak hours indicator";
-"popover.peak_hours_toggle_desc" = "Display a flame icon in the menu bar and highlight the session card during peak hours";
-"popover.peak_hours_menu_icon" = "Show flame icon in menu bar";
-"popover.peak_hours_menu_icon_desc" = "Display a flame icon next to your usage indicators during peak hours";
 
 /* ==================== */
 /* MARK: - Feedback Prompt */
@@ -1022,3 +1016,72 @@
 /* Sponsor slot */
 "sponsor.slot_title" = "Bu alan sponsorlara açıktır";
 "sponsor.slot_cta" = "İletişime geçin";
+
+/* Multi-Provider / OpenAI Codex */
+"section.codex_account_title" = "Codex Hesabı";
+"section.codex_account_desc" = "OpenAI Codex hesabınızı bağlayın";
+"profiles.provider_label" = "Sağlayıcı";
+"profiles.provider_hint" = "Bu profilin izlediği hizmet. Daha sonra değiştirilemez.";
+"usage.window.session" = "Oturum";
+"usage.window.weekly" = "Haftalık";
+"popover.credits_unlimited" = "Sınırsız kredi";
+"popover.credits_balance" = "Kredi: %@";
+"codex.title" = "OpenAI Codex Hesabı";
+"codex.subtitle" = "Codex kullanım limitlerinizi izleyin";
+"codex.connected" = "Bağlı";
+"codex.not_connected" = "Bağlı değil";
+"codex.source_manual" = "Elle kaydedilen kimlik bilgileri kullanılıyor";
+"codex.source_authfile" = "Codex CLI'dan okunuyor (auth.json)";
+"codex.signed_in_as" = "%@ olarak oturum açıldı";
+"codex.test_connection" = "Bağlantıyı Test Et";
+"codex.cli_detection_title" = "Codex CLI";
+"codex.cli_detection_subtitle" = "Kimlik bilgileri ~/.codex/auth.json dosyasından okunur";
+"codex.cli_detected" = "Codex CLI algılandı";
+"codex.last_refresh" = "Belirteçler yenilendi %@";
+"codex.live_read_note" = "Kimlik bilgileri auth.json dosyasından canlı okunur — Codex CLI ile oturum açın veya kapatın, bu profil otomatik olarak takip eder.";
+"codex.cli_not_detected" = "Codex CLI algılanmadı";
+"codex.cli_not_detected_hint" = "Codex CLI'ı kurun ve oturum açmak için `codex` çalıştırın veya kimlik bilgilerini aşağıya yapıştırın.";
+"codex.rescan" = "Yeniden Tara";
+"codex.test_success" = "Bağlantı Tamam";
+"codex.test_success_plan" = "Bağlandı — %@ planı";
+"codex.manual_title" = "Elle Kimlik Bilgileri";
+"codex.manual_subtitle" = "CLI bu Mac'te değilse auth.json içeriğini yapıştırın";
+"codex.manual_saved" = "Elle girilen kimlik bilgileri kaydedildi";
+"codex.manual_remove" = "Kaldır";
+"codex.manual_save" = "Kimlik Bilgilerini Kaydet";
+"setup.choose_provider.subtitle" = "Hangi hizmeti izlemek istiyorsunuz?";
+"setup.choose_provider.anthropic_hint" = "Claude.ai, Claude Code ve Console kullanımı";
+"setup.choose_provider.codex_hint" = "OpenAI Codex CLI kullanım limitleri";
+"setup.choose_provider.skip" = "Şimdilik atla";
+"setup.codex_detected.title" = "Codex CLI Algılandı";
+"setup.codex_detected.description" = "Codex CLI kimlik bilgileriniz bulundu. Kullanım limitlerinizi hemen izlemeye başlayın.";
+"setup.codex_not_detected.title" = "Codex'i Bağla";
+"setup.codex_not_detected.description" = "Codex CLI oturumu bulunamadı. Oturum açmak için `codex` çalıştırın veya ~/.codex/auth.json içeriğini aşağıya yapıştırın.";
+"notification.usage_updated.title" = "Kullanım Güncellendi";
+"notification.usage_updated.body" = "Kullanım verileri başarıyla yüklendi";
+"error.codex_credentials_invalid" = "Codex kimlik bilgileri okunamadı";
+"error.codex_credentials_invalid.suggestion" = "~/.codex/auth.json dosyasının tüm içeriğini yapıştırın";
+"error.codex_credentials_not_found" = "Codex kimlik bilgisi bulunamadı";
+"error.codex_credentials_not_found.suggestion" = "Oturum açmak için `codex` çalıştırın veya Ayarlar'da kimlik bilgilerini yapıştırın";
+"error.codex_auth_expired" = "Codex oturumu süresi doldu";
+"error.codex_auth_expired.suggestion" = "Yeniden oturum açmak için terminalde `codex` çalıştırın";
+"error.codex_auth_refresh_failed" = "Codex oturumu yenilenemedi";
+"error.codex_invalid_response" = "Codex kullanım API'sinden beklenmeyen yanıt";
+"error.codex_server_error" = "Codex kullanım API'si hata döndürdü";
+
+// MARK: - Terminal Launcher
+"launcher.title" = "Terminal Başlatıcı";
+"launcher.subtitle" = "Claude Code'u bu profille herhangi bir terminalden çalıştırın";
+"launcher.description" = "Bir %@ komutu yükler. Normal claude komutu etkin profili kullanmaya devam eder; başlatıcı her zaman bu profilin kendi Claude Code oturumunu açar.";
+"launcher.install" = "Başlatıcıyı Yükle";
+"launcher.remove" = "Kaldır";
+"launcher.login_needed" = "Tek seferlik kurulum: terminalde %@ komutunu çalıştırın ve /login ile giriş yapın. Uygulama daha sonra bu hesabı otomatik olarak bağlar ve izler.";
+"launcher.pinned" = "Bağlandı — kullanım takibi bu oturumu izler.";
+"launcher.verify" = "Oturumu Kontrol Et";
+"launcher.path_warning" = "~/.local/bin PATH içinde değil. Bu satırı kabuk profilinize ekleyin:";
+"launcher.install_failed" = "Başlatıcı yüklenemedi: %@";
+"support.popup_title" = "Merhaba, ben Hamed 👋";
+"support.popup_later" = "Belki sonra";
+"support.popup_signature" = "Claude Usage'ın arkasındaki tek kişilik ekip";
+"support.popup_body" = "Ücretsiz, açık kaynak, tek kişi tarafından yapıldı — reklam yok, izleme yok. Sizi bir oturum limitini yakmaktan kurtardıysa, bir kahve onu ayakta tutar.";
+"support.popup_days" = "%d gündür limitlerinizi izliyor — her zaman ücretsiz";

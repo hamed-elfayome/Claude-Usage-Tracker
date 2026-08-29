@@ -76,4 +76,18 @@ final class NotchHookServerTests: XCTestCase {
         let status = try await post("/hook/\(token)/stop", json: "{not json")
         XCTAssertEqual(status, 200, "malformed bodies must never punish Claude Code")
     }
+
+    func testOversizeBodyGets200AndIsDropped() async throws {
+        // Over the 1 MiB cap. The server must drain the wire and answer 200
+        // (a 413 here is what used to paint hook errors into Claude Code
+        // sessions on every large file Read), and the event must not land.
+        let sessionId = "oversize-\(UUID().uuidString.prefix(6))"
+        let padding = String(repeating: "a", count: Int(Constants.NotchHUD.maxBodyBytes) + 65_536)
+        let status = try await post("/hook/\(token)/session-start",
+                                    json: #"{"session_id":"\#(sessionId)","junk":"\#(padding)"}"#)
+        XCTAssertEqual(status, 200, "over-cap bodies from an authorized sender must be acknowledged, not errored")
+        try await Task.sleep(nanoseconds: 300_000_000)
+        XCTAssertFalse(NotchSessionStore.shared.sessions.contains { $0.id == sessionId },
+                       "over-cap event must be dropped, not processed")
+    }
 }

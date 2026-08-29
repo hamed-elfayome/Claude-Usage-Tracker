@@ -135,6 +135,14 @@ final class AutoStartSessionService {
     }
 
     private func checkProfile(_ profile: Profile) async {
+        // Explicit capability gate: auto-start burns tokens via the claude.ai
+        // conversation API — providers without it must be skipped by design,
+        // not just incidentally via the credentials check below.
+        guard profile.provider.descriptor.capabilities.autoStartSession else {
+            LoggingService.shared.logDebug("Skipping profile '\(profile.name)' - provider does not support auto-start")
+            return
+        }
+
         // Skip if profile doesn't have Claude.ai credentials
         guard profile.hasClaudeAI else {
             LoggingService.shared.logDebug("Skipping profile '\(profile.name)' - no Claude.ai credentials")
@@ -143,13 +151,20 @@ final class AutoStartSessionService {
 
         do {
             // Fetch current usage for this profile
-            let usage = try await fetchUsageForProfile(profile)
+            let (usage, hasOpenWindow) = try await fetchUsageForProfile(profile)
 
             let currentPercentage = usage.effectiveSessionPercentage
 
-            // Simple logic (like v1.1.0): If session is at 0%, start it
-            // The initialization message will bring usage above 0%, preventing repeated starts
-            if currentPercentage == 0.0 {
+            // A session window that is open but unused reads 0% — often for
+            // hours, because the initialization message (and light real usage)
+            // rounds down to zero. Starting one then spends a request, and
+            // leaves an empty conversation behind, to open something already
+            // running. The in-memory `lastCapturedResetTime` guard below covers
+            // the same run, but is lost across app restarts and never set for
+            // windows the user opened themselves. Gating on the live reset time
+            // from the API closes both gaps: only a window with no current
+            // `resets_at` is genuinely waiting to be opened.
+            if currentPercentage == 0.0 && !hasOpenWindow {
                 // Check if we recently auto-started and should wait for reset
                 if let lastResetTime = lastCapturedResetTime[profile.id],
                    Date() < lastResetTime {
@@ -165,7 +180,7 @@ final class AutoStartSessionService {
             } else {
                 // Session is active, clear any tracked reset time since usage endpoint is now showing correct data
                 lastCapturedResetTime.removeValue(forKey: profile.id)
-                LoggingService.shared.logDebug("Profile '\(profile.name)': session at \(currentPercentage)% (active)")
+                LoggingService.shared.logDebug("Profile '\(profile.name)': session at \(currentPercentage)% (window \(hasOpenWindow ? "open" : "closed"))")
             }
 
         } catch {
@@ -173,19 +188,19 @@ final class AutoStartSessionService {
         }
     }
 
-    private func fetchUsageForProfile(_ profile: Profile) async throws -> ClaudeUsage {
+    private func fetchUsageForProfile(_ profile: Profile) async throws -> (usage: ClaudeUsage, hasOpenWindow: Bool) {
         // Fetch usage data using the profile's specific credentials
-        let usage = try await fetchUsageData(for: profile)
+        let (usage, hasOpenWindow) = try await fetchUsageData(for: profile)
 
         // Save usage to profile
         await MainActor.run {
             profileManager.saveClaudeUsage(usage, for: profile.id)
         }
 
-        return usage
+        return (usage, hasOpenWindow)
     }
 
-    private func fetchUsageData(for profile: Profile) async throws -> ClaudeUsage {
+    private func fetchUsageData(for profile: Profile) async throws -> (usage: ClaudeUsage, hasOpenWindow: Bool) {
         // Get credentials from the specific profile
         guard let sessionKey = profile.claudeSessionKey,
               let orgId = profile.organizationId else {
@@ -202,7 +217,7 @@ final class AutoStartSessionService {
             .build()
 
         var request = URLRequest(url: url)
-        request.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
+        request.setValue(ClaudeAPIService.sessionCookieHeader(sessionKey: sessionKey, url: url), forHTTPHeaderField: "Cookie")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.httpMethod = "GET"
         request.timeoutInterval = 30
@@ -222,10 +237,10 @@ final class AutoStartSessionService {
         }
 
         // Parse usage response
-        return try parseUsageResponse(data)
+        return try parseUsageResponse(data)  // (usage, hasOpenWindow)
     }
 
-    private func parseUsageResponse(_ data: Data) throws -> ClaudeUsage {
+    private func parseUsageResponse(_ data: Data) throws -> (usage: ClaudeUsage, hasOpenWindow: Bool) {
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw AppError(code: .apiParsingFailed, message: "Failed to parse usage data", isRecoverable: false)
         }
@@ -233,6 +248,14 @@ final class AutoStartSessionService {
         // Extract session usage (five_hour)
         var sessionPercentage = 0.0
         var sessionResetTime = Date().addingTimeInterval(5 * 3600)
+
+        // Whether a window is currently open, as opposed to merely unused. The
+        // API omits `resets_at` when no window is running; when one is running
+        // it is present and in the future. Percentage alone cannot tell these
+        // apart, since an open window reads 0% until usage accrues past
+        // rounding. `sessionResetTime` above is synthesised when absent, so it
+        // cannot carry this signal — hence a separate flag.
+        var hasOpenWindow = false
 
         if let fiveHour = json["five_hour"] as? [String: Any] {
             if let utilization = fiveHour["utilization"] {
@@ -242,6 +265,7 @@ final class AutoStartSessionService {
                 let formatter = ISO8601DateFormatter()
                 formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
                 sessionResetTime = formatter.date(from: resetsAt) ?? sessionResetTime
+                hasOpenWindow = sessionResetTime > Date()
             }
         }
 
@@ -287,7 +311,7 @@ final class AutoStartSessionService {
         let opusTokens = Int(Double(weeklyLimit) * (opusPercentage / 100.0))
         let sonnetTokens = Int(Double(weeklyLimit) * (sonnetPercentage / 100.0))
 
-        return ClaudeUsage(
+        let usage = ClaudeUsage(
             sessionTokensUsed: 0,
             sessionLimit: 0,
             sessionPercentage: sessionPercentage,
@@ -313,6 +337,7 @@ final class AutoStartSessionService {
             lastUpdated: Date(),
             userTimezone: .current
         )
+        return (usage, hasOpenWindow)
     }
 
     private func parseUtilization(_ value: Any) -> Double {
@@ -373,7 +398,8 @@ final class AutoStartSessionService {
                 notificationManager.sendAutoStartNotification(
                     profileName: profile.name,
                     success: true,
-                    error: nil
+                    error: nil,
+                    settings: profile.notificationSettings
                 )
             }
 
@@ -385,7 +411,8 @@ final class AutoStartSessionService {
                 notificationManager.sendAutoStartNotification(
                     profileName: profile.name,
                     success: false,
-                    error: error.localizedDescription
+                    error: error.localizedDescription,
+                    settings: profile.notificationSettings
                 )
             }
         }
@@ -407,7 +434,7 @@ final class AutoStartSessionService {
             .build()
 
         var conversationRequest = URLRequest(url: conversationURL)
-        conversationRequest.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
+        conversationRequest.setValue(ClaudeAPIService.sessionCookieHeader(sessionKey: sessionKey, url: conversationURL), forHTTPHeaderField: "Cookie")
         conversationRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         conversationRequest.httpMethod = "POST"
 
@@ -436,7 +463,7 @@ final class AutoStartSessionService {
             .build()
 
         var messageRequest = URLRequest(url: messageURL)
-        messageRequest.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
+        messageRequest.setValue(ClaudeAPIService.sessionCookieHeader(sessionKey: sessionKey, url: messageURL), forHTTPHeaderField: "Cookie")
         messageRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         messageRequest.httpMethod = "POST"
 
@@ -463,7 +490,7 @@ final class AutoStartSessionService {
             .build()
 
         var deleteRequest = URLRequest(url: deleteURL)
-        deleteRequest.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
+        deleteRequest.setValue(ClaudeAPIService.sessionCookieHeader(sessionKey: sessionKey, url: deleteURL), forHTTPHeaderField: "Cookie")
         deleteRequest.httpMethod = "DELETE"
 
         // Attempt to delete, but don't fail if deletion fails

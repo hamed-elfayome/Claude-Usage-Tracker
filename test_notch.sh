@@ -47,12 +47,12 @@ movie() {
 }
 
 abuse() {
-  echo "▶ abuse cases (expect 404/405/413/200)"
+  echo "▶ abuse cases (expect 404/405/200)"
   post "http://127.0.0.1:${PORT}/hook/session-start" '{"session_id":"legacy"}'           # tokenless legacy -> 404
   post "http://127.0.0.1:${PORT}/hook/wrongtoken/stop" '{"session_id":"spoof"}'          # bad token -> 404
   post "$BASE/permission-request" '{"session_id":"x"}'                                    # not in allowlist -> 404
   echo -n "  GET  $BASE/stop -> "; curl -s -o /dev/null -w "HTTP %{http_code}\n" "$BASE/stop"   # GET -> 405
-  post "$BASE/stop" "{\"session_id\":\"pad\",\"junk\":\"$(head -c 100000 /dev/zero | tr '\0' 'a')\"}"  # >64KB -> 413
+  post "$BASE/stop" "{\"session_id\":\"pad\",\"junk\":\"$(head -c 2000000 /dev/zero | tr '\0' 'a')\"}"  # >1MiB -> 200 (drained + dropped)
   post "$BASE/stop" '{not json'                                                           # malformed -> 200 (dropped)
   echo "✓ abuse done"
 }

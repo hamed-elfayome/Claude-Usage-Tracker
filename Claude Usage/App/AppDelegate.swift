@@ -21,8 +21,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         // Load profiles into ProfileManager (synchronously)
         ProfileManager.shared.loadProfiles()
 
+        // Regenerate installed statusline scripts so they pick up format changes
+        // across app updates and re-embed fresh Cloudflare clearance cookies.
+        try? StatuslineService.shared.updateScriptsIfInstalled()
+
         // Initialize update manager to enable automatic update checks
         _ = UpdateManager.shared
+
+        // Monthly support reminder (first check is delayed past startup)
+        SupportReminderService.shared.start()
 
         // Request notification permissions
         requestNotificationPermissions()
@@ -139,7 +146,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         }
 
         // Check if valid CLI credentials exist in system Keychain
-        if hasValidSystemCLICredentials() {
+        // (Claude Code specific — only relevant for providers with CLI sync)
+        if activeProfile.provider.descriptor.capabilities.cliAccountSync,
+           hasValidSystemCLICredentials() {
             LoggingService.shared.log("AppDelegate: Found valid CLI credentials, skipping wizard")
             return false
         }

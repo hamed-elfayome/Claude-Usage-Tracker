@@ -126,6 +126,22 @@ class ClaudeAPIService: APIServiceProtocol {
         throw AppError.sessionKeyNotFound()
     }
 
+    /// Cookie header for claude.ai session requests: the session key plus any
+    /// Cloudflare clearance / device cookies captured by the sign-in webview
+    /// (shared cookie storage). Requests that send ONLY `sessionKey` get
+    /// challenged or rejected with E3000 permission errors even when the
+    /// session is valid (#204, #277) — every claude.ai call must go through
+    /// this, not just `performRequest`.
+    static func sessionCookieHeader(sessionKey: String, url: URL) -> String {
+        var cookiePairs = ["sessionKey=\(sessionKey)"]
+        if let stored = HTTPCookieStorage.shared.cookies(for: url) {
+            for cookie in stored where ["cf_clearance", "__cf_bm", "anthropic-device-id"].contains(cookie.name) {
+                cookiePairs.append("\(cookie.name)=\(cookie.value)")
+            }
+        }
+        return cookiePairs.joined(separator: "; ")
+    }
+
     /// Builds an authenticated request with the appropriate headers for the auth type
     private func buildAuthenticatedRequest(url: URL, auth: AuthenticationType) -> URLRequest {
         var request = URLRequest(url: url)
@@ -133,9 +149,9 @@ class ClaudeAPIService: APIServiceProtocol {
         switch auth {
         case .claudeAISession(let sessionKey):
             // Existing claude.ai authentication
-            request.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
+            request.setValue(Self.sessionCookieHeader(sessionKey: sessionKey, url: url), forHTTPHeaderField: "Cookie")
             request.setValue("application/json", forHTTPHeaderField: "Accept")
-            request.setValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15", forHTTPHeaderField: "User-Agent")
+            request.setValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15", forHTTPHeaderField: "User-Agent")
             request.setValue("https://claude.ai", forHTTPHeaderField: "Referer")
             request.setValue("https://claude.ai", forHTTPHeaderField: "Origin")
 
@@ -148,7 +164,7 @@ class ClaudeAPIService: APIServiceProtocol {
 
         case .consoleAPISession(let apiKey):
             // Console API authentication
-            request.setValue("sessionKey=\(apiKey)", forHTTPHeaderField: "Cookie")
+            request.setValue(Self.sessionCookieHeader(sessionKey: apiKey, url: url), forHTTPHeaderField: "Cookie")
             request.setValue("application/json", forHTTPHeaderField: "Accept")
         }
 
@@ -243,9 +259,9 @@ class ClaudeAPIService: APIServiceProtocol {
             }
 
             var request = URLRequest(url: url)
-            request.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
+            request.setValue(Self.sessionCookieHeader(sessionKey: sessionKey, url: url), forHTTPHeaderField: "Cookie")
             request.setValue("application/json", forHTTPHeaderField: "Accept")
-            request.setValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15", forHTTPHeaderField: "User-Agent")
+            request.setValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15", forHTTPHeaderField: "User-Agent")
             request.setValue("https://claude.ai", forHTTPHeaderField: "Referer")
             request.setValue("https://claude.ai", forHTTPHeaderField: "Origin")
             request.httpMethod = "GET"
@@ -336,6 +352,19 @@ class ClaudeAPIService: APIServiceProtocol {
                 }
 
             case 401, 403:
+                // A Cloudflare bot challenge is not an auth verdict: reporting
+                // it as E3000/expired credentials sends users chasing
+                // re-logins that can never help (#277).
+                let preview = String(data: data, encoding: .utf8)?.prefix(200) ?? ""
+                if preview.contains("Just a moment") || httpResponse.value(forHTTPHeaderField: "cf-mitigated") != nil {
+                    throw AppError(
+                        code: .apiServiceUnavailable,
+                        message: "Request blocked by Cloudflare protection.",
+                        technicalDetails: "claude.ai answered the organizations request with a bot-verification challenge, not an auth verdict.",
+                        isRecoverable: true,
+                        recoverySuggestion: "Your session key is likely still valid. Re-open the sign-in window so the webview can refresh Cloudflare cookies, then try again."
+                    )
+                }
                 throw AppError.apiUnauthorized()
 
             case 429:
@@ -623,15 +652,9 @@ class ClaudeAPIService: APIServiceProtocol {
         // Include Cloudflare clearance cookies captured by the sign-in webview
         // (shared cookie storage) — without them claude.ai intermittently
         // answers with a 403 "Just a moment..." challenge page.
-        var cookiePairs = ["sessionKey=\(sessionKey)"]
-        if let stored = HTTPCookieStorage.shared.cookies(for: url) {
-            for cookie in stored where ["cf_clearance", "__cf_bm"].contains(cookie.name) {
-                cookiePairs.append("\(cookie.name)=\(cookie.value)")
-            }
-        }
-        request.setValue(cookiePairs.joined(separator: "; "), forHTTPHeaderField: "Cookie")
+        request.setValue(Self.sessionCookieHeader(sessionKey: sessionKey, url: url), forHTTPHeaderField: "Cookie")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.setValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15", forHTTPHeaderField: "User-Agent")
+        request.setValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15", forHTTPHeaderField: "User-Agent")
         request.setValue("https://claude.ai", forHTTPHeaderField: "Referer")
         request.setValue("https://claude.ai", forHTTPHeaderField: "Origin")
         request.httpMethod = "GET"
@@ -710,10 +733,14 @@ class ClaudeAPIService: APIServiceProtocol {
             let responsePreview = String(data: data, encoding: .utf8)?.prefix(200) ?? "Unable to read response"
 
             // Cloudflare bot challenge, not an actual auth failure — the
-            // session key is fine, the request just got challenged.
-            if responsePreview.contains("Just a moment") || responsePreview.contains("cf-mitigated") {
+            // session key is fine, the request just got challenged. Must NOT
+            // be .apiUnauthorized: the credential-error banner keys off that
+            // code and would falsely tell the user their credentials expired
+            // (#277).
+            if responsePreview.contains("Just a moment") || responsePreview.contains("cf-mitigated")
+                || httpResponse.value(forHTTPHeaderField: "cf-mitigated") != nil {
                 throw AppError(
-                    code: .apiUnauthorized,
+                    code: .apiServiceUnavailable,
                     message: "Request blocked by Cloudflare protection.",
                     technicalDetails: "Endpoint: \(endpoint)\nStatus: \(httpResponse.statusCode)\nCloudflare challenge page returned",
                     isRecoverable: true,
@@ -1053,10 +1080,10 @@ class ClaudeAPIService: APIServiceProtocol {
             .build()
 
         var conversationRequest = URLRequest(url: conversationURL)
-        conversationRequest.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
+        conversationRequest.setValue(Self.sessionCookieHeader(sessionKey: sessionKey, url: conversationURL), forHTTPHeaderField: "Cookie")
         conversationRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         conversationRequest.setValue("application/json", forHTTPHeaderField: "Accept")
-        conversationRequest.setValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15", forHTTPHeaderField: "User-Agent")
+        conversationRequest.setValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15", forHTTPHeaderField: "User-Agent")
         conversationRequest.setValue("https://claude.ai", forHTTPHeaderField: "Referer")
         conversationRequest.setValue("https://claude.ai", forHTTPHeaderField: "Origin")
         conversationRequest.httpMethod = "POST"
@@ -1101,10 +1128,10 @@ class ClaudeAPIService: APIServiceProtocol {
             .build()
 
         var messageRequest = URLRequest(url: messageURL)
-        messageRequest.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
+        messageRequest.setValue(Self.sessionCookieHeader(sessionKey: sessionKey, url: messageURL), forHTTPHeaderField: "Cookie")
         messageRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         messageRequest.setValue("application/json", forHTTPHeaderField: "Accept")
-        messageRequest.setValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15", forHTTPHeaderField: "User-Agent")
+        messageRequest.setValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15", forHTTPHeaderField: "User-Agent")
         messageRequest.setValue("https://claude.ai", forHTTPHeaderField: "Referer")
         messageRequest.setValue("https://claude.ai", forHTTPHeaderField: "Origin")
         messageRequest.httpMethod = "POST"
@@ -1144,8 +1171,8 @@ class ClaudeAPIService: APIServiceProtocol {
             .build()
 
         var deleteRequest = URLRequest(url: deleteURL)
-        deleteRequest.setValue("sessionKey=\(sessionKey)", forHTTPHeaderField: "Cookie")
-        deleteRequest.setValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15", forHTTPHeaderField: "User-Agent")
+        deleteRequest.setValue(Self.sessionCookieHeader(sessionKey: sessionKey, url: deleteURL), forHTTPHeaderField: "Cookie")
+        deleteRequest.setValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Safari/605.1.15", forHTTPHeaderField: "User-Agent")
         deleteRequest.setValue("https://claude.ai", forHTTPHeaderField: "Referer")
         deleteRequest.setValue("https://claude.ai", forHTTPHeaderField: "Origin")
         deleteRequest.httpMethod = "DELETE"

@@ -26,6 +26,13 @@ class ClaudeStatusService {
         }
     }
 
+    /// Any Statuspage-compatible endpoint (e.g. a provider's
+    /// `descriptor.statusPageURL` — the JSON schema is identical across
+    /// Anthropic and OpenAI status pages).
+    init(statusURL: URL) {
+        self.statusURL = statusURL
+    }
+
     // MARK: - Status Fetching
 
     /// Fetch current Claude status

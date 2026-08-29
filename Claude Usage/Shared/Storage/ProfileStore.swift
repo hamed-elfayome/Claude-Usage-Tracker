@@ -21,6 +21,10 @@ class ProfileStore {
         static let multiProfileConfig = "multiProfileDisplayConfig"
     }
 
+    /// One-time flag so the expected no-keychain-store situation on ad-hoc dev
+    /// builds is logged once, not on every save cycle.
+    private static var loggedNoKeychainStoreOnce = false
+
     init() {
         // Use standard UserDefaults (app container)
         self.defaults = UserDefaults.standard
@@ -45,7 +49,16 @@ class ProfileStore {
                 // credentials in the plist for this save so nothing is lost; the
                 // migration retries on the next save.
                 encoder.userInfo[Profile.includeSecretsKey] = true
-                LoggingService.shared.logError("ProfileStore: Keychain write failed — keeping credentials in plist for this save (will retry)")
+                if keychainService.profileSecretStorageKnownUnavailable {
+                    // Expected on ad-hoc dev builds — not an error, and saves run
+                    // on every refresh, so say it once instead of every cycle.
+                    if !Self.loggedNoKeychainStoreOnce {
+                        Self.loggedNoKeychainStoreOnce = true
+                        LoggingService.shared.log("ProfileStore: no reachable keychain store in this build — credentials remain in plist (expected for ad-hoc dev builds)")
+                    }
+                } else {
+                    LoggingService.shared.logError("ProfileStore: Keychain write failed — keeping credentials in plist for this save (will retry)")
+                }
             }
             let data = try encoder.encode(profiles)
             defaults.set(data, forKey: Keys.profiles)
@@ -92,6 +105,11 @@ class ProfileStore {
                 } else {
                     profiles[i].cliCredentialsJSON = keychainService.loadProfileSecret(profileId: id, field: .cliCredentialsJSON)
                 }
+                if profiles[i].codexCredentialsJSON != nil {
+                    plistHadSecrets = true
+                } else {
+                    profiles[i].codexCredentialsJSON = keychainService.loadProfileSecret(profileId: id, field: .codexCredentialsJSON)
+                }
             }
 
             if plistHadSecrets {
@@ -117,6 +135,7 @@ class ProfileStore {
         ok = persistSecret(profile.claudeSessionKey, profile.id, .claudeSessionKey) && ok
         ok = persistSecret(profile.apiSessionKey, profile.id, .apiSessionKey) && ok
         ok = persistSecret(profile.cliCredentialsJSON, profile.id, .cliCredentialsJSON) && ok
+        ok = persistSecret(profile.codexCredentialsJSON, profile.id, .codexCredentialsJSON) && ok
         return ok
     }
 

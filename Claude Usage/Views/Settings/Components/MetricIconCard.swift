@@ -133,6 +133,14 @@ private struct WeekDisplayOptions: View {
     @Binding var config: MetricIconConfig
     let onConfigChanged: () -> Void
 
+    /// Token display mode requires a provider that reports token counts —
+    /// percentage-only providers (e.g. Codex) would render "0/0".
+    private var availableModes: [WeekDisplayMode] {
+        let supportsTokens = ProfileManager.shared.activeProfile?
+            .provider.descriptor.capabilities.tokenCounts ?? true
+        return WeekDisplayMode.allCases.filter { supportsTokens || $0 != .tokens }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             Text("ui.display_mode".localized)
@@ -146,7 +154,7 @@ private struct WeekDisplayOptions: View {
                     onConfigChanged()
                 }
             )) {
-                ForEach(WeekDisplayMode.allCases, id: \.self) { mode in
+                ForEach(availableModes, id: \.self) { mode in
                     VStack(alignment: .leading, spacing: 2) {
                         Text(mode.displayName)
                         Text(mode.description)
@@ -157,6 +165,16 @@ private struct WeekDisplayOptions: View {
                 }
             }
             .pickerStyle(.radioGroup)
+        }
+        .onAppear {
+            // A stored .tokens mode can predate the provider filter (e.g. a
+            // Codex profile created with settings copied from an Anthropic
+            // profile). An out-of-options Picker selection renders nothing
+            // selected — migrate it to .percentage.
+            if !availableModes.contains(config.weekDisplayMode) {
+                config.weekDisplayMode = .percentage
+                onConfigChanged()
+            }
         }
     }
 }

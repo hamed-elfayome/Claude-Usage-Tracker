@@ -925,12 +925,6 @@
 "popover.time_format_system" = "System";
 "popover.time_format_12h" = "12-Stunden";
 "popover.time_format_24h" = "24-Stunden";
-"popover.peak_hours" = "Peak Hours Indicator";
-"popover.peak_hours_desc" = "Show when Claude is in peak hours (weekdays %@)";
-"popover.peak_hours_toggle" = "Show peak hours indicator";
-"popover.peak_hours_toggle_desc" = "Display a flame icon in the menu bar and highlight the session card during peak hours";
-"popover.peak_hours_menu_icon" = "Show flame icon in menu bar";
-"popover.peak_hours_menu_icon_desc" = "Display a flame icon next to your usage indicators during peak hours";
 
 /* ==================== */
 /* MARK: - Feedback Prompt */
@@ -1030,3 +1024,72 @@
 /* Sponsor slot */
 "sponsor.slot_title" = "Dieser Platz ist für Sponsoren verfügbar";
 "sponsor.slot_cta" = "Kontakt aufnehmen";
+
+/* Multi-Provider / OpenAI Codex */
+"section.codex_account_title" = "Codex-Konto";
+"section.codex_account_desc" = "Verbinde dein OpenAI-Codex-Konto";
+"profiles.provider_label" = "Anbieter";
+"profiles.provider_hint" = "Welchen Dienst dieses Profil verfolgt. Kann später nicht geändert werden.";
+"usage.window.session" = "Sitzung";
+"usage.window.weekly" = "Wöchentlich";
+"popover.credits_unlimited" = "Unbegrenzte Credits";
+"popover.credits_balance" = "Credits: %@";
+"codex.title" = "OpenAI-Codex-Konto";
+"codex.subtitle" = "Verfolge deine Codex-Nutzungslimits";
+"codex.connected" = "Verbunden";
+"codex.not_connected" = "Nicht verbunden";
+"codex.source_manual" = "Manuell gespeicherte Zugangsdaten";
+"codex.source_authfile" = "Wird aus der Codex-CLI gelesen (auth.json)";
+"codex.signed_in_as" = "Angemeldet als %@";
+"codex.test_connection" = "Verbindung testen";
+"codex.cli_detection_title" = "Codex-CLI";
+"codex.cli_detection_subtitle" = "Zugangsdaten werden aus ~/.codex/auth.json gelesen";
+"codex.cli_detected" = "Codex-CLI erkannt";
+"codex.last_refresh" = "Tokens aktualisiert %@";
+"codex.live_read_note" = "Zugangsdaten werden live aus auth.json gelesen — melde dich mit der Codex-CLI an oder ab, und dieses Profil folgt automatisch.";
+"codex.cli_not_detected" = "Codex-CLI nicht erkannt";
+"codex.cli_not_detected_hint" = "Installiere die Codex-CLI und führe `codex` aus, um dich anzumelden, oder füge unten Zugangsdaten ein.";
+"codex.rescan" = "Erneut suchen";
+"codex.test_success" = "Verbindung OK";
+"codex.test_success_plan" = "Verbunden — %@-Plan";
+"codex.manual_title" = "Manuelle Zugangsdaten";
+"codex.manual_subtitle" = "Füge den Inhalt von auth.json ein, falls die CLI nicht auf diesem Mac ist";
+"codex.manual_saved" = "Manuelle Zugangsdaten gespeichert";
+"codex.manual_remove" = "Entfernen";
+"codex.manual_save" = "Zugangsdaten speichern";
+"setup.choose_provider.subtitle" = "Welchen Dienst möchtest du verfolgen?";
+"setup.choose_provider.anthropic_hint" = "Claude.ai-, Claude-Code- und Console-Nutzung";
+"setup.choose_provider.codex_hint" = "Nutzungslimits der OpenAI-Codex-CLI";
+"setup.choose_provider.skip" = "Vorerst überspringen";
+"setup.codex_detected.title" = "Codex-CLI erkannt";
+"setup.codex_detected.description" = "Deine Codex-CLI-Zugangsdaten wurden gefunden. Beginne sofort, deine Nutzungslimits zu verfolgen.";
+"setup.codex_not_detected.title" = "Codex verbinden";
+"setup.codex_not_detected.description" = "Keine Codex-CLI-Anmeldung gefunden. Führe `codex` aus, um dich anzumelden, oder füge unten den Inhalt von ~/.codex/auth.json ein.";
+"notification.usage_updated.title" = "Nutzung aktualisiert";
+"notification.usage_updated.body" = "Nutzungsdaten erfolgreich geladen";
+"error.codex_credentials_invalid" = "Codex-Zugangsdaten konnten nicht gelesen werden";
+"error.codex_credentials_invalid.suggestion" = "Füge den vollständigen Inhalt von ~/.codex/auth.json ein";
+"error.codex_credentials_not_found" = "Keine Codex-Zugangsdaten gefunden";
+"error.codex_credentials_not_found.suggestion" = "Führe `codex` aus, um dich anzumelden, oder füge Zugangsdaten in den Einstellungen ein";
+"error.codex_auth_expired" = "Codex-Anmeldung abgelaufen";
+"error.codex_auth_expired.suggestion" = "Führe `codex` im Terminal aus, um dich erneut anzumelden";
+"error.codex_auth_refresh_failed" = "Codex-Anmeldung konnte nicht erneuert werden";
+"error.codex_invalid_response" = "Unerwartete Antwort der Codex-Nutzungs-API";
+"error.codex_server_error" = "Die Codex-Nutzungs-API hat einen Fehler zurückgegeben";
+
+// MARK: - Terminal Launcher
+"launcher.title" = "Terminal-Starter";
+"launcher.subtitle" = "Claude Code mit diesem Profil aus jedem Terminal starten";
+"launcher.description" = "Installiert einen %@-Befehl. Der einfache claude-Befehl nutzt weiterhin das aktive Profil; der Starter öffnet immer die eigene Claude-Code-Anmeldung dieses Profils.";
+"launcher.install" = "Starter installieren";
+"launcher.remove" = "Entfernen";
+"launcher.login_needed" = "Einmalige Einrichtung: Führe %@ im Terminal aus und melde dich mit /login an. Die App verknüpft und verfolgt dieses Konto dann automatisch.";
+"launcher.pinned" = "Verknüpft — die Nutzungsverfolgung folgt dieser Anmeldung.";
+"launcher.verify" = "Anmeldung prüfen";
+"launcher.path_warning" = "~/.local/bin ist nicht in deinem PATH. Füge diese Zeile deinem Shell-Profil hinzu:";
+"launcher.install_failed" = "Starter konnte nicht installiert werden: %@";
+"support.popup_title" = "Hi, ich bin Hamed 👋";
+"support.popup_later" = "Vielleicht später";
+"support.popup_signature" = "das Ein-Personen-Team hinter Claude Usage";
+"support.popup_body" = "Kostenlos, Open Source, von einer Person gebaut — ohne Werbung, ohne Tracking. Hat es dich je vor einem verbrannten Session-Limit bewahrt, hält ein Kaffee es am Leben.";
+"support.popup_days" = "Behält deine Limits seit %d Tagen im Blick — für immer kostenlos";

@@ -936,12 +936,6 @@
 "popover.time_format_system" = "시스템";
 "popover.time_format_12h" = "12시간";
 "popover.time_format_24h" = "24시간";
-"popover.peak_hours" = "Peak Hours Indicator";
-"popover.peak_hours_desc" = "Show when Claude is in peak hours (weekdays %@)";
-"popover.peak_hours_toggle" = "Show peak hours indicator";
-"popover.peak_hours_toggle_desc" = "Display a flame icon in the menu bar and highlight the session card during peak hours";
-"popover.peak_hours_menu_icon" = "Show flame icon in menu bar";
-"popover.peak_hours_menu_icon_desc" = "Display a flame icon next to your usage indicators during peak hours";
 
 /* ==================== */
 /* MARK: - Feedback Prompt */
@@ -1039,3 +1033,72 @@
 /* Sponsor slot */
 "sponsor.slot_title" = "이 공간은 스폰서에게 제공됩니다";
 "sponsor.slot_cta" = "문의하기";
+
+/* Multi-Provider / OpenAI Codex */
+"section.codex_account_title" = "Codex 계정";
+"section.codex_account_desc" = "OpenAI Codex 계정을 연결하세요";
+"profiles.provider_label" = "제공자";
+"profiles.provider_hint" = "이 프로필이 추적하는 서비스입니다. 나중에 변경할 수 없습니다.";
+"usage.window.session" = "세션";
+"usage.window.weekly" = "주간";
+"popover.credits_unlimited" = "무제한 크레딧";
+"popover.credits_balance" = "크레딧: %@";
+"codex.title" = "OpenAI Codex 계정";
+"codex.subtitle" = "Codex 사용 한도를 추적하세요";
+"codex.connected" = "연결됨";
+"codex.not_connected" = "연결되지 않음";
+"codex.source_manual" = "수동으로 저장한 자격 증명 사용 중";
+"codex.source_authfile" = "Codex CLI(auth.json)에서 읽는 중";
+"codex.signed_in_as" = "%@(으)로 로그인됨";
+"codex.test_connection" = "연결 테스트";
+"codex.cli_detection_title" = "Codex CLI";
+"codex.cli_detection_subtitle" = "자격 증명은 ~/.codex/auth.json에서 읽어옵니다";
+"codex.cli_detected" = "Codex CLI 감지됨";
+"codex.last_refresh" = "토큰 갱신: %@";
+"codex.live_read_note" = "자격 증명은 auth.json에서 실시간으로 읽어옵니다. Codex CLI로 로그인하거나 로그아웃하면 이 프로필도 자동으로 따라갑니다.";
+"codex.cli_not_detected" = "Codex CLI를 찾을 수 없음";
+"codex.cli_not_detected_hint" = "Codex CLI를 설치하고 `codex`를 실행해 로그인하거나, 아래에 자격 증명을 붙여넣으세요.";
+"codex.rescan" = "다시 검색";
+"codex.test_success" = "연결 정상";
+"codex.test_success_plan" = "연결됨 — %@ 플랜";
+"codex.manual_title" = "수동 자격 증명";
+"codex.manual_subtitle" = "CLI가 이 Mac에 없다면 auth.json의 내용을 붙여넣으세요";
+"codex.manual_saved" = "수동 자격 증명이 저장됨";
+"codex.manual_remove" = "제거";
+"codex.manual_save" = "자격 증명 저장";
+"setup.choose_provider.subtitle" = "어떤 서비스를 추적할까요?";
+"setup.choose_provider.anthropic_hint" = "Claude.ai, Claude Code 및 Console 사용량";
+"setup.choose_provider.codex_hint" = "OpenAI Codex CLI 사용 한도";
+"setup.choose_provider.skip" = "지금은 건너뛰기";
+"setup.codex_detected.title" = "Codex CLI 감지됨";
+"setup.codex_detected.description" = "Codex CLI 자격 증명을 찾았습니다. 바로 사용 한도 추적을 시작하세요.";
+"setup.codex_not_detected.title" = "Codex 연결";
+"setup.codex_not_detected.description" = "Codex CLI 로그인을 찾을 수 없습니다. `codex`를 실행해 로그인하거나 ~/.codex/auth.json의 내용을 아래에 붙여넣으세요.";
+"notification.usage_updated.title" = "사용량 업데이트됨";
+"notification.usage_updated.body" = "사용량 데이터를 성공적으로 불러왔습니다";
+"error.codex_credentials_invalid" = "Codex 자격 증명을 읽을 수 없습니다";
+"error.codex_credentials_invalid.suggestion" = "~/.codex/auth.json의 전체 내용을 붙여넣으세요";
+"error.codex_credentials_not_found" = "Codex 자격 증명을 찾을 수 없습니다";
+"error.codex_credentials_not_found.suggestion" = "`codex`를 실행해 로그인하거나 설정에서 자격 증명을 붙여넣으세요";
+"error.codex_auth_expired" = "Codex 로그인이 만료되었습니다";
+"error.codex_auth_expired.suggestion" = "터미널에서 `codex`를 실행해 다시 로그인하세요";
+"error.codex_auth_refresh_failed" = "Codex 로그인을 갱신하지 못했습니다";
+"error.codex_invalid_response" = "Codex 사용량 API의 예기치 않은 응답";
+"error.codex_server_error" = "Codex 사용량 API가 오류를 반환했습니다";
+
+// MARK: - Terminal Launcher
+"launcher.title" = "터미널 런처";
+"launcher.subtitle" = "어느 터미널에서든 이 프로필로 Claude Code 실행";
+"launcher.description" = "%@ 명령을 설치합니다. 일반 claude 명령은 계속 활성 프로필을 사용하고, 런처는 항상 이 프로필 전용 Claude Code 로그인을 엽니다.";
+"launcher.install" = "런처 설치";
+"launcher.remove" = "제거";
+"launcher.login_needed" = "최초 1회 설정: 터미널에서 %@를 실행하고 /login으로 로그인하세요. 이후 앱이 해당 계정을 자동으로 연결하고 추적합니다.";
+"launcher.pinned" = "연결됨 — 사용량 추적이 이 로그인을 따릅니다.";
+"launcher.verify" = "로그인 확인";
+"launcher.path_warning" = "~/.local/bin이 PATH에 없습니다. 셸 프로필에 다음 줄을 추가하세요:";
+"launcher.install_failed" = "런처를 설치할 수 없습니다: %@";
+"support.popup_title" = "안녕하세요, Hamed입니다 👋";
+"support.popup_later" = "나중에";
+"support.popup_signature" = "Claude Usage를 혼자 만드는 1인 팀";
+"support.popup_body" = "무료, 오픈소스, 1인 개발 — 광고도 추적도 없습니다. 세션 한도를 태우는 걸 막아준 적이 있다면, 커피 한 잔이 개발을 이어가게 합니다.";
+"support.popup_days" = "%d일째 당신의 한도를 지키는 중 — 언제나 무료";

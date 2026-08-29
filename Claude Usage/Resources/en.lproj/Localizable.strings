@@ -933,12 +933,6 @@
 "popover.time_format_system" = "System";
 "popover.time_format_12h" = "12-hour";
 "popover.time_format_24h" = "24-hour";
-"popover.peak_hours" = "Peak Hours Indicator";
-"popover.peak_hours_desc" = "Show when Claude is in peak hours (weekdays %@)";
-"popover.peak_hours_toggle" = "Show peak hours indicator";
-"popover.peak_hours_toggle_desc" = "Display a flame icon in the menu bar and highlight the session card during peak hours";
-"popover.peak_hours_menu_icon" = "Show flame icon in menu bar";
-"popover.peak_hours_menu_icon_desc" = "Display a flame icon next to your usage indicators during peak hours";
 
 /* ==================== */
 /* MARK: - Feedback Prompt */
@@ -1026,3 +1020,72 @@
 /* Sponsor slot */
 "sponsor.slot_title" = "This spot is available for sponsors";
 "sponsor.slot_cta" = "Get in touch";
+
+/* Multi-Provider / OpenAI Codex */
+"section.codex_account_title" = "Codex Account";
+"section.codex_account_desc" = "Connect your OpenAI Codex account";
+"profiles.provider_label" = "Provider";
+"profiles.provider_hint" = "Which service this profile tracks. This can't be changed later.";
+"usage.window.session" = "Session";
+"usage.window.weekly" = "Weekly";
+"popover.credits_unlimited" = "Unlimited credits";
+"popover.credits_balance" = "Credits: %@";
+"codex.title" = "OpenAI Codex Account";
+"codex.subtitle" = "Track your Codex usage limits";
+"codex.connected" = "Connected";
+"codex.not_connected" = "Not connected";
+"codex.source_manual" = "Using manually saved credentials";
+"codex.source_authfile" = "Reading from the Codex CLI (auth.json)";
+"codex.signed_in_as" = "Signed in as %@";
+"codex.test_connection" = "Test Connection";
+"codex.cli_detection_title" = "Codex CLI";
+"codex.cli_detection_subtitle" = "Credentials are read from ~/.codex/auth.json";
+"codex.cli_detected" = "Codex CLI detected";
+"codex.last_refresh" = "Tokens refreshed %@";
+"codex.live_read_note" = "Credentials are read live from auth.json — sign in or out with the Codex CLI and this profile follows automatically.";
+"codex.cli_not_detected" = "Codex CLI not detected";
+"codex.cli_not_detected_hint" = "Install the Codex CLI and run `codex` to log in, or paste credentials below.";
+"codex.rescan" = "Rescan";
+"codex.test_success" = "Connection OK";
+"codex.test_success_plan" = "Connected — %@ plan";
+"codex.manual_title" = "Manual Credentials";
+"codex.manual_subtitle" = "Paste the contents of auth.json if the CLI isn't on this Mac";
+"codex.manual_saved" = "Manual credentials saved";
+"codex.manual_remove" = "Remove";
+"codex.manual_save" = "Save Credentials";
+"setup.choose_provider.subtitle" = "Which service do you want to track?";
+"setup.choose_provider.anthropic_hint" = "Claude.ai, Claude Code, and Console usage";
+"setup.choose_provider.codex_hint" = "OpenAI Codex CLI usage limits";
+"setup.choose_provider.skip" = "Skip for now";
+"setup.codex_detected.title" = "Codex CLI Detected";
+"setup.codex_detected.description" = "Your Codex CLI credentials were found. Start tracking your usage limits right away.";
+"setup.codex_not_detected.title" = "Connect Codex";
+"setup.codex_not_detected.description" = "No Codex CLI login found. Run `codex` to log in, or paste the contents of ~/.codex/auth.json below.";
+"notification.usage_updated.title" = "Usage Updated";
+"notification.usage_updated.body" = "Successfully loaded usage data";
+"error.codex_credentials_invalid" = "Codex credentials could not be read";
+"error.codex_credentials_invalid.suggestion" = "Paste the full contents of ~/.codex/auth.json";
+"error.codex_credentials_not_found" = "No Codex credentials found";
+"error.codex_credentials_not_found.suggestion" = "Run `codex` to log in, or paste credentials in Settings";
+"error.codex_auth_expired" = "Codex login expired";
+"error.codex_auth_expired.suggestion" = "Run `codex` in your terminal to log in again";
+"error.codex_auth_refresh_failed" = "Could not refresh Codex login";
+"error.codex_invalid_response" = "Unexpected response from the Codex usage API";
+"error.codex_server_error" = "Codex usage API returned an error";
+
+// MARK: - Terminal Launcher
+"launcher.title" = "Terminal Launcher";
+"launcher.subtitle" = "Run Claude Code with this profile from any terminal";
+"launcher.description" = "Installs a %@ command. The plain claude command keeps using the active profile; the launcher always opens this profile's own Claude Code login.";
+"launcher.install" = "Install Launcher";
+"launcher.remove" = "Remove";
+"launcher.login_needed" = "One-time setup: run %@ in your terminal and sign in with /login. The app will then link and track that account automatically.";
+"launcher.pinned" = "Linked — usage tracking follows this login.";
+"launcher.verify" = "Check Login";
+"launcher.path_warning" = "~/.local/bin is not on your PATH. Add this line to your shell profile:";
+"launcher.install_failed" = "Couldn't install the launcher: %@";
+"support.popup_title" = "Hi, I'm Hamed 👋";
+"support.popup_later" = "Maybe later";
+"support.popup_signature" = "the one-person team behind Claude Usage";
+"support.popup_body" = "Free, open source, built by one person — no ads, no tracking. If it has ever saved you from burning a session limit, a coffee keeps it going.";
+"support.popup_days" = "Watching your limits for %d days — always free";

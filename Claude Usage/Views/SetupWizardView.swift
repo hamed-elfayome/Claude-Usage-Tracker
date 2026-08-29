@@ -4,9 +4,11 @@ import AppKit
 // MARK: - Setup Mode (Auto-detect vs Manual)
 
 enum SetupMode {
+    case chooseProvider
     case loading
     case cliDetected(credentials: String)
     case manualSetup
+    case codexSetup
 }
 
 // MARK: - Wizard State Machine
@@ -39,11 +41,31 @@ struct SetupWizardView: View {
     @State private var hasClaudeCodeCredentials = false
     @State private var isMigrating = false
     @State private var migrationMessage: String?
-    @State private var setupMode: SetupMode = .loading
+    @State private var setupMode: SetupMode = .chooseProvider
     private let apiService = ClaudeAPIService()
 
     var body: some View {
         switch setupMode {
+        case .chooseProvider:
+            // NOTE: selecting a card only navigates — the profile's provider
+            // is mutated exclusively on flow COMPLETION (see applyProvider
+            // call sites), so Back/Skip never leaves the profile converted
+            // to a provider the user was merely exploring.
+            ProviderChoiceSetupView(
+                onSelect: { provider in
+                    switch provider {
+                    case .anthropic:
+                        // Anthropic is the default; make it explicit in case a
+                        // previous codex setup was completed and re-entered.
+                        applyProvider(.anthropic)
+                        setupMode = .loading
+                    case .codex:
+                        setupMode = .codexSetup
+                    }
+                },
+                onSkip: { dismiss() }
+            )
+
         case .loading:
             VStack(spacing: 16) {
                 ProgressView()
@@ -63,7 +85,27 @@ struct SetupWizardView: View {
 
         case .manualSetup:
             manualSetupBody
+
+        case .codexSetup:
+            CodexSetupView(
+                onDone: {
+                    // Provider flips to codex only now — setup completed.
+                    applyProvider(.codex)
+                    NotificationCenter.default.post(name: .credentialsChanged, object: nil)
+                    dismiss()
+                },
+                onBack: { setupMode = .chooseProvider }
+            )
         }
+    }
+
+    /// Sets the chosen provider on the active profile (the wizard always
+    /// configures the active profile).
+    private func applyProvider(_ provider: Provider) {
+        guard var profile = ProfileManager.shared.activeProfile,
+              profile.provider != provider else { return }
+        profile.provider = provider
+        ProfileManager.shared.updateProfile(profile)
     }
 
     /// Detects CLI credentials and sets the appropriate setup mode
@@ -981,6 +1023,199 @@ struct CLIDetectedSetupView: View {
             Spacer()
         }
         .frame(width: 580, height: 680)
+    }
+}
+
+// MARK: - Provider Choice (wizard step 0)
+
+/// First wizard step: pick which provider this profile tracks. Anthropic
+/// continues into the existing Claude flow; other providers branch to their
+/// own setup views. Cards come from the registry, so new providers appear
+/// automatically.
+struct ProviderChoiceSetupView: View {
+    let onSelect: (Provider) -> Void
+    let onSkip: () -> Void
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer()
+
+            VStack(spacing: 24) {
+                HStack(spacing: 2) {
+                    Image("WizardLogo")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 80, height: 80)
+
+                    VStack(spacing: 8) {
+                        Text("setup.welcome.title".localized)
+                            .font(.system(size: 24, weight: .semibold))
+
+                        Text("setup.choose_provider.subtitle".localized)
+                            .font(.system(size: 13))
+                            .foregroundColor(.secondary)
+                    }
+                }
+
+                HStack(spacing: 16) {
+                    ForEach(Provider.allCases, id: \.self) { provider in
+                        Button {
+                            onSelect(provider)
+                        } label: {
+                            VStack(spacing: 12) {
+                                ProviderLogoView(provider: provider, size: 32)
+                                Text(provider.descriptor.displayName)
+                                    .font(.system(size: 14, weight: .semibold))
+                                Text(provider == .anthropic
+                                     ? "setup.choose_provider.anthropic_hint".localized
+                                     : "setup.choose_provider.codex_hint".localized)
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.secondary)
+                                    .multilineTextAlignment(.center)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            .frame(width: 180)
+                            .padding(.vertical, 24)
+                            .padding(.horizontal, 12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(Color.primary.opacity(0.04))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .strokeBorder(Color.primary.opacity(0.1), lineWidth: 1)
+                            )
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+
+                Button(action: onSkip) {
+                    Text("setup.choose_provider.skip".localized)
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
+
+            Spacer()
+        }
+        .frame(width: 580, height: 680)
+    }
+}
+
+// MARK: - Codex Setup
+
+/// Wizard step for OpenAI Codex profiles: detect the Codex CLI's auth.json,
+/// or accept manually pasted credentials.
+struct CodexSetupView: View {
+    let onDone: () -> Void
+    let onBack: () -> Void
+
+    @State private var detected: CodexCredentials?
+    @State private var manualJSON = ""
+    @State private var errorMessage: String?
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer()
+
+            VStack(spacing: 24) {
+                ZStack {
+                    Circle()
+                        .fill(Color.green.opacity(0.12))
+                        .frame(width: 80, height: 80)
+
+                    ProviderLogoView(provider: .codex, size: 36)
+                        .foregroundColor(.green)
+                }
+
+                if let detected {
+                    Text("setup.codex_detected.title".localized)
+                        .font(.system(size: 24, weight: .bold))
+
+                    Text(detected.email.map { "codex.signed_in_as".localized(with: $0) }
+                         ?? "setup.codex_detected.description".localized)
+                        .font(.system(size: 14))
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 60)
+
+                    Button(action: onDone) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "chart.bar.fill")
+                            Text("setup.cli_detected.start".localized)
+                        }
+                        .font(.system(size: 14, weight: .semibold))
+                        .padding(.horizontal, 28)
+                        .padding(.vertical, 10)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                } else {
+                    Text("setup.codex_not_detected.title".localized)
+                        .font(.system(size: 24, weight: .bold))
+
+                    Text("setup.codex_not_detected.description".localized)
+                        .font(.system(size: 14))
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 60)
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        TextEditor(text: $manualJSON)
+                            .font(.system(size: 11, design: .monospaced))
+                            .frame(width: 380, height: 80)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .strokeBorder(Color.primary.opacity(0.15), lineWidth: 1)
+                            )
+
+                        if let errorMessage {
+                            Text(errorMessage)
+                                .font(.system(size: 11))
+                                .foregroundColor(.red)
+                        }
+                    }
+
+                    Button(action: saveManual) {
+                        Text("codex.manual_save".localized)
+                            .font(.system(size: 14, weight: .semibold))
+                            .padding(.horizontal, 28)
+                            .padding(.vertical, 10)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .disabled(manualJSON.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+
+                Button(action: onBack) {
+                    Text("common.back".localized)
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
+
+            Spacer()
+        }
+        .frame(width: 580, height: 680)
+        .onAppear {
+            detected = try? CodexAuthService.shared.loadFromAuthFile()
+        }
+    }
+
+    private func saveManual() {
+        errorMessage = nil
+        guard CodexAuthService.parse(Data(manualJSON.utf8)) != nil else {
+            errorMessage = "error.codex_credentials_invalid".localized
+            return
+        }
+        guard var profile = ProfileManager.shared.activeProfile else { return }
+        profile.codexCredentialsJSON = manualJSON
+        ProfileManager.shared.updateProfile(profile)
+        onDone()
     }
 }
 

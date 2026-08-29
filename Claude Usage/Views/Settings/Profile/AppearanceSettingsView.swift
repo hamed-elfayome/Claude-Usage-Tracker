@@ -177,8 +177,9 @@ struct AppearanceSettingsView: View {
                             )
                         }
 
-                        // API Credits
-                        if let apiIndex = configuration.metrics.firstIndex(where: { $0.metricType == .api }) {
+                        // API Credits (console-billing providers only)
+                        if profileManager.activeProfile?.provider.descriptor.capabilities.consoleBilling ?? true,
+                           let apiIndex = configuration.metrics.firstIndex(where: { $0.metricType == .api }) {
                             MetricIconCard(
                                 metricType: .api,
                                 config: Binding(

@@ -286,6 +286,8 @@ struct SettingsView: View {
                     APIBillingView()
                 case .cliAccount:
                     CLIAccountView()
+                case .codexAccount:
+                    CodexAccountView()
 
                 // Profile Settings
                 case .appearance:
@@ -483,9 +485,23 @@ struct SponsorSlotCard: View {
 
 struct AppSettingsSection: View {
     @Binding var selectedSection: SettingsSection
+    @StateObject private var profileManager = ProfileManager.shared
 
     var sharedSections: [SettingsSection] {
-        SettingsSection.allCases.filter { !$0.isProfileSetting && !$0.isCredential && !$0.isBottomBarItem }
+        // The Claude Code (statusline) section is hidden only when NO profile
+        // is on a provider with CLI sync AND nothing is installed — while the
+        // statusline scripts are installed, the section must stay reachable
+        // so the user can uninstall them. NotchHUD is hook-driven, app-wide
+        // Claude Code infrastructure and stays visible regardless.
+        let hasCLISyncProfile = profileManager.profiles.contains {
+            $0.provider.descriptor.capabilities.cliAccountSync
+        }
+        let showClaudeCode = hasCLISyncProfile || StatuslineService.shared.isInstalled
+        return SettingsSection.allCases.filter {
+            guard !$0.isProfileSetting && !$0.isCredential && !$0.isBottomBarItem else { return false }
+            if $0 == .claudeCode && !showClaudeCode { return false }
+            return true
+        }
     }
 
     var body: some View {
@@ -588,6 +604,7 @@ enum SettingsSection: String, CaseIterable {
     case claudeAI
     case apiConsole
     case cliAccount
+    case codexAccount
 
     // Profile Settings
     case appearance
@@ -613,6 +630,7 @@ enum SettingsSection: String, CaseIterable {
         case .claudeAI: return "section.claudeai_title".localized
         case .apiConsole: return "section.api_console_title".localized
         case .cliAccount: return "section.cli_account_title".localized
+        case .codexAccount: return "section.codex_account_title".localized
         case .appearance: return "section.appearance_title".localized
         case .general: return "section.general_title".localized
         case .history: return "section.history_title".localized
@@ -636,6 +654,7 @@ enum SettingsSection: String, CaseIterable {
         case .claudeAI: return "key.fill"
         case .apiConsole: return "dollarsign.circle.fill"
         case .cliAccount: return "terminal.fill"
+        case .codexAccount: return "terminal.fill"
         case .appearance: return "paintbrush.fill"
         case .general: return "gearshape.fill"
         case .history: return "chart.bar.xaxis"
@@ -659,6 +678,7 @@ enum SettingsSection: String, CaseIterable {
         case .claudeAI: return "section.claudeai_desc".localized
         case .apiConsole: return "section.api_console_desc".localized
         case .cliAccount: return "section.cli_account_desc".localized
+        case .codexAccount: return "section.codex_account_desc".localized
         case .appearance: return "section.appearance_desc".localized
         case .general: return "section.general_desc".localized
         case .history: return "section.history_desc".localized
@@ -688,7 +708,7 @@ enum SettingsSection: String, CaseIterable {
 
     var isCredential: Bool {
         switch self {
-        case .claudeAI, .apiConsole, .cliAccount:
+        case .claudeAI, .apiConsole, .cliAccount, .codexAccount:
             return true
         default:
             return false
@@ -763,52 +783,58 @@ struct ProfileCredentialCardsRow: View {
     @StateObject private var profileManager = ProfileManager.shared
     @State private var credentials: ProfileCredentials?
 
+    /// Credential sections come from the active profile's provider descriptor,
+    /// so each provider shows only its own credential cards.
+    private var credentialSections: [SettingsSection] {
+        (profileManager.activeProfile?.provider ?? .anthropic).descriptor.credentialSections
+    }
+
     var body: some View {
         VStack(spacing: 4) {
-            // Claude.ai Card
-            Button {
-                selectedSection = .claudeAI
-            } label: {
-                CredentialMiniCard(
-                    icon: "key.fill",
-                    title: "Claude.ai",
-                    isConnected: credentials?.hasClaudeAI ?? false,
-                    isSelected: selectedSection == .claudeAI
-                )
+            ForEach(credentialSections, id: \.self) { section in
+                Button {
+                    selectedSection = section
+                } label: {
+                    CredentialMiniCard(
+                        icon: section.icon,
+                        title: cardTitle(for: section),
+                        isConnected: isConnected(section),
+                        isSelected: selectedSection == section
+                    )
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
-
-            // API Console Card
-            Button {
-                selectedSection = .apiConsole
-            } label: {
-                CredentialMiniCard(
-                    icon: "dollarsign.circle.fill",
-                    title: "API Console",
-                    isConnected: credentials?.apiSessionKey != nil,
-                    isSelected: selectedSection == .apiConsole
-                )
-            }
-            .buttonStyle(.plain)
-
-            // CLI Account Card
-            Button {
-                selectedSection = .cliAccount
-            } label: {
-                CredentialMiniCard(
-                    icon: "terminal.fill",
-                    title: "CLI Account",
-                    isConnected: profileManager.activeProfile?.hasCliAccount ?? false,
-                    isSelected: selectedSection == .cliAccount
-                )
-            }
-            .buttonStyle(.plain)
         }
         .onAppear {
             loadCredentials()
         }
         .onChange(of: profileManager.activeProfile?.id) { _, _ in
             loadCredentials()
+            // A credential section from another provider may still be selected
+            // after a profile switch — snap back to a section that exists.
+            if selectedSection.isCredential, !credentialSections.contains(selectedSection) {
+                selectedSection = credentialSections.first ?? .general
+            }
+        }
+    }
+
+    private func cardTitle(for section: SettingsSection) -> String {
+        switch section {
+        case .claudeAI: return "Claude.ai"
+        case .apiConsole: return "API Console"
+        case .cliAccount: return "CLI Account"
+        case .codexAccount: return "Codex CLI"
+        default: return section.title
+        }
+    }
+
+    private func isConnected(_ section: SettingsSection) -> Bool {
+        switch section {
+        case .claudeAI: return credentials?.hasClaudeAI ?? false
+        case .apiConsole: return credentials?.apiSessionKey != nil
+        case .cliAccount: return profileManager.activeProfile?.hasCliAccount ?? false
+        case .codexAccount: return profileManager.activeProfile?.hasUsageCredentials ?? false
+        default: return false
         }
     }
 
