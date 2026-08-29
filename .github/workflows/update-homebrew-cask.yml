@@ -3,16 +3,27 @@ name: Update Homebrew Cask
 on:
   release:
     types: [published]
+  # Releases published by the Release workflow's GITHUB_TOKEN do not emit a
+  # `release: published` event (GitHub recursion guard), so the Release
+  # workflow dispatches this explicitly — and it stays runnable by hand.
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag to update the cask for (e.g. v3.3.0)'
+        required: true
+        type: string
 
 jobs:
   update-cask:
     runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
     steps:
       - name: Extract version from tag
         id: version
         run: |
           # Extract version from release tag
-          VERSION="${{ github.event.release.tag_name }}"
+          VERSION="${RELEASE_TAG}"
           VERSION="${VERSION#v}"
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "Version: ${VERSION}"
@@ -20,10 +31,10 @@ jobs:
       - name: Download release artifact
         run: |
           # Download the Claude-Usage.zip from the release
-          echo "Downloading from: https://github.com/${{ github.repository }}/releases/download/${{ github.event.release.tag_name }}/Claude-Usage.zip"
+          echo "Downloading from: https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/Claude-Usage.zip"
 
           curl -L -f -o Claude-Usage.zip \
-            "https://github.com/${{ github.repository }}/releases/download/${{ github.event.release.tag_name }}/Claude-Usage.zip"
+            "https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/Claude-Usage.zip"
 
           # Verify download succeeded
           if [ ! -f Claude-Usage.zip ]; then
