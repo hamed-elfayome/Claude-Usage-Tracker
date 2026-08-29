@@ -933,12 +933,6 @@
 "popover.time_format_system" = "Hệ thống";
 "popover.time_format_12h" = "12 giờ";
 "popover.time_format_24h" = "24 giờ";
-"popover.peak_hours" = "Chỉ báo giờ cao điểm";
-"popover.peak_hours_desc" = "Hiện khi Claude đang trong giờ cao điểm (ngày thường %@)";
-"popover.peak_hours_toggle" = "Hiện chỉ báo giờ cao điểm";
-"popover.peak_hours_toggle_desc" = "Hiển thị biểu tượng ngọn lửa trên thanh menu và làm nổi bật thẻ phiên trong giờ cao điểm";
-"popover.peak_hours_menu_icon" = "Hiện biểu tượng ngọn lửa trên thanh menu";
-"popover.peak_hours_menu_icon_desc" = "Hiển thị biểu tượng ngọn lửa cạnh chỉ số mức sử dụng của bạn trong giờ cao điểm";
 
 /* ==================== */
 /* MARK: - Feedback Prompt */
@@ -1026,3 +1020,74 @@
 /* Sponsor slot */
 "sponsor.slot_title" = "Vị trí này dành cho nhà tài trợ";
 "sponsor.slot_cta" = "Liên hệ ngay";
+
+// MARK: - Providers & Codex (v3.3.0)
+"codex.cli_detected" = "Đã phát hiện Codex CLI";
+"codex.cli_detection_subtitle" = "Thông tin đăng nhập được đọc từ ~/.codex/auth.json";
+"codex.cli_detection_title" = "Codex CLI";
+"codex.cli_not_detected" = "Không phát hiện Codex CLI";
+"codex.cli_not_detected_hint" = "Cài Codex CLI và chạy `codex` để đăng nhập, hoặc dán thông tin đăng nhập bên dưới.";
+"codex.connected" = "Đã kết nối";
+"codex.last_refresh" = "Token được làm mới %@";
+"codex.live_read_note" = "Thông tin đăng nhập được đọc trực tiếp từ auth.json — đăng nhập hoặc đăng xuất bằng Codex CLI và hồ sơ này sẽ tự động cập nhật theo.";
+"codex.manual_remove" = "Xoá";
+"codex.manual_save" = "Lưu thông tin đăng nhập";
+"codex.manual_saved" = "Đã lưu thông tin đăng nhập thủ công";
+"codex.manual_subtitle" = "Dán nội dung auth.json nếu máy Mac này không có CLI";
+"codex.manual_title" = "Thông tin đăng nhập thủ công";
+"codex.not_connected" = "Chưa kết nối";
+"codex.rescan" = "Quét lại";
+"codex.signed_in_as" = "Đã đăng nhập với %@";
+"codex.source_authfile" = "Đang đọc từ Codex CLI (auth.json)";
+"codex.source_manual" = "Đang dùng thông tin đăng nhập lưu thủ công";
+"codex.subtitle" = "Theo dõi giới hạn sử dụng Codex của bạn";
+"codex.test_connection" = "Kiểm tra kết nối";
+"codex.test_success" = "Kết nối OK";
+"codex.test_success_plan" = "Đã kết nối — gói %@";
+"codex.title" = "Tài khoản OpenAI Codex";
+"error.codex_auth_expired" = "Phiên đăng nhập Codex đã hết hạn";
+"error.codex_auth_expired.suggestion" = "Chạy `codex` trong terminal để đăng nhập lại";
+"error.codex_auth_refresh_failed" = "Không thể làm mới phiên đăng nhập Codex";
+"error.codex_credentials_invalid" = "Không đọc được thông tin đăng nhập Codex";
+"error.codex_credentials_invalid.suggestion" = "Dán toàn bộ nội dung của ~/.codex/auth.json";
+"error.codex_credentials_not_found" = "Không tìm thấy thông tin đăng nhập Codex";
+"error.codex_credentials_not_found.suggestion" = "Chạy `codex` để đăng nhập, hoặc dán thông tin đăng nhập trong Cài đặt";
+"error.codex_invalid_response" = "Phản hồi không mong đợi từ API sử dụng Codex";
+"error.codex_server_error" = "API sử dụng Codex trả về lỗi";
+"notification.usage_updated.body" = "Đã tải dữ liệu sử dụng thành công";
+"notification.usage_updated.title" = "Đã cập nhật mức sử dụng";
+"popover.credits_balance" = "Credits: %@";
+"popover.credits_unlimited" = "Credits không giới hạn";
+"profiles.provider_hint" = "Dịch vụ mà hồ sơ này theo dõi. Không thể thay đổi sau này.";
+"profiles.provider_label" = "Nhà cung cấp";
+"section.codex_account_desc" = "Kết nối tài khoản OpenAI Codex của bạn";
+"section.codex_account_title" = "Tài khoản Codex";
+"setup.choose_provider.anthropic_hint" = "Mức sử dụng Claude.ai, Claude Code và Console";
+"setup.choose_provider.codex_hint" = "Giới hạn sử dụng OpenAI Codex CLI";
+"setup.choose_provider.skip" = "Bỏ qua";
+"setup.choose_provider.subtitle" = "Bạn muốn theo dõi dịch vụ nào?";
+"setup.codex_detected.description" = "Đã tìm thấy thông tin đăng nhập Codex CLI của bạn. Bắt đầu theo dõi giới hạn sử dụng ngay.";
+"setup.codex_detected.title" = "Đã phát hiện Codex CLI";
+"setup.codex_not_detected.description" = "Không tìm thấy đăng nhập Codex CLI. Chạy `codex` để đăng nhập, hoặc dán nội dung ~/.codex/auth.json bên dưới.";
+"setup.codex_not_detected.title" = "Kết nối Codex";
+"usage.window.session" = "Phiên";
+"usage.window.weekly" = "Hằng tuần";
+
+// MARK: - Terminal Launcher
+"launcher.title" = "Trình khởi chạy Terminal";
+"launcher.subtitle" = "Chạy Claude Code với hồ sơ này từ bất kỳ terminal nào";
+"launcher.description" = "Cài một lệnh %@. Lệnh claude thông thường vẫn dùng hồ sơ đang hoạt động; trình khởi chạy luôn mở đăng nhập Claude Code riêng của hồ sơ này.";
+"launcher.install" = "Cài trình khởi chạy";
+"launcher.remove" = "Gỡ bỏ";
+"launcher.login_needed" = "Thiết lập một lần: chạy %@ trong terminal và đăng nhập bằng /login. Sau đó ứng dụng sẽ tự động liên kết và theo dõi tài khoản đó.";
+"launcher.pinned" = "Đã liên kết — theo dõi mức sử dụng sẽ đi theo đăng nhập này.";
+"launcher.verify" = "Kiểm tra đăng nhập";
+"launcher.path_warning" = "~/.local/bin không có trong PATH. Thêm dòng này vào cấu hình shell của bạn:";
+"launcher.install_failed" = "Không thể cài trình khởi chạy: %@";
+
+// MARK: - Terminal Launcher / Support
+"support.popup_title" = "Chào, mình là Hamed 👋";
+"support.popup_signature" = "đội một người đứng sau Claude Usage";
+"support.popup_body" = "Miễn phí, mã nguồn mở, do một người xây dựng — không quảng cáo, không theo dõi. Nếu nó từng giúp bạn khỏi lãng phí giới hạn phiên, một ly cà phê sẽ giúp nó tiếp tục.";
+"support.popup_days" = "Đồng hành cùng giới hạn của bạn %d ngày — luôn miễn phí";
+"support.popup_later" = "Để sau";
