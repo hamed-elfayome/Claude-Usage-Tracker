@@ -42,6 +42,13 @@ struct Profile: Codable, Identifiable, Equatable {
     /// CLAUDE_CONFIG_DIR installs map each Tracker profile to its own keychain entry.
     var customKeychainServiceName: String?
 
+    /// Slug of this profile's installed terminal launcher (`claude-<slug>`),
+    /// frozen at install time. The launcher's CLAUDE_CONFIG_DIR path — and
+    /// therefore the keychain hash Claude Code derives from it — must stay
+    /// stable across profile renames, so the slug never follows `name`.
+    /// nil when no launcher is installed.
+    var terminalLauncherSlug: String?
+
     /// Serialized `oauthAccount` object from Claude Code's `.claude.json` config file.
     /// Captured at sync time and re-applied during profile switches so that
     /// Claude Code's `/status` command shows the correct account for the active
@@ -85,6 +92,7 @@ struct Profile: Codable, Identifiable, Equatable {
         hasCliAccount: Bool = false,
         cliAccountSyncedAt: Date? = nil,
         customKeychainServiceName: String? = nil,
+        terminalLauncherSlug: String? = nil,
         oauthAccountJSON: String? = nil,
         claudeUsage: ClaudeUsage? = nil,
         apiUsage: APIUsage? = nil,
@@ -110,6 +118,7 @@ struct Profile: Codable, Identifiable, Equatable {
         self.hasCliAccount = hasCliAccount
         self.cliAccountSyncedAt = cliAccountSyncedAt
         self.customKeychainServiceName = customKeychainServiceName
+        self.terminalLauncherSlug = terminalLauncherSlug
         self.oauthAccountJSON = oauthAccountJSON
         self.claudeUsage = claudeUsage
         self.apiUsage = apiUsage
@@ -139,6 +148,7 @@ struct Profile: Codable, Identifiable, Equatable {
         case codexCredentialsJSON
         case hasCliAccount, cliAccountSyncedAt
         case customKeychainServiceName
+        case terminalLauncherSlug
         case oauthAccountJSON
         case claudeUsage, apiUsage
         case iconConfig
@@ -168,6 +178,7 @@ struct Profile: Codable, Identifiable, Equatable {
         hasCliAccount = try c.decodeIfPresent(Bool.self, forKey: .hasCliAccount) ?? false
         cliAccountSyncedAt = try c.decodeIfPresent(Date.self, forKey: .cliAccountSyncedAt)
         customKeychainServiceName = try c.decodeIfPresent(String.self, forKey: .customKeychainServiceName)
+        terminalLauncherSlug = try c.decodeIfPresent(String.self, forKey: .terminalLauncherSlug)
         oauthAccountJSON = try c.decodeIfPresent(String.self, forKey: .oauthAccountJSON)
         // Usage values are re-fetchable caches — a malformed cache (e.g. written
         // by a different app version) must degrade to nil, never fail the
@@ -203,6 +214,7 @@ struct Profile: Codable, Identifiable, Equatable {
         try c.encode(hasCliAccount, forKey: .hasCliAccount)
         try c.encodeIfPresent(cliAccountSyncedAt, forKey: .cliAccountSyncedAt)
         try c.encodeIfPresent(customKeychainServiceName, forKey: .customKeychainServiceName)
+        try c.encodeIfPresent(terminalLauncherSlug, forKey: .terminalLauncherSlug)
         try c.encodeIfPresent(oauthAccountJSON, forKey: .oauthAccountJSON)
         try c.encodeIfPresent(claudeUsage, forKey: .claudeUsage)
         try c.encodeIfPresent(apiUsage, forKey: .apiUsage)

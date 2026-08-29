@@ -1071,3 +1071,15 @@
 "error.codex_auth_refresh_failed" = "Не вдалося оновити вхід Codex";
 "error.codex_invalid_response" = "Неочікувана відповідь API використання Codex";
 "error.codex_server_error" = "API використання Codex повернув помилку";
+
+// MARK: - Terminal Launcher
+"launcher.title" = "Термінальний запускач";
+"launcher.subtitle" = "Запускайте Claude Code із цим профілем із будь-якого термінала";
+"launcher.description" = "Встановлює команду %@. Звичайна команда claude і надалі використовує активний профіль; запускач завжди відкриває власний вхід Claude Code цього профілю.";
+"launcher.install" = "Встановити запускач";
+"launcher.remove" = "Видалити";
+"launcher.login_needed" = "Одноразове налаштування: виконайте %@ у терміналі та увійдіть через /login. Далі застосунок автоматично звʼяже та відстежуватиме цей акаунт.";
+"launcher.pinned" = "Звʼязано — відстеження використання йде за цим входом.";
+"launcher.verify" = "Перевірити вхід";
+"launcher.path_warning" = "~/.local/bin відсутній у вашому PATH. Додайте цей рядок до профілю оболонки:";
+"launcher.install_failed" = "Не вдалося встановити запускач: %@";

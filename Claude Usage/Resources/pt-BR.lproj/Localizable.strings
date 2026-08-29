@@ -1076,3 +1076,15 @@
 "error.codex_auth_refresh_failed" = "Não foi possível renovar o login do Codex";
 "error.codex_invalid_response" = "Resposta inesperada da API de uso do Codex";
 "error.codex_server_error" = "A API de uso do Codex retornou um erro";
+
+// MARK: - Terminal Launcher
+"launcher.title" = "Atalho de terminal";
+"launcher.subtitle" = "Execute o Claude Code com este perfil de qualquer terminal";
+"launcher.description" = "Instala um comando %@. O comando claude comum continua usando o perfil ativo; o atalho sempre abre o login do Claude Code próprio deste perfil.";
+"launcher.install" = "Instalar atalho";
+"launcher.remove" = "Remover";
+"launcher.login_needed" = "Configuração única: execute %@ no terminal e faça login com /login. Depois o app vincula e acompanha essa conta automaticamente.";
+"launcher.pinned" = "Vinculado — o acompanhamento de uso segue este login.";
+"launcher.verify" = "Verificar login";
+"launcher.path_warning" = "~/.local/bin não está no seu PATH. Adicione esta linha ao perfil do shell:";
+"launcher.install_failed" = "Não foi possível instalar o atalho: %@";

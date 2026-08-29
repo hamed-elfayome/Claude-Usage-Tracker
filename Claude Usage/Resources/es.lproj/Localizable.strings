@@ -1057,3 +1057,15 @@
 "error.codex_auth_refresh_failed" = "No se pudo renovar la sesión de Codex";
 "error.codex_invalid_response" = "Respuesta inesperada de la API de uso de Codex";
 "error.codex_server_error" = "La API de uso de Codex devolvió un error";
+
+// MARK: - Terminal Launcher
+"launcher.title" = "Lanzador de terminal";
+"launcher.subtitle" = "Ejecuta Claude Code con este perfil desde cualquier terminal";
+"launcher.description" = "Instala un comando %@. El comando claude normal sigue usando el perfil activo; el lanzador siempre abre la sesión propia de Claude Code de este perfil.";
+"launcher.install" = "Instalar lanzador";
+"launcher.remove" = "Eliminar";
+"launcher.login_needed" = "Configuración única: ejecuta %@ en tu terminal e inicia sesión con /login. La app vinculará y rastreará esa cuenta automáticamente.";
+"launcher.pinned" = "Vinculado: el seguimiento de uso sigue esta sesión.";
+"launcher.verify" = "Comprobar sesión";
+"launcher.path_warning" = "~/.local/bin no está en tu PATH. Añade esta línea a tu perfil de shell:";
+"launcher.install_failed" = "No se pudo instalar el lanzador: %@";

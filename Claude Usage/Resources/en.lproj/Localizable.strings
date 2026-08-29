@@ -1072,3 +1072,15 @@
 "error.codex_auth_refresh_failed" = "Could not refresh Codex login";
 "error.codex_invalid_response" = "Unexpected response from the Codex usage API";
 "error.codex_server_error" = "Codex usage API returned an error";
+
+// MARK: - Terminal Launcher
+"launcher.title" = "Terminal Launcher";
+"launcher.subtitle" = "Run Claude Code with this profile from any terminal";
+"launcher.description" = "Installs a %@ command. The plain claude command keeps using the active profile; the launcher always opens this profile's own Claude Code login.";
+"launcher.install" = "Install Launcher";
+"launcher.remove" = "Remove";
+"launcher.login_needed" = "One-time setup: run %@ in your terminal and sign in with /login. The app will then link and track that account automatically.";
+"launcher.pinned" = "Linked — usage tracking follows this login.";
+"launcher.verify" = "Check Login";
+"launcher.path_warning" = "~/.local/bin is not on your PATH. Add this line to your shell profile:";
+"launcher.install_failed" = "Couldn't install the launcher: %@";

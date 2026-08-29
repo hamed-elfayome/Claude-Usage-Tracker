@@ -1076,3 +1076,15 @@
 "error.codex_auth_refresh_failed" = "Impossibile aggiornare l'accesso a Codex";
 "error.codex_invalid_response" = "Risposta inattesa dall'API di utilizzo di Codex";
 "error.codex_server_error" = "L'API di utilizzo di Codex ha restituito un errore";
+
+// MARK: - Terminal Launcher
+"launcher.title" = "Launcher da terminale";
+"launcher.subtitle" = "Esegui Claude Code con questo profilo da qualsiasi terminale";
+"launcher.description" = "Installa un comando %@. Il comando claude semplice continua a usare il profilo attivo; il launcher apre sempre l'accesso Claude Code di questo profilo.";
+"launcher.install" = "Installa launcher";
+"launcher.remove" = "Rimuovi";
+"launcher.login_needed" = "Configurazione una tantum: esegui %@ nel terminale e accedi con /login. L'app collegherà e traccerà quell'account automaticamente.";
+"launcher.pinned" = "Collegato — il monitoraggio dell'uso segue questo accesso.";
+"launcher.verify" = "Verifica accesso";
+"launcher.path_warning" = "~/.local/bin non è nel tuo PATH. Aggiungi questa riga al profilo della shell:";
+"launcher.install_failed" = "Impossibile installare il launcher: %@";

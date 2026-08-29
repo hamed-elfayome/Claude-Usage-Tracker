@@ -1062,3 +1062,15 @@
 "error.codex_auth_refresh_failed" = "无法刷新 Codex 登录";
 "error.codex_invalid_response" = "Codex 用量 API 返回了意外响应";
 "error.codex_server_error" = "Codex 用量 API 返回错误";
+
+// MARK: - Terminal Launcher
+"launcher.title" = "终端启动器";
+"launcher.subtitle" = "在任意终端中以此配置文件运行 Claude Code";
+"launcher.description" = "安装一个 %@ 命令。普通的 claude 命令继续使用当前活跃的配置文件；启动器始终打开此配置文件专属的 Claude Code 登录。";
+"launcher.install" = "安装启动器";
+"launcher.remove" = "移除";
+"launcher.login_needed" = "一次性设置：在终端中运行 %@ 并使用 /login 登录。之后应用会自动关联并跟踪该账户。";
+"launcher.pinned" = "已关联 — 用量跟踪将跟随此登录。";
+"launcher.verify" = "检查登录";
+"launcher.path_warning" = "~/.local/bin 不在你的 PATH 中。请将此行添加到你的 shell 配置文件：";
+"launcher.install_failed" = "无法安装启动器：%@";

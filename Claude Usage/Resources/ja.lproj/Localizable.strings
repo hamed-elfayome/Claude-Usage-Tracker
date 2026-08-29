@@ -1076,3 +1076,15 @@
 "error.codex_auth_refresh_failed" = "Codexのログインを更新できませんでした";
 "error.codex_invalid_response" = "Codex使用状況APIから予期しない応答";
 "error.codex_server_error" = "Codex使用状況APIがエラーを返しました";
+
+// MARK: - Terminal Launcher
+"launcher.title" = "ターミナルランチャー";
+"launcher.subtitle" = "任意のターミナルからこのプロファイルで Claude Code を起動";
+"launcher.description" = "%@ コマンドをインストールします。通常の claude コマンドはアクティブなプロファイルを使い続け、ランチャーは常にこのプロファイル専用の Claude Code ログインを開きます。";
+"launcher.install" = "ランチャーをインストール";
+"launcher.remove" = "削除";
+"launcher.login_needed" = "初回のみ: ターミナルで %@ を実行し /login でサインインしてください。その後アプリが自動的にそのアカウントを連携・追跡します。";
+"launcher.pinned" = "連携済み — 使用状況の追跡はこのログインに従います。";
+"launcher.verify" = "ログインを確認";
+"launcher.path_warning" = "~/.local/bin が PATH にありません。シェルのプロファイルに次の行を追加してください:";
+"launcher.install_failed" = "ランチャーをインストールできませんでした: %@";

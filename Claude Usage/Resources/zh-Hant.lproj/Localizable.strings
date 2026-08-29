@@ -1062,3 +1062,15 @@
 "error.codex_auth_refresh_failed" = "無法重新整理 Codex 登入";
 "error.codex_invalid_response" = "Codex 用量 API 傳回非預期回應";
 "error.codex_server_error" = "Codex 用量 API 傳回錯誤";
+
+// MARK: - Terminal Launcher
+"launcher.title" = "終端機啟動器";
+"launcher.subtitle" = "在任何終端機中以此設定檔執行 Claude Code";
+"launcher.description" = "安裝一個 %@ 指令。一般的 claude 指令仍使用目前作用中的設定檔；啟動器則永遠開啟此設定檔專屬的 Claude Code 登入。";
+"launcher.install" = "安裝啟動器";
+"launcher.remove" = "移除";
+"launcher.login_needed" = "一次性設定：在終端機執行 %@ 並以 /login 登入。之後 App 會自動連結並追蹤該帳戶。";
+"launcher.pinned" = "已連結 — 用量追蹤將跟隨此登入。";
+"launcher.verify" = "檢查登入";
+"launcher.path_warning" = "~/.local/bin 不在你的 PATH 中。請將此行加入你的 shell 設定檔：";
+"launcher.install_failed" = "無法安裝啟動器：%@";

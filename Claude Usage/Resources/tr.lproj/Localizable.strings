@@ -1068,3 +1068,15 @@
 "error.codex_auth_refresh_failed" = "Codex oturumu yenilenemedi";
 "error.codex_invalid_response" = "Codex kullanım API'sinden beklenmeyen yanıt";
 "error.codex_server_error" = "Codex kullanım API'si hata döndürdü";
+
+// MARK: - Terminal Launcher
+"launcher.title" = "Terminal Başlatıcı";
+"launcher.subtitle" = "Claude Code'u bu profille herhangi bir terminalden çalıştırın";
+"launcher.description" = "Bir %@ komutu yükler. Normal claude komutu etkin profili kullanmaya devam eder; başlatıcı her zaman bu profilin kendi Claude Code oturumunu açar.";
+"launcher.install" = "Başlatıcıyı Yükle";
+"launcher.remove" = "Kaldır";
+"launcher.login_needed" = "Tek seferlik kurulum: terminalde %@ komutunu çalıştırın ve /login ile giriş yapın. Uygulama daha sonra bu hesabı otomatik olarak bağlar ve izler.";
+"launcher.pinned" = "Bağlandı — kullanım takibi bu oturumu izler.";
+"launcher.verify" = "Oturumu Kontrol Et";
+"launcher.path_warning" = "~/.local/bin PATH içinde değil. Bu satırı kabuk profilinize ekleyin:";
+"launcher.install_failed" = "Başlatıcı yüklenemedi: %@";

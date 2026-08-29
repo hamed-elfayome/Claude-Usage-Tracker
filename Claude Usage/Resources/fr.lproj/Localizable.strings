@@ -1054,3 +1054,15 @@
 "error.codex_auth_refresh_failed" = "Impossible d'actualiser la connexion Codex";
 "error.codex_invalid_response" = "Réponse inattendue de l'API d'utilisation Codex";
 "error.codex_server_error" = "L'API d'utilisation Codex a renvoyé une erreur";
+
+// MARK: - Terminal Launcher
+"launcher.title" = "Lanceur de terminal";
+"launcher.subtitle" = "Lancez Claude Code avec ce profil depuis n'importe quel terminal";
+"launcher.description" = "Installe une commande %@. La commande claude simple continue d'utiliser le profil actif ; le lanceur ouvre toujours la connexion Claude Code propre à ce profil.";
+"launcher.install" = "Installer le lanceur";
+"launcher.remove" = "Supprimer";
+"launcher.login_needed" = "Configuration unique : exécutez %@ dans votre terminal et connectez-vous avec /login. L'app liera et suivra ensuite ce compte automatiquement.";
+"launcher.pinned" = "Lié — le suivi d'utilisation suit cette connexion.";
+"launcher.verify" = "Vérifier la connexion";
+"launcher.path_warning" = "~/.local/bin n'est pas dans votre PATH. Ajoutez cette ligne à votre profil shell :";
+"launcher.install_failed" = "Impossible d'installer le lanceur : %@";

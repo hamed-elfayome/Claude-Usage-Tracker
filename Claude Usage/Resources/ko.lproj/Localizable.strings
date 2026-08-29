@@ -1085,3 +1085,15 @@
 "error.codex_auth_refresh_failed" = "Codex 로그인을 갱신하지 못했습니다";
 "error.codex_invalid_response" = "Codex 사용량 API의 예기치 않은 응답";
 "error.codex_server_error" = "Codex 사용량 API가 오류를 반환했습니다";
+
+// MARK: - Terminal Launcher
+"launcher.title" = "터미널 런처";
+"launcher.subtitle" = "어느 터미널에서든 이 프로필로 Claude Code 실행";
+"launcher.description" = "%@ 명령을 설치합니다. 일반 claude 명령은 계속 활성 프로필을 사용하고, 런처는 항상 이 프로필 전용 Claude Code 로그인을 엽니다.";
+"launcher.install" = "런처 설치";
+"launcher.remove" = "제거";
+"launcher.login_needed" = "최초 1회 설정: 터미널에서 %@를 실행하고 /login으로 로그인하세요. 이후 앱이 해당 계정을 자동으로 연결하고 추적합니다.";
+"launcher.pinned" = "연결됨 — 사용량 추적이 이 로그인을 따릅니다.";
+"launcher.verify" = "로그인 확인";
+"launcher.path_warning" = "~/.local/bin이 PATH에 없습니다. 셸 프로필에 다음 줄을 추가하세요:";
+"launcher.install_failed" = "런처를 설치할 수 없습니다: %@";

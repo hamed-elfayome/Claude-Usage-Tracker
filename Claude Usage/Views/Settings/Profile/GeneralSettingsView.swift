@@ -101,6 +101,12 @@ struct GeneralSettingsView: View {
                     }
                     }
 
+                    // Terminal launcher (claude-<profile> command). Claude Code
+                    // infrastructure, so same capability gate as CLI sync.
+                    if profile.provider.descriptor.capabilities.cliAccountSync {
+                        TerminalLauncherSection(profile: profile)
+                    }
+
                     // Notifications
                     SettingsSectionCard(
                         title: "general.notifications_title".localized,

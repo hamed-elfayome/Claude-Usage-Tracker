@@ -1076,3 +1076,15 @@
 "error.codex_auth_refresh_failed" = "Codex-Anmeldung konnte nicht erneuert werden";
 "error.codex_invalid_response" = "Unerwartete Antwort der Codex-Nutzungs-API";
 "error.codex_server_error" = "Die Codex-Nutzungs-API hat einen Fehler zurückgegeben";
+
+// MARK: - Terminal Launcher
+"launcher.title" = "Terminal-Starter";
+"launcher.subtitle" = "Claude Code mit diesem Profil aus jedem Terminal starten";
+"launcher.description" = "Installiert einen %@-Befehl. Der einfache claude-Befehl nutzt weiterhin das aktive Profil; der Starter öffnet immer die eigene Claude-Code-Anmeldung dieses Profils.";
+"launcher.install" = "Starter installieren";
+"launcher.remove" = "Entfernen";
+"launcher.login_needed" = "Einmalige Einrichtung: Führe %@ im Terminal aus und melde dich mit /login an. Die App verknüpft und verfolgt dieses Konto dann automatisch.";
+"launcher.pinned" = "Verknüpft — die Nutzungsverfolgung folgt dieser Anmeldung.";
+"launcher.verify" = "Anmeldung prüfen";
+"launcher.path_warning" = "~/.local/bin ist nicht in deinem PATH. Füge diese Zeile deinem Shell-Profil hinzu:";
+"launcher.install_failed" = "Starter konnte nicht installiert werden: %@";

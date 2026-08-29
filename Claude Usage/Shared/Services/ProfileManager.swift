@@ -121,6 +121,12 @@ class ProfileManager: ObservableObject {
 
         let profileName = profiles.first(where: { $0.id == id })?.name ?? "unknown"
 
+        // Remove the profile's terminal launcher script, if any (the launcher's
+        // config dir and login are left in place — see TerminalLauncherService).
+        if let profile = profiles.first(where: { $0.id == id }) {
+            TerminalLauncherService.shared.uninstall(profile)
+        }
+
         // Clean up usage history for this profile
         UsageHistoryService.shared.deleteHistory(for: id)
         LoggingService.shared.log("Successfully deleted usage history for profile: \(profileName)")
