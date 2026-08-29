@@ -7,7 +7,7 @@ extension ClaudeAPIService {
     /// Performs a Console API GET request with network logging
     private func consoleRequest(url: URL, apiSessionKey: String) async throws -> (Data, HTTPURLResponse) {
         var request = URLRequest(url: url)
-        request.setValue("sessionKey=\(apiSessionKey)", forHTTPHeaderField: "Cookie")
+        request.setValue(Self.sessionCookieHeader(sessionKey: apiSessionKey, url: url), forHTTPHeaderField: "Cookie")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.httpMethod = "GET"
 
