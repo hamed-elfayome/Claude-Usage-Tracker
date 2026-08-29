@@ -398,7 +398,8 @@ final class AutoStartSessionService {
                 notificationManager.sendAutoStartNotification(
                     profileName: profile.name,
                     success: true,
-                    error: nil
+                    error: nil,
+                    settings: profile.notificationSettings
                 )
             }
 
@@ -410,7 +411,8 @@ final class AutoStartSessionService {
                 notificationManager.sendAutoStartNotification(
                     profileName: profile.name,
                     success: false,
-                    error: error.localizedDescription
+                    error: error.localizedDescription,
+                    settings: profile.notificationSettings
                 )
             }
         }
