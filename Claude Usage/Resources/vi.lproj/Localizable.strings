@@ -1,0 +1,1028 @@
+/*
+   Localizable.strings
+   Claude Usage Tracker
+
+   Vietnamese (Tiếng Việt)
+   Created by Claude Code on 2026-07-24.
+*/
+
+/* ==================== */
+/* MARK: - App Info */
+/* ==================== */
+"app.name" = "Claude Usage Tracker";
+"app.window.main" = "Mức sử dụng Claude";
+"app.window.settings" = "Cài đặt";
+"app.window.github_prompt" = "Ủng hộ Claude Usage Tracker";
+
+/* ==================== */
+/* MARK: - Common Actions */
+/* ==================== */
+"common.ok" = "OK";
+"common.cancel" = "Huỷ";
+"common.save" = "Lưu";
+"common.delete" = "Xoá";
+"common.done" = "Xong";
+"common.close" = "Đóng";
+"common.refresh" = "Làm mới";
+"common.settings" = "Cài đặt";
+"common.quit" = "Thoát";
+"common.validate" = "Xác thực";
+"common.yes" = "Có";
+"common.no" = "Không";
+
+/* ==================== */
+/* MARK: - Settings Navigation */
+/* ==================== */
+"settings.title" = "Cài đặt";
+"settings.personal_usage" = "Mức sử dụng cá nhân";
+"settings.personal_usage.description" = "Theo dõi mức sử dụng gói miễn phí Claude.ai của bạn";
+"settings.api_billing" = "Thanh toán API";
+"settings.api_billing.description" = "Theo dõi hoá đơn và tín dụng trên API Console";
+"settings.general" = "Chung";
+"settings.general.description" = "Hành vi và tuỳ chọn của ứng dụng";
+"settings.appearance" = "Giao diện";
+"settings.appearance.description" = "Tuỳ chỉnh biểu tượng thanh menu";
+"settings.session_management" = "Quản lý phiên";
+"settings.session_management.description" = "Quản lý phiên tự động";
+"settings.notifications" = "Thông báo";
+"settings.notifications.description" = "Cảnh báo và thông báo về mức sử dụng";
+"settings.claude_cli" = "Claude CLI";
+"settings.claude_cli.description" = "Tích hợp thanh trạng thái terminal";
+"settings.updates" = "Cập nhật";
+"settings.updates.description" = "Luôn cập nhật phiên bản mới nhất cho ứng dụng";
+"settings.about" = "Giới thiệu";
+"settings.about.description" = "Thông tin ứng dụng và ghi công";
+
+/* ==================== */
+/* MARK: - Menu Bar */
+/* ==================== */
+"menubar.claude_usage" = "Claude Usage";
+"menubar.session_usage" = "Mức dùng phiên";
+"menubar.weekly_usage" = "Hàng tuần";
+"menubar.opus_usage" = "Opus";
+"menubar.sonnet_usage" = "Sonnet";
+"menubar.fable_usage" = "Fable";
+"menubar.design_usage" = "Thiết kế";
+"menubar.extra_usage" = "Mức dùng thêm";
+"menubar.api_credits" = "Tín dụng API";
+"menubar.api_cost" = "Chi phí API";
+"menubar.this_month" = "Tháng này";
+"menubar.total" = "Tổng cộng";
+"menubar.cost_source.cli" = "Claude Code";
+"menubar.cost_source.api" = "API";
+"menubar.cost_source.unknown" = "Khác";
+"menubar.5_hour_window" = "Chu kỳ xoay vòng 5 giờ";
+"menubar.all_models" = "Tất cả mô hình";
+"menubar.weekly" = "Hàng tuần";
+"menubar.anthropic_console" = "Anthropic API Console";
+"menubar.used" = "Đã dùng";
+"menubar.remaining" = "Còn lại";
+"menubar.resets_time" = "Đặt lại %@";
+"menubar.resets_in" = "Đặt lại sau %@";
+"menubar.resets_both" = "Đặt lại sau %@ (%@)";
+"menubar.click_status" = "Nhấp để mở status.claude.com";
+
+/* ==================== */
+/* MARK: - Usage Status */
+/* ==================== */
+"usage.high_session" = "Mức dùng phiên cao";
+"usage.high_session.desc" = "Hãy cân nhắc nghỉ ngơi để đặt lại chu kỳ phiên của bạn";
+"usage.weekly_approaching" = "Sắp đạt giới hạn hàng tuần";
+"usage.weekly_approaching.desc" = "Bạn sắp đạt đến giới hạn token hàng tuần";
+"usage.efficient" = "Sử dụng hiệu quả";
+"usage.efficient.desc" = "Bạn đang quản lý mức tiêu thụ token rất tốt!";
+
+/* ==================== */
+/* MARK: - General Settings */
+/* ==================== */
+"general.launch_at_login" = "Khởi chạy khi đăng nhập";
+"general.launch_at_login.description" = "Tự động khởi chạy Claude Usage Tracker khi bạn đăng nhập vào Mac";
+"general.refresh_interval" = "Chu kỳ làm mới";
+"general.refresh_interval.description" = "Chu kỳ ngắn hơn cho dữ liệu theo thời gian thực chính xác hơn nhưng có thể ảnh hưởng đến thời lượng pin";
+"general.check_overage_limit" = "Kiểm tra giới hạn mức dùng thêm";
+"general.check_overage_limit.description" = "Lấy và hiển thị thông tin chi phí hàng tháng và giới hạn mức dùng thêm";
+"general.language.title" = "Ngôn ngữ";
+"general.language.select" = "Chọn ngôn ngữ";
+"general.language.restart_note" = "Thay đổi ngôn ngữ sẽ có hiệu lực sau khi khởi động lại ứng dụng";
+"general.language.restart_app" = "Khởi động lại ứng dụng để áp dụng";
+
+/* ==================== */
+/* MARK: - Appearance Settings */
+/* ==================== */
+"appearance.menu_bar_icons" = "Biểu tượng thanh menu";
+"appearance.menu_bar_icons.subtitle" = "Tuỳ chỉnh chỉ số nào xuất hiện trên thanh menu của bạn";
+"appearance.show_icon_names" = "Hiển thị tên biểu tượng";
+"appearance.show_icon_names.description" = "Hiển thị nhãn chỉ số (S:, W:, API:) bên cạnh biểu tượng";
+"appearance.monochrome_mode" = "Đơn sắc (Thích ứng)";
+"appearance.monochrome_mode.description" = "Biểu tượng tự động thích ứng theo chế độ sáng/tối";
+"appearance.metric_configuration" = "Cấu hình chỉ số";
+"appearance.drag_to_reorder" = "Kéo để sắp xếp lại thứ tự biểu tượng. Các chỉ số bị tắt sẽ được ẩn khỏi thanh menu.";
+
+/* ==================== */
+/* MARK: - Session Management */
+/* ==================== */
+"session.auto_start" = "Tự động bắt đầu phiên khi đặt lại";
+"session.auto_start.description" = "Tự động gửi 'Hi' đến Claude khi phiên của bạn đặt lại về 0%. Điều này giúp phiên của bạn luôn sẵn sàng mà không cần thao tác thủ công.";
+"session.enable_auto_start" = "Bật tự động bắt đầu phiên";
+"session.beta_badge" = "BETA";
+
+/* ==================== */
+/* MARK: - Notifications Settings */
+/* ==================== */
+"notifications.enable" = "Bật thông báo";
+"notifications.enable.description" = "Nhận cảnh báo khi sắp đạt giới hạn mức sử dụng";
+"notifications.alert_thresholds" = "Ngưỡng cảnh báo";
+"notifications.threshold.warning" = "Cảnh báo";
+"notifications.threshold.high" = "Mức dùng cao";
+"notifications.threshold.critical" = "Nghiêm trọng";
+"notifications.threshold.session_reset" = "Đặt lại phiên";
+
+/* ==================== */
+/* MARK: - Setup Wizard */
+/* ==================== */
+"setup.welcome.title" = "Chào mừng đến với Claude Usage Tracker";
+"setup.welcome.subtitle" = "Cấu hình quyền truy cập API để bắt đầu theo dõi mức sử dụng";
+"setup.step.get_session_key" = "Lấy khoá phiên của bạn";
+"setup.step.get_session_key.description" = "Bạn cần trích xuất khoá phiên của mình từ claude.ai";
+"setup.step.enter_session_key" = "Nhập khoá phiên của bạn";
+"setup.open_claude_ai" = "Mở claude.ai";
+"setup.show_instructions" = "Hiện hướng dẫn";
+"setup.hide_instructions" = "Ẩn";
+"setup.instruction.step1" = "Mở Developer Tools (F12 hoặc Cmd+Option+I)";
+"setup.instruction.step2" = "Vào Application/Storage → Cookies → https://claude.ai";
+"setup.instruction.step3" = "Tìm cookie 'sessionKey'";
+"setup.instruction.step4" = "Nhấp đúp vào Value và sao chép (Cmd+C)";
+"setup.paste_session_key" = "Dán giá trị sessionKey bạn đã sao chép";
+"setup.auto_start_session" = "Tự động bắt đầu phiên khi đặt lại";
+"setup.auto_start_session.description" = "Tự động gửi 'Hi' đến Claude 3.5 Haiku khi phiên của bạn đặt lại về 0%. Điều này giúp phiên của bạn luôn sẵn sàng mà không cần thao tác thủ công.";
+"setup.enable_auto_start" = "Bật tự động bắt đầu phiên";
+"setup.menubar_appearance" = "Giao diện thanh menu";
+"setup.choose_icon_style" = "Chọn kiểu biểu tượng bạn thích";
+"setup.monochrome_adaptive" = "Đơn sắc (Thích ứng)";
+"setup.validation.success" = "Đã kết nối thành công đến tổ chức";
+
+/* ==================== */
+/* MARK: - About */
+/* ==================== */
+"about.version" = "Phiên bản %@";
+"about.check_updates" = "Kiểm tra cập nhật";
+"about.created_by" = "Người tạo";
+"about.contributors" = "Người đóng góp (%d)";
+"about.contributors_loading" = "Người đóng góp";
+"about.contributors_failed" = "Không thể tải danh sách người đóng góp";
+"about.links" = "Liên kết";
+"about.star_github" = "Gắn sao trên GitHub";
+"about.report_issue" = "Báo cáo sự cố";
+"about.send_feedback" = "Gửi phản hồi";
+"about.mit_license" = "Giấy phép MIT • Mã nguồn mở";
+"about.copyright" = "© 2025 Hamed Elfayome";
+
+/* ==================== */
+/* MARK: - Updates Settings */
+/* ==================== */
+"settings.updates.title" = "Cập nhật phần mềm";
+"settings.updates.current_version" = "Phiên bản hiện tại";
+"settings.updates.last_check" = "Lần kiểm tra gần nhất";
+"settings.updates.never_checked" = "Chưa từng";
+"settings.updates.automatic" = "Cập nhật tự động";
+"settings.updates.automatic.description" = "Tự động kiểm tra và tải cập nhật mỗi ngày";
+"settings.updates.check_now" = "Kiểm tra cập nhật";
+"settings.updates.info.title" = "Cập nhật an toàn";
+"settings.updates.info.description" = "Tất cả bản cập nhật đều được ký mã hoá và xác minh trước khi cài đặt";
+
+/* ==================== */
+/* MARK: - Icon Styles */
+/* ==================== */
+"icon_style.battery" = "Pin";
+"icon_style.percentage" = "Phần trăm";
+"icon_style.text_only" = "Chỉ văn bản";
+"icon_style.minimal" = "Tối giản";
+
+/* ==================== */
+/* MARK: - Metric Types */
+/* ==================== */
+"metric.session_usage" = "Mức dùng phiên";
+"metric.session_usage.description" = "Mức dùng theo chu kỳ xoay vòng 5 giờ";
+"metric.week_usage" = "Mức dùng tuần";
+"metric.week_usage.description" = "Mức dùng token hàng tuần (tất cả mô hình)";
+"metric.api_credits" = "Tín dụng API";
+"metric.api_credits.description" = "Tín dụng thanh toán API Console";
+
+/* ==================== */
+/* MARK: - Display Modes */
+/* ==================== */
+"display.remaining_credits" = "Tín dụng còn lại";
+"display.remaining_credits.description" = "Chỉ hiển thị tín dụng còn lại";
+"display.used_amount" = "Số lượng đã dùng";
+"display.used_amount.description" = "Chỉ hiển thị số tiền đã chi";
+"display.both_used_total" = "Cả hai (Đã dùng / Tổng)";
+"display.both_used_total.description" = "Hiển thị cả đã dùng và tổng cộng";
+"display.percentage" = "Phần trăm";
+"display.percentage.description" = "Hiển thị dưới dạng phần trăm (ví dụ: 60%)";
+"display.token_count" = "Số lượng token";
+"display.token_count.description" = "Hiển thị số token (ví dụ: 600K/1M)";
+
+/* ==================== */
+/* MARK: - Notification Messages */
+/* ==================== */
+"notification.session_warning.title" = "Cảnh báo mức dùng phiên";
+"notification.session_warning.message" = "Bạn đã dùng %@ giới hạn phiên 5 giờ của mình. %@";
+"notification.session_critical.title" = "Mức dùng phiên nghiêm trọng";
+"notification.session_critical.message" = "Bạn đã dùng %@ giới hạn phiên 5 giờ của mình! %@";
+"notification.session_reset.title" = "Đặt lại phiên";
+"notification.session_reset.message" = "Phiên của bạn đã được đặt lại! Bạn hiện có một phiên 5 giờ mới sẵn sàng sử dụng.";
+"notification.session_auto_started.title" = "Đã tự động bắt đầu phiên";
+"notification.session_auto_started.message" = "Một phiên mới đã được tự động khởi tạo. Phiên 5 giờ mới của bạn đã sẵn sàng!";
+"notification.session_auto_start_failed.title" = "Tự động bắt đầu thất bại";
+"notification.session_auto_start_failed.message" = "Không thể tự động bắt đầu phiên. Vui lòng kiểm tra thông tin đăng nhập của bạn.";
+"notification.weekly_warning.title" = "Cảnh báo mức dùng hàng tuần";
+"notification.weekly_warning.message" = "Bạn đã dùng %@ giới hạn hàng tuần của mình. %@";
+"notification.weekly_critical.title" = "Mức dùng hàng tuần nghiêm trọng";
+"notification.weekly_critical.message" = "Bạn đã dùng %@ giới hạn hàng tuần của mình! %@";
+"notification.opus_warning.title" = "Cảnh báo mức dùng Opus";
+"notification.opus_warning.message" = "Bạn đã dùng %@ giới hạn Opus hàng tuần của mình. %@";
+"notification.opus_critical.title" = "Mức dùng Opus nghiêm trọng";
+"notification.opus_critical.message" = "Bạn đã dùng %@ giới hạn Opus hàng tuần của mình! %@";
+"notification.enabled.title" = "Đã bật thông báo";
+"notification.enabled.message" = "Bạn sẽ nhận được cảnh báo ở các ngưỡng mức dùng 75%, 90% và 95%, cùng với thông báo đặt lại phiên.";
+"notification.profile_auto_switched.title" = "Đã tự động chuyển hồ sơ";
+"notification.profile_auto_switched.message" = "%@ → %@ do đã đạt giới hạn phiên";
+
+/* ==================== */
+/* MARK: - Auto-Switch Profile */
+/* ==================== */
+"auto_switch.title" = "Tự động chuyển hồ sơ";
+"auto_switch.subtitle" = "Tự động chuyển khi đạt giới hạn phiên";
+"auto_switch.enable_title" = "Bật tự động chuyển";
+"auto_switch.enable_description" = "Khi hồ sơ đang hoạt động đạt 100% mức dùng phiên, tự động chuyển sang hồ sơ khả dụng tiếp theo";
+
+/* ==================== */
+/* MARK: - Error Messages */
+/* ==================== */
+"error.session_key_not_found" = "Không tìm thấy khoá phiên";
+"error.session_key_not_found.suggestion" = "Vui lòng cấu hình khoá phiên Claude của bạn trong Cài đặt";
+"error.session_key_invalid" = "Khoá phiên không hợp lệ";
+"error.session_key_invalid.suggestion" = "Vui lòng kiểm tra định dạng khoá phiên của bạn. Khoá phải bắt đầu bằng 'sk-ant-'";
+"error.network_unavailable" = "Không có kết nối internet";
+"error.network_unavailable.suggestion" = "Vui lòng kiểm tra kết nối internet của bạn và thử lại";
+"error.network_timeout" = "Yêu cầu đã hết thời gian chờ";
+"error.network_timeout.suggestion" = "Vui lòng thử lại. Nếu sự cố vẫn tiếp diễn, hãy kiểm tra trạng thái của Claude tại status.claude.com";
+"error.api_unauthorized" = "Truy cập không được phép";
+"error.api_unauthorized.suggestion" = "Khoá phiên của bạn có thể đã hết hạn. Vui lòng cập nhật trong Cài đặt";
+"error.api_server_error" = "Lỗi máy chủ";
+"error.api_server_error.suggestion" = "Máy chủ đã gặp sự cố. Vui lòng thử lại sau";
+"error.api_rate_limited" = "Đã vượt quá giới hạn tần suất";
+"error.api_rate_limited.suggestion" = "Vui lòng chờ một lát trước khi thử lại";
+
+/* ==================== */
+/* MARK: - Validation Messages */
+/* ==================== */
+"validation.session_key_too_short" = "Khoá phiên quá ngắn";
+"validation.session_key_too_long" = "Khoá phiên quá dài";
+"validation.invalid_prefix" = "Tiền tố khoá phiên không hợp lệ";
+"validation.invalid_characters" = "Ký tự không hợp lệ trong khoá phiên";
+"validation.invalid_format" = "Định dạng khoá phiên không hợp lệ";
+"validation.contains_whitespace" = "Khoá phiên chứa khoảng trắng";
+
+/* ==================== */
+/* MARK: - GitHub Star Prompt */
+/* ==================== */
+"github.enjoy_app" = "Bạn thấy Claude Usage Tracker hữu ích?";
+"github.star_description" = "Nếu ứng dụng này hữu ích với bạn, hãy cân nhắc gắn sao cho nó trên GitHub! Điều này giúp người khác khám phá dự án và khích lệ việc phát triển liên tục.";
+"github.star_button" = "Gắn sao trên GitHub";
+"github.maybe_later" = "Để sau";
+"github.never_show" = "Không hiện lại";
+
+/* ==================== */
+/* MARK: - API Settings */
+/* ==================== */
+"api.enable_tracking" = "Bật theo dõi API";
+"api.enable_tracking.description" = "Theo dõi tín dụng và chi tiêu trên Anthropic API Console của bạn";
+"api.session_key_placeholder" = "sk-ant-api03-...";
+"api.configure" = "Cấu hình theo dõi API";
+"api.configure.description" = "Theo dõi mức sử dụng và tín dụng API trên Anthropic Console của bạn";
+"api.instructions" = "Để theo dõi mức dùng API, bạn cần cung cấp khoá phiên API của mình:";
+"api.instruction_step1" = "Đăng nhập vào console.anthropic.com";
+"api.instruction_step2" = "Mở Developer Tools (F12 hoặc Cmd+Option+I)";
+"api.instruction_step3" = "Vào Application → Cookies → https://console.anthropic.com";
+"api.instruction_step4" = "Tìm 'sessionKey' và sao chép giá trị của nó";
+
+/* ==================== */
+/* MARK: - Personal Usage */
+/* ==================== */
+"personal.configure" = "Cấu hình mức sử dụng cá nhân";
+"personal.configure.description" = "Theo dõi mức dùng gói miễn phí của bạn trên claude.ai";
+"personal.status" = "Trạng thái";
+"personal.session_key" = "Khoá phiên";
+"personal.session_key.configured" = "Đã cấu hình";
+"personal.session_key.not_configured" = "Chưa cấu hình";
+"personal.reconfigure" = "Cấu hình lại";
+"personal.remove" = "Xoá khoá phiên";
+
+/* ==================== */
+/* MARK: - Claude Code (CLI) */
+/* ==================== */
+"claudecode.title" = "Tích hợp Claude CLI";
+"claudecode.description" = "Hiển thị thông tin mức sử dụng trên thanh trạng thái terminal của bạn";
+"claudecode.coming_soon" = "Sắp ra mắt";
+"claudecode.features_description" = "Tích hợp với Claude Code CLI để hiển thị trên thanh trạng thái terminal sẽ có trong bản cập nhật tương lai.";
+
+/* ==================== */
+/* MARK: - Additional UI Labels */
+/* ==================== */
+"ui.app_behavior" = "Hành vi ứng dụng";
+"ui.usage_tracking" = "Theo dõi mức sử dụng";
+"ui.global_settings" = "Cài đặt chung";
+"ui.menu_bar_metrics" = "Chỉ số thanh menu";
+"ui.quick_actions" = "Thao tác nhanh";
+"ui.how_it_works" = "Cách hoạt động";
+"ui.display_components" = "Thành phần hiển thị";
+"ui.requirements" = "Yêu cầu";
+"ui.live_preview" = "Xem trước trực tiếp";
+"ui.updates_realtime" = "Cập nhật theo thời gian thực";
+"ui.organization" = "Tổ chức";
+"ui.icon_style" = "Kiểu biểu tượng";
+"ui.display_mode" = "Chế độ hiển thị";
+"ui.at_least_one_metric" = "Phải bật ít nhất một chỉ số";
+
+/* ==================== */
+/* MARK: - Session Management (Additional) */
+/* ==================== */
+"session.subtitle" = "Tự động khởi tạo và duy trì phiên";
+"session.auto_description_line1" = "• Phát hiện khi phiên của bạn đặt lại về 0%";
+"session.auto_description_line2" = "• Gửi 'Hi' đến Claude 3.5 Haiku (mô hình rẻ nhất)";
+"session.auto_description_line3" = "• Sử dụng một cuộc trò chuyện tạm thời sẽ không xuất hiện trong lịch sử của bạn";
+"session.auto_description_line4" = "• Phiên 5 giờ mới sẽ sẵn sàng ngay lập tức";
+
+/* ==================== */
+/* MARK: - Claude CLI (Additional) */
+/* ==================== */
+"claudecode.subtitle" = "Tuỳ chỉnh hiển thị thanh trạng thái terminal của bạn";
+"claudecode.preview_label" = "Xem trước trực tiếp";
+"claudecode.preview_description" = "Đây là cách thanh trạng thái của bạn sẽ hiển thị trong Claude CLI";
+"claudecode.component_model" = "Tên mô hình";
+"claudecode.component_directory" = "Tên thư mục";
+"claudecode.component_branch" = "Nhánh Git";
+"claudecode.component_context" = "Cửa sổ ngữ cảnh";
+"claudecode.component_context_tokens" = "Hiển thị dưới dạng token (thay vì %)";
+"claudecode.component_usage" = "Thống kê mức sử dụng";
+"claudecode.component_progressbar" = "Thanh tiến trình";
+"claudecode.component_pace_marker" = "Dấu nhịp độ";
+"claudecode.pace_marker_info" = "Tô màu theo nhịp độ sử dụng dự kiến (xanh lá → tím)";
+"claudecode.component_resettime" = "Thời gian đặt lại";
+"claudecode.component_weekly" = "Hiện mức dùng hàng tuần";
+"claudecode.component_weekly_description" = "Mức dùng token hàng tuần kèm thanh tiến trình và thời gian đặt lại";
+"claudecode.component_extra_usage" = "Hiện mức dùng thêm";
+"claudecode.component_extra_usage_description" = "Chỉ số chi phí (ví dụ: 9.49 USD)";
+"claudecode.weekly_label" = "Hiện nhãn \"Weekly:\"";
+"claudecode.requirement_sessionkey" = "• Khoá phiên đã được cấu hình trong tab Credentials → Claude.ai";
+"claudecode.requirement_restart" = "• Khởi động lại Claude CLI sau khi áp dụng thay đổi";
+"claudecode.error_no_components" = "Vui lòng chọn ít nhất một thành phần để hiển thị";
+"claudecode.error_no_sessionkey" = "Chưa cấu hình khoá phiên. Vui lòng thiết lập trong tab Mức sử dụng cá nhân trước.";
+"claudecode.success_applied" = "Đã áp dụng cấu hình! Khởi động lại Claude CLI để xem thay đổi.";
+"claudecode.success_disabled" = "Đã tắt thanh trạng thái. Khởi động lại Claude CLI.";
+"claudecode.preview_no_components" = "Chưa chọn thành phần nào";
+
+/* ==================== */
+/* MARK: - API Billing (Additional) */
+/* ==================== */
+"api.title" = "Thanh toán API";
+"api.subtitle" = "Theo dõi mức dùng và chi tiêu API";
+"api.enable_billing_tracking" = "Bật theo dõi thanh toán API";
+"api.enable_billing_description" = "Theo dõi mức dùng API, chi tiêu hiện tại và tín dụng trả trước còn lại của bạn";
+"api.label_api_session_key" = "Khoá phiên API";
+"api.placeholder_api_session_key" = "sk-ant-api03-...";
+"api.help_api_session_key" = "Khoá phiên của bạn từ console.anthropic.com";
+"api.button_fetch_organizations" = "Lấy danh sách tổ chức";
+"api.button_fetching" = "Đang lấy dữ liệu...";
+"api.button_save_configuration" = "Lưu cấu hình";
+"api.success_organizations_found" = "Đã tìm thấy %d tổ chức";
+"api.error_fetch_failed" = "Không thể lấy danh sách tổ chức: %@";
+"api.success_configuration_saved" = "Đã lưu cấu hình API thành công";
+
+/* ==================== */
+/* MARK: - Personal Usage (Additional) */
+/* ==================== */
+"personal.title" = "Mức sử dụng cá nhân";
+"personal.subtitle" = "Theo dõi mức dùng và phiên Claude.ai của bạn";
+"personal.label_session_key" = "Khoá phiên";
+"personal.placeholder_session_key" = "sk-ant-sid-...";
+"personal.help_session_key" = "Dán cookie sessionKey của bạn từ DevTools trên claude.ai";
+"personal.button_test_connection" = "Kiểm tra kết nối";
+"personal.button_save_and_continue" = "Lưu & tiếp tục";
+"personal.button_remove_key" = "Xoá khoá";
+"personal.success_connected" = "Đã kết nối thành công đến tổ chức";
+"personal.confirm_remove_title" = "Xoá khoá phiên?";
+"personal.confirm_remove_message" = "Thao tác này sẽ dừng theo dõi mức sử dụng cá nhân của bạn.";
+
+/* ==================== */
+/* MARK: - Error Presenter */
+/* ==================== */
+"error.code_label" = "Mã lỗi:";
+"error.what_to_do" = "Cách khắc phục:";
+"error.occurred_at" = "Xảy ra lúc: %@";
+
+/* ==================== */
+/* MARK: - General Settings (Additional) */
+/* ==================== */
+"general.slider_realtime" = "Cập nhật theo thời gian thực";
+"general.slider_frequent" = "Cập nhật thường xuyên";
+"general.slider_balanced" = "Chế độ cân bằng";
+"general.slider_efficient" = "Tiết kiệm năng lượng";
+"general.slider_battery_saver" = "Tiết kiệm pin";
+"general.slider_fast" = "Nhanh";
+"general.slider_balanced_label" = "Cân bằng";
+"general.slider_battery_saver_label" = "Tiết kiệm pin";
+"general.available_languages" = "Ngôn ngữ khả dụng (%d)";
+
+/* ==================== */
+/* MARK: - Badges */
+/* ==================== */
+"badge.new" = "MỚI";
+"badge.beta" = "BETA";
+"badge.pro" = "PRO";
+
+/* ==================== */
+/* MARK: - Appearance (Additional) */
+/* ==================== */
+"appearance.title" = "Giao diện thanh menu";
+"appearance.subtitle" = "Tuỳ chỉnh biểu tượng và chỉ số trên thanh menu của bạn";
+"appearance.global_settings" = "Cài đặt chung";
+"appearance.menu_bar_metrics" = "Chỉ số thanh menu";
+"appearance.monochrome_title" = "Đơn sắc";
+"appearance.monochrome_description" = "Dùng màu thích ứng thay vì màu trạng thái (xanh lá/cam/đỏ)";
+"appearance.show_labels_title" = "Hiện nhãn biểu tượng";
+"appearance.show_labels_description" = "Hiển thị nhãn tiền tố (S:, W:, API:) cho mỗi chỉ số";
+"appearance.show_remaining_title" = "Hiện phần trăm còn lại";
+"appearance.show_remaining_description" = "Hiển thị dung lượng còn lại thay vì phần trăm đã dùng (giống pin trên macOS)";
+"appearance.pace_marker_section_title" = "Dấu nhịp độ";
+"appearance.pace_marker_section_subtitle" = "Theo dõi nhịp độ sử dụng so với chu kỳ đặt lại";
+"appearance.show_time_marker_title" = "Hiện dấu thời gian";
+"appearance.show_time_marker_description" = "Hiển thị một vạch đánh dấu trên thanh tiến trình cho biết bạn đã trải qua bao nhiêu phần của chu kỳ thời gian";
+"appearance.show_pace_marker_title" = "Tô màu dấu theo nhịp độ";
+"appearance.show_pace_marker_description" = "Tô màu dấu thời gian dựa trên nhịp độ sử dụng dự kiến (xanh lá → tím). Áp dụng cho chỉ số phiên và hàng tuần.";
+"appearance.pace_coloring_title" = "Màu thanh theo nhịp độ";
+"appearance.pace_coloring_description" = "Tô màu thanh tiến trình dựa trên nhịp độ dự kiến thay vì mức dùng hiện tại. Dự đoán xem bạn có đạt giới hạn vào cuối chu kỳ hay không.";
+"appearance.multiprofile_locked_title" = "Cài đặt giao diện đã bị khoá";
+"appearance.multiprofile_locked_description" = "Các cài đặt này bị tắt khi Hiển thị đa hồ sơ đang hoạt động. Mỗi hồ sơ dùng giao diện riêng ở chế độ đa hồ sơ.";
+"appearance.disable_multiprofile" = "Tắt hiển thị đa hồ sơ";
+
+/* ==================== */
+/* MARK: - Setup Wizard (Additional) */
+/* ==================== */
+"setup.step_number_1" = "1";
+"setup.step_number_2" = "2";
+"setup.step_title_get_key" = "Lấy khoá phiên của bạn";
+"setup.step_title_enter_key" = "Nhập khoá phiên của bạn";
+"setup.step_description_get_key" = "Bạn cần trích xuất khoá phiên của mình từ claude.ai";
+"setup.button_open_claude" = "Mở claude.ai";
+"setup.paste_instruction" = "Dán giá trị sessionKey bạn đã sao chép";
+
+/* ==================== */
+/* MARK: - Component Preview */
+/* ==================== */
+"preview.sample_text_claude" = "Claude";
+"preview.sample_percentage" = "60%";
+"preview.sample_card_content" = "Nội dung thẻ ở đây";
+"preview.sample_more_content" = "Nội dung khác";
+"preview.sample_update_every" = "Cập nhật mỗi:";
+"preview.sample_5_minutes" = "5 phút";
+
+/* ==================== */
+/* MARK: - Manage Profiles */
+/* ==================== */
+"profiles.title" = "Quản lý hồ sơ";
+"profiles.subtitle" = "Tạo và quản lý nhiều tài khoản Claude";
+"profiles.create_new" = "Tạo hồ sơ mới";
+"profiles.about_title" = "Giới thiệu về hồ sơ";
+"profiles.about_description" = "Mỗi hồ sơ có riêng:";
+"profiles.about_credentials" = "Thông tin đăng nhập Claude.ai";
+"profiles.about_api" = "Thông tin đăng nhập API Console";
+"profiles.about_cli" = "Đồng bộ tài khoản CLI";
+"profiles.about_appearance" = "Giao diện thanh menu";
+"profiles.about_notifications" = "Cài đặt thông báo";
+"profiles.about_refresh" = "Chu kỳ làm mới";
+"profiles.active_badge" = "Đang hoạt động";
+"profiles.created" = "Đã tạo";
+"profiles.cli_synced" = "Đã đồng bộ CLI";
+"profiles.rename" = "Đổi tên hồ sơ";
+"profiles.activate" = "Kích hoạt hồ sơ";
+"profiles.delete" = "Xoá hồ sơ";
+"profiles.delete_title" = "Xoá hồ sơ";
+"profiles.delete_confirm" = "Bạn có chắc chắn muốn xoá \"%@\" không? Thao tác này sẽ xoá toàn bộ thông tin đăng nhập và cài đặt liên quan.";
+"profiles.create_title" = "Tạo hồ sơ mới";
+"profiles.name_label" = "Tên hồ sơ (tuỳ chọn)";
+"profiles.name_placeholder" = "Để trống để dùng tên ngẫu nhiên";
+"profiles.name_hint" = "Nếu để trống, một tên ngẫu nhiên thú vị sẽ được tạo ra!";
+
+/* ==================== */
+/* MARK: - Multi-Profile Display */
+/* ==================== */
+"multiprofile.title" = "Hiển thị đa hồ sơ";
+"multiprofile.subtitle" = "Hiển thị nhiều hồ sơ trên thanh menu";
+"multiprofile.enable_title" = "Hiện nhiều hồ sơ";
+"multiprofile.enable_description" = "Hiển thị các hồ sơ đã chọn dưới dạng biểu tượng thu gọn cạnh nhau";
+"multiprofile.select_profiles" = "Chọn hồ sơ để hiển thị:";
+"multiprofile.info" = "Mỗi hồ sơ hiển thị mức sử dụng với màu biểu thị trạng thái (xanh lá/cam/đỏ)";
+"multiprofile.active_badge" = "Đang hoạt động";
+"multiprofile.at_least_one" = "Phải chọn ít nhất một hồ sơ";
+"multiprofile.icon_style" = "Kiểu biểu tượng";
+"multiprofile.style_circles" = "Hình tròn";
+"multiprofile.style_bars" = "Thanh";
+"multiprofile.style_dots" = "Chấm";
+"multiprofile.style_percent" = "Phần trăm";
+"multiprofile.show_week" = "Hiện mức dùng tuần";
+"multiprofile.show_week_description" = "Hiển thị mức dùng hàng tuần cùng với phiên";
+"multiprofile.show_label" = "Hiện nhãn hồ sơ";
+"multiprofile.show_label_description" = "Hiển thị tên hồ sơ bên dưới biểu tượng";
+"multiprofile.use_system_color" = "Đơn sắc";
+"multiprofile.use_system_color_description" = "Dùng màu trắng thay vì màu trạng thái (xanh lá/cam/đỏ)";
+"multiprofile.active_indicator_title" = "Hiện dấu hiệu hồ sơ đang hoạt động";
+"multiprofile.active_indicator_description" = "Hiển thị một gạch chân xanh lá nhỏ bên dưới biểu tượng của hồ sơ đang hoạt động";
+
+/* ==================== */
+/* MARK: - General Settings (Profile-Level) */
+/* ==================== */
+"general.title" = "Chung";
+"general.subtitle" = "Chu kỳ làm mới, tự động bắt đầu và thông báo";
+"general.refresh_title" = "Chu kỳ làm mới";
+"general.refresh_subtitle" = "Tần suất kiểm tra cập nhật mức sử dụng";
+"general.refresh_seconds" = "%d giây";
+"general.refresh_min" = "10s";
+"general.refresh_max" = "300s";
+"general.autostart_title" = "Tự động bắt đầu phiên";
+"general.autostart_subtitle" = "Tự động bắt đầu phiên mới khi cần";
+"general.autostart_toggle" = "Tự động bắt đầu phiên mới";
+"general.autostart_description" = "Tự động gửi tin nhắn khi phiên đặt lại";
+"general.autostart_requirement" = "• Khoá phiên đã được cấu hình trong tab Credentials → Claude.ai";
+"general.notifications_title" = "Thông báo";
+"general.notifications_subtitle" = "Nhận thông báo về các mốc mức sử dụng";
+"general.connected" = "Đã kết nối";
+"general.not_connected" = "Chưa kết nối";
+
+/* ==================== */
+/* MARK: - Updates Settings */
+/* ==================== */
+"updates.version_info" = "Thông tin phiên bản";
+"updates.update_preferences" = "Tuỳ chọn cập nhật";
+"updates.version_label" = "v%@ (%@)";
+
+/* ==================== */
+/* MARK: - Appearance (Additional) */
+/* ==================== */
+"appearance.global_subtitle" = "Tuỳ chỉnh hành vi biểu tượng thanh menu";
+"appearance.metrics_subtitle" = "Chọn chỉ số nào sẽ hiển thị trên thanh menu";
+"appearance.all_metrics_off_title" = "Chế độ logo ứng dụng";
+"appearance.all_metrics_off_description" = "Tất cả chỉ số đều đã tắt. Logo ứng dụng sẽ được hiển thị trên thanh menu thay thế. Nhấp vào đó để truy cập hồ sơ và cài đặt.";
+
+/* ==================== */
+/* MARK: - Metric Card */
+/* ==================== */
+"metric.show_countdown" = "Hiện thời gian đến phiên tiếp theo";
+"metric.countdown_description" = "Hiển thị thời gian còn lại (ví dụ: →2H) trong biểu tượng";
+
+/* ==================== */
+/* MARK: - Personal Usage (Additional) */
+/* ==================== */
+"personal.configuration_title" = "Cấu hình";
+"personal.status_connected" = "Đã kết nối";
+"personal.status_not_connected" = "Chưa kết nối";
+
+/* ==================== */
+/* MARK: - Language Settings */
+/* ==================== */
+"language.title" = "Ngôn ngữ";
+"language.subtitle" = "Chọn ngôn ngữ bạn muốn dùng";
+"language.select_language" = "Chọn ngôn ngữ";
+"language.available" = "Ngôn ngữ khả dụng";
+"language.restart_required" = "Cần khởi động lại";
+"language.restart_message" = "Ứng dụng cần khởi động lại để thay đổi ngôn ngữ có hiệu lực.";
+"language.restart_now" = "Khởi động lại ngay";
+"language.restart_later" = "Để sau";
+
+/* ==================== */
+/* MARK: - Common Actions (Additional) */
+/* ==================== */
+"common.create" = "Tạo";
+"common.rename" = "Đổi tên";
+"common.activate" = "Kích hoạt";
+"common.connected" = "Đã kết nối";
+"common.not_connected" = "Chưa kết nối";
+"common.back" = "Quay lại";
+"common.next" = "Tiếp theo";
+"common.remove" = "Xoá";
+"common.switch" = "Chuyển";
+"common.retry" = "Thử lại";
+
+/* ==================== */
+/* MARK: - Popover/Menu Bar */
+/* ==================== */
+"popover.manage_profiles" = "Quản lý hồ sơ";
+"popover.no_profile" = "Không có hồ sơ";
+"popover.profiles_count" = "%d hồ sơ";
+"popover.profile_count_singular" = "1 hồ sơ";
+
+/* ==================== */
+/* MARK: - Setup Wizard */
+/* ==================== */
+"setup.step.enter_session_key" = "Nhập khoá";
+"wizard.test_connection" = "Kiểm tra kết nối";
+"wizard.select_org_title" = "Bạn muốn theo dõi tổ chức nào?";
+"wizard.select_org_subtitle" = "Chọn tổ chức Claude để theo dõi mức sử dụng";
+"wizard.config_summary" = "Tóm tắt cấu hình";
+"wizard.session_key" = "Khoá phiên";
+"wizard.api_session_key" = "Khoá phiên API";
+"wizard.organization" = "Tổ chức";
+"wizard.organization_id" = "ID: %@";
+"wizard.select_organization" = "Chọn tổ chức";
+"wizard.choose_organization" = "Chọn tổ chức để theo dõi";
+"wizard.review_config" = "Xem lại cấu hình";
+"wizard.confirm_settings" = "Xác nhận cài đặt của bạn trước khi lưu";
+"wizard.key_will_update" = "Khoá phiên sẽ được cập nhật";
+"wizard.api_key_will_update" = "Khoá phiên API sẽ được cập nhật";
+
+/* ==================== */
+/* MARK: - CLI Account */
+/* ==================== */
+"cli.access_token" = "Token truy cập";
+"cli.subscription" = "Gói đăng ký";
+"cli.scopes" = "Phạm vi quyền";
+"cli.sync_instructions" = "Nhấp 'Đồng bộ từ Claude Code' bên dưới để nhập thông tin đăng nhập của bạn";
+"cli.about_title" = "Giới thiệu về đồng bộ tài khoản CLI";
+"cli.benefits" = "Lợi ích:";
+"cli.tracking_note" = "Lưu ý: Theo dõi mức sử dụng dùng thông tin đăng nhập Claude.ai. Thông tin đăng nhập CLI chỉ dùng để chuyển đổi tài khoản.";
+
+/* ==================== */
+/* MARK: - Settings Sections (Titles & Descriptions) */
+/* ==================== */
+"section.credentials" = "THÔNG TIN ĐĂNG NHẬP";
+"section.active_profile" = "Hồ sơ đang hoạt động";
+"section.settings" = "CÀI ĐẶT";
+"section.app" = "ỨNG DỤNG";
+
+"section.claudeai_title" = "Claude.ai";
+"section.claudeai_desc" = "Thông tin đăng nhập Claude.ai";
+"section.api_console_title" = "API Console";
+"section.api_console_desc" = "Thông tin đăng nhập API Console";
+"section.cli_account_title" = "Tài khoản CLI";
+"section.cli_account_desc" = "Đồng bộ tài khoản CLI";
+"section.appearance_title" = "Giao diện";
+"section.appearance_desc" = "Giao diện thanh menu";
+"section.general_title" = "Chung";
+"section.general_desc" = "Cài đặt chung";
+"section.manage_profiles_title" = "Quản lý hồ sơ";
+"section.manage_profiles_desc" = "Quản lý hồ sơ";
+
+/* ==================== */
+/* MARK: - Creator Info */
+/* ==================== */
+"creator.name" = "Hamed Elfayome";
+"creator.username" = "@hamed-elfayome";
+
+/* ==================== */
+/* MARK: - Wizard Steps & Actions */
+/* ==================== */
+"wizard.enter_key" = "Nhập khoá";
+"wizard.select_org" = "Chọn tổ chức";
+"wizard.confirm" = "Xác nhận";
+"wizard.testing" = "Đang kiểm tra...";
+"wizard.test_connection" = "Kiểm tra kết nối";
+"wizard.fetching" = "Đang lấy dữ liệu...";
+"wizard.fetch_organizations" = "Lấy danh sách tổ chức";
+"wizard.saving" = "Đang lưu...";
+"wizard.save_configuration" = "Lưu cấu hình";
+
+/* ==================== */
+/* MARK: - CLI Account Sync */
+/* ==================== */
+"cli.title" = "Tài khoản CLI";
+"cli.subtitle" = "Đồng bộ tài khoản đã đăng nhập Claude Code của bạn";
+"cli.synced" = "Đã đồng bộ tài khoản CLI";
+"cli.not_synced" = "Chưa đồng bộ";
+"cli.account_details" = "Chi tiết tài khoản";
+"cli.credentials_synced" = "Thông tin đăng nhập CLI đã đồng bộ của bạn";
+"cli.no_credentials" = "Chưa có thông tin đăng nhập nào được đồng bộ";
+"cli.resync" = "Đồng bộ lại";
+"cli.sync_from_code" = "Đồng bộ từ Claude Code";
+"cli.benefit_1" = "Tự động chuyển đăng nhập Claude Code theo hồ sơ";
+"cli.benefit_2" = "Giữ đồng bộ tài khoản CLI và ứng dụng";
+"cli.benefit_3" = "Tự động làm mới thông tin đăng nhập khi chuyển hồ sơ";
+
+/* ==================== */
+/* MARK: - Additional Keys */
+/* ==================== */
+"api.single_organization" = "Đã tìm thấy và tự động chọn một tổ chức duy nhất";
+"api.remove_title" = "Xoá thông tin đăng nhập";
+"api.remove_subtitle" = "Xoá vĩnh viễn khoá phiên API Console khỏi hồ sơ này";
+"claudecode.button_apply" = "Áp dụng";
+"claudecode.button_reset" = "Đặt lại";
+"claudecode.actions_title" = "Thao tác";
+"claudecode.component_profile" = "Tên hồ sơ";
+"claudecode.context_info" = "Ngữ cảnh có thể hiển thị ~80-95% thay vì 100% — Claude tự động nén trước khi đạt giới hạn, và token đầu ra cũng dùng không gian ngữ cảnh.";
+"claudecode.element_colors_title" = "Màu thành phần";
+"claudecode.element_color_directory" = "Thư mục";
+"claudecode.element_color_branch" = "Nhánh";
+"claudecode.element_color_model" = "Mô hình";
+"claudecode.element_color_profile" = "Hồ sơ";
+"claudecode.element_color_context" = "Ngữ cảnh";
+"claudecode.element_color_separator" = "Dấu phân cách";
+"claudecode.element_color_usage" = "Dải màu mức sử dụng";
+"claudecode.element_color_usage_desc" = "Ghi đè dải màu 10 cấp bằng một màu cố định";
+"claudecode.element_color_pace" = "Dấu nhịp độ";
+"claudecode.element_color_pace_desc" = "Ghi đè màu nhịp độ 6 cấp bằng một màu cố định";
+"claudecode.element_color_weekly" = "Mức dùng hàng tuần";
+"claudecode.element_color_weekly_desc" = "Ghi đè dải màu mức dùng hàng tuần bằng một màu cố định";
+"claudecode.element_color_extra" = "Mức dùng thêm";
+"claudecode.element_color_extra_desc" = "Ghi đè dải màu mức dùng thêm (chi phí) bằng một màu cố định";
+"error.generic" = "Lỗi: %@";
+"personal.button_saving" = "Đang lưu...";
+"personal.button_setup_wizard" = "Trình hướng dẫn thiết lập";
+"personal.button_open_claude" = "Mở claude.ai";
+"personal.success_key_saved" = "Đã lưu khoá phiên thành công";
+"personal.remove_title" = "Xoá thông tin đăng nhập";
+"personal.remove_subtitle" = "Xoá vĩnh viễn khoá phiên Claude.ai khỏi hồ sơ này";
+"personal.signin_description" = "Đăng nhập để tự động trích xuất khoá phiên của bạn.";
+"personal.signin_button" = "Đăng nhập vào Claude.ai";
+"personal.signin_sheet_title" = "Đăng nhập vào Claude.ai";
+"personal.advanced_manual_key" = "Nâng cao: Nhập khoá phiên thủ công";
+"about.run_setup_wizard" = "Chạy trình hướng dẫn thiết lập";
+
+/* ==================== */
+/* MARK: - Migration & Reset */
+/* ==================== */
+"wizard.migrate_old_data" = "Có dữ liệu ứng dụng cũ?";
+"wizard.migrate_description" = "Nếu bạn đã cài đặt phiên bản trước đó, nhấp vào bên dưới để nhập hồ sơ và cài đặt cũ của bạn. Thao tác này sẽ yêu cầu quyền hệ thống để truy cập dữ liệu.";
+"wizard.migrate_button" = "Di chuyển dữ liệu";
+"wizard.migration_success" = "✅ Đã di chuyển thành công %d mục";
+"wizard.migration_failed" = "⚠️ Di chuyển dữ liệu thất bại: %@";
+"about.reset_app_data" = "Đặt lại dữ liệu ứng dụng";
+"about.reset_confirmation_title" = "Đặt lại toàn bộ dữ liệu ứng dụng?";
+"about.reset_confirm" = "Đặt lại";
+"about.reset_confirmation_message" = "Thao tác này sẽ xoá vĩnh viễn toàn bộ hồ sơ, thông tin đăng nhập và cài đặt. Ứng dụng sẽ thoát và bạn cần thiết lập lại. Không thể hoàn tác.";
+"wizard.skip_migration" = "Bỏ qua";
+"wizard.migration_skipped" = "Đã bỏ qua di chuyển dữ liệu. Bạn có thể tự đồng bộ dữ liệu cũ thủ công sau nếu cần.";
+
+/* Claude Code Info */
+"wizard.claude_code_info_title" = "Đang dùng Claude Code?";
+"wizard.claude_code_info_description" = "Theo dõi mức sử dụng vẫn hoạt động, nhưng thanh trạng thái CLI & tự động bắt đầu phiên sẽ không hoạt động nếu không có khoá phiên";
+"wizard.claude_code_skip_setup" = "Bỏ qua thiết lập";
+"wizard.migrate_description_short" = "Nhập dữ liệu hồ sơ cũ từ phiên bản ứng dụng trước";
+"wizard.skip_migration" = "Bỏ qua";
+"wizard.migration_skipped" = "Đã bỏ qua";
+
+/* ==================== */
+/* MARK: - Usage History */
+/* ==================== */
+"section.history_title" = "Lịch sử";
+"section.history_desc" = "Xem lịch sử mức sử dụng";
+"section.support_title" = "Ủng hộ";
+"section.support_desc" = "Ủng hộ phát triển dự án";
+"section.debug_title" = "Công cụ gỡ lỗi";
+"section.debug_desc" = "Ghi nhật ký mạng và chẩn đoán";
+"history.title" = "Lịch sử mức sử dụng";
+"history.subtitle" = "Theo dõi mức sử dụng của bạn theo thời gian";
+"history.tab.session" = "Phiên";
+"history.tab.weekly" = "Hàng tuần";
+"history.tab.billing" = "Thanh toán";
+"history.chart.session_title" = "Lịch sử mức dùng phiên";
+"history.chart.weekly_title" = "Xu hướng mức dùng hàng tuần";
+"history.chart.billing_title" = "Chi phí API hàng tháng";
+"history.chart.now" = "Hiện tại";
+"history.empty.session_title" = "Chưa có lịch sử phiên";
+"history.empty.session_description" = "Mức dùng phiên sẽ được ghi lại sau mỗi lần đặt lại 5 giờ";
+"history.empty.weekly_title" = "Chưa có lịch sử hàng tuần";
+"history.empty.weekly_description" = "Mức dùng hàng tuần sẽ được ghi lại sau mỗi lần đặt lại vào thứ Hai";
+"history.empty.billing_title" = "Chưa có lịch sử thanh toán";
+"history.empty.billing_description" = "Dữ liệu thanh toán sẽ được ghi lại sau mỗi lần đặt lại hàng tháng";
+"history.list.title" = "Bản ghi lịch sử";
+"history.list.count" = "%d bản ghi";
+"history.list.empty" = "Chưa có bản ghi nào. Lịch sử sẽ được ghi lại tự động vào mỗi lần đặt lại.";
+"history.list.more" = "+%d bản ghi khác";
+"history.export_button" = "Xuất";
+"history.clear_button" = "Xoá";
+"history.no_profile" = "Không có hồ sơ đang hoạt động";
+"history.reset_type.session" = "Đặt lại phiên";
+"history.reset_type.weekly" = "Đặt lại hàng tuần";
+"history.reset_type.billing" = "Chu kỳ thanh toán";
+"history.label.total" = "Tổng cộng";
+"history.label.spent" = "Đã chi";
+"history.label.session" = "Phiên";
+"history.time_scale.5_hours" = "5 giờ";
+"history.time_scale.24_hours" = "24 giờ";
+"history.time_scale.7_days" = "7 ngày";
+"history.time_scale.30_days" = "30 ngày";
+"history.chart.session_usage" = "Mức dùng phiên";
+"history.chart.weekly_usage" = "Mức dùng hàng tuần";
+"history.chart.api_billing" = "Thanh toán API";
+"history.chart.no_data" = "Không có dữ liệu trong khoảng thời gian đã chọn";
+"history.export.title" = "Xuất dữ liệu";
+"history.export.json" = "Xuất dưới dạng JSON";
+"history.export.csv" = "Xuất dưới dạng CSV";
+"history.chart.now" = "Hiện tại";
+
+/* ==================== */
+/* MARK: - Support View */
+/* ==================== */
+"support.title" = "Ủng hộ dự án";
+"support.subtitle" = "Claude Usage Tracker miễn phí và mã nguồn mở";
+"support.all_features_free" = "Mọi tính năng đều miễn phí";
+"support.all_features_desc" = "Mọi tính năng trong ứng dụng này đều hoàn toàn miễn phí. Không có gói cao cấp, không tường phí, không đăng ký trả phí.";
+"support.open_source" = "Mã nguồn mở";
+"support.open_source_desc" = "Mã nguồn được công khai trên GitHub. Bạn có thể kiểm tra, chỉnh sửa và đóng góp cho dự án.";
+"support.no_tracking" = "Không theo dõi";
+"support.no_tracking_desc" = "Quyền riêng tư của bạn rất quan trọng. Không phân tích, không đo từ xa, không thu thập dữ liệu. Mọi thứ đều nằm trên Mac của bạn.";
+"support.message" = "Nếu bạn thấy ứng dụng này hữu ích, hãy cân nhắc ủng hộ việc phát triển nó";
+"support.buy_coffee" = "Mời tôi một ly cà phê";
+"support.footer" = "Sự ủng hộ của bạn giúp dự án này tiếp tục tồn tại và phát triển";
+"support.also_support" = "Bạn cũng có thể ủng hộ bằng cách";
+"support.star_github" = "Gắn sao trên GitHub";
+
+/* ==================== */
+/* MARK: - Debug View */
+/* ==================== */
+"debug.title" = "Công cụ gỡ lỗi";
+"debug.subtitle" = "Ghi nhật ký yêu cầu mạng để khắc phục sự cố và chẩn đoán";
+"debug.network_logger" = "Trình ghi nhật ký yêu cầu mạng";
+"debug.network_logger_desc" = "Ghi lại toàn bộ yêu cầu API với thông tin chi tiết";
+"debug.logging_duration" = "Thời lượng ghi nhật ký";
+"debug.logging_active" = "Đang ghi nhật ký";
+"debug.logging_inactive" = "Không ghi nhật ký";
+"debug.stops_in" = "Dừng sau %@";
+"debug.start_logging" = "Bắt đầu ghi nhật ký";
+"debug.stop_logging" = "Dừng ghi nhật ký";
+"debug.clear_logs" = "Xoá nhật ký";
+"debug.clear_all_logs" = "Xoá toàn bộ nhật ký?";
+"debug.clear_logs_message" = "Thao tác này sẽ xoá vĩnh viễn toàn bộ yêu cầu mạng đã ghi.";
+"debug.captured_requests" = "Yêu cầu đã ghi";
+"debug.requests_logged" = "%d yêu cầu đã ghi";
+"debug.no_requests" = "Chưa có yêu cầu nào được ghi";
+"debug.request_details" = "Chi tiết yêu cầu";
+"debug.basic_information" = "Thông tin cơ bản";
+"debug.request_body" = "Nội dung yêu cầu";
+"debug.response_preview" = "Phản hồi (Xem trước)";
+"debug.full_size" = "Kích thước đầy đủ: %@";
+"debug.error" = "Lỗi";
+"debug.url" = "URL";
+"debug.method" = "Phương thức";
+"debug.status_code" = "Mã trạng thái";
+"debug.duration" = "Thời lượng";
+"debug.timestamp" = "Dấu thời gian";
+"debug.duration_seconds" = "%.3f giây";
+
+/* ==================== */
+/* MARK: - Combined Usage Chart */
+/* ==================== */
+"history.chart.usage_overview" = "Tổng quan mức sử dụng";
+
+/* ==================== */
+/* MARK: - Keyboard Shortcuts */
+/* ==================== */
+"section.shortcuts_title" = "Phím tắt";
+"section.shortcuts_desc" = "Cấu hình phím tắt bàn phím";
+"shortcuts.title" = "Phím tắt bàn phím";
+"shortcuts.subtitle" = "Đặt phím tắt toàn cục cho các thao tác thường dùng";
+"shortcuts.open_popover" = "Bật/tắt cửa sổ popover";
+"shortcuts.open_popover_desc" = "Hiện hoặc ẩn popover mức sử dụng";
+"shortcuts.refresh" = "Làm mới mức sử dụng";
+"shortcuts.refresh_desc" = "Lấy dữ liệu mức sử dụng mới nhất";
+"shortcuts.open_settings" = "Mở cài đặt";
+"shortcuts.open_settings_desc" = "Mở cửa sổ cài đặt";
+"shortcuts.next_profile" = "Hồ sơ tiếp theo";
+"shortcuts.next_profile_desc" = "Chuyển sang hồ sơ tiếp theo";
+"shortcuts.record" = "Nhấp để ghi";
+"shortcuts.recording" = "Nhấn phím tắt...";
+"shortcuts.clear" = "Xoá";
+"shortcuts.none" = "Không có";
+"shortcuts.info_title" = "Phím tắt toàn cục";
+"shortcuts.info_desc" = "Phím tắt hoạt động từ bất kỳ ứng dụng nào. Mỗi phím tắt phải bao gồm ít nhất một phím bổ trợ (Command, Option, Control hoặc Shift). Tránh xung đột với phím tắt hệ thống.";
+
+/* ==================== */
+/* MARK: - Mobile App (Coming Soon) */
+/* ==================== */
+"section.mobile_app_title" = "Ứng dụng di động";
+"section.mobile_app_desc" = "Ứng dụng di động sắp ra mắt";
+"mobile.title" = "Ứng dụng di động";
+"mobile.subtitle" = "Theo dõi mức dùng Claude của bạn khi di chuyển";
+"mobile.coming_soon_badge" = "SẮP RA MẮT";
+"mobile.cta_message" = "Bạn quan tâm? Hãy cho chúng tôi biết và chúng tôi sẽ thông báo khi sẵn sàng.";
+"mobile.notify_me" = "Thông báo cho tôi";
+"mobile.submitting" = "Đang gửi...";
+"mobile.notified" = "Bạn đã có trong danh sách!";
+"mobile.notified_desc" = "Chúng tôi sẽ báo cho bạn khi ứng dụng di động sẵn sàng.";
+"mobile.privacy_note" = "Không có dữ liệu cá nhân nào được thu thập. Điều này chỉ đăng ký sự quan tâm của bạn.";
+"mobile.error_title" = "Yêu cầu thất bại";
+"mobile.error_message" = "Không thể đăng ký sự quan tâm của bạn. Vui lòng kiểm tra kết nối internet và thử lại.";
+
+/* ==================== */
+/* MARK: - Popover Settings */
+/* ==================== */
+"section.popover_title" = "Popover";
+"section.popover_desc" = "Tuỳ chỉnh hiển thị popover";
+"section.app_settings_title" = "Cài đặt";
+"section.app_settings_desc" = "Cài đặt và khởi động ứng dụng";
+"popover.title" = "Popover";
+"popover.subtitle" = "Tuỳ chỉnh cách popover hiển thị thông tin mức sử dụng";
+"popover.display_section" = "Hiển thị";
+"popover.time_display" = "Hiển thị thời gian đặt lại";
+"popover.time_display_desc" = "Chọn hiển thị gì cho thời gian đặt lại trong popover";
+"popover.time_display_reset" = "Thời gian đặt lại";
+"popover.time_display_remaining" = "Còn lại";
+"popover.time_display_both" = "Cả hai";
+"popover.time_format" = "Định dạng thời gian";
+"popover.time_format_desc" = "Chọn cách hiển thị thời gian trong toàn bộ ứng dụng";
+"popover.time_format_system" = "Hệ thống";
+"popover.time_format_12h" = "12 giờ";
+"popover.time_format_24h" = "24 giờ";
+"popover.peak_hours" = "Chỉ báo giờ cao điểm";
+"popover.peak_hours_desc" = "Hiện khi Claude đang trong giờ cao điểm (ngày thường %@)";
+"popover.peak_hours_toggle" = "Hiện chỉ báo giờ cao điểm";
+"popover.peak_hours_toggle_desc" = "Hiển thị biểu tượng ngọn lửa trên thanh menu và làm nổi bật thẻ phiên trong giờ cao điểm";
+"popover.peak_hours_menu_icon" = "Hiện biểu tượng ngọn lửa trên thanh menu";
+"popover.peak_hours_menu_icon_desc" = "Hiển thị biểu tượng ngọn lửa cạnh chỉ số mức sử dụng của bạn trong giờ cao điểm";
+
+/* ==================== */
+/* MARK: - Feedback Prompt */
+/* ==================== */
+"feedback.title" = "Giúp chúng tôi cải thiện";
+"feedback.subtitle" = "Phản hồi của bạn định hình tương lai của ứng dụng này";
+"feedback.name_placeholder" = "Tên";
+"feedback.title_label" = "Vai trò";
+"feedback.contact_placeholder" = "Email";
+"feedback.message_placeholder" = "Hãy cho chúng tôi biết bất cứ điều gì — phản hồi, ý tưởng, đề xuất tính năng...";
+"feedback.submit" = "Gửi";
+"feedback.submitting" = "Đang gửi...";
+"feedback.remind_later" = "Nhắc tôi sau";
+"feedback.never_show" = "Không hỏi lại";
+"feedback.thanks" = "Cảm ơn bạn đã phản hồi!";
+"feedback.error_title" = "Gửi thất bại";
+"feedback.error_message" = "Không thể gửi phản hồi của bạn. Vui lòng thử lại sau.";
+"feedback.role_developer" = "Nhà phát triển";
+"feedback.role_designer" = "Nhà thiết kế";
+"feedback.role_manager" = "Quản lý";
+"feedback.role_student" = "Sinh viên";
+"feedback.role_researcher" = "Nhà nghiên cứu";
+"feedback.role_other" = "Khác";
+
+// MARK: - Status Banners
+"popover.banner.credentials_expired" = "Thông tin đăng nhập đã hết hạn. Cập nhật trong Cài đặt.";
+"popover.banner.refresh_failed" = "Làm mới thất bại %d lần";
+"popover.banner.updated_ago" = "Đã cập nhật %d phút trước";
+
+// MARK: - Overage Balance
+"popover.overage_balance" = "Số dư";
+
+// MARK: - Setup Wizard CLI Detection
+"setup.cli_detecting" = "Đang kiểm tra thông tin đăng nhập CLI...";
+"setup.cli_detected.title" = "Đã phát hiện CLI!";
+"setup.cli_detected.description" = "Đã tìm thấy thông tin đăng nhập Claude Code CLI trên hệ thống của bạn. Bắt đầu theo dõi mức sử dụng chỉ với một cú nhấp.";
+"setup.cli_detected.start" = "Bắt đầu theo dõi";
+"setup.cli_detected.manual" = "Thiết lập thủ công thay thế";
+
+// MARK: - Custom Notification Settings
+"notifications.custom_thresholds" = "Ngưỡng tuỳ chỉnh";
+"notifications.custom_threshold" = "Cảnh báo tuỳ chỉnh";
+"notifications.custom_placeholder" = "ví dụ: 50";
+"notifications.custom_add" = "Thêm";
+"notifications.sound" = "Âm thanh";
+"notifications.sound.default" = "Mặc định";
+"notifications.sound.none" = "Không có";
+"notifications.sound.preview" = "Nghe thử âm thanh";
+
+/* Claude Code Notch HUD */
+"notch.hud.section_title" = "Dynamic Island";
+"notch.hud.section_desc" = "Màn hình tối giản gần notch hiển thị Claude Code đang làm gì";
+"notch.hud.enable" = "Bật Dynamic Island";
+"notch.hud.enable_desc" = "Cài đặt hook Claude Code và hiển thị hoạt động phiên trực tiếp gần notch";
+"notch.hud.auto_hide" = "Tự động ẩn khi rảnh";
+"notch.hud.auto_hide_desc" = "Ẩn HUD vài giây sau khi tất cả phiên chuyển sang trạng thái rảnh";
+"notch.hud.expanded_title" = "Claude Code";
+"notch.no_sessions" = "Không có phiên đang hoạt động";
+"notch.status.thinking" = "Đang suy nghĩ…";
+"notch.status.writing_code" = "Đang viết…";
+"notch.status.reading_files" = "Đang đọc…";
+"notch.status.running_command" = "Đang chạy…";
+"notch.status.needs_attention" = "Cần thao tác";
+"notch.status.idle" = "Xong";
+"notch.task.running_command" = "Đang chạy lệnh";
+"notch.task.writing" = "Đang viết %@";
+"notch.task.editing" = "Đang chỉnh sửa %@";
+"notch.task.reading" = "Đang đọc %@";
+"notch.task.searching" = "Đang tìm kiếm tệp";
+"notch.task.subagent" = "Đang chạy tác nhân phụ";
+"notch.task.web" = "Đang duyệt web";
+"notch.hooks.title" = "Claude Code Hooks";
+"notch.hooks.desc" = "HUD nhận sự kiện qua hook trong ~/.claude/settings.json";
+"notch.hooks.status_installed" = "Đã cài đặt hook";
+"notch.hooks.status_partial" = "Đã cài đặt hook một phần";
+"notch.hooks.status_not_installed" = "Chưa cấu hình hook";
+"notch.hooks.status_legacy" = "Đã phát hiện hook từ phiên bản trước — chúng sẽ được thay thế khi bạn bật HUD.";
+"notch.hooks.install" = "Cài đặt";
+"notch.hooks.repair" = "Sửa chữa";
+"notch.hooks.remove" = "Xoá";
+"notch.server.listening" = "Đang lắng nghe trên %@";
+"notch.server.port_busy" = "Cổng %@ đang được sử dụng — có bản sao khác của ứng dụng đang chạy không?";
+"notch.server.retry" = "Thử lại";
+
+/* Sponsor slot */
+"sponsor.slot_title" = "Vị trí này dành cho nhà tài trợ";
+"sponsor.slot_cta" = "Liên hệ ngay";
