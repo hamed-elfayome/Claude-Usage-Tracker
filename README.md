@@ -13,12 +13,12 @@
   ![Swift](https://img.shields.io/badge/Swift-5.0+-orange?style=flat-square&logo=swift)
   ![SwiftUI](https://img.shields.io/badge/SwiftUI-5.0+-blue?style=flat-square&logo=swift)
   ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
-  ![Version](https://img.shields.io/badge/version-3.2.0-blue?style=flat-square)
+  ![Version](https://img.shields.io/badge/version-3.3.0-blue?style=flat-square)
   ![Languages](https://img.shields.io/badge/languages-13-purple?style=flat-square)
 
   <sub>🇬🇧 English • 🇪🇸 Español • 🇫🇷 Français • 🇩🇪 Deutsch • 🇮🇹 Italiano • 🇵🇹 Português • 🇧🇷 Português (BR) • 🇯🇵 日本語 • 🇰🇷 한국어 • 🇨🇳 简体中文 • 🇹🇼 繁體中文 • 🇹🇷 Türkçe • 🇺🇦 Українська</sub>
 
-  ### [Download Latest Release (v3.2.0)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
+  ### [Download Latest Release (v3.3.0)](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)
 
   **[🌐 claudetracker.com](https://claudetracker.com)** — live stats, features & install
 
@@ -35,8 +35,10 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 
 ### Key Capabilities
 
+- **Multi-Provider Support**: Track OpenAI Codex usage alongside Claude — per-profile provider selection, built on a registry so more providers can follow
 - **Dynamic Island (Beta)**: A minimal notch HUD showing what Claude Code is doing in real time — current tool, session status, and a pulse when Claude needs your input
 - **Multi-Profile Support**: Manage unlimited Claude accounts with isolated credentials and settings
+- **Terminal Launchers**: Install a `claude-<profile>` command per profile — each opens Claude Code with that profile's own login while plain `claude` follows the active profile
 - **Multi-Profile Display**: Monitor all profiles simultaneously in the menu bar
 - **Claude Code Integration**: Sync CLI accounts and auto-switch credentials when changing profiles
 - **Real-Time Monitoring**: Track session, weekly, and per-model usage (Fable, Opus, Sonnet, Design), API console usage, and API costs per profile
@@ -64,6 +66,8 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 ---
 
 ## What's New
+
+- **v3.3.0 (2026-08-29)**: **Multi-provider architecture with OpenAI Codex support** (#229) — per-profile provider selection on a registry pattern (`docs/ADDING_A_PROVIDER.md`); **per-profile terminal launchers** — `claude-<profile>` commands with isolated `CLAUDE_CONFIG_DIR` logins and automatic usage tracking after one `/login`; keychain migration finally works on shipped Developer ID builds (#292); popover shows over full-screen apps (#298); Dynamic Island targets the built-in notch (#294); Cloudflare challenges no longer masquerade as expired credentials (#277); macOS 26 multi-profile crash fixes; transient E1000 on profile switch eliminated; obsolete peak-hours indicator removed (#308). Thanks to 5 community contributors.
 
 - **v3.2.0 (2026-07-12)**: **Dynamic Island (Beta)** — live Claude Code activity HUD at the notch; **Fable per-model tracking** via the new `limits[]` usage format; credentials moved to the macOS Keychain (GHSA-mfxh-xpwm-23c7); profile switching overhaul (no more forced re-logins); usage history storage fix (silent settings loss on macOS 26); macOS 26/27 crash and sign-in fixes; localization parity across all 13 languages. Huge thanks to 9 community contributors.
 
@@ -332,6 +336,30 @@ Access profile switcher in multiple places:
    - Or use settings sidebar picker
    - CLI credentials apply automatically
 
+---
+
+## OpenAI Codex Profiles (v3.3.0+)
+
+Profiles aren't Claude-only anymore. When creating a profile, pick **OpenAI Codex** as its provider to track your Codex rate limits in the same menu bar:
+
+- Reads your existing `~/.codex/auth.json` login (or paste credentials in Settings → Codex Account)
+- Maps Codex's 5-hour and weekly rate windows onto the familiar session/weekly rows
+- Refreshes expired tokens automatically and writes them back atomically with `0600` permissions
+- Anthropic-only integrations (statusline, auto-start, Dynamic Island) hide themselves for Codex profiles
+
+Want another provider? The architecture is additive — see `docs/ADDING_A_PROVIDER.md`.
+
+---
+
+## Per-Profile Terminal Launchers (v3.3.0+)
+
+Run different Claude Code accounts side by side without touching environment variables:
+
+1. Open **Settings → General** on the profile you want and click **Install Launcher**
+2. Run `claude-<profile>` in any terminal — it opens Claude Code with that profile's own `CLAUDE_CONFIG_DIR`, so sign in once with `/login`
+3. The app detects the new login and links it to the profile automatically — usage tracking follows that account from then on
+
+Plain `claude` keeps following the **active** profile, exactly as before. Removing a launcher never deletes its login.
 
 ---
 
