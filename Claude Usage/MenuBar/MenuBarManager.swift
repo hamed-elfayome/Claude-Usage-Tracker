@@ -612,7 +612,14 @@ class MenuBarManager: NSObject, ObservableObject {
     /// the Space placement a menu bar popover needs to appear over a full-screen app.
     private func showPopover(_ popover: NSPopover, from button: NSStatusBarButton) {
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-        popover.contentViewController?.view.window?.enableDisplayOnFullScreenSpaces()
+        if let window = popover.contentViewController?.view.window {
+            window.enableDisplayOnFullScreenSpaces()
+            // AppKit hands initial key focus to the first focusable control in
+            // the popover, drawing an accent-colored focus ring around the
+            // profile-switcher menu. Nothing in the popover needs initial
+            // keyboard focus, so drop first responder to the window itself.
+            window.makeFirstResponder(nil)
+        }
     }
 
     /// Shows a lightweight context menu (Refresh / Settings / Quit) anchored to the
