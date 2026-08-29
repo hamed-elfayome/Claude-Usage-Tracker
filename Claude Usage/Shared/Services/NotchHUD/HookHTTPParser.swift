@@ -15,6 +15,12 @@ struct HookHTTPParser {
         case needMoreData
         /// A complete request was framed.
         case request(method: String, path: String, body: Data)
+        /// Body exceeds the cap on an otherwise well-formed request. The
+        /// caller owns the response: for an authorized path that is a drained
+        /// 200-and-drop, never an error status — the cap is our limitation,
+        /// not the sender's mistake. `remainingBytes` is how much body is
+        /// still on the wire.
+        case oversizeRequest(path: String, remainingBytes: Int)
         /// Protocol violation — respond with this HTTP status and close.
         case error(status: Int)
     }
@@ -28,11 +34,17 @@ struct HookHTTPParser {
 
     private let maxHeaderBytes: Int
     private let maxBodyBytes: Int
+    private let pathAuthorizer: ((String) -> Bool)?
 
+    /// `pathAuthorizer` is consulted at header-framing time, BEFORE any body
+    /// byte is buffered — an unauthorized peer must not be able to make us
+    /// accumulate its payload. `nil` skips the early check (pure-parser tests).
     init(maxHeaderBytes: Int = Constants.NotchHUD.maxHeaderBytes,
-         maxBodyBytes: Int = Constants.NotchHUD.maxBodyBytes) {
+         maxBodyBytes: Int = Constants.NotchHUD.maxBodyBytes,
+         pathAuthorizer: ((String) -> Bool)? = nil) {
         self.maxHeaderBytes = maxHeaderBytes
         self.maxBodyBytes = maxBodyBytes
+        self.pathAuthorizer = pathAuthorizer
     }
 
     /// Feed the next chunk of bytes from the connection.
@@ -48,9 +60,19 @@ struct HookHTTPParser {
                     finished = true
                     return .error(status: 431)
                 }
-                if case let .error(status) = parseHeader(upTo: range.lowerBound) {
+                switch parseHeader(upTo: range.lowerBound) {
+                case let .error(status):
                     finished = true
                     return .error(status: status)
+                case .oversizeRequest:
+                    // Re-derive with the body bytes that rode in alongside
+                    // the header already subtracted.
+                    finished = true
+                    let received = buffer.count - range.upperBound
+                    return .oversizeRequest(path: path ?? "",
+                                            remainingBytes: max(0, (contentLength ?? 0) - received))
+                default:
+                    break
                 }
             } else if buffer.count > maxHeaderBytes {
                 finished = true
@@ -91,6 +113,13 @@ struct HookHTTPParser {
 
         guard parsedMethod == "POST" else { return .error(status: 405) }
 
+        // Authorize the path BEFORE looking at Content-Length so an
+        // unauthorized peer can neither park a body in our buffer nor learn
+        // the size cap (404 for them, always).
+        if let authorize = pathAuthorizer, !authorize(parsedPath) {
+            return .error(status: 404)
+        }
+
         var length: Int?
         for line in lines.dropFirst() {
             let pair = line.split(separator: ":", maxSplits: 1)
@@ -101,11 +130,15 @@ struct HookHTTPParser {
         }
         // Hooks always send Content-Length; anything else is malformed for us.
         guard let contentLength = length, contentLength >= 0 else { return .error(status: 400) }
-        guard contentLength <= maxBodyBytes else { return .error(status: 413) }
 
         self.method = parsedMethod
         self.path = parsedPath
         self.contentLength = contentLength
+
+        guard contentLength <= maxBodyBytes else {
+            // Placeholder — feed() rebuilds this with the true remaining count.
+            return .oversizeRequest(path: parsedPath, remainingBytes: contentLength)
+        }
         return .needMoreData
     }
 }

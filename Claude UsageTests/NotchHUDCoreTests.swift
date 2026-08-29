@@ -45,10 +45,34 @@ final class HookHTTPParserTests: XCTestCase {
         XCTAssertEqual(parser.feed(raw), .error(status: 400))
     }
 
-    func testOversizedBodyRejected() {
+    func testOversizedBodyReportedWithRemainingCount() {
         var parser = HookHTTPParser()
+        let result = parser.feed(request(body: "{}", contentLength: 4_000_000))
+        // 2 body bytes ("{}") arrived with the header; the rest is unread.
+        XCTAssertEqual(result, .oversizeRequest(path: "/hook/x/stop",
+                                                remainingBytes: 4_000_000 - 2))
+    }
+
+    func testUnauthorizedPathRejectedBeforeBodyArrives() {
+        var parser = HookHTTPParser(pathAuthorizer: { $0 == "/hook/good/stop" })
+        // Header only — no body bytes sent yet. The 404 must not wait for them.
+        let header = Data("POST /hook/evil/stop HTTP/1.1\r\nHost: h\r\nContent-Length: 500000\r\n\r\n".utf8)
+        XCTAssertEqual(parser.feed(header), .error(status: 404))
+    }
+
+    func testUnauthorizedPathBeatsOversizeStatus() {
+        // An unauthorized peer must learn nothing about the size cap: 404,
+        // never an oversize acknowledgement.
+        var parser = HookHTTPParser(maxBodyBytes: 1024, pathAuthorizer: { _ in false })
         let result = parser.feed(request(body: "{}", contentLength: 1_000_000))
-        XCTAssertEqual(result, .error(status: 413))
+        XCTAssertEqual(result, .error(status: 404))
+    }
+
+    func testAuthorizedPathStillParses() {
+        var parser = HookHTTPParser(pathAuthorizer: { $0 == "/hook/x/stop" })
+        let result = parser.feed(request(body: #"{"session_id":"s1"}"#))
+        XCTAssertEqual(result, .request(method: "POST", path: "/hook/x/stop",
+                                        body: Data(#"{"session_id":"s1"}"#.utf8)))
     }
 
     func testOversizedHeaderRejected() {

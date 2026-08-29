@@ -24,6 +24,8 @@ final class NotchHookServer {
     private var listener: NWListener?
     private var retryCount = 0
     private var desiredRunning = false
+    /// Connections currently being serviced; bounds concurrent peers.
+    private var activeConnections = 0
 
     private init() {}
 
@@ -118,8 +120,34 @@ final class NotchHookServer {
     // MARK: - Connections
 
     private func handleNewConnection(_ connection: NWConnection) {
+        // Hard cap on concurrent peers — a client holding sockets open must
+        // not exhaust us. Real hook connections live for milliseconds.
+        guard activeConnections < Constants.NotchHUD.maxConcurrentConnections else {
+            connection.cancel()
+            return
+        }
+        activeConnections += 1
+        connection.stateUpdateHandler = { [weak self] state in
+            switch state {
+            case .cancelled, .failed:
+                self?.activeConnections -= 1
+                connection.stateUpdateHandler = nil
+            default:
+                break
+            }
+        }
         connection.start(queue: queue)
-        receive(on: connection, parser: HookHTTPParser())
+        // Deadline: whatever happens, the connection dies after this long.
+        // cancel() on an already-cancelled connection is a safe no-op.
+        queue.asyncAfter(deadline: .now() + Constants.NotchHUD.connectionDeadline) {
+            connection.cancel()
+        }
+        // The parser authorizes the path at header-framing time, so a peer
+        // without the token can never occupy body-buffer memory.
+        let parser = HookHTTPParser(pathAuthorizer: { [weak self] path in
+            self?.validatedEventSuffix(for: path) != nil
+        })
+        receive(on: connection, parser: parser)
     }
 
     private func receive(on connection: NWConnection, parser: HookHTTPParser) {
@@ -141,10 +169,20 @@ final class NotchHookServer {
             case let .error(status):
                 self.respond(connection, status: status)
 
+            case let .oversizeRequest(path, remainingBytes):
+                // Authorized sender, body over our cap. That is OUR
+                // limitation — drain the wire, answer 200, drop the event.
+                // An error status here would surface as a red hook error in
+                // the sender's Claude Code session (the pre-cap behavior:
+                // HTTP 413 on every large file Read).
+                LoggingService.shared.log(
+                    "NotchHookServer: dropping oversize \(path) payload (\(remainingBytes) bytes unread)")
+                self.drainThenAcknowledge(connection, remainingBytes: remainingBytes)
+
             case let .request(_, path, body):
-                // Path check is cheap and needs no body parsing; unknown or
-                // unauthenticated paths (incl. legacy hooks from the abandoned
-                // branch) get an instant 404.
+                // Belt-and-braces re-check; the parser already 404s
+                // unauthorized paths (incl. legacy hooks from the abandoned
+                // branch) before buffering any body.
                 guard let suffix = self.validatedEventSuffix(for: path) else {
                     self.respond(connection, status: 404)
                     return
@@ -157,13 +195,39 @@ final class NotchHookServer {
         }
     }
 
+    /// Read and discard the remaining body so the client's send completes,
+    /// then acknowledge with 200. Closing without draining would reset the
+    /// client mid-send and punish it with a socket error instead. Draining is
+    /// bounded by `maxDrainBytes` and the connection deadline.
+    private func drainThenAcknowledge(_ connection: NWConnection, remainingBytes: Int) {
+        guard remainingBytes > 0 else {
+            respond(connection, status: 200)
+            return
+        }
+        guard remainingBytes <= Constants.NotchHUD.maxDrainBytes else {
+            // Absurd Content-Length — never produced by real hooks. Answer
+            // and close; not worth reading megabytes for.
+            respond(connection, status: 200)
+            return
+        }
+        connection.receive(minimumIncompleteLength: 1, maximumLength: 65_536) { [weak self] data, _, isComplete, error in
+            guard let self = self else { connection.cancel(); return }
+            if error != nil { connection.cancel(); return }
+            let received = data?.count ?? 0
+            if received >= remainingBytes || isComplete {
+                self.respond(connection, status: 200)
+            } else {
+                self.drainThenAcknowledge(connection, remainingBytes: remainingBytes - received)
+            }
+        }
+    }
+
     private func respond(_ connection: NWConnection, status: Int) {
         let reason: String
         switch status {
         case 200: reason = "OK"
         case 404: reason = "Not Found"
         case 405: reason = "Method Not Allowed"
-        case 413: reason = "Payload Too Large"
         case 431: reason = "Request Header Fields Too Large"
         default: reason = "Bad Request"
         }
