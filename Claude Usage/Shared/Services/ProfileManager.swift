@@ -224,7 +224,7 @@ class ProfileManager: ObservableObject {
             // keychain and Claude Code would 401 ("Please run /login"). This refreshes
             // via the refresh_token grant and persists the rotated tokens back to the
             // profile, so applyProfileCredentials below writes a valid token.
-            if let refreshed = await cliSyncService.ensureFreshCredentials(for: updatedProfile.id) {
+            if let refreshed = await cliSyncService.ensureFreshCredentials(for: updatedProfile.id, allowRotation: true) {
                 LoggingService.shared.log("✓ Ensured fresh credentials before apply for: \(updatedProfile.name)")
                 _ = refreshed
                 // Reload so applyProfileCredentials picks up the refreshed token.
