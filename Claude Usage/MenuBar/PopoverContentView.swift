@@ -559,11 +559,6 @@ struct SmartUsageDashboard: View {
     let usage: ClaudeUsage
     let apiUsage: APIUsage?
     @StateObject private var profileManager = ProfileManager.shared
-    @ObservedObject private var peakHoursService = PeakHoursService.shared
-
-    private var isPeakHours: Bool {
-        SharedDataStore.shared.loadPeakHoursIndicatorEnabled() && peakHoursService.isPeakHours
-    }
 
     private var showRemainingPercentage: Bool {
         if profileManager.displayMode == .multi {
@@ -610,8 +605,7 @@ struct SmartUsageDashboard: View {
                 showTimeMarker: showTimeMarker,
                 showPaceMarker: showPaceMarker,
                 usePaceColoring: usePaceColoring,
-                timeDisplay: timeDisplay,
-                isPeakHighlighted: isPeakHours
+                timeDisplay: timeDisplay
             )
 
             if usage.designWeeklyTokensUsed > 0 {
@@ -733,7 +727,6 @@ struct UsageRow: View {
     var showPaceMarker: Bool = true
     var usePaceColoring: Bool = true
     var timeDisplay: PopoverTimeDisplay = .resetTime
-    var isPeakHighlighted: Bool = false
 
     private var displayPercentage: Double {
         UsageStatusCalculator.getDisplayPercentage(
@@ -853,10 +846,7 @@ struct UsageRow: View {
         .padding(.vertical, 8)
         .background(
             RoundedRectangle(cornerRadius: 8)
-                .strokeBorder(
-                    isPeakHighlighted ? Color.red.opacity(0.6) : Color.primary.opacity(0.1),
-                    lineWidth: isPeakHighlighted ? 1.5 : 0.5
-                )
+                .strokeBorder(Color.primary.opacity(0.1), lineWidth: 0.5)
         )
     }
 

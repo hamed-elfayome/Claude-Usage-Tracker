@@ -16,11 +16,6 @@ final class StatusBarUIManager {
     // Dictionary to hold status items keyed by profile ID (multi-profile mode)
     private var multiProfileStatusItems: [UUID: NSStatusItem] = [:]
 
-    // Peak hours indicator (independent of metric system)
-    private var peakHoursStatusItem: NSStatusItem?
-    private var peakHoursTimer: Timer?
-    private weak var peakHoursTarget: AnyObject?
-    private var peakHoursAction: Selector?
 
     // Current display mode
     private var isMultiProfileMode: Bool = false
@@ -51,10 +46,6 @@ final class StatusBarUIManager {
     private static func autosaveName(forProfileId id: UUID) -> NSStatusItem.AutosaveName {
         return "\(autosavePrefix).multiProfile.\(id.uuidString)"
     }
-
-    /// Returns a stable autosaveName for the peak hours indicator
-    private static let peakHoursAutosaveName: NSStatusItem.AutosaveName = "\(autosavePrefix).peakHours"
-
     /// Returns a stable autosaveName for the default logo (no credentials)
     private static let defaultLogoAutosaveName: NSStatusItem.AutosaveName = "\(autosavePrefix).defaultLogo"
 
@@ -209,78 +200,7 @@ final class StatusBarUIManager {
 
         isMultiProfileMode = false
 
-        removePeakHoursIndicator()
-
         LoggingService.shared.logUIEvent("Status bar cleaned up")
-    }
-
-    // MARK: - Peak Hours Indicator
-
-    /// Starts monitoring peak hours. Shows the flame icon only during peak hours.
-    func setupPeakHoursIndicator(target: AnyObject, action: Selector) {
-        removePeakHoursIndicator()
-
-        peakHoursTarget = target
-        peakHoursAction = action
-
-        // Show immediately if currently peak
-        updatePeakHoursIcon()
-
-        peakHoursTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
-            self?.updatePeakHoursIcon()
-        }
-        peakHoursTimer?.tolerance = 10
-    }
-
-    /// Removes the peak hours status item and stops monitoring.
-    func removePeakHoursIndicator() {
-        peakHoursTimer?.invalidate()
-        peakHoursTimer = nil
-        peakHoursTarget = nil
-        peakHoursAction = nil
-        removePeakHoursStatusItem()
-    }
-
-    /// Updates the peak hours icon: shows during peak, hides when off-peak.
-    func updatePeakHoursIcon() {
-        let isPeak = PeakHoursService.checkIsPeakHours()
-
-        if isPeak {
-            // Create the status item if not already showing
-            if peakHoursStatusItem == nil, let target = peakHoursTarget, let action = peakHoursAction {
-                let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-                statusItem.autosaveName = Self.peakHoursAutosaveName
-                // Override any persisted false from a prior cmd-drag.
-                statusItem.isVisible = true
-                if let button = statusItem.button {
-                    button.action = action
-                    button.target = target
-                    button.sendAction(on: [.leftMouseUp, .rightMouseUp])
-                }
-                peakHoursStatusItem = statusItem
-            }
-            if let button = peakHoursStatusItem?.button {
-                let menuBarIsDark = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-                let image = renderer.createPeakHoursIcon(isPeak: true, isDarkMode: menuBarIsDark)
-                image.isTemplate = false
-                setButtonImage(button, image: image)
-            }
-        } else {
-            // Remove the icon when off-peak
-            removePeakHoursStatusItem()
-        }
-    }
-
-    private func removePeakHoursStatusItem() {
-        if let item = peakHoursStatusItem {
-            if let button = item.button {
-                button.image = nil
-                button.action = nil
-                button.target = nil
-            }
-            NSStatusBar.system.removeStatusItem(item)
-        }
-        peakHoursStatusItem = nil
     }
 
     // MARK: - Multi-Profile Mode

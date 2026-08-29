@@ -5,6 +5,12 @@ All notable changes to Claude Usage Tracker will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Removed
+
+- **Peak hours indicator**: Anthropic removed the peak-hour limit reduction on Claude Code for Pro and Max accounts on 2026-05-06 (["Higher usage limits for Claude and a compute deal with SpaceX"](https://www.anthropic.com/news/higher-limits-spacex)), so the flame icon, the session-card highlight, and the "Session limits are consumed faster during peak hours" popover were all reporting a policy that no longer exists. The indicator, its setting, and the `popover.peak_hours*` strings in all 13 languages have been removed.
+
 ## [3.2.0] - 2026-07-12
 
 ### Major Features
