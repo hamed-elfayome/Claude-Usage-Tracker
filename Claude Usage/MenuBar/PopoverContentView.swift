@@ -311,6 +311,9 @@ struct ProfileSwitcherCompact: View {
         }
         .menuStyle(.borderlessButton)
         .buttonStyle(.plain)
+        // The popover window can hand this Menu first-responder status on open,
+        // which draws an accent-colored focus ring around the header label.
+        .focusEffectDisabled()
     }
 }
 
@@ -430,6 +433,8 @@ struct ProfileSwitcherBar: View {
         }
         .menuStyle(.borderlessButton)
         .buttonStyle(.plain)
+        // See ProfileSwitcherCompact: suppress the first-responder focus ring.
+        .focusEffectDisabled()
         .onHover { hovering in
             withAnimation(.easeInOut(duration: 0.15)) {
                 isHovered = hovering
