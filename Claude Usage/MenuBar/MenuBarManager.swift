@@ -572,11 +572,7 @@ class MenuBarManager: NSObject, ObservableObject {
                     // the @Published profile properties set earlier in this method
                     popover.close()
                     stopMonitoringForOutsideClicks()
-                    // Activate first so the popover appears over a full-screen Space.
-                    // An .accessory app that isn't active renders the popover on the
-                    // desktop Space, hidden behind any frontmost full-screen app.
-                    NSApp.activate(ignoringOtherApps: true)
-                    popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+                    showPopover(popover, from: button)
                     currentPopoverButton = button
                     startMonitoringForOutsideClicks()
                 }
@@ -596,14 +592,18 @@ class MenuBarManager: NSObject, ObservableObject {
                 stopMonitoringForOutsideClicks()
                 // Update content view controller for current profile data
                 popover.contentViewController = createContentViewController()
-                // Activate first so the popover appears over a full-screen Space
-                // (otherwise an inactive .accessory app draws it on the desktop Space).
-                NSApp.activate(ignoringOtherApps: true)
-                popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+                showPopover(popover, from: button)
                 currentPopoverButton = button
                 startMonitoringForOutsideClicks()
             }
         }
+    }
+
+    /// Shows `popover` anchored to a status bar button and gives its backing window
+    /// the Space placement a menu bar popover needs to appear over a full-screen app.
+    private func showPopover(_ popover: NSPopover, from button: NSStatusBarButton) {
+        popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+        popover.contentViewController?.view.window?.enableDisplayOnFullScreenSpaces()
     }
 
     /// Shows a lightweight context menu (Refresh / Settings / Quit) anchored to the
