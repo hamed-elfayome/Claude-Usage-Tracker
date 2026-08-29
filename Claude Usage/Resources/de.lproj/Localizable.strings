@@ -1091,5 +1091,5 @@
 "support.popup_title" = "Hi, ich bin Hamed 👋";
 "support.popup_later" = "Vielleicht später";
 "support.popup_signature" = "das Ein-Personen-Team hinter Claude Usage";
-"support.popup_body" = "Diese App ist kostenlos und Open Source — keine Werbung, kein Tracking, keine Paywall. Jedes Update entsteht an meinen Abenden und Wochenenden. Wenn Claude Usage dich je davor bewahrt hat, ein Session-Limit zu verbrennen, ist ein Kaffee das, was die App am Leben hält und besser macht.";
+"support.popup_body" = "Kostenlos, Open Source, von einer Person gebaut — ohne Werbung, ohne Tracking. Hat es dich je vor einem verbrannten Session-Limit bewahrt, hält ein Kaffee es am Leben.";
 "support.popup_days" = "Behält deine Limits seit %d Tagen im Blick — für immer kostenlos";

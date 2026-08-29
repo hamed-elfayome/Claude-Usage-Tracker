@@ -1087,5 +1087,5 @@
 "support.popup_title" = "Hi, I'm Hamed 👋";
 "support.popup_later" = "Maybe later";
 "support.popup_signature" = "the one-person team behind Claude Usage";
-"support.popup_body" = "This app is free and open source — no ads, no tracking, no paywall. Every update is built in my evenings and weekends. If Claude Usage has ever saved you from burning a session limit, a coffee is what keeps it alive and improving.";
+"support.popup_body" = "Free, open source, built by one person — no ads, no tracking. If it has ever saved you from burning a session limit, a coffee keeps it going.";
 "support.popup_days" = "Watching your limits for %d days — always free";

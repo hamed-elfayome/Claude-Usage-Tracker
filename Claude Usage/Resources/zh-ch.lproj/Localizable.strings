@@ -1077,5 +1077,5 @@
 "support.popup_title" = "你好，我是 Hamed 👋";
 "support.popup_later" = "以后再说";
 "support.popup_signature" = "Claude Usage 背后的一人团队";
-"support.popup_body" = "这款应用免费且开源——没有广告、没有跟踪、没有付费墙。每次更新都诞生于我的夜晚和周末。如果 Claude Usage 曾帮你避免烧掉一次会话额度，一杯咖啡就是它持续存活和进步的动力。";
+"support.popup_body" = "免费、开源、一人开发——没有广告，没有跟踪。如果它曾帮你避免烧掉会话额度，一杯咖啡就能让它继续前进。";
 "support.popup_days" = "已守护你的额度 %d 天 — 永久免费";

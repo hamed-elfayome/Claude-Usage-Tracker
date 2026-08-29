@@ -92,8 +92,16 @@ final class SupportReminderService {
         window.styleMask = [.titled, .closable, .fullSizeContentView]
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
+        // Close is the only meaningful window action; hiding the other two
+        // stops the traffic-light row from reserving visual weight.
+        window.standardWindowButton(.miniaturizeButton)?.isHidden = true
+        window.standardWindowButton(.zoomButton)?.isHidden = true
         window.isMovableByWindowBackground = true
         window.level = .floating
+        // Follow the user to their current Space — without this the window can
+        // open on another desktop (or be invisible over a full-screen app) and
+        // look like it never appeared.
+        window.collectionBehavior = [.moveToActiveSpace, .fullScreenAuxiliary]
         window.isReleasedWhenClosed = false
         window.center()
         self.window = window
@@ -128,76 +136,75 @@ private struct SupportReminderView: View {
         VStack(alignment: .leading, spacing: 0) {
             // Maker's-note header: cup badge + hand-signed feel, left aligned —
             // a note from a person, not a marketing card.
-            HStack(spacing: 12) {
+            HStack(spacing: 10) {
                 ZStack {
                     Circle()
                         .fill(LinearGradient(
                             colors: [Self.coffeeYellow, Self.coffeeYellow.opacity(0.65)],
                             startPoint: .topLeading, endPoint: .bottomTrailing))
-                        .frame(width: 44, height: 44)
+                        .frame(width: 36, height: 36)
                     Image(systemName: "cup.and.saucer.fill")
-                        .font(.system(size: 19))
+                        .font(.system(size: 16))
                         .foregroundColor(.black.opacity(0.8))
                 }
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 1) {
                     Text("support.popup_title".localized)
-                        .font(.system(size: 15, weight: .bold))
+                        .font(.system(size: 14, weight: .bold))
                     Text("support.popup_signature".localized)
-                        .font(.system(size: 11))
+                        .font(.system(size: 10.5))
                         .foregroundColor(.secondary)
                 }
             }
-            .padding(.bottom, 14)
-
-            Text("support.popup_body".localized)
-                .font(.system(size: 12.5))
-                .foregroundColor(.primary.opacity(0.85))
-                .lineSpacing(3)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.bottom, 14)
-
-            if daysTogether >= 14 {
-                HStack(spacing: 6) {
-                    Image(systemName: "heart.fill")
-                        .font(.system(size: 10))
-                        .foregroundColor(Self.coffeeYellow)
-                    Text(String(format: "support.popup_days".localized, daysTogether))
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.secondary)
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(Capsule().fill(Color.primary.opacity(0.06)))
-                .padding(.bottom, 16)
-            }
-
-            Button(action: onCoffee) {
-                HStack(spacing: 8) {
-                    Image(systemName: "cup.and.saucer.fill")
-                        .font(.system(size: 14))
-                    Text("support.buy_coffee".localized)
-                        .font(.system(size: 13.5, weight: .bold))
-                }
-                .foregroundColor(.black)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(Self.coffeeYellow)
-                .cornerRadius(9)
-            }
-            .buttonStyle(.plain)
             .padding(.bottom, 10)
 
+            Text("support.popup_body".localized)
+                .font(.system(size: 12))
+                .foregroundColor(.primary.opacity(0.85))
+                .lineSpacing(2)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.bottom, 12)
+
+            HStack(spacing: 8) {
+                Button(action: onCoffee) {
+                    HStack(spacing: 7) {
+                        Image(systemName: "cup.and.saucer.fill")
+                            .font(.system(size: 13))
+                        Text("support.buy_coffee".localized)
+                            .font(.system(size: 13, weight: .bold))
+                    }
+                    .foregroundColor(.black)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .background(Self.coffeeYellow)
+                    .cornerRadius(8)
+                }
+                .buttonStyle(.plain)
+                .keyboardShortcut(.defaultAction)
+            }
+            .padding(.bottom, 8)
+
             HStack {
+                if daysTogether >= 14 {
+                    HStack(spacing: 4) {
+                        Image(systemName: "heart.fill")
+                            .font(.system(size: 9))
+                            .foregroundColor(Self.coffeeYellow)
+                        Text(String(format: "support.popup_days".localized, daysTogether))
+                            .font(.system(size: 10))
+                            .foregroundColor(.secondary)
+                    }
+                }
                 Spacer()
                 Button("support.popup_later".localized, action: onLater)
                     .buttonStyle(.plain)
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
-                Spacer()
+                    .keyboardShortcut(.cancelAction)
             }
         }
-        .padding(22)
-        .frame(width: 340)
+        .padding(.top, 26)   // clears the (transparent) titlebar close button
+        .padding([.horizontal, .bottom], 18)
+        .frame(width: 320)
     }
 }
