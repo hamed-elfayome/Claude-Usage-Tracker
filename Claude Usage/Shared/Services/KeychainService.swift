@@ -250,57 +250,74 @@ class KeychainService {
         }
     }
 
-    // MARK: - Generic SecItem Helpers (data-protection keychain)
+    // MARK: - Generic SecItem Helpers (data-protection keychain, file-based fallback)
     //
-    // Per-profile secrets use the DATA-PROTECTION keychain exclusively
+    // Per-profile secrets PREFER the DATA-PROTECTION keychain
     // (`kSecUseDataProtectionKeychain`). Unlike the classic file-based login
     // keychain, it has NO ACL password dialogs — access is granted silently by
     // app identity and denied silently otherwise — so users can never see a
-    // scary "wants to use your confidential information" prompt. Ad-hoc-signed
-    // dev builds lack the required application identifier; there the operations
-    // fail with errSecMissingEntitlement and callers fall back to the legacy
-    // plist storage (zero behavior change, zero data loss).
+    // scary "wants to use your confidential information" prompt. But it
+    // requires an application-identifier entitlement that only provisioned
+    // builds carry; builds without it (ad-hoc dev builds AND the shipped
+    // Developer ID builds — #292) get errSecMissingEntitlement on every call.
+    // Those builds fall back to the FILE-BASED login keychain, which needs no
+    // entitlement, instead of abandoning the keychain entirely — the old
+    // behavior stranded credentials in the cleartext profiles_v3 plist, which
+    // is exactly what #267 / GHSA-mfxh-xpwm-23c7 set out to eliminate. Reads
+    // check the data-protection store first and fall through to the file-based
+    // store, so secrets survive moving between entitled and unentitled builds.
 
     /// Set to true after any operation returns errSecMissingEntitlement so we
-    /// stop retrying on every call (ad-hoc dev builds).
+    /// stop retrying the data-protection keychain on every call.
     private var dataProtectionUnavailable = false
 
     /// Whether per-profile secret storage is usable in this build.
-    /// Probes once with a throwaway item; result is effectively cached via
-    /// `dataProtectionUnavailable`.
+    /// Probes with a throwaway item; with the file-based fallback this only
+    /// fails when BOTH keychains reject us.
     var isProfileSecretStorageAvailable: Bool {
-        if dataProtectionUnavailable { return false }
         let probeAccount = "availability-probe"
         do {
             try saveItem("probe", service: Self.profileSecretsService, account: probeAccount)
             _ = deleteItem(service: Self.profileSecretsService, account: probeAccount)
             return true
         } catch {
-            return !dataProtectionUnavailable
+            return false
         }
     }
 
     private func noteStatus(_ status: OSStatus) {
         if status == errSecMissingEntitlement {
             if !dataProtectionUnavailable {
-                LoggingService.shared.log("Keychain: data-protection keychain unavailable (ad-hoc build?) — falling back to legacy storage")
+                LoggingService.shared.log("Keychain: data-protection keychain unavailable (no application-identifier entitlement) — using file-based login keychain")
             }
             dataProtectionUnavailable = true
         }
     }
 
     private func saveItem(_ value: String, service: String, account: String) throws {
-        if dataProtectionUnavailable { throw KeychainError.saveFailed(status: errSecMissingEntitlement) }
+        if !dataProtectionUnavailable {
+            do {
+                try saveItem(value, service: service, account: account, dataProtection: true)
+                return
+            } catch KeychainError.saveFailed(let status) where status == errSecMissingEntitlement {
+                // noteStatus flagged the store; retry below file-based so the
+                // FIRST save already lands in a keychain, not the plist.
+            }
+        }
+        try saveItem(value, service: service, account: account, dataProtection: false)
+    }
+
+    private func saveItem(_ value: String, service: String, account: String, dataProtection: Bool) throws {
         guard let data = value.data(using: .utf8) else {
             throw KeychainError.invalidData
         }
 
-        let updateQuery: [String: Any] = [
+        var updateQuery: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-            kSecUseDataProtectionKeychain as String: true
+            kSecAttrAccount as String: account
         ]
+        if dataProtection { updateQuery[kSecUseDataProtectionKeychain as String] = true }
         let updateStatus = SecItemUpdate(updateQuery as CFDictionary, [kSecValueData as String: data] as CFDictionary)
         if updateStatus == errSecSuccess { return }
         noteStatus(updateStatus)
@@ -309,17 +326,20 @@ class KeychainService {
             throw KeychainError.saveFailed(status: updateStatus)
         }
 
-        let addQuery: [String: Any] = [
+        var addQuery: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: account,
             kSecValueData as String: data,
-            // AfterFirstUnlock: the app is a login-item menu bar app and must be
-            // able to read credentials when launched right at login.
-            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock,
-            kSecAttrSynchronizable as String: false,
-            kSecUseDataProtectionKeychain as String: true
+            kSecAttrSynchronizable as String: false
         ]
+        if dataProtection {
+            // AfterFirstUnlock: the app is a login-item menu bar app and must be
+            // able to read credentials when launched right at login. (Accessibility
+            // classes only apply to the data-protection keychain.)
+            addQuery[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
+            addQuery[kSecUseDataProtectionKeychain as String] = true
+        }
         let addStatus = SecItemAdd(addQuery as CFDictionary, nil)
         guard addStatus == errSecSuccess else {
             noteStatus(addStatus)
@@ -328,15 +348,29 @@ class KeychainService {
     }
 
     private func loadItem(service: String, account: String) throws -> String? {
-        if dataProtectionUnavailable { return nil }
-        let query: [String: Any] = [
+        if !dataProtectionUnavailable {
+            do {
+                if let value = try loadItem(service: service, account: account, dataProtection: true) {
+                    return value
+                }
+            } catch KeychainError.loadFailed(let status) where status == errSecMissingEntitlement {
+                // noteStatus flagged the store; fall through to file-based.
+            }
+            // Fall through on not-found too: secrets written by an unentitled
+            // build must stay readable if this build gained the entitlement.
+        }
+        return try loadItem(service: service, account: account, dataProtection: false)
+    }
+
+    private func loadItem(service: String, account: String, dataProtection: Bool) throws -> String? {
+        var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: account,
             kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne,
-            kSecUseDataProtectionKeychain as String: true
+            kSecMatchLimit as String: kSecMatchLimitOne
         ]
+        if dataProtection { query[kSecUseDataProtectionKeychain as String] = true }
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
         if status == errSecSuccess {
@@ -350,18 +384,29 @@ class KeychainService {
         throw KeychainError.loadFailed(status: status)
     }
 
-    /// Returns true when the item is gone (deleted or was never there).
+    /// Returns true when the item is gone (deleted or was never there) from
+    /// every store this build can reach.
     private func deleteItem(service: String, account: String) -> Bool {
-        if dataProtectionUnavailable { return false }
-        let query: [String: Any] = [
+        var goneFromDataProtection = true
+        if !dataProtectionUnavailable {
+            goneFromDataProtection = deleteItem(service: service, account: account, dataProtection: true)
+        }
+        let goneFromFileBased = deleteItem(service: service, account: account, dataProtection: false)
+        return goneFromDataProtection && goneFromFileBased
+    }
+
+    private func deleteItem(service: String, account: String, dataProtection: Bool) -> Bool {
+        var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-            kSecUseDataProtectionKeychain as String: true
+            kSecAttrAccount as String: account
         ]
+        if dataProtection { query[kSecUseDataProtectionKeychain as String] = true }
         let status = SecItemDelete(query as CFDictionary)
         if status == errSecSuccess || status == errSecItemNotFound { return true }
         noteStatus(status)
+        // An unreachable store cannot be holding the item.
+        if status == errSecMissingEntitlement { return true }
         LoggingService.shared.logError("Keychain: failed to delete item (status: \(status))",
                                        error: KeychainError.deleteFailed(status: status))
         return false
