@@ -1088,3 +1088,5 @@
 "launcher.verify" = "Anmeldung prüfen";
 "launcher.path_warning" = "~/.local/bin ist nicht in deinem PATH. Füge diese Zeile deinem Shell-Profil hinzu:";
 "launcher.install_failed" = "Starter konnte nicht installiert werden: %@";
+"support.popup_title" = "Gefällt dir Claude Usage?";
+"support.popup_later" = "Vielleicht später";

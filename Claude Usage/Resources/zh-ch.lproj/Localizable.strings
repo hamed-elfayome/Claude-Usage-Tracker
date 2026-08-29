@@ -1074,3 +1074,5 @@
 "launcher.verify" = "检查登录";
 "launcher.path_warning" = "~/.local/bin 不在你的 PATH 中。请将此行添加到你的 shell 配置文件：";
 "launcher.install_failed" = "无法安装启动器：%@";
+"support.popup_title" = "喜欢 Claude Usage 吗？";
+"support.popup_later" = "以后再说";

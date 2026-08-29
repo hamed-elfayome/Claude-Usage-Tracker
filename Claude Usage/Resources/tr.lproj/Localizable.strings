@@ -1080,3 +1080,5 @@
 "launcher.verify" = "Oturumu Kontrol Et";
 "launcher.path_warning" = "~/.local/bin PATH içinde değil. Bu satırı kabuk profilinize ekleyin:";
 "launcher.install_failed" = "Başlatıcı yüklenemedi: %@";
+"support.popup_title" = "Claude Usage hoşunuza gidiyor mu?";
+"support.popup_later" = "Belki sonra";

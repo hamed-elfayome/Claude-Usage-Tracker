@@ -1088,3 +1088,5 @@
 "launcher.verify" = "Verificar login";
 "launcher.path_warning" = "~/.local/bin não está no seu PATH. Adicione esta linha ao perfil do shell:";
 "launcher.install_failed" = "Não foi possível instalar o atalho: %@";
+"support.popup_title" = "Curtindo o Claude Usage?";
+"support.popup_later" = "Talvez depois";

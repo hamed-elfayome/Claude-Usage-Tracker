@@ -1097,3 +1097,5 @@
 "launcher.verify" = "로그인 확인";
 "launcher.path_warning" = "~/.local/bin이 PATH에 없습니다. 셸 프로필에 다음 줄을 추가하세요:";
 "launcher.install_failed" = "런처를 설치할 수 없습니다: %@";
+"support.popup_title" = "Claude Usage가 마음에 드시나요?";
+"support.popup_later" = "나중에";

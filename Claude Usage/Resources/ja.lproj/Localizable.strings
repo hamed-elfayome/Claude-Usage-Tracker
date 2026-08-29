@@ -1088,3 +1088,5 @@
 "launcher.verify" = "ログインを確認";
 "launcher.path_warning" = "~/.local/bin が PATH にありません。シェルのプロファイルに次の行を追加してください:";
 "launcher.install_failed" = "ランチャーをインストールできませんでした: %@";
+"support.popup_title" = "Claude Usage を気に入っていますか？";
+"support.popup_later" = "また今度";

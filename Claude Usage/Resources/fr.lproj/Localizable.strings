@@ -1066,3 +1066,5 @@
 "launcher.verify" = "Vérifier la connexion";
 "launcher.path_warning" = "~/.local/bin n'est pas dans votre PATH. Ajoutez cette ligne à votre profil shell :";
 "launcher.install_failed" = "Impossible d'installer le lanceur : %@";
+"support.popup_title" = "Claude Usage vous plaît ?";
+"support.popup_later" = "Peut-être plus tard";

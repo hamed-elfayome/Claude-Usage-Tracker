@@ -1069,3 +1069,5 @@
 "launcher.verify" = "Comprobar sesión";
 "launcher.path_warning" = "~/.local/bin no está en tu PATH. Añade esta línea a tu perfil de shell:";
 "launcher.install_failed" = "No se pudo instalar el lanzador: %@";
+"support.popup_title" = "¿Te gusta Claude Usage?";
+"support.popup_later" = "Quizás más tarde";

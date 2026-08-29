@@ -1083,3 +1083,5 @@
 "launcher.verify" = "Перевірити вхід";
 "launcher.path_warning" = "~/.local/bin відсутній у вашому PATH. Додайте цей рядок до профілю оболонки:";
 "launcher.install_failed" = "Не вдалося встановити запускач: %@";
+"support.popup_title" = "Подобається Claude Usage?";
+"support.popup_later" = "Можливо, пізніше";

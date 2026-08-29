@@ -17,6 +17,10 @@ class SharedDataStore {
         // Language & Localization
         static let languageCode = "selectedLanguageCode"
 
+        // Support reminder
+        static let supportReminderLastShownAt = "supportReminderLastShownAt"
+        static let supportReminderFirstLaunchAt = "supportReminderFirstLaunchAt"
+
         // Statusline Configuration
         static let statuslineShowModel = "statuslineShowModel"
         static let statuslineShowDirectory = "statuslineShowDirectory"
@@ -83,6 +87,27 @@ class SharedDataStore {
     }
 
     // MARK: - Language & Localization
+
+    // MARK: - Support Reminder
+
+    func loadSupportReminderLastShownAt() -> Date? {
+        defaults.object(forKey: Keys.supportReminderLastShownAt) as? Date
+    }
+
+    func saveSupportReminderLastShownAt(_ date: Date) {
+        defaults.set(date, forKey: Keys.supportReminderLastShownAt)
+    }
+
+    /// First-launch timestamp, recorded lazily on first access so existing
+    /// installs start their clock at update time rather than showing at once.
+    func supportReminderFirstLaunchAt() -> Date {
+        if let date = defaults.object(forKey: Keys.supportReminderFirstLaunchAt) as? Date {
+            return date
+        }
+        let now = Date()
+        defaults.set(now, forKey: Keys.supportReminderFirstLaunchAt)
+        return now
+    }
 
     func saveLanguageCode(_ code: String) {
         defaults.set(code, forKey: Keys.languageCode)
