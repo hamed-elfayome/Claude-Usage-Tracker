@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Major Features
+
+- **Multi-provider architecture with OpenAI Codex support** (#229): profiles can now track OpenAI Codex usage alongside Anthropic. Codex profiles read `~/.codex/auth.json` (OAuth or API-key shapes), refresh tokens automatically with an atomic `0600` write-back, and map the 5-hour/weekly rate windows onto the familiar session/weekly rows. Built on a provider registry (`docs/ADDING_A_PROVIDER.md`) so future providers are additive. *Codex support is covered by mocked tests only and has not yet been verified against a live Codex account.*
+
+### Security
+
+- **Keychain migration no longer silently no-ops on Developer ID builds** (#292, PR #302): the shipped builds lack the entitlement the data-protection keychain requires, so per-profile secrets were stranded in the cleartext plist despite the 3.2.0 migration. Unentitled-but-stably-signed builds now fall back to the file-based login keychain — thanks @lathe-agent-oa. A follow-up gates the fallback on a stable signing identity (Team ID), so ad-hoc dev/test builds never trigger the login-keychain password prompt.
+
+### Bug Fixes
+
+- **Popover now appears over full-screen apps** (#298, PR #310): the popover's backing window joins all Spaces (`.canJoinAllSpaces` + `.fullScreenAuxiliary`) instead of relying on app activation — thanks @carloronconi
+- **False "credentials expired" (E3000) from Cloudflare challenges** (#277, PR #303): Cloudflare clearance cookies now ride along on every claude.ai request, challenge pages are reported as a temporary service issue instead of an auth failure, and installed statusline scripts are regenerated on launch — thanks @lathe-agent-oa
+- **Dynamic Island presents on the built-in notched display** (#294, PR #301): the HUD now targets the MacBook's notch even when an external monitor is the primary display — thanks @lathe-agent-oa
+- **macOS 26 multi-profile crashes fixed** (PR #280, PR #289): status items are created and updated at a coarse fixed length, avoiding the recursive variable-width layout solve that overflowed the stack with 2+ profile icons — thanks @RaulVargasP
+- **Transient E1000 on profile switch eliminated** (PR #290): an explicit switch now refreshes the incoming profile's token before applying it, background monitoring never rotates tokens owned by external tools (e.g. `cux`), and profiles without a live credential show their last-known usage instead of an error dialog — thanks @RaulVargasP
+
 ### Removed
 
 - **Peak hours indicator**: Anthropic removed the peak-hour limit reduction on Claude Code for Pro and Max accounts on 2026-05-06 (["Higher usage limits for Claude and a compute deal with SpaceX"](https://www.anthropic.com/news/higher-limits-spacex)), so the flame icon, the session-card highlight, and the "Session limits are consumed faster during peak hours" popover were all reporting a policy that no longer exists. The indicator, its setting, and the `popover.peak_hours*` strings in all 13 languages have been removed.
