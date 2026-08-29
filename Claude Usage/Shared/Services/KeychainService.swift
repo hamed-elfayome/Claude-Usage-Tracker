@@ -188,10 +188,23 @@ class KeychainService {
         "\(profileId.uuidString).\(field.rawValue)"
     }
 
+    /// True once we know this build has NO reachable keychain store for
+    /// per-profile secrets (data-protection unentitled AND file-based fallback
+    /// gated off for ad-hoc signing). Lets hot paths return quietly instead of
+    /// re-attempting SecItem calls and logging an error on every save cycle.
+    var profileSecretStorageKnownUnavailable: Bool {
+        dataProtectionUnavailable && !fileBasedFallbackAllowed
+    }
+
     /// Saves (or deletes, when `value` is nil) a per-profile secret.
     /// Returns true when the Keychain now reflects the requested state.
     @discardableResult
     func saveProfileSecret(_ value: String?, profileId: UUID, field: ProfileSecretField) -> Bool {
+        if profileSecretStorageKnownUnavailable, value != nil {
+            // Expected on ad-hoc dev builds; the one-time noteStatus line
+            // already explained why. Callers keep the plist fallback.
+            return false
+        }
         let account = profileSecretAccount(profileId, field)
         guard let value = value else {
             let ok = deleteItem(service: Self.profileSecretsService, account: account)
@@ -316,7 +329,9 @@ class KeychainService {
     private func noteStatus(_ status: OSStatus) {
         if status == errSecMissingEntitlement {
             if !dataProtectionUnavailable {
-                LoggingService.shared.log("Keychain: data-protection keychain unavailable (no application-identifier entitlement) — using file-based login keychain")
+                LoggingService.shared.log(fileBasedFallbackAllowed
+                    ? "Keychain: data-protection keychain unavailable (no application-identifier entitlement) — using file-based login keychain"
+                    : "Keychain: data-protection keychain unavailable (no application-identifier entitlement) — no reachable keychain store in this ad-hoc build; profile secrets stay in the plist")
             }
             dataProtectionUnavailable = true
         }
