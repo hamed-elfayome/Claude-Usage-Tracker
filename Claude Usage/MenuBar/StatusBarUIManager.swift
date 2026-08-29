@@ -21,6 +21,8 @@ final class StatusBarUIManager {
     private var isMultiProfileMode: Bool = false
 
     private var appearanceObservers: [NSKeyValueObservation] = []
+    private var buttonAppearanceObservers: [ObjectIdentifier: NSKeyValueObservation] = [:]
+    private var appearanceTracker = MenuBarAppearanceTracker()
     private var appearanceDebounceTimer: Timer?
 
     // Image cache to avoid redundant button.image assignments (which trigger KVO)
@@ -359,7 +361,7 @@ final class StatusBarUIManager {
             }
 
             // Get actual menu bar appearance from the button (based on wallpaper, not system mode)
-            let menuBarIsDark = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            let menuBarIsDark = resolveMenuBarIsDark(for: button)
 
             // Get usage data for this profile
             let usage = profile.claudeUsage ?? ClaudeUsage.empty
@@ -590,7 +592,7 @@ final class StatusBarUIManager {
             if let statusItem = statusItems[.session],  // We use .session as placeholder key
                let button = statusItem.button {
                 // Get actual menu bar appearance from the button
-                let menuBarIsDark = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+                let menuBarIsDark = resolveMenuBarIsDark(for: button)
                 let logoImage = renderer.createDefaultAppLogo(isDarkMode: menuBarIsDark)
                 logoImage.isTemplate = true  // Let macOS handle the color
                 setButtonImage(button, image: logoImage)
@@ -606,7 +608,7 @@ final class StatusBarUIManager {
             }
 
             // Get actual menu bar appearance from the button
-            let menuBarIsDark = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            let menuBarIsDark = resolveMenuBarIsDark(for: button)
 
             // Create image directly using our renderer
             let image = renderer.createImage(
@@ -645,7 +647,7 @@ final class StatusBarUIManager {
         }
 
         // Get the actual menu bar appearance from the button's effective appearance
-        let menuBarIsDark = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        let menuBarIsDark = resolveMenuBarIsDark(for: button)
 
         // Create image directly using our renderer
         let image = renderer.createImage(
@@ -720,9 +722,8 @@ final class StatusBarUIManager {
         appearanceObservers.forEach { $0.invalidate() }
         appearanceObservers.removeAll()
 
-        // IMPORTANT: Do NOT observe per-button effectiveAppearance.
-        // Setting button.image triggers effectiveAppearance KVO on the button,
-        // which causes an infinite redraw loop.
+        // System-wide light/dark switch. Per-button observation (below) covers
+        // the menu bar's own tint changing without the system theme changing.
         let appObserver = NSApp.observe(\.effectiveAppearance, options: [.new]) { [weak self] _, change in
             guard let self = self else { return }
             let newName = change.newValue?.name
@@ -733,6 +734,77 @@ final class StatusBarUIManager {
             self.delegate?.statusBarAppearanceDidChange()
         }
         appearanceObservers.append(appObserver)
+    }
+
+    /// Resolves the light/dark appearance the menu bar is actually showing
+    /// behind `button` (which follows the wallpaper of the current Space, not
+    /// just the system theme), records it as the value this render bakes in,
+    /// and makes sure the button is being watched for future flips.
+    private func resolveMenuBarIsDark(for button: NSStatusBarButton) -> Bool {
+        let isDark = Self.isDark(button.effectiveAppearance)
+        appearanceTracker.recordRender(for: ObjectIdentifier(button), isDark: isDark)
+        observeButtonAppearance(button)
+        return isDark
+    }
+
+    private static func isDark(_ appearance: NSAppearance) -> Bool {
+        appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+    }
+
+    /// Watches a single button's effectiveAppearance so a Space switch onto a
+    /// differently-tinted menu bar recolors the digits immediately instead of
+    /// waiting for the next usage refresh tick.
+    ///
+    /// The value visible *inside* the KVO callback is not trustworthy: while
+    /// `button.image` is being assigned, AppKit transiently resolves the button
+    /// to the app's own appearance (e.g. `darkAqua` on a dark-mode system) and
+    /// fires this observer before settling back on the menu bar's real
+    /// vibrant appearance. Acting on that transient value is what turned
+    /// per-button observation into an infinite redraw loop before. So the
+    /// callback never reads or decides anything; it just asks for a
+    /// debounced re-check, which reads the settled appearance and redraws
+    /// only if it differs from what each button was last rendered with.
+    private func observeButtonAppearance(_ button: NSStatusBarButton) {
+        let buttonId = ObjectIdentifier(button)
+        guard buttonAppearanceObservers[buttonId] == nil else { return }
+
+        buttonAppearanceObservers[buttonId] = button.observe(\.effectiveAppearance) { [weak self] _, _ in
+            self?.scheduleSettledAppearanceCheck()
+        }
+    }
+
+    /// Coalesces bursts of per-button KVO into one check after the appearance
+    /// has settled.
+    private func scheduleSettledAppearanceCheck() {
+        appearanceDebounceTimer?.invalidate()
+        appearanceDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: false) { [weak self] _ in
+            self?.redrawIfMenuBarTintChanged()
+        }
+    }
+
+    /// Re-reads every tracked button's settled appearance and triggers one
+    /// redraw if any of them no longer matches the appearance it was drawn with.
+    private func redrawIfMenuBarTintChanged() {
+        pruneButtonAppearanceObservers()
+        let liveButtons = (Array(statusItems.values) + Array(multiProfileStatusItems.values)).compactMap { $0.button }
+        let stale = liveButtons.filter {
+            appearanceTracker.needsRedraw(for: ObjectIdentifier($0), currentIsDark: Self.isDark($0.effectiveAppearance))
+        }
+        guard !stale.isEmpty else { return }
+        LoggingService.shared.logUIEvent("Menu bar tint changed under \(stale.count) status item(s); redrawing")
+        lastImageData.removeAll()
+        delegate?.statusBarAppearanceDidChange()
+    }
+
+    /// Drop observers and bookkeeping for buttons whose status items are gone.
+    private func pruneButtonAppearanceObservers() {
+        let liveButtons = (Array(statusItems.values) + Array(multiProfileStatusItems.values)).compactMap { $0.button }
+        let liveIds = Set(liveButtons.map { ObjectIdentifier($0) })
+        for (id, observer) in buttonAppearanceObservers where !liveIds.contains(id) {
+            observer.invalidate()
+            buttonAppearanceObservers[id] = nil
+        }
+        appearanceTracker.retain(only: liveIds)
     }
 
     /// Only sets button.image if the image data actually changed.
@@ -749,15 +821,6 @@ final class StatusBarUIManager {
         if lastImageData[buttonId] == newData { return }
         lastImageData[buttonId] = newData
         button.image = image
-    }
-
-    /// Debounces appearance change notifications so multiple displays/buttons
-    /// coalesce into a single delegate callback
-    private func scheduleAppearanceUpdate() {
-        appearanceDebounceTimer?.invalidate()
-        appearanceDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: false) { [weak self] _ in
-            self?.delegate?.statusBarAppearanceDidChange()
-        }
     }
 }
 
