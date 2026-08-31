@@ -2,19 +2,24 @@
   <a href="mailto:hamedelfayome@gmail.com?subject=Claude%20Usage%20Tracker%20%E2%80%94%20Sponsorship"><img src="https://claudetracker.com/asset/sponsor.svg" alt="Sponsor slot available — get in touch: hamedelfayome@gmail.com" height="44"></a>
 </div>
 
+<br>
+
 <div align="center">
   <a href="https://claudetracker.com/#fleet"><img src="https://claudetracker.com/map.svg" alt="Claude Usage Tracker — a native macOS menu bar app for real-time monitoring of Claude AI usage limits. Live worldwide distribution map." width="100%"></a>
 
   <a href="https://claudetracker.com"><img src="https://claudetracker.com/asset/languages.svg?list=English%2CEspa%C3%B1ol%2CFran%C3%A7ais%2CDeutsch%2CItaliano%2CPortugu%C3%AAs%2CPortugu%C3%AAs%20(BR)%2C%E6%97%A5%E6%9C%AC%E8%AA%9E%2C%ED%95%9C%EA%B5%AD%EC%96%B4%2C%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87%2C%E7%B9%81%E9%AB%94%E4%B8%AD%E6%96%87%2CT%C3%BCrk%C3%A7e%2C%D0%A3%D0%BA%D1%80%D0%B0%D1%97%D0%BD%D1%81%D1%8C%D0%BA%D0%B0%2CTi%E1%BA%BFng%20Vi%E1%BB%87t" alt="Localized in 14 languages" width="100%"></a>
 
+  <br>
+
   <a href="https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip"><img src="https://claudetracker.com/asset/download.svg" alt="Download for macOS — latest release, ~6 MB, signed &amp; notarized" height="78"></a>
 
   <br>
 
-  <a href="https://claudetracker.com"><img src="https://claudetracker.com/asset/website.svg" alt="claudetracker.com — live stats &amp; install" height="54"></a>
   <a href="https://www.buymeacoffee.com/hamedelfayome"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="54"></a>
 
-  <img src="https://claudetracker.com/asset/specs.svg?items=macOS%2014.0%2B%20(Sonoma)%2C~6%20MB%2CNative%20Swift%20%2F%20SwiftUI%2COfficially%20Signed" alt="macOS 14.0+ (Sonoma) · ~6 MB · Native Swift/SwiftUI · Officially Signed" height="40">
+  <img src="https://claudetracker.com/asset/specs.svg?items=macOS%2014.0%2B%20(Sonoma)%2C~6%20MB%2CNative%20Swift%20%2F%20SwiftUI%2COfficially%20Signed" alt="macOS 14.0+ (Sonoma) · ~6 MB · Native Swift/SwiftUI · Officially Signed" height="40" align="middle"> 
+  <a href="https://claudetracker.com"><img src="https://claudetracker.com/asset/website.svg" alt="claudetracker.com — live stats &amp; install" height="30" hspace="4" align="middle"></a>
+
 </div>
 
 ---
