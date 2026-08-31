@@ -178,6 +178,50 @@ final class SharedDataStoreTests: XCTestCase {
         XCTAssertFalse(sharedDataStore.shouldShowGitHubStarPrompt())
     }
 
+    // MARK: - Keep Awake Tests
+
+    func testKeepAwakeAutoEnabled() {
+        UserDefaults.standard.removeObject(forKey: Constants.UserDefaultsKeys.keepAwakeAutoEnabled)
+        XCTAssertFalse(sharedDataStore.loadKeepAwakeAutoEnabled(),
+                       "off until the user's first click/toggle opts in")
+
+        sharedDataStore.saveKeepAwakeAutoEnabled(true)
+        XCTAssertTrue(sharedDataStore.loadKeepAwakeAutoEnabled())
+
+        sharedDataStore.saveKeepAwakeAutoEnabled(false)
+        XCTAssertFalse(sharedDataStore.loadKeepAwakeAutoEnabled(), "off is remembered")
+    }
+
+    func testKeepAwakeSleepMode() {
+        UserDefaults.standard.removeObject(forKey: Constants.UserDefaultsKeys.keepAwakeSleepMode)
+        XCTAssertNil(sharedDataStore.loadKeepAwakeSleepMode())
+
+        sharedDataStore.saveKeepAwakeSleepMode("preventDisplaySleep")
+        XCTAssertEqual(sharedDataStore.loadKeepAwakeSleepMode(), "preventDisplaySleep")
+
+        sharedDataStore.saveKeepAwakeSleepMode("allowDisplaySleep")
+        XCTAssertEqual(sharedDataStore.loadKeepAwakeSleepMode(), "allowDisplaySleep")
+    }
+
+    func testKeepAwakeDefaultDuration() {
+        UserDefaults.standard.removeObject(forKey: Constants.UserDefaultsKeys.keepAwakeDefaultDuration)
+        XCTAssertEqual(sharedDataStore.loadKeepAwakeDefaultDuration(), 0, "0 = indefinite by default")
+
+        sharedDataStore.saveKeepAwakeDefaultDuration(3 * 60 * 60)
+        XCTAssertEqual(sharedDataStore.loadKeepAwakeDefaultDuration(), 3 * 60 * 60)
+    }
+
+    func testKeepAwakeAutoGracePeriod() {
+        UserDefaults.standard.removeObject(forKey: Constants.UserDefaultsKeys.keepAwakeAutoGracePeriod)
+        XCTAssertEqual(sharedDataStore.loadKeepAwakeAutoGracePeriod(), 60 * 60, "defaults to 1 hour")
+
+        sharedDataStore.saveKeepAwakeAutoGracePeriod(60 * 60)
+        XCTAssertEqual(sharedDataStore.loadKeepAwakeAutoGracePeriod(), 60 * 60)
+
+        sharedDataStore.saveKeepAwakeAutoGracePeriod(0)
+        XCTAssertEqual(sharedDataStore.loadKeepAwakeAutoGracePeriod(), 0, "explicit 0 (immediately) survives")
+    }
+
     func testResetGitHubStarPromptForTesting() {
         // Set some state
         sharedDataStore.saveHasStarredGitHub(true)
