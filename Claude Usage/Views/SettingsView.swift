@@ -6,99 +6,48 @@ import UserNotifications
 /// Full-window vibrancy background — same approach as the popover's VisualEffectBackground.
 /// Using NSViewRepresentable inside SwiftUI means the entire view tree is SwiftUI-managed,
 /// so there is no opaque flash on deminiaturize or appearance change.
+// NOTE: NSVisualEffectView(.hudWindow) removed — see VisualEffectBackground in
+// PopoverContentView.swift. macOS 26 (Tahoe) segfaults in SwiftUICore's material
+// pipeline while resolving hosted materials. Solid opaque background = no crash.
 struct SettingsBackground: NSViewRepresentable {
     func makeNSView(context: Context) -> NSView {
-        let container = NSView()
-
-        let effectView = NSVisualEffectView()
-        effectView.material = .hudWindow
-        effectView.blendingMode = .behindWindow
-        effectView.state = .active
-        effectView.isEmphasized = true
-        effectView.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(effectView)
-
-        let tintView = NSView()
-        tintView.wantsLayer = true
-        if NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua {
-            tintView.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.35).cgColor
-        } else {
-            tintView.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.4).cgColor
-        }
-        tintView.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(tintView)
-
-        NSLayoutConstraint.activate([
-            effectView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            effectView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            effectView.topAnchor.constraint(equalTo: container.topAnchor),
-            effectView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-            tintView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            tintView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            tintView.topAnchor.constraint(equalTo: container.topAnchor),
-            tintView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-        ])
-
-        return container
+        let view = NSView()
+        view.wantsLayer = true
+        applyBackground(to: view)
+        return view
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {
-        if let tintView = nsView.subviews.last {
-            tintView.wantsLayer = true
-            if NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua {
-                tintView.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.35).cgColor
-            } else {
-                tintView.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.4).cgColor
-            }
-        }
+        applyBackground(to: nsView)
+    }
+
+    private func applyBackground(to view: NSView) {
+        view.wantsLayer = true
+        let isDark = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        view.layer?.backgroundColor = (isDark
+            ? NSColor(calibratedWhite: 0.12, alpha: 1.0)
+            : NSColor(calibratedWhite: 0.95, alpha: 1.0)).cgColor
     }
 }
 
 struct SidebarVisualEffect: NSViewRepresentable {
     func makeNSView(context: Context) -> NSView {
-        let container = NSView()
-
-        let effectView = NSVisualEffectView()
-        effectView.material = .hudWindow
-        effectView.blendingMode = .behindWindow
-        effectView.state = .active
-        effectView.isEmphasized = true
-        effectView.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(effectView)
-
-        let tintView = NSView()
-        tintView.wantsLayer = true
-        if NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua {
-            tintView.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.55).cgColor
-        } else {
-            tintView.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.5).cgColor
-        }
-        tintView.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(tintView)
-
-        NSLayoutConstraint.activate([
-            effectView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            effectView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            effectView.topAnchor.constraint(equalTo: container.topAnchor),
-            effectView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-            tintView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            tintView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            tintView.topAnchor.constraint(equalTo: container.topAnchor),
-            tintView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-        ])
-
-        return container
+        let view = NSView()
+        view.wantsLayer = true
+        applyBackground(to: view)
+        return view
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {
-        if let tintView = nsView.subviews.last {
-            tintView.wantsLayer = true
-            if NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua {
-                tintView.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.55).cgColor
-            } else {
-                tintView.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.5).cgColor
-            }
-        }
+        applyBackground(to: nsView)
+    }
+
+    private func applyBackground(to view: NSView) {
+        view.wantsLayer = true
+        let isDark = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        view.layer?.backgroundColor = (isDark
+            ? NSColor(calibratedWhite: 0.09, alpha: 1.0)
+            : NSColor(calibratedWhite: 0.92, alpha: 1.0)).cgColor
     }
 }
 
