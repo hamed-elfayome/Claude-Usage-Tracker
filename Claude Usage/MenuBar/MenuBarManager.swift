@@ -9,6 +9,8 @@ class MenuBarManager: NSObject, ObservableObject {
     @Published private(set) var usage: ClaudeUsage = .empty
     @Published private(set) var status: ClaudeStatus = .unknown
     @Published private(set) var apiUsage: APIUsage?
+    @Published private(set) var tokenStats: TokenStats?
+    private let tokenStatsService = TokenStatsService()
     @Published private(set) var isRefreshing: Bool = false
 
     // Error tracking for stale data / credential banners
@@ -711,7 +713,8 @@ class MenuBarManager: NSObject, ObservableObject {
             // Single profile mode - use the standard update
             statusBarUIManager?.updateAllButtons(
                 usage: usage,
-                apiUsage: apiUsage
+                apiUsage: apiUsage,
+                tokenStats: tokenStats
             )
         }
     }
@@ -721,7 +724,8 @@ class MenuBarManager: NSObject, ObservableObject {
         statusBarUIManager?.updateButton(
             for: metricType,
             usage: usage,
-            apiUsage: apiUsage
+            apiUsage: apiUsage,
+            tokenStats: tokenStats
         )
     }
 
@@ -1359,6 +1363,19 @@ class MenuBarManager: NSObject, ObservableObject {
 
                     LoggingService.shared.log("MenuBarManager: Failed to fetch API usage - [\(appError.code.rawValue)] \(appError.message)")
                 }
+            }
+
+            // Load Claude Code token stats (local files, not a network call).
+            // Only the enabled frames are computed, to bound the JSONL scan.
+            let enabledTokenFrames: Set<MenuBarMetricType> = await MainActor.run {
+                let cfg = self.profileManager.activeProfile?.iconConfig ?? .default
+                return Set(cfg.enabledMetrics.map { $0.metricType }.filter { $0.isTokenMetric })
+            }
+            let loadedTokenStats = enabledTokenFrames.isEmpty
+                ? TokenStats.unavailable
+                : self.tokenStatsService.load(enabledFrames: enabledTokenFrames)
+            await MainActor.run {
+                self.tokenStats = loadedTokenStats
             }
 
             // Clear loading state

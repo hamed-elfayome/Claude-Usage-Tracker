@@ -19,6 +19,7 @@ final class MenuBarIconRenderer {
         globalConfig: MenuBarIconConfiguration,
         usage: ClaudeUsage,
         apiUsage: APIUsage?,
+        tokenStats: TokenStats?,
         isDarkMode: Bool,
         colorMode: MenuBarColorMode,
         singleColorHex: String,
@@ -31,6 +32,7 @@ final class MenuBarIconRenderer {
             config: config,
             usage: usage,
             apiUsage: apiUsage,
+            tokenStats: tokenStats,
             showRemaining: globalConfig.showRemainingPercentage,
             usePaceColoring: globalConfig.usePaceColoring
         )
@@ -46,7 +48,7 @@ final class MenuBarIconRenderer {
 
         // Compute pace status from RAW values (not display-adjusted)
         let paceStatus: PaceStatus? = {
-            guard globalConfig.showPaceMarker, metricType != .api else { return nil }
+            guard globalConfig.showPaceMarker, metricType != .api, !metricType.isTokenMetric else { return nil }
             // Get raw elapsed fraction (always non-inverted)
             guard let rawElapsed = calculateTimeMarkerFraction(
                 metricType: metricType, usage: usage, showRemaining: false
@@ -69,6 +71,16 @@ final class MenuBarIconRenderer {
                 isDarkMode: isDarkMode,
                 colorMode: colorMode,
                 singleColorHex: singleColorHex,
+                showIconName: showIconName
+            )
+        }
+
+        // Token metrics render as a stacked number (uppercase label above, number below)
+        if metricType.isTokenMetric {
+            return createStackedTokenStyle(
+                topLabel: metricType.tokenTopLabel,
+                bottomText: metricData.displayText,
+                isDarkMode: isDarkMode,
                 showIconName: showIconName
             )
         }
@@ -154,6 +166,7 @@ final class MenuBarIconRenderer {
         config: MetricIconConfig,
         usage: ClaudeUsage,
         apiUsage: APIUsage?,
+        tokenStats: TokenStats?,
         showRemaining: Bool,
         usePaceColoring: Bool = true
     ) -> MetricData {
@@ -256,6 +269,20 @@ final class MenuBarIconRenderer {
                 percentage: displayPercentage,
                 displayText: displayText,
                 statusLevel: statusLevel,
+                sessionResetTime: nil
+            )
+
+        case .tokensAllTime, .tokens7Days, .tokens30Days:
+            let text: String
+            if let stats = tokenStats, stats.isAvailable, let value = stats.value(for: metricType) {
+                text = FormatterHelper.abbreviatedCount(value)
+            } else {
+                text = "—"
+            }
+            return MetricData(
+                percentage: 0,
+                displayText: text,
+                statusLevel: .safe,
                 sessionResetTime: nil
             )
         }
@@ -688,13 +715,15 @@ final class MenuBarIconRenderer {
         return image
     }
 
-    // MARK: - API Text Style (Always Text-Based)
+    // MARK: - Prefixed Text Style (Always Text-Based)
 
-    private func createAPITextStyle(
-        metricData: MetricData,
+    /// Shared text-drawing routine for metrics that are always rendered as plain
+    /// text (API credits, token counts). `prefix` is only prepended when
+    /// `showIconName` is true.
+    private func createPrefixedTextStyle(
+        prefix: String,
+        displayText: String,
         isDarkMode: Bool,
-        colorMode: MenuBarColorMode,
-        singleColorHex: String,
         showIconName: Bool
     ) -> NSImage {
         let font = NSFont.systemFont(ofSize: 11, weight: .medium)
@@ -702,13 +731,7 @@ final class MenuBarIconRenderer {
         // Use isDarkMode to determine correct foreground color for menu bar
         let textColor: NSColor = menuBarForegroundColor(isDarkMode: isDarkMode)
 
-        var fullText = ""
-
-        if showIconName {
-            fullText = "API: \(metricData.displayText)"
-        } else {
-            fullText = metricData.displayText
-        }
+        let fullText = showIconName ? "\(prefix) \(displayText)" : displayText
 
         let attributes: [NSAttributedString.Key: Any] = [
             .font: font,
@@ -723,6 +746,69 @@ final class MenuBarIconRenderer {
 
         let textY = (18 - textSize.height) / 2
         fullText.draw(at: NSPoint(x: 2, y: textY), withAttributes: attributes)
+
+        return image
+    }
+
+    private func createAPITextStyle(
+        metricData: MetricData,
+        isDarkMode: Bool,
+        colorMode: MenuBarColorMode,
+        singleColorHex: String,
+        showIconName: Bool
+    ) -> NSImage {
+        return createPrefixedTextStyle(
+            prefix: "API:",
+            displayText: metricData.displayText,
+            isDarkMode: isDarkMode,
+            showIconName: showIconName
+        )
+    }
+
+    /// Renders a token metric as a compact vertical stack: a small uppercase
+    /// label on top and the abbreviated number below (CPU/RAM widget style).
+    /// Falls back to a single centered number line when the label is hidden.
+    private func createStackedTokenStyle(
+        topLabel: String,
+        bottomText: String,
+        isDarkMode: Bool,
+        showIconName: Bool
+    ) -> NSImage {
+        let textColor: NSColor = menuBarForegroundColor(isDarkMode: isDarkMode)
+
+        // Label hidden → single centered number line (matches other text styles).
+        guard showIconName else {
+            let font = NSFont.systemFont(ofSize: 11, weight: .medium)
+            let attrs: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: textColor]
+            let size = bottomText.size(withAttributes: attrs)
+            let image = NSImage(size: NSSize(width: size.width + 4, height: 18))
+            image.lockFocus()
+            defer { image.unlockFocus() }
+            bottomText.draw(at: NSPoint(x: 2, y: (18 - size.height) / 2), withAttributes: attrs)
+            return image
+        }
+
+        // Crisp, legible caption on top; larger number below (CPU/RAM widget style).
+        let labelFont = NSFont.systemFont(ofSize: 7.5, weight: .medium)
+        let valueFont = NSFont.systemFont(ofSize: 11, weight: .medium)
+        let labelAttrs: [NSAttributedString.Key: Any] = [.font: labelFont, .foregroundColor: textColor]
+        let valueAttrs: [NSAttributedString.Key: Any] = [.font: valueFont, .foregroundColor: textColor]
+
+        let labelSize = topLabel.size(withAttributes: labelAttrs)
+        let valueSize = bottomText.size(withAttributes: valueAttrs)
+
+        let height: CGFloat = 22
+        let width = max(labelSize.width, valueSize.width) + 4
+
+        let image = NSImage(size: NSSize(width: width, height: height))
+        image.lockFocus()
+        defer { image.unlockFocus() }
+
+        // Number sits at the bottom (larger, prominent); thin label hugs the top.
+        let labelY = height - labelSize.height + 0.5
+        let valueY: CGFloat = -0.5
+        topLabel.draw(at: NSPoint(x: (width - labelSize.width) / 2, y: labelY), withAttributes: labelAttrs)
+        bottomText.draw(at: NSPoint(x: (width - valueSize.width) / 2, y: valueY), withAttributes: valueAttrs)
 
         return image
     }
@@ -1408,6 +1494,8 @@ final class MenuBarIconRenderer {
             resetTime = usage.weeklyResetTime
             duration = Constants.weeklyWindow
         case .api:
+            return nil
+        case .tokensAllTime, .tokens7Days, .tokens30Days:
             return nil
         }
 

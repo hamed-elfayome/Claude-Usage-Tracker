@@ -119,6 +119,10 @@ enum Constants {
             claudeDirectory.appendingPathComponent(".credentials.json")
         }
 
+        static var statsCacheFile: URL {
+            claudeDirectory.appendingPathComponent("stats-cache.json")
+        }
+
         /// Candidate paths for Claude Code's main config file (`.claude.json`),
         /// which holds `oauthAccount` (email, accountUuid, organizationName, etc.)
         /// Claude Code historically stores this at `~/.claude.json`, but when
