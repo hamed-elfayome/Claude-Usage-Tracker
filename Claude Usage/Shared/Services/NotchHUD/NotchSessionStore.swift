@@ -49,8 +49,8 @@ final class NotchSessionStore: ObservableObject {
         case let .sessionEnd(id):
             sessions.removeAll { $0.id == id }
 
-        case let .userPromptSubmit(id, prompt):
-            upsert(id: id) { session in
+        case let .userPromptSubmit(id, cwd, prompt):
+            upsert(id: id, cwd: cwd) { session in
                 session.status = .thinking
                 session.currentTask = nil
                 if let prompt = prompt, !prompt.isEmpty {
@@ -64,25 +64,33 @@ final class NotchSessionStore: ObservableObject {
                 session.currentTask = task
             }
 
-        case let .postToolUse(id):
-            upsert(id: id) { session in
+        case let .postToolUse(id, cwd):
+            upsert(id: id, cwd: cwd) { session in
                 session.status = .thinking
                 session.hasRecentError = false
             }
 
-        case let .toolFailure(id):
-            upsert(id: id) { session in
+        case let .toolFailure(id, cwd):
+            upsert(id: id, cwd: cwd) { session in
                 session.hasRecentError = true
             }
 
-        case let .stop(id):
-            upsert(id: id) { session in
+        case let .stop(id, cwd):
+            upsert(id: id, cwd: cwd) { session in
                 session.status = .idle
                 session.currentTask = nil
             }
 
-        case let .notification(id, message):
-            upsert(id: id) { session in
+        case let .notification(id, cwd, message):
+            upsert(id: id, cwd: cwd) { session in
+                // A notification arriving while the session is already .idle is
+                // Claude Code's "waiting for your input" nudge, fired ~60s after
+                // the Stop hook: the task is finished, not blocked. Re-raising
+                // attention here would let auto keep-awake re-arm on a done
+                // session and hold the Mac awake until the terminal closes. A
+                // genuine permission prompt arrives mid-work (the session is
+                // never .idle then) and still raises the cue.
+                guard session.status != .idle else { return }
                 session.status = .needsAttention
                 if let message = message, !message.isEmpty {
                     session.currentTask = String(message.prefix(80))

@@ -25,9 +25,13 @@ struct NotchCompactLeadingView: View {
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(.white)
                     .lineLimit(1)
-                    .truncationMode(.middle)
-                    .frame(maxWidth: 96, alignment: .leading)
+                    // Long project names shrink a little before truncating,
+                    // so the bar never grows past its cap.
+                    .minimumScaleFactor(0.8)
+                    .truncationMode(.tail)
+                    .frame(maxWidth: 150, alignment: .leading)
             }
+            .help(session.displayName)
             .contentShape(Rectangle())
             .onTapGesture { NotchHUDController.shared.toggleExpanded() }
         }
