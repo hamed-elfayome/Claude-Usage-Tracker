@@ -1,0 +1,8 @@
+/* Claude Usage Widget */
+"widget.no_data" = "Claude Usage を起動すると使用状況が表示されます";
+"widget.session" = "セッション";
+"widget.weekly" = "週間";
+"widget.session.name" = "セッション使用量";
+"widget.session.desc" = "アクティブなプロファイルの5時間セッション使用量。";
+"widget.overview.name" = "使用量オーバービュー";
+"widget.overview.desc" = "表示中の全プロファイルのセッション・週間使用量。";

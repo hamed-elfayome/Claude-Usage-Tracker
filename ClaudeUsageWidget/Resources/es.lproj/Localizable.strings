@@ -1,0 +1,8 @@
+/* Claude Usage Widget */
+"widget.no_data" = "Abre Claude Usage para cargar los datos de uso";
+"widget.session" = "Sesión";
+"widget.weekly" = "Semanal";
+"widget.session.name" = "Uso de sesión";
+"widget.session.desc" = "Uso actual de la sesión de 5 horas del perfil activo.";
+"widget.overview.name" = "Resumen de uso";
+"widget.overview.desc" = "Uso de sesión y semanal de todos los perfiles mostrados.";
