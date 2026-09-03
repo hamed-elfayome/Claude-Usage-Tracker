@@ -64,6 +64,7 @@
 "menubar.fable_usage" = "Fable";
 "menubar.design_usage" = "Thiết kế";
 "menubar.extra_usage" = "Mức dùng thêm";
+"menubar.monthly_spend" = "Chi tiêu hàng tháng";
 "menubar.api_credits" = "Tín dụng API";
 "menubar.api_cost" = "Chi phí API";
 "menubar.this_month" = "Tháng này";
@@ -550,6 +551,9 @@
 "general.refresh_seconds" = "%d giây";
 "general.refresh_min" = "10s";
 "general.refresh_max" = "300s";
+"general.spend_target_title" = "Mục tiêu chi tiêu hàng tháng";
+"general.spend_target_subtitle" = "Ngân sách cá nhân tùy chọn cho tháng. Đặt giá trị để hiện thanh Chi tiêu hàng tháng trong cửa sổ bật lên; để trống để chỉ hiện số tiền.";
+"general.spend_target_placeholder" = "ví dụ: 1500";
 "general.autostart_title" = "Tự động bắt đầu phiên";
 "general.autostart_subtitle" = "Tự động bắt đầu phiên mới khi cần";
 "general.autostart_toggle" = "Tự động bắt đầu phiên mới";
@@ -965,6 +969,9 @@
 // MARK: - Overage Balance
 "popover.overage_balance" = "Số dư";
 
+
+// MARK: - Monthly Spend
+"popover.monthly_spend_period" = "Tháng này";
 // MARK: - Setup Wizard CLI Detection
 "setup.cli_detecting" = "Đang kiểm tra thông tin đăng nhập CLI...";
 "setup.cli_detected.title" = "Đã phát hiện CLI!";

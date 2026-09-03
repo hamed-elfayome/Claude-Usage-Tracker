@@ -64,6 +64,7 @@
 "menubar.fable_usage" = "Fable";
 "menubar.design_usage" = "Design";
 "menubar.extra_usage" = "Uso Extra";
+"menubar.monthly_spend" = "Gasto Mensual";
 "menubar.api_credits" = "Créditos API";
 "menubar.5_hour_window" = "Ventana móvil de 5 horas";
 "menubar.all_models" = "Todos los modelos";
@@ -553,6 +554,9 @@
 "general.refresh_seconds" = "%d segundos";
 "general.refresh_min" = "10s";
 "general.refresh_max" = "300s";
+"general.spend_target_title" = "Objetivo de Gasto Mensual";
+"general.spend_target_subtitle" = "Presupuesto personal opcional para el mes. Configúralo para mostrar una barra de Gasto Mensual en la ventana emergente; déjalo en blanco para mostrar solo el importe.";
+"general.spend_target_placeholder" = "p. ej. 1500";
 "general.autostart_title" = "Inicio Automático de Sesión";
 "general.autostart_subtitle" = "Iniciar automáticamente una nueva sesión cuando sea necesario";
 "general.autostart_toggle" = "Inicio Automático de Nueva Sesión";
@@ -938,6 +942,9 @@
 // MARK: - Overage Balance
 "popover.overage_balance" = "Saldo";
 
+
+// MARK: - Monthly Spend
+"popover.monthly_spend_period" = "Este mes";
 // MARK: - Setup Wizard CLI Detection
 "setup.cli_detecting" = "Buscando credenciales CLI...";
 "setup.cli_detected.title" = "CLI Detectado!";

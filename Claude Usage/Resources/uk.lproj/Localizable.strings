@@ -64,6 +64,7 @@
 "menubar.fable_usage" = "Fable";
 "menubar.design_usage" = "Дизайн";
 "menubar.extra_usage" = "Додаткове використання";
+"menubar.monthly_spend" = "Місячні витрати";
 "menubar.api_credits" = "Кредити API";
 "menubar.api_cost" = "Вартість API";
 "menubar.this_month" = "Цього місяця";
@@ -550,6 +551,9 @@
 "general.refresh_seconds" = "%d секунд";
 "general.refresh_min" = "10с";
 "general.refresh_max" = "300с";
+"general.spend_target_title" = "Місячна ціль витрат";
+"general.spend_target_subtitle" = "Необов'язковий особистий бюджет на місяць. Установіть, щоб показати смугу місячних витрат у спливаючому вікні; залиште порожнім, щоб показувати лише суму.";
+"general.spend_target_placeholder" = "напр. 1500";
 "general.autostart_title" = "Автозапуск сесії";
 "general.autostart_subtitle" = "Автоматично запускати нову сесію за потреби";
 "general.autostart_toggle" = "Автозапуск нової сесії";
@@ -913,6 +917,9 @@
 "popover.time_format_24h" = "24-годинний";
 "popover.time_format_system" = "Системний";
 "popover.overage_balance" = "Баланс";
+
+// MARK: - Monthly Spend
+"popover.monthly_spend_period" = "Цей місяць";
 "popover.banner.credentials_expired" = "Облікові дані застаріли. Оновіть у Налаштуваннях.";
 "popover.banner.refresh_failed" = "Оновлення не вдалося %d разів";
 "popover.banner.updated_ago" = "Оновлено %dхв тому";

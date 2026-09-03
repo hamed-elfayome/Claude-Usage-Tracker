@@ -65,6 +65,7 @@
 "menubar.fable_usage" = "Fable";
 "menubar.design_usage" = "设计";
 "menubar.extra_usage" = "额外使用量";
+"menubar.monthly_spend" = "每月支出";
 "menubar.api_credits" = "API 积分";
 "menubar.5_hour_window" = "5小时滚动窗口";
 "menubar.all_models" = "所有模型";
@@ -551,6 +552,9 @@
 "general.refresh_seconds" = "%d 秒";
 "general.refresh_min" = "10秒";
 "general.refresh_max" = "300秒";
+"general.spend_target_title" = "每月支出目标";
+"general.spend_target_subtitle" = "可选的每月个人预算。设置后会在弹出窗口中显示每月支出进度条；留空则仅显示金额。";
+"general.spend_target_placeholder" = "例如 1500";
 "general.autostart_title" = "自动启动会话";
 "general.autostart_subtitle" = "需要时自动启动新会话";
 "general.autostart_toggle" = "自动启动新会话";
@@ -955,6 +959,9 @@
 // MARK: - Overage Balance
 "popover.overage_balance" = "余额";
 
+
+// MARK: - Monthly Spend
+"popover.monthly_spend_period" = "本月";
 // MARK: - Setup Wizard CLI Detection
 "setup.cli_detecting" = "正在检查CLI凭证...";
 "setup.cli_detected.title" = "检测到CLI！";
