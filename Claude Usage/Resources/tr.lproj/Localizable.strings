@@ -64,6 +64,7 @@
 "menubar.fable_usage" = "Fable";
 "menubar.design_usage" = "Tasarım";
 "menubar.extra_usage" = "Ek Kullanım";
+"menubar.monthly_spend" = "Aylık Harcama";
 "menubar.api_credits" = "API Kredileri";
 "menubar.api_cost" = "API Maliyeti";
 "menubar.this_month" = "Bu Ay";
@@ -550,6 +551,9 @@
 "general.refresh_seconds" = "%d saniye";
 "general.refresh_min" = "10sn";
 "general.refresh_max" = "300sn";
+"general.spend_target_title" = "Aylık Harcama Hedefi";
+"general.spend_target_subtitle" = "İsteğe bağlı aylık kişisel bütçe. Açılır pencerede bir Aylık Harcama çubuğu göstermek için ayarlayın; yalnızca tutarı göstermek için boş bırakın.";
+"general.spend_target_placeholder" = "örn. 1500";
 "general.autostart_title" = "Oturumu Otomatik Başlat";
 "general.autostart_subtitle" = "Gerektiğinde otomatik olarak yeni bir oturum başlat";
 "general.autostart_toggle" = "Yeni Oturumu Otomatik Başlat";
@@ -960,6 +964,9 @@
 
 // MARK: - Overage Balance
 "popover.overage_balance" = "Bakiye";
+
+// MARK: - Monthly Spend
+"popover.monthly_spend_period" = "Bu ay";
 
 // MARK: - Setup Wizard CLI Detection
 "setup.cli_detecting" = "CLI kimlik bilgileri kontrol ediliyor...";

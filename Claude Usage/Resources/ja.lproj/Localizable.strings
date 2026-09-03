@@ -64,6 +64,7 @@
 "menubar.fable_usage" = "Fable";
 "menubar.design_usage" = "デザイン";
 "menubar.extra_usage" = "追加使用";
+"menubar.monthly_spend" = "月間支出";
 "menubar.api_credits" = "APIクレジット";
 "menubar.5_hour_window" = "5時間ローリングウィンドウ";
 "menubar.all_models" = "すべてのモデル";
@@ -572,6 +573,9 @@
 "general.refresh_seconds" = "%d秒";
 "general.refresh_min" = "10秒";
 "general.refresh_max" = "300秒";
+"general.spend_target_title" = "月間支出目標";
+"general.spend_target_subtitle" = "任意の月間個人予算。設定するとポップオーバーに月間支出バーが表示されます。空欄の場合は金額のみ表示されます。";
+"general.spend_target_placeholder" = "例: 1500";
 "general.autostart_title" = "セッション自動開始";
 "general.autostart_subtitle" = "必要に応じて自動的に新しいセッションを開始";
 "general.autostart_toggle" = "新しいセッションを自動開始";
@@ -956,6 +960,9 @@
 
 // MARK: - Overage Balance
 "popover.overage_balance" = "残高";
+
+// MARK: - Monthly Spend
+"popover.monthly_spend_period" = "今月";
 
 // MARK: - Setup Wizard CLI Detection
 "setup.cli_detecting" = "CLI認証情報を確認中...";

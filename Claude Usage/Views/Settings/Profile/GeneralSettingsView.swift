@@ -12,6 +12,10 @@ import UserNotifications
 struct GeneralSettingsView: View {
     @StateObject private var profileManager = ProfileManager.shared
 
+    /// Spend target as typed, in whole units of the display currency. Kept as
+    /// text so a part-typed value isn't rounded away mid-edit.
+    @State private var spendTargetText = ""
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: DesignTokens.Spacing.section) {
@@ -63,6 +67,40 @@ struct GeneralSettingsView: View {
                                     .foregroundColor(.secondary)
                             }
                         }
+                    }
+
+                    // Monthly Spend Target — denominator for the popover's
+                    // Monthly Spend bar. Only providers that report a per-member
+                    // spend figure can use it.
+                    if profile.provider.descriptor.capabilities.personalSpend {
+                        SettingsSectionCard(
+                            title: "general.spend_target_title".localized,
+                            subtitle: "general.spend_target_subtitle".localized
+                        ) {
+                            HStack(spacing: DesignTokens.Spacing.iconText) {
+                                Image(systemName: "dollarsign.circle")
+                                    .font(.system(size: DesignTokens.Icons.standard))
+                                    .foregroundColor(DesignTokens.Colors.accent)
+                                    .frame(width: DesignTokens.Spacing.iconFrame)
+
+                                TextField("general.spend_target_placeholder".localized, text: $spendTargetText)
+                                    .textFieldStyle(.roundedBorder)
+                                    .frame(width: 120)
+                                    .onChange(of: spendTargetText) { _, newValue in
+                                        saveSpendTarget(newValue, on: profile)
+                                    }
+
+                                Text(profile.claudeUsage?.personalSpendCurrency ?? "USD")
+                                    .font(DesignTokens.Typography.caption)
+                                    .foregroundColor(.secondary)
+
+                                Spacer()
+                            }
+                        }
+                        // Load on first show and whenever the edited profile
+                        // changes, so the field never shows another profile's target.
+                        .onAppear { loadSpendTarget(from: profile) }
+                        .onChange(of: profile.id) { _, _ in loadSpendTarget(from: profile) }
                     }
 
                     // Auto-Start Session (capability-gated: burns tokens via
@@ -231,6 +269,42 @@ struct GeneralSettingsView: View {
     }
 
     // MARK: - Helper Methods
+
+    /// Mirrors the stored target (cents) into the text field as whole units.
+    /// Formats the Double directly — converting to Int first traps for values
+    /// beyond Int.max, which a large typed target can reach.
+    private func loadSpendTarget(from profile: Profile) {
+        if let cents = profile.monthlySpendLimitCents, cents > 0, cents.isFinite {
+            spendTargetText = String(format: "%.0f", cents / 100)
+        } else {
+            spendTargetText = ""
+        }
+    }
+
+    /// Parses the spend-target field as whole units and stores it as cents
+    /// (matching the minor-units convention of `costUsed`/`costLimit`).
+    /// Anything non-numeric or zero clears the target.
+    private func saveSpendTarget(_ text: String, on profile: Profile) {
+        let cleaned = text
+            .replacingOccurrences(of: ",", with: "")
+            .replacingOccurrences(of: "$", with: "")
+            .trimmingCharacters(in: .whitespaces)
+
+        let newValue: Double?
+        if let units = Int(cleaned), units > 0, Double(units).isFinite {
+            newValue = Double(units) * 100.0
+        } else {
+            newValue = nil
+        }
+
+        // Skip the write when nothing changed — loading the field on appear
+        // fires onChange too, and updateProfile persists and re-publishes.
+        guard newValue != profile.monthlySpendLimitCents else { return }
+
+        var updated = profile
+        updated.monthlySpendLimitCents = newValue
+        profileManager.updateProfile(updated)
+    }
 
     private func requestNotificationPermission() {
         Task {

@@ -64,6 +64,7 @@
 "menubar.fable_usage" = "Fable";
 "menubar.design_usage" = "Design";
 "menubar.extra_usage" = "Zusätzliche Nutzung";
+"menubar.monthly_spend" = "Monatliche Ausgaben";
 "menubar.api_credits" = "API-Guthaben";
 "menubar.5_hour_window" = "5-Stunden-Gleitfenster";
 "menubar.all_models" = "Alle Modelle";
@@ -572,6 +573,9 @@
 "general.refresh_seconds" = "%d Sekunden";
 "general.refresh_min" = "10s";
 "general.refresh_max" = "300s";
+"general.spend_target_title" = "Monatliches Ausgabenziel";
+"general.spend_target_subtitle" = "Optionales persönliches Monatsbudget. Festlegen, um im Popover einen Balken für die monatlichen Ausgaben anzuzeigen; leer lassen, um nur den Betrag anzuzeigen.";
+"general.spend_target_placeholder" = "z. B. 1500";
 "general.autostart_title" = "Sitzungs-Auto-Start";
 "general.autostart_subtitle" = "Automatisch eine neue Sitzung bei Bedarf starten";
 "general.autostart_toggle" = "Neue Sitzung Automatisch Starten";
@@ -956,6 +960,9 @@
 
 // MARK: - Overage Balance
 "popover.overage_balance" = "Guthaben";
+
+// MARK: - Monthly Spend
+"popover.monthly_spend_period" = "Diesen Monat";
 
 // MARK: - Setup Wizard CLI Detection
 "setup.cli_detecting" = "CLI-Anmeldedaten werden gesucht...";

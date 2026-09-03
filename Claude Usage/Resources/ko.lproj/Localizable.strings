@@ -73,6 +73,7 @@
 "menubar.fable_usage" = "Fable";
 "menubar.design_usage" = "디자인";
 "menubar.extra_usage" = "추가 사용량";
+"menubar.monthly_spend" = "월간 지출";
 "menubar.api_credits" = "API 크레딧";
 "menubar.5_hour_window" = "5시간 롤링 윈도우";
 "menubar.all_models" = "모든 모델";
@@ -157,6 +158,9 @@
 "general.refresh_seconds" = "%d초";
 "general.refresh_min" = "10초";
 "general.refresh_max" = "300초";
+"general.spend_target_title" = "월간 지출 목표";
+"general.spend_target_subtitle" = "선택적 월간 개인 예산. 설정하면 팝오버에 월간 지출 막대가 표시됩니다. 비워두면 금액만 표시됩니다.";
+"general.spend_target_placeholder" = "예: 1500";
 "general.autostart_title" = "세션 자동 시작";
 "general.autostart_subtitle" = "필요 시 자동으로 새 세션 시작";
 "general.autostart_toggle" = "새 세션 자동 시작";
@@ -967,6 +971,9 @@
 
 // MARK: - Overage Balance
 "popover.overage_balance" = "잔액";
+
+// MARK: - Monthly Spend
+"popover.monthly_spend_period" = "이번 달";
 
 // MARK: - Setup Wizard CLI Detection
 "setup.cli_detecting" = "CLI 자격 증명 확인 중...";
