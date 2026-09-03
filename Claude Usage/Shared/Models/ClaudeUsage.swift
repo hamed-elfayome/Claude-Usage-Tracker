@@ -47,6 +47,14 @@ struct ClaudeUsage: Codable, Equatable {
     var overageBalance: Double?
     var overageBalanceCurrency: String?
 
+    // The authenticated member's OWN month-to-date spend, from the claude.ai
+    // /usage/spend endpoint. Minor units (cents) of `personalSpendCurrency`.
+    // Distinct from the org-wide `costUsed`/`costLimit` figures above: this is
+    // what *this account* spent, matching claude.ai/settings/usage. Gated by the
+    // `personalSpend` provider capability.
+    var personalSpendUsed: Double?
+    var personalSpendCurrency: String?
+
     // Provider plan/credits (populated by providers that report them, e.g. Codex)
     var planType: String?
     var creditsBalance: Double?
@@ -141,6 +149,7 @@ extension ClaudeUsage {
         case fableWeeklyTokensUsed, fableWeeklyPercentage, fableWeeklyResetTime
         case costUsed, costLimit, costCurrency
         case overageBalance, overageBalanceCurrency
+        case personalSpendUsed, personalSpendCurrency
         case planType, creditsBalance, creditsUnlimited
         case lastUpdated, userTimezone
     }
@@ -172,6 +181,8 @@ extension ClaudeUsage {
             costCurrency: try c.decodeIfPresent(String.self, forKey: .costCurrency),
             overageBalance: try c.decodeIfPresent(Double.self, forKey: .overageBalance),
             overageBalanceCurrency: try c.decodeIfPresent(String.self, forKey: .overageBalanceCurrency),
+            personalSpendUsed: try c.decodeIfPresent(Double.self, forKey: .personalSpendUsed),
+            personalSpendCurrency: try c.decodeIfPresent(String.self, forKey: .personalSpendCurrency),
             planType: try c.decodeIfPresent(String.self, forKey: .planType),
             creditsBalance: try c.decodeIfPresent(Double.self, forKey: .creditsBalance),
             creditsUnlimited: try c.decodeIfPresent(Bool.self, forKey: .creditsUnlimited),

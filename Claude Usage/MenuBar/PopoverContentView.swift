@@ -102,6 +102,16 @@ struct PopoverContentView: View {
         return viewingProfile?.provider ?? .anthropic
     }
 
+    /// Monthly spend target of the profile being viewed. Read from the viewed
+    /// profile rather than the active one so multi-profile mode pairs each
+    /// profile's spend with its own target.
+    private var displayMonthlySpendLimitCents: Double? {
+        let viewingProfile = manager.clickedProfileId.flatMap { id in
+            profileManager.profiles.first(where: { $0.id == id })
+        } ?? profileManager.activeProfile
+        return viewingProfile?.monthlySpendLimitCents
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Header
@@ -208,7 +218,12 @@ struct PopoverContentView: View {
             }
 
             // Usage
-            SmartUsageDashboard(usage: displayUsage, apiUsage: displayAPIUsage, provider: displayProvider)
+            SmartUsageDashboard(
+                usage: displayUsage,
+                apiUsage: displayAPIUsage,
+                provider: displayProvider,
+                monthlySpendLimitCents: displayMonthlySpendLimitCents
+            )
 
             // Contextual Insights
             if showInsights {
@@ -588,6 +603,7 @@ struct SmartUsageDashboard: View {
     let usage: ClaudeUsage
     let apiUsage: APIUsage?
     var provider: Provider = .anthropic
+    var monthlySpendLimitCents: Double? = nil
     @StateObject private var profileManager = ProfileManager.shared
     private var capabilities: ProviderCapabilities {
         provider.descriptor.capabilities
@@ -730,6 +746,18 @@ struct SmartUsageDashboard: View {
                             .foregroundColor(.adaptiveGreen)
                     }
                 }
+            }
+
+            // Monthly spend — this member's own month-to-date spend (the number
+            // shown on claude.ai/settings/usage), distinct from the org-wide
+            // Extra Usage above. Only rendered when the endpoint returned a value.
+            if capabilities.personalSpend, let personalUsed = usage.personalSpendUsed {
+                MonthlySpendRow(
+                    usedMinorUnits: personalUsed,
+                    currency: usage.personalSpendCurrency ?? "USD",
+                    limitCents: monthlySpendLimitCents,
+                    showRemaining: showRemainingPercentage
+                )
             }
 
             // Plan / credits (providers that report them, e.g. Codex)
@@ -918,6 +946,56 @@ struct UsageRow: View {
             return "menubar.resets_in".localized(with: reset.timeRemainingString())
         case .both:
             return "menubar.resets_both".localized(with: reset.timeRemainingString(), reset.resetTimeString())
+        }
+    }
+}
+
+// MARK: - Monthly Spend Row
+
+/// The authenticated member's own month-to-date spend. When a monthly target is
+/// set on the profile this renders as a progress bar (matching Extra Usage);
+/// otherwise it shows just the amount, since the API exposes no per-member limit.
+struct MonthlySpendRow: View {
+    let usedMinorUnits: Double
+    let currency: String
+    let limitCents: Double?
+    let showRemaining: Bool
+
+    private var usedDollars: Double { usedMinorUnits / 100.0 }
+
+    var body: some View {
+        if let limit = limitCents, limit > 0 {
+            UsageRow(
+                title: "menubar.monthly_spend".localized,
+                subtitle: String(format: "%.2f / %.2f %@", usedDollars, limit / 100.0, currency),
+                usedPercentage: (usedMinorUnits / limit) * 100.0,
+                showRemaining: showRemaining,
+                resetTime: nil,
+                periodDuration: nil
+            )
+        } else {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("menubar.monthly_spend".localized)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.primary)
+                    Text("popover.monthly_spend_period".localized)
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                Text(String(format: "%.2f %@", usedDollars, currency))
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .foregroundColor(.adaptiveGreen)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .strokeBorder(Color.primary.opacity(0.1), lineWidth: 0.5)
+            )
         }
     }
 }
