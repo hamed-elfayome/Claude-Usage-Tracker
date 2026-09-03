@@ -961,9 +961,9 @@
 // MARK: - Overage Balance
 "popover.overage_balance" = "Guthaben";
 
-
 // MARK: - Monthly Spend
 "popover.monthly_spend_period" = "Diesen Monat";
+
 // MARK: - Setup Wizard CLI Detection
 "setup.cli_detecting" = "CLI-Anmeldedaten werden gesucht...";
 "setup.cli_detected.title" = "CLI Erkannt!";

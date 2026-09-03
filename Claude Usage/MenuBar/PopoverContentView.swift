@@ -102,9 +102,8 @@ struct PopoverContentView: View {
         return viewingProfile?.provider ?? .anthropic
     }
 
-    /// Monthly spend target of the profile being viewed. Read from the viewed
-    /// profile rather than the active one so multi-profile mode pairs each
-    /// profile's spend with its own target.
+    /// Monthly spend target of the profile being viewed (clicked profile in
+    /// multi-profile mode, else the active profile).
     private var displayMonthlySpendLimitCents: Double? {
         let viewingProfile = manager.clickedProfileId.flatMap { id in
             profileManager.profiles.first(where: { $0.id == id })
@@ -748,9 +747,7 @@ struct SmartUsageDashboard: View {
                 }
             }
 
-            // Monthly spend — this member's own month-to-date spend (the number
-            // shown on claude.ai/settings/usage), distinct from the org-wide
-            // Extra Usage above. Only rendered when the endpoint returned a value.
+            // Monthly spend (member's own month-to-date; distinct from org-wide Extra Usage)
             if capabilities.personalSpend, let personalUsed = usage.personalSpendUsed {
                 MonthlySpendRow(
                     usedMinorUnits: personalUsed,
@@ -952,9 +949,8 @@ struct UsageRow: View {
 
 // MARK: - Monthly Spend Row
 
-/// The authenticated member's own month-to-date spend. When a monthly target is
-/// set on the profile this renders as a progress bar (matching Extra Usage);
-/// otherwise it shows just the amount, since the API exposes no per-member limit.
+/// The member's own month-to-date spend. Renders as a progress bar when the
+/// profile has a monthly target; otherwise shows just the amount.
 struct MonthlySpendRow: View {
     let usedMinorUnits: Double
     let currency: String

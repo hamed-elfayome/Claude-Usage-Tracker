@@ -969,9 +969,9 @@
 // MARK: - Overage Balance
 "popover.overage_balance" = "Số dư";
 
-
 // MARK: - Monthly Spend
 "popover.monthly_spend_period" = "Tháng này";
+
 // MARK: - Setup Wizard CLI Detection
 "setup.cli_detecting" = "Đang kiểm tra thông tin đăng nhập CLI...";
 "setup.cli_detected.title" = "Đã phát hiện CLI!";

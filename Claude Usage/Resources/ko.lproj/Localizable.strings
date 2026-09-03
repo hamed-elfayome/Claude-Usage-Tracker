@@ -972,9 +972,9 @@
 // MARK: - Overage Balance
 "popover.overage_balance" = "잔액";
 
-
 // MARK: - Monthly Spend
 "popover.monthly_spend_period" = "이번 달";
+
 // MARK: - Setup Wizard CLI Detection
 "setup.cli_detecting" = "CLI 자격 증명 확인 중...";
 "setup.cli_detected.title" = "CLI 감지됨!";

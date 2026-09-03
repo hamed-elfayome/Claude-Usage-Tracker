@@ -961,9 +961,9 @@
 // MARK: - Overage Balance
 "popover.overage_balance" = "残高";
 
-
 // MARK: - Monthly Spend
 "popover.monthly_spend_period" = "今月";
+
 // MARK: - Setup Wizard CLI Detection
 "setup.cli_detecting" = "CLI認証情報を確認中...";
 "setup.cli_detected.title" = "CLIを検出しました！";

@@ -2,7 +2,7 @@
 //  UsageSpendResponseTests.swift
 //  Claude Usage Tests
 //
-//  Created on 2026-07-21.
+//  Created on 2026-09-03.
 //
 
 import XCTest

@@ -965,9 +965,9 @@
 // MARK: - Overage Balance
 "popover.overage_balance" = "Bakiye";
 
-
 // MARK: - Monthly Spend
 "popover.monthly_spend_period" = "Bu ay";
+
 // MARK: - Setup Wizard CLI Detection
 "setup.cli_detecting" = "CLI kimlik bilgileri kontrol ediliyor...";
 "setup.cli_detected.title" = "CLI Tespit Edildi!";

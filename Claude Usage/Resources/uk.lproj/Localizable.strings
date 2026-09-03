@@ -920,6 +920,7 @@
 
 // MARK: - Monthly Spend
 "popover.monthly_spend_period" = "Цей місяць";
+
 "popover.banner.credentials_expired" = "Облікові дані застаріли. Оновіть у Налаштуваннях.";
 "popover.banner.refresh_failed" = "Оновлення не вдалося %d разів";
 "popover.banner.updated_ago" = "Оновлено %dхв тому";

@@ -47,11 +47,8 @@ struct ClaudeUsage: Codable, Equatable {
     var overageBalance: Double?
     var overageBalanceCurrency: String?
 
-    // The authenticated member's OWN month-to-date spend, from the claude.ai
-    // /usage/spend endpoint. Minor units (cents) of `personalSpendCurrency`.
-    // Distinct from the org-wide `costUsed`/`costLimit` figures above: this is
-    // what *this account* spent, matching claude.ai/settings/usage. Gated by the
-    // `personalSpend` provider capability.
+    // Member's own month-to-date spend from /usage/spend, in minor units
+    // (see ClaudeAPIService.fetchPersonalSpend)
     var personalSpendUsed: Double?
     var personalSpendCurrency: String?
 
