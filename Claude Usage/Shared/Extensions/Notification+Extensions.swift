@@ -29,4 +29,9 @@ extension Notification.Name {
 
     /// Posted when a Claude Code notch HUD setting is toggled (enabled/auto-hide)
     static let notchHUDSettingChanged = Notification.Name("notchHUDSettingChanged")
+
+    /// Posted when a Notify! setting is saved: the device link, a surface
+    /// switch, or the gauge selection. The publish driver holds those outside
+    /// published state, so this is the only way it hears about a change.
+    static let notifySettingsChanged = Notification.Name("notifySettingsChanged")
 }

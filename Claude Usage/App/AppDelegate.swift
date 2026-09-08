@@ -62,6 +62,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             object: nil
         )
 
+        // Notify! publishing (opt-in): push usage to the user's phone as a Live
+        // Activity and two widgets, and react to the settings toggle at runtime.
+        updateNotifyPublishing()
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleNotifySettingChanged),
+            name: .notifySettingsChanged,
+            object: nil
+        )
+
         if !shouldShowSetupWizard() {
             // Initialize menu bar with active profile
             menuBarManager?.setup()
@@ -238,6 +248,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         // Cleanup
         NotchHookServer.shared.stop()
         NotchHUDController.shared.stop()
+        NotifyPublishDriver.shared.stop()
         menuBarManager?.cleanup()
     }
 
@@ -263,6 +274,23 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         } else {
             NotchHookServer.shared.stop()
             NotchHUDController.shared.stop()
+        }
+    }
+
+    // MARK: - Notify!
+
+    @objc private func handleNotifySettingChanged() {
+        updateNotifyPublishing()
+    }
+
+    /// Brings publishing up and down with the master switch. The driver's own
+    /// `start()` and `stop()` are idempotent, so this is safe to call on every
+    /// save, including the ones that only changed a surface toggle.
+    private func updateNotifyPublishing() {
+        if NotifySettingsStore.shared.isEnabled() {
+            NotifyPublishDriver.shared.start()
+        } else {
+            NotifyPublishDriver.shared.stop()
         }
     }
 

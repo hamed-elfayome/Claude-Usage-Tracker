@@ -5,6 +5,12 @@ All notable changes to Claude Usage Tracker will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Major Features
+
+- **Notify! publishing**: your usage can now go to your phone. Link a [Notify!](https://getnotifyapp.com) device in Settings → Notify! and the app pushes the active profile's windows to three surfaces — a Live Activity tile carrying up to six windows side by side, a Lock Screen widget showing one window as a ring or a bar, and a Home Screen widget carrying the same tile but staying where you put it. Each surface can be switched off on its own, and the Lock Screen widget's window can be picked or left on "whichever needs attention most". Off by default. What leaves the Mac is provider names, window labels, percentages and reset countdowns, and nothing else. The device token uses the same hardened Keychain path as the per-profile secrets (#292), the save is confirmed by reading it back, and it is never written anywhere else — so **the app must be signed to link a device**: an ad-hoc build (Xcode with no development team) can reach no Keychain at all, and the pane says so rather than reporting a link that did not save. See [docs/features/notify.md](docs/features/notify.md). Ported from the same feature in ClaudeBar.
+
 ## [3.3.0] - 2026-08-29
 
 ### Major Features

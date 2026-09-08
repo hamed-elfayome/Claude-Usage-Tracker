@@ -1102,3 +1102,129 @@
 "support.popup_signature" = "Claude Usage를 혼자 만드는 1인 팀";
 "support.popup_body" = "무료, 오픈소스, 1인 개발 — 광고도 추적도 없습니다. 세션 한도를 태우는 걸 막아준 적이 있다면, 커피 한 잔이 개발을 이어가게 합니다.";
 "support.popup_days" = "%d일째 당신의 한도를 지키는 중 — 언제나 무료";
+
+/* NOTE: the Notify! strings below are still in English and need translating. */
+
+/* ==================== */
+/* MARK: - Notify! (publish usage to a phone) */
+/* ==================== */
+"notify.title" = "Notify!";
+"notify.subtitle" = "Put your usage on your phone's Lock Screen and Home Screen";
+
+/* Sections */
+"notify.section.publishing" = "Publishing";
+"notify.section.publishing_desc" = "Send your usage to the Notify! app on your phone";
+"notify.section.device" = "Linked Device";
+"notify.section.device_desc" = "Copy the device ID and token from the Notify! app";
+"notify.section.surfaces" = "What to Show";
+"notify.section.surfaces_desc" = "Each surface can be switched off on its own";
+"notify.section.gauge" = "Lock Screen Widget";
+"notify.section.gauge_desc" = "Which window the widget's ring shows";
+"notify.section.publish" = "Send Now";
+"notify.section.publish_desc" = "Push your current usage without waiting for the next update";
+"notify.section.privacy" = "Privacy";
+
+/* Master switch */
+"notify.enable" = "Publish to Notify!";
+"notify.enable_desc" = "Off until you link a device. Your usage is sent to Notify!, which is not Anthropic or OpenAI.";
+
+/* Device link */
+"notify.device_id" = "Device ID";
+"notify.device_id.placeholder" = "Paste the device ID, or the whole notification link";
+"notify.device_token" = "Device Token";
+"notify.device_token.placeholder" = "Paste the device token";
+"notify.verify" = "Verify Device";
+"notify.verifying" = "Checking…";
+"notify.save_link" = "Save Link";
+"notify.unlink" = "Unlink";
+
+/* Surfaces */
+"notify.surface.live_activity" = "Live Activity";
+"notify.surface.live_activity_desc" = "A tile on the Lock Screen with every window side by side. iPhone and iPad only.";
+"notify.surface.lock_screen" = "Lock Screen Widget";
+"notify.surface.lock_screen_desc" = "One window as a ring or a bar, for a glance without unlocking.";
+"notify.surface.home_screen" = "Home Screen Widget";
+"notify.surface.home_screen_desc" = "The same tile as the Live Activity, but it stays where you put it. Needs a recent Notify!.";
+
+/* Gauge picker */
+"notify.gauge.window" = "Show";
+"notify.gauge.automatic" = "Whichever needs attention most";
+
+/* Publish */
+"notify.publish_now" = "Send Now";
+"notify.publishing" = "Sending…";
+
+/* Privacy */
+"notify.privacy.what_leaves" = "What leaves this Mac: provider names, window labels, percentages left, balances and reset countdowns.";
+"notify.privacy.where_it_goes" = "Where it goes: push.getnotifyapp.com, and from there to your own phone.";
+"notify.privacy.off_by_default" = "Off by default, and it stays off until you link a device.";
+"notify.privacy.token_secret" = "Your device token is kept in the macOS Keychain and is never written to the app's settings.";
+
+/* Status messages */
+"notify.status.link_saved" = "Device link saved.";
+"notify.status.unlinked" = "Device unlinked. Anything already on your phone stays there until you remove it in Notify!.";
+"notify.status.verified" = "Linked to %@.";
+"notify.status.published" = "Sent.";
+"notify.status.switched_off" = "Publishing to Notify! is switched off.";
+"notify.status.all_surfaces_off" = "The Live Activity, the Lock Screen widget and the Home Screen widget are all switched off, so there is nothing to send.";
+"notify.status.no_usage_yet" = "There is no usage to send yet. Give the app a moment to fetch some.";
+"notify.status.holding_off" = "Notify! is still holding off Live Activity starts. The app will retry on its own.";
+"notify.status.home_screen_not_served" = "Notify! is not serving Home Screen widgets yet. The app will try again later.";
+
+/* Device kinds */
+"notify.device_kind.app_device" = "iPhone or iPad";
+"notify.device_kind.mac" = "Mac";
+"notify.device_kind.web" = "browser";
+"notify.device_kind.group" = "group";
+"notify.device_kind.unknown" = "device";
+
+/* What a device cannot carry */
+"notify.unsupported.live_activity_mac" = "This is a Mac ID. A Live Activity is an iPhone and iPad feature, so it cannot be started here. The widgets still work.";
+"notify.unsupported.live_activity_web" = "This is a browser ID. A Live Activity is an iPhone and iPad feature, so it cannot be started here. The widgets still work.";
+"notify.unsupported.live_activity_generic" = "A Live Activity only exists on an iPhone or iPad, so use the device ID and token from the Notify! app on your phone instead.";
+"notify.unsupported.group" = "This is a group ID. A group sends a notification out to its members and owns no Lock Screen of its own, so use the device ID and token for a single device instead.";
+"notify.unsupported.widget_generic" = "A group owns no Lock Screen of its own, so use the device ID and token for a single device instead.";
+"notify.unsupported.screen_widget_generic" = "A group owns no Home Screen of its own, so use the device ID and token for a single device instead.";
+
+/* Windows shown on the phone */
+"notify.window.session" = "5h";
+"notify.window.weekly" = "7d";
+"notify.window.opus" = "Opus 7d";
+"notify.window.sonnet" = "Sonnet 7d";
+"notify.window.design" = "Design 7d";
+"notify.window.fable" = "Fable 7d";
+"notify.window.spend" = "Spend";
+"notify.window.extra_usage" = "Extra usage";
+"notify.window.credits" = "Credits";
+
+/* Sentences written onto the tile and the widget */
+"notify.summary.balance_left" = "%@ left";
+"notify.summary.percent_left" = "%d%% left";
+"notify.summary.resets_soon" = "resets soon";
+"notify.summary.resets_in" = "resets in %@";
+
+/* Waits */
+"notify.wait.a_minute" = "a minute";
+"notify.wait.minutes" = "%d minutes";
+"notify.wait.an_hour" = "an hour";
+"notify.wait.hours" = "%d hours";
+
+/* Errors */
+"notify.error.not_linked" = "Add your Notify! device ID and token before publishing.";
+"notify.error.rejected_credentials" = "Notify! rejected these credentials. Copy the device ID and token again from the Notify! app.";
+"notify.error.live_activity_unavailable" = "This device cannot show a Live Activity yet. Open the Notify! app once on the device.";
+"notify.error.tile_gone" = "The Live Activity was dismissed on the device. A new one will be started.";
+"notify.error.backoff" = "Notify! is waiting %@ before another Live Activity.";
+"notify.error.backoff_open_app" = "Notify! is waiting %@ before another Live Activity. Opening the Notify! app on the device may clear it sooner.";
+"notify.error.invalid_payload" = "Notify! rejected the content of this update.";
+"notify.error.delivery_unconfirmed" = "Notify! could not confirm the Live Activity started. It will be checked again on the next update.";
+"notify.error.transport_failed" = "Could not reach Notify!: %@";
+"notify.error.surface_switched_off" = "Notify! has this widget switched off at the moment. The app will try again later.";
+"notify.error.unexpected_status" = "Notify! answered with HTTP %d.";
+"notify.error.malformed_response" = "Notify! sent a response the app could not read.";
+"notify.error.link_is_group" = "That link points at a Notify! group. This needs a device link, not a group.";
+"notify.error.bad_host" = "The Notify! host is not a usable URL.";
+"notify.error.encode_failed" = "This update could not be encoded.";
+
+/* Notify! — token storage */
+"notify.status.link_save_failed" = "Could not save the device token to the Keychain, so nothing was linked. The Keychain needs the app to be signed, and a copy built locally without a development team is not. Use a signed build — a release download, or set your team under Signing & Capabilities in Xcode.";

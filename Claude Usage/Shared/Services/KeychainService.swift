@@ -257,6 +257,53 @@ class KeychainService {
         return onDisk == expected
     }
 
+    // MARK: - Notify! Device Token
+
+    /// The linked Notify! device's per-device secret.
+    ///
+    /// Deliberately on the same `saveItem`/`loadItem` helpers the per-profile
+    /// secrets use, rather than the older `save(_:for:)` API above. That one
+    /// attaches a `kSecAttrAccessControl`, which routes the item to the
+    /// data-protection keychain with no fallback, so on any build without the
+    /// application-identifier entitlement it fails outright — and a token that
+    /// silently fails to save reads to the user as "linked" while every publish
+    /// answers "not linked".
+    private static let notifyService = "com.claudeusagetracker.notify"
+    private static let notifyTokenAccount = "device-token"
+
+    /// Saves the token and confirms it can be read back again.
+    ///
+    /// The read-back is the point. `saveItem` can report success against a
+    /// store a later read cannot reach, and the caller needs to know whether
+    /// the token is really there before it tells anyone they are linked.
+    ///
+    /// - Returns: false when this build has no reachable keychain store, which
+    ///   is the ordinary case for an ad-hoc signed local build.
+    @discardableResult
+    func saveNotifyDeviceToken(_ token: String) -> Bool {
+        do {
+            try saveItem(token, service: Self.notifyService, account: Self.notifyTokenAccount)
+        } catch {
+            LoggingService.shared.log("Keychain: no reachable store for the Notify! device token in this build")
+            return false
+        }
+        return notifyDeviceToken() == token
+    }
+
+    /// The stored token, or nil when absent or unreadable.
+    func notifyDeviceToken() -> String? {
+        guard let token = try? loadItem(service: Self.notifyService, account: Self.notifyTokenAccount),
+              !token.isEmpty else {
+            return nil
+        }
+        return token
+    }
+
+    @discardableResult
+    func deleteNotifyDeviceToken() -> Bool {
+        deleteItem(service: Self.notifyService, account: Self.notifyTokenAccount)
+    }
+
     /// Removes all Keychain secrets belonging to a profile (call on profile deletion).
     func deleteAllProfileSecrets(profileId: UUID) {
         for field in ProfileSecretField.allCases {
