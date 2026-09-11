@@ -197,6 +197,8 @@
 "appearance.show_pace_marker_description" = "예상 사용 속도에 따라 시간 마커 색상을 변경합니다(녹색→보라색). 세션 및 주간 메트릭에 적용됩니다.";
 "appearance.pace_coloring_title" = "속도 기반 막대 색상";
 "appearance.pace_coloring_description" = "현재 사용 수준 대신 예상 속도에 따라 진행 막대 색상을 지정합니다. 기간 종료 시 한도에 도달할지 예측합니다.";
+"appearance.exclude_weekends_title" = "주간 속도에서 주말 제외";
+"appearance.exclude_weekends_description" = "주간 시간 마커와 속도가 평일에만 진행되고 주말에는 멈춥니다. 주로 평일에 Claude를 사용하는 경우에 유용합니다.";
 "appearance.multiprofile_locked_title" = "모양 설정 잠김";
 "appearance.multiprofile_locked_description" = "다중 프로필 표시가 활성화된 동안 이 설정은 비활성화됩니다. 다중 프로필 모드에서는 각 프로필이 자체 모양을 사용합니다.";
 "appearance.disable_multiprofile" = "다중 프로필 표시 끄기";

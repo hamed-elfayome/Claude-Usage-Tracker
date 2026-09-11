@@ -464,6 +464,8 @@
 "appearance.show_pace_marker_description" = "根据预计使用速率为时间标记着色（绿色→紫色）。适用于会话和每周指标。";
 "appearance.pace_coloring_title" = "基于节奏的进度条颜色";
 "appearance.pace_coloring_description" = "根据预测节奏而非当前使用水平为进度条着色。预测您是否会在周期结束前达到限制。";
+"appearance.exclude_weekends_title" = "每周节奏排除周末";
+"appearance.exclude_weekends_description" = "每周时间标记和节奏只在工作日推进，周末暂停。适合主要在工作日使用 Claude 的用户。";
 "appearance.multiprofile_locked_title" = "外观设置已锁定";
 "appearance.multiprofile_locked_description" = "当多配置文件显示处于活动状态时，这些设置被禁用。在多配置文件模式下，每个配置文件使用自己的外观。";
 "appearance.disable_multiprofile" = "关闭多配置文件显示";

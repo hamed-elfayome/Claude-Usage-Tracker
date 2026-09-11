@@ -426,6 +426,8 @@
 "appearance.show_pace_marker_description" = "Colore le marqueur de temps selon le rythme d'utilisation projeté (vert → violet). S'applique aux métriques de session et hebdomadaires.";
 "appearance.pace_coloring_title" = "Couleurs de barre par rythme";
 "appearance.pace_coloring_description" = "Colorer les barres de progression selon le rythme projeté au lieu du niveau d'utilisation actuel. Projette si vous atteindrez les limites d'ici la fin de la période.";
+"appearance.exclude_weekends_title" = "Exclure les week-ends du rythme hebdomadaire";
+"appearance.exclude_weekends_description" = "Le marqueur de temps et le rythme hebdomadaires n'avancent qu'en semaine et se mettent en pause le week-end. Utile si vous utilisez surtout Claude pendant la semaine de travail.";
 "appearance.multiprofile_locked_title" = "Paramètres d'Apparence Verrouillés";
 "appearance.multiprofile_locked_description" = "Ces paramètres sont désactivés pendant que l'Affichage Multi-Profil est actif. Chaque profil utilise sa propre apparence en mode multi-profil.";
 "appearance.disable_multiprofile" = "Désactiver l'Affichage Multi-Profil";

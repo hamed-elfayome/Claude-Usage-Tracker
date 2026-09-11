@@ -463,6 +463,8 @@
 "appearance.show_pace_marker_description" = "Color the time marker based on projected usage pace (green → purple). Applies to session and weekly metrics.";
 "appearance.pace_coloring_title" = "Pace-Aware Bar Colors";
 "appearance.pace_coloring_description" = "Color progress bars based on projected pace instead of current usage level. Projects whether you'll hit limits by the end of the period.";
+"appearance.exclude_weekends_title" = "Exclude Weekends from Weekly Pace";
+"appearance.exclude_weekends_description" = "The weekly time marker and pace only advance on weekdays and pause over the weekend. Useful if you mostly use Claude during the work week.";
 "appearance.multiprofile_locked_title" = "Appearance Settings Locked";
 "appearance.multiprofile_locked_description" = "These settings are disabled while Multi-Profile Display is active. Each profile uses its own appearance in multi-profile mode.";
 "appearance.disable_multiprofile" = "Turn Off Multi-Profile Display";

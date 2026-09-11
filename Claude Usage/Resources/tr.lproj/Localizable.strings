@@ -463,6 +463,8 @@
 "appearance.pace_marker_section_subtitle" = "Sıfırlama dönemlerine göre kullanım temposunu takip edin";
 "appearance.show_pace_marker_title" = "İşaretçiyi Tempoya Göre Renklendir";
 "appearance.show_pace_marker_description" = "Zaman işaretçisini tahmini kullanım temposuna göre renklendir (yeşil → mor). Oturum ve haftalık metriklere uygulanır.";
+"appearance.exclude_weekends_title" = "Haftalık Tempodan Hafta Sonlarını Hariç Tut";
+"appearance.exclude_weekends_description" = "Haftalık zaman işaretçisi ve tempo yalnızca hafta içi ilerler, hafta sonu durur. Claude'u çoğunlukla iş haftası boyunca kullanıyorsanız kullanışlıdır.";
 "appearance.multiprofile_locked_title" = "Görünüm Ayarları Kilitli";
 "appearance.multiprofile_locked_description" = "Çoklu Profil Görünümü etkinken bu ayarlar devre dışıdır. Çoklu profil modunda her profil kendi görünümünü kullanır.";
 "appearance.disable_multiprofile" = "Çoklu Profil Görünümünü Kapat";

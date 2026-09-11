@@ -442,6 +442,8 @@
 "appearance.show_pace_marker_description" = "Die Zeitmarkierung nach dem prognostizierten Nutzungstempo einfärben (grün → lila). Gilt für Sitzungs- und Wochenmetriken.";
 "appearance.pace_coloring_title" = "Tempobasierte Balkenfarben";
 "appearance.pace_coloring_description" = "Fortschrittsbalken basierend auf dem prognostizierten Tempo statt dem aktuellen Nutzungsniveau einfärben. Prognostiziert, ob Limits bis zum Ende des Zeitraums erreicht werden.";
+"appearance.exclude_weekends_title" = "Wochenenden beim Wochentempo ausschließen";
+"appearance.exclude_weekends_description" = "Die wöchentliche Zeitmarkierung und das Tempo laufen nur an Arbeitstagen weiter und pausieren am Wochenende. Praktisch, wenn Sie Claude hauptsächlich unter der Woche nutzen.";
 "appearance.multiprofile_locked_title" = "Darstellungseinstellungen gesperrt";
 "appearance.multiprofile_locked_description" = "Diese Einstellungen sind deaktiviert, während die Mehrfach-Profil-Anzeige aktiv ist. Jedes Profil verwendet im Mehrfach-Profil-Modus seine eigene Darstellung.";
 "appearance.disable_multiprofile" = "Mehrfach-Profil-Anzeige ausschalten";
