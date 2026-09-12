@@ -52,8 +52,50 @@ final class StatusBarUIManager {
     /// Fixed placeholder length for freshly-created multi-profile status items. Creating
     /// them at a concrete length (rather than .variableLength) avoids the macOS 26 (Tahoe)
     /// recursive variable-width NSISEngine solve during a multi-item rebuild (profile
-    /// switch). updateMultiProfileButtons replaces it with the real coarse-rounded width.
+    /// switch). updateMultiProfileButtons replaces it with the real pinned width.
     private static let multiProfilePlaceholderLength: CGFloat = 32
+
+    // MARK: - Multi-profile item width
+
+    /// Grid the multi-profile status item length is quantized to. See `pinnedLength(forImageWidth:previous:)`.
+    private static let multiProfileLengthGrid: CGFloat = 4
+
+    /// Length currently pinned for each multi-profile item, so an ordinary refresh never
+    /// moves it. Dropped when the rendering config changes (see `lengthPinSignature`).
+    private var pinnedMultiProfileLengths: [UUID: CGFloat] = [:]
+
+    /// Signature of the config the pinned lengths were computed for.
+    private var pinnedLengthSignature: String = ""
+
+    /// The length to pin for an item rendering an icon `width` points wide.
+    ///
+    /// The length must not move between refreshes: on macOS 26 (Tahoe) *changing* a status
+    /// item's length is the recursing NSISEngine op that overflows the stack with 2+ items.
+    /// Two properties give that guarantee here:
+    ///
+    /// - quantizing to a small grid absorbs sub-point rendering differences, and
+    /// - `previous` is never reduced, so data-dependent styles (the percentage style is the
+    ///   only one whose width varies — "5%" vs "100%") settle at their widest and stay there.
+    ///
+    /// It deliberately does *not* round up to a coarse grid. That reserved up to 31pt of dead
+    /// menu bar width per profile, which on a busy menu bar is enough to push the last
+    /// profile's item into the notch, where macOS never draws it (#328).
+    static func pinnedLength(forImageWidth width: CGFloat, previous: CGFloat?) -> CGFloat {
+        let grid = multiProfileLengthGrid
+        let quantized = max(grid, (max(width, 0) / grid).rounded(.up) * grid)
+        return max(quantized, previous ?? 0)
+    }
+
+    /// Identifies the rendering config a pinned length belongs to. When it changes, pins are
+    /// dropped so switching to a narrower icon style gives the reserved width back.
+    static func lengthPinSignature(for config: MultiProfileDisplayConfig) -> String {
+        [
+            config.iconStyle.rawValue,
+            String(config.showProfileLabel),
+            String(config.showWeek),
+            String(config.showPaceMarker)
+        ].joined(separator: "|")
+    }
 
     // MARK: - Multi-profile identity helpers
 
@@ -203,6 +245,8 @@ final class StatusBarUIManager {
             NSStatusBar.system.removeStatusItem(statusItem)
         }
         multiProfileStatusItems.removeAll()
+        pinnedMultiProfileLengths.removeAll()
+        undrawableProfileIds.removeAll()
 
         isMultiProfileMode = false
 
@@ -296,6 +340,8 @@ final class StatusBarUIManager {
                 LoggingService.shared.logUIEvent("Multi-profile: Removed status item for profile \(profileId)")
             }
             multiProfileStatusItems.removeValue(forKey: profileId)
+            pinnedMultiProfileLengths.removeValue(forKey: profileId)
+            undrawableProfileIds.remove(profileId)
         }
 
         // Step 2: Add items that are new
@@ -336,6 +382,55 @@ final class StatusBarUIManager {
         LoggingService.shared.logUIEvent("Multi-profile config updated: removed=\(idsToRemove.count), added=\(idsToAdd.count), kept=\(currentProfileIds.intersection(newProfileIds).count)")
     }
 
+    // MARK: - Undrawable item detection
+
+    /// Profiles already reported as undrawable, so the warning is logged on transitions only.
+    private var undrawableProfileIds: Set<UUID> = []
+
+    /// Logs when a multi-profile item has been laid out where macOS will not draw it.
+    ///
+    /// Status items are packed right-to-left, and on a notched display everything from the
+    /// notch leftwards is dead space. An item laid out there still exists, still reports
+    /// `isVisible == true` and still carries its image — it is simply never drawn. Without
+    /// this the only symptom is a profile whose icon never appears, which is what #328
+    /// reported as a provider-specific bug when it is really "the menu bar ran out of room".
+    ///
+    /// This is a conservative signal, not a complete one: it flags items that reach into the
+    /// notch, so it under-reports (a bar that is over capacity by a few points can also drop
+    /// the leftmost item just clear of the notch) and it says nothing on a notch-less display,
+    /// where macOS hides items that would collide with the frontmost app's menus and there is
+    /// no equivalent geometric test.
+    private func warnIfItemIsUndrawable(_ statusItem: NSStatusItem, profileId: UUID, profileName: String) {
+        // `auxiliaryTopRightArea` is the menu bar strip to the right of the camera housing;
+        // it is nil on a display without one, where this test does not apply.
+        guard let window = statusItem.button?.window,
+              let screen = window.screen ?? NSScreen.main,
+              let rightArea = screen.auxiliaryTopRightArea else {
+            return
+        }
+
+        // The item has been laid out once its frame has a real height; before that its
+        // origin is still (0, 0) and would read as a false positive.
+        guard window.frame.height > 0 else { return }
+
+        let isUndrawable = window.frame.minX < rightArea.minX
+        let wasUndrawable = undrawableProfileIds.contains(profileId)
+        guard isUndrawable != wasUndrawable else { return }
+
+        if isUndrawable {
+            undrawableProfileIds.insert(profileId)
+            LoggingService.shared.logWarning(
+                "Multi-profile: '\(profileName)' has a status item at x=\(Int(window.frame.minX)) but the "
+                + "drawable menu bar starts at x=\(Int(rightArea.minX)) (notch) — macOS will not draw it. "
+                + "The menu bar is out of room. Free a menu bar slot, drag this icon further "
+                + "right (⌘-drag), or deselect a profile."
+            )
+        } else {
+            undrawableProfileIds.remove(profileId)
+            LoggingService.shared.logUIEvent("Multi-profile: '\(profileName)' status item is drawable again")
+        }
+    }
+
     /// Adds a thin green underline to an image to indicate the active profile
     private func addGreenUnderline(to image: NSImage) -> NSImage {
         let newImage = NSImage(size: image.size)
@@ -351,6 +446,14 @@ final class StatusBarUIManager {
     /// Updates all multi-profile status items
     func updateMultiProfileButtons(profiles: [Profile], config: MultiProfileDisplayConfig, activeProfileId: UUID? = nil) {
         guard isMultiProfileMode else { return }
+
+        // A different icon style renders at a different width; drop the pins so a narrower
+        // style hands its reserved menu bar width back instead of keeping the widest ever used.
+        let signature = Self.lengthPinSignature(for: config)
+        if signature != pinnedLengthSignature {
+            pinnedLengthSignature = signature
+            pinnedMultiProfileLengths.removeAll()
+        }
 
         for profile in profiles where profile.isSelectedForDisplay {
             guard let statusItem = multiProfileStatusItems[profile.id],
@@ -521,13 +624,19 @@ final class StatusBarUIManager {
             // Crucially the length must stay CONSTANT across refreshes: *changing* a
             // status item's length is itself the recursing op (the "PlusDelta"), so a
             // per-pixel width jitter between updates (e.g. "5%" vs "45%") would still
-            // crash. Round the width up to a coarse grid so ordinary data changes never
-            // move the length, and only assign when it genuinely changes.
-            let stableLength = ceil(finalImage.size.width / 32.0) * 32.0
+            // crash. `pinnedLength` keeps it constant without over-reserving width —
+            // see its doc comment — and we only assign when it genuinely changes.
+            let stableLength = Self.pinnedLength(
+                forImageWidth: finalImage.size.width,
+                previous: pinnedMultiProfileLengths[profile.id]
+            )
+            pinnedMultiProfileLengths[profile.id] = stableLength
             if abs(statusItem.length - stableLength) > 0.5 {
                 statusItem.length = stableLength
             }
             button.image = finalImage
+
+            warnIfItemIsUndrawable(statusItem, profileId: profile.id, profileName: profile.name)
         }
     }
 
