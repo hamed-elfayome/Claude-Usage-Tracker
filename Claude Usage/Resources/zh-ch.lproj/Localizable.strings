@@ -375,6 +375,8 @@
 "claudecode.component_weekly_description" = "带进度条和重置时间的每周令牌使用量";
 "claudecode.component_extra_usage" = "显示额外使用量";
 "claudecode.component_extra_usage_description" = "费用指标（例如 9.49 USD）";
+"claudecode.component_cache" = "Show Prompt Cache";
+"claudecode.component_cache_description" = "Cache hit rate, with the cause of a recent miss (e.g., ⚡ 94% ✗ tools)";
 "claudecode.weekly_label" = "显示 \"Weekly:\" 标签";
 "claudecode.requirement_sessionkey" = "• 在凭据 → Claude.ai 标签页中配置了会话密钥";
 "claudecode.requirement_restart" = "• 应用更改后重启 Claude CLI";

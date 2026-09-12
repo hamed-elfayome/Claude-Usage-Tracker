@@ -33,6 +33,7 @@ struct ClaudeCodeView: View {
     @State private var showWeeklyResetTime: Bool = SharedDataStore.shared.loadStatuslineShowWeeklyResetTime()
     @State private var showWeeklyLabel: Bool = SharedDataStore.shared.loadStatuslineShowWeeklyLabel()
     @State private var showExtraUsage: Bool = SharedDataStore.shared.loadStatuslineShowExtraUsage()
+    @State private var showCache: Bool = SharedDataStore.shared.loadStatuslineShowCache()
 
     // Appearance settings
     @State private var colorMode: StatuslineColorMode = SharedDataStore.shared.loadStatuslineColorMode()
@@ -355,6 +356,12 @@ struct ClaudeCodeView: View {
                                 .padding(.leading, DesignTokens.Spacing.cardPadding)
                             }
                         }
+
+                        SettingToggle(
+                            title: "claudecode.component_cache".localized,
+                            description: "claudecode.component_cache_description".localized,
+                            isOn: $showCache
+                        )
                     }
 
                     Divider()
@@ -720,7 +727,14 @@ struct ClaudeCodeView: View {
                 }
             }
 
-            if !showDirectory && !showBranch && !showModel && !showProfile && !showContext && !showUsage && !showWeekly && !showExtraUsage {
+            if showCache {
+                if showDirectory || showBranch || showModel || showProfile || showContext || showUsage {
+                    Text(" │ ").foregroundColor(TerminalColors.gray)
+                }
+                Text("⚡ 94%").foregroundColor(TerminalColors.green)
+            }
+
+            if !showDirectory && !showBranch && !showModel && !showProfile && !showContext && !showUsage && !showWeekly && !showExtraUsage && !showCache {
                 Text("claudecode.preview_no_components".localized)
                     .foregroundColor(.secondary)
             }
@@ -853,7 +867,7 @@ struct ClaudeCodeView: View {
     /// Installs scripts, updates config file, and enables statusline in settings.json.
     private func applyConfiguration() {
         // Validate: at least one component must be selected
-        guard showModel || showDirectory || showBranch || showContext || showUsage || showProfile || showWeekly || showExtraUsage else {
+        guard showModel || showDirectory || showBranch || showContext || showUsage || showProfile || showWeekly || showExtraUsage || showCache else {
             statusMessage = "claudecode.error_no_components".localized
             isSuccess = false
             return
@@ -892,6 +906,7 @@ struct ClaudeCodeView: View {
         SharedDataStore.shared.saveStatuslineShowWeeklyResetTime(showWeeklyResetTime)
         SharedDataStore.shared.saveStatuslineShowWeeklyLabel(showWeeklyLabel)
         SharedDataStore.shared.saveStatuslineShowExtraUsage(showExtraUsage)
+        SharedDataStore.shared.saveStatuslineShowCache(showCache)
 
         do {
             // Write configuration file
@@ -920,7 +935,8 @@ struct ClaudeCodeView: View {
                 showWeeklyPaceMarker: showWeeklyPaceMarker,
                 showWeeklyResetTime: showWeeklyResetTime,
                 showWeeklyLabel: showWeeklyLabel,
-                showExtraUsage: showExtraUsage
+                showExtraUsage: showExtraUsage,
+                showCache: showCache
             )
 
             // Update Claude CLI settings.json
@@ -1045,6 +1061,10 @@ struct ClaudeCodeView: View {
             } else {
                 parts.append("– USD")
             }
+        }
+
+        if showCache {
+            parts.append("⚡ 94%")
         }
 
         return parts.isEmpty ? "claudecode.preview_no_components".localized : parts.joined(separator: " │ ")

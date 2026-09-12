@@ -43,6 +43,7 @@ class SharedDataStore {
         static let statuslineShowWeeklyResetTime = "statuslineShowWeeklyResetTime"
         static let statuslineShowWeeklyLabel = "statuslineShowWeeklyLabel"
         static let statuslineShowExtraUsage = "statuslineShowExtraUsage"
+        static let statuslineShowCache = "statuslineShowCache"
         static let statuslineColorMode = "statuslineColorMode"
         static let statuslineSingleColorHex = "statuslineSingleColorHex"
         static let statuslineElementColors = "statuslineElementColors"
@@ -380,6 +381,17 @@ class SharedDataStore {
             return false
         }
         return defaults.bool(forKey: Keys.statuslineShowExtraUsage)
+    }
+
+    func saveStatuslineShowCache(_ show: Bool) {
+        defaults.set(show, forKey: Keys.statuslineShowCache)
+    }
+
+    func loadStatuslineShowCache() -> Bool {
+        if defaults.object(forKey: Keys.statuslineShowCache) == nil {
+            return false
+        }
+        return defaults.bool(forKey: Keys.statuslineShowCache)
     }
 
     func saveStatuslineColorMode(_ mode: StatuslineColorMode) {

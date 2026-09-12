@@ -488,6 +488,8 @@
 "claudecode.component_weekly_description" = "막대 및 초기화 시간이 포함된 주간 토큰 사용량";
 "claudecode.component_extra_usage" = "추가 사용량 표시";
 "claudecode.component_extra_usage_description" = "비용 표시 (예: 9.49 USD)";
+"claudecode.component_cache" = "Show Prompt Cache";
+"claudecode.component_cache_description" = "Cache hit rate, with the cause of a recent miss (e.g., ⚡ 94% ✗ tools)";
 "claudecode.weekly_label" = "\"Weekly:\" 라벨 표시";
 "claudecode.requirement_sessionkey" = "• 자격 증명 → Claude.ai 탭에서 세션 키 구성됨";
 "claudecode.requirement_restart" = "• 변경사항 적용 후 Claude CLI 재시작";

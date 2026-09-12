@@ -367,6 +367,8 @@
 "claudecode.component_weekly_description" = "バーとリセット時間付きの週間トークン使用量";
 "claudecode.component_extra_usage" = "追加使用量を表示";
 "claudecode.component_extra_usage_description" = "コスト表示（例: 9.49 USD）";
+"claudecode.component_cache" = "Show Prompt Cache";
+"claudecode.component_cache_description" = "Cache hit rate, with the cause of a recent miss (e.g., ⚡ 94% ✗ tools)";
 "claudecode.weekly_label" = "\"Weekly:\" ラベルを表示";
 "claudecode.requirement_sessionkey" = "• 認証情報 → Claude.aiタブでセッションキーが構成されている";
 "claudecode.requirement_restart" = "• 変更適用後にClaude CLIを再起動";
