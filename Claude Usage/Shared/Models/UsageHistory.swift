@@ -203,22 +203,45 @@ struct UsageHistoryData: Codable, Equatable {
     /// Session reset snapshots sorted by date (newest first), filtered for valid data
     var sessionSnapshots: [UsageSnapshot] {
         snapshots(for: .sessionReset)
-            .filter { $0.triggeringResetTime <= $0.timestamp.addingTimeInterval(60) } // Allow 1 min tolerance
+            .filter(\.isValid)
             .sorted { $0.timestamp > $1.timestamp }
     }
 
     /// Weekly reset snapshots sorted by date (newest first), filtered for valid data
     var weeklySnapshots: [UsageSnapshot] {
         snapshots(for: .weeklyReset)
-            .filter { $0.triggeringResetTime <= $0.timestamp.addingTimeInterval(60) } // Allow 1 min tolerance
+            .filter(\.isValid)
             .sorted { $0.timestamp > $1.timestamp }
     }
 
     /// Billing cycle snapshots sorted by date (newest first), filtered for valid data
     var billingCycleSnapshots: [UsageSnapshot] {
         snapshots(for: .billingCycle)
-            .filter { $0.triggeringResetTime <= $0.timestamp.addingTimeInterval(60) } // Allow 1 min tolerance
+            .filter(\.isValid)
             .sorted { $0.timestamp > $1.timestamp }
+    }
+
+    /// Removes invalid snapshots and keeps only the newest `limit` snapshots of each
+    /// listed reset type. Operates on the raw array so snapshots hidden by the
+    /// validity filter can't accumulate unbounded (#337).
+    /// - Returns: Whether any snapshots were removed.
+    @discardableResult
+    mutating func prune(limits: [ResetType: Int]) -> Bool {
+        let originalCount = snapshots.count
+        snapshots.removeAll { !$0.isValid }
+
+        for (resetType, limit) in limits {
+            let ofType = snapshots(for: resetType)
+            guard ofType.count > limit else { continue }
+            let idsToRemove = Set(
+                ofType.sorted { $0.timestamp > $1.timestamp }
+                    .dropFirst(limit)
+                    .map(\.id)
+            )
+            snapshots.removeAll { idsToRemove.contains($0.id) }
+        }
+
+        return snapshots.count != originalCount
     }
 
     /// Total number of snapshots
@@ -287,5 +310,27 @@ struct UsageHistoryData: Codable, Equatable {
     func exportToCSV(for resetType: ResetType) -> String {
         let filtered = UsageHistoryData(snapshots: snapshots(for: resetType))
         return filtered.exportToCSV()
+    }
+}
+
+extension UsageSnapshot {
+    /// A snapshot is valid when its triggering reset time isn't after the moment it
+    /// was captured (1 min tolerance). Snapshots recorded against an upcoming reset
+    /// time come from spurious reset detections and are never displayed.
+    var isValid: Bool {
+        triggeringResetTime <= timestamp.addingTimeInterval(60)
+    }
+}
+
+/// Decides whether a change in an API-reported reset time is a real reset.
+enum ResetDetection {
+    /// Reset times from the API jitter by sub-second amounts around a minute
+    /// boundary and can drift slightly between polls, while a real reset moves them
+    /// by hours or days. Comparing truncated minutes turned that jitter into a
+    /// "reset" on nearly every poll (#337).
+    static let tolerance: TimeInterval = 5 * 60
+
+    static func isReset(from previous: Date, to new: Date) -> Bool {
+        abs(new.timeIntervalSince(previous)) > tolerance
     }
 }

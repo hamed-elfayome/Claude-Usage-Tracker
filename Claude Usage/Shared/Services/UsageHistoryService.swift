@@ -26,6 +26,15 @@ class UsageHistoryService {
     /// Maximum snapshots to keep per type (to prevent excessive data)
     private let maxSessionSnapshots = 1000   // ~7 days at 10-min intervals
     private let maxWeeklySnapshots = 500     // ~6 weeks at 2-hour intervals
+    private let maxBillingSnapshots = 100    // ~8 years of monthly cycles
+
+    private var snapshotLimits: [ResetType: Int] {
+        [.sessionReset: maxSessionSnapshots, .weeklyReset: maxWeeklySnapshots, .billingCycle: maxBillingSnapshots]
+    }
+
+    /// In-memory copy of each profile's history, so recording a snapshot doesn't
+    /// re-read and re-decode the whole file every time (#337).
+    private var historyCache: [UUID: UsageHistoryData] = [:]
 
     /// Recording intervals for periodic snapshots
     private let sessionRecordingInterval: TimeInterval = 10 * 60  // 10 minutes
@@ -123,6 +132,7 @@ class UsageHistoryService {
 
     /// Saves usage history for a profile (to a JSON file, not UserDefaults — see #260)
     func saveHistory(_ history: UsageHistoryData, for profileId: UUID) {
+        historyCache[profileId] = history
         do {
             let data = try encoder.encode(history)
             try data.write(to: historyFileURL(for: profileId), options: [.atomic])
@@ -134,18 +144,36 @@ class UsageHistoryService {
 
     /// Loads usage history for a profile (from its JSON file — see #260)
     func loadHistory(for profileId: UUID) -> UsageHistoryData {
+        if let cached = historyCache[profileId] {
+            return cached
+        }
+
         let url = historyFileURL(for: profileId)
         guard let data = try? Data(contentsOf: url) else {
             return UsageHistoryData()
         }
 
         do {
-            let history = try decoder.decode(UsageHistoryData.self, from: data)
+            var history = try decoder.decode(UsageHistoryData.self, from: data)
+            // Clean up files bloated by spurious reset snapshots (#337)
+            if history.prune(limits: snapshotLimits) {
+                LoggingService.shared.logInfo("UsageHistory: pruned history for profile \(profileId.uuidString.prefix(8)) to \(history.count) snapshots")
+                saveHistory(history, for: profileId)
+            }
+            historyCache[profileId] = history
             return history
         } catch {
             LoggingService.shared.logStorageError("loadHistory", error: error)
             return UsageHistoryData()
         }
+    }
+
+    /// Appends a snapshot, enforces per-type limits, and persists the result.
+    private func appendSnapshot(_ snapshot: UsageSnapshot, for profileId: UUID) {
+        var history = loadHistory(for: profileId)
+        history.addSnapshot(snapshot)
+        history.prune(limits: snapshotLimits)
+        saveHistory(history, for: profileId)
     }
 
     // MARK: - Record Resets
@@ -164,20 +192,7 @@ class UsageHistoryService {
         }
 
         let snapshot = UsageSnapshot.fromSessionReset(usage, resetTime: resetTime, provider: provider)
-
-        var history = loadHistory(for: profileId)
-        history.addSnapshot(snapshot)
-
-        // Prune old session snapshots if exceeding limit
-        let sessionCount = history.sessionSnapshots.count
-        if sessionCount > maxSessionSnapshots {
-            let toRemove = sessionCount - maxSessionSnapshots
-            let oldestSessions = history.sessionSnapshots.suffix(toRemove)
-            let idsToRemove = Set(oldestSessions.map { $0.id })
-            history.snapshots.removeAll { idsToRemove.contains($0.id) }
-        }
-
-        saveHistory(history, for: profileId)
+        appendSnapshot(snapshot, for: profileId)
         LoggingService.shared.logInfo("Recorded session reset snapshot for profile \(profileId.uuidString.prefix(8)): \(usage.sessionPercentage)% usage")
     }
 
@@ -195,10 +210,7 @@ class UsageHistoryService {
         }
 
         let snapshot = UsageSnapshot.fromWeeklyReset(usage, resetTime: resetTime, provider: provider)
-
-        var history = loadHistory(for: profileId)
-        history.addSnapshot(snapshot)
-        saveHistory(history, for: profileId)
+        appendSnapshot(snapshot, for: profileId)
 
         LoggingService.shared.logInfo("Recorded weekly reset snapshot for profile \(profileId.uuidString.prefix(8)): \(usage.weeklyPercentage)% usage")
     }
@@ -217,10 +229,7 @@ class UsageHistoryService {
         }
 
         let snapshot = UsageSnapshot.fromBillingCycleReset(usage, resetTime: resetTime)
-
-        var history = loadHistory(for: profileId)
-        history.addSnapshot(snapshot)
-        saveHistory(history, for: profileId)
+        appendSnapshot(snapshot, for: profileId)
 
         LoggingService.shared.logInfo("Recorded billing cycle snapshot for profile \(profileId.uuidString.prefix(8)): \(usage.formattedUsed) spent")
     }
@@ -249,19 +258,7 @@ class UsageHistoryService {
             triggeringResetTime: now
         )
 
-        var history = loadHistory(for: profileId)
-        history.addSnapshot(snapshot)
-
-        // Prune old session snapshots if exceeding limit
-        let sessionCount = history.sessionSnapshots.count
-        if sessionCount > maxSessionSnapshots {
-            let toRemove = sessionCount - maxSessionSnapshots
-            let oldestSessions = history.sessionSnapshots.suffix(toRemove)
-            let idsToRemove = Set(oldestSessions.map { $0.id })
-            history.snapshots.removeAll { idsToRemove.contains($0.id) }
-        }
-
-        saveHistory(history, for: profileId)
+        appendSnapshot(snapshot, for: profileId)
         setLastSessionRecordTime(now, for: profileId)
         LoggingService.shared.logInfo("Recorded periodic session snapshot: \(usage.sessionPercentage)%")
     }
@@ -294,19 +291,7 @@ class UsageHistoryService {
             triggeringResetTime: now
         )
 
-        var history = loadHistory(for: profileId)
-        history.addSnapshot(snapshot)
-
-        // Prune old weekly snapshots if exceeding limit
-        let weeklyCount = history.weeklySnapshots.count
-        if weeklyCount > maxWeeklySnapshots {
-            let toRemove = weeklyCount - maxWeeklySnapshots
-            let oldestWeekly = history.weeklySnapshots.suffix(toRemove)
-            let idsToRemove = Set(oldestWeekly.map { $0.id })
-            history.snapshots.removeAll { idsToRemove.contains($0.id) }
-        }
-
-        saveHistory(history, for: profileId)
+        appendSnapshot(snapshot, for: profileId)
         setLastWeeklyRecordTime(now, for: profileId)
         LoggingService.shared.logInfo("Recorded periodic weekly snapshot: \(usage.weeklyPercentage)%")
     }
@@ -396,6 +381,7 @@ class UsageHistoryService {
 
     /// Deletes all history for a profile
     func deleteHistory(for profileId: UUID) {
+        historyCache.removeValue(forKey: profileId)
         try? FileManager.default.removeItem(at: historyFileURL(for: profileId))
         // Best-effort removal of any legacy UserDefaults blob (pre-migration installs).
         defaults.removeObject(forKey: storageKey(for: profileId))
