@@ -129,8 +129,7 @@ class NotificationManager: NotificationServiceProtocol {
         }
 
         guard usage.hasSessionLimit else {
-            previousSessionPercentages.removeValue(forKey: profileName)
-            sentNotifications = sentNotifications.filter { !$0.hasPrefix(profileName) }
+            clearNotificationsForProfile(profileName)
             return
         }
 

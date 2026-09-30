@@ -98,6 +98,7 @@ final class ProfileProviderTests: XCTestCase {
         XCTAssertEqual(decoded.creditsUnlimited, false)
     }
 
+    @MainActor
     func testCachedProUsageKeepsSessionLimitDisabled() throws {
         var usage = ClaudeUsage.empty
         usage.planType = "pro"

@@ -157,6 +157,8 @@ class UsageHistoryService {
             return
         }
 
+        guard usage.hasSessionLimit else { return }
+
         // Only record if there was actual usage
         guard usage.sessionTokensUsed > 0 || usage.sessionPercentage > 0 else {
             LoggingService.shared.logInfo("recordSessionReset: Skipping snapshot - no usage to record")

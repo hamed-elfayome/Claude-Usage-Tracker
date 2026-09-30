@@ -592,6 +592,7 @@ final class StatusBarUIManager {
             // Show default app logo
             if let statusItem = statusItems[.session],  // We use .session as placeholder key
                let button = statusItem.button {
+                statusItem.isVisible = true
                 // Get actual menu bar appearance from the button
                 let menuBarIsDark = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
                 let logoImage = renderer.createDefaultAppLogo(isDarkMode: menuBarIsDark)
@@ -682,13 +683,15 @@ final class StatusBarUIManager {
         return statusItems[metricType]?.button
     }
 
-    /// Get the first enabled metric's button (for backwards compatibility)
+    /// Get the first visible enabled metric's button for popover positioning.
     var primaryButton: NSStatusBarButton? {
         let config = DataStore.shared.loadMenuBarIconConfiguration()
-        guard let firstMetric = config.enabledMetrics.first else {
-            return nil
+        for metric in config.enabledMetrics {
+            if let item = statusItems[metric.metricType], item.isVisible {
+                return item.button
+            }
         }
-        return statusItems[firstMetric.metricType]?.button
+        return nil
     }
 
     /// Find which metric type owns the given button (sender)
