@@ -229,6 +229,8 @@ class UsageHistoryService {
 
     /// Records session usage periodically (every 10 minutes)
     func recordSessionPeriodic(for profileId: UUID, usage: ClaudeUsage, provider: Provider = .anthropic) {
+        guard usage.hasSessionLimit else { return }
+
         let now = Date()
 
         // Check if enough time has passed since last recording (using persisted timestamp)
