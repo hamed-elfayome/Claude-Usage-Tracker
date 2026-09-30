@@ -364,9 +364,10 @@ final class StatusBarUIManager {
             // Get usage data for this profile
             let usage = profile.claudeUsage ?? ClaudeUsage.empty
             let showRemaining = config.showRemainingPercentage
+            let showWeek = config.showWeek && usage.hasSessionLimit
 
-            // Calculate percentages
-            let sessionUsed = usage.effectiveSessionPercentage
+            // Pro uses weekly usage as its primary metric.
+            let sessionUsed = usage.hasSessionLimit ? usage.effectiveSessionPercentage : usage.weeklyPercentage
             let weekUsed = usage.weeklyPercentage
 
             let sessionDisplay = UsageStatusCalculator.getDisplayPercentage(
@@ -379,8 +380,8 @@ final class StatusBarUIManager {
             )
 
             let sessionElapsed = UsageStatusCalculator.elapsedFraction(
-                resetTime: usage.sessionResetTime,
-                duration: Constants.sessionWindow,
+                resetTime: usage.hasSessionLimit ? usage.sessionResetTime : usage.weeklyResetTime,
+                duration: usage.hasSessionLimit ? Constants.sessionWindow : Constants.weeklyWindow,
                 showRemaining: false
             )
             let weekElapsed = UsageStatusCalculator.elapsedFraction(
@@ -428,7 +429,7 @@ final class StatusBarUIManager {
                 if config.showProfileLabel {
                     image = renderer.createConcentricIconWithLabel(
                         sessionPercentage: sessionDisplay,
-                        weekPercentage: config.showWeek ? weekDisplay : 0,
+                        weekPercentage: showWeek ? weekDisplay : 0,
                         sessionStatus: sessionStatus,
                         weekStatus: weekStatus,
                         profileName: profile.name,
@@ -436,15 +437,16 @@ final class StatusBarUIManager {
                         isDarkMode: menuBarIsDark,
                         useSystemColor: false,
                         sessionTimeMarker: sessionMarker,
-                        weekTimeMarker: config.showWeek ? weekMarker : nil,
+                        weekTimeMarker: showWeek ? weekMarker : nil,
                         sessionPaceStatus: sessionPaceStatus,
-                        weekPaceStatus: config.showWeek ? weekPaceStatus : nil,
-                        showPaceMarker: config.showPaceMarker
+                        weekPaceStatus: showWeek ? weekPaceStatus : nil,
+                        showPaceMarker: config.showPaceMarker,
+                        showWeek: showWeek
                     )
                 } else {
                     image = renderer.createConcentricIcon(
                         sessionPercentage: sessionDisplay,
-                        weekPercentage: config.showWeek ? weekDisplay : 0,
+                        weekPercentage: showWeek ? weekDisplay : 0,
                         sessionStatus: sessionStatus,
                         weekStatus: weekStatus,
                         profileInitial: String(profile.name.prefix(1)),
@@ -452,16 +454,17 @@ final class StatusBarUIManager {
                         isDarkMode: menuBarIsDark,
                         useSystemColor: false,
                         sessionTimeMarker: sessionMarker,
-                        weekTimeMarker: config.showWeek ? weekMarker : nil,
+                        weekTimeMarker: showWeek ? weekMarker : nil,
                         sessionPaceStatus: sessionPaceStatus,
-                        weekPaceStatus: config.showWeek ? weekPaceStatus : nil,
-                        showPaceMarker: config.showPaceMarker
+                        weekPaceStatus: showWeek ? weekPaceStatus : nil,
+                        showPaceMarker: config.showPaceMarker,
+                        showWeek: showWeek
                     )
                 }
             case .progressBar:
                 image = renderer.createMultiProfileProgressBar(
                     sessionPercentage: sessionDisplay,
-                    weekPercentage: config.showWeek ? weekDisplay : nil,
+                    weekPercentage: showWeek ? weekDisplay : nil,
                     sessionStatus: sessionStatus,
                     weekStatus: weekStatus,
                     profileName: config.showProfileLabel ? profile.name : nil,
@@ -469,9 +472,9 @@ final class StatusBarUIManager {
                     isDarkMode: menuBarIsDark,
                     useSystemColor: false,
                     sessionTimeMarker: sessionMarker,
-                    weekTimeMarker: config.showWeek ? weekMarker : nil,
+                    weekTimeMarker: showWeek ? weekMarker : nil,
                     sessionPaceStatus: sessionPaceStatus,
-                    weekPaceStatus: config.showWeek ? weekPaceStatus : nil,
+                    weekPaceStatus: showWeek ? weekPaceStatus : nil,
                     showPaceMarker: config.showPaceMarker
                 )
             case .compact:
@@ -488,7 +491,7 @@ final class StatusBarUIManager {
             case .percentage:
                 image = renderer.createMultiProfilePercentage(
                     sessionPercentage: sessionDisplay,
-                    weekPercentage: config.showWeek ? weekDisplay : nil,
+                    weekPercentage: showWeek ? weekDisplay : nil,
                     sessionStatus: sessionStatus,
                     weekStatus: weekStatus,
                     profileName: config.showProfileLabel ? profile.name : nil,
@@ -496,7 +499,7 @@ final class StatusBarUIManager {
                     isDarkMode: menuBarIsDark,
                     useSystemColor: false,
                     sessionPaceStatus: sessionPaceStatus,
-                    weekPaceStatus: config.showWeek ? weekPaceStatus : nil,
+                    weekPaceStatus: showWeek ? weekPaceStatus : nil,
                     showPaceMarker: config.showPaceMarker
                 )
             }
@@ -589,6 +592,7 @@ final class StatusBarUIManager {
             // Show default app logo
             if let statusItem = statusItems[.session],  // We use .session as placeholder key
                let button = statusItem.button {
+                statusItem.isVisible = true
                 // Get actual menu bar appearance from the button
                 let menuBarIsDark = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
                 let logoImage = renderer.createDefaultAppLogo(isDarkMode: menuBarIsDark)
@@ -600,30 +604,7 @@ final class StatusBarUIManager {
 
         // Normal metric display
         for metricConfig in config.enabledMetrics {
-            guard let statusItem = statusItems[metricConfig.metricType],
-                  let button = statusItem.button else {
-                continue
-            }
-
-            // Get actual menu bar appearance from the button
-            let menuBarIsDark = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-
-            // Create image directly using our renderer
-            let image = renderer.createImage(
-                for: metricConfig.metricType,
-                config: metricConfig,
-                globalConfig: config,
-                usage: usage,
-                apiUsage: apiUsage,
-                isDarkMode: menuBarIsDark,
-                colorMode: config.colorMode,
-                singleColorHex: config.singleColorHex,
-                showIconName: config.showIconNames,
-                showNextSessionTime: metricConfig.showNextSessionTime
-            )
-
-            image.isTemplate = config.colorMode == .monochrome && !config.showPaceMarker
-            button.image = image
+            updateButton(for: metricConfig.metricType, usage: usage, apiUsage: apiUsage)
         }
     }
 
@@ -640,16 +621,28 @@ final class StatusBarUIManager {
 
         // Get config from active profile
         let config = ProfileManager.shared.activeProfile?.iconConfig ?? .default
-        guard let metricConfig = config.config(for: metricType) else {
+        let replacesSession = metricType == .session && !usage.hasSessionLimit
+        let hasWeekIcon = config.enabledMetrics.contains { $0.metricType == .week }
+        let shouldBeVisible = !replacesSession || !hasWeekIcon
+        if statusItem.isVisible != shouldBeVisible {
+            statusItem.isVisible = shouldBeVisible
+        }
+        guard shouldBeVisible else { return }
+
+        // Keep a clickable weekly icon when the saved configuration only enables session.
+        let displayMetric = replacesSession ? MenuBarMetricType.week : metricType
+        guard var metricConfig = config.config(for: metricType) else {
             return
         }
+
+        metricConfig.metricType = displayMetric
 
         // Get the actual menu bar appearance from the button's effective appearance
         let menuBarIsDark = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
 
         // Create image directly using our renderer
         let image = renderer.createImage(
-            for: metricType,
+            for: displayMetric,
             config: metricConfig,
             globalConfig: config,
             usage: usage,
@@ -658,7 +651,7 @@ final class StatusBarUIManager {
             colorMode: config.colorMode,
             singleColorHex: config.singleColorHex,
             showIconName: config.showIconNames,
-            showNextSessionTime: metricConfig.showNextSessionTime
+            showNextSessionTime: !replacesSession && metricConfig.showNextSessionTime
         )
 
         image.isTemplate = config.colorMode == .monochrome && !config.showPaceMarker
@@ -690,13 +683,15 @@ final class StatusBarUIManager {
         return statusItems[metricType]?.button
     }
 
-    /// Get the first enabled metric's button (for backwards compatibility)
+    /// Get the first visible enabled metric's button for popover positioning.
     var primaryButton: NSStatusBarButton? {
         let config = DataStore.shared.loadMenuBarIconConfiguration()
-        guard let firstMetric = config.enabledMetrics.first else {
-            return nil
+        for metric in config.enabledMetrics {
+            if let item = statusItems[metric.metricType], item.isVisible {
+                return item.button
+            }
         }
-        return statusItems[firstMetric.metricType]?.button
+        return nil
     }
 
     /// Find which metric type owns the given button (sender)

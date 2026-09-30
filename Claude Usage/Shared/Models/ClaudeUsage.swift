@@ -8,9 +8,15 @@ struct ClaudeUsage: Codable, Equatable {
     var sessionPercentage: Double
     var sessionResetTime: Date
 
-    /// Returns 0% if the 5-hour session window has expired, otherwise the raw percentage.
+    /// Codex Pro has no five-hour limit. Other providers leave planType unset.
+    /// https://learn.chatgpt.com/docs/pricing
+    var hasSessionLimit: Bool {
+        planType != "pro"
+    }
+
+    /// Returns 0% if there is no session limit or its window has expired.
     var effectiveSessionPercentage: Double {
-        sessionResetTime < Date() ? 0.0 : sessionPercentage
+        !hasSessionLimit || sessionResetTime < Date() ? 0.0 : sessionPercentage
     }
 
     // Weekly data (all models)

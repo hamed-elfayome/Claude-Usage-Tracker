@@ -128,6 +128,11 @@ class NotificationManager: NotificationServiceProtocol {
             return
         }
 
+        guard usage.hasSessionLimit else {
+            clearNotificationsForProfile(profileName)
+            return
+        }
+
         let sessionPercentage = usage.effectiveSessionPercentage
         let previousPercentage = previousSessionPercentages[profileName] ?? 0.0
 

@@ -753,7 +753,8 @@ final class MenuBarIconRenderer {
         weekTimeMarker: CGFloat? = nil,
         sessionPaceStatus: PaceStatus? = nil,
         weekPaceStatus: PaceStatus? = nil,
-        showPaceMarker: Bool = false
+        showPaceMarker: Bool = false,
+        showWeek: Bool = true
     ) -> NSImage {
         let size: CGFloat = 24
         let image = NSImage(size: NSSize(width: size, height: size))
@@ -830,10 +831,10 @@ final class MenuBarIconRenderer {
         )
         backgroundColor.setStroke()
         innerBgPath.lineWidth = innerStrokeWidth
-        innerBgPath.stroke()
+        if showWeek { innerBgPath.stroke() }
 
         // Week progress ring (inner - secondary metric, clockwise from 12 o'clock)
-        if weekPercentage > 0 {
+        if showWeek && weekPercentage > 0 {
             let weekEndAngle = 90 - (360 * CGFloat(weekPercentage / 100.0))
             let innerProgressPath = NSBezierPath()
             innerProgressPath.appendArc(
@@ -850,7 +851,7 @@ final class MenuBarIconRenderer {
         }
 
         // Week time marker on inner ring
-        if let fraction = weekTimeMarker {
+        if showWeek, let fraction = weekTimeMarker {
             let tickAngle = (90 - 360 * fraction) * .pi / 180
             let innerR = innerRadius - 2.0
             let outerR = innerRadius + 2.0
@@ -890,7 +891,8 @@ final class MenuBarIconRenderer {
         weekTimeMarker: CGFloat? = nil,
         sessionPaceStatus: PaceStatus? = nil,
         weekPaceStatus: PaceStatus? = nil,
-        showPaceMarker: Bool = false
+        showPaceMarker: Bool = false,
+        showWeek: Bool = true
     ) -> NSImage {
         let circleSize: CGFloat = 20
         let labelHeight: CGFloat = 10
@@ -973,10 +975,10 @@ final class MenuBarIconRenderer {
         )
         backgroundColor.setStroke()
         innerBgPath.lineWidth = innerStrokeWidth
-        innerBgPath.stroke()
+        if showWeek { innerBgPath.stroke() }
 
         // Week progress ring (inner - secondary metric, clockwise from 12 o'clock)
-        if weekPercentage > 0 {
+        if showWeek && weekPercentage > 0 {
             let weekEndAngle = 90 - (360 * CGFloat(weekPercentage / 100.0))
             let innerProgressPath = NSBezierPath()
             innerProgressPath.appendArc(
@@ -993,7 +995,7 @@ final class MenuBarIconRenderer {
         }
 
         // Week time marker on inner ring
-        if let fraction = weekTimeMarker {
+        if showWeek, let fraction = weekTimeMarker {
             let tickAngle = (90 - 360 * fraction) * .pi / 180
             let innerR = innerRadius - 2.0
             let outerR = innerRadius + 2.0

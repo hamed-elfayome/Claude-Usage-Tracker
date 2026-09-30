@@ -80,6 +80,7 @@ final class ProfileProviderTests: XCTestCase {
 
         let decoded = try JSONDecoder().decode(ClaudeUsage.self, from: legacyData)
         XCTAssertNil(decoded.planType)
+        XCTAssertTrue(decoded.hasSessionLimit)
         XCTAssertNil(decoded.creditsBalance)
         XCTAssertNil(decoded.creditsUnlimited)
     }
@@ -95,6 +96,20 @@ final class ProfileProviderTests: XCTestCase {
         XCTAssertEqual(decoded.planType, "plus")
         XCTAssertEqual(decoded.creditsBalance, 12.5)
         XCTAssertEqual(decoded.creditsUnlimited, false)
+    }
+
+    @MainActor
+    func testCachedProUsageKeepsSessionLimitDisabled() throws {
+        var usage = ClaudeUsage.empty
+        usage.planType = "pro"
+        usage.sessionPercentage = 99
+        usage.weeklyPercentage = 17
+
+        let data = try JSONEncoder().encode(usage)
+        let decoded = try JSONDecoder().decode(ClaudeUsage.self, from: data)
+        XCTAssertFalse(decoded.hasSessionLimit)
+        XCTAssertEqual(decoded.effectiveSessionPercentage, 0)
+        XCTAssertEqual(decoded.weeklyPercentage, 17)
     }
 
     // MARK: - UsageSnapshot provider tag

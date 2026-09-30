@@ -338,7 +338,7 @@ Access profile switcher in multiple places:
 Profiles aren't Claude-only anymore. When creating a profile, pick **OpenAI Codex** as its provider to track your Codex rate limits in the same menu bar:
 
 - Reads your existing `~/.codex/auth.json` login (or paste credentials in Settings → Codex Account)
-- Maps Codex's 5-hour and weekly rate windows onto the familiar session/weekly rows
+- Maps Codex's rate windows onto the familiar session/weekly rows; Pro profiles show weekly usage only
 - Refreshes expired tokens automatically and writes them back atomically with `0600` permissions
 - Anthropic-only integrations (statusline, auto-start, Dynamic Island) hide themselves for Codex profiles
 
