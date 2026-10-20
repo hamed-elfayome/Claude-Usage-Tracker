@@ -23,17 +23,44 @@ final class AutoStartSessionService {
     private var wakeObserver: NSObjectProtocol?
     private var sleepObserver: NSObjectProtocol?
 
-    private let apiService: ClaudeAPIService
-    private let profileManager: ProfileManager
-    private let notificationManager: NotificationManager
+    let session: URLSession
+    private let profiles: () -> [Profile]
+    let saveUsage: (ClaudeUsage, UUID) -> Void
+    private let notify: (Profile, Bool, String?) -> Void
+    let logError: (String) -> Void
 
     // Track last captured reset time per profile to prevent duplicate auto-starts
     private var lastCapturedResetTime: [UUID: Date] = [:]
 
-    private init() {
-        self.apiService = ClaudeAPIService()
-        self.profileManager = ProfileManager.shared
-        self.notificationManager = NotificationManager.shared
+    private convenience init() {
+        self.init(
+            session: .shared,
+            profiles: { ProfileManager.shared.profiles },
+            saveUsage: { ProfileManager.shared.saveClaudeUsage($0, for: $1) },
+            notify: { profile, success, error in
+                NotificationManager.shared.sendAutoStartNotification(
+                    profileName: profile.name,
+                    success: success,
+                    error: error,
+                    settings: profile.notificationSettings
+                )
+            },
+            logError: { LoggingService.shared.logError($0) }
+        )
+    }
+
+    init(
+        session: URLSession,
+        profiles: @escaping () -> [Profile],
+        saveUsage: @escaping (ClaudeUsage, UUID) -> Void,
+        notify: @escaping (Profile, Bool, String?) -> Void,
+        logError: @escaping (String) -> Void
+    ) {
+        self.session = session
+        self.profiles = profiles
+        self.saveUsage = saveUsage
+        self.notify = notify
+        self.logError = logError
     }
 
     // MARK: - Lifecycle
@@ -103,6 +130,7 @@ final class AutoStartSessionService {
     // MARK: - Profile Checking
 
     /// Performs check with debouncing to prevent duplicate checks
+
     private func performCheckIfNeeded(source: String) async {
         // Debounce: Don't check if we checked less than 10 seconds ago
         let timeSinceLastCheck = Date().timeIntervalSince(lastCheckTime)
@@ -115,11 +143,13 @@ final class AutoStartSessionService {
         await checkAllProfiles(source: source)
     }
 
-    private func checkAllProfiles(source: String) async {
-        LoggingService.shared.logDebug("AutoStartSessionService: Checking all profiles for auto-start (source: \(source))")
+    func checkAllProfiles(source: String) async {
+        LoggingService.shared.logDebug(
+            "AutoStartSessionService: Checking all profiles for auto-start (source: \(source))"
+        )
 
         // Get all profiles with auto-start enabled
-        let profilesWithAutoStart = profileManager.profiles.filter { $0.autoStartSessionEnabled }
+        let profilesWithAutoStart = profiles().filter { $0.autoStartSessionEnabled }
 
         guard !profilesWithAutoStart.isEmpty else {
             LoggingService.shared.logDebug("No profiles with auto-start enabled")
@@ -169,8 +199,23 @@ final class AutoStartSessionService {
                 if let lastResetTime = lastCapturedResetTime[profile.id],
                    Date() < lastResetTime {
                     let minutesRemaining = Int(lastResetTime.timeIntervalSinceNow / 60)
-                    LoggingService.shared.logDebug("Profile '\(profile.name)': skipping auto-start - \(minutesRemaining)m until session reset")
+                    LoggingService.shared.logDebug(
+                        "Profile '\(profile.name)': skipping auto-start - \(minutesRemaining)m until session reset"
+                    )
                     return
+                }
+
+                // An unused five-hour window does not restore the weekly allowance.
+                // Check the account's explicit spending permission, not cached costs
+                // or the tracker's optional extra-usage display setting.
+                if usage.weeklyPercentage >= 100 {
+                    guard try await fetchExtraUsageEnabled(for: profile) else {
+                        LoggingService.shared.logInfo(
+                            "Profile '\(profile.name)': skipping auto-start - "
+                                + "weekly allowance exhausted and extra usage disabled"
+                        )
+                        return
+                    }
                 }
 
                 LoggingService.shared.logInfo("Session at 0% for profile '\(profile.name)' - triggering auto-start")
@@ -180,205 +225,17 @@ final class AutoStartSessionService {
             } else {
                 // Session is active, clear any tracked reset time since usage endpoint is now showing correct data
                 lastCapturedResetTime.removeValue(forKey: profile.id)
-                LoggingService.shared.logDebug("Profile '\(profile.name)': session at \(currentPercentage)% (window \(hasOpenWindow ? "open" : "closed"))")
+                let windowState = hasOpenWindow ? "open" : "closed"
+                LoggingService.shared.logDebug(
+                    "Profile '\(profile.name)': session at \(currentPercentage)% (window \(windowState))"
+                )
             }
 
         } catch {
-            LoggingService.shared.logError("Failed to check profile '\(profile.name)': \(error.localizedDescription)")
+            // Network, parsing, and permission errors must all stop this check.
+            logError("Failed to check profile '\(profile.name)': \(error.localizedDescription)")
         }
     }
-
-    private func fetchUsageForProfile(_ profile: Profile) async throws -> (usage: ClaudeUsage, hasOpenWindow: Bool) {
-        // Fetch usage data using the profile's specific credentials
-        let (usage, hasOpenWindow) = try await fetchUsageData(for: profile)
-
-        // Save usage to profile
-        await MainActor.run {
-            profileManager.saveClaudeUsage(usage, for: profile.id)
-        }
-
-        return (usage, hasOpenWindow)
-    }
-
-    private func fetchUsageData(for profile: Profile) async throws -> (usage: ClaudeUsage, hasOpenWindow: Bool) {
-        // Get credentials from the specific profile
-        guard let sessionKey = profile.claudeSessionKey,
-              let orgId = profile.organizationId else {
-            throw AppError(
-                code: .sessionKeyNotFound,
-                message: "Missing credentials for profile '\(profile.name)'",
-                isRecoverable: false
-            )
-        }
-
-        // Build URL
-        let url = try URLBuilder(baseURL: Constants.APIEndpoints.claudeBase)
-            .appendingPath("/organizations/\(orgId)/usage")
-            .build()
-
-        var request = URLRequest(url: url)
-        request.setValue(ClaudeAPIService.sessionCookieHeader(sessionKey: sessionKey, url: url), forHTTPHeaderField: "Cookie")
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.httpMethod = "GET"
-        request.timeoutInterval = 30
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw AppError(code: .apiInvalidResponse, message: "Invalid response", isRecoverable: true)
-        }
-
-        guard httpResponse.statusCode == 200 else {
-            throw AppError(
-                code: .apiGenericError,
-                message: "API returned status \(httpResponse.statusCode)",
-                isRecoverable: true
-            )
-        }
-
-        // Parse usage response
-        return try parseUsageResponse(data)  // (usage, hasOpenWindow)
-    }
-
-    private func parseUsageResponse(_ data: Data) throws -> (usage: ClaudeUsage, hasOpenWindow: Bool) {
-        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            throw AppError(code: .apiParsingFailed, message: "Failed to parse usage data", isRecoverable: false)
-        }
-
-        // Extract session usage (five_hour)
-        var sessionPercentage = 0.0
-        var sessionResetTime = Date().addingTimeInterval(5 * 3600)
-
-        // Whether a window is currently open, as opposed to merely unused. The
-        // API omits `resets_at` when no window is running; when one is running
-        // it is present and in the future. Percentage alone cannot tell these
-        // apart, since an open window reads 0% until usage accrues past
-        // rounding. `sessionResetTime` above is synthesised when absent, so it
-        // cannot carry this signal — hence a separate flag.
-        var hasOpenWindow = false
-
-        if let fiveHour = json["five_hour"] as? [String: Any] {
-            if let utilization = fiveHour["utilization"] {
-                sessionPercentage = parseUtilization(utilization)
-            }
-            if let resetsAt = fiveHour["resets_at"] as? String {
-                let formatter = ISO8601DateFormatter()
-                formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-                sessionResetTime = formatter.date(from: resetsAt) ?? sessionResetTime
-                hasOpenWindow = sessionResetTime > Date()
-            }
-        }
-
-        // Extract weekly usage (seven_day)
-        var weeklyPercentage = 0.0
-        var weeklyResetTime = Date().nextMonday1259pm()
-
-        if let sevenDay = json["seven_day"] as? [String: Any] {
-            if let utilization = sevenDay["utilization"] {
-                weeklyPercentage = parseUtilization(utilization)
-            }
-            if let resetsAt = sevenDay["resets_at"] as? String {
-                let formatter = ISO8601DateFormatter()
-                formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-                weeklyResetTime = formatter.date(from: resetsAt) ?? weeklyResetTime
-            }
-        }
-
-        // Extract Opus weekly usage (seven_day_opus)
-        var opusPercentage = 0.0
-        if let sevenDayOpus = json["seven_day_opus"] as? [String: Any] {
-            if let utilization = sevenDayOpus["utilization"] {
-                opusPercentage = parseUtilization(utilization)
-            }
-        }
-
-        // Extract Sonnet weekly usage (seven_day_sonnet)
-        var sonnetPercentage = 0.0
-        var sonnetResetTime: Date? = nil
-        if let sevenDaySonnet = json["seven_day_sonnet"] as? [String: Any] {
-            if let utilization = sevenDaySonnet["utilization"] {
-                sonnetPercentage = parseUtilization(utilization)
-            }
-            if let resetsAt = sevenDaySonnet["resets_at"] as? String {
-                let formatter = ISO8601DateFormatter()
-                formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-                sonnetResetTime = formatter.date(from: resetsAt)
-            }
-        }
-
-        let weeklyLimit = Constants.weeklyLimit
-        let weeklyTokens = Int(Double(weeklyLimit) * (weeklyPercentage / 100.0))
-        let opusTokens = Int(Double(weeklyLimit) * (opusPercentage / 100.0))
-        let sonnetTokens = Int(Double(weeklyLimit) * (sonnetPercentage / 100.0))
-
-        let usage = ClaudeUsage(
-            sessionTokensUsed: 0,
-            sessionLimit: 0,
-            sessionPercentage: sessionPercentage,
-            sessionResetTime: sessionResetTime,
-            weeklyTokensUsed: weeklyTokens,
-            weeklyLimit: weeklyLimit,
-            weeklyPercentage: weeklyPercentage,
-            weeklyResetTime: weeklyResetTime,
-            opusWeeklyTokensUsed: opusTokens,
-            opusWeeklyPercentage: opusPercentage,
-            sonnetWeeklyTokensUsed: sonnetTokens,
-            sonnetWeeklyPercentage: sonnetPercentage,
-            sonnetWeeklyResetTime: sonnetResetTime,
-            designWeeklyTokensUsed: 0,
-            designWeeklyPercentage: 0,
-            designWeeklyResetTime: nil,
-            fableWeeklyTokensUsed: 0,
-            fableWeeklyPercentage: 0,
-            fableWeeklyResetTime: nil,
-            costUsed: nil,
-            costLimit: nil,
-            costCurrency: nil,
-            lastUpdated: Date(),
-            userTimezone: .current
-        )
-        return (usage, hasOpenWindow)
-    }
-
-    private func parseUtilization(_ value: Any) -> Double {
-        if let intValue = value as? Int {
-            return Double(intValue)
-        }
-        if let doubleValue = value as? Double {
-            return doubleValue
-        }
-        if let stringValue = value as? String {
-            let cleaned = stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-                .replacingOccurrences(of: "%", with: "")
-            if let parsed = Double(cleaned) {
-                return parsed
-            }
-        }
-        return 0.0
-    }
-
-    /// Parse the completion response (SSE format) to extract session reset time from messageLimit.windows.5h
-    private func parseCompletionResponseForResetTime(_ data: Data) -> Date? {
-        guard let responseString = String(data: data, encoding: .utf8) else { return nil }
-
-        // The response is SSE format - find the last completion event with messageLimit data
-        let lines = responseString.components(separatedBy: "\n")
-        for line in lines.reversed() {
-            if line.hasPrefix("data: "),
-               let jsonStart = line.index(line.startIndex, offsetBy: 6, limitedBy: line.endIndex),
-               let jsonData = String(line[jsonStart...]).data(using: .utf8),
-               let json = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any],
-               let messageLimit = json["messageLimit"] as? [String: Any],
-               let windows = messageLimit["windows"] as? [String: Any],
-               let fiveH = windows["5h"] as? [String: Any],
-               let resetsAt = fiveH["resets_at"] as? Double {
-                return Date(timeIntervalSince1970: resetsAt)
-            }
-        }
-        return nil
-    }
-
-    // MARK: - Auto-Start Session
 
     private func autoStartSession(for profile: Profile) async {
         do {
@@ -394,112 +251,14 @@ final class AutoStartSessionService {
             LoggingService.shared.logInfo("Successfully auto-started session for profile '\(profile.name)'")
 
             // Send success notification
-            await MainActor.run {
-                notificationManager.sendAutoStartNotification(
-                    profileName: profile.name,
-                    success: true,
-                    error: nil,
-                    settings: profile.notificationSettings
-                )
-            }
+            notify(profile, true, nil)
 
         } catch {
-            LoggingService.shared.logError("Failed to auto-start session for profile '\(profile.name)': \(error.localizedDescription)")
+            // Initialization can fail during transport or response validation.
+            logError("Failed to auto-start session for profile '\(profile.name)': \(error.localizedDescription)")
 
             // Send failure notification
-            await MainActor.run {
-                notificationManager.sendAutoStartNotification(
-                    profileName: profile.name,
-                    success: false,
-                    error: error.localizedDescription,
-                    settings: profile.notificationSettings
-                )
-            }
+            notify(profile, false, error.localizedDescription)
         }
-    }
-
-    private func sendInitializationMessage(for profile: Profile) async throws -> Data {
-        guard let sessionKey = profile.claudeSessionKey,
-              let orgId = profile.organizationId else {
-            throw AppError(
-                code: .sessionKeyNotFound,
-                message: "Missing credentials",
-                isRecoverable: false
-            )
-        }
-
-        // Create a new conversation
-        let conversationURL = try URLBuilder(baseURL: Constants.APIEndpoints.claudeBase)
-            .appendingPathComponents(["/organizations", orgId, "/chat_conversations"])
-            .build()
-
-        var conversationRequest = URLRequest(url: conversationURL)
-        conversationRequest.setValue(ClaudeAPIService.sessionCookieHeader(sessionKey: sessionKey, url: conversationURL), forHTTPHeaderField: "Cookie")
-        conversationRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        conversationRequest.httpMethod = "POST"
-
-        let conversationBody: [String: Any] = [
-            "uuid": UUID().uuidString.lowercased(),
-            "name": ""
-        ]
-        conversationRequest.httpBody = try JSONSerialization.data(withJSONObject: conversationBody)
-
-        let (conversationData, conversationResponse) = try await URLSession.shared.data(for: conversationRequest)
-
-        guard let httpResponse = conversationResponse as? HTTPURLResponse,
-              (httpResponse.statusCode == 200 || httpResponse.statusCode == 201) else {
-            throw AppError(code: .apiGenericError, message: "Failed to create conversation", isRecoverable: true)
-        }
-
-        // Parse conversation UUID
-        guard let json = try? JSONSerialization.jsonObject(with: conversationData) as? [String: Any],
-              let conversationUUID = json["uuid"] as? String else {
-            throw AppError(code: .apiParsingFailed, message: "Failed to parse conversation", isRecoverable: false)
-        }
-
-        // Send a minimal "Hi" message to initialize the session
-        let messageURL = try URLBuilder(baseURL: Constants.APIEndpoints.claudeBase)
-            .appendingPathComponents(["/organizations", orgId, "/chat_conversations", conversationUUID, "/completion"])
-            .build()
-
-        var messageRequest = URLRequest(url: messageURL)
-        messageRequest.setValue(ClaudeAPIService.sessionCookieHeader(sessionKey: sessionKey, url: messageURL), forHTTPHeaderField: "Cookie")
-        messageRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        messageRequest.httpMethod = "POST"
-
-        let messageBody: [String: Any] = [
-            "prompt": "Hi",
-            "model": "claude-haiku-4-5-20251001",  // Ensures non-zero usage to prevent duplicate auto-starts
-            "timezone": "UTC"
-        ]
-        messageRequest.httpBody = try JSONSerialization.data(withJSONObject: messageBody)
-
-        let (messageData, messageResponse) = try await URLSession.shared.data(for: messageRequest)
-
-        guard let messageHTTPResponse = messageResponse as? HTTPURLResponse,
-              messageHTTPResponse.statusCode == 200 else {
-            throw AppError(code: .apiGenericError, message: "Failed to send initialization message", isRecoverable: true)
-        }
-
-        // Capture message data before deleting conversation
-        let capturedData = messageData
-
-        // Delete the conversation to keep it out of chat history (incognito mode)
-        let deleteURL = try URLBuilder(baseURL: Constants.APIEndpoints.claudeBase)
-            .appendingPathComponents(["/organizations", orgId, "/chat_conversations", conversationUUID])
-            .build()
-
-        var deleteRequest = URLRequest(url: deleteURL)
-        deleteRequest.setValue(ClaudeAPIService.sessionCookieHeader(sessionKey: sessionKey, url: deleteURL), forHTTPHeaderField: "Cookie")
-        deleteRequest.httpMethod = "DELETE"
-
-        // Attempt to delete, but don't fail if deletion fails
-        do {
-            _ = try await URLSession.shared.data(for: deleteRequest)
-        } catch {
-            // Silently ignore deletion errors - session is already initialized
-        }
-
-        return capturedData
     }
 }

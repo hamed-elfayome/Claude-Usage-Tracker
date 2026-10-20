@@ -7,40 +7,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
     private var setupWindow: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Disable window restoration for menu bar app
-        UserDefaults.standard.set(false, forKey: "NSQuitAlwaysKeepsWindows")
+        // Hosted unit tests must not start timers, sync credentials, or contact accounts.
+        guard NSClassFromString("XCTestCase") == nil else { return }
 
-        // Set app icon early for Stage Manager and windows
-        if let appIcon = NSImage(named: "AppIcon") {
-            NSApp.applicationIconImage = appIcon
-        }
-
-        // Hide dock icon (menu bar app only)
-        NSApp.setActivationPolicy(.accessory)
-
-        // Load profiles into ProfileManager (synchronously)
-        ProfileManager.shared.loadProfiles()
-
-        // Regenerate installed statusline scripts so they pick up format changes
-        // across app updates and re-embed fresh Cloudflare clearance cookies.
-        try? StatuslineService.shared.updateScriptsIfInstalled()
-
-        // Initialize update manager to enable automatic update checks
-        _ = UpdateManager.shared
-
-        // Monthly support reminder (first check is delayed past startup)
-        SupportReminderService.shared.start()
-
-        // Request notification permissions
-        requestNotificationPermissions()
-
-        // Listen for manual wizard trigger (for testing)
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleShowSetupWizard),
-            name: .showSetupWizard,
-            object: nil
-        )
+        prepareApplication()
 
         // Always create the menu bar manager up front. On macOS Tahoe the setup
         // wizard window may fail to display (see #197), and if the manager was
@@ -115,6 +85,43 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         }
     }
 
+    private func prepareApplication() {
+        // Disable window restoration for menu bar app
+        UserDefaults.standard.set(false, forKey: "NSQuitAlwaysKeepsWindows")
+
+        // Set app icon early for Stage Manager and windows
+        if let appIcon = NSImage(named: "AppIcon") {
+            NSApp.applicationIconImage = appIcon
+        }
+
+        // Hide dock icon (menu bar app only)
+        NSApp.setActivationPolicy(.accessory)
+
+        // Load profiles into ProfileManager (synchronously)
+        ProfileManager.shared.loadProfiles()
+
+        // Regenerate installed statusline scripts so they pick up format changes
+        // across app updates and re-embed fresh Cloudflare clearance cookies.
+        try? StatuslineService.shared.updateScriptsIfInstalled()
+
+        // Initialize update manager to enable automatic update checks
+        _ = UpdateManager.shared
+
+        // Monthly support reminder (first check is delayed past startup)
+        SupportReminderService.shared.start()
+
+        // Request notification permissions
+        requestNotificationPermissions()
+
+        // Listen for manual wizard trigger (for testing)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleShowSetupWizard),
+            name: .showSetupWizard,
+            object: nil
+        )
+    }
+
     private func requestNotificationPermissions() {
         let center = UNUserNotificationCenter.current()
         center.delegate = self
@@ -122,7 +129,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             // Silently request permissions
         }
     }
-
 
     private func shouldShowSetupWizard() -> Bool {
         // FORCE SHOW wizard on very first app launch (one-time)
@@ -235,6 +241,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        guard NSClassFromString("XCTestCase") == nil else { return }
+
         // Cleanup
         NotchHookServer.shared.stop()
         NotchHUDController.shared.stop()
