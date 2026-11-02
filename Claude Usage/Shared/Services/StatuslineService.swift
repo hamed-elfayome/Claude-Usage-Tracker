@@ -55,10 +55,22 @@ func fetchUsageData(cookieHeader: String, orgId: String) async throws -> (utiliz
         throw NSError(domain: "ClaudeAPI", code: 3, userInfo: [NSLocalizedDescriptionKey: "Failed to fetch usage"])
     }
 
-    if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-       let fiveHour = json["five_hour"] as? [String: Any],
+    guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+        throw NSError(domain: "ClaudeAPI", code: 4, userInfo: [NSLocalizedDescriptionKey: "Invalid response format"])
+    }
+
+    if let fiveHour = json["five_hour"] as? [String: Any],
        let utilization = fiveHour["utilization"] as? Int {
         let resetsAt = fiveHour["resets_at"] as? String
+        return (utilization, resetsAt)
+    }
+
+    // Plans without a 5-hour window (e.g. Ultra) return five_hour: null,
+    // so fall back to the weekly window. Weekly utilization can be fractional.
+    if json["five_hour"] is NSNull || json["five_hour"] == nil,
+       let sevenDay = json["seven_day"] as? [String: Any],
+       let utilization = (sevenDay["utilization"] as? NSNumber)?.intValue {
+        let resetsAt = sevenDay["resets_at"] as? String
         return (utilization, resetsAt)
     }
 
@@ -1098,9 +1110,12 @@ ELEMENT_COLOR_EXTRA=\(elementColors.extraUsageBaseHex ?? "")
             .appendingPathComponent(".statusline-usage-cache")
 
         let formatter = ISO8601DateFormatter()
+        // Without a session limit the "Usage:" segment shows weekly instead
+        let utilization = usage.hasSessionLimit ? usage.effectiveSessionPercentage : usage.weeklyPercentage
+        let resetsAt = usage.hasSessionLimit ? usage.sessionResetTime : usage.weeklyResetTime
         var cacheContent = """
-        UTILIZATION=\(Int(usage.effectiveSessionPercentage))
-        RESETS_AT=\(formatter.string(from: usage.sessionResetTime))
+        UTILIZATION=\(Int(utilization))
+        RESETS_AT=\(formatter.string(from: resetsAt))
         TIMESTAMP=\(Int(Date().timeIntervalSince1970))
         """
 
