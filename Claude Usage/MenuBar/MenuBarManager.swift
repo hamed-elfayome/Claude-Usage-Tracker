@@ -154,7 +154,7 @@ class MenuBarManager: NSObject, ObservableObject {
                     }
                 )
             } else {
-                displayConfig = config.effective(for: profileManager.activeProfile?.claudeUsage ?? usage)
+                displayConfig = configAdjustedForPlanLimits(config)
             }
 
             statusBarUIManager?.setup(target: self, action: #selector(togglePopover), config: displayConfig)
@@ -457,7 +457,7 @@ class MenuBarManager: NSObject, ObservableObject {
                 }
             )
         } else {
-            displayConfig = config.effective(for: profileManager.activeProfile?.claudeUsage ?? usage)
+            displayConfig = configAdjustedForPlanLimits(config)
         }
 
         statusBarUIManager?.updateConfiguration(
@@ -944,6 +944,12 @@ class MenuBarManager: NSObject, ObservableObject {
         return ProviderRegistry.service(for: profile.provider).hasCredentials(for: profile)
     }
 
+    /// The icon config to display for the active profile's last usage, so the
+    /// session icon is hidden on plans without a session limit (see `effective(for:)`).
+    private func configAdjustedForPlanLimits(_ config: MenuBarIconConfiguration) -> MenuBarIconConfiguration {
+        config.effective(for: profileManager.activeProfile?.claudeUsage ?? usage)
+    }
+
     private func setupMultiProfileMode() {
         let selectedProfiles = profileManager.getSelectedProfiles()
         let config = profileManager.multiProfileConfig
@@ -1155,7 +1161,7 @@ class MenuBarManager: NSObject, ObservableObject {
                 }
             )
         } else {
-            displayConfig = config.effective(for: profileManager.activeProfile?.claudeUsage ?? usage)
+            displayConfig = configAdjustedForPlanLimits(config)
         }
 
         statusBarUIManager?.setup(target: self, action: #selector(togglePopover), config: displayConfig)
@@ -1250,8 +1256,8 @@ class MenuBarManager: NSObject, ObservableObject {
                     // The session icon is shown or hidden by the plan's limits, so
                     // rebuild the status items when the session limit appears or goes away
                     if newUsage.hasSessionLimit != previousUsage.hasSessionLimit,
-                       let profile = self.profileManager.activeProfile {
-                        self.updateMenuBarDisplay(with: profile.iconConfig)
+                       let activeProfile = self.profileManager.activeProfile {
+                        self.updateMenuBarDisplay(with: activeProfile.iconConfig)
                     }
 
                     // Write statusline cache for instant CLI rendering (Claude Code only)
