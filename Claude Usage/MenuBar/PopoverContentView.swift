@@ -627,19 +627,21 @@ struct SmartUsageDashboard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            // Primary: Session Usage
-            UsageRow(
-                title: "menubar.session_usage".localized,
-                subtitle: "menubar.5_hour_window".localized,
-                usedPercentage: usage.effectiveSessionPercentage,
-                showRemaining: showRemainingPercentage,
-                resetTime: usage.sessionResetTime,
-                periodDuration: Constants.sessionWindow,
-                showTimeMarker: showTimeMarker,
-                showPaceMarker: showPaceMarker,
-                usePaceColoring: usePaceColoring,
-                timeDisplay: timeDisplay
-            )
+            // Primary: Session Usage (absent on plans without a 5-hour window, e.g. Ultra)
+            if usage.hasSessionLimit {
+                UsageRow(
+                    title: "menubar.session_usage".localized,
+                    subtitle: "menubar.5_hour_window".localized,
+                    usedPercentage: usage.effectiveSessionPercentage,
+                    showRemaining: showRemainingPercentage,
+                    resetTime: usage.sessionResetTime,
+                    periodDuration: Constants.sessionWindow,
+                    showTimeMarker: showTimeMarker,
+                    showPaceMarker: showPaceMarker,
+                    usePaceColoring: usePaceColoring,
+                    timeDisplay: timeDisplay
+                )
+            }
 
             if usage.designWeeklyTokensUsed > 0 {
                 UsageRow(
