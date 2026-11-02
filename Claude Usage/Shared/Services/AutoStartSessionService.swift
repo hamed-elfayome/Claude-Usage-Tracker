@@ -153,6 +153,12 @@ final class AutoStartSessionService {
             // Fetch current usage for this profile
             let (usage, hasOpenWindow) = try await fetchUsageForProfile(profile)
 
+            // Plans without a 5-hour window (e.g. Ultra) have no session to start
+            guard usage.hasSessionLimit else {
+                LoggingService.shared.logDebug("Profile '\(profile.name)': skipping auto-start - plan has no session limit")
+                return
+            }
+
             let currentPercentage = usage.effectiveSessionPercentage
 
             // A session window that is open but unused reads 0% — often for
@@ -269,6 +275,15 @@ final class AutoStartSessionService {
             }
         }
 
+        // Same signal as ClaudeAPIService.parseUsageResponse: the session limit
+        // is absent only when five_hour is null and limits[] has no non-weekly
+        // entry. The usage is saved to the profile, so it must agree.
+        let limits = json["limits"] as? [[String: Any]] ?? []
+        let hasNonWeeklyLimit = limits.contains { limit in
+            (limit["group"] as? String).map { $0 != "weekly" } ?? false
+        }
+        let hasSessionLimit = json["five_hour"] is [String: Any] || hasNonWeeklyLimit
+
         // Extract weekly usage (seven_day)
         var weeklyPercentage = 0.0
         var weeklyResetTime = Date().nextMonday1259pm()
@@ -316,6 +331,7 @@ final class AutoStartSessionService {
             sessionLimit: 0,
             sessionPercentage: sessionPercentage,
             sessionResetTime: sessionResetTime,
+            hasSessionLimit: hasSessionLimit,
             weeklyTokensUsed: weeklyTokens,
             weeklyLimit: weeklyLimit,
             weeklyPercentage: weeklyPercentage,
