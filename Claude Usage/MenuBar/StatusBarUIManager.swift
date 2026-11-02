@@ -577,9 +577,9 @@ final class StatusBarUIManager {
         usage: ClaudeUsage,
         apiUsage: APIUsage?
     ) {
-        // Get config from active profile
+        // Get config from active profile, adjusted for the plan's limits
         let profile = ProfileManager.shared.activeProfile
-        let config = profile?.iconConfig ?? .default
+        let config = (profile?.iconConfig ?? .default).effective(for: usage)
 
         // Keep the render path aligned with ClaudeAPIService/MenuBarManager auth
         // fallback logic so users authenticated only via `claude login` don't
@@ -638,8 +638,8 @@ final class StatusBarUIManager {
             return
         }
 
-        // Get config from active profile
-        let config = ProfileManager.shared.activeProfile?.iconConfig ?? .default
+        // Get config from active profile, adjusted for the plan's limits
+        let config = (ProfileManager.shared.activeProfile?.iconConfig ?? .default).effective(for: usage)
         guard let metricConfig = config.config(for: metricType) else {
             return
         }
@@ -693,10 +693,10 @@ final class StatusBarUIManager {
     /// Get the first enabled metric's button (for backwards compatibility)
     var primaryButton: NSStatusBarButton? {
         let config = DataStore.shared.loadMenuBarIconConfiguration()
-        guard let firstMetric = config.enabledMetrics.first else {
-            return nil
-        }
-        return statusItems[firstMetric.metricType]?.button
+        // The session item is hidden on plans without a session limit, so take
+        // the first enabled metric that has an item, then the week fallback.
+        let metricTypes = config.enabledMetrics.map(\.metricType) + [.week]
+        return metricTypes.lazy.compactMap { self.statusItems[$0]?.button }.first
     }
 
     /// Find which metric type owns the given button (sender)

@@ -154,7 +154,7 @@ class MenuBarManager: NSObject, ObservableObject {
                     }
                 )
             } else {
-                displayConfig = config
+                displayConfig = config.effective(for: profileManager.activeProfile?.claudeUsage ?? usage)
             }
 
             statusBarUIManager?.setup(target: self, action: #selector(togglePopover), config: displayConfig)
@@ -457,7 +457,7 @@ class MenuBarManager: NSObject, ObservableObject {
                 }
             )
         } else {
-            displayConfig = config
+            displayConfig = config.effective(for: profileManager.activeProfile?.claudeUsage ?? usage)
         }
 
         statusBarUIManager?.updateConfiguration(
@@ -1155,7 +1155,7 @@ class MenuBarManager: NSObject, ObservableObject {
                 }
             )
         } else {
-            displayConfig = config
+            displayConfig = config.effective(for: profileManager.activeProfile?.claudeUsage ?? usage)
         }
 
         statusBarUIManager?.setup(target: self, action: #selector(togglePopover), config: displayConfig)
@@ -1245,6 +1245,13 @@ class MenuBarManager: NSObject, ObservableObject {
                     // Save to active profile instead of global DataStore
                     if let profileId = self.profileManager.activeProfile?.id {
                         self.profileManager.saveClaudeUsage(newUsage, for: profileId)
+                    }
+
+                    // The session icon is shown or hidden by the plan's limits, so
+                    // rebuild the status items when the session limit appears or goes away
+                    if newUsage.hasSessionLimit != previousUsage.hasSessionLimit,
+                       let profile = self.profileManager.activeProfile {
+                        self.updateMenuBarDisplay(with: profile.iconConfig)
                     }
 
                     // Write statusline cache for instant CLI rendering (Claude Code only)

@@ -438,6 +438,25 @@ struct MenuBarIconConfiguration: Codable, Equatable {
             .sorted { $0.order < $1.order }
     }
 
+    /// The configuration to display for the given usage. Plans without a 5-hour
+    /// session limit (e.g. Ultra) hide the session icon, and if that leaves no
+    /// icon the week icon shows instead. The saved configuration is unchanged,
+    /// so the session icon comes back on its own when a session limit returns.
+    func effective(for usage: ClaudeUsage) -> MenuBarIconConfiguration {
+        guard !usage.hasSessionLimit,
+              let sessionIndex = metrics.firstIndex(where: { $0.metricType == .session && $0.isEnabled }) else {
+            return self
+        }
+
+        var adjusted = self
+        adjusted.metrics[sessionIndex].isEnabled = false
+        if adjusted.enabledMetrics.isEmpty,
+           let weekIndex = adjusted.metrics.firstIndex(where: { $0.metricType == .week }) {
+            adjusted.metrics[weekIndex].isEnabled = true
+        }
+        return adjusted
+    }
+
     /// Get config for specific metric type
     func config(for metricType: MenuBarMetricType) -> MetricIconConfig? {
         metrics.first { $0.metricType == metricType }
