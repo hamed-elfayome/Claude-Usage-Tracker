@@ -5,7 +5,7 @@ struct UsageEntry: TimelineEntry {
     let date: Date
     let snapshot: WidgetSnapshot?
 
-    /// Data older than this is rendered dimmed — the app is probably not
+    /// Data at least this old is rendered dimmed — the app is probably not
     /// running (or a profile stopped refreshing), so the numbers can no
     /// longer be trusted. The app writes a heartbeat snapshot every 5 min.
     static let staleInterval: TimeInterval = 15 * 60
@@ -15,14 +15,14 @@ struct UsageEntry: TimelineEntry {
     /// the timeline flips the dimming at the right moment.
     var isStale: Bool {
         guard let snapshot else { return true }
-        return date.timeIntervalSince(snapshot.generatedAt) > Self.staleInterval
+        return date.timeIntervalSince(snapshot.generatedAt) >= Self.staleInterval
     }
 
     /// Per-profile staleness. The single-profile refresh path only updates
     /// the active profile, so other profiles can be stale even while the
     /// snapshot itself is fresh.
     func isProfileStale(_ profile: WidgetSnapshot.ProfileEntry) -> Bool {
-        isStale || date.timeIntervalSince(profile.lastUpdated) > Self.staleInterval
+        isStale || date.timeIntervalSince(profile.lastUpdated) >= Self.staleInterval
     }
 
     static func placeholderSnapshot() -> WidgetSnapshot {
