@@ -17,6 +17,14 @@ extension AutoStartSessionService {
         var usage = ClaudeUsage.empty
         usage.sessionPercentage = window.percentage
         usage.sessionResetTime = window.resetTime
+        // Same signal as ClaudeAPIService.parseUsageResponse: the session limit
+        // is absent only when five_hour is null and limits[] has no non-weekly
+        // entry. The usage is saved to the profile, so the two must agree.
+        let limits = json["limits"] as? [[String: Any]] ?? []
+        let hasNonWeeklyLimit = limits.contains { limit in
+            (limit["group"] as? String).map { $0 != "weekly" } ?? false
+        }
+        usage.hasSessionLimit = json["five_hour"] is [String: Any] || hasNonWeeklyLimit
         usage.weeklyLimit = Constants.weeklyLimit
         usage.weeklyPercentage = try parseWeeklyUtilization(sevenDay?["utilization"])
         usage.weeklyResetTime = parseResetTime(sevenDay?["resets_at"]) ?? usage.weeklyResetTime

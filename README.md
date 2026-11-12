@@ -725,7 +725,7 @@ GET https://claude.ai/api/organizations/{org_id}/usage
 **Authentication**: Session cookie (`sessionKey`) from claude.ai
 
 **Response Structure**:
-- `five_hour`: 5-hour session usage data
+- `five_hour`: 5-hour session usage data (`null` on plans without a session limit, such as Ultra)
   - `utilization_pct`: Usage percentage (0-100)
   - `reset_at`: ISO 8601 timestamp for next reset
 - `seven_day`: Weekly usage across all models

@@ -8,6 +8,11 @@ struct ClaudeUsage: Codable, Equatable {
     var sessionPercentage: Double
     var sessionResetTime: Date
 
+    /// Whether the plan has a 5-hour session limit. `false` when the usage API
+    /// reports no session window (e.g. `five_hour: null` on Ultra); the session
+    /// fields then hold placeholders and consumers should hide the session metric.
+    var hasSessionLimit: Bool = true
+
     /// Returns 0% if the 5-hour session window has expired, otherwise the raw percentage.
     var effectiveSessionPercentage: Double {
         sessionResetTime < Date() ? 0.0 : sessionPercentage
@@ -133,7 +138,7 @@ enum UsageStatusLevel {
 // its memberwise initializer.
 extension ClaudeUsage {
     private enum CodingKeys: String, CodingKey {
-        case sessionTokensUsed, sessionLimit, sessionPercentage, sessionResetTime
+        case sessionTokensUsed, sessionLimit, sessionPercentage, sessionResetTime, hasSessionLimit
         case weeklyTokensUsed, weeklyLimit, weeklyPercentage, weeklyResetTime
         case opusWeeklyTokensUsed, opusWeeklyPercentage
         case sonnetWeeklyTokensUsed, sonnetWeeklyPercentage, sonnetWeeklyResetTime
@@ -152,6 +157,7 @@ extension ClaudeUsage {
             sessionLimit: try c.decodeIfPresent(Int.self, forKey: .sessionLimit) ?? 0,
             sessionPercentage: try c.decodeIfPresent(Double.self, forKey: .sessionPercentage) ?? 0,
             sessionResetTime: try c.decodeIfPresent(Date.self, forKey: .sessionResetTime) ?? Date(),
+            hasSessionLimit: try c.decodeIfPresent(Bool.self, forKey: .hasSessionLimit) ?? true,
             weeklyTokensUsed: try c.decodeIfPresent(Int.self, forKey: .weeklyTokensUsed) ?? 0,
             weeklyLimit: try c.decodeIfPresent(Int.self, forKey: .weeklyLimit) ?? 0,
             weeklyPercentage: try c.decodeIfPresent(Double.self, forKey: .weeklyPercentage) ?? 0,

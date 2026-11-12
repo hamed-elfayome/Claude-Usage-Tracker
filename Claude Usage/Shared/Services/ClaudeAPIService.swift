@@ -670,8 +670,10 @@ class ClaudeAPIService: APIServiceProtocol {
             // what we're here to measure. The unified rate-limit headers are
             // still present on 429 responses, so parse them instead of
             // failing the refresh right when the user most needs the data.
+            // Plans without a 5-hour window only send the 7d headers.
             let has429UsageHeaders = httpResponse.statusCode == 429
-                && httpResponse.value(forHTTPHeaderField: "anthropic-ratelimit-unified-5h-utilization") != nil
+                && (httpResponse.value(forHTTPHeaderField: "anthropic-ratelimit-unified-5h-utilization") != nil
+                    || httpResponse.value(forHTTPHeaderField: "anthropic-ratelimit-unified-7d-utilization") != nil)
 
             guard httpResponse.statusCode == 200 || has429UsageHeaders else {
                 let responsePreview = String(data: data, encoding: .utf8)?.prefix(200) ?? "Unable to read response"
@@ -848,7 +850,11 @@ class ClaudeAPIService: APIServiceProtocol {
 
     // MARK: - Response Parsing
 
-    private func parseUsageResponse(_ data: Data) throws -> ClaudeUsage {
+    /// Parses the `/usage` JSON response into a `ClaudeUsage`.
+    /// - Parameter data: Raw response body from `GET /api/organizations/{org}/usage`
+    /// - Returns: The parsed usage; `hasSessionLimit` is `false` when the plan has no 5-hour window
+    /// - Throws: `AppError` with `.apiParsingFailed` if the body isn't a JSON object
+    func parseUsageResponse(_ data: Data) throws -> ClaudeUsage {
         // Parse Claude's actual API response structure
 
         if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
@@ -860,7 +866,8 @@ class ClaudeAPIService: APIServiceProtocol {
             // Extract session usage (five_hour)
             var sessionPercentage = 0.0
             var sessionResetTime = Date().addingTimeInterval(5 * 3600)
-            if let fiveHour = json["five_hour"] as? [String: Any] {
+            let fiveHour = json["five_hour"] as? [String: Any]
+            if let fiveHour {
                 if let utilization = fiveHour["utilization"] {
                     sessionPercentage = parseUtilization(utilization)
                 }
@@ -931,8 +938,16 @@ class ClaudeAPIService: APIServiceProtocol {
             //  "scope":{"model":{"id":null,"display_name":"Fable"}}}
             // limits[] is therefore the source of truth: when an entry is
             // present it overrides whatever the legacy fields said.
+            // Plans without a 5-hour window (e.g. Ultra) return five_hour: null
+            // and only weekly entries in limits[]. A non-weekly entry means a
+            // session window exists even if five_hour is null, so both must
+            // agree before the session limit is treated as absent.
+            var hasNonWeeklyLimit = false
             if let limits = json["limits"] as? [[String: Any]] {
                 for limit in limits {
+                    if let group = limit["group"] as? String, group != "weekly" {
+                        hasNonWeeklyLimit = true
+                    }
                     guard limit["kind"] as? String == "weekly_scoped",
                           let scope = limit["scope"] as? [String: Any],
                           let model = scope["model"] as? [String: Any],
@@ -980,6 +995,7 @@ class ClaudeAPIService: APIServiceProtocol {
                 sessionLimit: sessionLimit,
                 sessionPercentage: sessionPercentage,
                 sessionResetTime: sessionResetTime,
+                hasSessionLimit: fiveHour != nil || hasNonWeeklyLimit,
                 weeklyTokensUsed: weeklyTokens,
                 weeklyLimit: weeklyLimit,
                 weeklyPercentage: weeklyPercentage,
@@ -1026,7 +1042,9 @@ class ClaudeAPIService: APIServiceProtocol {
     /// Parses usage data from Messages API rate limit response headers.
     /// Headers use format: anthropic-ratelimit-unified-{window}-{field}
     /// Utilization values are 0.0-1.0 (converted to 0-100 percentage).
-    private func parseUsageFromRateLimitHeaders(_ response: HTTPURLResponse) -> ClaudeUsage {
+    /// - Parameter response: The Messages API response carrying the unified rate-limit headers
+    /// - Returns: The parsed usage; `hasSessionLimit` is `false` when no `5h-*` headers are present
+    func parseUsageFromRateLimitHeaders(_ response: HTTPURLResponse) -> ClaudeUsage {
         func headerDouble(_ name: String) -> Double? {
             if let value = response.value(forHTTPHeaderField: name) {
                 return Double(value)
@@ -1035,10 +1053,15 @@ class ClaudeAPIService: APIServiceProtocol {
         }
 
         // Session (5h) usage — utilization is 0.0-1.0, convert to 0-100
-        let sessionUtilization = headerDouble("anthropic-ratelimit-unified-5h-utilization") ?? 0
+        let sessionUtilizationHeader = headerDouble("anthropic-ratelimit-unified-5h-utilization")
+        let sessionResetHeader = headerDouble("anthropic-ratelimit-unified-5h-reset")
+        // Plans without a 5-hour window (e.g. Ultra) send no 5h-* headers at all
+        let hasSessionLimit = sessionUtilizationHeader != nil || sessionResetHeader != nil
+
+        let sessionUtilization = sessionUtilizationHeader ?? 0
         var sessionPercentage = sessionUtilization * 100.0
 
-        let sessionResetTimestamp = headerDouble("anthropic-ratelimit-unified-5h-reset") ?? 0
+        let sessionResetTimestamp = sessionResetHeader ?? 0
         let sessionResetTime = sessionResetTimestamp > 0
             ? Date(timeIntervalSince1970: sessionResetTimestamp)
             : Date().addingTimeInterval(5 * 3600)
@@ -1068,6 +1091,7 @@ class ClaudeAPIService: APIServiceProtocol {
             sessionLimit: 0,
             sessionPercentage: sessionPercentage,
             sessionResetTime: sessionResetTime,
+            hasSessionLimit: hasSessionLimit,
             weeklyTokensUsed: weeklyTokens,
             weeklyLimit: weeklyLimit,
             weeklyPercentage: weeklyPercentage,

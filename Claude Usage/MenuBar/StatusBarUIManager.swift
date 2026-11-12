@@ -367,8 +367,14 @@ final class StatusBarUIManager {
             let usage = profile.claudeUsage ?? ClaudeUsage.empty
             let showRemaining = config.showRemainingPercentage
 
+            // Plans without a 5-hour window (e.g. Ultra) draw weekly in the
+            // session (primary) slot and drop the secondary week value, so
+            // weekly isn't drawn twice. The session* values below then hold weekly.
+            let hasSessionLimit = usage.hasSessionLimit
+            let showWeek = config.showWeek && hasSessionLimit
+
             // Calculate percentages
-            let sessionUsed = usage.effectiveSessionPercentage
+            let sessionUsed = hasSessionLimit ? usage.effectiveSessionPercentage : usage.weeklyPercentage
             let weekUsed = usage.weeklyPercentage
 
             let sessionDisplay = UsageStatusCalculator.getDisplayPercentage(
@@ -381,8 +387,8 @@ final class StatusBarUIManager {
             )
 
             let sessionElapsed = UsageStatusCalculator.elapsedFraction(
-                resetTime: usage.sessionResetTime,
-                duration: Constants.sessionWindow,
+                resetTime: hasSessionLimit ? usage.sessionResetTime : usage.weeklyResetTime,
+                duration: hasSessionLimit ? Constants.sessionWindow : Constants.weeklyWindow,
                 showRemaining: false
             )
             let weekElapsed = UsageStatusCalculator.elapsedFraction(
@@ -430,7 +436,7 @@ final class StatusBarUIManager {
                 if config.showProfileLabel {
                     image = renderer.createConcentricIconWithLabel(
                         sessionPercentage: sessionDisplay,
-                        weekPercentage: config.showWeek ? weekDisplay : 0,
+                        weekPercentage: showWeek ? weekDisplay : 0,
                         sessionStatus: sessionStatus,
                         weekStatus: weekStatus,
                         profileName: profile.name,
@@ -438,15 +444,15 @@ final class StatusBarUIManager {
                         isDarkMode: menuBarIsDark,
                         useSystemColor: false,
                         sessionTimeMarker: sessionMarker,
-                        weekTimeMarker: config.showWeek ? weekMarker : nil,
+                        weekTimeMarker: showWeek ? weekMarker : nil,
                         sessionPaceStatus: sessionPaceStatus,
-                        weekPaceStatus: config.showWeek ? weekPaceStatus : nil,
+                        weekPaceStatus: showWeek ? weekPaceStatus : nil,
                         showPaceMarker: config.showPaceMarker
                     )
                 } else {
                     image = renderer.createConcentricIcon(
                         sessionPercentage: sessionDisplay,
-                        weekPercentage: config.showWeek ? weekDisplay : 0,
+                        weekPercentage: showWeek ? weekDisplay : 0,
                         sessionStatus: sessionStatus,
                         weekStatus: weekStatus,
                         profileInitial: String(profile.name.prefix(1)),
@@ -454,16 +460,16 @@ final class StatusBarUIManager {
                         isDarkMode: menuBarIsDark,
                         useSystemColor: false,
                         sessionTimeMarker: sessionMarker,
-                        weekTimeMarker: config.showWeek ? weekMarker : nil,
+                        weekTimeMarker: showWeek ? weekMarker : nil,
                         sessionPaceStatus: sessionPaceStatus,
-                        weekPaceStatus: config.showWeek ? weekPaceStatus : nil,
+                        weekPaceStatus: showWeek ? weekPaceStatus : nil,
                         showPaceMarker: config.showPaceMarker
                     )
                 }
             case .progressBar:
                 image = renderer.createMultiProfileProgressBar(
                     sessionPercentage: sessionDisplay,
-                    weekPercentage: config.showWeek ? weekDisplay : nil,
+                    weekPercentage: showWeek ? weekDisplay : nil,
                     sessionStatus: sessionStatus,
                     weekStatus: weekStatus,
                     profileName: config.showProfileLabel ? profile.name : nil,
@@ -471,9 +477,9 @@ final class StatusBarUIManager {
                     isDarkMode: menuBarIsDark,
                     useSystemColor: false,
                     sessionTimeMarker: sessionMarker,
-                    weekTimeMarker: config.showWeek ? weekMarker : nil,
+                    weekTimeMarker: showWeek ? weekMarker : nil,
                     sessionPaceStatus: sessionPaceStatus,
-                    weekPaceStatus: config.showWeek ? weekPaceStatus : nil,
+                    weekPaceStatus: showWeek ? weekPaceStatus : nil,
                     showPaceMarker: config.showPaceMarker
                 )
             case .compact:
@@ -490,7 +496,7 @@ final class StatusBarUIManager {
             case .percentage:
                 image = renderer.createMultiProfilePercentage(
                     sessionPercentage: sessionDisplay,
-                    weekPercentage: config.showWeek ? weekDisplay : nil,
+                    weekPercentage: showWeek ? weekDisplay : nil,
                     sessionStatus: sessionStatus,
                     weekStatus: weekStatus,
                     profileName: config.showProfileLabel ? profile.name : nil,
@@ -498,7 +504,7 @@ final class StatusBarUIManager {
                     isDarkMode: menuBarIsDark,
                     useSystemColor: false,
                     sessionPaceStatus: sessionPaceStatus,
-                    weekPaceStatus: config.showWeek ? weekPaceStatus : nil,
+                    weekPaceStatus: showWeek ? weekPaceStatus : nil,
                     showPaceMarker: config.showPaceMarker
                 )
             }
@@ -579,9 +585,9 @@ final class StatusBarUIManager {
         usage: ClaudeUsage,
         apiUsage: APIUsage?
     ) {
-        // Get config from active profile
+        // Get config from active profile, adjusted for the plan's limits
         let profile = ProfileManager.shared.activeProfile
-        let config = profile?.iconConfig ?? .default
+        let config = (profile?.iconConfig ?? .default).effective(for: usage)
 
         // Keep the render path aligned with ClaudeAPIService/MenuBarManager auth
         // fallback logic so users authenticated only via `claude login` don't
@@ -640,8 +646,8 @@ final class StatusBarUIManager {
             return
         }
 
-        // Get config from active profile
-        let config = ProfileManager.shared.activeProfile?.iconConfig ?? .default
+        // Get config from active profile, adjusted for the plan's limits
+        let config = (ProfileManager.shared.activeProfile?.iconConfig ?? .default).effective(for: usage)
         guard let metricConfig = config.config(for: metricType) else {
             return
         }
@@ -695,10 +701,10 @@ final class StatusBarUIManager {
     /// Get the first enabled metric's button (for backwards compatibility)
     var primaryButton: NSStatusBarButton? {
         let config = DataStore.shared.loadMenuBarIconConfiguration()
-        guard let firstMetric = config.enabledMetrics.first else {
-            return nil
-        }
-        return statusItems[firstMetric.metricType]?.button
+        // The session item is hidden on plans without a session limit, so take
+        // the first enabled metric that has an item, then the week fallback.
+        let metricTypes = config.enabledMetrics.map(\.metricType) + [.week]
+        return metricTypes.lazy.compactMap { self.statusItems[$0]?.button }.first
     }
 
     /// Find which metric type owns the given button (sender)

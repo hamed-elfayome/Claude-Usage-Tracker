@@ -183,6 +183,12 @@ final class AutoStartSessionService {
             // Fetch current usage for this profile
             let (usage, hasOpenWindow) = try await fetchUsageForProfile(profile)
 
+            // Plans without a 5-hour window (e.g. Ultra) have no session to start
+            guard usage.hasSessionLimit else {
+                LoggingService.shared.logDebug("Profile '\(profile.name)': skipping auto-start - plan has no session limit")
+                return
+            }
+
             let currentPercentage = usage.effectiveSessionPercentage
 
             // A session window that is open but unused reads 0% — often for
