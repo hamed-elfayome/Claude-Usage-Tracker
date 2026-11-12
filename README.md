@@ -7,7 +7,7 @@
 <div align="center">
   <a href="https://claudetracker.com/#fleet"><img src="https://claudetracker.com/map.svg" alt="Claude Usage Tracker — a native macOS menu bar app for real-time monitoring of Claude AI usage limits. Live worldwide distribution map." width="100%"></a>
 
-  <a href="https://claudetracker.com"><img src="https://claudetracker.com/asset/languages.svg?list=English%2CEspa%C3%B1ol%2CFran%C3%A7ais%2CDeutsch%2CItaliano%2CPortugu%C3%AAs%2CPortugu%C3%AAs%20(BR)%2C%E6%97%A5%E6%9C%AC%E8%AA%9E%2C%ED%95%9C%EA%B5%AD%EC%96%B4%2C%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87%2C%E7%B9%81%E9%AB%94%E4%B8%AD%E6%96%87%2CT%C3%BCrk%C3%A7e%2C%D0%A3%D0%BA%D1%80%D0%B0%D1%97%D0%BD%D1%81%D1%8C%D0%BA%D0%B0%2CTi%E1%BA%BFng%20Vi%E1%BB%87t" alt="Localized in 14 languages" width="100%"></a>
+  <a href="https://claudetracker.com"><img src="https://claudetracker.com/asset/languages.svg?list=English%2CEspa%C3%B1ol%2CFran%C3%A7ais%2CDeutsch%2CItaliano%2CPortugu%C3%AAs%2CPortugu%C3%AAs%20(BR)%2C%E6%97%A5%E6%9C%AC%E8%AA%9E%2C%ED%95%9C%EA%B5%AD%EC%96%B4%2C%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87%2C%E7%B9%81%E9%AB%94%E4%B8%AD%E6%96%87%2CT%C3%BCrk%C3%A7e%2C%D0%A3%D0%BA%D1%80%D0%B0%D1%97%D0%BD%D1%81%D1%8C%D0%BA%D0%B0%2CTi%E1%BA%BFng%20Vi%E1%BB%87t%2C%D9%81%D8%A7%D8%B1%D8%B3%DB%8C" alt="Localized in 15 languages" width="100%"></a>
 
   <br>
 
@@ -381,7 +381,7 @@ Plain `claude` keeps following the **active** profile, exactly as before. Removi
 - **6-Tier Pace System**: Pace markers colored by projected usage (green/teal/yellow/orange/red/purple)
 - **Interactive Popover**: One-click access with detachable floating window capability
 - **Live Status Indicator**: Real-time Claude system status from status.claude.com
-- **Multi-Language Support**: 14 languages (English, Spanish, French, German, Italian, Portuguese, Brazilian Portuguese, Japanese, Korean, Simplified Chinese, Traditional Chinese, Turkish, Ukrainian, Vietnamese)
+- **Multi-Language Support**: 15 languages (English, Spanish, French, German, Italian, Portuguese, Brazilian Portuguese, Japanese, Korean, Simplified Chinese, Traditional Chinese, Turkish, Ukrainian, Vietnamese, Persian)
 - Adaptive colors for light/dark mode
 
 ### Automation & Intelligence

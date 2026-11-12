@@ -1,0 +1,1091 @@
+/*
+   Localizable.strings
+   Claude Usage Tracker
+
+   English (Base Language)
+   Created by Claude Code on 2025-12-27.
+*/
+
+/* ==================== */
+/* MARK: - App Info */
+/* ==================== */
+"app.name" = "Claude Usage Tracker";
+"app.window.main" = "مصرف Claude";
+"app.window.settings" = "تنظیمات";
+"app.window.github_prompt" = "حمایت از Claude Usage Tracker";
+
+/* ==================== */
+/* MARK: - Common Actions */
+/* ==================== */
+"common.ok" = "تأیید";
+"common.cancel" = "لغو";
+"common.save" = "ذخیره";
+"common.delete" = "حذف";
+"common.done" = "انجام شد";
+"common.close" = "بستن";
+"common.refresh" = "تازه‌سازی";
+"common.settings" = "تنظیمات";
+"common.quit" = "خروج";
+"common.validate" = "اعتبارسنجی";
+"common.yes" = "بله";
+"common.no" = "خیر";
+
+/* ==================== */
+/* MARK: - Settings Navigation */
+/* ==================== */
+"settings.title" = "تنظیمات";
+"settings.personal_usage" = "مصرف شخصی";
+"settings.personal_usage.description" = "پیگیری مصرف طرح رایگان claude.ai";
+"settings.api_billing" = "صورت‌حساب API";
+"settings.api_billing.description" = "نظارت بر صورت‌حساب و اعتبارهای API Console";
+"settings.general" = "عمومی";
+"settings.general.description" = "رفتار و ترجیحات برنامه";
+"settings.appearance" = "ظاهر";
+"settings.appearance.description" = "سفارشی‌سازی آیکون‌های نوار منو";
+"settings.session_management" = "مدیریت نشست";
+"settings.session_management.description" = "مدیریت خودکار نشست";
+"settings.notifications" = "اعلان‌ها";
+"settings.notifications.description" = "هشدارها و اعلان‌های مصرف";
+"settings.claude_cli" = "Claude CLI";
+"settings.claude_cli.description" = "یکپارچه‌سازی نوار وضعیت ترمینال";
+"settings.updates" = "به‌روزرسانی‌ها";
+"settings.updates.description" = "به‌روز نگه‌داشتن برنامه";
+"settings.about" = "درباره";
+"settings.about.description" = "اطلاعات برنامه و دست‌اندرکاران";
+
+/* ==================== */
+/* MARK: - Menu Bar */
+/* ==================== */
+"menubar.claude_usage" = "مصرف Claude";
+"menubar.session_usage" = "مصرف نشست";
+"menubar.weekly_usage" = "هفتگی";
+"menubar.opus_usage" = "Opus";
+"menubar.sonnet_usage" = "Sonnet";
+"menubar.fable_usage" = "Fable";
+"menubar.design_usage" = "Design";
+"menubar.extra_usage" = "مصرف اضافی";
+"menubar.api_credits" = "اعتبارهای API";
+"menubar.api_cost" = "هزینهٔ API";
+"menubar.this_month" = "این ماه";
+"menubar.total" = "مجموع";
+"menubar.cost_source.cli" = "Claude Code";
+"menubar.cost_source.api" = "API";
+"menubar.cost_source.unknown" = "سایر";
+"menubar.5_hour_window" = "پنجرهٔ شناور ۵ ساعته";
+"menubar.all_models" = "همهٔ مدل‌ها";
+"menubar.weekly" = "هفتگی";
+"menubar.anthropic_console" = "کنسول Anthropic API";
+"menubar.used" = "مصرف‌شده";
+"menubar.remaining" = "باقی‌مانده";
+"menubar.resets_time" = "بازنشانی در %@";
+"menubar.resets_in" = "بازنشانی تا %@";
+"menubar.resets_both" = "بازنشانی تا %@ (%@)";
+"menubar.click_status" = "برای باز کردن status.claude.com کلیک کنید";
+
+/* ==================== */
+/* MARK: - Usage Status */
+/* ==================== */
+"usage.high_session" = "مصرف بالای نشست";
+"usage.high_session.desc" = "برای بازنشانی پنجرهٔ نشست، کمی استراحت کنید";
+"usage.weekly_approaching" = "نزدیک شدن به سقف هفتگی";
+"usage.weekly_approaching.desc" = "به سقف هفتگی توکن‌های خود نزدیک شده‌اید";
+"usage.efficient" = "مصرف بهینه";
+"usage.efficient.desc" = "مدیریت مصرف توکن‌هایتان عالی بوده است!";
+
+/* ==================== */
+/* MARK: - General Settings */
+/* ==================== */
+"general.launch_at_login" = "راه‌اندازی هنگام ورود به سیستم";
+"general.launch_at_login.description" = "اجرای خودکار Claude Usage Tracker هنگام ورود به Mac";
+"general.refresh_interval" = "بازهٔ تازه‌سازی";
+"general.refresh_interval.description" = "بازه‌های کوتاه‌تر داده‌های هم‌زمان‌تری ارائه می‌دهند اما ممکن است بر عمر باتری اثر بگذارند";
+"general.check_overage_limit" = "بررسی سقف مصرف اضافی";
+"general.check_overage_limit.description" = "دریافت و نمایش اطلاعات هزینهٔ ماهانه و سقف مصرف اضافی";
+"general.language.title" = "زبان";
+"general.language.select" = "انتخاب زبان";
+"general.language.restart_note" = "تغییر زبان پس از راه‌اندازی مجدد برنامه اعمال خواهد شد";
+"general.language.restart_app" = "راه‌اندازی مجدد برنامه برای اعمال";
+
+/* ==================== */
+/* MARK: - Appearance Settings */
+/* ==================== */
+"appearance.menu_bar_icons" = "آیکون‌های نوار منو";
+"appearance.menu_bar_icons.subtitle" = "سفارشی‌سازی معیارهای نمایش‌یافته در نوار منو";
+"appearance.show_icon_names" = "نمایش نام آیکون‌ها";
+"appearance.show_icon_names.description" = "نمایش برچسب معیارها (S:, W:, API:) در کنار آیکون‌ها";
+"appearance.monochrome_mode" = "تک‌رنگ (تطبیقی)";
+"appearance.monochrome_mode.description" = "آیکون‌ها به‌طور خودکار با حالت روشن/تاریک سازگار می‌شوند";
+"appearance.metric_configuration" = "پیکربندی معیارها";
+"appearance.drag_to_reorder" = "برای تغییر ترتیب آیکون‌ها بکشید. معیارهای غیرفعال در نوار منو پنهان می‌شوند.";
+
+/* ==================== */
+/* MARK: - Session Management */
+/* ==================== */
+"session.auto_start" = "شروع خودکار نشست هنگام بازنشانی";
+"session.auto_start.description" = "ارسال خودکار «Hi» به Claude هنگام بازنشانی نشست به ۰٪. این کار نشست شما را بدون نیاز به دخالت دستی همیشه آماده نگه می‌دارد.";
+"session.enable_auto_start" = "فعال‌سازی شروع خودکار نشست";
+"session.beta_badge" = "بتا";
+
+/* ==================== */
+/* MARK: - Notifications Settings */
+/* ==================== */
+"notifications.enable" = "فعال‌سازی اعلان‌ها";
+"notifications.enable.description" = "دریافت هشدار هنگام نزدیک شدن به سقف مصرف";
+"notifications.alert_thresholds" = "آستانه‌های هشدار";
+"notifications.threshold.warning" = "هشدار";
+"notifications.threshold.high" = "مصرف بالا";
+"notifications.threshold.critical" = "بحرانی";
+"notifications.threshold.session_reset" = "بازنشانی نشست";
+
+/* ==================== */
+/* MARK: - Setup Wizard */
+/* ==================== */
+"setup.welcome.title" = "به Claude Usage Tracker خوش آمدید";
+"setup.welcome.subtitle" = "برای شروع پیگیری مصرف، دسترسی API خود را پیکربندی کنید";
+"setup.step.get_session_key" = "دریافت کلید نشست خود";
+"setup.step.get_session_key.description" = "باید کلید نشست خود را از claude.ai استخراج کنید";
+"setup.step.enter_session_key" = "وارد کردن کلید نشست خود";
+"setup.open_claude_ai" = "باز کردن claude.ai";
+"setup.show_instructions" = "نمایش دستورالعمل‌ها";
+"setup.hide_instructions" = "پنهان‌سازی";
+"setup.instruction.step1" = "ابزارهای توسعه‌دهنده را باز کنید (F12 یا Cmd+Option+I)";
+"setup.instruction.step2" = "به \U2068Application/Storage → Cookies → https://claude.ai\U2069 بروید";
+"setup.instruction.step3" = "کوکی «sessionKey» را پیدا کنید";
+"setup.instruction.step4" = "روی مقدار (Value) آن دوبار کلیک کرده و کپی کنید (Cmd+C)";
+"setup.paste_session_key" = "مقدار کپی‌شدهٔ sessionKey را جای‌گذاری کنید";
+"setup.auto_start_session" = "شروع خودکار نشست هنگام بازنشانی";
+"setup.auto_start_session.description" = "ارسال خودکار «Hi» به Claude 3.5 Haiku هنگام بازنشانی نشست به ۰٪. این کار نشست شما را بدون نیاز به دخالت دستی همیشه آماده نگه می‌دارد.";
+"setup.enable_auto_start" = "فعال‌سازی شروع خودکار نشست";
+"setup.menubar_appearance" = "ظاهر نوار منو";
+"setup.choose_icon_style" = "سبک آیکون دلخواه خود را انتخاب کنید";
+"setup.monochrome_adaptive" = "تک‌رنگ (تطبیقی)";
+"setup.validation.success" = "اتصال به سازمان با موفقیت برقرار شد";
+
+/* ==================== */
+/* MARK: - About */
+/* ==================== */
+"about.version" = "نسخهٔ %@";
+"about.check_updates" = "بررسی برای به‌روزرسانی‌ها";
+"about.created_by" = "سازنده";
+"about.contributors" = "مشارکت‌کنندگان (%d)";
+"about.contributors_loading" = "مشارکت‌کنندگان";
+"about.contributors_failed" = "بارگذاری مشارکت‌کنندگان ناموفق بود";
+"about.links" = "پیوندها";
+"about.star_github" = "ستاره دادن در GitHub";
+"about.report_issue" = "گزارش مشکل";
+"about.send_feedback" = "ارسال بازخورد";
+"about.mit_license" = "مجوز MIT • منبع‌باز";
+"about.copyright" = "© 2025 Hamed Elfayome";
+
+/* ==================== */
+/* MARK: - Updates Settings */
+/* ==================== */
+"settings.updates.title" = "به‌روزرسانی‌های نرم‌افزار";
+"settings.updates.current_version" = "نسخهٔ فعلی";
+"settings.updates.last_check" = "آخرین بررسی";
+"settings.updates.never_checked" = "هرگز";
+"settings.updates.automatic" = "به‌روزرسانی‌های خودکار";
+"settings.updates.automatic.description" = "بررسی و دانلود خودکار به‌روزرسانی‌ها به‌صورت روزانه";
+"settings.updates.check_now" = "بررسی برای به‌روزرسانی‌ها";
+"settings.updates.info.title" = "به‌روزرسانی‌های امن";
+"settings.updates.info.description" = "تمامی به‌روزرسانی‌ها پیش از نصب، به‌صورت رمزنگاری‌شده امضا و تأیید می‌شوند";
+
+/* ==================== */
+/* MARK: - Icon Styles */
+/* ==================== */
+"icon_style.battery" = "باتری";
+"icon_style.percentage" = "درصد";
+"icon_style.text_only" = "فقط متن";
+"icon_style.minimal" = "مینیمال";
+
+/* ==================== */
+/* MARK: - Metric Types */
+/* ==================== */
+"metric.session_usage" = "مصرف نشست";
+"metric.session_usage.description" = "مصرف در پنجرهٔ شناور ۵ ساعته";
+"metric.week_usage" = "مصرف هفتگی";
+"metric.week_usage.description" = "مصرف هفتگی توکن (همهٔ مدل‌ها)";
+"metric.api_credits" = "اعتبارهای API";
+"metric.api_credits.description" = "اعتبارهای صورت‌حساب API Console";
+
+/* ==================== */
+/* MARK: - Display Modes */
+/* ==================== */
+"display.remaining_credits" = "اعتبارهای باقی‌مانده";
+"display.remaining_credits.description" = "نمایش فقط اعتبارهای باقی‌مانده";
+"display.used_amount" = "مقدار مصرف‌شده";
+"display.used_amount.description" = "نمایش فقط مقدار مصرف‌شده";
+"display.both_used_total" = "هر دو (مصرف‌شده / مجموع)";
+"display.both_used_total.description" = "نمایش هر دو مقدار مصرف‌شده و مجموع";
+"display.percentage" = "درصد";
+"display.percentage.description" = "نمایش به‌صورت درصد (مثلاً ۶۰٪)";
+"display.token_count" = "تعداد توکن";
+"display.token_count.description" = "نمایش ارقام توکن (مثلاً 600K/1M)";
+
+/* ==================== */
+/* MARK: - Notification Messages */
+/* ==================== */
+"notification.session_warning.title" = "هشدار مصرف نشست";
+"notification.session_warning.message" = "شما %@ از سقف نشست ۵ ساعتهٔ خود را مصرف کرده‌اید. %@";
+"notification.session_critical.title" = "مصرف بحرانی نشست";
+"notification.session_critical.message" = "شما %@ از سقف نشست ۵ ساعتهٔ خود را مصرف کرده‌اید! %@";
+"notification.session_reset.title" = "بازنشانی نشست";
+"notification.session_reset.message" = "نشست شما بازنشانی شد! اکنون یک نشست تازهٔ ۵ ساعته در دسترس دارید.";
+"notification.session_auto_started.title" = "نشست به‌طور خودکار شروع شد";
+"notification.session_auto_started.message" = "یک نشست جدید به‌طور خودکار آغاز شد. نشست تازهٔ ۵ ساعتهٔ شما آماده است!";
+"notification.session_auto_start_failed.title" = "شروع خودکار ناموفق بود";
+"notification.session_auto_start_failed.message" = "شروع خودکار نشست ناموفق بود. لطفاً اطلاعات اعتباری خود را بررسی کنید.";
+"notification.weekly_warning.title" = "هشدار مصرف هفتگی";
+"notification.weekly_warning.message" = "شما %@ از سقف هفتگی خود را مصرف کرده‌اید. %@";
+"notification.weekly_critical.title" = "مصرف بحرانی هفتگی";
+"notification.weekly_critical.message" = "شما %@ از سقف هفتگی خود را مصرف کرده‌اید! %@";
+"notification.opus_warning.title" = "هشدار مصرف Opus";
+"notification.opus_warning.message" = "شما %@ از سقف هفتگی Opus خود را مصرف کرده‌اید. %@";
+"notification.opus_critical.title" = "مصرف بحرانی Opus";
+"notification.opus_critical.message" = "شما %@ از سقف هفتگی Opus خود را مصرف کرده‌اید! %@";
+"notification.enabled.title" = "اعلان‌ها فعال شدند";
+"notification.enabled.message" = "اکنون هشدارهایی در آستانه‌های مصرف ۷۵٪، ۹۰٪ و ۹۵٪، به همراه اعلان‌های بازنشانی نشست دریافت خواهید کرد.";
+"notification.profile_auto_switched.title" = "تغییر خودکار نمایه";
+"notification.profile_auto_switched.message" = "تغییر نمایه از %@ به %@ به دلیل رسیدن به سقف نشست";
+
+/* ==================== */
+/* MARK: - Auto-Switch Profile */
+/* ==================== */
+"auto_switch.title" = "تغییر خودکار نمایه";
+"auto_switch.subtitle" = "تغییر خودکار هنگام رسیدن به سقف نشست";
+"auto_switch.enable_title" = "فعال‌سازی تغییر خودکار";
+"auto_switch.enable_description" = "هنگامی که مصرف نشست نمایهٔ فعال به ۱۰۰٪ برسد، به‌طور خودکار به نمایهٔ دردسترس بعدی تغییر می‌یابد";
+
+/* ==================== */
+/* MARK: - Error Messages */
+/* ==================== */
+"error.session_key_not_found" = "کلید نشستی یافت نشد";
+"error.session_key_not_found.suggestion" = "لطفاً کلید نشست Claude خود را در «تنظیمات» پیکربندی کنید";
+"error.session_key_invalid" = "کلید نشست نامعتبر است";
+"error.session_key_invalid.suggestion" = "لطفاً قالب کلید نشست خود را بررسی کنید. باید با «sk-ant-» شروع شود";
+"error.network_unavailable" = "اتصال اینترنت برقرار نیست";
+"error.network_unavailable.suggestion" = "لطفاً اتصال اینترنت خود را بررسی کرده و دوباره تلاش کنید";
+"error.network_timeout" = "مهلت زمانی درخواست به پایان رسید";
+"error.network_timeout.suggestion" = "لطفاً دوباره تلاش کنید. در صورت تداوم مشکل، وضعیت Claude را در status.claude.com بررسی کنید";
+"error.api_unauthorized" = "دسترسی غیرمجاز";
+"error.api_unauthorized.suggestion" = "ممکن است کلید نشست شما منقضی شده باشد. لطفاً آن را در «تنظیمات» به‌روزرسانی کنید";
+"error.api_server_error" = "خطای سرور";
+"error.api_server_error.suggestion" = "سرور با خطا مواجه شد. لطفاً بعداً دوباره تلاش کنید";
+"error.api_rate_limited" = "از سقف مجاز نرخ درخواست فراتر رفته است";
+"error.api_rate_limited.suggestion" = "لطفاً چند لحظه صبر کرده و سپس دوباره تلاش کنید";
+
+/* ==================== */
+/* MARK: - Validation Messages */
+/* ==================== */
+"validation.session_key_too_short" = "کلید نشست بیش از حد کوتاه است";
+"validation.session_key_too_long" = "کلید نشست بیش از حد بلند است";
+"validation.invalid_prefix" = "پیشوند کلید نشست نامعتبر است";
+"validation.invalid_characters" = "نویسه‌های نامعتبر در کلید نشست";
+"validation.invalid_format" = "قالب کلید نشست نامعتبر است";
+"validation.contains_whitespace" = "کلید نشست شامل فاصله است";
+
+/* ==================== */
+/* MARK: - GitHub Star Prompt */
+/* ==================== */
+"github.enjoy_app" = "از Claude Usage Tracker راضی هستید؟";
+"github.star_description" = "اگر این برنامه برایتان مفید بوده است، لطفاً به آن در GitHub ستاره بدهید! این کار به دیگران کمک می‌کند پروژه را پیدا کنند و انگیزه‌ای برای ادامهٔ توسعه است.";
+"github.star_button" = "ستاره دادن در GitHub";
+"github.maybe_later" = "شاید بعداً";
+"github.never_show" = "دیگر نشان داده نشود";
+
+/* ==================== */
+/* MARK: - API Settings */
+/* ==================== */
+"api.enable_tracking" = "فعال‌سازی رهگیری API";
+"api.enable_tracking.description" = "رهگیری اعتبار و هزینه‌های شما در Anthropic API Console";
+"api.session_key_placeholder" = "sk-ant-api03-...";
+"api.configure" = "پیکربندی رهگیری API";
+"api.configure.description" = "نظارت بر مصرف و اعتبار API شما در Anthropic Console";
+"api.instructions" = "برای رهگیری مصرف API، باید کلید نشست API خود را وارد کنید:";
+"api.instruction_step1" = "ورود به console.anthropic.com";
+"api.instruction_step2" = "باز کردن Developer Tools (F12 یا Cmd+Option+I)";
+"api.instruction_step3" = "به \U2068Application → Cookies → https://console.anthropic.com\U2069 بروید";
+"api.instruction_step4" = "یافتن «sessionKey» و کپی کردن مقدار آن";
+
+/* ==================== */
+/* MARK: - Personal Usage */
+/* ==================== */
+"personal.configure" = "پیکربندی مصرف شخصی";
+"personal.configure.description" = "رهگیری مصرف طرح رایگان خود در claude.ai";
+"personal.status" = "وضعیت";
+"personal.session_key" = "کلید نشست";
+"personal.session_key.configured" = "پیکربندی‌شده";
+"personal.session_key.not_configured" = "پیکربندی‌نشده";
+"personal.reconfigure" = "پیکربندی مجدد";
+"personal.remove" = "حذف کلید نشست";
+
+/* ==================== */
+/* MARK: - Claude Code (CLI) */
+/* ==================== */
+"claudecode.title" = "یکپارچه‌سازی با Claude CLI";
+"claudecode.description" = "نمایش اطلاعات مصرف در نوار وضعیت ترمینال";
+"claudecode.coming_soon" = "به‌زودی";
+"claudecode.features_description" = "یکپارچه‌سازی با Claude Code CLI برای نمایش در نوار وضعیت ترمینال، در به‌روزرسانی آینده ارائه خواهد شد.";
+
+/* ==================== */
+/* MARK: - Additional UI Labels */
+/* ==================== */
+"ui.app_behavior" = "رفتار برنامه";
+"ui.usage_tracking" = "رهگیری مصرف";
+"ui.global_settings" = "تنظیمات سراسری";
+"ui.menu_bar_metrics" = "سنجه‌های نوار منو";
+"ui.quick_actions" = "عملیات سریع";
+"ui.how_it_works" = "روش کارکرد";
+"ui.display_components" = "اجزای نمایش";
+"ui.requirements" = "پیش‌نیازها";
+"ui.live_preview" = "پیش‌نمایش زنده";
+"ui.updates_realtime" = "به‌روزرسانی بی‌درنگ";
+"ui.organization" = "سازمان";
+"ui.icon_style" = "سبک آیکون";
+"ui.display_mode" = "حالت نمایش";
+"ui.at_least_one_metric" = "دست‌کم یک سنجه باید فعال باشد";
+
+/* ==================== */
+/* MARK: - Session Management (Additional) */
+/* ==================== */
+"session.subtitle" = "راه‌اندازی و نگهداری خودکار نشست";
+"session.auto_description_line1" = "• تشخیص زمان بازنشانی نشست به 0%";
+"session.auto_description_line2" = "• ارسال «Hi» به Claude 3.5 Haiku (ارزان‌ترین مدل)";
+"session.auto_description_line3" = "• استفاده از گفتگوی موقتی که در تاریخچهٔ شما ظاهر نمی‌شود";
+"session.auto_description_line4" = "• نشست جدید ۵ ساعته بلافاصله آماده می‌شود";
+
+/* ==================== */
+/* MARK: - Claude CLI (Additional) */
+/* ==================== */
+"claudecode.subtitle" = "سفارشی‌سازی نمایش نوار وضعیت ترمینال";
+"claudecode.preview_label" = "پیش‌نمایش زنده";
+"claudecode.preview_description" = "نوار وضعیت شما در Claude CLI به این صورت نمایش داده می‌شود";
+"claudecode.component_model" = "نام مدل";
+"claudecode.component_directory" = "نام پوشه";
+"claudecode.component_branch" = "شاخهٔ Git";
+"claudecode.component_context" = "پنجرهٔ زمینه";
+"claudecode.component_context_tokens" = "نمایش به‌صورت توکن (به‌جای ٪)";
+"claudecode.component_usage" = "آمار مصرف";
+"claudecode.component_progressbar" = "نوار پیشرفت";
+"claudecode.component_pace_marker" = "نشانگر سرعت";
+"claudecode.pace_marker_info" = "رنگ‌آمیزی بر اساس سرعت تخمینی مصرف (سبز ← بنفش)";
+"claudecode.component_resettime" = "زمان بازنشانی";
+"claudecode.component_weekly" = "نمایش مصرف هفتگی";
+"claudecode.component_weekly_description" = "مصرف هفتگی توکن همراه با نوار و زمان بازنشانی";
+"claudecode.component_extra_usage" = "نمایش مصرف مازاد";
+"claudecode.component_extra_usage_description" = "نشانگر هزینه (مانند 9.49 USD)";
+"claudecode.weekly_label" = "نمایش برچسب \"Weekly:\"";
+"claudecode.requirement_sessionkey" = "• کلید نشست در برگهٔ «اعتبارنامه‌ها ← Claude.ai» پیکربندی شده باشد";
+"claudecode.requirement_restart" = "• راه‌اندازی مجدد Claude CLI پس از اعمال تغییرات";
+"claudecode.error_no_components" = "لطفاً دست‌کم یک جزء را برای نمایش انتخاب کنید";
+"claudecode.error_no_sessionkey" = "کلید نشست پیکربندی نشده است. لطفاً ابتدا آن را در برگهٔ «مصرف شخصی» تنظیم کنید.";
+"claudecode.success_applied" = "پیکربندی اعمال شد! برای مشاهدهٔ تغییرات، Claude CLI را مجدداً راه‌اندازی کنید.";
+"claudecode.success_disabled" = "نوار وضعیت غیرفعال شد. Claude CLI را مجدداً راه‌اندازی کنید.";
+"claudecode.preview_no_components" = "هیچ جزئی انتخاب نشده است";
+
+/* ==================== */
+/* MARK: - API Billing (Additional) */
+/* ==================== */
+"api.title" = "صورت‌حساب API";
+"api.subtitle" = "نظارت بر مصرف و هزینه‌های API";
+"api.enable_billing_tracking" = "فعال‌سازی رهگیری صورت‌حساب API";
+"api.enable_billing_description" = "نظارت بر مصرف API، هزینه‌های جاری و اعتبارات پیش‌پرداخت باقیمانده";
+"api.label_api_session_key" = "کلید نشست API";
+"api.placeholder_api_session_key" = "sk-ant-api03-...";
+"api.help_api_session_key" = "کلید نشست شما از console.anthropic.com";
+"api.button_fetch_organizations" = "دریافت سازمان‌ها";
+"api.button_fetching" = "در حال دریافت…";
+"api.button_save_configuration" = "ذخیرهٔ پیکربندی";
+"api.success_organizations_found" = "تعداد %d سازمان یافت شد";
+"api.error_fetch_failed" = "خطا در دریافت سازمان‌ها: %@";
+"api.success_configuration_saved" = "پیکربندی API با موفقیت ذخیره شد";
+
+/* ==================== */
+/* MARK: - Personal Usage (Additional) */
+/* ==================== */
+"personal.title" = "مصرف شخصی";
+"personal.subtitle" = "رهگیری مصرف و نشست‌های شما در Claude.ai";
+"personal.label_session_key" = "کلید نشست";
+"personal.placeholder_session_key" = "sk-ant-sid-...";
+"personal.help_session_key" = "کوکی «sessionKey» را از DevTools در claude.ai جای‌گذاری کنید";
+"personal.button_test_connection" = "آزمایش اتصال";
+"personal.button_save_and_continue" = "ذخیره و ادامه";
+"personal.button_remove_key" = "حذف کلید";
+"personal.success_connected" = "اتصال به سازمان با موفقیت برقرار شد";
+"personal.confirm_remove_title" = "کلید نشست حذف شود؟";
+"personal.confirm_remove_message" = "با این کار، رهگیری مصرف شخصی شما متوقف خواهد شد.";
+
+/* ==================== */
+/* MARK: - Error Presenter */
+/* ==================== */
+"error.code_label" = "کد خطا:";
+"error.what_to_do" = "اقدامات لازم:";
+"error.occurred_at" = "زمان رخداد: %@";
+
+/* ==================== */
+/* MARK: - General Settings (Additional) */
+/* ==================== */
+"general.slider_realtime" = "به‌روزرسانی‌های بی‌درنگ";
+"general.slider_frequent" = "به‌روزرسانی‌های مکرر";
+"general.slider_balanced" = "حالت متوازن";
+"general.slider_efficient" = "بهینه در مصرف انرژی";
+"general.slider_battery_saver" = "صرفه‌جویی در باتری";
+"general.slider_fast" = "سریع";
+"general.slider_balanced_label" = "متوازن";
+"general.slider_battery_saver_label" = "صرفه‌جویی باتری";
+"general.available_languages" = "زبان‌های موجود (%d)";
+
+/* ==================== */
+/* MARK: - Badges */
+/* ==================== */
+"badge.new" = "جدید";
+"badge.beta" = "بتا";
+"badge.pro" = "حرفه‌ای";
+
+/* ==================== */
+/* MARK: - Appearance (Additional) */
+/* ==================== */
+"appearance.title" = "ظاهر نوار منو";
+"appearance.subtitle" = "سفارشی‌سازی آیکون‌ها و سنجه‌های نوار منو";
+"appearance.global_settings" = "تنظیمات سراسری";
+"appearance.menu_bar_metrics" = "سنجه‌های نوار منو";
+"appearance.monochrome_title" = "تک‌رنگ";
+"appearance.monochrome_description" = "استفاده از رنگ تطبیقی به‌جای رنگ‌های وضعیت (سبز/نارنجی/قرمز)";
+"appearance.show_labels_title" = "نمایش برچسب‌های آیکون";
+"appearance.show_labels_description" = "نمایش برچسب‌های پیشوند (S:، W:، API:) برای هر سنجه";
+"appearance.show_remaining_title" = "نمایش درصد باقیمانده";
+"appearance.show_remaining_description" = "نمایش ظرفیت باقیمانده به‌جای درصد مصرف‌شده (مانند باتری macOS)";
+"appearance.pace_marker_section_title" = "نشانگر سرعت";
+"appearance.pace_marker_section_subtitle" = "رهگیری سرعت مصرف متناسب با دوره‌های بازنشانی";
+"appearance.show_time_marker_title" = "نمایش نشانگر زمان";
+"appearance.show_time_marker_description" = "نمایش علامت مدرج روی نوار پیشرفت برای نشان دادن میزان سپری شدن دورهٔ زمانی";
+"appearance.show_pace_marker_title" = "رنگ‌آمیزی نشانگر بر اساس سرعت";
+"appearance.show_pace_marker_description" = "رنگ‌آمیزی نشانگر زمان بر اساس سرعت تخمینی مصرف (سبز ← بنفش). برای سنجه‌های نشست و هفتگی اعمال می‌شود.";
+"appearance.pace_coloring_title" = "رنگ‌های نوار متناسب با سرعت مصرف";
+"appearance.pace_coloring_description" = "رنگ‌آمیزی نوارهای پیشرفت بر اساس سرعت تخمینی به‌جای سطح مصرف فعلی. این گزینه پیش‌بینی می‌کند که آیا تا پایان دوره به سقف مجاز خواهید رسید یا خیر.";
+"appearance.multiprofile_locked_title" = "تنظیمات ظاهر قفل شده است";
+"appearance.multiprofile_locked_description" = "این تنظیمات در هنگام فعال بودن «نمایش چندنمایه‌ای» غیرفعال هستند. هر نمایه در حالت چندنمایه‌ای از ظاهر اختصاصی خود استفاده می‌کند.";
+"appearance.disable_multiprofile" = "خاموش کردن نمایش چندنمایه‌ای";
+
+/* ==================== */
+/* MARK: - Setup Wizard (Additional) */
+/* ==================== */
+"setup.step_number_1" = "1";
+"setup.step_number_2" = "2";
+"setup.step_title_get_key" = "دریافت کلید نشست";
+"setup.step_title_enter_key" = "وارد کردن کلید نشست";
+"setup.step_description_get_key" = "باید کلید نشست خود را از claude.ai استخراج کنید";
+"setup.button_open_claude" = "باز کردن claude.ai";
+"setup.paste_instruction" = "مقدار کپی‌شدهٔ «sessionKey» را جای‌گذاری کنید";
+
+/* ==================== */
+/* MARK: - Component Preview */
+/* ==================== */
+"preview.sample_text_claude" = "Claude";
+"preview.sample_percentage" = "60%";
+"preview.sample_card_content" = "محتوای کارت اینجا قرار می‌گیرد";
+"preview.sample_more_content" = "محتوای بیشتر";
+"preview.sample_update_every" = "به‌روزرسانی در هر:";
+"preview.sample_5_minutes" = "۵ دقیقه";
+
+/* ==================== */
+/* MARK: - Manage Profiles */
+/* ==================== */
+"profiles.title" = "مدیریت نمایه‌ها";
+"profiles.subtitle" = "ایجاد و مدیریت چندین حساب Claude";
+"profiles.create_new" = "ایجاد نمایهٔ جدید";
+"profiles.about_title" = "دربارهٔ نمایه‌ها";
+"profiles.about_description" = "هر نمایه موارد اختصاصی خود را دارد:";
+"profiles.about_credentials" = "اعتبارنامه‌های Claude.ai";
+"profiles.about_api" = "اعتبارنامه‌های API Console";
+"profiles.about_cli" = "همگام‌سازی حساب CLI";
+"profiles.about_appearance" = "ظاهر نوار منو";
+"profiles.about_notifications" = "تنظیمات اعلان";
+"profiles.about_refresh" = "فاصلهٔ به‌روزرسانی";
+"profiles.active_badge" = "فعال";
+"profiles.created" = "تاریخ ایجاد";
+"profiles.cli_synced" = "همگام‌شده با CLI";
+"profiles.rename" = "تغییر نام نمایه";
+"profiles.activate" = "فعال‌سازی نمایه";
+"profiles.delete" = "حذف نمایه";
+"profiles.delete_title" = "حذف نمایه";
+"profiles.delete_confirm" = "آیا از حذف \"%@\" اطمینان دارید؟ با این کار تمام اعتبارنامه‌ها و تنظیمات مرتبط حذف خواهد شد.";
+"profiles.create_title" = "ایجاد نمایهٔ جدید";
+"profiles.name_label" = "نام نمایه (اختیاری)";
+"profiles.name_placeholder" = "برای نام تصادفی، خالی بگذارید";
+"profiles.name_hint" = "اگر خالی بماند، یک نام تصادفی جالب ایجاد خواهد شد!";
+
+/* ==================== */
+/* MARK: - Multi-Profile Display */
+/* ==================== */
+"multiprofile.title" = "نمایش چندنمایه‌ای";
+"multiprofile.subtitle" = "نمایش چندین نمایه در نوار منو";
+"multiprofile.enable_title" = "نمایش چندین نمایه";
+"multiprofile.enable_description" = "نمایش نمایه‌های انتخاب‌شده به‌صورت آیکون‌های فشرده در کنار یکدیگر";
+"multiprofile.select_profiles" = "انتخاب نمایه‌ها برای نمایش:";
+"multiprofile.info" = "هر نمایه مصرف را با رنگ نشان‌دهندهٔ وضعیت (سبز/نارنجی/قرمز) نمایش می‌دهد";
+"multiprofile.active_badge" = "فعال";
+"multiprofile.at_least_one" = "دست‌کم یک نمایه باید انتخاب شود";
+"multiprofile.icon_style" = "سبک آیکون";
+"multiprofile.style_circles" = "دایره‌ها";
+"multiprofile.style_bars" = "نوارها";
+"multiprofile.style_dots" = "نقطه‌ها";
+"multiprofile.style_percent" = "درصد";
+"multiprofile.show_week" = "نمایش مصرف هفته";
+"multiprofile.show_week_description" = "نمایش مصرف هفتگی علاوه بر نشست";
+"multiprofile.show_label" = "نمایش برچسب نمایه";
+"multiprofile.show_label_description" = "نمایش نام نمایه در زیر آیکون";
+"multiprofile.use_system_color" = "تک‌رنگ";
+"multiprofile.use_system_color_description" = "استفاده از رنگ سفید به‌جای رنگ‌های وضعیت (سبز/نارنجی/قرمز)";
+"multiprofile.active_indicator_title" = "نمایش نشانگر نمایهٔ فعال";
+"multiprofile.active_indicator_description" = "نمایش یک خط زیرین سبز کوچک زیر آیکون نمایهٔ فعال فعلی";
+
+/* ==================== */
+/* MARK: - General Settings (Profile-Level) */
+/* ==================== */
+"general.title" = "عمومی";
+"general.subtitle" = "فاصلهٔ به‌روزرسانی، شروع خودکار و اعلان‌ها";
+"general.refresh_title" = "فاصلهٔ به‌روزرسانی";
+"general.refresh_subtitle" = "فاصلهٔ زمانی برای بررسی به‌روزرسانی‌های مصرف";
+"general.refresh_seconds" = "هر %d ثانیه";
+"general.refresh_min" = "10s";
+"general.refresh_max" = "300s";
+"general.autostart_title" = "شروع خودکار نشست";
+"general.autostart_subtitle" = "شروع خودکار یک نشست جدید در صورت نیاز";
+"general.autostart_toggle" = "شروع خودکار نشست جدید";
+"general.autostart_description" = "ارسال خودکار پیام هنگام بازنشانی نشست";
+"general.autostart_requirement" = "• کلید نشست در برگهٔ «اعتبارنامه‌ها ← Claude.ai» پیکربندی شده باشد";
+"general.notifications_title" = "اعلان‌ها";
+"general.notifications_subtitle" = "دریافت اعلان دربارهٔ نقاط عطف مصرف";
+"general.connected" = "متصل";
+"general.not_connected" = "متصل نیست";
+
+/* ==================== */
+/* MARK: - Updates Settings */
+/* ==================== */
+"updates.version_info" = "اطلاعات نسخه";
+"updates.update_preferences" = "تنظیمات به‌روزرسانی";
+"updates.version_label" = "v%@ (%@)";
+
+/* ==================== */
+/* MARK: - Appearance (Additional) */
+/* ==================== */
+"appearance.global_subtitle" = "سفارشی‌سازی رفتار آیکون نوار منو";
+"appearance.metrics_subtitle" = "انتخاب سنجه‌ها برای نمایش در نوار منو";
+"appearance.all_metrics_off_title" = "حالت نشان‌وارهٔ برنامه";
+"appearance.all_metrics_off_description" = "همهٔ معیارها خاموش هستند. به جای آن، نشان‌وارهٔ برنامه در نوار منو نمایش داده خواهد شد. برای دسترسی به نمایه‌ها و تنظیمات روی آن کلیک کنید.";
+
+/* ==================== */
+/* MARK: - Metric Card */
+/* ==================== */
+"metric.show_countdown" = "نمایش زمان باقی‌مانده تا نشست بعدی";
+"metric.countdown_description" = "نمایش زمان باقی‌مانده (مانند →2H) در آیکون";
+
+/* ==================== */
+/* MARK: - Personal Usage (Additional) */
+/* ==================== */
+"personal.configuration_title" = "پیکربندی";
+"personal.status_connected" = "متصل";
+"personal.status_not_connected" = "متصل نیست";
+
+/* ==================== */
+/* MARK: - Language Settings */
+/* ==================== */
+"language.title" = "زبان";
+"language.subtitle" = "زبان مورد نظر خود را انتخاب کنید";
+"language.select_language" = "انتخاب زبان";
+"language.available" = "زبان‌های موجود";
+"language.restart_required" = "راه‌اندازی مجدد لازم است";
+"language.restart_message" = "برای اعمال تغییرات زبان، برنامه باید مجدداً راه‌اندازی شود.";
+"language.restart_now" = "راه‌اندازی مجدد اکنون";
+"language.restart_later" = "بعداً";
+
+/* ==================== */
+/* MARK: - Common Actions (Additional) */
+/* ==================== */
+"common.create" = "ایجاد";
+"common.rename" = "تغییر نام";
+"common.activate" = "فعال‌سازی";
+"common.connected" = "متصل";
+"common.not_connected" = "متصل نیست";
+"common.back" = "بازگشت";
+"common.next" = "بعدی";
+"common.remove" = "حذف";
+"common.switch" = "تعویض";
+"common.retry" = "تلاش مجدد";
+
+/* ==================== */
+/* MARK: - Popover/Menu Bar */
+/* ==================== */
+"popover.manage_profiles" = "مدیریت نمایه‌ها";
+"popover.no_profile" = "بدون نمایه";
+"popover.profiles_count" = "تعداد %d نمایه";
+"popover.profile_count_singular" = "تعداد ۱ نمایه";
+
+/* ==================== */
+/* MARK: - Setup Wizard */
+/* ==================== */
+"setup.step.enter_session_key" = "ورود کلید";
+"wizard.test_connection" = "آزمایش اتصال";
+"wizard.select_org_title" = "کدام سازمان را می‌خواهید ردیابی کنید؟";
+"wizard.select_org_subtitle" = "سازمان Claude را برای پایش مصرف انتخاب کنید";
+"wizard.config_summary" = "خلاصهٔ پیکربندی";
+"wizard.session_key" = "کلید نشست";
+"wizard.api_session_key" = "کلید نشست API";
+"wizard.organization" = "سازمان";
+"wizard.organization_id" = "شناسه: %@";
+"wizard.select_organization" = "انتخاب سازمان";
+"wizard.choose_organization" = "سازمانی را که می‌خواهید ردیابی کنید انتخاب نمایید";
+"wizard.review_config" = "بررسی پیکربندی";
+"wizard.confirm_settings" = "تنظیمات خود را قبل از ذخیره تأیید کنید";
+"wizard.key_will_update" = "کلید نشست به‌روزرسانی خواهد شد";
+"wizard.api_key_will_update" = "کلید نشست API به‌روزرسانی خواهد شد";
+
+/* ==================== */
+/* MARK: - CLI Account */
+/* ==================== */
+"cli.access_token" = "توکن دسترسی";
+"cli.subscription" = "اشتراک";
+"cli.scopes" = "دامنه‌های دسترسی";
+"cli.sync_instructions" = "برای وارد کردن اعتبارنامه‌های خود، روی «همگام‌سازی از Claude Code» در زیر کلیک کنید";
+"cli.about_title" = "دربارهٔ همگام‌سازی حساب CLI";
+"cli.benefits" = "مزایا:";
+"cli.tracking_note" = "نکته: ردیابی مصرف از اعتبارنامه‌های Claude.ai استفاده می‌کند. اعتبارنامه‌های CLI فقط برای تعویض حساب هستند.";
+
+/* ==================== */
+/* MARK: - Settings Sections (Titles & Descriptions) */
+/* ==================== */
+"section.credentials" = "اعتبارنامه‌ها";
+"section.active_profile" = "نمایهٔ فعال";
+"section.settings" = "تنظیمات";
+"section.app" = "برنامه";
+
+"section.claudeai_title" = "Claude.ai";
+"section.claudeai_desc" = "اعتبارنامه‌های Claude.ai";
+"section.api_console_title" = "کنسول API";
+"section.api_console_desc" = "اعتبارنامه‌های کنسول API";
+"section.cli_account_title" = "حساب CLI";
+"section.cli_account_desc" = "همگام‌سازی حساب CLI";
+"section.appearance_title" = "ظاهر";
+"section.appearance_desc" = "ظاهر نوار منو";
+"section.general_title" = "عمومی";
+"section.general_desc" = "تنظیمات عمومی";
+"section.manage_profiles_title" = "مدیریت نمایه‌ها";
+"section.manage_profiles_desc" = "مدیریت نمایه‌ها";
+
+/* ==================== */
+/* MARK: - Creator Info */
+/* ==================== */
+"creator.name" = "Hamed Elfayome";
+"creator.username" = "@hamed-elfayome";
+
+/* ==================== */
+/* MARK: - Wizard Steps & Actions */
+/* ==================== */
+"wizard.enter_key" = "ورود کلید";
+"wizard.select_org" = "انتخاب سازمان";
+"wizard.confirm" = "تأیید";
+"wizard.testing" = "در حال آزمایش…";
+"wizard.test_connection" = "آزمایش اتصال";
+"wizard.fetching" = "در حال دریافت…";
+"wizard.fetch_organizations" = "دریافت سازمان‌ها";
+"wizard.saving" = "در حال ذخیره…";
+"wizard.save_configuration" = "ذخیرهٔ پیکربندی";
+
+/* ==================== */
+/* MARK: - CLI Account Sync */
+/* ==================== */
+"cli.title" = "حساب CLI";
+"cli.subtitle" = "همگام‌سازی حساب واردشده در Claude Code";
+"cli.synced" = "حساب CLI همگام‌سازی شد";
+"cli.not_synced" = "همگام‌سازی نشده";
+"cli.account_details" = "جزئیات حساب";
+"cli.credentials_synced" = "اعتبارنامه‌های همگام‌سازی‌شدهٔ CLI شما";
+"cli.no_credentials" = "هنوز هیچ اعتبارنامه‌ای همگام‌سازی نشده است";
+"cli.resync" = "همگام‌سازی مجدد";
+"cli.sync_from_code" = "همگام‌سازی از Claude Code";
+"cli.benefit_1" = "تعویض خودکار ورود Claude Code همراه با نمایه‌ها";
+"cli.benefit_2" = "همگام نگه‌داشتن حساب‌های CLI و برنامه";
+"cli.benefit_3" = "تازه‌سازی خودکار اعتبارنامه‌ها هنگام تعویض نمایه";
+
+/* ==================== */
+/* MARK: - Additional Keys */
+/* ==================== */
+"api.single_organization" = "یک سازمان یافت شد و به‌طور خودکار انتخاب گردید";
+"api.remove_title" = "حذف اعتبارنامه‌ها";
+"api.remove_subtitle" = "حذف دائمی کلید نشست کنسول API از این نمایه";
+"claudecode.button_apply" = "اعمال";
+"claudecode.button_reset" = "بازنشانی";
+"claudecode.actions_title" = "عملیات";
+"claudecode.component_profile" = "نام نمایه";
+"claudecode.context_info" = "زمینه ممکن است به جای 100% حدود ~80-95% را نشان دهد — Claude پیش از رسیدن به سقف به‌طور خودکار فشرده‌سازی می‌کند، و توکن‌های خروجی نیز از فضای زمینه استفاده می‌کنند.";
+"claudecode.element_colors_title" = "رنگ‌های عناصر";
+"claudecode.element_color_directory" = "پوشه";
+"claudecode.element_color_branch" = "شاخه";
+"claudecode.element_color_model" = "مدل";
+"claudecode.element_color_profile" = "نمایه";
+"claudecode.element_color_context" = "زمینه";
+"claudecode.element_color_separator" = "جداکننده";
+"claudecode.element_color_usage" = "گرادیان مصرف";
+"claudecode.element_color_usage_desc" = "جایگزینی گرادیان ۱۰ سطحی با یک رنگ ثابت";
+"claudecode.element_color_pace" = "نشانگر سرعت";
+"claudecode.element_color_pace_desc" = "جایگزینی رنگ‌های ۶ سطحی سرعت با یک رنگ ثابت";
+"claudecode.element_color_weekly" = "مصرف هفتگی";
+"claudecode.element_color_weekly_desc" = "جایگزینی گرادیان مصرف هفتگی با یک رنگ ثابت";
+"claudecode.element_color_extra" = "مصرف اضافی";
+"claudecode.element_color_extra_desc" = "جایگزینی گرادیان مصرف اضافی (هزینه) با یک رنگ ثابت";
+"error.generic" = "خطا: %@";
+"personal.button_saving" = "در حال ذخیره…";
+"personal.button_setup_wizard" = "راهنمای راه‌اندازی";
+"personal.button_open_claude" = "باز کردن claude.ai";
+"personal.success_key_saved" = "کلید نشست با موفقیت ذخیره شد";
+"personal.remove_title" = "حذف اعتبارنامه‌ها";
+"personal.remove_subtitle" = "حذف دائمی کلید نشست Claude.ai از این نمایه";
+"personal.signin_description" = "برای استخراج خودکار کلید نشست خود، وارد شوید.";
+"personal.signin_button" = "ورود به Claude.ai";
+"personal.signin_sheet_title" = "ورود به Claude.ai";
+"personal.advanced_manual_key" = "پیشرفته: کلید نشست دستی";
+"about.run_setup_wizard" = "اجرای راهنمای راه‌اندازی";
+
+/* ==================== */
+/* MARK: - Migration & Reset */
+/* ==================== */
+"wizard.migrate_old_data" = "داده‌های نسخهٔ قدیمی برنامه را دارید؟";
+"wizard.migrate_description" = "اگر نسخهٔ قبلی را نصب داشته‌اید، برای درون‌ریزی نمایه‌ها و تنظیمات قدیمی خود روی دکمهٔ زیر کلیک کنید. این کار نیازمند مجوز سیستم برای دسترسی به داده‌ها است.";
+"wizard.migrate_button" = "انتقال داده‌ها";
+"wizard.migration_success" = "✅ با موفقیت %d مورد منتقل شد";
+"wizard.migration_failed" = "⚠️ انتقال با شکست مواجه شد: %@";
+"about.reset_app_data" = "بازنشانی داده‌های برنامه";
+"about.reset_confirmation_title" = "همهٔ داده‌های برنامه بازنشانی شوند؟";
+"about.reset_confirm" = "بازنشانی";
+"about.reset_confirmation_message" = "این کار همهٔ نمایه‌ها، اعتبارنامه‌ها و تنظیمات را برای همیشه حذف خواهد کرد. برنامه بسته خواهد شد و باید دوباره آن را راه‌اندازی کنید. این عمل غیرقابل بازگشت است.";
+"wizard.skip_migration" = "صرف‌نظر";
+"wizard.migration_skipped" = "از انتقال صرف‌نظر شد. در صورت نیاز می‌توانید داده‌های قدیمی را بعداً به صورت دستی همگام‌سازی کنید.";
+
+/* Claude Code Info */
+"wizard.claude_code_info_title" = "آیا از Claude Code استفاده می‌کنید؟";
+"wizard.claude_code_info_description" = "ردیابی مصرف کار خواهد کرد، اما نوار وضعیت CLI و شروع خودکار نشست بدون کلید نشست کار نخواهند کرد";
+"wizard.claude_code_skip_setup" = "صرف‌نظر از راه‌اندازی";
+"wizard.migrate_description_short" = "درون‌ریزی داده‌های نمایه‌های قدیمی شما از نسخهٔ قبلی برنامه";
+"wizard.skip_migration" = "صرف‌نظر";
+"wizard.migration_skipped" = "صرف‌نظر شد";
+
+/* ==================== */
+/* MARK: - Usage History */
+/* ==================== */
+"section.history_title" = "تاریخچه";
+"section.history_desc" = "مشاهدهٔ تاریخچهٔ مصرف";
+"section.support_title" = "حمایت";
+"section.support_desc" = "حمایت از توسعهٔ پروژه";
+"section.debug_title" = "ابزارهای عیب‌یابی";
+"section.debug_desc" = "ثبت وقایع شبکه و عیب‌یابی";
+"history.title" = "تاریخچهٔ مصرف";
+"history.subtitle" = "ردیابی مصرف خود در طول زمان";
+"history.tab.session" = "نشست‌ها";
+"history.tab.weekly" = "هفتگی";
+"history.tab.billing" = "صورت‌حساب";
+"history.chart.session_title" = "تاریخچهٔ مصرف نشست";
+"history.chart.weekly_title" = "روند مصرف هفتگی";
+"history.chart.billing_title" = "هزینهٔ ماهانهٔ API";
+"history.chart.now" = "اکنون";
+"history.empty.session_title" = "تاریخچهٔ نشستی وجود ندارد";
+"history.empty.session_description" = "مصرف نشست پس از هر بازنشانی ۵ ساعته ثبت خواهد شد";
+"history.empty.weekly_title" = "تاریخچهٔ هفتگی وجود ندارد";
+"history.empty.weekly_description" = "مصرف هفتگی پس از هر بازنشانی دوشنبه ثبت خواهد شد";
+"history.empty.billing_title" = "تاریخچهٔ صورت‌حسابی وجود ندارد";
+"history.empty.billing_description" = "داده‌های صورت‌حساب پس از هر بازنشانی ماهانه ثبت خواهد شد";
+"history.list.title" = "رکوردهای تاریخچه";
+"history.list.count" = "تعداد %d رکورد";
+"history.list.empty" = "هنوز رکوردی وجود ندارد. تاریخچه در هر بازنشانی به‌طور خودکار ثبت خواهد شد.";
+"history.list.more" = "و %d رکورد دیگر";
+"history.export_button" = "برون‌بری";
+"history.clear_button" = "پاک کردن";
+"history.no_profile" = "بدون نمایهٔ فعال";
+"history.reset_type.session" = "بازنشانی نشست";
+"history.reset_type.weekly" = "بازنشانی هفتگی";
+"history.reset_type.billing" = "دورهٔ صورت‌حساب";
+"history.label.total" = "مجموع";
+"history.label.spent" = "هزینه‌شده";
+"history.label.session" = "نشست";
+"history.time_scale.5_hours" = "۵ ساعت";
+"history.time_scale.24_hours" = "۲۴ ساعت";
+"history.time_scale.7_days" = "۷ روز";
+"history.time_scale.30_days" = "۳۰ روز";
+"history.chart.session_usage" = "مصرف نشست";
+"history.chart.weekly_usage" = "مصرف هفتگی";
+"history.chart.api_billing" = "صورت‌حساب API";
+"history.chart.no_data" = "داده‌ای در محدودهٔ انتخابی وجود ندارد";
+"history.export.title" = "برون‌بری داده‌ها";
+"history.export.json" = "برون‌بری در قالب JSON";
+"history.export.csv" = "برون‌بری در قالب CSV";
+"history.chart.now" = "اکنون";
+
+/* ==================== */
+/* MARK: - Support View */
+/* ==================== */
+"support.title" = "حمایت از پروژه";
+"support.subtitle" = "برنامهٔ Claude Usage Tracker رایگان و متن‌باز است";
+"support.all_features_free" = "همهٔ امکانات رایگان هستند";
+"support.all_features_desc" = "استفاده از تمام امکانات این برنامه کاملاً رایگان است. بدون سطوح ویژه، بدون پرداخت درون‌برنامه‌ای، بدون اشتراک.";
+"support.open_source" = "متن‌باز";
+"support.open_source_desc" = "کد منبع به‌صورت عمومی در GitHub در دسترس است. شما می‌توانید در پروژه مشارکت کنید، آن را بررسی کرده و تغییر دهید.";
+"support.no_tracking" = "بدون ردیابی";
+"support.no_tracking_desc" = "حریم خصوصی شما اهمیت دارد. بدون آمارگیری، بدون تله‌متری و بدون جمع‌آوری داده‌ها. همه‌چیز در Mac شما باقی می‌ماند.";
+"support.message" = "اگر این برنامه برایتان مفید است، از توسعهٔ آن حمایت کنید";
+"support.buy_coffee" = "خرید یک قهوه برای من";
+"support.footer" = "حمایت شما به زنده نگه‌داشتن و رشد این پروژه کمک می‌کند";
+"support.also_support" = "همچنین می‌توانید حمایت کنید با:";
+"support.star_github" = "ستاره دادن در GitHub";
+
+/* ==================== */
+/* MARK: - Debug View */
+/* ==================== */
+"debug.title" = "ابزارهای عیب‌یابی";
+"debug.subtitle" = "ثبت درخواست‌های شبکه برای خطایابی و عیب‌یابی";
+"debug.network_logger" = "ثبت‌کنندهٔ درخواست‌های شبکه";
+"debug.network_logger_desc" = "ثبت تمام درخواست‌های API با اطلاعات دقیق";
+"debug.logging_duration" = "مدت‌زمان ثبت وقایع";
+"debug.logging_active" = "ثبت وقایع فعال است";
+"debug.logging_inactive" = "ثبت وقایع غیرفعال است";
+"debug.stops_in" = "توقف در %@";
+"debug.start_logging" = "شروع ثبت وقایع";
+"debug.stop_logging" = "توقف ثبت وقایع";
+"debug.clear_logs" = "پاک کردن گزارش‌ها";
+"debug.clear_all_logs" = "همهٔ گزارش‌ها پاک شوند؟";
+"debug.clear_logs_message" = "این کار تمام درخواست‌های شبکهٔ ثبت‌شده را برای همیشه حذف خواهد کرد.";
+"debug.captured_requests" = "درخواست‌های ثبت‌شده";
+"debug.requests_logged" = "تعداد %d درخواست ثبت‌شده";
+"debug.no_requests" = "هنوز درخواستی ثبت نشده است";
+"debug.request_details" = "جزئیات درخواست";
+"debug.basic_information" = "اطلاعات پایه";
+"debug.request_body" = "بدنهٔ درخواست";
+"debug.response_preview" = "پاسخ (پیش‌نمایش)";
+"debug.full_size" = "اندازهٔ کامل: %@";
+"debug.error" = "خطا";
+"debug.url" = "URL";
+"debug.method" = "روش";
+"debug.status_code" = "کد وضعیت";
+"debug.duration" = "مدت‌زمان";
+"debug.timestamp" = "برچسب زمان";
+"debug.duration_seconds" = "معادل %.3f ثانیه";
+
+/* ==================== */
+/* MARK: - Combined Usage Chart */
+/* ==================== */
+"history.chart.usage_overview" = "نمای کلی مصرف";
+
+/* ==================== */
+/* MARK: - Keyboard Shortcuts */
+/* ==================== */
+"section.shortcuts_title" = "میان‌برها";
+"section.shortcuts_desc" = "پیکربندی میان‌برهای صفحه‌کلید";
+"shortcuts.title" = "میان‌برهای صفحه‌کلید";
+"shortcuts.subtitle" = "تنظیم کلیدهای میان‌بر سراسری برای کارهای متداول";
+"shortcuts.open_popover" = "نمایش/پنهان‌سازی پنجرهٔ بازشو";
+"shortcuts.open_popover_desc" = "نمایش یا پنهان کردن پنجرهٔ بازشوی مصرف";
+"shortcuts.refresh" = "تازه‌سازی مصرف";
+"shortcuts.refresh_desc" = "دریافت آخرین داده‌های مصرف";
+"shortcuts.open_settings" = "باز کردن تنظیمات";
+"shortcuts.open_settings_desc" = "باز کردن پنجرهٔ تنظیمات";
+"shortcuts.next_profile" = "نمایهٔ بعدی";
+"shortcuts.next_profile_desc" = "جابه‌جایی به نمایهٔ بعدی";
+"shortcuts.record" = "برای ضبط کلیک کنید";
+"shortcuts.recording" = "کلیدهای میان‌بر را فشار دهید…";
+"shortcuts.clear" = "پاک کردن";
+"shortcuts.none" = "هیچ";
+"shortcuts.info_title" = "میان‌برهای سراسری";
+"shortcuts.info_desc" = "میان‌برها از داخل هر برنامه‌ای کار می‌کنند. هر میان‌بر باید دست‌کم شامل یک کلید تبدیل (Command، ‏Option، ‏Control یا Shift) باشد. از تداخل با میان‌برهای سیستم خودداری کنید.";
+
+/* ==================== */
+/* MARK: - Mobile App (Coming Soon) */
+/* ==================== */
+"section.mobile_app_title" = "برنامهٔ موبایل";
+"section.mobile_app_desc" = "برنامهٔ موبایل به‌زودی عرضه می‌شود";
+"mobile.title" = "برنامهٔ موبایل";
+"mobile.subtitle" = "پیگیری مصرف Claude در همه‌جا";
+"mobile.coming_soon_badge" = "به‌زودی";
+"mobile.cta_message" = "علاقه‌مندید؟ به ما اطلاع دهید تا هنگام آماده شدن به شما خبر دهیم.";
+"mobile.notify_me" = "به من اطلاع بده";
+"mobile.submitting" = "در حال ارسال…";
+"mobile.notified" = "نام شما در فهرست ثبت شد!";
+"mobile.notified_desc" = "هنگام در دسترس قرار گرفتن برنامهٔ موبایل، به شما اطلاع خواهیم داد.";
+"mobile.privacy_note" = "هیچ دادهٔ شخصی جمع‌آوری نمی‌شود. این کار فقط ابراز تمایل شما را ثبت می‌کند.";
+"mobile.error_title" = "درخواست ناموفق بود";
+"mobile.error_message" = "ثبت تمایل شما امکان‌پذیر نبود. لطفاً اتصال اینترنت خود را بررسی کرده و دوباره تلاش کنید.";
+
+/* ==================== */
+/* MARK: - Popover Settings */
+/* ==================== */
+"section.popover_title" = "پنجرهٔ بازشو";
+"section.popover_desc" = "سفارشی‌سازی نمایش پنجرهٔ بازشو";
+"section.app_settings_title" = "تنظیمات";
+"section.app_settings_desc" = "تنظیمات برنامه و راه‌اندازی";
+"popover.title" = "پنجرهٔ بازشو";
+"popover.subtitle" = "سفارشی‌سازی نحوهٔ نمایش اطلاعات مصرف در پنجرهٔ بازشو";
+"popover.display_section" = "نمایش";
+"popover.time_display" = "نمایش زمان بازنشانی";
+"popover.time_display_desc" = "انتخاب نحوهٔ نمایش زمان‌های بازنشانی در پنجرهٔ بازشو";
+"popover.time_display_reset" = "زمان بازنشانی";
+"popover.time_display_remaining" = "باقی‌مانده";
+"popover.time_display_both" = "هر دو";
+"popover.time_format" = "قالب زمان";
+"popover.time_format_desc" = "انتخاب نحوهٔ نمایش زمان در سراسر برنامه";
+"popover.time_format_system" = "سیستم";
+"popover.time_format_12h" = "12-hour";
+"popover.time_format_24h" = "24-hour";
+
+/* ==================== */
+/* MARK: - Feedback Prompt */
+/* ==================== */
+"feedback.title" = "کمک به بهبود برنامه";
+"feedback.subtitle" = "بازخورد شما آیندهٔ این برنامه را شکل می‌دهد";
+"feedback.name_placeholder" = "نام";
+"feedback.title_label" = "نقش";
+"feedback.contact_placeholder" = "ایمیل";
+"feedback.message_placeholder" = "هر نظری دارید با ما در میان بگذارید — بازخورد، ایده، درخواست قابلیت…";
+"feedback.submit" = "ارسال";
+"feedback.submitting" = "در حال ارسال…";
+"feedback.remind_later" = "بعداً یادآوری کن";
+"feedback.never_show" = "دیگر نپرس";
+"feedback.thanks" = "از بازخورد شما سپاسگزاریم!";
+"feedback.error_title" = "ارسال ناموفق بود";
+"feedback.error_message" = "ارسال بازخورد شما امکان‌پذیر نبود. لطفاً بعداً دوباره امتحان کنید.";
+"feedback.role_developer" = "توسعه‌دهنده";
+"feedback.role_designer" = "طراح";
+"feedback.role_manager" = "مدیر";
+"feedback.role_student" = "دانشجو";
+"feedback.role_researcher" = "پژوهشگر";
+"feedback.role_other" = "سایر";
+
+// MARK: - Status Banners
+"popover.banner.credentials_expired" = "اعتبارنامه منقضی شده است. در «تنظیمات» به‌روزرسانی کنید.";
+"popover.banner.refresh_failed" = "تازه‌سازی %d بار ناموفق بود";
+"popover.banner.updated_ago" = "به‌روزرسانی: %dm پیش";
+
+// MARK: - Overage Balance
+"popover.overage_balance" = "موجودی";
+
+// MARK: - Setup Wizard CLI Detection
+"setup.cli_detecting" = "در حال بررسی اعتبارنامه‌های CLI…";
+"setup.cli_detected.title" = "ابزار CLI شناسایی شد!";
+"setup.cli_detected.description" = "اعتبارنامه‌های Claude Code CLI در سیستم شما یافت شد. پیگیری مصرف خود را تنها با یک کلیک آغاز کنید.";
+"setup.cli_detected.start" = "شروع پیگیری";
+"setup.cli_detected.manual" = "راه‌اندازی به‌صورت دستی";
+
+// MARK: - Custom Notification Settings
+"notifications.custom_thresholds" = "آستانه‌های سفارشی";
+"notifications.custom_threshold" = "هشدار سفارشی";
+"notifications.custom_placeholder" = "مثلاً ۵۰";
+"notifications.custom_add" = "افزودن";
+"notifications.sound" = "صدا";
+"notifications.sound.default" = "پیش‌فرض";
+"notifications.sound.none" = "هیچ";
+"notifications.sound.preview" = "پیش‌شنیدن صدا";
+
+/* Claude Code Notch HUD */
+"notch.hud.section_title" = "Dynamic Island";
+"notch.hud.section_desc" = "نمایشگری مینیمال در نزدیکی ناچ که فعالیت‌های Claude Code را نشان می‌دهد";
+"notch.hud.enable" = "فعال‌سازی Dynamic Island";
+"notch.hud.enable_desc" = "قلاب‌های Claude Code را نصب می‌کند و فعالیت زندهٔ نشست را در نزدیکی ناچ نشان می‌دهد";
+"notch.hud.auto_hide" = "پنهان‌سازی خودکار در زمان بی‌کاری";
+"notch.hud.auto_hide_desc" = "پنهان کردن HUD چند ثانیه پس از بی‌کار شدن تمام نشست‌ها";
+"notch.hud.expanded_title" = "Claude Code";
+"notch.no_sessions" = "هیچ نشست فعالی وجود ندارد";
+"notch.status.thinking" = "در حال فکر کردن…";
+"notch.status.writing_code" = "در حال نوشتن…";
+"notch.status.reading_files" = "در حال خواندن…";
+"notch.status.running_command" = "در حال اجرا…";
+"notch.status.needs_attention" = "نیازمند ورودی";
+"notch.status.idle" = "انجام شد";
+"notch.task.running_command" = "در حال اجرای دستور";
+"notch.task.writing" = "در حال نوشتن %@";
+"notch.task.editing" = "در حال ویرایش %@";
+"notch.task.reading" = "در حال خواندن %@";
+"notch.task.searching" = "در حال جستجوی فایل‌ها";
+"notch.task.subagent" = "در حال اجرای عامل فرعی";
+"notch.task.web" = "در حال مرور وب";
+"notch.hooks.title" = "قلاب‌های Claude Code";
+"notch.hooks.desc" = "نمایشگر HUD رویدادها را از طریق قلاب‌های موجود در \U2068~/.claude/settings.json\U2069 دریافت می‌کند";
+"notch.hooks.status_installed" = "قلاب‌ها نصب شده‌اند";
+"notch.hooks.status_partial" = "قلاب‌ها تا حدی نصب شده‌اند";
+"notch.hooks.status_not_installed" = "قلاب‌ها پیکربندی نشده‌اند";
+"notch.hooks.status_legacy" = "قلاب‌هایی از نسخهٔ قبلی شناسایی شدند — با فعال‌سازی HUD جایگزین خواهند شد.";
+"notch.hooks.install" = "نصب";
+"notch.hooks.repair" = "تعمیر";
+"notch.hooks.remove" = "حذف";
+"notch.server.listening" = "در حال شنود روی %@";
+"notch.server.port_busy" = "درگاه %@ در حال استفاده است — آیا نسخهٔ دیگری از برنامه در حال اجراست؟";
+"notch.server.retry" = "تلاش مجدد";
+
+/* Sponsor slot */
+"sponsor.slot_title" = "این جایگاه برای حامیان مالی در دسترس است";
+"sponsor.slot_cta" = "ارتباط با ما";
+
+/* Multi-Provider / OpenAI Codex */
+"section.codex_account_title" = "حساب Codex";
+"section.codex_account_desc" = "اتصال به حساب OpenAI Codex شما";
+"profiles.provider_label" = "ارائه‌دهنده";
+"profiles.provider_hint" = "مشخص می‌کند این نمایه کدام سرویس را پیگیری می‌کند. این مورد بعداً قابل تغییر نیست.";
+"usage.window.session" = "نشست";
+"usage.window.weekly" = "هفتگی";
+"popover.credits_unlimited" = "اعتبار نامحدود";
+"popover.credits_balance" = "اعتبار: %@";
+"codex.title" = "حساب OpenAI Codex";
+"codex.subtitle" = "پیگیری سقف مصرف Codex شما";
+"codex.connected" = "متصل";
+"codex.not_connected" = "متصل نیست";
+"codex.source_manual" = "استفاده از اعتبارنامه‌های ذخیره‌شده به‌صورت دستی";
+"codex.source_authfile" = "در حال خواندن از Codex CLI (\U2068auth.json\U2069)";
+"codex.signed_in_as" = "واردشده با حساب %@";
+"codex.test_connection" = "آزمایش اتصال";
+"codex.cli_detection_title" = "Codex CLI";
+"codex.cli_detection_subtitle" = "اعتبارنامه‌ها از \U2068~/.codex/auth.json\U2069 خوانده می‌شوند";
+"codex.cli_detected" = "ابزار Codex CLI شناسایی شد";
+"codex.last_refresh" = "توکن‌ها در %@ تازه‌سازی شدند";
+"codex.live_read_note" = "اعتبارنامه‌ها به‌صورت زنده از \U2068auth.json\U2069 خوانده می‌شوند — با ورود یا خروج در Codex CLI، این نمایه به‌طور خودکار تغییرات را اعمال می‌کند.";
+"codex.cli_not_detected" = "ابزار Codex CLI شناسایی نشد";
+"codex.cli_not_detected_hint" = "ابزار Codex CLI را نصب کرده و دستور `codex` را برای ورود اجرا کنید، یا اعتبارنامه‌ها را در زیر جای‌گذاری نمایید.";
+"codex.rescan" = "پویش مجدد";
+"codex.test_success" = "اتصال برقرار است";
+"codex.test_success_plan" = "متصل — طرح %@";
+"codex.manual_title" = "اعتبارنامه‌های دستی";
+"codex.manual_subtitle" = "در صورتی که CLI روی این Mac نصب نیست، محتوای \U2068auth.json\U2069 را جای‌گذاری کنید";
+"codex.manual_saved" = "اعتبارنامه‌های دستی ذخیره شدند";
+"codex.manual_remove" = "حذف";
+"codex.manual_save" = "ذخیرهٔ اعتبارنامه‌ها";
+"setup.choose_provider.subtitle" = "کدام سرویس را می‌خواهید پیگیری کنید؟";
+"setup.choose_provider.anthropic_hint" = "مصرف Claude.ai، ‏Claude Code و Console";
+"setup.choose_provider.codex_hint" = "سقف مصرف OpenAI Codex CLI";
+"setup.choose_provider.skip" = "فعلاً رد شدن";
+"setup.codex_detected.title" = "ابزار Codex CLI شناسایی شد";
+"setup.codex_detected.description" = "اعتبارنامه‌های Codex CLI شما یافت شد. پیگیری سقف مصرف خود را بلافاصله آغاز کنید.";
+"setup.codex_not_detected.title" = "اتصال به Codex";
+"setup.codex_not_detected.description" = "هیچ ورودی برای Codex CLI یافت نشد. دستور `codex` را برای ورود اجرا کنید، یا محتوای \U2068~/.codex/auth.json\U2069 را در زیر جای‌گذاری نمایید.";
+"notification.usage_updated.title" = "مصرف به‌روزرسانی شد";
+"notification.usage_updated.body" = "داده‌های مصرف با موفقیت بارگیری شد";
+"error.codex_credentials_invalid" = "خواندن اعتبارنامه‌های Codex امکان‌پذیر نبود";
+"error.codex_credentials_invalid.suggestion" = "محتوای کامل \U2068~/.codex/auth.json\U2069 را جای‌گذاری کنید";
+"error.codex_credentials_not_found" = "هیچ اعتبارنامه‌ای برای Codex یافت نشد";
+"error.codex_credentials_not_found.suggestion" = "برای ورود، دستور `codex` را اجرا کنید، یا اعتبارنامه‌ها را در «تنظیمات» جای‌گذاری نمایید";
+"error.codex_auth_expired" = "اطلاعات ورود به Codex منقضی شده است";
+"error.codex_auth_expired.suggestion" = "برای ورود مجدد، دستور `codex` را در ترمینال خود اجرا کنید";
+"error.codex_auth_refresh_failed" = "تازه‌سازی ورود به Codex امکان‌پذیر نبود";
+"error.codex_invalid_response" = "پاسخ غیرمنتظره از API مصرف Codex";
+"error.codex_server_error" = "خطایی از API مصرف Codex بازگردانده شد";
+
+// MARK: - Terminal Launcher
+"launcher.title" = "راه‌انداز ترمینال";
+"launcher.subtitle" = "اجرای Claude Code با این نمایه از هر ترمینالی";
+"launcher.description" = "دستور %@ را نصب می‌کند. دستور سادهٔ claude همچنان از نمایهٔ فعال استفاده خواهد کرد؛ راه‌انداز همیشه ورود اختصاصی Claude Code این نمایه را باز می‌کند.";
+"launcher.install" = "نصب راه‌انداز";
+"launcher.remove" = "حذف";
+"launcher.login_needed" = "راه‌اندازی یک‌باره: دستور %@ را در ترمینال خود اجرا کرده و با /login وارد شوید. سپس برنامه به‌طور خودکار آن حساب را متصل و پیگیری خواهد کرد.";
+"launcher.pinned" = "متصل شد — پیگیری مصرف بر اساس این ورود انجام می‌شود.";
+"launcher.verify" = "بررسی ورود";
+"launcher.path_warning" = "مسیر \U2068~/.local/bin\U2069 در PATH شما وجود ندارد. این خط را به نمایهٔ shell خود اضافه کنید:";
+"launcher.install_failed" = "نصب راه‌انداز امکان‌پذیر نبود: %@";
+"support.popup_title" = "سلام، من حامد هستم 👋";
+"support.popup_later" = "شاید بعداً";
+"support.popup_signature" = "تیم تک‌نفرهٔ پشت Claude Usage";
+"support.popup_body" = "رایگان، متن‌باز، ساخته‌شده توسط یک نفر — بدون تبلیغات، بدون ردیابی. اگر تاکنون مانع از اتمام سقف نشست شما شده است، یک قهوه به ادامهٔ کار آن کمک می‌کند.";
+"support.popup_days" = "پایش سقف‌های شما به مدت %d روز — همیشه رایگان";

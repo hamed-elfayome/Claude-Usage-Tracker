@@ -5,6 +5,12 @@ All notable changes to Claude Usage Tracker will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Persian localization**: Persian (فارسی) is now available as the 15th interface language, with common technical terms (Token, API, CLI, Claude, Opus, Sonnet) kept in English.
+
 ## [3.3.0] - 2026-08-29
 
 ### Major Features
