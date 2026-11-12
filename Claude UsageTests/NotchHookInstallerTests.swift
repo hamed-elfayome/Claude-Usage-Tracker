@@ -37,6 +37,8 @@ final class NotchHookInstallerTests: XCTestCase {
                 for hook in (group["hooks"] as? [[String: Any]]) ?? [] {
                     if let url = hook["url"] as? String, url.contains("19847") {
                         urls.append(url)
+                    } else if let command = hook["command"] as? String, command.contains("19847") {
+                        urls.append(command)
                     }
                 }
             }
@@ -54,6 +56,40 @@ final class NotchHookInstallerTests: XCTestCase {
         XCTAssertTrue(urls.allSatisfy { $0.contains("/hook/testtoken/") })
         XCTAssertFalse(urls.contains { $0.contains("permission-request") })
         XCTAssertEqual(installer.checkStatus(), .installed)
+    }
+
+    func testSessionStartIsACommandHook() throws {
+        // Claude Code never calls an http hook on SessionStart.
+        XCTAssertNoThrow(try installer.install().get())
+
+        let hooks = try readSettings()["hooks"] as! [String: Any]
+        let sessionStart = (hooks["SessionStart"] as! [[String: Any]])[0]["hooks"] as! [[String: Any]]
+        XCTAssertEqual(sessionStart[0]["type"] as? String, "command")
+        let command = try XCTUnwrap(sessionStart[0]["command"] as? String)
+        XCTAssertTrue(command.contains("/hook/testtoken/session-start"))
+        XCTAssertNil(sessionStart[0]["url"])
+
+        let stop = (hooks["Stop"] as! [[String: Any]])[0]["hooks"] as! [[String: Any]]
+        XCTAssertEqual(stop[0]["type"] as? String, "http")
+    }
+
+    func testHTTPSessionStartHookDetectedAndReplaced() throws {
+        // What v3.3.0 wrote: the right URL, on a hook type that never fires.
+        XCTAssertNoThrow(try installer.install().get())
+        var settings = try readSettings()
+        var hooks = settings["hooks"] as! [String: Any]
+        hooks["SessionStart"] = [["matcher": "", "hooks": [[
+            "type": "http",
+            "url": "http://127.0.0.1:19847/hook/testtoken/session-start",
+            "timeout": 3,
+        ]]]]
+        settings["hooks"] = hooks
+        try writeSettings(settings)
+
+        XCTAssertEqual(installer.checkStatus(), .legacyDetected)
+        XCTAssertNoThrow(try installer.install().get())
+        XCTAssertEqual(installer.checkStatus(), .installed)
+        XCTAssertEqual(allOurURLs(in: try readSettings()).count, 8)
     }
 
     func testInstallPreservesForeignSettingsAndHooks() throws {
