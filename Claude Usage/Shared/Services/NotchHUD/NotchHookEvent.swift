@@ -10,21 +10,37 @@
 import Foundation
 
 /// A passive observation event from a Claude Code hook.
+///
+/// Every hook payload carries `cwd`, so every mutating event forwards it: a
+/// session first observed mid-flight (tracker restarted, or a sub-process
+/// that never fires SessionStart) still gets named after its project instead
+/// of falling back to a bare session id.
 enum NotchHookEvent: Equatable {
-    case sessionStart(id: String, cwd: String?)
+    /// `title` is the session's custom title; Claude Code sends it on the two
+    /// events below, and only when one has been set.
+    case sessionStart(id: String, cwd: String?, title: String? = nil)
     case sessionEnd(id: String)
-    case userPromptSubmit(id: String, prompt: String?)
+    case userPromptSubmit(id: String, cwd: String?, prompt: String?, title: String? = nil)
     case preToolUse(id: String, cwd: String?, status: SessionStatus, task: String)
-    case postToolUse(id: String)
-    case toolFailure(id: String)
-    case stop(id: String)
-    case notification(id: String, message: String?)
+    case postToolUse(id: String, cwd: String?)
+    case toolFailure(id: String, cwd: String?)
+    /// `backgroundWork` is true when the turn ended with agent work still in
+    /// flight: the session is paused until that work wakes it, not finished.
+    case stop(id: String, cwd: String? = nil, backgroundWork: Bool = false)
+    /// `isIdleNudge` marks Claude Code's "waiting for your input" reminder, as
+    /// opposed to a prompt that actually blocks the session.
+    case notification(id: String, cwd: String?, message: String?, isIdleNudge: Bool = false)
 
     /// The hook URL path suffix each event is received on (after the token segment).
     static let pathSuffixes: [String] = [
         "session-start", "session-end", "user-prompt-submit", "pre-tool-use",
         "post-tool-use", "post-tool-use-failure", "stop", "notification",
     ]
+
+    /// `background_tasks` types that mean an agent is still working for the
+    /// session. Shells and monitors are left out: a dev server or a log tail
+    /// runs for as long as the session does and would never read as done.
+    static let agentTaskTypes: Set<String> = ["subagent", "workflow", "teammate"]
 
     /// Builds an event from a hook path suffix + parsed JSON payload.
     /// Returns nil for unknown paths or payloads without a session id.
@@ -33,14 +49,15 @@ enum NotchHookEvent: Equatable {
             return nil
         }
         let cwd = payload["cwd"] as? String
+        let title = payload["session_title"] as? String
 
         switch pathSuffix {
         case "session-start":
-            return .sessionStart(id: sessionId, cwd: cwd)
+            return .sessionStart(id: sessionId, cwd: cwd, title: title)
         case "session-end":
             return .sessionEnd(id: sessionId)
         case "user-prompt-submit":
-            return .userPromptSubmit(id: sessionId, prompt: payload["prompt"] as? String)
+            return .userPromptSubmit(id: sessionId, cwd: cwd, prompt: payload["prompt"] as? String, title: title)
         case "pre-tool-use":
             let activity = ToolActivityMapper.map(
                 toolName: payload["tool_name"] as? String ?? "",
@@ -48,13 +65,16 @@ enum NotchHookEvent: Equatable {
             )
             return .preToolUse(id: sessionId, cwd: cwd, status: activity.status, task: activity.task)
         case "post-tool-use":
-            return .postToolUse(id: sessionId)
+            return .postToolUse(id: sessionId, cwd: cwd)
         case "post-tool-use-failure":
-            return .toolFailure(id: sessionId)
+            return .toolFailure(id: sessionId, cwd: cwd)
         case "stop":
-            return .stop(id: sessionId)
+            let tasks = payload["background_tasks"] as? [[String: Any]] ?? []
+            let backgroundWork = tasks.contains { agentTaskTypes.contains($0["type"] as? String ?? "") }
+            return .stop(id: sessionId, cwd: cwd, backgroundWork: backgroundWork)
         case "notification":
-            return .notification(id: sessionId, message: payload["message"] as? String)
+            return .notification(id: sessionId, cwd: cwd, message: payload["message"] as? String,
+                                 isIdleNudge: payload["notification_type"] as? String == "idle_prompt")
         default:
             return nil
         }
