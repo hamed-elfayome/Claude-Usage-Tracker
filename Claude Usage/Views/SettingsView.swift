@@ -8,6 +8,10 @@ import UserNotifications
 /// so there is no opaque flash on deminiaturize or appearance change.
 struct SettingsBackground: NSViewRepresentable {
     func makeNSView(context: Context) -> NSView {
+        if OpaqueBackground.isRequired {
+            return OpaqueBackground.make(dark: 0.12, light: 0.95)
+        }
+
         let container = NSView()
 
         let effectView = NSVisualEffectView()
@@ -43,6 +47,11 @@ struct SettingsBackground: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {
+        if OpaqueBackground.isRequired {
+            OpaqueBackground.apply(to: nsView, dark: 0.12, light: 0.95)
+            return
+        }
+
         if let tintView = nsView.subviews.last {
             tintView.wantsLayer = true
             if NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua {
@@ -56,6 +65,10 @@ struct SettingsBackground: NSViewRepresentable {
 
 struct SidebarVisualEffect: NSViewRepresentable {
     func makeNSView(context: Context) -> NSView {
+        if OpaqueBackground.isRequired {
+            return OpaqueBackground.make(dark: 0.09, light: 0.92)
+        }
+
         let container = NSView()
 
         let effectView = NSVisualEffectView()
@@ -91,6 +104,11 @@ struct SidebarVisualEffect: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {
+        if OpaqueBackground.isRequired {
+            OpaqueBackground.apply(to: nsView, dark: 0.09, light: 0.92)
+            return
+        }
+
         if let tintView = nsView.subviews.last {
             tintView.wantsLayer = true
             if NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua {

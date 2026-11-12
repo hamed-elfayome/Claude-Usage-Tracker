@@ -1,9 +1,38 @@
 import SwiftUI
 import Charts
 
+// MARK: - Opaque fallback for macOS 26+
+/// On macOS 26 (Tahoe) and later, hosting an `NSVisualEffectView` material under
+/// SwiftUI content can crash inside the system's material pipeline
+/// (`MaterialProviderBox.resolveLayers`, no app frames; #279, #333). Those
+/// systems get a plain, theme-aware opaque layer instead. Earlier systems keep
+/// the vibrancy background.
+enum OpaqueBackground {
+    static var isRequired: Bool {
+        if #available(macOS 26.0, *) { return true }
+        return false
+    }
+
+    static func make(dark: CGFloat, light: CGFloat) -> NSView {
+        let view = NSView()
+        apply(to: view, dark: dark, light: light)
+        return view
+    }
+
+    static func apply(to view: NSView, dark: CGFloat, light: CGFloat) {
+        view.wantsLayer = true
+        let isDark = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        view.layer?.backgroundColor = NSColor(calibratedWhite: isDark ? dark : light, alpha: 1.0).cgColor
+    }
+}
+
 // MARK: - Always-active vibrancy background
 struct VisualEffectBackground: NSViewRepresentable {
     func makeNSView(context: Context) -> NSView {
+        if OpaqueBackground.isRequired {
+            return OpaqueBackground.make(dark: 0.12, light: 0.96)
+        }
+
         let container = NSView()
 
         // Base vibrancy layer
@@ -41,6 +70,11 @@ struct VisualEffectBackground: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {
+        if OpaqueBackground.isRequired {
+            OpaqueBackground.apply(to: nsView, dark: 0.12, light: 0.96)
+            return
+        }
+
         // Update tint for appearance changes
         if let tintView = nsView.subviews.last {
             tintView.wantsLayer = true
