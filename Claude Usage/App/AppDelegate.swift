@@ -95,7 +95,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         }
     }
 
-<<<<<<< HEAD
     private func prepareApplication() {
         // Disable window restoration for menu bar app
         UserDefaults.standard.set(false, forKey: "NSQuitAlwaysKeepsWindows")
@@ -131,7 +130,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             name: .showSetupWizard,
             object: nil
         )
-=======
+    }
+
     /// Another running copy of the app, if any. Debug builds and test hosts
     /// are exempt so development can go on beside an installed copy.
     private func otherRunningInstance() -> NSRunningApplication? {
@@ -144,7 +144,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         return NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
             .first { $0.processIdentifier != ownPID && !$0.isTerminated }
         #endif
->>>>>>> pr-344
     }
 
     private func requestNotificationPermissions() {
