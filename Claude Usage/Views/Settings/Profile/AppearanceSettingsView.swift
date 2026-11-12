@@ -234,7 +234,7 @@ struct AppearanceSettingsView: View {
                 configuration = activeProfile.iconConfig
             }
         }
-        .onChange(of: profileManager.activeProfile?.id) { _, newProfileId in
+        .onChangeCompat(of: profileManager.activeProfile?.id) { newProfileId in
             // Reload configuration when profile changes
             if let activeProfile = profileManager.activeProfile {
                 configuration = activeProfile.iconConfig

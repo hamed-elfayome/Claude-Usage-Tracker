@@ -60,7 +60,7 @@ struct NotchHUDSettingsView: View {
             .padding()
         }
         .onAppear { hookStatus = NotchHookInstaller.shared.checkStatus() }
-        .onChange(of: enabled) { _, newValue in
+        .onChangeCompat(of: enabled) { newValue in
             SharedDataStore.shared.saveNotchHUDEnabled(newValue)
             if newValue {
                 NotchHookInstaller.shared.install()
@@ -70,7 +70,7 @@ struct NotchHUDSettingsView: View {
             hookStatus = NotchHookInstaller.shared.checkStatus()
             NotificationCenter.default.post(name: .notchHUDSettingChanged, object: nil)
         }
-        .onChange(of: autoHide) { _, newValue in
+        .onChangeCompat(of: autoHide) { newValue in
             SharedDataStore.shared.saveNotchHUDAutoHide(newValue)
             NotificationCenter.default.post(name: .notchHUDSettingChanged, object: nil)
         }

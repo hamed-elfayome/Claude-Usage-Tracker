@@ -808,7 +808,7 @@ struct ProfileCredentialCardsRow: View {
         .onAppear {
             loadCredentials()
         }
-        .onChange(of: profileManager.activeProfile?.id) { _, _ in
+        .onChangeCompat(of: profileManager.activeProfile?.id) { _ in
             loadCredentials()
             // A credential section from another provider may still be selected
             // after a profile switch — snap back to a section that exists.

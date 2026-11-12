@@ -18,8 +18,8 @@ struct NotchCompactLeadingView: View {
                 Image(systemName: session.status.sfSymbolName)
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(session.status.tintColor)
-                    .symbolEffect(.pulse, isActive: session.status == .needsAttention)
-                    .contentTransition(.symbolEffect(.replace))
+                    .symbolPulseCompat(isActive: session.status == .needsAttention)
+                    .symbolReplaceTransitionCompat()
 
                 Text(session.displayName)
                     .font(.system(size: 11, weight: .medium))

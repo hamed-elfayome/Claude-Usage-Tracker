@@ -17,7 +17,7 @@
 
   <a href="https://www.buymeacoffee.com/hamedelfayome"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="54"></a>
 
-  <img src="https://claudetracker.com/asset/specs.svg?items=macOS%2014.0%2B%20(Sonoma)%2C~6%20MB%2CNative%20Swift%20%2F%20SwiftUI%2COfficially%20Signed" alt="macOS 14.0+ (Sonoma) · ~6 MB · Native Swift/SwiftUI · Officially Signed" height="40" align="middle"> 
+  <img src="https://claudetracker.com/asset/specs.svg?items=macOS%2013.0%2B%20(Ventura)%2C~6%20MB%2CNative%20Swift%20%2F%20SwiftUI%2COfficially%20Signed" alt="macOS 13.0+ (Ventura) · ~6 MB · Native Swift/SwiftUI · Officially Signed" height="40" align="middle"> 
   <a href="https://claudetracker.com"><img src="https://claudetracker.com/asset/website.svg" alt="claudetracker.com — live stats &amp; install" height="30" hspace="4" align="middle"></a>
 
 </div>
@@ -90,7 +90,7 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 
 Before installing Claude Usage Tracker, ensure you have:
 
-- **macOS 14.0 (Sonoma) or later** - Check: Apple menu → About This Mac
+- **macOS 13.0 (Ventura) or later** - Check: Apple menu → About This Mac
 - **Active Claude AI account** - Sign up at [claude.ai](https://claude.ai)
 
 **Authentication** (choose one method):
@@ -706,7 +706,7 @@ Sonnet │ Ctx: 96K │ Usage: 25%
 
 - **Language**: Swift 5.0+
 - **UI Framework**: SwiftUI 5.0+
-- **Platform**: macOS 14.0+ (Sonoma)
+- **Platform**: macOS 13.0+ (Ventura)
 - **Architecture**: MVVM with Protocol-Oriented Design
 - **Storage**: UserDefaults with App Groups
 - **Networking**: URLSession with async/await
@@ -859,7 +859,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Acknowledgments
 
 - Built with Swift and SwiftUI
-- Designed for macOS Sonoma and later
+- Designed for macOS Ventura and later
 - Uses Claude AI's usage API
 - Inspired by the need for better usage visibility
 
