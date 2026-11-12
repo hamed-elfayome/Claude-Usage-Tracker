@@ -1419,7 +1419,11 @@ class MenuBarManager: NSObject, ObservableObject {
         let toName = nextProfile.name
         let notificationSettings = currentProfile.notificationSettings
         Task {
-            await profileManager.activateProfile(nextProfile.id)
+            // A cancelled switch (e.g. the target's saved CLI login is dead) must not be announced
+            guard await profileManager.activateProfile(nextProfile.id) else {
+                LoggingService.shared.log("AutoSwitch: switch to '\(toName)' did not complete, staying on '\(fromName)'")
+                return
+            }
 
             await MainActor.run {
                 // Send notification

@@ -237,6 +237,8 @@
 /* MARK: - Error Messages */
 /* ==================== */
 "error.session_key_not_found" = "Nessuna chiave di sessione trovata";
+"error.cli_login_expired" = "L'accesso a Claude Code salvato per %@ è scaduto";
+"error.cli_login_expired_suggestion" = "Il cambio è stato annullato e il tuo accesso attuale è rimasto invariato, quindi le sessioni di Claude Code in corso continuano a funzionare. Per ricollegare %@, esegui /login in Claude Code con quell'account, poi passa di nuovo a %@.";
 "error.session_key_not_found.suggestion" = "Configura la tua chiave di sessione Claude nelle Impostazioni";
 "error.session_key_invalid" = "Chiave di sessione non valida";
 "error.session_key_invalid.suggestion" = "Verifica il formato della chiave di sessione. Dovrebbe iniziare con 'sk-ant-'";

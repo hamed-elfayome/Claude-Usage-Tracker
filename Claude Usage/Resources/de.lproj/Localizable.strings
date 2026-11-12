@@ -239,6 +239,8 @@
 /* MARK: - Error Messages */
 /* ==================== */
 "error.session_key_not_found" = "Kein Sitzungsschlüssel gefunden";
+"error.cli_login_expired" = "Die gespeicherte Claude-Code-Anmeldung von %@ ist abgelaufen";
+"error.cli_login_expired_suggestion" = "Der Wechsel wurde abgebrochen und Ihre aktuelle Anmeldung bleibt unverändert, laufende Claude-Code-Sitzungen arbeiten also weiter. Um %@ neu zu verknüpfen, führen Sie in Claude Code /login mit diesem Konto aus und wechseln Sie dann erneut zu %@.";
 "error.session_key_not_found.suggestion" = "Bitte konfigurieren Sie Ihren Claude-Sitzungsschlüssel in den Einstellungen";
 "error.session_key_invalid" = "Ungültiger Sitzungsschlüssel";
 "error.session_key_invalid.suggestion" = "Bitte überprüfen Sie das Format Ihres Sitzungsschlüssels. Er sollte mit 'sk-ant-' beginnen";

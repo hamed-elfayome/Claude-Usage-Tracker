@@ -260,6 +260,8 @@
 /* MARK: - Error Messages */
 /* ==================== */
 "error.session_key_not_found" = "Ключ сесії не знайдено";
+"error.cli_login_expired" = "Збережений вхід Claude Code для %@ прострочено";
+"error.cli_login_expired_suggestion" = "Перемикання скасовано, а поточний вхід залишено без змін, тож запущені сесії Claude Code працюють далі. Щоб знову підключити %@, виконайте /login у Claude Code з цим обліковим записом, а потім знову перемкніться на %@.";
 "error.session_key_not_found.suggestion" = "Будь ласка, налаштуйте ключ сесії Claude у Налаштуваннях";
 "error.session_key_invalid" = "Невірний ключ сесії";
 "error.session_key_invalid.suggestion" = "Будь ласка, перевірте формат ключа сесії. Він має починатися з «sk-ant-»";

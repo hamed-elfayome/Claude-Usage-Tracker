@@ -239,6 +239,8 @@
 /* MARK: - Error Messages */
 /* ==================== */
 "error.session_key_not_found" = "Clé de session non trouvée";
+"error.cli_login_expired" = "La connexion Claude Code enregistrée pour %@ a expiré";
+"error.cli_login_expired_suggestion" = "Le changement a été annulé et votre connexion actuelle est conservée : les sessions Claude Code en cours continuent de fonctionner. Pour reconnecter %@, exécutez /login dans Claude Code avec ce compte, puis repassez à %@.";
 "error.session_key_not_found.suggestion" = "Veuillez configurer votre clé de session Claude dans les Réglages";
 "error.session_key_invalid" = "Clé de session invalide";
 "error.session_key_invalid.suggestion" = "Veuillez vérifier le format de votre clé de session. Elle doit commencer par 'sk-ant-'";

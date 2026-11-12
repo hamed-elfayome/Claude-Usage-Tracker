@@ -237,6 +237,8 @@
 /* MARK: - Error Messages */
 /* ==================== */
 "error.session_key_not_found" = "Nenhuma chave de sessão encontrada";
+"error.cli_login_expired" = "O login do Claude Code salvo de %@ expirou";
+"error.cli_login_expired_suggestion" = "A troca foi cancelada e seu login atual foi mantido, então as sessões do Claude Code em andamento continuam funcionando. Para vincular %@ novamente, execute /login no Claude Code com essa conta e depois troque para %@ de novo.";
 "error.session_key_not_found.suggestion" = "Por favor, configure sua chave de sessão do Claude nas Configurações";
 "error.session_key_invalid" = "Chave de sessão inválida";
 "error.session_key_invalid.suggestion" = "Por favor, verifique o formato da sua chave de sessão. Ela deve começar com 'sk-ant-'";

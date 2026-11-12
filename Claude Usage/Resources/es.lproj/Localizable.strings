@@ -174,6 +174,8 @@
 /* MARK: - Error Messages */
 /* ==================== */
 "error.session_key_not_found" = "No se encontró la clave de sesión";
+"error.cli_login_expired" = "El inicio de sesión de Claude Code guardado de %@ ha caducado";
+"error.cli_login_expired_suggestion" = "El cambio se canceló y tu inicio de sesión actual se mantiene, así que las sesiones de Claude Code en curso siguen funcionando. Para volver a vincular %@, ejecuta /login en Claude Code con esa cuenta y luego cambia de nuevo a %@.";
 "error.session_key_not_found.suggestion" = "Por favor configura tu clave de sesión de Claude en Ajustes";
 "error.session_key_invalid" = "Clave de sesión inválida";
 "error.session_key_invalid.suggestion" = "Por favor verifica el formato de tu clave de sesión. Debe comenzar con 'sk-ant-'";

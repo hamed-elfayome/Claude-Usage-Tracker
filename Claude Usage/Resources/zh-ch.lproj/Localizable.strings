@@ -261,6 +261,8 @@
 /* MARK: - Error Messages */
 /* ==================== */
 "error.session_key_not_found" = "未找到会话密钥";
+"error.cli_login_expired" = "%@ 保存的 Claude Code 登录已过期";
+"error.cli_login_expired_suggestion" = "切换已取消，当前登录保持不变，正在运行的 Claude Code 会话会继续工作。要重新关联 %@，请在 Claude Code 中用该账户运行 /login，然后再次切换到 %@。";
 "error.session_key_not_found.suggestion" = "请在设置中配置您的 Claude 会话密钥";
 "error.session_key_invalid" = "无效的会话密钥";
 "error.session_key_invalid.suggestion" = "请检查您的会话密钥格式。它应该以 'sk-ant-' 开头";

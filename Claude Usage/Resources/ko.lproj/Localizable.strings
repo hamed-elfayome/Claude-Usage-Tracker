@@ -415,6 +415,8 @@
 /* MARK: - Error Messages */
 /* ==================== */
 "error.session_key_not_found" = "세션 키를 찾을 수 없음";
+"error.cli_login_expired" = "%@의 저장된 Claude Code 로그인이 만료되었습니다";
+"error.cli_login_expired_suggestion" = "전환이 취소되었고 현재 로그인은 그대로 유지되므로 실행 중인 Claude Code 세션은 계속 작동합니다. %@을(를) 다시 연결하려면 해당 계정으로 Claude Code에서 /login을 실행한 다음 %@(으)로 다시 전환하세요.";
 "error.session_key_not_found.suggestion" = "설정에서 Claude 세션 키를 구성하세요";
 "error.session_key_invalid" = "잘못된 세션 키";
 "error.session_key_invalid.suggestion" = "세션 키 형식을 확인하세요. 'sk-ant-'로 시작해야 합니다";

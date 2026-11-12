@@ -253,6 +253,8 @@
 /* MARK: - Error Messages */
 /* ==================== */
 "error.session_key_not_found" = "セッションキーが見つかりません";
+"error.cli_login_expired" = "%@ の保存済み Claude Code ログインの有効期限が切れました";
+"error.cli_login_expired_suggestion" = "切り替えはキャンセルされ、現在のログインはそのまま残っているため、実行中の Claude Code セッションは引き続き動作します。%@ を再リンクするには、そのアカウントで Claude Code の /login を実行してから、もう一度 %@ に切り替えてください。";
 "error.session_key_not_found.suggestion" = "設定でClaudeセッションキーを構成してください";
 "error.session_key_invalid" = "無効なセッションキー";
 "error.session_key_invalid.suggestion" = "セッションキーの形式を確認してください。'sk-ant-'で始まる必要があります";

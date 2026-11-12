@@ -714,6 +714,16 @@ class ClaudeCodeSyncService {
         return nil
     }
 
+    /// Whether Claude Code's live login (`.claude.json` `oauthAccount`) is the same account as
+    /// `profile`. False when either side has no account identity.
+    func systemHoldsAccount(of profile: Profile) -> Bool {
+        guard let system = accountIdentity(fromOAuthAccountJSON: readOAuthAccount()),
+              let stored = accountIdentity(fromOAuthAccountJSON: profile.oauthAccountJSON) else {
+            return false
+        }
+        return system == stored
+    }
+
     /// Writes an `oauthAccount` object (serialized JSON string) back into
     /// Claude Code's `.claude.json` config file, replacing whatever was there.
     /// Preserves all other top-level keys in the file. Does nothing if no
@@ -1001,7 +1011,15 @@ class ClaudeCodeSyncService {
     /// On a successful refresh, the new credentials are written back to BOTH the profile's
     /// cached JSON AND (when applicable) the custom keychain entry, so Claude Code and the
     /// Tracker stay in sync.
-    func ensureFreshCredentials(for profileId: UUID, allowRotation: Bool = false) async -> String? {
+    ///
+    /// `onRefreshRejected` is called when the token endpoint answers `invalid_grant`, i.e. the
+    /// saved refresh token is definitively dead. Other failures (offline, timeout, 5xx, 429)
+    /// also return `nil` but do not call it: the refresh token may still be good.
+    func ensureFreshCredentials(
+        for profileId: UUID,
+        allowRotation: Bool = false,
+        onRefreshRejected: (() -> Void)? = nil
+    ) async -> String? {
         let profiles = ProfileStore.shared.loadProfiles()
         guard let profile = profiles.first(where: { $0.id == profileId }) else {
             return nil
@@ -1129,6 +1147,9 @@ class ClaudeCodeSyncService {
             // tokens — only `{ "error": "...", "error_description": "..." }` style payloads —
             // so logging it is safe.
             LoggingService.shared.logError("ensureFreshCredentials: refresh failed for '\(profile.name)' (HTTP \(status)) body=\(body)")
+            if body.contains("invalid_grant") {
+                onRefreshRejected?()
+            }
             return nil
         } catch {
             LoggingService.shared.logError("ensureFreshCredentials: refresh failed for '\(profile.name)'", error: error)

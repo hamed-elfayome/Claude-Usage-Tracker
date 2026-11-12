@@ -260,6 +260,8 @@
 /* MARK: - Error Messages */
 /* ==================== */
 "error.session_key_not_found" = "Không tìm thấy khoá phiên";
+"error.cli_login_expired" = "Phiên đăng nhập Claude Code đã lưu của %@ đã hết hạn";
+"error.cli_login_expired_suggestion" = "Việc chuyển đổi đã bị huỷ và phiên đăng nhập hiện tại của bạn được giữ nguyên, nên các phiên Claude Code đang chạy vẫn tiếp tục hoạt động. Để liên kết lại %@, hãy chạy /login trong Claude Code bằng tài khoản đó, rồi chuyển sang %@ lại.";
 "error.session_key_not_found.suggestion" = "Vui lòng cấu hình khoá phiên Claude của bạn trong Cài đặt";
 "error.session_key_invalid" = "Khoá phiên không hợp lệ";
 "error.session_key_invalid.suggestion" = "Vui lòng kiểm tra định dạng khoá phiên của bạn. Khoá phải bắt đầu bằng 'sk-ant-'";

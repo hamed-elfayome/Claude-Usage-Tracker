@@ -260,6 +260,8 @@
 /* MARK: - Error Messages */
 /* ==================== */
 "error.session_key_not_found" = "No session key found";
+"error.cli_login_expired" = "%@'s saved Claude Code login has expired";
+"error.cli_login_expired_suggestion" = "The switch was cancelled and your current login was left as it is, so running Claude Code sessions keep working. To re-link %@, run /login in Claude Code with that account, then switch to %@ again.";
 "error.session_key_not_found.suggestion" = "Please configure your Claude session key in Settings";
 "error.session_key_invalid" = "Invalid session key";
 "error.session_key_invalid.suggestion" = "Please check your session key format. It should start with 'sk-ant-'";
