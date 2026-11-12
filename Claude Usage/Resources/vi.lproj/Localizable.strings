@@ -465,6 +465,8 @@
 "appearance.show_pace_marker_description" = "Tô màu dấu thời gian dựa trên nhịp độ sử dụng dự kiến (xanh lá → tím). Áp dụng cho chỉ số phiên và hàng tuần.";
 "appearance.pace_coloring_title" = "Màu thanh theo nhịp độ";
 "appearance.pace_coloring_description" = "Tô màu thanh tiến trình dựa trên nhịp độ dự kiến thay vì mức dùng hiện tại. Dự đoán xem bạn có đạt giới hạn vào cuối chu kỳ hay không.";
+"appearance.exclude_weekends_title" = "Loại trừ cuối tuần khỏi nhịp độ hàng tuần";
+"appearance.exclude_weekends_description" = "Dấu thời gian và nhịp độ hàng tuần chỉ tiến lên vào ngày làm việc và tạm dừng vào cuối tuần. Hữu ích nếu bạn chủ yếu dùng Claude trong tuần làm việc.";
 "appearance.multiprofile_locked_title" = "Cài đặt giao diện đã bị khoá";
 "appearance.multiprofile_locked_description" = "Các cài đặt này bị tắt khi Hiển thị đa hồ sơ đang hoạt động. Mỗi hồ sơ dùng giao diện riêng ở chế độ đa hồ sơ.";
 "appearance.disable_multiprofile" = "Tắt hiển thị đa hồ sơ";

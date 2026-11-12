@@ -466,6 +466,8 @@
 "appearance.show_pace_marker_description" = "根據預計使用速率為時間標記著色（綠色→紫色）。適用於 Session 和每週指標。";
 "appearance.pace_coloring_title" = "基於節奏的進度條色彩";
 "appearance.pace_coloring_description" = "根據預測節奏而非目前使用程度為進度條著色。預測您是否會在週期結束前達到限制。";
+"appearance.exclude_weekends_title" = "每週節奏排除週末";
+"appearance.exclude_weekends_description" = "每週時間標記與節奏只在工作日推進，週末暫停。適合主要在工作日使用 Claude 的使用者。";
 "appearance.multiprofile_locked_title" = "外觀設定已鎖定";
 "appearance.multiprofile_locked_description" = "當多設定檔顯示啟用時，這些設定會被停用。在多設定檔模式下，每個設定檔使用自己的外觀。";
 "appearance.disable_multiprofile" = "關閉多設定檔顯示";

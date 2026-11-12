@@ -32,7 +32,8 @@ final class MenuBarIconRenderer {
             usage: usage,
             apiUsage: apiUsage,
             showRemaining: globalConfig.showRemainingPercentage,
-            usePaceColoring: globalConfig.usePaceColoring
+            usePaceColoring: globalConfig.usePaceColoring,
+            excludeWeekends: globalConfig.excludeWeekendsFromWeeklyPace
         )
 
         // Calculate time marker fraction for session/week metrics
@@ -40,7 +41,8 @@ final class MenuBarIconRenderer {
             ? calculateTimeMarkerFraction(
                 metricType: metricType,
                 usage: usage,
-                showRemaining: globalConfig.showRemainingPercentage
+                showRemaining: globalConfig.showRemainingPercentage,
+                excludeWeekends: globalConfig.excludeWeekendsFromWeeklyPace
             )
             : nil
 
@@ -49,7 +51,8 @@ final class MenuBarIconRenderer {
             guard globalConfig.showPaceMarker, metricType != .api else { return nil }
             // Get raw elapsed fraction (always non-inverted)
             guard let rawElapsed = calculateTimeMarkerFraction(
-                metricType: metricType, usage: usage, showRemaining: false
+                metricType: metricType, usage: usage, showRemaining: false,
+                excludeWeekends: globalConfig.excludeWeekendsFromWeeklyPace
             ) else { return nil }
             // Get raw used percentage
             let rawUsed: Double = metricType == .session
@@ -155,7 +158,8 @@ final class MenuBarIconRenderer {
         usage: ClaudeUsage,
         apiUsage: APIUsage?,
         showRemaining: Bool,
-        usePaceColoring: Bool = true
+        usePaceColoring: Bool = true,
+        excludeWeekends: Bool = false
     ) -> MetricData {
         switch metricType {
         case .session:
@@ -194,7 +198,8 @@ final class MenuBarIconRenderer {
                 ? UsageStatusCalculator.elapsedFraction(
                     resetTime: usage.weeklyResetTime,
                     duration: Constants.weeklyWindow,
-                    showRemaining: false
+                    showRemaining: false,
+                    excludingWeekends: excludeWeekends
                 )
                 : nil
             let statusLevel = UsageStatusCalculator.calculateStatus(
@@ -1397,7 +1402,8 @@ final class MenuBarIconRenderer {
     private func calculateTimeMarkerFraction(
         metricType: MenuBarMetricType,
         usage: ClaudeUsage,
-        showRemaining: Bool
+        showRemaining: Bool,
+        excludeWeekends: Bool = false
     ) -> CGFloat? {
         let resetTime: Date?
         let duration: TimeInterval
@@ -1416,7 +1422,8 @@ final class MenuBarIconRenderer {
         guard let f = UsageStatusCalculator.elapsedFraction(
             resetTime: resetTime,
             duration: duration,
-            showRemaining: showRemaining
+            showRemaining: showRemaining,
+            excludingWeekends: excludeWeekends && metricType == .week
         ) else { return nil }
         return CGFloat(f)
     }

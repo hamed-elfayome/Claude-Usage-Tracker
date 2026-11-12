@@ -119,6 +119,18 @@ struct AppearanceSettingsView: View {
                                 }
                             )
                         )
+
+                        SettingToggle(
+                            title: "appearance.exclude_weekends_title".localized,
+                            description: "appearance.exclude_weekends_description".localized,
+                            isOn: Binding(
+                                get: { configuration.excludeWeekendsFromWeeklyPace },
+                                set: { newValue in
+                                    configuration.excludeWeekendsFromWeeklyPace = newValue
+                                    saveConfiguration()
+                                }
+                            )
+                        )
                     }
                 }
                 .disabled(isMultiProfileMode)

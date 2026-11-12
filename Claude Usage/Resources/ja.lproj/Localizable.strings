@@ -458,6 +458,8 @@
 "appearance.show_pace_marker_description" = "予測使用ペースに基づいてタイムマーカーを色分けします（緑→紫）。セッションと週間メトリクスに適用されます。";
 "appearance.pace_coloring_title" = "ペース対応バーカラー";
 "appearance.pace_coloring_description" = "現在の使用レベルではなく予測ペースに基づいてプログレスバーを色分けします。期間終了までにリミットに達するかを予測します。";
+"appearance.exclude_weekends_title" = "週間ペースから週末を除外";
+"appearance.exclude_weekends_description" = "週間の経過時間マーカーとペースは平日のみ進み、週末は止まります。主に平日にClaudeを使う場合に便利です。";
 "appearance.multiprofile_locked_title" = "外観設定がロックされています";
 "appearance.multiprofile_locked_description" = "マルチプロファイル表示がアクティブな間、これらの設定は無効になっています。マルチプロファイルモードでは各プロファイルが独自の外観を使用します。";
 "appearance.disable_multiprofile" = "マルチプロファイル表示をオフにする";

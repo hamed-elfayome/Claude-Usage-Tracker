@@ -621,6 +621,13 @@ struct SmartUsageDashboard: View {
         return profileManager.activeProfile?.iconConfig.showPaceMarker ?? true
     }
 
+    private var excludeWeekendsFromWeeklyPace: Bool {
+        if profileManager.displayMode == .multi {
+            return profileManager.multiProfileConfig.excludeWeekendsFromWeeklyPace
+        }
+        return profileManager.activeProfile?.iconConfig.excludeWeekendsFromWeeklyPace ?? false
+    }
+
     private var timeDisplay: PopoverTimeDisplay {
         SharedDataStore.shared.loadPopoverTimeDisplay()
     }
@@ -668,6 +675,7 @@ struct SmartUsageDashboard: View {
                 showTimeMarker: showTimeMarker,
                 showPaceMarker: showPaceMarker,
                 usePaceColoring: usePaceColoring,
+                excludeWeekends: excludeWeekendsFromWeeklyPace,
                 timeDisplay: timeDisplay
             )
 
@@ -788,6 +796,7 @@ struct UsageRow: View {
     var showTimeMarker: Bool = true
     var showPaceMarker: Bool = true
     var usePaceColoring: Bool = true
+    var excludeWeekends: Bool = false
     var timeDisplay: PopoverTimeDisplay = .resetTime
 
     private var displayPercentage: Double {
@@ -801,7 +810,8 @@ struct UsageRow: View {
         UsageStatusCalculator.elapsedFraction(
             resetTime: resetTime,
             duration: periodDuration ?? 0,
-            showRemaining: false
+            showRemaining: false,
+            excludingWeekends: excludeWeekends
         )
     }
 
