@@ -10,6 +10,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         // Hosted unit tests must not start timers, sync credentials, or contact accounts.
         guard NSClassFromString("XCTestCase") == nil else { return }
 
+        // macOS only stops a second launch of the same copy. A second copy
+        // (an installed build next to one run from Xcode, or an old build left
+        // as a login item) would poll the same account, rewrite the same
+        // history file and fight over the notch hook port.
+        if let running = otherRunningInstance() {
+            LoggingService.shared.log("Another instance is already running (pid \(running.processIdentifier)); quitting")
+            NSApp.terminate(nil)
+            return
+        }
+
         prepareApplication()
 
         // Always create the menu bar manager up front. On macOS Tahoe the setup
@@ -85,6 +95,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         }
     }
 
+<<<<<<< HEAD
     private func prepareApplication() {
         // Disable window restoration for menu bar app
         UserDefaults.standard.set(false, forKey: "NSQuitAlwaysKeepsWindows")
@@ -120,6 +131,20 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             name: .showSetupWizard,
             object: nil
         )
+=======
+    /// Another running copy of the app, if any. Debug builds and test hosts
+    /// are exempt so development can go on beside an installed copy.
+    private func otherRunningInstance() -> NSRunningApplication? {
+        #if DEBUG
+        return nil
+        #else
+        guard ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil,
+              let bundleID = Bundle.main.bundleIdentifier else { return nil }
+        let ownPID = ProcessInfo.processInfo.processIdentifier
+        return NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
+            .first { $0.processIdentifier != ownPID && !$0.isTerminated }
+        #endif
+>>>>>>> pr-344
     }
 
     private func requestNotificationPermissions() {
