@@ -376,6 +376,8 @@
 "claudecode.component_weekly_description" = "Weekly token usage with bar and reset time";
 "claudecode.component_extra_usage" = "Show Extra Usage";
 "claudecode.component_extra_usage_description" = "Cost indicator (e.g., 9.49 USD)";
+"claudecode.component_cache" = "Show Prompt Cache";
+"claudecode.component_cache_description" = "Cache hit rate, with the cause of a recent miss (e.g., ⚡ 94% ✗ tools)";
 "claudecode.weekly_label" = "Show \"Weekly:\" label";
 "claudecode.requirement_sessionkey" = "• Session key configured in Credentials → Claude.ai tab";
 "claudecode.requirement_restart" = "• Restart Claude CLI after applying changes";

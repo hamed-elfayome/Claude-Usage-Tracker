@@ -155,6 +155,7 @@ if [ -f "$config_file" ]; then
   show_weekly_reset=$SHOW_WEEKLY_RESET_TIME
   show_weekly_label=$SHOW_WEEKLY_LABEL
   show_extra_usage=$SHOW_EXTRA_USAGE
+  show_cache=$SHOW_CACHE
   element_color_dir=$ELEMENT_COLOR_DIR
   element_color_branch=$ELEMENT_COLOR_BRANCH
   element_color_model=$ELEMENT_COLOR_MODEL
@@ -190,6 +191,7 @@ else
   show_weekly_reset=1
   show_weekly_label=1
   show_extra_usage=0
+  show_cache=0
   element_color_dir="#0000EE"
   element_color_branch="#00BB00"
   element_color_model="#BBBB00"
@@ -793,6 +795,48 @@ if [ "$show_extra_usage" = "1" ] && [ "$show_usage" = "1" ]; then
   fi
 fi
 
+# Prompt-cache health: Claude Code reports it under "prompt_cache" once the first
+# API response has landed (hit_ratio 0-1, warm flag, and the likely cause of the
+# last miss). Absent until then, so the element simply stays hidden.
+cache_text=""
+if [ "$show_cache" = "1" ]; then
+  hit_ratio=$(echo "$input" | grep -o '"hit_ratio": *[0-9.]*' | head -1 | sed 's/.*: *//')
+  cache_warm=$(echo "$input" | grep -o '"warm": *\\(true\\|false\\)' | head -1 | sed 's/.*: *//')
+  miss_cause=$(echo "$input" | grep -o '"causes": *\\["[a-z0-9_]*"' | head -1 | sed 's/.*\\["//;s/"$//')
+  last_miss_at=$(echo "$input" | grep -o '"last_miss_at": *[0-9]*' | head -1 | sed 's/.*: *//')
+
+  if [ -n "$hit_ratio" ]; then
+    cache_pct=$(awk "BEGIN { print int($hit_ratio * 100 + 0.5) }")
+    if [ "$cache_warm" = "false" ]; then
+      cache_color="$GRAY"
+    elif [ "$cache_pct" -ge 90 ]; then
+      cache_color="$LEVEL_3"
+    elif [ "$cache_pct" -ge 70 ]; then
+      cache_color="$LEVEL_6"
+    else
+      cache_color="$LEVEL_9"
+    fi
+    cache_text="${cache_color}⚡ ${cache_pct}%${RESET}"
+
+    # A miss inside the last ten minutes is annotated with its likely cause
+    if [ -n "$miss_cause" ] && [ -n "$last_miss_at" ]; then
+      miss_age=$(( $(date +%s) - last_miss_at ))
+      if [ "$miss_age" -ge 0 ] && [ "$miss_age" -lt 600 ]; then
+        case "$miss_cause" in
+          system_prompt_changed) miss_label="system" ;;
+          tools_changed) miss_label="tools" ;;
+          model_changed) miss_label="model" ;;
+          messages_rewritten) miss_label="history" ;;
+          ttl_expired_5m|ttl_expired_1h) miss_label="ttl" ;;
+          likely_server_side) miss_label="server" ;;
+          *) miss_label="$miss_cause" ;;
+        esac
+        cache_text="${cache_text}${LEVEL_9} ✗ ${miss_label}${RESET}"
+      fi
+    fi
+  fi
+fi
+
 output=""
 separator="${GRAY} │ ${RESET}"
 
@@ -840,6 +884,12 @@ fi
 if [ -n "$extra_usage_text" ]; then
   [ -n "$output" ] && output="${output}${separator}"
   output="${output}${extra_usage_text}"
+fi
+
+# Then prompt cache
+if [ -n "$cache_text" ]; then
+  [ -n "$output" ] && output="${output}${separator}"
+  output="${output}${cache_text}"
 fi
 
 printf "%s\\n" "$output"
@@ -961,7 +1011,8 @@ printf "%s\\n" "$output"
         showWeeklyPaceMarker: Bool = true,
         showWeeklyResetTime: Bool = true,
         showWeeklyLabel: Bool = true,
-        showExtraUsage: Bool = false
+        showExtraUsage: Bool = false,
+        showCache: Bool = false
     ) throws {
         let configPath = Constants.ClaudePaths.claudeDirectory
             .appendingPathComponent("statusline-config.txt")
@@ -1005,6 +1056,7 @@ SHOW_WEEKLY_PACE_MARKER=\(showWeeklyPaceMarker ? "1" : "0")
 SHOW_WEEKLY_RESET_TIME=\(showWeeklyResetTime ? "1" : "0")
 SHOW_WEEKLY_LABEL=\(showWeeklyLabel ? "1" : "0")
 SHOW_EXTRA_USAGE=\(showExtraUsage ? "1" : "0")
+SHOW_CACHE=\(showCache ? "1" : "0")
 ELEMENT_COLOR_DIR=\(elementColors.directoryHex)
 ELEMENT_COLOR_BRANCH=\(elementColors.branchHex)
 ELEMENT_COLOR_MODEL=\(elementColors.modelHex)

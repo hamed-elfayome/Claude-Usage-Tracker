@@ -355,6 +355,8 @@
 "claudecode.component_weekly_description" = "Wöchentliche Token-Nutzung mit Balken und Rücksetzzeit";
 "claudecode.component_extra_usage" = "Zusätzliche Nutzung anzeigen";
 "claudecode.component_extra_usage_description" = "Kostenanzeige (z.B. 9,49 USD)";
+"claudecode.component_cache" = "Show Prompt Cache";
+"claudecode.component_cache_description" = "Cache hit rate, with the cause of a recent miss (e.g., ⚡ 94% ✗ tools)";
 "claudecode.weekly_label" = "\"Weekly:\"-Label anzeigen";
 "claudecode.requirement_sessionkey" = "• Sitzungsschlüssel im Tab 'Anmeldedaten → Claude.ai' konfiguriert";
 "claudecode.requirement_restart" = "• Claude CLI nach Anwendung der Änderungen neu starten";

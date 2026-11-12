@@ -351,6 +351,8 @@
 "claudecode.component_weekly_description" = "Utilisation hebdomadaire de tokens avec barre et temps de réinitialisation";
 "claudecode.component_extra_usage" = "Afficher l'utilisation supplémentaire";
 "claudecode.component_extra_usage_description" = "Indicateur de coût (ex., 9,49 USD)";
+"claudecode.component_cache" = "Show Prompt Cache";
+"claudecode.component_cache_description" = "Cache hit rate, with the cause of a recent miss (e.g., ⚡ 94% ✗ tools)";
 "claudecode.weekly_label" = "Afficher le libellé \"Weekly:\"";
 "claudecode.requirement_sessionkey" = "• Clé de session configurée dans Identifiants → onglet Claude.ai";
 "claudecode.requirement_restart" = "• Redémarrez Claude CLI après l'application des modifications";
