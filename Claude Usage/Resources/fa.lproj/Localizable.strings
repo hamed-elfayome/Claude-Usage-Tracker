@@ -1089,3 +1089,18 @@
 "support.popup_signature" = "تیم تک‌نفرهٔ پشت Claude Usage";
 "support.popup_body" = "رایگان، متن‌باز، ساخته‌شده توسط یک نفر — بدون تبلیغات، بدون ردیابی. اگر تاکنون مانع از اتمام سقف نشست شما شده است، یک قهوه به ادامهٔ کار آن کمک می‌کند.";
 "support.popup_days" = "پایش سقف‌های شما به مدت %d روز — همیشه رایگان";
+
+/* ==================== */
+/* MARK: - Added after the initial Persian translation (needs native review) */
+/* ==================== */
+"appearance.exclude_weekends_title" = "حذف آخر هفته از آهنگ مصرف هفتگی";
+"appearance.exclude_weekends_description" = "نشانگر زمان هفتگی و آهنگ مصرف فقط در روزهای کاری جلو می‌روند و در آخر هفته متوقف می‌شوند. اگر بیشتر در روزهای کاری از Claude استفاده می‌کنید مفید است.";
+"claudecode.component_cache" = "نمایش Prompt Cache";
+"claudecode.component_cache_description" = "نرخ برخورد کش، همراه با علت خطای اخیر (مثلاً ⚡ 94% ✗ tools)";
+"error.cli_login_expired" = "ورود ذخیره‌شدهٔ Claude Code برای %@ منقضی شده است";
+"error.cli_login_expired_suggestion" = "جابه‌جایی لغو شد و ورود فعلی شما دست‌نخورده ماند، بنابراین نشست‌های در حال اجرای Claude Code به کار خود ادامه می‌دهند. برای اتصال دوبارهٔ %@، در Claude Code با همان حساب دستور ‎/login را اجرا کنید و سپس دوباره به %@ جابه‌جا شوید.";
+"general.spend_target_title" = "هدف هزینهٔ ماهانه";
+"general.spend_target_subtitle" = "بودجهٔ شخصی اختیاری برای ماه. با تنظیم آن، نوار «هزینهٔ ماهانه» در پنجرهٔ بازشو نمایش داده می‌شود؛ اگر خالی بماند فقط مبلغ نشان داده می‌شود.";
+"general.spend_target_placeholder" = "مثلاً 1500";
+"menubar.monthly_spend" = "هزینهٔ ماهانه";
+"popover.monthly_spend_period" = "این ماه";
