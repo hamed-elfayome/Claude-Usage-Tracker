@@ -86,7 +86,7 @@ struct GeneralSettingsView: View {
                                 TextField("general.spend_target_placeholder".localized, text: $spendTargetText)
                                     .textFieldStyle(.roundedBorder)
                                     .frame(width: 120)
-                                    .onChange(of: spendTargetText) { _, newValue in
+                                    .onChangeCompat(of: spendTargetText) { newValue in
                                         saveSpendTarget(newValue, on: profile)
                                     }
 
@@ -100,7 +100,7 @@ struct GeneralSettingsView: View {
                         // Load on first show and whenever the edited profile
                         // changes, so the field never shows another profile's target.
                         .onAppear { loadSpendTarget(from: profile) }
-                        .onChange(of: profile.id) { _, _ in loadSpendTarget(from: profile) }
+                        .onChangeCompat(of: profile.id) { _ in loadSpendTarget(from: profile) }
                     }
 
                     // Auto-Start Session (capability-gated: burns tokens via
