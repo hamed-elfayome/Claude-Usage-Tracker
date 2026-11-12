@@ -177,6 +177,10 @@ final class CodexAPIService {
         }
 
         usage.planType = response.planType
+        // Codex Pro has no five-hour limit (https://learn.chatgpt.com/docs/pricing),
+        // and neither does any plan whose response carries only a weekly window.
+        // A five-hour window still reported for Pro is ignored (#342).
+        usage.hasSessionLimit = response.planType != "pro" && !(session == nil && weekly != nil)
         if let credits = response.credits {
             usage.creditsUnlimited = credits.unlimited
             usage.creditsBalance = credits.balance

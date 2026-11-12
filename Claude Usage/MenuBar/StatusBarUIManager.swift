@@ -447,7 +447,8 @@ final class StatusBarUIManager {
                         weekTimeMarker: showWeek ? weekMarker : nil,
                         sessionPaceStatus: sessionPaceStatus,
                         weekPaceStatus: showWeek ? weekPaceStatus : nil,
-                        showPaceMarker: config.showPaceMarker
+                        showPaceMarker: config.showPaceMarker,
+                        showWeek: showWeek
                     )
                 } else {
                     image = renderer.createConcentricIcon(
@@ -463,7 +464,8 @@ final class StatusBarUIManager {
                         weekTimeMarker: showWeek ? weekMarker : nil,
                         sessionPaceStatus: sessionPaceStatus,
                         weekPaceStatus: showWeek ? weekPaceStatus : nil,
-                        showPaceMarker: config.showPaceMarker
+                        showPaceMarker: config.showPaceMarker,
+                        showWeek: showWeek
                     )
                 }
             case .progressBar:

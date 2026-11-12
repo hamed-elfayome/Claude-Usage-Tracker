@@ -13,9 +13,9 @@ struct ClaudeUsage: Codable, Equatable {
     /// fields then hold placeholders and consumers should hide the session metric.
     var hasSessionLimit: Bool = true
 
-    /// Returns 0% if the 5-hour session window has expired, otherwise the raw percentage.
+    /// Returns 0% if there is no session limit or its window has expired, otherwise the raw percentage.
     var effectiveSessionPercentage: Double {
-        sessionResetTime < Date() ? 0.0 : sessionPercentage
+        !hasSessionLimit || sessionResetTime < Date() ? 0.0 : sessionPercentage
     }
 
     // Weekly data (all models)

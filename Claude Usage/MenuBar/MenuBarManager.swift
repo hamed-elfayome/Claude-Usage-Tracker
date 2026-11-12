@@ -1485,6 +1485,11 @@ class MenuBarManager: NSObject, ObservableObject {
         previousUsage: ClaudeUsage?,
         newUsage: ClaudeUsage
     ) {
+        guard newUsage.hasSessionLimit else {
+            lastKnownSessionResetTime.removeValue(forKey: profileId)
+            return
+        }
+
         let lastKnown = lastKnownSessionResetTime[profileId]
         let newResetTime = newUsage.sessionResetTime
 
