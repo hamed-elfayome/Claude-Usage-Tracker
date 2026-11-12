@@ -629,7 +629,7 @@ struct SmartUsageDashboard: View {
         VStack(alignment: .leading, spacing: 6) {
             // Primary: Session Usage
             UsageRow(
-                title: "menubar.session_usage".localized,
+                title: (showRemainingPercentage ? "menubar.session_remaining" : "menubar.session_usage").localized,
                 subtitle: "menubar.5_hour_window".localized,
                 usedPercentage: usage.effectiveSessionPercentage,
                 showRemaining: showRemainingPercentage,
@@ -795,6 +795,11 @@ struct UsageRow: View {
         )
     }
 
+    var percentageText: String {
+        let label = (showRemaining ? "menubar.remaining" : "menubar.used").localized
+        return "\(Int(displayPercentage))% \(label)"
+    }
+
     private var rawElapsedFraction: Double? {
         UsageStatusCalculator.elapsedFraction(
             resetTime: resetTime,
@@ -868,7 +873,7 @@ struct UsageRow: View {
 
                 Spacer()
 
-                Text("\(Int(displayPercentage))%")
+                Text(percentageText)
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
                     .foregroundColor(statusColor)
             }

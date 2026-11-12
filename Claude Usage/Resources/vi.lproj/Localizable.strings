@@ -58,6 +58,7 @@
 /* ==================== */
 "menubar.claude_usage" = "Claude Usage";
 "menubar.session_usage" = "Mức dùng phiên";
+"menubar.session_remaining" = "Dung lượng phiên còn lại";
 "menubar.weekly_usage" = "Hàng tuần";
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";

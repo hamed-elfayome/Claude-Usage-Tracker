@@ -59,6 +59,7 @@
 /* ==================== */
 "menubar.claude_usage" = "Claude 使用情况";
 "menubar.session_usage" = "会话使用量";
+"menubar.session_remaining" = "会话剩余额度";
 "menubar.weekly_usage" = "每周";
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";
