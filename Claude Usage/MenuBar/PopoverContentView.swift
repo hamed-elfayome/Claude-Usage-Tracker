@@ -795,9 +795,12 @@ struct UsageRow: View {
         )
     }
 
+    private var percentageLabel: String {
+        (showRemaining ? "menubar.remaining" : "menubar.used").localized
+    }
+
     var percentageText: String {
-        let label = (showRemaining ? "menubar.remaining" : "menubar.used").localized
-        return "\(Int(displayPercentage))% \(label)"
+        "\(Int(displayPercentage))% \(percentageLabel)"
     }
 
     private var rawElapsedFraction: Double? {
@@ -855,6 +858,7 @@ struct UsageRow: View {
                             Text(tag)
                                 .font(.system(size: 9, weight: .medium))
                                 .foregroundColor(.secondary)
+                                .fixedSize()
                                 .padding(.horizontal, 5)
                                 .padding(.vertical, 1)
                                 .background(
@@ -871,11 +875,18 @@ struct UsageRow: View {
                     }
                 }
 
-                Spacer()
+                Spacer(minLength: 4)
 
-                Text(percentageText)
+                // Number stays prominent; the Used/Remaining word is smaller so
+                // the title keeps its room in the 280pt popover.
+                (Text("\(Int(displayPercentage))%")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
+                 + Text(" \(percentageLabel)")
+                    .font(.system(size: 10, weight: .medium)))
                     .foregroundColor(statusColor)
+                    .lineLimit(1)
+                    .fixedSize()
+                    .accessibilityLabel(percentageText)
             }
 
             // Progress bar

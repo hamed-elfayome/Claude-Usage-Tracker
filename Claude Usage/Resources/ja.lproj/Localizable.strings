@@ -58,7 +58,7 @@
 /* ==================== */
 "menubar.claude_usage" = "Claude使用状況";
 "menubar.session_usage" = "セッション使用";
-"menubar.session_remaining" = "セッション残量";
+"menubar.session_remaining" = "セッション残り";
 "menubar.weekly_usage" = "週次";
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";

@@ -59,7 +59,7 @@
 /* ==================== */
 "menubar.claude_usage" = "Claude 使用情況";
 "menubar.session_usage" = "Session 使用量";
-"menubar.session_remaining" = "工作階段剩餘額度";
+"menubar.session_remaining" = "Session 剩餘量";
 "menubar.weekly_usage" = "每週";
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";

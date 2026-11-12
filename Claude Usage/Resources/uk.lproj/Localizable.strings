@@ -58,7 +58,7 @@
 /* ==================== */
 "menubar.claude_usage" = "Використання Claude";
 "menubar.session_usage" = "Використання сесії";
-"menubar.session_remaining" = "Залишок ліміту сеансу";
+"menubar.session_remaining" = "Залишок сесії";
 "menubar.weekly_usage" = "Тижневе";
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";

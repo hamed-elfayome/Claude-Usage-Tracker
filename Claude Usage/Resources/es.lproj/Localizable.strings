@@ -58,7 +58,7 @@
 /* ==================== */
 "menubar.claude_usage" = "Uso de Claude";
 "menubar.session_usage" = "Uso de Sesión";
-"menubar.session_remaining" = "Capacidad restante de la sesión";
+"menubar.session_remaining" = "Sesión restante";
 "menubar.weekly_usage" = "Semanal";
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";
