@@ -20,6 +20,9 @@ final class StatusBarUIManager {
     // Current display mode
     private var isMultiProfileMode: Bool = false
 
+    /// Space on each side of a compact dot in multi-profile mode (#316).
+    private static let compactDotHorizontalMargin: CGFloat = 4
+
     private var appearanceObservers: [NSKeyValueObservation] = []
     private var buttonAppearanceObservers: [ObjectIdentifier: NSKeyValueObservation] = [:]
     private var appearanceTracker = MenuBarAppearanceTracker()
@@ -534,7 +537,17 @@ final class StatusBarUIManager {
             // per-pixel width jitter between updates (e.g. "5%" vs "45%") would still
             // crash. Round the width up to a coarse grid so ordinary data changes never
             // move the length, and only assign when it genuinely changes.
-            let stableLength = ceil(finalImage.size.width / 32.0) * 32.0
+            //
+            // The compact dot is the exception (#316): its image width comes from
+            // fixed constants, never from usage data, so it is already constant
+            // across refreshes. Rounding it up to the grid doubled the gap between
+            // dots; a fixed margin keeps the length constant without the padding.
+            let stableLength: CGFloat
+            if config.iconStyle == .compact {
+                stableLength = finalImage.size.width + Self.compactDotHorizontalMargin * 2
+            } else {
+                stableLength = ceil(finalImage.size.width / 32.0) * 32.0
+            }
             if abs(statusItem.length - stableLength) > 0.5 {
                 statusItem.length = stableLength
             }
