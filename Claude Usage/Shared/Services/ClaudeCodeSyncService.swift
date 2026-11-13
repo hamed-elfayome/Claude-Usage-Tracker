@@ -834,6 +834,15 @@ class ClaudeCodeSyncService {
             throw ClaudeCodeError.noProfileCredentials
         }
 
+        // A profile pinned to its own keychain entry is already signed in there. Copying
+        // its token into the default entry would replace another account's login and put
+        // one refresh-token lineage in two config dirs, where the second refresh fails
+        // with invalid_grant (#355, and the reasoning in TerminalLauncherService).
+        if let dedicatedEntry = dedicatedKeychainEntry(for: profile) {
+            LoggingService.shared.log("Profile is pinned to '\(dedicatedEntry)' — leaving the default Claude Code login untouched")
+            return
+        }
+
         LoggingService.shared.log("📦 Found CLI credentials, writing to keychain and credentials file...")
         try writeSystemCredentials(jsonData)
         writeCredentialsFile(jsonData)
