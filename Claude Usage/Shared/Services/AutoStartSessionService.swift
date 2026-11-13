@@ -29,6 +29,9 @@ final class AutoStartSessionService {
     private let notify: (Profile, Bool, String?) -> Void
     let logError: (String) -> Void
 
+    /// Minimum wait after a start that was accepted but did not report an open window.
+    static let unconfirmedStartRetryDelay: TimeInterval = 30 * 60
+
     // Track last captured reset time per profile to prevent duplicate auto-starts
     private var lastCapturedResetTime: [UUID: Date] = [:]
 
@@ -263,6 +266,13 @@ final class AutoStartSessionService {
             if let resetTime = parseCompletionResponseForResetTime(responseData) {
                 lastCapturedResetTime[profile.id] = resetTime
                 LoggingService.shared.logInfo("Captured session reset time for '\(profile.name)': \(resetTime)")
+            } else {
+                // The start was accepted but reported no window. If one did open, the
+                // usage endpoint shows it on the next check and this is cleared. If
+                // none opened, wait before starting again rather than creating a
+                // conversation on every 5-minute cycle (#334).
+                lastCapturedResetTime[profile.id] = Date().addingTimeInterval(Self.unconfirmedStartRetryDelay)
+                LoggingService.shared.logInfo("No session reset time in the start response for '\(profile.name)'; next attempt in \(Int(Self.unconfirmedStartRetryDelay / 60))m at the earliest")
             }
 
             retryBackoff.recordSuccess(for: profile.id)
