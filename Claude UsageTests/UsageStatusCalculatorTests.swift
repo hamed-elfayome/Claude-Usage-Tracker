@@ -135,6 +135,25 @@ final class UsageStatusCalculatorTests: XCTestCase {
         )
     }
 
+    // MARK: - Popover Percentage Labels
+
+    @MainActor
+    func testUsageRowLabelsMatchDisplayMode() {
+        for usedPercentage in [0.0, 65.0, 100.0, 110.0] {
+            let usedRow = UsageRow(
+                title: "Session", subtitle: nil, usedPercentage: usedPercentage,
+                showRemaining: false, resetTime: nil, periodDuration: nil
+            )
+            let remainingRow = UsageRow(
+                title: "Session", subtitle: nil, usedPercentage: usedPercentage,
+                showRemaining: true, resetTime: nil, periodDuration: nil
+            )
+
+            XCTAssertEqual(usedRow.percentageText, "\(Int(usedPercentage))% \("menubar.used".localized)")
+            XCTAssertEqual(remainingRow.percentageText, "\(Int(max(0, 100 - usedPercentage)))% \("menubar.remaining".localized)")
+        }
+    }
+
     // MARK: - Edge Cases
 
     func testBoundaryConditions_UsedMode() {
