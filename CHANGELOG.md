@@ -9,7 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Persian localization**: Persian (فارسی) is now available as the 15th interface language, with common technical terms (Token, API, CLI, Claude, Opus, Sonnet) kept in English.
+- **Persian localization** (PR #353): Persian (فارسی) is now available as the 15th interface language, with common technical terms (Token, API, CLI, Claude, Opus, Sonnet) kept in English — thanks @aliafshany
+- **Fable weekly usage in the menu bar and the statusline** (#318, #323): an optional menu bar metric and an optional Claude Code statusline segment, both off by default.
+- **Exclude weekends from weekly pace** (#326, PR #327): the weekly time marker and pace can pause over the weekend — thanks @BlaisedEstais
+- **Monthly spend for Enterprise members** (#287, PR #288): the popover shows the member's own month-to-date spend, with an optional monthly target — thanks @judy
+- **Prompt-cache hit rate in the statusline** (PR #332): optional segment showing the cache hit rate and the cause of a recent miss — thanks @lathe-agent-oa
+
+### Bug Fixes
+
+- **Profile switch no longer logs Claude Code out when a saved login is dead** (#331, PR #345): a snapshot whose refresh is rejected is not written over the live login — thanks @OfficialCodeVoyage
+- **Usage history file no longer grows without bound** (#337, PR #338): spurious reset detections are gone, old files are pruned, and the file is not rewritten on every refresh — thanks @iosue-iulianus
+- **E3006 right after a successful sign-in** (#319, PR #320): Cloudflare's partitioned `cf_clearance` cookie now travels with claude.ai requests — thanks @Gythiro
+- **403 "Invalid authorization for organization" after signing in again** (#266): an organization left over from a previous sign-in is no longer kept, and a claude.ai organization is preferred over an API-only one.
+- **Plans without a 5-hour limit** (#356, PR #357, PR #342): the session metric is hidden on Claude Ultra and Codex Pro, and weekly becomes the primary metric — thanks @healingpro and @joshuagruenstein
+- **Auto-start respects the weekly limit and cleans up after itself** (#334, PR #349): no start when the week is exhausted and extra usage is off, temporary conversations are deleted after a failed start, and failed starts back off instead of repeating every 5 minutes — thanks @thedandano
+- **macOS 26 crash in the popover and settings backgrounds** (#333, PR #279): macOS 26 and later use an opaque background and opt out of Liquid Glass; earlier systems keep the blur — thanks @RaulVargasP
+- **Multi-profile display: a Codex profile keeps refreshing while a Claude profile is active** (#335).
+- **Pinned profiles re-sync from their own keychain entry** (#355): Re-sync no longer captures the default Claude Code login into a profile pinned to another entry.
+- **Statusline scripts are left alone when unchanged or unused** (#321, #191): the installed script is rewritten only when it changed, a hand-edited copy is backed up first, and nothing is refreshed unless Claude Code's settings actually run this statusline.
+- **Per-model weekly quotas for CLI-only profiles** (PR #276) — thanks @RaulVargasP
+- **Tighter spacing between compact dots in multi-profile mode** (#316).
+- **Menu bar recolors immediately when the menu bar tint changes** (PR #315), **single running instance** (PR #344), and **Dynamic Island fixes**: the SessionStart hook is installed as a command hook, sessions are named after their project or custom title, and background agent work reads as working (PR #343, PR #284) — thanks @wmwallace
 
 ## [3.3.0] - 2026-08-29
 
