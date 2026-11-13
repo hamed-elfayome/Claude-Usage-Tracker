@@ -488,7 +488,13 @@ class ClaudeAPIService: APIServiceProtocol {
         let organizations = try await fetchAllOrganizations(sessionKey: sessionKey)
 
         // Auto-select organization (prefer first one for now - user can change later)
-        let selectedOrg = organizations.first!
+        guard let selectedOrg = Self.preferredOrganization(from: organizations) else {
+            throw AppError(
+                code: .apiInvalidResponse,
+                message: "No organizations found for this account",
+                isRecoverable: true
+            )
+        }
         LoggingService.shared.logInfo("Auto-selected organization: \(selectedOrg.name) (ID: \(selectedOrg.uuid))")
 
         // Store the selected org ID in active profile
