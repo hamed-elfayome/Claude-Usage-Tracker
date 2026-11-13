@@ -1,0 +1,8 @@
+/* Claude Usage Widget */
+"widget.no_data" = "Öffne Claude Usage, um Nutzungsdaten zu laden";
+"widget.session" = "Sitzung";
+"widget.weekly" = "Wöchentlich";
+"widget.session.name" = "Sitzungsnutzung";
+"widget.session.desc" = "Aktuelle 5-Stunden-Sitzungsnutzung des aktiven Profils.";
+"widget.overview.name" = "Nutzungsübersicht";
+"widget.overview.desc" = "Sitzungs- und Wochennutzung aller angezeigten Profile.";

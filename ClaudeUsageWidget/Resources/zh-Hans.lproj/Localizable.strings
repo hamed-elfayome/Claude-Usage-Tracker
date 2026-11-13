@@ -1,0 +1,8 @@
+/* Claude Usage Widget */
+"widget.no_data" = "打开 Claude Usage 以加载使用数据";
+"widget.session" = "会话";
+"widget.weekly" = "每周";
+"widget.session.name" = "会话用量";
+"widget.session.desc" = "当前活跃配置文件的 5 小时会话用量。";
+"widget.overview.name" = "用量概览";
+"widget.overview.desc" = "所有显示的配置文件的会话及每周用量。";

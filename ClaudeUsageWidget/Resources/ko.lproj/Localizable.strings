@@ -1,0 +1,8 @@
+/* Claude Usage Widget */
+"widget.no_data" = "Claude Usage를 실행하면 사용량이 표시됩니다";
+"widget.session" = "세션";
+"widget.weekly" = "주간";
+"widget.session.name" = "세션 사용량";
+"widget.session.desc" = "활성 프로필의 5시간 세션 사용량입니다.";
+"widget.overview.name" = "사용량 개요";
+"widget.overview.desc" = "표시된 모든 프로필의 세션 및 주간 사용량입니다.";
