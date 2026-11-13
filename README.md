@@ -24,805 +24,113 @@
 
 ---
 
-## Overview
-
-Claude Usage Tracker is a lightweight, native macOS menu bar application that provides real-time monitoring of your Claude AI usage limits. Built entirely with Swift and SwiftUI, it offers a clean, intuitive interface to track your 5-hour session window, weekly usage limits, and Opus-specific consumption.
-
-### Key Capabilities
-
-- **Multi-Provider Support**: Track OpenAI Codex usage alongside Claude — per-profile provider selection, built on a registry so more providers can follow
-- **Dynamic Island (Beta)**: A minimal notch HUD showing what Claude Code is doing in real time — current tool, session status, and a pulse when Claude needs your input
-- **Desktop Widgets**: Six WidgetKit widgets (tracks, rings, a dial, a reset countdown) in small to extra-large sizes, each with a profile picker
-- **Keep Awake**: Keeps the Mac awake while Claude Code is working, or on a manual timer
-- **Multi-Profile Support**: Manage unlimited Claude accounts with isolated credentials and settings
-- **Terminal Launchers**: Install a `claude-<profile>` command per profile — each opens Claude Code with that profile's own login. Plain `claude` follows the active profile, unless that profile has its own launcher login
-- **Multi-Profile Display**: Monitor all profiles simultaneously in the menu bar
-- **Claude Code Integration**: Sync CLI accounts and auto-switch credentials when changing profiles
-- **Real-Time Monitoring**: Track session, weekly, and per-model usage (Fable, Opus, Sonnet, Design), API console usage, and API costs per profile
-- **Usage History**: Interactive charts tracking session, weekly, and billing data over time
-- **Global Shortcuts**: System-wide keyboard shortcuts (no Accessibility permission)
-- **Headless Mode**: Works on headless Macs via Remote Desktop
-- **Customizable Interface**: 5 icon styles + 3 color modes (Multi-Color/Greyscale/Single Color) + per-element statusline colors + remaining/used percentage toggle
-- **Smart Automation**: Auto-start sessions, auto-switch profiles, threshold notifications
-- **Developer Tools**: Terminal statusline integration with model, context, profile display, weekly/extra usage segments, pace markers, per-element colors, and color modes
-- **Privacy-First**: Credentials in the macOS Keychain, local storage, minimal anonymous analytics (version-only heartbeat), no cloud sync
-- **Native Performance**: Lightweight Swift/SwiftUI design for macOS
+**Claude Usage Tracker** is a native macOS menu bar app that shows how much of your Claude limits you have used, and when they reset. It tracks the 5-hour session, the weekly limit, per-model limits and API spend, for as many accounts as you have, and it can do the same for OpenAI Codex.
 
 <div align="center">
-  <img src=".github/settings.gif" alt="Quick Walkthrough" width="600">
-  <img src=".github/icon.jpg" alt="Menu Bar Icon" height="180">
-  <img src=".github/popover.png" alt="Popover Interface" width="200">
-
-  <sub>Menu bar icon and detailed usage popover</sub>
-
-  <img src=".github/statusline.png" alt="Claude Code Statusline">
-  <br>
-  <sub>Live terminal statusline showing directory, branch, model, context, and color-coded usage</sub>
+  <img src=".github/settings.gif" alt="A walkthrough of the settings window" width="600">
+  <img src=".github/icon.jpg" alt="Menu bar icon" height="180">
+  <img src=".github/popover.png" alt="Usage popover" width="200">
 </div>
 
----
+## Install
 
-## What's New
-
-- **v3.4.0 (2026-11-13)**: **Desktop widgets** — six WidgetKit widgets in small to extra-large sizes with a per-widget profile picker; **Keep Awake** — keeps the Mac awake while Claude Code works; **macOS 13 (Ventura) support**; optional **Fable weekly** metric in the menu bar and statusline (#318, #323); **exclude weekends from weekly pace** (#326); **monthly spend for Enterprise members** (#287); prompt-cache hit rate in the statusline; plans without a 5-hour limit (Claude Ultra, Codex Pro) show weekly as the primary metric (#356); profile switching no longer logs Claude Code out on a dead saved login (#331) and pinned profiles keep their login to themselves (#355); usage history no longer grows without bound (#337); E3006 and 403 sign-in failures fixed (#319, #266); auto-start respects the weekly limit and backs off after failures (#334); macOS 26 material crash fixed (#333); statusline no longer blanks on an old cache (#322); popover percentages say "used" or "remaining" (#269); Persian localization — 15 languages total. Thanks to 15 community contributors.
-
-- **v3.3.0 (2026-08-29)**: **Multi-provider architecture with OpenAI Codex support** (#229) — per-profile provider selection on a registry pattern (`docs/ADDING_A_PROVIDER.md`); **per-profile terminal launchers** — `claude-<profile>` commands with isolated `CLAUDE_CONFIG_DIR` logins and automatic usage tracking after one `/login`; keychain migration finally works on shipped Developer ID builds (#292); popover shows over full-screen apps (#298); Dynamic Island targets the built-in notch (#294); Cloudflare challenges no longer masquerade as expired credentials (#277); macOS 26 multi-profile crash fixes; transient E1000 on profile switch eliminated; obsolete peak-hours indicator removed (#308); Vietnamese localization — 14 languages total. Thanks to 8 community contributors.
-
-- **v3.2.0 (2026-07-12)**: **Dynamic Island (Beta)** — live Claude Code activity HUD at the notch; **Fable per-model tracking** via the new `limits[]` usage format; credentials moved to the macOS Keychain (GHSA-mfxh-xpwm-23c7); profile switching overhaul (no more forced re-logins); usage history storage fix (silent settings loss on macOS 26); macOS 26/27 crash and sign-in fixes; localization parity across all 13 languages. Huge thanks to 9 community contributors.
-
-- **v3.1.0 (2026-04-14)**: Peak hours indicator with flame icon and countdown popover, right-click context menu on menu bar icons, per-element statusline color customization (#208), weekly & extra usage segments in statusline (#177), active profile indicator in multi-profile mode, Nix installation option (#211), 3 new languages (Brazilian Portuguese, Turkish, Ukrainian) bringing total to 12, 13 bug fixes including popover crash on profile switch, app hang on launch, and E3000 unauthorized errors
-
-- **v3.0.3 (2026-03-10)**: 6-tier pace system with colored pace markers, 3 color modes (Multi-Color/Greyscale/Single Color), label toggles, 24-hour time format, terminal-matching preview colors
-
-- **v3.0.2 (2026-03-10)**: API cost tracking with daily chart, browser-based authentication, rate limit header usage for CLI OAuth, auto-sizing popover, session key expiry tracking
-
-- **v3.0.1 (2026-03-08)**: Popover settings tab, multi-display CPU fix
-
-- **v3.0.0 - Major Release (2026-03-08)**: Headless mode, usage history charts, global shortcuts, auto-switch profiles, borderless settings, 6 new statusline components, Simplified Chinese
-
-- **v2.3.0** – Multi-profile menu bar display, remaining percentage toggle
-- **v2.2.0** – Multi-profile management, CLI integration, Korean language
-- **v2.0.0** – Apple code signing, automatic updates, Keychain security
-
-**[View Full Release History](CHANGELOG.md)**
-
----
-
-## Getting Started
-
-### Prerequisites
-
-Before installing Claude Usage Tracker, ensure you have:
-
-- **macOS 13.0 (Ventura) or later** - Check: Apple menu → About This Mac
-- **Active Claude AI account** - Sign up at [claude.ai](https://claude.ai)
-
-**Authentication** (choose one method):
-- **Easiest**: [Claude Code](https://claude.com/claude-code) installed and logged in - App automatically uses CLI credentials (v2.2.2+)
-- **Browser Sign-In**: Sign in via the built-in browser — session key extracted automatically (v3.0.2+)
-- **Manual**: Web browser access to extract session key from claude.ai (Chrome, Safari, Firefox, etc.)
-
-**Note**: For terminal statusline integration, you'll still need to manually configure a session key even if using Claude Code OAuth
-
-### Installation
-
-#### Option 1: Homebrew (Recommended)
+**Homebrew** (recommended)
 
 ```bash
 brew install --cask hamed-elfayome/claude-usage/claude-usage-tracker
 ```
 
-Or tap first, then install:
+**Direct download:** get [Claude-Usage.zip](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip), unzip it, and drag `Claude Usage.app` to Applications.
 
-```bash
-brew tap hamed-elfayome/claude-usage
-brew install --cask claude-usage-tracker
-```
+**Nix:** `nix-shell -p claude-usage-tracker`, or add `claude-usage-tracker` to `home.packages`.
 
-**Note**: Starting with v2.0.0, the app is officially signed with an Apple Developer certificate. No security workarounds needed!
+**From source:** clone the repository, open `Claude Usage.xcodeproj` in Xcode, and run.
 
-**To update**:
-```bash
-brew upgrade --cask claude-usage-tracker
-```
+The app is signed and notarized, needs macOS 13 (Ventura) or later, and updates itself (Settings → Updates). Desktop widgets need macOS 14.
 
-Or use the built-in automatic update feature (Settings → Updates).
+## Get started
 
-**To uninstall**:
-```bash
-brew uninstall --cask claude-usage-tracker
-```
+Pick whichever fits how you use Claude:
 
-#### Option 2: Nix
+| You have | Do this |
+|---|---|
+| [Claude Code](https://claude.com/claude-code), logged in | Launch the app. It finds the login on its own. |
+| A claude.ai account | Settings → Claude.ai → **Sign in to Claude.ai**, then pick your organization. |
+| A session key you'd rather paste | Settings → Claude.ai → **Advanced: Manual Session Key**. |
 
-Test the app:
+Click the menu bar icon to see your usage. The [setup guide](docs/setup.md) covers each path step by step, including API Console billing.
 
-```bash
-nix-shell -p claude-usage-tracker
-```
+The terminal statusline needs a claude.ai sign-in even if the app itself runs on your Claude Code login.
 
-Install it using home-manager:
+## What it does
 
-```nix
-home.packages = with pkgs; [
-  claude-usage-tracker
-];
-```
+**Tracks your limits**
+- The 5-hour session, the weekly limit, and per-model weekly limits (Fable, Opus, Sonnet, Design)
+- Extra usage and, on Enterprise plans, your own month-to-date spend
+- API Console spend, with a daily chart and a per-key breakdown
+- Plans without a 5-hour limit (Claude Ultra, Codex Pro) show the week as the main number
+- History charts for session, weekly and billing data
 
-#### Option 3: Direct Download
+**Shows it where you look**
+- Menu bar icon in five styles, with separate icons per metric if you want them
+- A time marker on every bar: how far through the window you are, colored by projected pace
+- Popover with every limit, reset times and Claude's service status
+- Six desktop widgets, small to extra large, each with a profile picker
+- Used or remaining percentages, three color modes, 15 languages
 
-**[Download Claude-Usage.zip](https://github.com/hamed-elfayome/Claude-Usage-Tracker/releases/latest/download/Claude-Usage.zip)**
+**Handles several accounts**
+- Unlimited profiles, each with its own credentials, appearance and notifications
+- Show every profile in the menu bar at once, or only the active one
+- OpenAI Codex profiles alongside Claude ones
+- Switching profile switches your Claude Code login with it
+- `claude-<profile>` terminal commands that always open a given account
 
-1. Download the `.zip` file from the link above
-2. Extract the zip file (double-click or use Archive Utility)
-3. Drag `Claude Usage.app` to your Applications folder
-4. Double-click to launch - that's it!
+**Works with Claude Code**
+- A terminal statusline: directory, branch, model, context, usage, pace, reset time, prompt-cache hit rate
+- Dynamic Island (beta): what Claude Code is doing, at the notch
+- Keep Awake: stops the Mac sleeping while Claude Code works
 
-**v2.0.0+ Note**: The app is now officially signed with an Apple Developer certificate. You can install and run it like any other Mac application - no security warnings or workarounds needed.
+**Looks after itself**
+- Notifications at 75%, 90%, 95% and thresholds you add
+- Auto-start a new session when the last one resets
+- Auto-switch to the next profile when one hits its session limit
+- Global keyboard shortcuts, launch at login, headless Macs supported
 
-**Automatic Updates**: Once installed, the app will automatically check for updates and notify you when new versions are available (Settings → Updates).
+## Guides
 
-#### Option 4: Build from Source
+| Guide | What's in it |
+|---|---|
+| [Setup](docs/setup.md) | Signing in three ways, API Console billing, where settings live |
+| [Profiles](docs/profiles.md) | Multiple accounts, Codex profiles, terminal launchers |
+| [Claude Code](docs/claude-code.md) | Statusline setup and components, Dynamic Island, Keep Awake |
+| [Widgets](docs/widgets.md) | The six desktop widgets and how to pick a profile |
+| [Troubleshooting](docs/troubleshooting.md) | Sign-in errors, missing icon, statusline problems |
+| [Adding a provider](docs/ADDING_A_PROVIDER.md) | For contributors: how providers plug in |
 
-```bash
-# Clone the repository
-git clone https://github.com/hamed-elfayome/Claude-Usage-Tracker.git
-cd Claude-Usage-Tracker
+## What's new
 
-# Open in Xcode
-open "Claude Usage.xcodeproj"
+- **v3.4.0 (2026-11-13)**: **Desktop widgets** — six WidgetKit widgets in small to extra-large sizes with a per-widget profile picker; **Keep Awake** — keeps the Mac awake while Claude Code works; **macOS 13 (Ventura) support**; optional **Fable weekly** metric in the menu bar and statusline (#318, #323); **exclude weekends from weekly pace** (#326); **monthly spend for Enterprise members** (#287); prompt-cache hit rate in the statusline; plans without a 5-hour limit (Claude Ultra, Codex Pro) show weekly as the primary metric (#356); profile switching no longer logs Claude Code out on a dead saved login (#331) and pinned profiles keep their login to themselves (#355); usage history no longer grows without bound (#337); E3006 and 403 sign-in failures fixed (#319, #266); auto-start respects the weekly limit and backs off after failures (#334); macOS 26 material crash fixed (#333); statusline no longer blanks on an old cache (#322); popover percentages say "used" or "remaining" (#269); Persian localization — 15 languages total. Thanks to 15 community contributors.
 
-# Build and run (⌘R)
-```
+- **v3.3.0 (2026-08-29)**: **Multi-provider architecture with OpenAI Codex support** (#229) — per-profile provider selection on a registry pattern (`docs/ADDING_A_PROVIDER.md`); **per-profile terminal launchers** — `claude-<profile>` commands with isolated `CLAUDE_CONFIG_DIR` logins and automatic usage tracking after one `/login`; keychain migration finally works on shipped Developer ID builds (#292); popover shows over full-screen apps (#298); Dynamic Island targets the built-in notch (#294); Cloudflare challenges no longer masquerade as expired credentials (#277); macOS 26 multi-profile crash fixes; transient E1000 on profile switch eliminated; obsolete peak-hours indicator removed (#308); Vietnamese localization — 14 languages total. Thanks to 8 community contributors.
 
-### Quick Start Guide
+Earlier releases are in the [changelog](CHANGELOG.md).
 
-#### Option A: Automatic Setup with Claude Code (Easiest)
+## Privacy and security
 
-**New in v2.2.2**: If you have Claude Code installed and logged in, the app works automatically!
+- Credentials are stored in the macOS Keychain, never in plain files.
+- Usage data stays on your Mac. There is no account and no cloud sync.
+- The app talks to claude.ai and Anthropic's API for your usage, over HTTPS only.
+- It sends one anonymous heartbeat a day containing the app version, and nothing else.
+- The sponsor placement in Settings reads a small JSON file from claudetracker.com, at most every 6 hours, with no cookies or identifiers.
+- Updates are delivered over HTTPS and verified by signature.
 
-1. **Install Claude Code** (if not already installed)
-   - Download from [claude.com/claude-code](https://claude.com/claude-code)
-   - Log in using `claude login`
+To report a vulnerability, see [SECURITY.md](SECURITY.md).
 
-2. **Launch Claude Usage Tracker**
-   - The app automatically detects your Claude Code Account
-   - No manual configuration needed!
+## Contributing
 
-3. **Verify It's Working**
-   - Click the menu bar icon
-   - You should see your usage statistics immediately
-
-#### Option B: Browser Sign-In (v3.0.2+)
-
-If you don't use Claude Code, sign in directly through the app:
-
-1. **Click the menu bar icon** and select "Settings"
-2. **Navigate to "Personal Usage"** tab
-3. **Click "Sign in to Claude.ai"** — an embedded browser opens
-4. **Log in** with your Claude.ai credentials (email, Google SSO, etc.)
-5. **Session key is extracted automatically** — the app validates and saves it
-6. **Select your organization** from the list and confirm
-
-#### Option C: Manual Setup with Session Key
-
-If you prefer manual configuration:
-
-**Step 1: Extract Your Session Key**
-
-1. **Open Claude AI**
-   - Navigate to [claude.ai](https://claude.ai) in your browser
-   - Make sure you're logged in
-
-2. **Open Developer Tools**
-   - **Chrome/Edge**: Press `F12` or `Cmd+Option+I` (macOS) / `Ctrl+Shift+I` (Windows)
-   - **Safari**: Enable Developer menu in Preferences → Advanced, then press `Cmd+Option+I`
-   - **Firefox**: Press `F12` or `Cmd+Option+I` (macOS) / `Ctrl+Shift+I` (Windows)
-
-3. **Navigate to Cookies**
-   - Go to: **Application** tab (Chrome/Edge) or **Storage** tab (Firefox)
-   - Expand: **Cookies** → **https://claude.ai**
-   - Find: `sessionKey` cookie
-   - Copy: The value (starts with `sk-ant-sid01-...`)
-
-**Step 2: Configure Session Key**
-
-1. **Click the menu bar icon** and select "Settings"
-2. **Navigate to "Personal Usage"** tab
-3. **Expand "Advanced: Manual Session Key"**
-4. **Paste your session key** and click "Test Connection"
-5. **Select your organization** from the list
-6. **Review and click "Save Configuration"**
-
-**Step 3: Verify It's Working**
-
-1. **Check Menu Bar**: You should see the Claude Usage icon in your menu bar
-2. **Click the Icon**: Popover appears showing your usage statistics
-3. **View Data**: Session usage, weekly usage, and reset timers should display
-
-**Success!** The app is now monitoring your Claude usage.
-
-#### Next Steps
-
-- **Customize Icon**: Go to Settings → Appearance to choose your preferred menu bar style
-- **Enable Notifications**: Settings → Notifications to get threshold alerts
-- **Auto-Start Sessions**: Settings → Session Management to enable automatic session initialization
-- **Terminal Integration**: Settings → Claude Code to set up statusline (requires session key configuration)
-- **Keyboard Shortcuts**: Settings → Shortcuts to configure global hotkeys
-
----
-
-## Advanced Configuration
-
-### Manual Session Key Setup
-
-If you prefer to configure the session key manually instead of using the setup wizard:
-
-```bash
-# Create session key file
-echo "sk-ant-sid01-YOUR_SESSION_KEY_HERE" > ~/.claude-session-key
-
-# Set secure permissions (important for security)
-chmod 600 ~/.claude-session-key
-```
-
-After creating the file, launch the app and it will automatically detect the session key.
-
----
-
-## Multi-Profile Management
-
-**New in v2.2.0**: Claude Usage Tracker now supports unlimited profiles, allowing you to manage multiple Claude accounts seamlessly with automatic credential switching.
-
-**New in v3.0.0**: Auto-switch profiles when session limit reached, usage history tracking, and global keyboard shortcuts!
-
-### Features
-
-#### Profile Management
-- **Unlimited Profiles**: Create as many profiles as needed for different Claude accounts
-- **Multi-Profile Display**: Show all profiles in the menu bar at once
-  - Toggle between Single mode (active profile only) and Multi mode (all profiles)
-  - Each profile displays with its own icon style and settings
-  - Click any profile icon to view its usage details
-  - Independent refresh rates per profile
-- **Fun Auto-Names**: Profiles auto-generate with names like "Quantum Llama", "Sneaky Penguin", "Turbo Sloth"
-- **Custom Names**: Rename profiles to whatever you prefer
-- **Quick Switching**: Switch profiles instantly via popover dropdown or settings sidebar
-- **Profile Badges**: Visual indicators show which profiles have Claude.ai credentials and CLI accounts
-
-#### Claude Code CLI Integration
-- **One-Click Sync**: Sync your currently logged-in Claude Code account to a profile
-- **Automatic Switching**: When you switch profiles, CLI credentials automatically update
-- **Credential Display**: View masked access tokens and subscription type
-- **Smart Re-Sync**: Credentials automatically refresh before profile switches to capture CLI changes
-- **Per-Profile CLI**: Each profile can have its own Claude Code account or share the system account
-
-#### Per-Profile Settings
-Each profile has isolated settings:
-- **Credentials**: Separate Claude.ai session keys, API keys, and organization IDs
-- **Appearance**: Independent icon styles and monochrome mode
-- **Refresh Interval**: Custom refresh rates (5-300 seconds)
-- **Auto-Start Sessions**: Enable/disable per profile
-- **Notifications**: Independent threshold alerts (75%, 90%, 95%)
-- **Usage Data**: Tracked separately per profile
-
-#### Profile Switcher
-Access profile switcher in multiple places:
-- **Popover Header**: Dropdown menu with profile badges
-- **Settings Sidebar**: Active profile picker with visual indicators
-- **Manage Profiles Tab**: Full profile management interface
-
-#### How to Use
-
-1. **Create Profiles**:
-   - Go to Settings → Manage Profiles
-   - Click "Create New Profile"
-   - Auto-generates a fun name or enter your own
-
-2. **Configure Credentials**:
-   - Switch to desired profile in sidebar
-   - Go to Claude.AI / API Console / CLI Account tabs
-   - Enter credentials (isolated per profile)
-
-3. **Sync Claude Code** (Optional):
-   - Log in to Claude Code in terminal
-   - Open Settings → CLI Account
-   - Click "Sync from Claude Code"
-   - Now when you switch profiles, CLI credentials auto-update!
-
-4. **Switch Profiles**:
-   - Click popover dropdown
-   - Or use settings sidebar picker
-   - CLI credentials apply automatically
-
----
-
-## OpenAI Codex Profiles (v3.3.0+)
-
-Profiles aren't Claude-only anymore. When creating a profile, pick **OpenAI Codex** as its provider to track your Codex rate limits in the same menu bar:
-
-- Reads your existing `~/.codex/auth.json` login (or paste credentials in Settings → Codex Account)
-- Maps Codex's 5-hour and weekly rate windows onto the familiar session/weekly rows
-- Refreshes expired tokens automatically and writes them back atomically with `0600` permissions
-- Anthropic-only integrations (statusline, auto-start, Dynamic Island) hide themselves for Codex profiles
-
-Want another provider? The architecture is additive — see `docs/ADDING_A_PROVIDER.md`.
-
----
-
-## Per-Profile Terminal Launchers (v3.3.0+)
-
-Run different Claude Code accounts side by side without touching environment variables:
-
-1. Open **Settings → General** on the profile you want and click **Install Launcher**
-2. Run `claude-<profile>` in any terminal — it opens Claude Code with that profile's own `CLAUDE_CONFIG_DIR`, so sign in once with `/login`
-3. The app detects the new login and links it to the profile automatically — usage tracking follows that account from then on
-
-Plain `claude` keeps following the **active** profile, with one exception: switching to a profile that is linked to its own launcher login (or pinned to another keychain entry) leaves plain `claude` signed in as it was. Copying that login across would put one sign-in in two places, and whichever Claude Code refreshed it second would be logged out. Use the profile's `claude-<profile>` command for that account. Removing a launcher never deletes its login.
-
----
-
-## Features
-
-### Installation & Updates
-- **Official Apple Code Signing**: Professionally signed application - installs like any Mac app
-- **Automatic Updates**: Built-in update system powered by Sparkle framework
-- **One-Click Installation**: No security workarounds or manual approvals needed
-- **Update Notifications**: Get notified when new versions are available
-
-### Usage Tracking & Monitoring
-- Real-time monitoring of 5-hour session, weekly limits, and Opus-specific usage
-- API console usage tracking with monthly cost dashboard and daily cost chart
-- Per-API-key cost breakdown with model-level detail
-- Extra usage cost tracking for Claude Extra subscribers
-- Color-coded indicators (adaptive green/orange/red) based on consumption levels
-- Smart countdown timers for session and weekly resets with 3-way display (time, remaining, or both)
-
-### Menu Bar & Interface
-- **5 Customizable Icon Styles**: Battery, Progress Bar, Percentage Only, Icon with Bar, Compact
-- **Multi-Metric Icons**: Display separate icons for session, weekly, and api usage simultaneously
-- **3 Color Modes**: Multi-Color (threshold-based), Greyscale (adapts to appearance), Single Color (custom hex)
-- **6-Tier Pace System**: Pace markers colored by projected usage (green/teal/yellow/orange/red/purple)
-- **Interactive Popover**: One-click access with detachable floating window capability
-- **Live Status Indicator**: Real-time Claude system status from status.claude.com
-- **Multi-Language Support**: 15 languages (English, Spanish, French, German, Italian, Portuguese, Brazilian Portuguese, Japanese, Korean, Simplified Chinese, Traditional Chinese, Turkish, Ukrainian, Vietnamese, Persian)
-- Adaptive colors for light/dark mode
-
-### Automation & Intelligence
-- **Auto-Start Sessions**: Automatically initialize new sessions when usage resets to 0%
-- **Auto-Switch Profiles**: Automatically switch to next profile at session limit
-- **Wake-from-Sleep Refresh**: Auto-refresh after waking with debounce
-- **Smart Notifications**: Threshold alerts at 75%, 90%, 95% + custom thresholds with sound picker
-- **Network Monitoring**: Auto-detect connectivity changes and handle offline scenarios
-- **Launch at Login**: System-level auto-start option
-- **Configurable Refresh**: Set intervals from 5 to 120 seconds
-- Session reset and auto-start confirmations
-
-### Developer Integration
-- **Dynamic Island (Beta)**: Live Claude Code activity at the notch — session status, current tool, needs-input pulse, multi-session support; passive read-only hooks (the HUD can never approve or answer for you); floating pill on displays without a notch
-- **Claude Code Terminal Statusline**: Real-time usage in your terminal
-- Customizable components: directory, git branch, model name, context window, profile name, usage percentage, progress bar, pace marker, reset timer
-- **3 color modes**: Multi-Color, Greyscale, Single Color (custom hex) for statusline
-- **Pace marker**: 6-tier colored marker on progress bar showing projected usage pace
-- **Label toggles**: Show/hide "Ctx:", "Usage:", "Reset:" prefixes
-- **24-hour time**: Optional 24-hour format for reset time
-- Terminal-matching preview with ANSI-equivalent colors
-- Instant rendering via usage cache (no startup delay)
-- One-click automated installation
-- Live preview before applying changes
-
-### Security & Privacy
-- **macOS Keychain Storage**: All per-profile credentials (session keys, API keys, CLI OAuth tokens) stored in the macOS data-protection Keychain — never in cleartext on disk (GHSA-mfxh-xpwm-23c7)
-- **Automatic Migration**: Seamless, verified migration from old storage methods — no re-login required
-- **Apple Code Signed**: Verified by Apple for enhanced security and trust
-- **Advanced Error Handling**: Professional error system with user-friendly recovery
-- **Robust Validation**: Session key and API endpoint validation
-- Local storage with no cloud sync
-- Minimal anonymous analytics (version-only heartbeat every 24h — no PII, no credentials)
-- The sponsor placement in Settings reads a small JSON file from claudetracker.com (at most every 6 hours, no cookies or identifiers)
-- HTTPS-only communication with Claude API
-
-### Advanced Capabilities
-- Multi-screen support
-- First-run guided setup wizard
-- Protocol-based modular architecture
-- Persistent settings with App Groups
-- Comprehensive test coverage
-
----
-
-## Usage
-
-### Menu Bar Interface
-
-Click the menu bar icon to access:
-
-- **Session Usage**: 5-hour rolling window percentage and reset time
-- **Weekly Usage**: Overall weekly consumption across all models
-- **Opus Usage**: Weekly Opus-specific usage (if applicable)
-- **API Cost**: Monthly cost with daily chart and per-key breakdown (if Console configured)
-- **Quick Actions**: Refresh and Settings
-
-### Settings
-
-Access comprehensive settings through the menu bar popover → Settings button. The app features a modern sidebar interface with profile switcher and organized tabs:
-
-### Profile-Specific Settings
-
-#### Profile Switcher (Sidebar)
-- **Quick Profile Selection**: Dropdown to switch between profiles instantly
-- **Profile Badges**: Visual indicators for Claude.ai 🔵 and CLI ✅ credentials
-- **Active Profile Display**: Shows currently selected profile
-
-#### Claude.AI (Credentials)
-Configure your Claude.ai personal account:
-- **Browser Sign-In**: Sign in via embedded browser to extract session key automatically (v3.0.2+)
-- **3-Step Setup Wizard**: Guided session key configuration
-  - Non-destructive connection testing
-  - Visual organization selector
-  - Configuration summary with preview
-- **Manual Key Entry**: Advanced option under disclosure group for direct session key input
-- **Smart Updates**: Organization preserved when re-entering same key
-
-#### API Console (Credentials)
-Configure API console usage tracking:
-- **Browser Sign-In**: Sign in via embedded browser for Anthropic Console (v3.0.2+)
-- **API Session Key**: Set your API authentication key (manual fallback)
-- **Organization ID**: Configure organization for API tracking
-- **Dual Tracking**: Monitor both web and API usage simultaneously
-- **API Billing**: View API console spend, prepaid credits, and monthly cost breakdown
-- **Session Key Expiry**: Visual status indicator showing when your session key expires
-
-#### CLI Account (Credentials)
-Sync Claude Code CLI credentials:
-- **One-Click Sync**: Copy currently logged-in Claude Code account to profile
-- **Credential Display**: View masked access token and subscription type
-- **Auto-Switch**: Credentials automatically update when changing profiles
-- **Remove Sync**: Unlink CLI account from profile
-
-#### Appearance
-Customize menu bar icon per profile:
-- **Icon Style Selection**: Choose from 5 different display modes
-  - Battery Style (classic indicator with fill)
-  - Progress Bar (horizontal bar with percentage)
-  - Percentage Only (text-only minimalist)
-  - Icon with Bar (Claude icon + progress)
-  - Compact (space-efficient)
-- **3 Color Modes**: Multi-Color (threshold-based), Greyscale (adapts to appearance), Single Color (custom hex)
-- **Pace Marker**: Colored time marker on progress bars showing projected usage pace (6 tiers)
-- **Percentage Display Mode**: Toggle between used/remaining percentage
-  - Show "75% used" or "25% remaining" - your choice
-  - Color coding automatically adapts (green for high remaining, red for low)
-  - Helps focus on budget left rather than budget spent
-- **Live Preview**: See changes in real-time before applying
-
-#### General (Profile Settings)
-Per-profile behavior configuration:
-- **Refresh Interval**: Configure auto-refresh rate (5-300 seconds)
-- **Auto-Start Sessions**: Enable/disable automatic session initialization on reset
-- **Model Selection**: Uses the most cost-effective model available
-- **Notifications**: Per-profile threshold alerts (75%, 90%, 95%) + custom thresholds with sound picker
-
-### App-Wide Settings
-
-#### Manage Profiles
-Create and manage multiple profiles:
-- **Create Profiles**: Add new profiles with fun auto-generated names
-- **Rename Profiles**: Customize profile names
-- **Delete Profiles**: Remove unused profiles (minimum 1 required)
-- **Profile List**: View all profiles with credential status indicators
-- **Display Mode Toggle**: Switch between Single and Multi mode
-  - Single Mode: Show only the active profile in menu bar
-  - Multi Mode: Show all profiles simultaneously in menu bar
-- **Auto-Switch Profile**: Automatically switch to next available profile when session limit reached
-
-#### Language
-Application language preferences:
-- **Language Selection**: Choose from 13 supported languages
-- **Live Updates**: Interface updates immediately when language changes
-- Supported: English, Spanish, French, German, Italian, Portuguese, Brazilian Portuguese, Japanese, Korean, Simplified Chinese, Traditional Chinese, Turkish, Ukrainian
-
-#### Claude Code (Statusline)
-Terminal integration (app-wide):
-- **Component Selection**: Choose what to display (directory, branch, model name, context window, profile name, usage, progress bar, pace marker, reset time)
-- **Color Mode**: Multi-Color, Greyscale, or Single Color with custom hex picker
-- **Pace Marker**: 6-tier colored marker showing projected usage pace on progress bar
-- **Label Toggles**: Show/hide "Ctx:", "Usage:", "Reset:" prefixes for compact display
-- **24-Hour Time**: Optional 24-hour format for reset time
-- **Live Preview**: Terminal-matching preview with ANSI-equivalent colors
-- **One-Click Install**: Automated script installation to `~/.claude/`
-- **Automatic Updates**: Statusline updates when switching profiles
-- **Usage Cache**: Instant CLI rendering via cached usage data
-- See [Claude Code Integration](#claude-code-integration) section for detailed setup
-
-#### Updates
-Automatic update configuration:
-- **Automatic Update Checking**: Configure how often to check for updates
-- **Update Notifications**: Get notified when new versions are available
-- **One-Click Installation**: Download and install updates with a single click
-- **Release Notes**: View what's new in each update
-
-#### About
-Application information:
-- **Version Information**: Current app version
-- **Credits**: Contributors and acknowledgments
-- **Links**: GitHub repository, issue tracker, documentation
-
-
-## Claude Code Integration
-
-Bring real-time Claude usage monitoring directly into your terminal with Claude Code statusline integration! Display your current usage percentage, model name, context window, profile name, git branch, and working directory without leaving your development workflow.
-
-### What is Claude Code?
-
-[Claude Code](https://claude.com/claude-code) is Anthropic's official CLI tool for interacting with Claude AI directly from your terminal. The statusline feature allows you to display custom information at the bottom of your terminal window.
-
-<div align="center">
-  <img src=".github/statusline.png" alt="Claude Code Statusline in Action" width="90%">
-  <br>
-  <sub>Example: Terminal statusline with all components enabled</sub>
-</div>
-
-### Setup Instructions
-
-#### Prerequisites
-
-1. **Claude Code installed**: Download from [claude.com/claude-code](https://claude.com/claude-code)
-2. **Session key configured**: Must be manually configured in the Personal Usage tab (Claude Code OAuth doesn't work for statusline - it requires direct session key)
-
-#### Installation Steps
-
-1. **Open Claude Usage Tracker Settings**
-   - Click the menu bar icon
-   - Click "Settings"
-   - Navigate to the "Claude Code" tab
-
-2. **Choose Your Components**
-   - Toggle on/off the components you want to see:
-     - **Directory name**: Shows current working directory
-     - **Git branch**: Displays current branch with ⎇ icon
-     - **Model name**: Shows current model (Opus, Sonnet)
-     - **Profile name**: Shows active profile name
-     - **Context window**: Shows context usage as percentage or token count
-     - **Usage statistics**: Shows session percentage with color coding
-     - **Progress bar**: Visual 10-segment indicator (optional when usage is enabled)
-     - **Pace marker**: Colored `┃` on progress bar at elapsed time position (6-tier pace colors)
-     - **Reset time**: When your session resets (12h or 24h format)
-   - **Color mode**: Choose Multi-Color, Greyscale, or Single Color
-   - **Label toggles**: Show/hide "Ctx:", "Usage:", "Reset:" prefixes
-
-3. **Preview Your Statusline**
-   - The live preview shows exactly how it will appear with terminal-matching ANSI colors
-   - Example: `claude-usage │ ⎇ main │ Opus │ Work │ Ctx: 48% │ Usage: 25% ▓▓┃░░░░░░░ → Reset: 3:45 PM`
-
-4. **Apply Configuration**
-   - Click "Apply" button
-   - Scripts will be installed to `~/.claude/`
-   - Claude Code's `settings.json` will be updated automatically
-
-5. **Restart Claude Code**
-   - Close and reopen your Claude Code terminal
-   - The statusline will appear at the bottom of your terminal window
-
-### What Gets Installed
-
-The setup automatically creates:
-
-- `~/.claude/fetch-claude-usage.swift`: Swift script that fetches usage data from Claude API
-- `~/.claude/statusline-command.sh`: Bash script that builds the statusline display
-- `~/.claude/statusline-config.txt`: Configuration file with your component preferences
-- `~/.claude/settings.json`: Updated with statusline command (or created if doesn't exist)
-
-All scripts are set with secure permissions (755) and only read your existing session key file.
-
-### Customization
-
-#### Available Components
-
-| Component | Description | Example |
-|-----------|-------------|---------|
-| Directory | Current directory name | `claude-usage` |
-| Git Branch | Active git branch | `⎇ main` |
-| Model | Current model name | `Opus` |
-| Profile | Active profile name | `Work` |
-| Context | Context window usage | `Ctx: 48%` or `96K` |
-| Usage | Session percentage | `Usage: 25%` or `25%` |
-| Progress Bar | 10-segment visual indicator | `▓▓░░░░░░░░` |
-| Pace Marker | Colored marker at elapsed time position | `▓▓┃░░░░░░░` |
-| Reset Time | When session resets | `→ Reset: 3:45 PM` or `→ 15:45` |
-
-#### Color Coding
-
-**Usage bar** is color-coded with a 10-level gradient:
-- **0-10%**: Dark green
-- **11-30%**: Green shades
-- **31-50%**: Yellow-green transitioning to olive
-- **51-70%**: Yellow to orange
-- **71-90%**: Dark orange to red
-- **91-100%**: Deep red
-
-**Pace marker** uses a 6-tier system based on projected end-of-period usage:
-- **Comfortable** (projected <50%): Green
-- **On Track** (50-75%): Teal
-- **Warming** (75-90%): Yellow
-- **Pressing** (90-100%): Orange
-- **Critical** (100-120%): Red
-- **Runaway** (>120%): Purple
-
-**Color modes** (applies to both menu bar and statusline):
-- **Multi-Color**: Full color palette (default)
-- **Greyscale**: No colors, adapts to system theme
-- **Single Color**: All elements use your custom hex color
-
-#### Disabling Statusline
-
-To remove the statusline:
-1. Open Claude Usage Tracker Settings → Claude Code tab
-2. Click "Reset" button
-3. Restart Claude Code
-
-This removes the statusline configuration but keeps the scripts installed for easy re-enabling.
-
-### Troubleshooting
-
-#### Statusline Not Appearing
-
-1. Verify Claude Code is installed and working
-2. Check that you restarted Claude Code after applying
-3. Ensure session key is valid in General settings tab
-4. Check that `~/.claude/settings.json` exists and has the statusline configuration
-
-#### Shows "Usage: ~"
-
-This indicates the Swift script couldn't fetch usage data:
-- Verify your session key is valid
-- Check that `~/.claude-session-key` exists
-- Ensure you're connected to the internet
-- Try refreshing your session key from claude.ai
-
-#### Permission Issues
-
-If scripts can't be executed:
-```bash
-chmod 755 ~/.claude/fetch-claude-usage.swift
-chmod 755 ~/.claude/statusline-command.sh
-```
-
-### Example Statuslines
-
-With all components enabled (Multi-Color mode):
-```
-my-project │ ⎇ feature/new-ui │ Opus │ Work │ Ctx: 48% │ Usage: 47% ▓▓▓▓┃░░░░░ → Reset: 4:15 PM
-```
-
-Compact (labels hidden, 24h time):
-```
-my-project │ ⎇ develop │ 12% ▓┃░░░░░░░░ → 16:15
-```
-
-Model and context only:
-```
-Sonnet │ Ctx: 96K │ Usage: 25%
-```
-
-## Architecture
-
-### Technology Stack
-
-- **Language**: Swift 5.0+
-- **UI Framework**: SwiftUI 5.0+
-- **Platform**: macOS 13.0+ (Ventura)
-- **Architecture**: MVVM with Protocol-Oriented Design
-- **Storage**: UserDefaults with App Groups
-- **Networking**: URLSession with async/await
-- **Design Patterns**: Coordinator pattern, Protocol-based services, Modular components
-
-## API Integration
-
-The application integrates with multiple Claude API endpoints for comprehensive usage tracking:
-
-### Web Usage Endpoint
-
-```
-GET https://claude.ai/api/organizations/{org_id}/usage
-```
-
-**Authentication**: Session cookie (`sessionKey`) from claude.ai
-
-**Response Structure**:
-- `five_hour`: 5-hour session usage data (`null` on plans without a session limit, such as Ultra)
-  - `utilization_pct`: Usage percentage (0-100)
-  - `reset_at`: ISO 8601 timestamp for next reset
-- `seven_day`: Weekly usage across all models
-  - `utilization_pct`: Weekly usage percentage
-- `seven_day_opus`: Opus-specific weekly usage
-  - `utilization_pct`: Opus weekly percentage
-- `extra_usage`: Claude Extra cost tracking (if applicable)
-  - `current_spending`: Amount spent
-  - `budget_limit`: Maximum allowed spending
-
-### API Console Endpoint
-
-```
-GET https://api.anthropic.com/v1/organization/{org_id}/usage
-```
-
-**Authentication**: API Key (`x-api-key` header)
-
-**Response Structure**:
-- API console usage statistics
-- Billing information
-- Rate limits and quotas
-
-### Dual Tracking
-
-The app can simultaneously monitor both web (claude.ai) and API console usage, providing complete visibility into your Claude consumption across all access methods.
-
-## Security
-
-- **macOS Keychain**: Session keys stored securely in macOS Keychain (most secure storage available)
-- **Automatic Migration**: v2.0+ automatically migrates session keys from older storage methods to Keychain
-- **Apple Code Signed**: Officially signed with Apple Developer certificate for verified authenticity
-- **Secure Updates**: Automatic updates delivered over HTTPS with code signature verification
-- **No Cloud Sync**: All data remains local to your machine
-- **Minimal Analytics**: Anonymous heartbeat every 24 hours containing only the app version — no PII, no credentials, no usage data
-- **Advanced Error Handling**: Robust error system with user-friendly recovery
-- **Session Key Validation**: Comprehensive validation of API credentials
-- **Network**: HTTPS-only communication with claude.ai and Anthropic API
-
-## Troubleshooting
-
-### Application Not Connecting
-
-1. Verify your session key is valid
-2. Check that you're logged into claude.ai in your browser
-3. Try extracting a fresh session key
-4. Ensure you have an active internet connection
-
-### 403 Permission Errors
-
-If you see "Unauthorized" or 403 errors:
-1. Open Settings → Personal Usage
-2. Use the 3-step wizard to reconfigure:
-   - Test your session key
-   - Select the correct organization
-   - Save configuration
-3. The wizard will preserve your organization selection when updating keys
-
-### Menu Bar Icons Showing Zero
-
-If icons briefly flash to zero during refresh:
-- This has been fixed in v2.1.0+
-- Update to the latest version for smooth refresh experience
-- Old data now stays visible until new data arrives
-
-### Menu Bar Icon Not Appearing
-
-1. Check System Settings → Desktop & Dock → Menu Bar
-2. Restart the application
-3. Check Console.app for error messages
-
-### Session Key Expired
-
-Session keys may expire after a period of time. You'll receive a notification 24 hours before expiry (v3.0.2+). To refresh:
-1. Go to Settings → Personal Usage (or API Console)
-2. Click "Sign in to Claude.ai" (or "Sign in to Anthropic Console") to re-authenticate via the built-in browser
-3. Or expand "Advanced: Manual Session Key" to paste a new key manually
-
-### Updates Not Working
-
-If automatic updates aren't working:
-
-1. Check Settings → Updates to ensure automatic checking is enabled
-2. Verify you're running v2.0.0 or later (earlier versions don't have auto-update)
-3. Check your internet connection
-4. Manually download the latest version from GitHub if needed
-
-## Contributors
+Pull requests are welcome. For a larger change, open an issue first so we can agree on the approach. [CONTRIBUTING.md](CONTRIBUTING.md) has the setup, the localization requirement and the conventions.
 
 <img src="https://contrib.rocks/image?repo=hamed-elfayome/Claude-Usage-Tracker" alt="Contributors" height="30px" />
-
-This project is built for the community — everyone is welcome
 
 ### Special Thanks
 
@@ -837,44 +145,13 @@ A huge thank you to everyone who contributed code, translations, bug reports, an
 <a href="https://github.com/Ali-Aldahmani"><img src="https://github.com/Ali-Aldahmani.png" width="40" height="40" alt="Ali-Aldahmani" title="Ali-Aldahmani"></a>
 <a href="https://github.com/cuvitx"><img src="https://github.com/cuvitx.png" width="40" height="40" alt="cuvitx" title="cuvitx"></a>
 
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
-
-### Development Setup
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-### Code Style
-
-- Follow Swift API Design Guidelines
-- Use SwiftUI best practices
-- Maintain MVVM architecture
-- Add comments for complex logic
-- Write descriptive commit messages
-
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- Built with Swift and SwiftUI
-- Designed for macOS Ventura and later
-- Uses Claude AI's usage API
-- Inspired by the need for better usage visibility
-
-## Disclaimer
+MIT. See [LICENSE](LICENSE).
 
 This application is not affiliated with, endorsed by, or sponsored by Anthropic PBC. Claude is a trademark of Anthropic PBC. This is an independent third-party tool created for personal usage monitoring.
 
-## AI Transparency
-
-This project is developed using AI-assisted workflows (primarily Claude Code via Happy). We believe in transparent collaboration between human developers and AI tools.
+This project is developed with AI-assisted workflows, primarily Claude Code.
 
 ---
 
