@@ -65,6 +65,7 @@
 "menubar.fable_usage" = "Fable";
 "menubar.design_usage" = "デザイン";
 "menubar.extra_usage" = "追加使用";
+"menubar.organization" = "組織";
 "menubar.monthly_spend" = "月間支出";
 "menubar.api_credits" = "APIクレジット";
 "menubar.5_hour_window" = "5時間ローリングウィンドウ";

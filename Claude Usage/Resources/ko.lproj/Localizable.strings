@@ -74,6 +74,7 @@
 "menubar.fable_usage" = "Fable";
 "menubar.design_usage" = "디자인";
 "menubar.extra_usage" = "추가 사용량";
+"menubar.organization" = "조직";
 "menubar.monthly_spend" = "월간 지출";
 "menubar.api_credits" = "API 크레딧";
 "menubar.5_hour_window" = "5시간 롤링 윈도우";

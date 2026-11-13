@@ -65,6 +65,7 @@
 "menubar.fable_usage" = "Fable";
 "menubar.design_usage" = "Design";
 "menubar.extra_usage" = "Uso Extra";
+"menubar.organization" = "Organización";
 "menubar.monthly_spend" = "Gasto Mensual";
 "menubar.api_credits" = "Créditos API";
 "menubar.5_hour_window" = "Ventana móvil de 5 horas";

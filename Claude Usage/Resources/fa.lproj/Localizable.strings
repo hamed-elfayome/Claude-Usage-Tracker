@@ -65,6 +65,7 @@
 "menubar.fable_usage" = "Fable";
 "menubar.design_usage" = "Design";
 "menubar.extra_usage" = "مصرف اضافی";
+"menubar.organization" = "سازمان";
 "menubar.api_credits" = "اعتبارهای API";
 "menubar.api_cost" = "هزینهٔ API";
 "menubar.this_month" = "این ماه";

@@ -1031,6 +1031,9 @@ struct SmartUsageDashboard: View {
                 let usedPercentage = (used / limit) * 100.0
                 UsageRow(
                     title: "menubar.extra_usage".localized,
+                    // When the account also reports the member's own spend, this figure
+                    // is the organization's total, not the member's (#325).
+                    tag: usage.personalSpendUsed != nil ? "menubar.organization".localized : nil,
                     subtitle: String(format: "%.2f / %.2f %@", used / 100.0, limit / 100.0, currency),
                     usedPercentage: usedPercentage,
                     showRemaining: showRemainingPercentage,

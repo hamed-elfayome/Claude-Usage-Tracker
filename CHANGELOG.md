@@ -30,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **macOS 26 crash in the popover and settings backgrounds** (#333, PR #279): macOS 26 and later use an opaque background and opt out of Liquid Glass; earlier systems keep the blur — thanks @RaulVargasP
 - **Multi-profile display: a Codex profile keeps refreshing while a Claude profile is active** (#335).
 - **Pinned profiles keep their login to themselves** (#355): Re-sync no longer captures the default Claude Code login into a profile pinned to another keychain entry, and switching to such a profile no longer copies its login over the default one. Plain `claude` therefore stays signed in as it was when you switch to a launcher-linked profile.
+- **Statusline no longer blanks when the app's cache is over 5 minutes old** (#322): it falls back to the rate limits Claude Code reports to the statusline, and after that shows the last reading with its age, e.g. `(stale 13m)`.
+- **Extra Usage is labelled as the organization's figure** (#325) when the account also reports the member's own spend.
 - **Statusline scripts are left alone when unchanged or unused** (#321, #191): the installed script is rewritten only when it changed, a hand-edited copy is backed up first, and nothing is refreshed unless Claude Code's settings actually run this statusline.
 - **Per-model weekly quotas for CLI-only profiles** (PR #276) — thanks @RaulVargasP
 - **Plans that report no usage limits** (#312): the popover says so, where it used to show 0% and a 5-hour countdown.
