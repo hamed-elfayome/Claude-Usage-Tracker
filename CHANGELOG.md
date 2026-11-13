@@ -5,7 +5,7 @@ All notable changes to Claude Usage Tracker will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.4.0] - 2026-11-13
 
 ### Added
 
@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **macOS 13 (Ventura) support** (PR #339): the app now runs on macOS 13; desktop widgets still need macOS 14 — thanks @olegbukatchuk
 - **Clearer popover percentages** (#269, PR #359): each percentage is followed by "used" or "remaining" — thanks @Diocto
 - **Prompt-cache hit rate in the statusline** (PR #332): optional segment showing the cache hit rate and the cause of a recent miss — thanks @lathe-agent-oa
+
+### Changed
+
+- **The sponsor placement in Settings is loaded from claudetracker.com**: the app asks `https://claudetracker.com/api/sponsor` at most every 6 hours, with no cookies or identifiers, and opens the linked page inside the settings window in a browser view that shares no data with the app's sign-in views. With no answer it shows the built-in placeholder.
+- **Minimum macOS is now 13.0 (Ventura)**; desktop widgets need macOS 14.
 
 ### Bug Fixes
 

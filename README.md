@@ -32,6 +32,8 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 
 - **Multi-Provider Support**: Track OpenAI Codex usage alongside Claude — per-profile provider selection, built on a registry so more providers can follow
 - **Dynamic Island (Beta)**: A minimal notch HUD showing what Claude Code is doing in real time — current tool, session status, and a pulse when Claude needs your input
+- **Desktop Widgets**: Six WidgetKit widgets (tracks, rings, a dial, a reset countdown) in small to extra-large sizes, each with a profile picker
+- **Keep Awake**: Keeps the Mac awake while Claude Code is working, or on a manual timer
 - **Multi-Profile Support**: Manage unlimited Claude accounts with isolated credentials and settings
 - **Terminal Launchers**: Install a `claude-<profile>` command per profile — each opens Claude Code with that profile's own login. Plain `claude` follows the active profile, unless that profile has its own launcher login
 - **Multi-Profile Display**: Monitor all profiles simultaneously in the menu bar
@@ -61,6 +63,8 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 ---
 
 ## What's New
+
+- **v3.4.0 (2026-11-13)**: **Desktop widgets** — six WidgetKit widgets in small to extra-large sizes with a per-widget profile picker; **Keep Awake** — keeps the Mac awake while Claude Code works; **macOS 13 (Ventura) support**; optional **Fable weekly** metric in the menu bar and statusline (#318, #323); **exclude weekends from weekly pace** (#326); **monthly spend for Enterprise members** (#287); prompt-cache hit rate in the statusline; plans without a 5-hour limit (Claude Ultra, Codex Pro) show weekly as the primary metric (#356); profile switching no longer logs Claude Code out on a dead saved login (#331) and pinned profiles keep their login to themselves (#355); usage history no longer grows without bound (#337); E3006 and 403 sign-in failures fixed (#319, #266); auto-start respects the weekly limit and backs off after failures (#334); macOS 26 material crash fixed (#333); statusline no longer blanks on an old cache (#322); popover percentages say "used" or "remaining" (#269); Persian localization — 15 languages total. Thanks to 15 community contributors.
 
 - **v3.3.0 (2026-08-29)**: **Multi-provider architecture with OpenAI Codex support** (#229) — per-profile provider selection on a registry pattern (`docs/ADDING_A_PROVIDER.md`); **per-profile terminal launchers** — `claude-<profile>` commands with isolated `CLAUDE_CONFIG_DIR` logins and automatic usage tracking after one `/login`; keychain migration finally works on shipped Developer ID builds (#292); popover shows over full-screen apps (#298); Dynamic Island targets the built-in notch (#294); Cloudflare challenges no longer masquerade as expired credentials (#277); macOS 26 multi-profile crash fixes; transient E1000 on profile switch eliminated; obsolete peak-hours indicator removed (#308); Vietnamese localization — 14 languages total. Thanks to 8 community contributors.
 
@@ -415,6 +419,7 @@ Plain `claude` keeps following the **active** profile, with one exception: switc
 - **Robust Validation**: Session key and API endpoint validation
 - Local storage with no cloud sync
 - Minimal anonymous analytics (version-only heartbeat every 24h — no PII, no credentials)
+- The sponsor placement in Settings reads a small JSON file from claudetracker.com (at most every 6 hours, no cookies or identifiers)
 - HTTPS-only communication with Claude API
 
 ### Advanced Capabilities

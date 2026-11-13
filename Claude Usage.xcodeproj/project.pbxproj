@@ -8,14 +8,14 @@
 
 /* Begin PBXBuildFile section */
 		056C52802F017E50007E2A48 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = SPARKLE_PRODUCT_DEP /* Sparkle */; };
-		APP_SRC_WIDGET_SNAPSHOT /* WidgetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = WIDGETSHARED_FILE_SNAPSHOT /* WidgetSnapshot.swift */; };
 		APP_EMBED_WIDGET /* Claude UsageWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = WIDGET_APPEX_REF /* Claude UsageWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		APP_SRC_WIDGET_SNAPSHOT /* WidgetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = WIDGETSHARED_FILE_SNAPSHOT /* WidgetSnapshot.swift */; };
 		DYNAMICNOTCH_BUILD_FILE /* DynamicNotchKit in Frameworks */ = {isa = PBXBuildFile; productRef = DYNAMICNOTCH_PRODUCT_DEP /* DynamicNotchKit */; };
+		WIDGET_RES_LOC /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = WIDGET_LOC_VARIANT /* Localizable.strings */; };
 		WIDGET_SRC_BUNDLE /* ClaudeUsageWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = WIDGET_FILE_BUNDLE /* ClaudeUsageWidgetBundle.swift */; };
 		WIDGET_SRC_PROVIDER /* UsageTimelineProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = WIDGET_FILE_PROVIDER /* UsageTimelineProvider.swift */; };
-		WIDGET_SRC_VIEWS /* UsageWidgetViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = WIDGET_FILE_VIEWS /* UsageWidgetViews.swift */; };
 		WIDGET_SRC_SNAPSHOT /* WidgetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = WIDGETSHARED_FILE_SNAPSHOT /* WidgetSnapshot.swift */; };
-		WIDGET_RES_LOC /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = WIDGET_LOC_VARIANT /* Localizable.strings */; };
+		WIDGET_SRC_VIEWS /* UsageWidgetViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = WIDGET_FILE_VIEWS /* UsageWidgetViews.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -52,13 +52,13 @@
 /* Begin PBXFileReference section */
 		05CD2CB22EA985A100004C83 /* Claude Usage.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Claude Usage.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		05CD2CC02EA985A100004C83 /* Claude UsageTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Claude UsageTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		WIDGETSHARED_FILE_SNAPSHOT /* WidgetSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSnapshot.swift; sourceTree = "<group>"; };
 		WIDGET_APPEX_REF /* Claude UsageWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "Claude UsageWidget.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
 		WIDGET_FILE_BUNDLE /* ClaudeUsageWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeUsageWidgetBundle.swift; sourceTree = "<group>"; };
+		WIDGET_FILE_ENTITLEMENTS /* ClaudeUsageWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ClaudeUsageWidget.entitlements; sourceTree = "<group>"; };
+		WIDGET_FILE_INFO /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		WIDGET_FILE_PROVIDER /* UsageTimelineProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageTimelineProvider.swift; sourceTree = "<group>"; };
 		WIDGET_FILE_VIEWS /* UsageWidgetViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageWidgetViews.swift; sourceTree = "<group>"; };
-		WIDGET_FILE_INFO /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		WIDGET_FILE_ENTITLEMENTS /* ClaudeUsageWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ClaudeUsageWidget.entitlements; sourceTree = "<group>"; };
-		WIDGETSHARED_FILE_SNAPSHOT /* WidgetSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSnapshot.swift; sourceTree = "<group>"; };
 		WIDGET_LOC_DE /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
 		WIDGET_LOC_EN /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		WIDGET_LOC_ES /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -135,6 +135,14 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		WIDGETSHARED_GROUP /* WidgetShared */ = {
+			isa = PBXGroup;
+			children = (
+				WIDGETSHARED_FILE_SNAPSHOT /* WidgetSnapshot.swift */,
+			);
+			path = WidgetShared;
+			sourceTree = "<group>";
+		};
 		WIDGET_GROUP /* ClaudeUsageWidget */ = {
 			isa = PBXGroup;
 			children = (
@@ -154,14 +162,6 @@
 				WIDGET_LOC_VARIANT /* Localizable.strings */,
 			);
 			path = Resources;
-			sourceTree = "<group>";
-		};
-		WIDGETSHARED_GROUP /* WidgetShared */ = {
-			isa = PBXGroup;
-			children = (
-				WIDGETSHARED_FILE_SNAPSHOT /* WidgetSnapshot.swift */,
-			);
-			path = WidgetShared;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -512,7 +512,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_PREVIEWS = YES;
@@ -534,7 +534,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 3.3.0;
+				MARKETING_VERSION = 3.4.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "HamedElfayome.Claude-Usage";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -559,7 +559,7 @@
 				CODE_SIGN_ENTITLEMENTS = "Claude Usage/Claude UsageRelease.entitlements";
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = T77ZWDC739;
 				ENABLE_APP_SANDBOX = NO;
@@ -589,7 +589,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 3.3.0;
+				MARKETING_VERSION = 3.4.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "HamedElfayome.Claude-Usage";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -657,12 +657,12 @@
 		WIDGET_DEBUG_CONFIG /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = "ClaudeUsageWidget/ClaudeUsageWidget.entitlements";
+				CODE_SIGN_ENTITLEMENTS = ClaudeUsageWidget/ClaudeUsageWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEAD_CODE_STRIPPING = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "ClaudeUsageWidget/Info.plist";
+				INFOPLIST_FILE = ClaudeUsageWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Claude Usage Widgets";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -670,7 +670,7 @@
 					"@executable_path/../../../../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 3.3.0;
+				MARKETING_VERSION = 3.4.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "HamedElfayome.Claude-Usage.widget";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
@@ -685,15 +685,15 @@
 		WIDGET_RELEASE_CONFIG /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = "ClaudeUsageWidget/ClaudeUsageWidget.entitlements";
+				CODE_SIGN_ENTITLEMENTS = ClaudeUsageWidget/ClaudeUsageWidget.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = T77ZWDC739;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "ClaudeUsageWidget/Info.plist";
+				INFOPLIST_FILE = ClaudeUsageWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Claude Usage Widgets";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -701,7 +701,7 @@
 					"@executable_path/../../../../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 3.3.0;
+				MARKETING_VERSION = 3.4.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "HamedElfayome.Claude-Usage.widget";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
