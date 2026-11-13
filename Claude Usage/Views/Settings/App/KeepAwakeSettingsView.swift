@@ -45,17 +45,17 @@ struct KeepAwakeSettingsView: View {
             .padding()
         }
         .onAppear(perform: loadPickerState)
-        .onChange(of: autoEnabled) { _, newValue in
+        .onChangeCompat(of: autoEnabled) { newValue in
             service.setAutoEnabled(newValue)
         }
-        .onChange(of: sleepMode) { _, newValue in
+        .onChangeCompat(of: sleepMode) { newValue in
             SharedDataStore.shared.saveKeepAwakeSleepMode(newValue.rawValue)
             NotificationCenter.default.post(name: .keepAwakeSettingChanged, object: nil)
         }
-        .onChange(of: durationChoice) { _, _ in saveDuration() }
-        .onChange(of: customDurationHours) { _, _ in saveDuration() }
-        .onChange(of: graceChoice) { _, _ in saveGracePeriod() }
-        .onChange(of: customGraceHours) { _, _ in saveGracePeriod() }
+        .onChangeCompat(of: durationChoice) { _ in saveDuration() }
+        .onChangeCompat(of: customDurationHours) { _ in saveDuration() }
+        .onChangeCompat(of: graceChoice) { _ in saveGracePeriod() }
+        .onChangeCompat(of: customGraceHours) { _ in saveGracePeriod() }
     }
 
     // MARK: - Manual card

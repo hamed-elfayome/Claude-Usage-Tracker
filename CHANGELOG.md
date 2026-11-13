@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fable weekly usage in the menu bar and the statusline** (#318, #323): an optional menu bar metric and an optional Claude Code statusline segment, both off by default.
 - **Exclude weekends from weekly pace** (#326, PR #327): the weekly time marker and pace can pause over the weekend — thanks @BlaisedEstais
 - **Monthly spend for Enterprise members** (#287, PR #288): the popover shows the member's own month-to-date spend, with an optional monthly target — thanks @judy
+- **Keep Awake** (PR #282): keeps the Mac awake while Claude Code is working, or on a manual timer. Automatic mode asks before adding its Claude Code hooks and reports when it cannot detect activity — thanks @wmwallace
+- **Desktop widgets** (PR #304): small, medium and large WidgetKit widgets showing session and weekly usage — thanks @keito4
+- **macOS 13 (Ventura) support** (PR #339): the app now runs on macOS 13; desktop widgets still need macOS 14 — thanks @olegbukatchuk
+- **Clearer popover percentages** (#269, PR #359): each percentage is followed by "used" or "remaining" — thanks @Diocto
 - **Prompt-cache hit rate in the statusline** (PR #332): optional segment showing the cache hit rate and the cause of a recent miss — thanks @lathe-agent-oa
 
 ### Bug Fixes
@@ -25,9 +29,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Auto-start respects the weekly limit and cleans up after itself** (#334, PR #349): no start when the week is exhausted and extra usage is off, temporary conversations are deleted after a failed start, and failed starts back off instead of repeating every 5 minutes — thanks @thedandano
 - **macOS 26 crash in the popover and settings backgrounds** (#333, PR #279): macOS 26 and later use an opaque background and opt out of Liquid Glass; earlier systems keep the blur — thanks @RaulVargasP
 - **Multi-profile display: a Codex profile keeps refreshing while a Claude profile is active** (#335).
-- **Pinned profiles re-sync from their own keychain entry** (#355): Re-sync no longer captures the default Claude Code login into a profile pinned to another entry.
+- **Pinned profiles keep their login to themselves** (#355): Re-sync no longer captures the default Claude Code login into a profile pinned to another keychain entry, and switching to such a profile no longer copies its login over the default one. Plain `claude` therefore stays signed in as it was when you switch to a launcher-linked profile.
 - **Statusline scripts are left alone when unchanged or unused** (#321, #191): the installed script is rewritten only when it changed, a hand-edited copy is backed up first, and nothing is refreshed unless Claude Code's settings actually run this statusline.
 - **Per-model weekly quotas for CLI-only profiles** (PR #276) — thanks @RaulVargasP
+- **Plans that report no usage limits** (#312): the popover says so, where it used to show 0% and a 5-hour countdown.
 - **Tighter spacing between compact dots in multi-profile mode** (#316).
 - **Menu bar recolors immediately when the menu bar tint changes** (PR #315), **single running instance** (PR #344), and **Dynamic Island fixes**: the SessionStart hook is installed as a command hook, sessions are named after their project or custom title, and background agent work reads as working (PR #343, PR #284) — thanks @wmwallace
 

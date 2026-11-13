@@ -694,9 +694,9 @@ struct KeepAwakeHeaderButton: View {
                 Image(systemName: isActive || isArmed ? "cup.and.saucer.fill" : "cup.and.saucer")
                     .font(.system(size: 10.5, weight: .medium))
                     .imageScale(.medium)
-                    .contentTransition(.symbolEffect(.replace))
-                    .symbolEffect(.bounce, options: .speed(1.3), value: isActive)
-                    .symbolEffect(.bounce, options: .speed(1.3), value: service.autoEnabled)
+                    .symbolReplaceTransitionCompat()
+                    .symbolBounceCompat(value: isActive)
+                    .symbolBounceCompat(value: service.autoEnabled)
                     .shadow(color: isActive ? Color.orange.opacity(0.3) : .clear, radius: 3)
             }
             .foregroundColor(iconColor)
@@ -754,10 +754,10 @@ struct KeepAwakeHeaderButton: View {
                 showHoverCard = false
             }
         }
-        .onChange(of: isActive) { _, active in
+        .onChangeCompat(of: isActive) { active in
             if active { rippleID += 1 }
         }
-        .onChange(of: service.autoEnabled) { _, enabled in
+        .onChangeCompat(of: service.autoEnabled) { enabled in
             // Arming auto (usually the first-ever click) plays the ripple even
             // though no assertion is held yet — the click must feel received.
             if enabled, !isActive {

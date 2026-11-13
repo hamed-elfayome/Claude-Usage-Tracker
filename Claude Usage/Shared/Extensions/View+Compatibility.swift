@@ -61,4 +61,15 @@ extension View {
             self
         }
     }
+
+    /// Bounces an SF Symbol each time `value` changes (macOS 14+). On macOS 13 the
+    /// symbol does not animate.
+    @ViewBuilder
+    func symbolBounceCompat<Value: Equatable>(value: Value, speed: Double = 1.3) -> some View {
+        if #available(macOS 14.0, *) {
+            symbolEffect(.bounce, options: .speed(speed), value: value)
+        } else {
+            self
+        }
+    }
 }

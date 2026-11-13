@@ -33,7 +33,7 @@ Claude Usage Tracker is a lightweight, native macOS menu bar application that pr
 - **Multi-Provider Support**: Track OpenAI Codex usage alongside Claude — per-profile provider selection, built on a registry so more providers can follow
 - **Dynamic Island (Beta)**: A minimal notch HUD showing what Claude Code is doing in real time — current tool, session status, and a pulse when Claude needs your input
 - **Multi-Profile Support**: Manage unlimited Claude accounts with isolated credentials and settings
-- **Terminal Launchers**: Install a `claude-<profile>` command per profile — each opens Claude Code with that profile's own login while plain `claude` follows the active profile
+- **Terminal Launchers**: Install a `claude-<profile>` command per profile — each opens Claude Code with that profile's own login. Plain `claude` follows the active profile, unless that profile has its own launcher login
 - **Multi-Profile Display**: Monitor all profiles simultaneously in the menu bar
 - **Claude Code Integration**: Sync CLI accounts and auto-switch credentials when changing profiles
 - **Real-Time Monitoring**: Track session, weekly, and per-model usage (Fable, Opus, Sonnet, Design), API console usage, and API costs per profile
@@ -354,7 +354,7 @@ Run different Claude Code accounts side by side without touching environment var
 2. Run `claude-<profile>` in any terminal — it opens Claude Code with that profile's own `CLAUDE_CONFIG_DIR`, so sign in once with `/login`
 3. The app detects the new login and links it to the profile automatically — usage tracking follows that account from then on
 
-Plain `claude` keeps following the **active** profile, exactly as before. Removing a launcher never deletes its login.
+Plain `claude` keeps following the **active** profile, with one exception: switching to a profile that is linked to its own launcher login (or pinned to another keychain entry) leaves plain `claude` signed in as it was. Copying that login across would put one sign-in in two places, and whichever Claude Code refreshed it second would be logged out. Use the profile's `claude-<profile>` command for that account. Removing a launcher never deletes its login.
 
 ---
 
