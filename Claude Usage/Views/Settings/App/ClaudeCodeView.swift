@@ -34,6 +34,7 @@ struct ClaudeCodeView: View {
     @State private var showWeeklyLabel: Bool = SharedDataStore.shared.loadStatuslineShowWeeklyLabel()
     @State private var showExtraUsage: Bool = SharedDataStore.shared.loadStatuslineShowExtraUsage()
     @State private var showCache: Bool = SharedDataStore.shared.loadStatuslineShowCache()
+    @State private var showFable: Bool = SharedDataStore.shared.loadStatuslineShowFable()
 
     // Appearance settings
     @State private var colorMode: StatuslineColorMode = SharedDataStore.shared.loadStatuslineColorMode()
@@ -351,6 +352,12 @@ struct ClaudeCodeView: View {
                                         title: "claudecode.component_extra_usage".localized,
                                         description: "claudecode.component_extra_usage_description".localized,
                                         isOn: $showExtraUsage
+                                    )
+
+                                    SettingToggle(
+                                        title: "claudecode.component_fable".localized,
+                                        description: "claudecode.component_fable_description".localized,
+                                        isOn: $showFable
                                     )
                                 }
                                 .padding(.leading, DesignTokens.Spacing.cardPadding)
@@ -907,6 +914,7 @@ struct ClaudeCodeView: View {
         SharedDataStore.shared.saveStatuslineShowWeeklyLabel(showWeeklyLabel)
         SharedDataStore.shared.saveStatuslineShowExtraUsage(showExtraUsage)
         SharedDataStore.shared.saveStatuslineShowCache(showCache)
+        SharedDataStore.shared.saveStatuslineShowFable(showFable)
 
         do {
             // Write configuration file
@@ -936,7 +944,8 @@ struct ClaudeCodeView: View {
                 showWeeklyResetTime: showWeeklyResetTime,
                 showWeeklyLabel: showWeeklyLabel,
                 showExtraUsage: showExtraUsage,
-                showCache: showCache
+                showCache: showCache,
+                showFable: showFable
             )
 
             // Update Claude CLI settings.json

@@ -357,6 +357,8 @@
 "claudecode.component_extra_usage_description" = "Indicador de costo (ej., 9.49 USD)";
 "claudecode.component_cache" = "Show Prompt Cache";
 "claudecode.component_cache_description" = "Cache hit rate, with the cause of a recent miss (e.g., ⚡ 94% ✗ tools)";
+"claudecode.component_fable" = "Mostrar Fable semanal";
+"claudecode.component_fable_description" = "Límite semanal de Fable (p. ej., Fable: 24%)";
 "claudecode.weekly_label" = "Mostrar etiqueta \"Weekly:\"";
 "claudecode.requirement_sessionkey" = "• Clave de sesión configurada en Credenciales → pestaña Claude.ai";
 "claudecode.requirement_restart" = "• Reiniciar Claude CLI después de aplicar cambios";

@@ -126,7 +126,8 @@ exit(1)
     /// Bash script that builds the statusline display.
     /// Installed to ~/.claude/statusline-command.sh and configured in Claude Code settings.json.
     /// Reads user preferences from ~/.claude/statusline-config.txt and displays selected components.
-    private let bashScript = """
+    /// Internal so tests can run the script that gets installed.
+    let bashScript = """
 #!/bin/bash
 config_file="$HOME/.claude/statusline-config.txt"
 if [ -f "$config_file" ]; then
@@ -155,6 +156,7 @@ if [ -f "$config_file" ]; then
   show_weekly_reset=$SHOW_WEEKLY_RESET_TIME
   show_weekly_label=$SHOW_WEEKLY_LABEL
   show_extra_usage=$SHOW_EXTRA_USAGE
+  show_fable=$SHOW_FABLE
   show_cache=$SHOW_CACHE
   element_color_dir=$ELEMENT_COLOR_DIR
   element_color_branch=$ELEMENT_COLOR_BRANCH
@@ -191,6 +193,7 @@ else
   show_weekly_reset=1
   show_weekly_label=1
   show_extra_usage=0
+  show_fable=0
   show_cache=0
   element_color_dir="#0000EE"
   element_color_branch="#00BB00"
@@ -795,6 +798,24 @@ if [ "$show_extra_usage" = "1" ] && [ "$show_usage" = "1" ]; then
   fi
 fi
 
+# Fable weekly limit, from the cache the app writes on each refresh (#323).
+# Hidden when the account has no Fable limit or the cache is stale.
+fable_text=""
+if [ "$show_fable" = "1" ] && [ "$show_usage" = "1" ]; then
+  cache_file="$HOME/.claude/.statusline-usage-cache"
+  if [ -f "$cache_file" ]; then
+    cache_ts=$(grep "^TIMESTAMP=" "$cache_file" 2>/dev/null | cut -d= -f2)
+    fable_util=$(grep "^FABLE_UTILIZATION=" "$cache_file" 2>/dev/null | cut -d= -f2)
+    if [ -n "$cache_ts" ] && [ -n "$fable_util" ] && [ $(( $(date +%s) - cache_ts )) -lt 300 ]; then
+      fable_level=$(( (fable_util + 9) / 10 ))
+      [ "$fable_level" -lt 1 ] && fable_level=1
+      [ "$fable_level" -gt 10 ] && fable_level=10
+      fable_level_var="LEVEL_${fable_level}"
+      fable_text="${!fable_level_var}Fable: ${fable_util}%${RESET}"
+    fi
+  fi
+fi
+
 # Prompt-cache health: Claude Code reports it under "prompt_cache" once the first
 # API response has landed (hit_ratio 0-1, warm flag, and the likely cause of the
 # last miss). Absent until then, so the element simply stays hidden.
@@ -878,6 +899,12 @@ fi
 if [ -n "$weekly_text" ]; then
   [ -n "$output" ] && output="${output}${separator}"
   output="${output}${weekly_text}"
+fi
+
+# Then Fable weekly
+if [ -n "$fable_text" ]; then
+  [ -n "$output" ] && output="${output}${separator}"
+  output="${output}${fable_text}"
 fi
 
 # Then extra usage
@@ -1063,7 +1090,8 @@ printf "%s\\n" "$output"
         showWeeklyResetTime: Bool = true,
         showWeeklyLabel: Bool = true,
         showExtraUsage: Bool = false,
-        showCache: Bool = false
+        showCache: Bool = false,
+        showFable: Bool = false
     ) throws {
         let configPath = Constants.ClaudePaths.claudeDirectory
             .appendingPathComponent("statusline-config.txt")
@@ -1107,6 +1135,7 @@ SHOW_WEEKLY_PACE_MARKER=\(showWeeklyPaceMarker ? "1" : "0")
 SHOW_WEEKLY_RESET_TIME=\(showWeeklyResetTime ? "1" : "0")
 SHOW_WEEKLY_LABEL=\(showWeeklyLabel ? "1" : "0")
 SHOW_EXTRA_USAGE=\(showExtraUsage ? "1" : "0")
+SHOW_FABLE=\(showFable ? "1" : "0")
 SHOW_CACHE=\(showCache ? "1" : "0")
 ELEMENT_COLOR_DIR=\(elementColors.directoryHex)
 ELEMENT_COLOR_BRANCH=\(elementColors.branchHex)
@@ -1230,6 +1259,11 @@ ELEMENT_COLOR_EXTRA=\(elementColors.extraUsageBaseHex ?? "")
         cacheContent += "\nWEEKLY_UTILIZATION=\(weeklyPct)"
         cacheContent += "\nWEEKLY_RESETS_AT=\(formatter.string(from: usage.weeklyResetTime))"
 
+        // Only accounts with a Fable weekly limit report one (#323)
+        if usage.fableWeeklyTokensUsed > 0 || usage.fableWeeklyPercentage > 0 || usage.fableWeeklyResetTime != nil {
+            cacheContent += "\nFABLE_UTILIZATION=\(Int(usage.fableWeeklyPercentage))"
+        }
+
         if let costUsed = usage.costUsed, let costLimit = usage.costLimit, let costCurrency = usage.costCurrency, costLimit > 0 {
             let usedStr = String(format: "%.2f", costUsed / 100.0)
             let limitStr = String(format: "%.2f", costLimit / 100.0)
@@ -1243,8 +1277,29 @@ ELEMENT_COLOR_EXTRA=\(elementColors.extraUsageBaseHex ?? "")
 
     /// Updates scripts only if already installed (installation is optional)
     func updateScriptsIfInstalled() throws {
-        guard isInstalled else { return }
+        // Script files left behind after the statusline was reset, or while the user
+        // runs a statusline of their own, are not touched: refreshing them would put
+        // the session key back on disk for a feature that is switched off (#191).
+        guard isInstalled, isEnabledInClaudeSettings else { return }
         try installScripts(injectSessionKey: true)
+    }
+
+    /// Whether Claude Code's settings.json currently runs this app's statusline.
+    var isEnabledInClaudeSettings: Bool {
+        let settingsPath = Constants.ClaudePaths.claudeDirectory.appendingPathComponent("settings.json")
+        guard let data = try? Data(contentsOf: settingsPath),
+              let settings = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return false
+        }
+        return Self.statusLineUsesOurScript(settings)
+    }
+
+    static func statusLineUsesOurScript(_ settings: [String: Any]) -> Bool {
+        guard let statusLine = settings["statusLine"] as? [String: Any],
+              let command = statusLine["command"] as? String else {
+            return false
+        }
+        return command.contains("statusline-command.sh")
     }
 
     /// Checks if active profile has a valid session key

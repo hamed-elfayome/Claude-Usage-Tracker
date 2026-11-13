@@ -379,6 +379,8 @@
 "claudecode.component_extra_usage_description" = "Chỉ số chi phí (ví dụ: 9.49 USD)";
 "claudecode.component_cache" = "Show Prompt Cache";
 "claudecode.component_cache_description" = "Cache hit rate, with the cause of a recent miss (e.g., ⚡ 94% ✗ tools)";
+"claudecode.component_fable" = "Hiển thị Fable hàng tuần";
+"claudecode.component_fable_description" = "Giới hạn Fable hàng tuần (ví dụ: Fable: 24%)";
 "claudecode.weekly_label" = "Hiện nhãn \"Weekly:\"";
 "claudecode.requirement_sessionkey" = "• Khoá phiên đã được cấu hình trong tab Credentials → Claude.ai";
 "claudecode.requirement_restart" = "• Khởi động lại Claude CLI sau khi áp dụng thay đổi";

@@ -1097,6 +1097,8 @@
 "appearance.exclude_weekends_description" = "نشانگر زمان هفتگی و سرعت مصرف فقط در روزهای کاری جلو می‌روند و در آخر هفته متوقف می‌شوند. اگر بیشتر در روزهای کاری از Claude استفاده می‌کنید مفید است.";
 "claudecode.component_cache" = "نمایش Prompt Cache";
 "claudecode.component_cache_description" = "نرخ برخورد کش، همراه با علت خطای اخیر (مثلاً ⚡ 94% ✗ tools)";
+"claudecode.component_fable" = "نمایش Fable هفتگی";
+"claudecode.component_fable_description" = "سقف هفتگی Fable (مثلاً Fable: 24%)";
 "error.cli_login_expired" = "ورود ذخیره‌شدهٔ Claude Code برای %@ منقضی شده است";
 "error.cli_login_expired_suggestion" = "جابه‌جایی لغو شد و ورود فعلی شما دست‌نخورده ماند، بنابراین نشست‌های در حال اجرای Claude Code به کار خود ادامه می‌دهند. برای اتصال دوبارهٔ %@، در Claude Code با همان حساب دستور ‎/login را اجرا کنید و سپس دوباره به %@ جابه‌جا شوید.";
 "general.spend_target_title" = "هدف هزینهٔ ماهانه";

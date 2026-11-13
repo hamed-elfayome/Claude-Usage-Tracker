@@ -379,6 +379,8 @@
 "claudecode.component_extra_usage_description" = "Maliyet göstergesi (ör. 9,49 USD)";
 "claudecode.component_cache" = "Show Prompt Cache";
 "claudecode.component_cache_description" = "Cache hit rate, with the cause of a recent miss (e.g., ⚡ 94% ✗ tools)";
+"claudecode.component_fable" = "Haftalık Fable'ı göster";
+"claudecode.component_fable_description" = "Haftalık Fable sınırı (ör. Fable: 24%)";
 "claudecode.weekly_label" = "\"Haftalık:\" etiketini göster";
 "claudecode.requirement_sessionkey" = "• Kimlik Bilgileri → Claude.ai sekmesinde oturum anahtarı yapılandırılmış olmalı";
 "claudecode.requirement_restart" = "• Değişiklikleri uyguladıktan sonra Claude CLI'ı yeniden başlatın";

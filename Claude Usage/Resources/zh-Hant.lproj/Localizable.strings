@@ -380,6 +380,8 @@
 "claudecode.component_extra_usage_description" = "費用指標（例如 9.49 USD）";
 "claudecode.component_cache" = "Show Prompt Cache";
 "claudecode.component_cache_description" = "Cache hit rate, with the cause of a recent miss (e.g., ⚡ 94% ✗ tools)";
+"claudecode.component_fable" = "顯示 Fable 每週用量";
+"claudecode.component_fable_description" = "Fable 每週限額（例如 Fable: 24%）";
 "claudecode.weekly_label" = "顯示 \"Weekly:\" 標籤";
 "claudecode.requirement_sessionkey" = "• 在憑證 → Claude.ai 分頁中設定了 Session 金鑰";
 "claudecode.requirement_restart" = "• 套用變更後重新啟動 Claude CLI";
