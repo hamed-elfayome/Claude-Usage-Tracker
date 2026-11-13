@@ -957,7 +957,14 @@ printf "%s\\n" "$output"
 
         // Install bash script
         let bashDestination = claudeDir.appendingPathComponent("statusline-command.sh")
-        try bashScript.write(to: bashDestination, atomically: true, encoding: .utf8)
+        if Self.shouldWriteBashScript(
+            installed: try? String(contentsOf: bashDestination, encoding: .utf8),
+            new: bashScript
+        ) {
+            backUpEditedBashScriptIfNeeded(at: bashDestination)
+            try bashScript.write(to: bashDestination, atomically: true, encoding: .utf8)
+            UserDefaults.standard.set(Self.contentFingerprint(bashScript), forKey: Self.lastWrittenBashScriptKey)
+        }
         try FileManager.default.setAttributes(
             // Owner-only: the script embeds the raw session key (GHSA-mfxh-xpwm-23c7 / #267)
             // and is only ever executed by Claude Code running as the same user.
@@ -966,6 +973,50 @@ printf "%s\\n" "$output"
         )
 
         print("[StatuslineService] Bash script installed to: \(bashDestination.path)")
+    }
+
+    // MARK: - Protecting hand-edited scripts (#321)
+
+    /// UserDefaults key holding the fingerprint of the bash script this app last wrote.
+    static let lastWrittenBashScriptKey = "statuslineLastWrittenBashScriptFingerprint"
+
+    /// A stable fingerprint of a script's text.
+    static func contentFingerprint(_ content: String) -> String {
+        ClaudeCodeSyncService.shared.sha256HexPrefix(content, length: 64)
+    }
+
+    /// The installed script is only rewritten when the shipped one differs from it,
+    /// so a launch that changes nothing leaves the file (and its modification date) alone.
+    static func shouldWriteBashScript(installed: String?, new: String) -> Bool {
+        installed != new
+    }
+
+    /// Whether the installed script was changed by someone other than this app:
+    /// it differs from the text this app last wrote. With no record of a previous
+    /// write (first launch after this check was added) the script counts as edited,
+    /// so the one unknown case errs towards keeping a copy.
+    static func isUserEdited(installed: String, lastWrittenFingerprint: String?) -> Bool {
+        contentFingerprint(installed) != lastWrittenFingerprint
+    }
+
+    /// Copies a hand-edited `statusline-command.sh` to `statusline-command.sh.backup`
+    /// before it is replaced, and logs that it did so.
+    private func backUpEditedBashScriptIfNeeded(at url: URL) {
+        guard let installed = try? String(contentsOf: url, encoding: .utf8),
+              Self.isUserEdited(
+                  installed: installed,
+                  lastWrittenFingerprint: UserDefaults.standard.string(forKey: Self.lastWrittenBashScriptKey)
+              ) else {
+            return
+        }
+        let backupURL = url.appendingPathExtension("backup")
+        do {
+            try installed.write(to: backupURL, atomically: true, encoding: .utf8)
+            try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: backupURL.path)
+            LoggingService.shared.log("Statusline: the installed script had local changes; saved a copy to \(backupURL.lastPathComponent) before updating it")
+        } catch {
+            LoggingService.shared.logError("Statusline: could not back up the edited script before updating it", error: error)
+        }
     }
 
     /// Removes the session key from the statusline Swift script
