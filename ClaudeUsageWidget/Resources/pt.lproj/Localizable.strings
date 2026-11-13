@@ -6,3 +6,11 @@
 "widget.session.desc" = "Utilização atual da sessão de 5 horas do perfil ativo.";
 "widget.overview.name" = "Visão geral da utilização";
 "widget.overview.desc" = "Utilização da sessão e utilização semanal de todos os perfis apresentados.";
+"widget.active.name" = "Perfil ativo";
+"widget.active.desc" = "Utilização de sessão e semanal do perfil ativo, com o tempo até à reposição.";
+"widget.rings.name" = "Anéis de utilização";
+"widget.rings.desc" = "Utilização de sessão e semanal em anéis, para o perfil ativo ou todos os perfis apresentados.";
+"widget.dial.name" = "Mostrador de utilização";
+"widget.dial.desc" = "A utilização atual do perfil ativo num mostrador.";
+"widget.reset.name" = "Próxima reposição";
+"widget.reset.desc" = "Tempo até os limites do perfil ativo serem repostos.";

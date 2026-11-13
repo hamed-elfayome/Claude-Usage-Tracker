@@ -6,3 +6,11 @@
 "widget.session.desc" = "Aktuelle 5-Stunden-Sitzungsnutzung des aktiven Profils.";
 "widget.overview.name" = "Nutzungsübersicht";
 "widget.overview.desc" = "Sitzungs- und Wochennutzung aller angezeigten Profile.";
+"widget.active.name" = "Aktives Profil";
+"widget.active.desc" = "Sitzungs- und Wochennutzung des aktiven Profils mit Zeit bis zum Zurücksetzen.";
+"widget.rings.name" = "Nutzungsringe";
+"widget.rings.desc" = "Sitzungs- und Wochennutzung als Ringe, für das aktive Profil oder alle angezeigten Profile.";
+"widget.dial.name" = "Nutzungsanzeige";
+"widget.dial.desc" = "Die aktuelle Nutzung des aktiven Profils auf einer Skala.";
+"widget.reset.name" = "Nächstes Zurücksetzen";
+"widget.reset.desc" = "Zeit, bis die Limits des aktiven Profils zurückgesetzt werden.";

@@ -6,5 +6,9 @@ struct ClaudeUsageWidgetBundle: WidgetBundle {
     var body: some Widget {
         SessionUsageWidget()
         UsageOverviewWidget()
+        ActiveProfileWidget()
+        UsageRingsWidget()
+        UsageDialWidget()
+        NextResetWidget()
     }
 }

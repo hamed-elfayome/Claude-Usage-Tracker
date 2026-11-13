@@ -6,3 +6,11 @@
 "widget.session.desc" = "当前活跃配置文件的 5 小时会话用量。";
 "widget.overview.name" = "用量概览";
 "widget.overview.desc" = "所有显示的配置文件的会话及每周用量。";
+"widget.active.name" = "当前配置";
+"widget.active.desc" = "当前配置的会话和每周用量，以及距离重置的时间。";
+"widget.rings.name" = "用量圆环";
+"widget.rings.desc" = "以圆环显示会话和每周用量，可显示当前配置或所有已显示的配置。";
+"widget.dial.name" = "用量表盘";
+"widget.dial.desc" = "在表盘上显示当前配置的用量。";
+"widget.reset.name" = "下次重置";
+"widget.reset.desc" = "距离当前配置的限额重置还有多久。";

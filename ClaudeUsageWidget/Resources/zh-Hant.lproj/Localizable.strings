@@ -6,3 +6,11 @@
 "widget.session.desc" = "目前使用中設定檔的 5 小時工作階段用量。";
 "widget.overview.name" = "用量總覽";
 "widget.overview.desc" = "所有顯示設定檔的工作階段與每週用量。";
+"widget.active.name" = "目前設定檔";
+"widget.active.desc" = "目前設定檔的工作階段與每週用量，以及距離重置的時間。";
+"widget.rings.name" = "用量圓環";
+"widget.rings.desc" = "以圓環顯示工作階段與每週用量，可顯示目前設定檔或所有已顯示的設定檔。";
+"widget.dial.name" = "用量錶盤";
+"widget.dial.desc" = "在錶盤上顯示目前設定檔的用量。";
+"widget.reset.name" = "下次重置";
+"widget.reset.desc" = "距離目前設定檔的限額重置還有多久。";

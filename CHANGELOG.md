@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Exclude weekends from weekly pace** (#326, PR #327): the weekly time marker and pace can pause over the weekend — thanks @BlaisedEstais
 - **Monthly spend for Enterprise members** (#287, PR #288): the popover shows the member's own month-to-date spend, with an optional monthly target — thanks @judy
 - **Keep Awake** (PR #282): keeps the Mac awake while Claude Code is working, or on a manual timer. Automatic mode asks before adding its Claude Code hooks and reports when it cannot detect activity — thanks @wmwallace
-- **Desktop widgets** (PR #304): small, medium and large WidgetKit widgets showing session and weekly usage — thanks @keito4
+- **Desktop widgets** (PR #304): six WidgetKit widgets — Session Usage, Usage Overview (medium, large, extra large), Active Profile, Usage Rings, Usage Dial and Next Reset. Each meter is a track or ring cut into the window's hours or days, with a marker for how far through the window it is now — thanks @keito4 for the original extension
 - **macOS 13 (Ventura) support** (PR #339): the app now runs on macOS 13; desktop widgets still need macOS 14 — thanks @olegbukatchuk
 - **Clearer popover percentages** (#269, PR #359): each percentage is followed by "used" or "remaining" — thanks @Diocto
 - **Prompt-cache hit rate in the statusline** (PR #332): optional segment showing the cache hit rate and the cause of a recent miss — thanks @lathe-agent-oa

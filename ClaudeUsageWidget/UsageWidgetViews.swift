@@ -64,7 +64,26 @@ extension WidgetSnapshot.ProfileEntry {
     }
 }
 
+extension UsageEntry {
+    /// The profile the single-profile widgets show: the active one, else the
+    /// first displayed one.
+    var focusProfile: WidgetSnapshot.ProfileEntry? {
+        let profiles = snapshot?.profiles ?? []
+        return profiles.first(where: \.isActive)
+            ?? profiles.first(where: \.isDisplayed)
+            ?? profiles.first
+    }
+}
+
 // MARK: - Shared pieces
+
+/// Tinted and vibrant desktop modes drop color, so hierarchy has to come from
+/// opacity there; in full color the fill carries the usage level.
+private func meterFill(_ percentage: Double, isStale: Bool, mode: WidgetRenderingMode) -> AnyShapeStyle {
+    if isStale { return AnyShapeStyle(.secondary) }
+    if mode == .fullColor { return AnyShapeStyle(levelColor(percentage)) }
+    return AnyShapeStyle(.primary)
+}
 
 private func levelColor(_ percentage: Double) -> Color {
     switch percentage {
@@ -110,12 +129,8 @@ struct MeterTrack: View {
 
     @Environment(\.widgetRenderingMode) private var renderingMode
 
-    /// Tinted and vibrant desktop modes drop color, so hierarchy has to come
-    /// from opacity there; in full color the fill carries the usage level.
     private var fillStyle: AnyShapeStyle {
-        if isStale { return AnyShapeStyle(.secondary) }
-        if renderingMode == .fullColor { return AnyShapeStyle(levelColor(meter.percentage)) }
-        return AnyShapeStyle(.primary)
+        meterFill(meter.percentage, isStale: isStale, mode: renderingMode)
     }
 
     private var needleOverhang: CGFloat { height >= 7 ? 3 : 2 }
@@ -216,12 +231,7 @@ private struct NoDataView: View {
 struct SessionUsageContent: View {
     let entry: UsageEntry
 
-    private var profile: WidgetSnapshot.ProfileEntry? {
-        let profiles = entry.snapshot?.profiles ?? []
-        return profiles.first(where: \.isActive)
-            ?? profiles.first(where: \.isDisplayed)
-            ?? profiles.first
-    }
+    private var profile: WidgetSnapshot.ProfileEntry? { entry.focusProfile }
 
     var body: some View {
         if let profile, let primary = profile.meters.first {
@@ -377,36 +387,68 @@ private struct ProfileLine: View {
 }
 
 struct UsageOverviewContent: View {
+    enum Size {
+        case medium, large, extraLarge
+
+        var maxProfiles: Int {
+            switch self {
+            case .medium: return 4
+            case .large: return 6
+            case .extraLarge: return 8
+            }
+        }
+
+        /// How many roomy blocks fit in one column before switching to lines.
+        var blocksPerColumn: Int {
+            switch self {
+            case .medium: return 2
+            case .large, .extraLarge: return 4
+            }
+        }
+    }
+
     let entry: UsageEntry
-    let isLarge: Bool
+    var size: Size = .medium
 
     private var profiles: [WidgetSnapshot.ProfileEntry] {
         let selected = (entry.snapshot?.profiles ?? []).filter(\.isDisplayed)
-        return Array(selected.prefix(isLarge ? 6 : 4))
+        return Array(selected.prefix(size.maxProfiles))
     }
 
-    /// Blocks while they fit, lines once they would not.
-    private var usesBlocks: Bool {
-        profiles.count <= (isLarge ? 4 : 2)
+    /// The extra-large widget is twice as wide, so it reads as two columns.
+    private var columns: [[WidgetSnapshot.ProfileEntry]] {
+        guard size == .extraLarge, profiles.count > 1 else { return [profiles] }
+        let half = (profiles.count + 1) / 2
+        return [Array(profiles.prefix(half)), Array(profiles.dropFirst(half))]
+    }
+
+    private func column(_ profiles: [WidgetSnapshot.ProfileEntry]) -> some View {
+        // Blocks while they fit, lines once they would not.
+        let usesBlocks = profiles.count <= size.blocksPerColumn
+        return VStack(alignment: .leading, spacing: 0) {
+            ForEach(Array(profiles.enumerated()), id: \.element.id) { index, profile in
+                if index > 0 {
+                    Spacer(minLength: usesBlocks ? 6 : 3)
+                }
+                if usesBlocks {
+                    ProfileBlock(profile: profile, entry: entry)
+                } else {
+                    ProfileLine(profile: profile, entry: entry)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
     var body: some View {
         if profiles.isEmpty {
             NoDataView()
         } else {
-            VStack(alignment: .leading, spacing: 0) {
-                ForEach(Array(profiles.enumerated()), id: \.element.id) { index, profile in
-                    if index > 0 {
-                        Spacer(minLength: usesBlocks ? 6 : 3)
-                    }
-                    if usesBlocks {
-                        ProfileBlock(profile: profile, entry: entry)
-                    } else {
-                        ProfileLine(profile: profile, entry: entry)
-                    }
+            HStack(alignment: .top, spacing: 28) {
+                ForEach(Array(columns.enumerated()), id: \.offset) { _, profiles in
+                    column(profiles)
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         }
     }
 }
@@ -415,8 +457,16 @@ struct UsageOverviewWidgetView: View {
     @Environment(\.widgetFamily) private var family
     let entry: UsageEntry
 
+    private var size: UsageOverviewContent.Size {
+        switch family {
+        case .systemExtraLarge: return .extraLarge
+        case .systemLarge: return .large
+        default: return .medium
+        }
+    }
+
     var body: some View {
-        UsageOverviewContent(entry: entry, isLarge: family == .systemLarge)
+        UsageOverviewContent(entry: entry, size: size)
             .containerBackground(.fill.tertiary, for: .widget)
     }
 }
@@ -428,6 +478,386 @@ struct UsageOverviewWidget: Widget {
         }
         .configurationDisplayName(String(localized: "widget.overview.name"))
         .description(String(localized: "widget.overview.desc"))
-        .supportedFamilies([.systemMedium, .systemLarge])
+        .supportedFamilies([.systemMedium, .systemLarge, .systemExtraLarge])
+    }
+}
+
+// MARK: - Rings
+
+/// One ring: the window as a circle, usage as the arc, and a notch where
+/// "now" falls. The same reading as the track, bent round.
+private struct MeterRing: View {
+    let meter: WidgetMeter
+    let now: Date
+    let isStale: Bool
+    let lineWidth: CGFloat
+    /// The dial leaves a gap at the bottom; a ring is the whole circle.
+    var sweep: Double = 1
+    var startDegrees: Double = -90
+
+    @Environment(\.widgetRenderingMode) private var renderingMode
+
+    var body: some View {
+        GeometryReader { geometry in
+            let radius = min(geometry.size.width, geometry.size.height) / 2 - lineWidth / 2
+            ZStack {
+                Circle()
+                    .trim(from: 0, to: sweep)
+                    .stroke(.primary.opacity(0.13), style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                    .rotationEffect(.degrees(startDegrees))
+                if meter.fraction > 0 {
+                    Circle()
+                        .trim(from: 0, to: sweep * meter.fraction)
+                        .stroke(meterFill(meter.percentage, isStale: isStale, mode: renderingMode),
+                                style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                        .rotationEffect(.degrees(startDegrees))
+                        .widgetAccentable()
+                }
+                if !isStale, let elapsed = meter.elapsedFraction(at: now) {
+                    Capsule()
+                        .fill(.primary)
+                        .frame(width: 2, height: lineWidth + 4)
+                        .offset(y: -radius)
+                        // The notch is drawn at 12 o'clock (-90°); turn it to its place on the arc.
+                        .rotationEffect(.degrees(startDegrees + 90 + 360 * sweep * elapsed))
+                }
+            }
+            .padding(lineWidth / 2)
+        }
+        .aspectRatio(1, contentMode: .fit)
+        .accessibilityHidden(true)
+    }
+}
+
+/// A profile as concentric rings, the way the menu bar draws it: session
+/// outside, week inside. The first meter's percentage sits in the middle.
+private struct ProfileRings: View {
+    let profile: WidgetSnapshot.ProfileEntry
+    let entry: UsageEntry
+    let diameter: CGFloat
+    /// Off when the numbers are spelled out next to the rings.
+    var showsPercentage = true
+
+    var body: some View {
+        let isStale = entry.isProfileStale(profile)
+        let meters = profile.meters
+        let lineWidth = diameter * (meters.count > 1 ? 0.105 : 0.13)
+        ZStack {
+            ForEach(Array(meters.enumerated()), id: \.element.id) { index, meter in
+                MeterRing(meter: meter, now: entry.date, isStale: isStale, lineWidth: lineWidth)
+                    .padding(CGFloat(index) * (lineWidth + diameter * 0.03))
+            }
+            if showsPercentage, let primary = meters.first {
+                PercentText(percentage: primary.percentage, size: max(10, diameter * 0.17), isStale: isStale)
+            }
+        }
+        .frame(width: diameter, height: diameter)
+    }
+}
+
+/// Label, percentage and time to reset for each meter, beside a ring.
+private struct MeterLegend: View {
+    let profile: WidgetSnapshot.ProfileEntry
+    let entry: UsageEntry
+
+    var body: some View {
+        let isStale = entry.isProfileStale(profile)
+        VStack(alignment: .leading, spacing: 8) {
+            ForEach(profile.meters) { meter in
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        Text(meter.kind.label)
+                        Spacer(minLength: 0)
+                        if !isStale, let countdown = WidgetTimeText.countdown(to: meter.resetTime, from: entry.date) {
+                            Text(countdown).monospacedDigit()
+                        }
+                    }
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    PercentText(percentage: meter.percentage, size: 20, isStale: isStale)
+                }
+            }
+            if isStale {
+                Text(WidgetTimeText.age(of: profile.lastUpdated, at: entry.date))
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+
+struct UsageRingsContent: View {
+    let entry: UsageEntry
+    let isMedium: Bool
+
+    private var profiles: [WidgetSnapshot.ProfileEntry] {
+        guard isMedium else { return entry.focusProfile.map { [$0] } ?? [] }
+        return Array((entry.snapshot?.profiles ?? []).filter(\.isDisplayed).prefix(4))
+    }
+
+    var body: some View {
+        if profiles.isEmpty {
+            NoDataView()
+        } else if !isMedium, let profile = profiles.first {
+            VStack(alignment: .leading, spacing: 6) {
+                ProfileName(profile: profile)
+                ProfileRings(profile: profile, entry: entry, diameter: 98)
+                    .frame(maxWidth: .infinity)
+            }
+        } else if profiles.count == 1, let profile = profiles.first {
+            // One profile has the width to spell its numbers out.
+            HStack(spacing: 20) {
+                ProfileRings(profile: profile, entry: entry, diameter: 118, showsPercentage: false)
+                VStack(alignment: .leading, spacing: 8) {
+                    ProfileName(profile: profile, size: 15)
+                    MeterLegend(profile: profile, entry: entry)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        } else {
+            let diameter: CGFloat = profiles.count == 2 ? 96 : (profiles.count == 3 ? 86 : 64)
+            HStack(alignment: .top, spacing: 0) {
+                ForEach(profiles) { profile in
+                    VStack(spacing: 7) {
+                        ProfileRings(profile: profile, entry: entry, diameter: diameter)
+                        ProfileName(profile: profile, size: 11)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+            }
+        }
+    }
+}
+
+struct UsageRingsWidgetView: View {
+    @Environment(\.widgetFamily) private var family
+    let entry: UsageEntry
+
+    var body: some View {
+        UsageRingsContent(entry: entry, isMedium: family == .systemMedium)
+            .containerBackground(.fill.tertiary, for: .widget)
+    }
+}
+
+struct UsageRingsWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "UsageRingsWidget", provider: UsageTimelineProvider()) { entry in
+            UsageRingsWidgetView(entry: entry)
+        }
+        .configurationDisplayName(String(localized: "widget.rings.name"))
+        .description(String(localized: "widget.rings.desc"))
+        .supportedFamilies([.systemSmall, .systemMedium])
+    }
+}
+
+// MARK: - Dial
+
+/// A single meter as an instrument dial: three quarters of a circle, the
+/// reading in the middle, the time to reset in the gap underneath.
+struct UsageDialContent: View {
+    let entry: UsageEntry
+
+    var body: some View {
+        if let profile = entry.focusProfile, let primary = profile.meters.first {
+            let isStale = entry.isProfileStale(profile)
+            VStack(alignment: .leading, spacing: 2) {
+                ProfileName(profile: profile)
+                ZStack {
+                    MeterRing(meter: primary, now: entry.date, isStale: isStale, lineWidth: 11,
+                              sweep: 0.75, startDegrees: 135)
+                    VStack(spacing: -2) {
+                        HStack(alignment: .firstTextBaseline, spacing: 1) {
+                            Text("\(Int(primary.percentage))")
+                                .font(.system(size: 30, weight: .semibold, design: .rounded))
+                                .monospacedDigit()
+                            Text("%")
+                                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                .foregroundStyle(.secondary)
+                        }
+                        .opacity(isStale ? 0.55 : 1)
+                        Text(primary.kind.label)
+                            .font(.system(size: 10))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+                    Group {
+                        if isStale {
+                            Text(WidgetTimeText.age(of: profile.lastUpdated, at: entry.date))
+                        } else if let countdown = WidgetTimeText.countdown(to: primary.resetTime, from: entry.date) {
+                            Text(countdown).monospacedDigit()
+                        }
+                    }
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .frame(maxHeight: .infinity, alignment: .bottom)
+                }
+                .frame(width: 104, height: 104)
+                .frame(maxWidth: .infinity)
+            }
+        } else {
+            NoDataView()
+        }
+    }
+}
+
+struct UsageDialWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "UsageDialWidget", provider: UsageTimelineProvider()) { entry in
+            UsageDialContent(entry: entry)
+                .containerBackground(.fill.tertiary, for: .widget)
+        }
+        .configurationDisplayName(String(localized: "widget.dial.name"))
+        .description(String(localized: "widget.dial.desc"))
+        .supportedFamilies([.systemSmall])
+    }
+}
+
+// MARK: - Next reset
+
+/// The same data read the other way round: not how much is used, but how
+/// long until it comes back.
+struct NextResetContent: View {
+    let entry: UsageEntry
+
+    var body: some View {
+        if let profile = entry.focusProfile, let primary = profile.meters.first {
+            let isStale = entry.isProfileStale(profile)
+            VStack(alignment: .leading, spacing: 0) {
+                ProfileName(profile: profile)
+
+                Spacer(minLength: 0)
+
+                Image(systemName: "arrow.counterclockwise")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                Text(isStale
+                     ? WidgetTimeText.age(of: profile.lastUpdated, at: entry.date)
+                     : (WidgetTimeText.countdown(to: primary.resetTime, from: entry.date) ?? "–"))
+                    .font(.system(size: 30, weight: .semibold, design: .rounded))
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.55)
+                    .opacity(isStale ? 0.55 : 1)
+
+                HStack(spacing: 4) {
+                    Text(primary.kind.label)
+                        .foregroundStyle(.secondary)
+                    Spacer(minLength: 0)
+                    PercentText(percentage: primary.percentage, size: 11, isStale: isStale)
+                }
+                .font(.system(size: 11))
+                .lineLimit(1)
+                .padding(.bottom, 3)
+
+                MeterTrack(meter: primary, now: entry.date, isStale: isStale, height: 9)
+
+                if let secondary = profile.meters.dropFirst().first {
+                    HStack(spacing: 4) {
+                        Text(secondary.kind.label)
+                            .foregroundStyle(.secondary)
+                        Spacer(minLength: 0)
+                        if !isStale, let countdown = WidgetTimeText.countdown(to: secondary.resetTime, from: entry.date) {
+                            Text(countdown)
+                                .fontWeight(.semibold)
+                                .monospacedDigit()
+                        }
+                    }
+                    .font(.system(size: 10))
+                    .lineLimit(1)
+                    .padding(.top, 5)
+                }
+            }
+        } else {
+            NoDataView()
+        }
+    }
+}
+
+struct NextResetWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "NextResetWidget", provider: UsageTimelineProvider()) { entry in
+            NextResetContent(entry: entry)
+                .containerBackground(.fill.tertiary, for: .widget)
+        }
+        .configurationDisplayName(String(localized: "widget.reset.name"))
+        .description(String(localized: "widget.reset.desc"))
+        .supportedFamilies([.systemSmall])
+    }
+}
+
+// MARK: - Active profile, wide
+
+/// The active profile with room to breathe: its headline number on the left,
+/// each window as a full-width track on the right.
+struct ActiveProfileContent: View {
+    let entry: UsageEntry
+
+    var body: some View {
+        if let profile = entry.focusProfile, let primary = profile.meters.first {
+            let isStale = entry.isProfileStale(profile)
+            HStack(alignment: .center, spacing: 18) {
+                VStack(alignment: .leading, spacing: 0) {
+                    ProfileName(profile: profile, size: 14)
+                    Spacer(minLength: 0)
+                    HStack(alignment: .firstTextBaseline, spacing: 1) {
+                        Text("\(Int(primary.percentage))")
+                            .font(.system(size: 50, weight: .semibold, design: .rounded))
+                            .monospacedDigit()
+                        Text("%")
+                            .font(.system(size: 20, weight: .semibold, design: .rounded))
+                            .foregroundStyle(.secondary)
+                    }
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .opacity(isStale ? 0.55 : 1)
+                    (isStale
+                         ? Text(WidgetTimeText.age(of: profile.lastUpdated, at: entry.date))
+                         : Text(primary.kind.label))
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                .frame(width: 100, alignment: .leading)
+
+                VStack(alignment: .leading, spacing: 12) {
+                    ForEach(profile.meters) { meter in
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                                Text(meter.kind.label)
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(.secondary)
+                                Spacer(minLength: 0)
+                                if !isStale, let countdown = WidgetTimeText.countdown(to: meter.resetTime, from: entry.date) {
+                                    Text(countdown)
+                                        .font(.system(size: 10))
+                                        .monospacedDigit()
+                                        .foregroundStyle(.secondary)
+                                }
+                                PercentText(percentage: meter.percentage, isStale: isStale)
+                                    .frame(width: 38, alignment: .trailing)
+                            }
+                            .lineLimit(1)
+                            MeterTrack(meter: meter, now: entry.date, isStale: isStale, height: 10)
+                        }
+                    }
+                }
+            }
+        } else {
+            NoDataView()
+        }
+    }
+}
+
+struct ActiveProfileWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "ActiveProfileWidget", provider: UsageTimelineProvider()) { entry in
+            ActiveProfileContent(entry: entry)
+                .containerBackground(.fill.tertiary, for: .widget)
+        }
+        .configurationDisplayName(String(localized: "widget.active.name"))
+        .description(String(localized: "widget.active.desc"))
+        .supportedFamilies([.systemMedium])
     }
 }

@@ -6,3 +6,11 @@
 "widget.session.desc" = "Etkin profilin mevcut 5 saatlik oturum kullanımı.";
 "widget.overview.name" = "Kullanım Özeti";
 "widget.overview.desc" = "Görüntülenen tüm profillerin oturum ve haftalık kullanımı.";
+"widget.active.name" = "Etkin Profil";
+"widget.active.desc" = "Etkin profilin oturum ve haftalık kullanımı, sıfırlanmaya kalan süreyle.";
+"widget.rings.name" = "Kullanım Halkaları";
+"widget.rings.desc" = "Oturum ve haftalık kullanım halkalar halinde; etkin profil veya gösterilen tüm profiller için.";
+"widget.dial.name" = "Kullanım Kadranı";
+"widget.dial.desc" = "Etkin profilin güncel kullanımı bir kadranda.";
+"widget.reset.name" = "Sonraki Sıfırlama";
+"widget.reset.desc" = "Etkin profilin sınırlarının sıfırlanmasına kalan süre.";

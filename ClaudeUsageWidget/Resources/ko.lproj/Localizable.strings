@@ -6,3 +6,11 @@
 "widget.session.desc" = "활성 프로필의 5시간 세션 사용량입니다.";
 "widget.overview.name" = "사용량 개요";
 "widget.overview.desc" = "표시된 모든 프로필의 세션 및 주간 사용량입니다.";
+"widget.active.name" = "활성 프로필";
+"widget.active.desc" = "활성 프로필의 세션 및 주간 사용량과 재설정까지 남은 시간.";
+"widget.rings.name" = "사용량 링";
+"widget.rings.desc" = "세션 및 주간 사용량을 링으로 표시합니다. 활성 프로필 또는 표시 중인 모든 프로필.";
+"widget.dial.name" = "사용량 다이얼";
+"widget.dial.desc" = "활성 프로필의 현재 사용량을 다이얼로 표시합니다.";
+"widget.reset.name" = "다음 재설정";
+"widget.reset.desc" = "활성 프로필의 한도가 재설정되기까지 남은 시간.";
