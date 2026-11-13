@@ -41,10 +41,10 @@ struct PopoverSettingsView: View {
             }
             .padding()
         }
-        .onChange(of: timeDisplay) { _, newValue in
+        .onChangeCompat(of: timeDisplay) { newValue in
             SharedDataStore.shared.savePopoverTimeDisplay(newValue)
         }
-        .onChange(of: timeFormat) { _, newValue in
+        .onChangeCompat(of: timeFormat) { newValue in
             SharedDataStore.shared.saveTimeFormatPreference(newValue)
         }
     }

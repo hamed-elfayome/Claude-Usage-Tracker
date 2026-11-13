@@ -90,7 +90,10 @@ final class SupportReminderService {
         let hosting = NSHostingController(rootView: view)
         // Remove the titlebar safe-area at the source: the glow owns the full
         // window and the fitting size stops including a phantom titlebar band.
-        hosting.safeAreaRegions = []
+        // (`safeAreaRegions` requires macOS 13.3; earlier 13.x keeps the default band.)
+        if #available(macOS 13.3, *) {
+            hosting.safeAreaRegions = []
+        }
         let window = NSWindow(contentViewController: hosting)
         window.styleMask = [.titled, .closable, .fullSizeContentView]
         window.titlebarAppearsTransparent = true
@@ -228,7 +231,7 @@ private struct SupportReminderView: View {
             }
             .buttonStyle(.plain)
             .keyboardShortcut(.defaultAction)
-            .focusEffectDisabled()
+            .focusEffectDisabledCompat()
             .onHover { hovering in
                 withAnimation(.easeOut(duration: 0.15)) { hoveringCTA = hovering }
             }

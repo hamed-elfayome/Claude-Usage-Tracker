@@ -193,7 +193,7 @@ struct ClaudeCodeView: View {
                                 .foregroundColor(.primary)
                         }
                         .padding(.top, 4)
-                        .onChange(of: elementColors) {
+                        .onChangeCompat(of: elementColors) { _ in
                             SharedDataStore.shared.saveStatuslineElementColors(elementColors)
                         }
                     }
