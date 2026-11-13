@@ -314,25 +314,27 @@ private struct MeterRow: View {
     let meter: WidgetMeter
     let now: Date
     let isStale: Bool
+    /// Larger type and a taller track, for when few profiles share the widget.
+    var isEmphasized = false
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: isEmphasized ? 10 : 8) {
             Text(meter.kind.label)
-                .font(.system(size: 11))
+                .font(.system(size: isEmphasized ? 13 : 11))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
-                .frame(width: 50, alignment: .leading)
-            MeterTrack(meter: meter, now: now, isStale: isStale)
-            PercentText(percentage: meter.percentage, isStale: isStale)
-                .frame(width: 38, alignment: .trailing)
+                .frame(width: isEmphasized ? 58 : 50, alignment: .leading)
+            MeterTrack(meter: meter, now: now, isStale: isStale, height: isEmphasized ? 12 : 8)
+            PercentText(percentage: meter.percentage, size: isEmphasized ? 16 : 13, isStale: isStale)
+                .frame(width: isEmphasized ? 46 : 38, alignment: .trailing)
             Text(isStale ? "" : (WidgetTimeText.countdown(to: meter.resetTime, from: now) ?? ""))
-                .font(.system(size: 10))
+                .font(.system(size: isEmphasized ? 11 : 10))
                 .monospacedDigit()
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
-                .frame(width: 44, alignment: .trailing)
+                .frame(width: isEmphasized ? 50 : 44, alignment: .trailing)
         }
     }
 }
@@ -341,12 +343,13 @@ private struct MeterRow: View {
 private struct ProfileBlock: View {
     let profile: WidgetSnapshot.ProfileEntry
     let entry: UsageEntry
+    var isEmphasized = false
 
     var body: some View {
         let isStale = entry.isProfileStale(profile)
-        VStack(alignment: .leading, spacing: 3) {
+        VStack(alignment: .leading, spacing: isEmphasized ? 8 : 3) {
             HStack(alignment: .firstTextBaseline) {
-                ProfileName(profile: profile)
+                ProfileName(profile: profile, size: isEmphasized ? 16 : 13)
                 Spacer(minLength: 4)
                 if isStale {
                     Text(WidgetTimeText.age(of: profile.lastUpdated, at: entry.date))
@@ -356,7 +359,7 @@ private struct ProfileBlock: View {
                 }
             }
             ForEach(profile.meters) { meter in
-                MeterRow(meter: meter, now: entry.date, isStale: isStale)
+                MeterRow(meter: meter, now: entry.date, isStale: isStale, isEmphasized: isEmphasized)
             }
         }
     }
@@ -405,6 +408,15 @@ struct UsageOverviewContent: View {
             case .large, .extraLarge: return 4
             }
         }
+
+        /// Up to this many profiles in a column get the larger block, so a
+        /// widget showing one or two profiles is filled, not mostly empty.
+        var emphasizedPerColumn: Int {
+            switch self {
+            case .medium: return 1
+            case .large, .extraLarge: return 2
+            }
+        }
     }
 
     let entry: UsageEntry
@@ -425,24 +437,90 @@ struct UsageOverviewContent: View {
     private func column(_ profiles: [WidgetSnapshot.ProfileEntry]) -> some View {
         // Blocks while they fit, lines once they would not.
         let usesBlocks = profiles.count <= size.blocksPerColumn
+        let isEmphasized = profiles.count <= size.emphasizedPerColumn
         return VStack(alignment: .leading, spacing: 0) {
             ForEach(Array(profiles.enumerated()), id: \.element.id) { index, profile in
                 if index > 0 {
                     Spacer(minLength: usesBlocks ? 6 : 3)
                 }
                 if usesBlocks {
-                    ProfileBlock(profile: profile, entry: entry)
+                    ProfileBlock(profile: profile, entry: entry, isEmphasized: isEmphasized)
                 } else {
                     ProfileLine(profile: profile, entry: entry)
                 }
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .frame(maxWidth: .infinity, maxHeight: profiles.count > 1 ? .infinity : nil, alignment: .topLeading)
+    }
+
+    /// A single profile in the large widget has the whole square to itself:
+    /// its rings at full size, then each window's number and time to reset.
+    private func hero(_ profile: WidgetSnapshot.ProfileEntry) -> some View {
+        let isStale = entry.isProfileStale(profile)
+        return VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .firstTextBaseline) {
+                ProfileName(profile: profile, size: 17)
+                Spacer(minLength: 4)
+                if isStale {
+                    Text(WidgetTimeText.age(of: profile.lastUpdated, at: entry.date))
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            Spacer(minLength: 8)
+            ProfileRings(profile: profile, entry: entry, diameter: 176, showsPercentage: false)
+                .frame(maxWidth: .infinity)
+            Spacer(minLength: 12)
+            HStack(alignment: .top, spacing: 16) {
+                ForEach(profile.meters) { meter in
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(meter.kind.label)
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                        HStack(alignment: .firstTextBaseline, spacing: 8) {
+                            PercentText(percentage: meter.percentage, size: 26, isStale: isStale)
+                            if !isStale, let countdown = WidgetTimeText.countdown(to: meter.resetTime, from: entry.date) {
+                                Text(countdown)
+                                    .font(.system(size: 11))
+                                    .monospacedDigit()
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+        }
+    }
+
+    /// Two profiles in the large widget: each gets its rings with the numbers beside them.
+    private func ringRows(_ profiles: [WidgetSnapshot.ProfileEntry]) -> some View {
+        VStack(spacing: 0) {
+            ForEach(Array(profiles.enumerated()), id: \.element.id) { index, profile in
+                if index > 0 {
+                    Divider().padding(.vertical, 10)
+                }
+                HStack(spacing: 20) {
+                    ProfileRings(profile: profile, entry: entry, diameter: 112, showsPercentage: false)
+                    VStack(alignment: .leading, spacing: 6) {
+                        ProfileName(profile: profile, size: 15)
+                        MeterLegend(profile: profile, entry: entry)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .frame(maxHeight: .infinity)
+            }
+        }
     }
 
     var body: some View {
         if profiles.isEmpty {
             NoDataView()
+        } else if size == .large, profiles.count == 1, let profile = profiles.first {
+            hero(profile)
+        } else if size == .large, profiles.count == 2 {
+            ringRows(profiles)
         } else {
             HStack(alignment: .top, spacing: 28) {
                 ForEach(Array(columns.enumerated()), id: \.offset) { _, profiles in
