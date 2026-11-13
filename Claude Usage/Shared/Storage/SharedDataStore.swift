@@ -43,6 +43,8 @@ class SharedDataStore {
         static let statuslineShowWeeklyResetTime = "statuslineShowWeeklyResetTime"
         static let statuslineShowWeeklyLabel = "statuslineShowWeeklyLabel"
         static let statuslineShowExtraUsage = "statuslineShowExtraUsage"
+        static let statuslineShowCache = "statuslineShowCache"
+        static let statuslineShowFable = "statuslineShowFable"
         static let statuslineColorMode = "statuslineColorMode"
         static let statuslineSingleColorHex = "statuslineSingleColorHex"
         static let statuslineElementColors = "statuslineElementColors"
@@ -150,6 +152,55 @@ class SharedDataStore {
         let token = String(UUID().uuidString.prefix(8)).lowercased()
         defaults.set(token, forKey: Constants.UserDefaultsKeys.notchHUDPathToken)
         return token
+    }
+
+    // MARK: - Keep Awake
+
+    func saveKeepAwakeAutoEnabled(_ enabled: Bool) {
+        defaults.set(enabled, forKey: Constants.UserDefaultsKeys.keepAwakeAutoEnabled)
+    }
+
+    func loadKeepAwakeAutoEnabled() -> Bool {
+        // Default false: nothing is active until the user's first click on the
+        // popover button (or the settings toggle), which enables auto mode and
+        // installs the hooks — that click is the explicit opt-in. Once turned
+        // off, it stays off until turned back on.
+        return defaults.bool(forKey: Constants.UserDefaultsKeys.keepAwakeAutoEnabled)
+    }
+
+    func saveKeepAwakeSleepMode(_ rawValue: String) {
+        defaults.set(rawValue, forKey: Constants.UserDefaultsKeys.keepAwakeSleepMode)
+    }
+
+    func loadKeepAwakeSleepMode() -> String? {
+        return defaults.string(forKey: Constants.UserDefaultsKeys.keepAwakeSleepMode)
+    }
+
+    /// Default manual keep-awake duration in seconds. 0 means indefinite.
+    func saveKeepAwakeDefaultDuration(_ duration: TimeInterval) {
+        defaults.set(duration, forKey: Constants.UserDefaultsKeys.keepAwakeDefaultDuration)
+    }
+
+    func loadKeepAwakeDefaultDuration() -> TimeInterval {
+        return defaults.double(forKey: Constants.UserDefaultsKeys.keepAwakeDefaultDuration)
+    }
+
+    /// How long auto mode keeps the Mac awake after Claude Code goes idle.
+    func saveKeepAwakeAutoGracePeriod(_ period: TimeInterval) {
+        defaults.set(period, forKey: Constants.UserDefaultsKeys.keepAwakeAutoGracePeriod)
+    }
+
+    /// Shortest (and default) grace period. A session with no hook events for two
+    /// minutes is dropped from the session store, which happens during any long
+    /// build or command, so a shorter grace would let the Mac sleep mid-task.
+    static let keepAwakeMinimumGracePeriod: TimeInterval = 15 * 60
+
+    func loadKeepAwakeAutoGracePeriod() -> TimeInterval {
+        guard defaults.object(forKey: Constants.UserDefaultsKeys.keepAwakeAutoGracePeriod) != nil else {
+            return Self.keepAwakeMinimumGracePeriod
+        }
+        return max(Self.keepAwakeMinimumGracePeriod,
+                   defaults.double(forKey: Constants.UserDefaultsKeys.keepAwakeAutoGracePeriod))
     }
 
     // MARK: - Statusline Configuration
@@ -380,6 +431,26 @@ class SharedDataStore {
             return false
         }
         return defaults.bool(forKey: Keys.statuslineShowExtraUsage)
+    }
+
+    func saveStatuslineShowFable(_ show: Bool) {
+        defaults.set(show, forKey: Keys.statuslineShowFable)
+    }
+
+    /// Off unless the user turned it on.
+    func loadStatuslineShowFable() -> Bool {
+        defaults.bool(forKey: Keys.statuslineShowFable)
+    }
+
+    func saveStatuslineShowCache(_ show: Bool) {
+        defaults.set(show, forKey: Keys.statuslineShowCache)
+    }
+
+    func loadStatuslineShowCache() -> Bool {
+        if defaults.object(forKey: Keys.statuslineShowCache) == nil {
+            return false
+        }
+        return defaults.bool(forKey: Keys.statuslineShowCache)
     }
 
     func saveStatuslineColorMode(_ mode: StatuslineColorMode) {

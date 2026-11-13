@@ -7,40 +7,20 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
     private var setupWindow: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Disable window restoration for menu bar app
-        UserDefaults.standard.set(false, forKey: "NSQuitAlwaysKeepsWindows")
+        // Hosted unit tests must not start timers, sync credentials, or contact accounts.
+        guard NSClassFromString("XCTestCase") == nil else { return }
 
-        // Set app icon early for Stage Manager and windows
-        if let appIcon = NSImage(named: "AppIcon") {
-            NSApp.applicationIconImage = appIcon
+        // macOS only stops a second launch of the same copy. A second copy
+        // (an installed build next to one run from Xcode, or an old build left
+        // as a login item) would poll the same account, rewrite the same
+        // history file and fight over the notch hook port.
+        if let running = otherRunningInstance() {
+            LoggingService.shared.log("Another instance is already running (pid \(running.processIdentifier)); quitting")
+            NSApp.terminate(nil)
+            return
         }
 
-        // Hide dock icon (menu bar app only)
-        NSApp.setActivationPolicy(.accessory)
-
-        // Load profiles into ProfileManager (synchronously)
-        ProfileManager.shared.loadProfiles()
-
-        // Regenerate installed statusline scripts so they pick up format changes
-        // across app updates and re-embed fresh Cloudflare clearance cookies.
-        try? StatuslineService.shared.updateScriptsIfInstalled()
-
-        // Initialize update manager to enable automatic update checks
-        _ = UpdateManager.shared
-
-        // Monthly support reminder (first check is delayed past startup)
-        SupportReminderService.shared.start()
-
-        // Request notification permissions
-        requestNotificationPermissions()
-
-        // Listen for manual wizard trigger (for testing)
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleShowSetupWizard),
-            name: .showSetupWizard,
-            object: nil
-        )
+        prepareApplication()
 
         // Always create the menu bar manager up front. On macOS Tahoe the setup
         // wizard window may fail to display (see #197), and if the manager was
@@ -52,13 +32,23 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         // Start 24-hour heartbeat ping to track active app usage
         HeartbeatService.shared.start()
 
+        // Keep Awake: manages the power assertion for manual and auto mode.
+        KeepAwakeService.shared.start()
+
         // Claude Code notch HUD (opt-in): start the hook listener + HUD when
-        // enabled, and react to the settings toggle at runtime.
+        // enabled, and react to the settings toggle at runtime. Keep Awake's
+        // auto mode shares the hook listener, so its toggle re-evaluates too.
         updateNotchHUDServices()
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(handleNotchHUDSettingChanged),
             name: .notchHUDSettingChanged,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleKeepAwakeSettingChanged),
+            name: .keepAwakeSettingChanged,
             object: nil
         )
 
@@ -115,6 +105,57 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         }
     }
 
+    private func prepareApplication() {
+        // Disable window restoration for menu bar app
+        UserDefaults.standard.set(false, forKey: "NSQuitAlwaysKeepsWindows")
+
+        // Set app icon early for Stage Manager and windows
+        if let appIcon = NSImage(named: "AppIcon") {
+            NSApp.applicationIconImage = appIcon
+        }
+
+        // Hide dock icon (menu bar app only)
+        NSApp.setActivationPolicy(.accessory)
+
+        // Load profiles into ProfileManager (synchronously)
+        ProfileManager.shared.loadProfiles()
+
+        // Regenerate installed statusline scripts so they pick up format changes
+        // across app updates and re-embed fresh Cloudflare clearance cookies.
+        try? StatuslineService.shared.updateScriptsIfInstalled()
+
+        // Initialize update manager to enable automatic update checks
+        _ = UpdateManager.shared
+
+        // Monthly support reminder (first check is delayed past startup)
+        SupportReminderService.shared.start()
+
+        // Request notification permissions
+        requestNotificationPermissions()
+
+        // Listen for manual wizard trigger (for testing)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleShowSetupWizard),
+            name: .showSetupWizard,
+            object: nil
+        )
+    }
+
+    /// Another running copy of the app, if any. Debug builds and test hosts
+    /// are exempt so development can go on beside an installed copy.
+    private func otherRunningInstance() -> NSRunningApplication? {
+        #if DEBUG
+        return nil
+        #else
+        guard ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil,
+              let bundleID = Bundle.main.bundleIdentifier else { return nil }
+        let ownPID = ProcessInfo.processInfo.processIdentifier
+        return NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
+            .first { $0.processIdentifier != ownPID && !$0.isTerminated }
+        #endif
+    }
+
     private func requestNotificationPermissions() {
         let center = UNUserNotificationCenter.current()
         center.delegate = self
@@ -122,7 +163,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             // Silently request permissions
         }
     }
-
 
     private func shouldShowSetupWizard() -> Bool {
         // FORCE SHOW wizard on very first app launch (one-time)
@@ -235,33 +275,53 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        guard NSClassFromString("XCTestCase") == nil else { return }
+
         // Cleanup
+        KeepAwakeService.shared.stop()
         NotchHookServer.shared.stop()
         NotchHUDController.shared.stop()
         menuBarManager?.cleanup()
     }
 
-    // MARK: - Claude Code Notch HUD
+    // MARK: - Claude Code Notch HUD / Keep Awake hook plumbing
 
     @objc private func handleNotchHUDSettingChanged() {
         updateNotchHUDServices()
     }
 
+    @objc private func handleKeepAwakeSettingChanged() {
+        updateNotchHUDServices()
+        KeepAwakeService.shared.settingsChanged()
+    }
+
+    /// The hook listener (and session store lifecycle) is shared between the
+    /// notch HUD and Keep Awake's auto mode: it runs while EITHER feature
+    /// needs session events. The HUD window itself stays gated on its own toggle.
     private func updateNotchHUDServices() {
-        if SharedDataStore.shared.loadNotchHUDEnabled() {
-            NotchHUDController.shared.start()
+        let hudEnabled = SharedDataStore.shared.loadNotchHUDEnabled()
+        let hooksNeeded = hudEnabled || SharedDataStore.shared.loadKeepAwakeAutoEnabled()
+
+        if hooksNeeded {
             NotchHookServer.shared.start()
+            NotchSessionStore.shared.startStaleSweep()
             // Self-heal hook config drift (e.g. legacy entries from an old build).
             if NotchHookInstaller.shared.checkStatus() != .installed {
                 NotchHookInstaller.shared.install()
             }
+        } else {
+            NotchHookServer.shared.stop()
+            NotchSessionStore.shared.reset()
+        }
+
+        if hudEnabled {
+            NotchHUDController.shared.start()
             #if DEBUG
             if ProcessInfo.processInfo.arguments.contains("--mock-notch") {
                 NotchHUDController.shared.injectMockSessions()
             }
             #endif
         } else {
-            NotchHookServer.shared.stop()
             NotchHUDController.shared.stop()
         }
     }

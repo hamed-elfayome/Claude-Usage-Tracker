@@ -1,0 +1,19 @@
+/* Claude Usage Widget */
+"widget.no_data" = "Ouvrez Claude Usage pour charger les données d'utilisation";
+"widget.session" = "Session";
+"widget.weekly" = "Hebdomadaire";
+"widget.session.name" = "Utilisation de session";
+"widget.session.desc" = "Utilisation actuelle de la session de 5 heures du profil actif.";
+"widget.overview.name" = "Aperçu de l'utilisation";
+"widget.overview.desc" = "Utilisation de session et hebdomadaire de tous les profils affichés.";
+"widget.active.name" = "Profil actif";
+"widget.active.desc" = "Utilisation de session et hebdomadaire du profil actif, avec le temps avant réinitialisation.";
+"widget.rings.name" = "Anneaux d'utilisation";
+"widget.rings.desc" = "Utilisation de session et hebdomadaire en anneaux, pour le profil actif ou tous les profils affichés.";
+"widget.dial.name" = "Cadran d'utilisation";
+"widget.dial.desc" = "L'utilisation actuelle du profil actif sur un cadran.";
+"widget.reset.name" = "Prochaine réinitialisation";
+"widget.reset.desc" = "Temps avant la réinitialisation des limites du profil actif.";
+"widget.config.title" = "Profil";
+"widget.config.profile" = "Profil";
+"widget.config.desc" = "Choisissez un profil, ou laissez vide pour suivre le profil actif.";

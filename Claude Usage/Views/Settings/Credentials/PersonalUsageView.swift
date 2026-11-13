@@ -174,7 +174,7 @@ struct PersonalUsageView: View {
             loadExistingConfiguration()
             loadCurrentCredentials()
         }
-        .onChange(of: profileManager.activeProfile?.id) { _, _ in
+        .onChangeCompat(of: profileManager.activeProfile?.id) { _ in
             // Reload when profile changes
             loadExistingConfiguration()
             loadCurrentCredentials()
@@ -570,10 +570,12 @@ struct SelectOrgStep: View {
             }
         }
         .onAppear {
-            if wizardState.selectedOrgId == nil,
-               let firstOrg = wizardState.testedOrganizations.first {
-                wizardState.selectedOrgId = firstOrg.uuid
-            }
+            // Also replaces a selection carried over from a previous sign-in that the
+            // account just tested does not belong to (#266).
+            wizardState.selectedOrgId = ClaudeAPIService.preferredOrganization(
+                from: wizardState.testedOrganizations,
+                current: wizardState.selectedOrgId
+            )?.uuid ?? wizardState.selectedOrgId
         }
     }
 }

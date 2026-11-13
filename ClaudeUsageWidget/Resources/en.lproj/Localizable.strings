@@ -1,0 +1,19 @@
+/* Claude Usage Widget */
+"widget.no_data" = "Open Claude Usage to load usage data";
+"widget.session" = "Session";
+"widget.weekly" = "Weekly";
+"widget.session.name" = "Session Usage";
+"widget.session.desc" = "Current 5-hour session usage for the active profile.";
+"widget.overview.name" = "Usage Overview";
+"widget.overview.desc" = "Session and weekly usage for all displayed profiles.";
+"widget.active.name" = "Active Profile";
+"widget.active.desc" = "Session and weekly usage for the active profile, with time to reset.";
+"widget.rings.name" = "Usage Rings";
+"widget.rings.desc" = "Session and weekly usage as rings, for the active profile or every displayed profile.";
+"widget.dial.name" = "Usage Dial";
+"widget.dial.desc" = "The active profile's current usage on a dial.";
+"widget.reset.name" = "Next Reset";
+"widget.reset.desc" = "Time until the active profile's limits reset.";
+"widget.config.title" = "Profile";
+"widget.config.profile" = "Profile";
+"widget.config.desc" = "Pick a profile, or leave it empty to follow the active profile.";

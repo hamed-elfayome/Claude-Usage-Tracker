@@ -18,7 +18,22 @@ final class LanguageManagerTests: XCTestCase {
         XCTAssertEqual(vi.flag, "🇻🇳")
     }
 
-    func testSupportedLanguageCountIs14() {
-        XCTAssertEqual(LanguageManager.SupportedLanguage.allCases.count, 14)
+    func testPersianCaseExists() {
+        let fa = LanguageManager.SupportedLanguage(rawValue: "fa")
+        XCTAssertNotNil(fa, "Persian ('fa') should be a supported language")
+    }
+
+    func testPersianProperties() {
+        guard let fa = LanguageManager.SupportedLanguage(rawValue: "fa") else {
+            return XCTFail("Persian case missing")
+        }
+        XCTAssertEqual(fa.code, "fa")
+        XCTAssertEqual(fa.displayName, "فارسی")
+        XCTAssertEqual(fa.englishName, "Persian")
+        XCTAssertEqual(fa.flag, "🇮🇷")
+    }
+
+    func testSupportedLanguageCountIs15() {
+        XCTAssertEqual(LanguageManager.SupportedLanguage.allCases.count, 15)
     }
 }

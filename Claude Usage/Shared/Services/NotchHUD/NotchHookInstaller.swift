@@ -4,7 +4,7 @@
 //
 //  Installs/removes the notch HUD's Claude Code hooks in ~/.claude/settings.json.
 //  Follows the app's read-merge-write-one-key discipline (see StatuslineService):
-//  only hook entries whose URL points at our listener are ever touched — all
+//  only hook entries that point at our listener are ever touched — all
 //  user/foreign hooks and settings are preserved verbatim.
 //
 
@@ -40,8 +40,41 @@ final class NotchHookInstaller {
         "\(Constants.NotchHUD.baseURL)/hook/\(pathToken())/\(suffix)"
     }
 
-    private var currentURLs: Set<String> {
-        Set(Self.events.map { hookURL(for: $0.suffix) })
+    /// Events Claude Code does not run `http` hooks for. SessionStart accepts
+    /// only `command` (and `mcp_tool`) hooks, so an http entry there is
+    /// silently never called; these events forward the payload with curl.
+    static let commandOnlyEvents: Set<String> = ["SessionStart"]
+
+    /// The hook definition written for one event.
+    private func hookDefinition(event: String, suffix: String) -> [String: Any] {
+        let url = hookURL(for: suffix)
+        guard Self.commandOnlyEvents.contains(event) else {
+            return ["type": "http", "url": url, "timeout": 3]
+        }
+        // Output is discarded and the exit status forced to 0: SessionStart
+        // stdout is added to Claude's context, and the hook must stay passive
+        // when the listener isn't running.
+        let command = "curl -s -m 2 -o /dev/null -X POST -H 'Content-Type: application/json' "
+            + "--data-binary @- '\(url)' 2>/dev/null || true"
+        return ["type": "command", "command": command, "timeout": 3]
+    }
+
+    /// Where a hook entry points if it is one of ours (any vintage), else nil.
+    /// http hooks are identified by `url`, command hooks by a command line
+    /// that mentions the listener.
+    private func listenerTarget(of hook: [String: Any]) -> String? {
+        if let url = hook["url"] as? String, url.hasPrefix(Constants.NotchHUD.baseURL) {
+            return url
+        }
+        if let command = hook["command"] as? String, command.contains(Constants.NotchHUD.baseURL) {
+            return command
+        }
+        return nil
+    }
+
+    /// The `url`/`command` of every hook the current configuration installs.
+    private var currentTargets: Set<String> {
+        Set(Self.events.compactMap { listenerTarget(of: hookDefinition(event: $0.event, suffix: $0.suffix)) })
     }
 
     // MARK: - Status
@@ -51,7 +84,8 @@ final class NotchHookInstaller {
         case partial
         case notInstalled
         /// Hooks pointing at our listener exist that don't match the current
-        /// 8-event configuration (e.g. the abandoned branch's 10-hook set).
+        /// 8-event configuration (e.g. the abandoned branch's 10-hook set, or
+        /// an http hook on an event that only runs command hooks).
         case legacyDetected
         case error(String)
     }
@@ -67,7 +101,7 @@ final class NotchHookInstaller {
                 return .notInstalled
             }
 
-            let expected = currentURLs
+            let expected = currentTargets
             var installedCount = 0
             var hasLegacy = false
 
@@ -76,9 +110,8 @@ final class NotchHookInstaller {
                 for group in matcherGroups {
                     guard let hookList = group["hooks"] as? [[String: Any]] else { continue }
                     for hook in hookList {
-                        guard let url = hook["url"] as? String,
-                              url.hasPrefix(Constants.NotchHUD.baseURL) else { continue }
-                        if expected.contains(url) {
+                        guard let target = listenerTarget(of: hook) else { continue }
+                        if expected.contains(target) {
                             installedCount += 1
                         } else {
                             hasLegacy = true
@@ -120,7 +153,7 @@ final class NotchHookInstaller {
             for (event, suffix) in Self.events {
                 let entry: [String: Any] = [
                     "matcher": "",
-                    "hooks": [["type": "http", "url": hookURL(for: suffix), "timeout": 3]],
+                    "hooks": [hookDefinition(event: event, suffix: suffix)],
                 ]
                 var matcherGroups = hooks[event] as? [[String: Any]] ?? []
                 matcherGroups.append(entry)
@@ -169,7 +202,7 @@ final class NotchHookInstaller {
         }
     }
 
-    /// Removes any hook whose URL points at our listener from every event key.
+    /// Removes any hook pointing at our listener from every event key.
     /// Matcher groups that end up empty are dropped; foreign hooks are kept.
     private func stripOurHooks(from hooks: [String: Any]) -> [String: Any] {
         var result = hooks
@@ -177,9 +210,7 @@ final class NotchHookInstaller {
             guard var matcherGroups = result[key] as? [[String: Any]] else { continue }
             matcherGroups = matcherGroups.compactMap { group in
                 guard var hookList = group["hooks"] as? [[String: Any]] else { return group }
-                hookList.removeAll { hook in
-                    (hook["url"] as? String)?.hasPrefix(Constants.NotchHUD.baseURL) == true
-                }
+                hookList.removeAll { listenerTarget(of: $0) != nil }
                 if hookList.isEmpty { return nil }
                 var updated = group
                 updated["hooks"] = hookList

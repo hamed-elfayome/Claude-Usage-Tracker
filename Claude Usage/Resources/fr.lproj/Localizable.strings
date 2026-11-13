@@ -58,12 +58,15 @@
 /* ==================== */
 "menubar.claude_usage" = "Utilisation Claude";
 "menubar.session_usage" = "Utilisation de Session";
+"menubar.session_remaining" = "Session restante";
 "menubar.weekly_usage" = "Hebdomadaire";
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";
 "menubar.fable_usage" = "Fable";
 "menubar.design_usage" = "Design";
 "menubar.extra_usage" = "Utilisation Supplémentaire";
+"menubar.organization" = "Organisation";
+"menubar.monthly_spend" = "Dépenses Mensuelles";
 "menubar.api_credits" = "Crédits API";
 "menubar.5_hour_window" = "Fenêtre glissante de 5 heures";
 "menubar.all_models" = "Tous les modèles";
@@ -239,6 +242,8 @@
 /* MARK: - Error Messages */
 /* ==================== */
 "error.session_key_not_found" = "Clé de session non trouvée";
+"error.cli_login_expired" = "La connexion Claude Code enregistrée pour %@ a expiré";
+"error.cli_login_expired_suggestion" = "Le changement a été annulé et votre connexion actuelle est conservée : les sessions Claude Code en cours continuent de fonctionner. Pour reconnecter %@, exécutez /login dans Claude Code avec ce compte, puis repassez à %@.";
 "error.session_key_not_found.suggestion" = "Veuillez configurer votre clé de session Claude dans les Réglages";
 "error.session_key_invalid" = "Clé de session invalide";
 "error.session_key_invalid.suggestion" = "Veuillez vérifier le format de votre clé de session. Elle doit commencer par 'sk-ant-'";
@@ -349,6 +354,10 @@
 "claudecode.component_weekly_description" = "Utilisation hebdomadaire de tokens avec barre et temps de réinitialisation";
 "claudecode.component_extra_usage" = "Afficher l'utilisation supplémentaire";
 "claudecode.component_extra_usage_description" = "Indicateur de coût (ex., 9,49 USD)";
+"claudecode.component_cache" = "Show Prompt Cache";
+"claudecode.component_cache_description" = "Cache hit rate, with the cause of a recent miss (e.g., ⚡ 94% ✗ tools)";
+"claudecode.component_fable" = "Afficher Fable hebdomadaire";
+"claudecode.component_fable_description" = "Limite hebdomadaire de Fable (p. ex. Fable: 24%)";
 "claudecode.weekly_label" = "Afficher le libellé \"Weekly:\"";
 "claudecode.requirement_sessionkey" = "• Clé de session configurée dans Identifiants → onglet Claude.ai";
 "claudecode.requirement_restart" = "• Redémarrez Claude CLI après l'application des modifications";
@@ -426,6 +435,8 @@
 "appearance.show_pace_marker_description" = "Colore le marqueur de temps selon le rythme d'utilisation projeté (vert → violet). S'applique aux métriques de session et hebdomadaires.";
 "appearance.pace_coloring_title" = "Couleurs de barre par rythme";
 "appearance.pace_coloring_description" = "Colorer les barres de progression selon le rythme projeté au lieu du niveau d'utilisation actuel. Projette si vous atteindrez les limites d'ici la fin de la période.";
+"appearance.exclude_weekends_title" = "Exclure les week-ends du rythme hebdomadaire";
+"appearance.exclude_weekends_description" = "Le marqueur de temps et le rythme hebdomadaires n'avancent qu'en semaine et se mettent en pause le week-end. Utile si vous utilisez surtout Claude pendant la semaine de travail.";
 "appearance.multiprofile_locked_title" = "Paramètres d'Apparence Verrouillés";
 "appearance.multiprofile_locked_description" = "Ces paramètres sont désactivés pendant que l'Affichage Multi-Profil est actif. Chaque profil utilise sa propre apparence en mode multi-profil.";
 "appearance.disable_multiprofile" = "Désactiver l'Affichage Multi-Profil";
@@ -550,6 +561,9 @@
 "general.refresh_seconds" = "%d secondes";
 "general.refresh_min" = "10s";
 "general.refresh_max" = "300s";
+"general.spend_target_title" = "Objectif de Dépense Mensuel";
+"general.spend_target_subtitle" = "Budget personnel mensuel facultatif. Définissez-le pour afficher une barre de Dépenses Mensuelles dans le popover ; laissez vide pour n'afficher que le montant.";
+"general.spend_target_placeholder" = "p. ex. 1500";
 "general.autostart_title" = "Démarrage Automatique de Session";
 "general.autostart_subtitle" = "Démarrer automatiquement une nouvelle session si nécessaire";
 "general.autostart_toggle" = "Démarrage Automatique de Nouvelle Session";
@@ -934,6 +948,10 @@
 
 // MARK: - Overage Balance
 "popover.overage_balance" = "Solde";
+"popover.no_limits_reported" = "Ce forfait ne communique aucune limite d'utilisation ; il n'y a donc rien à suivre ici.";
+
+// MARK: - Monthly Spend
+"popover.monthly_spend_period" = "Ce mois-ci";
 
 // MARK: - Setup Wizard CLI Detection
 "setup.cli_detecting" = "Recherche des identifiants CLI...";
@@ -999,9 +1017,50 @@
 "menubar.this_month" = "Ce mois-ci";
 "menubar.total" = "Total";
 
+/* Keep Awake */
+"section.keep_awake_title" = "Maintien éveillé";
+"section.keep_awake_desc" = "Empêche le Mac de se mettre en veille";
+"keep_awake.manual_title" = "Contrôle manuel";
+"keep_awake.manual_desc" = "Activez vous-même le maintien éveillé, avec minuteur facultatif";
+"keep_awake.enable" = "Maintenir le Mac éveillé";
+"keep_awake.enable_desc" = "Empêche temporairement le Mac de se mettre en veille";
+"keep_awake.status_active" = "Le Mac est actuellement maintenu éveillé";
+"keep_awake.remaining" = "Désactivation dans %@";
+"keep_awake.duration" = "Durée";
+"keep_awake.duration.indefinite" = "Jusqu'à désactivation";
+"keep_awake.duration.custom" = "Personnalisée…";
+"keep_awake.custom_hours" = "%d heures";
+"keep_awake.auto_title" = "Automatique";
+"keep_awake.auto_card_desc" = "Recommandé : ne maintient le Mac éveillé que lorsque Claude Code travaille réellement";
+"keep_awake.auto" = "Maintenir éveillé pendant que Claude Code travaille";
+"keep_awake.auto_desc" = "Reste éveillé pendant les sessions Claude Code actives, puis autorise à nouveau la veille. Installe les hooks Claude Code";
+"keep_awake.grace" = "Quand Claude Code s'arrête";
+"keep_awake.grace.immediately" = "Dormir aussitôt";
+"keep_awake.grace.stay" = "Rester éveillé %@";
+"keep_awake.hooks_note" = "L'activité est détectée via les hooks Claude Code dans ~/.claude/settings.json";
+"keep_awake.sleep_type" = "Prévention de la veille";
+"keep_awake.sleep_type_desc" = "Choisissez si l'écran reste allumé pendant que le Mac est maintenu éveillé";
+"keep_awake.sleep_type.system" = "L'écran peut s'éteindre";
+"keep_awake.sleep_type.display" = "Garder l'écran allumé";
+"keep_awake.lid_note" = "Capot fermé, le Mac se mettra quand même en veille sauf s'il est branché et relié à un écran externe";
+"keep_awake.state_off" = "Désactivé";
+"keep_awake.state_on_indefinite" = "Activé — éveillé jusqu'à désactivation (∞)";
+"keep_awake.state_on_remaining" = "Activé — %@ restant";
+"keep_awake.state_auto_active" = "Auto — Claude Code travaille";
+"keep_awake.state_auto_grace" = "Auto — Claude a terminé, éveillé encore %@";
+"keep_awake.state_auto_armed" = "Auto activé — garde le Mac éveillé quand Claude Code travaille";
+"keep_awake.hint_click_on" = "Cliquez pour activer — garde le Mac éveillé quand Claude Code travaille";
+"keep_awake.hint_click_off" = "Cliquez pour désactiver";
+"keep_awake.hint_click_auto_off" = "Cliquez pour désactiver le mode auto — reste désactivé jusqu'à réactivation";
+"keep_awake.menu_for" = "Garder éveillé pendant %@";
+"keep_awake.menu_indefinite" = "Garder éveillé jusqu'à désactivation";
+"keep_awake.menu_off" = "Désactiver le maintien éveillé";
+
 /* Sponsor slot */
 "sponsor.slot_title" = "Cet emplacement est disponible pour les sponsors";
 "sponsor.slot_cta" = "Me contacter";
+"sponsor.label" = "Sponsor";
+"sponsor.open_in_browser" = "Ouvrir dans le navigateur";
 
 /* Multi-Provider / OpenAI Codex */
 "section.codex_account_title" = "Compte Codex";
@@ -1071,3 +1130,8 @@
 "support.popup_signature" = "l'équipe d'une seule personne derrière Claude Usage";
 "support.popup_body" = "Gratuit, open source, fait par une seule personne — sans pubs ni pistage. Si Claude Usage vous a déjà évité de griller une limite de session, un café le fait vivre.";
 "support.popup_days" = "Veille sur vos limites depuis %d jours — toujours gratuit";
+"keep_awake.consent_title" = "Ajouter les hooks Claude Code ?";
+"keep_awake.consent_message" = "Pour savoir quand Claude Code travaille, Keep Awake ajoute des hooks à ~/.claude/settings.json et les écoute uniquement sur ce Mac. Vos autres hooks et réglages ne sont pas modifiés. Vous pouvez les retirer en désactivant cette option.";
+"keep_awake.consent_confirm" = "Ajouter les hooks et activer";
+"keep_awake.problem_hooks" = "Le mode automatique ne voit pas Claude Code : ses hooks sont absents de ~/.claude/settings.json. Désactivez puis réactivez le mode automatique pour les réinstaller.";
+"keep_awake.problem_listener" = "Le mode automatique ne voit pas Claude Code : le port de l'écouteur local est utilisé par une autre app ou une autre copie de Claude Usage.";

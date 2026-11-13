@@ -128,6 +128,14 @@ class NotificationManager: NotificationServiceProtocol {
             return
         }
 
+        // Every alert below is about the 5-hour session; plans without one
+        // (e.g. Ultra) get none. Forget the last percentage so a session limit
+        // that comes back doesn't look like a reset.
+        guard usage.hasSessionLimit else {
+            previousSessionPercentages.removeValue(forKey: profileName)
+            return
+        }
+
         let sessionPercentage = usage.effectiveSessionPercentage
         let previousPercentage = previousSessionPercentages[profileName] ?? 0.0
 

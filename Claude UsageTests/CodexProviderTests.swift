@@ -265,8 +265,59 @@ final class CodexProviderTests: XCTestCase {
         XCTAssertEqual(usage.weeklyLimit, 0, "no placeholder token limit for Codex")
         XCTAssertEqual(usage.opusWeeklyTokensUsed, 0)
         XCTAssertEqual(usage.planType, "pro")
+        XCTAssertFalse(usage.hasSessionLimit)
         XCTAssertEqual(usage.creditsBalance, 3.5)
         XCTAssertEqual(usage.creditsUnlimited, true)
+    }
+
+    func testProIgnoresSessionLimitEvenWhenAPIReportsAWindow() {
+        let sessionReset = Int(Date().addingTimeInterval(60 * 60).timeIntervalSince1970)
+        let response = CodexUsageResponse(
+            planType: "pro",
+            rateLimit: CodexRateLimitDetails(
+                primaryWindow: CodexRateWindow(usedPercent: 99, resetAt: sessionReset, limitWindowSeconds: 18000),
+                secondaryWindow: CodexRateWindow(usedPercent: 17, resetAt: nil, limitWindowSeconds: 604800)
+            ),
+            credits: nil
+        )
+        let usage = CodexAPIService.mapToUsage(response)
+
+        XCTAssertFalse(usage.hasSessionLimit)
+        XCTAssertEqual(usage.effectiveSessionPercentage, 0)
+        XCTAssertEqual(usage.weeklyPercentage, 17)
+    }
+
+    func testProWeeklyOnlyWindowDoesNotCreateASessionLimit() throws {
+        let response = try decodeResponse("""
+        {
+            "plan_type": "pro",
+            "rate_limit": {
+                "primary_window": {"used_percent": 37, "reset_at": 1789500000, "limit_window_seconds": 604800}
+            }
+        }
+        """)
+        let usage = CodexAPIService.mapToUsage(response)
+
+        XCTAssertFalse(usage.hasSessionLimit)
+        XCTAssertEqual(usage.weeklyPercentage, 37)
+        XCTAssertEqual(usage.weeklyResetTime, Date(timeIntervalSince1970: 1789500000))
+    }
+
+    func testOtherPlansKeepSessionLimits() {
+        for plan in ["plus", "business", "some_new_plan", nil] {
+            let response = CodexUsageResponse(
+                planType: plan,
+                rateLimit: CodexRateLimitDetails(
+                    primaryWindow: CodexRateWindow(usedPercent: 42, resetAt: nil, limitWindowSeconds: 18000),
+                    secondaryWindow: nil
+                ),
+                credits: nil
+            )
+            let usage = CodexAPIService.mapToUsage(response)
+
+            XCTAssertTrue(usage.hasSessionLimit, "Unexpected session behavior for \(plan ?? "nil")")
+            XCTAssertEqual(usage.effectiveSessionPercentage, 42)
+        }
     }
 
     func testMapToUsageMissingWeeklyGivesZeroPercent() throws {
@@ -340,5 +391,36 @@ final class CodexProviderTests: XCTestCase {
     func testUsageURLBareChatGPTHostGetsBackendAPI() {
         let url = CodexAPIService.shared.usageURL(env: [:], configContents: "chatgpt_base_url = \"https://chatgpt.com/\"")
         XCTAssertEqual(url.absoluteString, "https://chatgpt.com/backend-api/wham/usage")
+    }
+
+    // MARK: - Shared auth.json fallback (#335)
+
+    func testActiveProfileMayUseSharedAuthFile() {
+        let codex = Profile(name: "Codex", provider: .codex)
+        let other = Profile(name: "Codex 2", provider: .codex)
+        XCTAssertTrue(CodexUsageProvider.mayUseSharedAuthFile(codex, activeProfileId: codex.id, profiles: [codex, other]))
+    }
+
+    func testLoneCodexProfileMayUseSharedAuthFileWhileInactive() {
+        let claude = Profile(name: "Claude", provider: .anthropic)
+        let codex = Profile(name: "Codex", provider: .codex)
+        XCTAssertTrue(CodexUsageProvider.mayUseSharedAuthFile(codex, activeProfileId: claude.id, profiles: [claude, codex]))
+    }
+
+    func testCodexProfileWithPastedCredentialsDoesNotMakeTheFileAmbiguous() {
+        let claude = Profile(name: "Claude", provider: .anthropic)
+        let pasted = Profile(name: "Codex pasted", provider: .codex, codexCredentialsJSON: "{}")
+        let shared = Profile(name: "Codex shared", provider: .codex)
+        XCTAssertTrue(CodexUsageProvider.mayUseSharedAuthFile(shared, activeProfileId: claude.id, profiles: [claude, pasted, shared]))
+    }
+
+    func testTwoCredentialLessCodexProfilesKeepTheFileForTheActiveOne() {
+        let claude = Profile(name: "Claude", provider: .anthropic)
+        let first = Profile(name: "Codex 1", provider: .codex)
+        let second = Profile(name: "Codex 2", provider: .codex)
+        let all = [claude, first, second]
+        XCTAssertFalse(CodexUsageProvider.mayUseSharedAuthFile(first, activeProfileId: claude.id, profiles: all))
+        XCTAssertFalse(CodexUsageProvider.mayUseSharedAuthFile(second, activeProfileId: claude.id, profiles: all))
+        XCTAssertTrue(CodexUsageProvider.mayUseSharedAuthFile(first, activeProfileId: first.id, profiles: all))
     }
 }

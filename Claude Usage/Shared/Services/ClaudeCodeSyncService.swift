@@ -714,6 +714,16 @@ class ClaudeCodeSyncService {
         return nil
     }
 
+    /// Whether Claude Code's live login (`.claude.json` `oauthAccount`) is the same account as
+    /// `profile`. False when either side has no account identity.
+    func systemHoldsAccount(of profile: Profile) -> Bool {
+        guard let system = accountIdentity(fromOAuthAccountJSON: readOAuthAccount()),
+              let stored = accountIdentity(fromOAuthAccountJSON: profile.oauthAccountJSON) else {
+            return false
+        }
+        return system == stored
+    }
+
     /// Writes an `oauthAccount` object (serialized JSON string) back into
     /// Claude Code's `.claude.json` config file, replacing whatever was there.
     /// Preserves all other top-level keys in the file. Does nothing if no
@@ -754,9 +764,33 @@ class ClaudeCodeSyncService {
 
     // MARK: - Profile Sync Operations
 
+    /// The keychain entry `profile` is pinned to, when that entry is not the one plain
+    /// `claude` uses. Such a profile belongs to its own Claude Code config dir, so the
+    /// default login must be neither read into it nor overwritten from it (#355).
+    func dedicatedKeychainEntry(for profile: Profile) -> String? {
+        guard let pinned = profile.customKeychainServiceName, !pinned.isEmpty,
+              pinned != resolveServiceName() else {
+            return nil
+        }
+        return pinned
+    }
+
     /// Syncs credentials from system to profile (one-time copy)
     func syncToProfile(_ profileId: UUID) throws {
-        guard let jsonData = try readSystemCredentials() else {
+        let dedicatedEntry = ProfileStore.shared.loadProfiles()
+            .first(where: { $0.id == profileId })
+            .flatMap { dedicatedKeychainEntry(for: $0) }
+
+        // A profile pinned to its own keychain entry syncs from that entry. Reading the
+        // default entry here would capture whichever account plain `claude` is logged
+        // in to (#355).
+        let source: String?
+        if let dedicatedEntry {
+            source = readKeychainCredentials(serviceName: dedicatedEntry)
+        } else {
+            source = try readSystemCredentials()
+        }
+        guard let jsonData = source else {
             throw ClaudeCodeError.noCredentialsFound
         }
 
@@ -768,7 +802,8 @@ class ClaudeCodeSyncService {
 
         // Capture current oauthAccount from .claude.json (if present) so we can
         // restore it when this profile is re-activated. See issue #175.
-        let capturedOAuthAccount = readOAuthAccount()
+        // The default .claude.json describes the default login, not a dedicated entry.
+        let capturedOAuthAccount = dedicatedEntry == nil ? readOAuthAccount() : nil
 
         // Save to profile directly
         var profiles = ProfileStore.shared.loadProfiles()
@@ -797,6 +832,15 @@ class ClaudeCodeSyncService {
               let jsonData = profile.cliCredentialsJSON else {
             LoggingService.shared.log("❌ No CLI credentials found for profile: \(profileId)")
             throw ClaudeCodeError.noProfileCredentials
+        }
+
+        // A profile pinned to its own keychain entry is already signed in there. Copying
+        // its token into the default entry would replace another account's login and put
+        // one refresh-token lineage in two config dirs, where the second refresh fails
+        // with invalid_grant (#355, and the reasoning in TerminalLauncherService).
+        if let dedicatedEntry = dedicatedKeychainEntry(for: profile) {
+            LoggingService.shared.log("Profile is pinned to '\(dedicatedEntry)' — leaving the default Claude Code login untouched")
+            return
         }
 
         LoggingService.shared.log("📦 Found CLI credentials, writing to keychain and credentials file...")
@@ -1001,7 +1045,15 @@ class ClaudeCodeSyncService {
     /// On a successful refresh, the new credentials are written back to BOTH the profile's
     /// cached JSON AND (when applicable) the custom keychain entry, so Claude Code and the
     /// Tracker stay in sync.
-    func ensureFreshCredentials(for profileId: UUID, allowRotation: Bool = false) async -> String? {
+    ///
+    /// `onRefreshRejected` is called when the token endpoint answers `invalid_grant`, i.e. the
+    /// saved refresh token is definitively dead. Other failures (offline, timeout, 5xx, 429)
+    /// also return `nil` but do not call it: the refresh token may still be good.
+    func ensureFreshCredentials(
+        for profileId: UUID,
+        allowRotation: Bool = false,
+        onRefreshRejected: (() -> Void)? = nil
+    ) async -> String? {
         let profiles = ProfileStore.shared.loadProfiles()
         guard let profile = profiles.first(where: { $0.id == profileId }) else {
             return nil
@@ -1129,6 +1181,9 @@ class ClaudeCodeSyncService {
             // tokens — only `{ "error": "...", "error_description": "..." }` style payloads —
             // so logging it is safe.
             LoggingService.shared.logError("ensureFreshCredentials: refresh failed for '\(profile.name)' (HTTP \(status)) body=\(body)")
+            if body.contains("invalid_grant") {
+                onRefreshRejected?()
+            }
             return nil
         } catch {
             LoggingService.shared.logError("ensureFreshCredentials: refresh failed for '\(profile.name)'", error: error)
@@ -1208,6 +1263,14 @@ class ClaudeCodeSyncService {
     /// This ensures we always have the latest CLI login when switching profiles
     func resyncBeforeSwitching(for profileId: UUID) throws {
         LoggingService.shared.log("Re-syncing CLI credentials before profile switch: \(profileId)")
+
+        // A profile pinned to its own keychain entry is kept current from that entry by
+        // `ensureFreshCredentials`; the default entry belongs to a different login (#355).
+        if let profile = ProfileStore.shared.loadProfiles().first(where: { $0.id == profileId }),
+           dedicatedKeychainEntry(for: profile) != nil {
+            LoggingService.shared.log("Profile is pinned to its own keychain entry - skipping re-sync from the default login")
+            return
+        }
 
         // Read fresh credentials from system (if user is logged in)
         guard let freshJSON = try readSystemCredentials() else {

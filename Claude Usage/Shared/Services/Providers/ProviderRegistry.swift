@@ -31,6 +31,7 @@ enum ProviderRegistry {
                 cliAccountSync: true,
                 autoStartSession: true,
                 overageChecks: true,
+                personalSpend: true,
                 credits: false
             ),
             credentialSections: [.claudeAI, .apiConsole, .cliAccount],
@@ -50,6 +51,7 @@ enum ProviderRegistry {
                 cliAccountSync: false,
                 autoStartSession: false,
                 overageChecks: false,
+                personalSpend: false,
                 credits: true
             ),
             credentialSections: [.codexAccount],

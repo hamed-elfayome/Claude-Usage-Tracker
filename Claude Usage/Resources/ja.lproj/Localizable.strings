@@ -58,12 +58,15 @@
 /* ==================== */
 "menubar.claude_usage" = "Claude使用状況";
 "menubar.session_usage" = "セッション使用";
+"menubar.session_remaining" = "セッション残り";
 "menubar.weekly_usage" = "週次";
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";
 "menubar.fable_usage" = "Fable";
 "menubar.design_usage" = "デザイン";
 "menubar.extra_usage" = "追加使用";
+"menubar.organization" = "組織";
+"menubar.monthly_spend" = "月間支出";
 "menubar.api_credits" = "APIクレジット";
 "menubar.5_hour_window" = "5時間ローリングウィンドウ";
 "menubar.all_models" = "すべてのモデル";
@@ -253,6 +256,8 @@
 /* MARK: - Error Messages */
 /* ==================== */
 "error.session_key_not_found" = "セッションキーが見つかりません";
+"error.cli_login_expired" = "%@ の保存済み Claude Code ログインの有効期限が切れました";
+"error.cli_login_expired_suggestion" = "切り替えはキャンセルされ、現在のログインはそのまま残っているため、実行中の Claude Code セッションは引き続き動作します。%@ を再リンクするには、そのアカウントで Claude Code の /login を実行してから、もう一度 %@ に切り替えてください。";
 "error.session_key_not_found.suggestion" = "設定でClaudeセッションキーを構成してください";
 "error.session_key_invalid" = "無効なセッションキー";
 "error.session_key_invalid.suggestion" = "セッションキーの形式を確認してください。'sk-ant-'で始まる必要があります";
@@ -367,6 +372,10 @@
 "claudecode.component_weekly_description" = "バーとリセット時間付きの週間トークン使用量";
 "claudecode.component_extra_usage" = "追加使用量を表示";
 "claudecode.component_extra_usage_description" = "コスト表示（例: 9.49 USD）";
+"claudecode.component_cache" = "Show Prompt Cache";
+"claudecode.component_cache_description" = "Cache hit rate, with the cause of a recent miss (e.g., ⚡ 94% ✗ tools)";
+"claudecode.component_fable" = "Fable の週間使用量を表示";
+"claudecode.component_fable_description" = "Fable の週間上限（例：Fable: 24%）";
 "claudecode.weekly_label" = "\"Weekly:\" ラベルを表示";
 "claudecode.requirement_sessionkey" = "• 認証情報 → Claude.aiタブでセッションキーが構成されている";
 "claudecode.requirement_restart" = "• 変更適用後にClaude CLIを再起動";
@@ -456,6 +465,8 @@
 "appearance.show_pace_marker_description" = "予測使用ペースに基づいてタイムマーカーを色分けします（緑→紫）。セッションと週間メトリクスに適用されます。";
 "appearance.pace_coloring_title" = "ペース対応バーカラー";
 "appearance.pace_coloring_description" = "現在の使用レベルではなく予測ペースに基づいてプログレスバーを色分けします。期間終了までにリミットに達するかを予測します。";
+"appearance.exclude_weekends_title" = "週間ペースから週末を除外";
+"appearance.exclude_weekends_description" = "週間の経過時間マーカーとペースは平日のみ進み、週末は止まります。主に平日にClaudeを使う場合に便利です。";
 "appearance.multiprofile_locked_title" = "外観設定がロックされています";
 "appearance.multiprofile_locked_description" = "マルチプロファイル表示がアクティブな間、これらの設定は無効になっています。マルチプロファイルモードでは各プロファイルが独自の外観を使用します。";
 "appearance.disable_multiprofile" = "マルチプロファイル表示をオフにする";
@@ -572,6 +583,9 @@
 "general.refresh_seconds" = "%d秒";
 "general.refresh_min" = "10秒";
 "general.refresh_max" = "300秒";
+"general.spend_target_title" = "月間支出目標";
+"general.spend_target_subtitle" = "任意の月間個人予算。設定するとポップオーバーに月間支出バーが表示されます。空欄の場合は金額のみ表示されます。";
+"general.spend_target_placeholder" = "例: 1500";
 "general.autostart_title" = "セッション自動開始";
 "general.autostart_subtitle" = "必要に応じて自動的に新しいセッションを開始";
 "general.autostart_toggle" = "新しいセッションを自動開始";
@@ -956,6 +970,10 @@
 
 // MARK: - Overage Balance
 "popover.overage_balance" = "残高";
+"popover.no_limits_reported" = "このプランは使用量の上限を報告しないため、ここに表示できるものはありません。";
+
+// MARK: - Monthly Spend
+"popover.monthly_spend_period" = "今月";
 
 // MARK: - Setup Wizard CLI Detection
 "setup.cli_detecting" = "CLI認証情報を確認中...";
@@ -1021,9 +1039,50 @@
 "menubar.this_month" = "今月";
 "menubar.total" = "合計";
 
+/* Keep Awake */
+"section.keep_awake_title" = "スリープ防止";
+"section.keep_awake_desc" = "Macがスリープするのを防ぎます";
+"keep_awake.manual_title" = "手動コントロール";
+"keep_awake.manual_desc" = "必要なときに自分でオンにできます(タイマー設定可)";
+"keep_awake.enable" = "Macをスリープさせない";
+"keep_awake.enable_desc" = "一時的にMacがスリープするのを防ぎます";
+"keep_awake.status_active" = "現在Macのスリープを防止中です";
+"keep_awake.remaining" = "%@後にオフになります";
+"keep_awake.duration" = "継続時間";
+"keep_awake.duration.indefinite" = "オフにするまで";
+"keep_awake.duration.custom" = "カスタム…";
+"keep_awake.custom_hours" = "%d時間";
+"keep_awake.auto_title" = "自動";
+"keep_awake.auto_card_desc" = "おすすめ:Claude Codeが実際に作業している間だけMacをスリープさせません";
+"keep_awake.auto" = "Claude Codeの作業中はスリープさせない";
+"keep_awake.auto_desc" = "Claude Codeのセッション中はスリープせず、終了後は再びスリープを許可します。Claude Codeのフックをインストールします";
+"keep_awake.grace" = "Claude Codeの作業終了後";
+"keep_awake.grace.immediately" = "すぐにスリープ";
+"keep_awake.grace.stay" = "%@スリープしない";
+"keep_awake.hooks_note" = "アクティビティは ~/.claude/settings.json のClaude Codeフックで検出されます";
+"keep_awake.sleep_type" = "スリープ防止の種類";
+"keep_awake.sleep_type_desc" = "スリープ防止中に画面を点けたままにするかを選択します";
+"keep_awake.sleep_type.system" = "画面はスリープ可";
+"keep_awake.sleep_type.display" = "画面を点けたまま";
+"keep_awake.lid_note" = "蓋を閉じると、電源接続中に外部ディスプレイを使用している場合を除き、Macはスリープします";
+"keep_awake.state_off" = "オフ";
+"keep_awake.state_on_indefinite" = "オン — オフにするまでスリープしません(∞)";
+"keep_awake.state_on_remaining" = "オン — 残り%@";
+"keep_awake.state_auto_active" = "自動 — Claude Codeが作業中";
+"keep_awake.state_auto_grace" = "自動 — Claudeの作業終了、あと%@スリープしません";
+"keep_awake.state_auto_armed" = "自動オン — Claude Codeの作業中はMacをスリープさせません";
+"keep_awake.hint_click_on" = "クリックでオン — Claude Codeの作業中はMacをスリープさせません";
+"keep_awake.hint_click_off" = "クリックでオフ";
+"keep_awake.hint_click_auto_off" = "クリックで自動モードをオフ — 再びオンにするまでオフのままです";
+"keep_awake.menu_for" = "%@スリープさせない";
+"keep_awake.menu_indefinite" = "オフにするまでスリープさせない";
+"keep_awake.menu_off" = "スリープ防止をオフ";
+
 /* Sponsor slot */
 "sponsor.slot_title" = "スポンサー募集中のスペースです";
 "sponsor.slot_cta" = "お問い合わせ";
+"sponsor.label" = "スポンサー";
+"sponsor.open_in_browser" = "ブラウザで開く";
 
 /* Multi-Provider / OpenAI Codex */
 "section.codex_account_title" = "Codexアカウント";
@@ -1093,3 +1152,8 @@
 "support.popup_signature" = "Claude Usage を一人で作っています";
 "support.popup_body" = "無料・オープンソース・個人開発。広告もトラッキングもありません。セッション上限の浪費を防いだことがあるなら、一杯のコーヒーが開発を支えます。";
 "support.popup_days" = "あなたの上限を見守って %d 日 — ずっと無料";
+"keep_awake.consent_title" = "Claude Code のフックを追加しますか？";
+"keep_awake.consent_message" = "Claude Code が作業中かどうかを知るため、Keep Awake は ~/.claude/settings.json にフックを追加し、この Mac 上でのみ受信します。ほかのフックや設定は変更されません。このオプションをオフにすると削除できます。";
+"keep_awake.consent_confirm" = "フックを追加してオンにする";
+"keep_awake.problem_hooks" = "自動モードが Claude Code を検出できません：~/.claude/settings.json にフックがありません。自動モードをオフにしてからオンにし直すと再インストールされます。";
+"keep_awake.problem_listener" = "自動モードが Claude Code を検出できません：ローカルリスナーのポートが別のアプリまたは別の Claude Usage で使用中です。";

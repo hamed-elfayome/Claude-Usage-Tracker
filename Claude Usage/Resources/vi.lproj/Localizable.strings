@@ -58,12 +58,15 @@
 /* ==================== */
 "menubar.claude_usage" = "Claude Usage";
 "menubar.session_usage" = "Mức dùng phiên";
+"menubar.session_remaining" = "Phiên còn lại";
 "menubar.weekly_usage" = "Hàng tuần";
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";
 "menubar.fable_usage" = "Fable";
 "menubar.design_usage" = "Thiết kế";
 "menubar.extra_usage" = "Mức dùng thêm";
+"menubar.organization" = "Tổ chức";
+"menubar.monthly_spend" = "Chi tiêu hàng tháng";
 "menubar.api_credits" = "Tín dụng API";
 "menubar.api_cost" = "Chi phí API";
 "menubar.this_month" = "Tháng này";
@@ -260,6 +263,8 @@
 /* MARK: - Error Messages */
 /* ==================== */
 "error.session_key_not_found" = "Không tìm thấy khoá phiên";
+"error.cli_login_expired" = "Phiên đăng nhập Claude Code đã lưu của %@ đã hết hạn";
+"error.cli_login_expired_suggestion" = "Việc chuyển đổi đã bị huỷ và phiên đăng nhập hiện tại của bạn được giữ nguyên, nên các phiên Claude Code đang chạy vẫn tiếp tục hoạt động. Để liên kết lại %@, hãy chạy /login trong Claude Code bằng tài khoản đó, rồi chuyển sang %@ lại.";
 "error.session_key_not_found.suggestion" = "Vui lòng cấu hình khoá phiên Claude của bạn trong Cài đặt";
 "error.session_key_invalid" = "Khoá phiên không hợp lệ";
 "error.session_key_invalid.suggestion" = "Vui lòng kiểm tra định dạng khoá phiên của bạn. Khoá phải bắt đầu bằng 'sk-ant-'";
@@ -374,6 +379,10 @@
 "claudecode.component_weekly_description" = "Mức dùng token hàng tuần kèm thanh tiến trình và thời gian đặt lại";
 "claudecode.component_extra_usage" = "Hiện mức dùng thêm";
 "claudecode.component_extra_usage_description" = "Chỉ số chi phí (ví dụ: 9.49 USD)";
+"claudecode.component_cache" = "Show Prompt Cache";
+"claudecode.component_cache_description" = "Cache hit rate, with the cause of a recent miss (e.g., ⚡ 94% ✗ tools)";
+"claudecode.component_fable" = "Hiển thị Fable hàng tuần";
+"claudecode.component_fable_description" = "Giới hạn Fable hàng tuần (ví dụ: Fable: 24%)";
 "claudecode.weekly_label" = "Hiện nhãn \"Weekly:\"";
 "claudecode.requirement_sessionkey" = "• Khoá phiên đã được cấu hình trong tab Credentials → Claude.ai";
 "claudecode.requirement_restart" = "• Khởi động lại Claude CLI sau khi áp dụng thay đổi";
@@ -463,6 +472,8 @@
 "appearance.show_pace_marker_description" = "Tô màu dấu thời gian dựa trên nhịp độ sử dụng dự kiến (xanh lá → tím). Áp dụng cho chỉ số phiên và hàng tuần.";
 "appearance.pace_coloring_title" = "Màu thanh theo nhịp độ";
 "appearance.pace_coloring_description" = "Tô màu thanh tiến trình dựa trên nhịp độ dự kiến thay vì mức dùng hiện tại. Dự đoán xem bạn có đạt giới hạn vào cuối chu kỳ hay không.";
+"appearance.exclude_weekends_title" = "Loại trừ cuối tuần khỏi nhịp độ hàng tuần";
+"appearance.exclude_weekends_description" = "Dấu thời gian và nhịp độ hàng tuần chỉ tiến lên vào ngày làm việc và tạm dừng vào cuối tuần. Hữu ích nếu bạn chủ yếu dùng Claude trong tuần làm việc.";
 "appearance.multiprofile_locked_title" = "Cài đặt giao diện đã bị khoá";
 "appearance.multiprofile_locked_description" = "Các cài đặt này bị tắt khi Hiển thị đa hồ sơ đang hoạt động. Mỗi hồ sơ dùng giao diện riêng ở chế độ đa hồ sơ.";
 "appearance.disable_multiprofile" = "Tắt hiển thị đa hồ sơ";
@@ -550,6 +561,9 @@
 "general.refresh_seconds" = "%d giây";
 "general.refresh_min" = "10s";
 "general.refresh_max" = "300s";
+"general.spend_target_title" = "Mục tiêu chi tiêu hàng tháng";
+"general.spend_target_subtitle" = "Ngân sách cá nhân tùy chọn cho tháng. Đặt giá trị để hiện thanh Chi tiêu hàng tháng trong cửa sổ bật lên; để trống để chỉ hiện số tiền.";
+"general.spend_target_placeholder" = "ví dụ: 1500";
 "general.autostart_title" = "Tự động bắt đầu phiên";
 "general.autostart_subtitle" = "Tự động bắt đầu phiên mới khi cần";
 "general.autostart_toggle" = "Tự động bắt đầu phiên mới";
@@ -964,6 +978,10 @@
 
 // MARK: - Overage Balance
 "popover.overage_balance" = "Số dư";
+"popover.no_limits_reported" = "Gói này không báo cáo giới hạn sử dụng nên không có gì để theo dõi ở đây.";
+
+// MARK: - Monthly Spend
+"popover.monthly_spend_period" = "Tháng này";
 
 // MARK: - Setup Wizard CLI Detection
 "setup.cli_detecting" = "Đang kiểm tra thông tin đăng nhập CLI...";
@@ -1020,6 +1038,8 @@
 /* Sponsor slot */
 "sponsor.slot_title" = "Vị trí này dành cho nhà tài trợ";
 "sponsor.slot_cta" = "Liên hệ ngay";
+"sponsor.label" = "Nhà tài trợ";
+"sponsor.open_in_browser" = "Mở trong trình duyệt";
 
 // MARK: - Providers & Codex (v3.3.0)
 "codex.cli_detected" = "Đã phát hiện Codex CLI";
@@ -1091,3 +1111,47 @@
 "support.popup_body" = "Miễn phí, mã nguồn mở, do một người xây dựng — không quảng cáo, không theo dõi. Nếu nó từng giúp bạn khỏi lãng phí giới hạn phiên, một ly cà phê sẽ giúp nó tiếp tục.";
 "support.popup_days" = "Đồng hành cùng giới hạn của bạn %d ngày — luôn miễn phí";
 "support.popup_later" = "Để sau";
+
+// MARK: - Keep Awake
+"section.keep_awake_title" = "Giữ máy thức";
+"section.keep_awake_desc" = "Ngăn máy Mac chuyển sang chế độ ngủ";
+"keep_awake.manual_title" = "Điều khiển thủ công";
+"keep_awake.manual_desc" = "Tự bật giữ máy thức, có thể kèm hẹn giờ";
+"keep_awake.enable" = "Giữ máy Mac thức";
+"keep_awake.enable_desc" = "Tạm thời ngăn máy Mac chuyển sang chế độ ngủ";
+"keep_awake.status_active" = "Đang giữ máy Mac thức";
+"keep_awake.remaining" = "Tắt sau %@";
+"keep_awake.duration" = "Thời lượng";
+"keep_awake.duration.indefinite" = "Cho đến khi tắt";
+"keep_awake.duration.custom" = "Tùy chỉnh…";
+"keep_awake.custom_hours" = "%d giờ";
+"keep_awake.auto_title" = "Tự động";
+"keep_awake.auto_card_desc" = "Khuyên dùng: chỉ giữ máy Mac thức khi Claude Code thực sự đang làm việc";
+"keep_awake.auto" = "Giữ máy thức khi Claude Code làm việc";
+"keep_awake.auto_desc" = "Giữ máy thức trong các phiên Claude Code đang hoạt động, sau đó cho phép ngủ lại. Cài đặt hook của Claude Code";
+"keep_awake.grace" = "Sau khi Claude Code ngừng làm việc";
+"keep_awake.grace.immediately" = "Ngủ ngay";
+"keep_awake.grace.stay" = "Giữ thức thêm %@";
+"keep_awake.hooks_note" = "Hoạt động được phát hiện qua hook của Claude Code trong ~/.claude/settings.json";
+"keep_awake.sleep_type" = "Ngăn chế độ ngủ";
+"keep_awake.sleep_type_desc" = "Chọn màn hình có luôn bật trong khi giữ máy Mac thức hay không";
+"keep_awake.sleep_type.system" = "Màn hình có thể tắt";
+"keep_awake.sleep_type.display" = "Giữ màn hình bật";
+"keep_awake.lid_note" = "Khi gập máy, máy Mac vẫn sẽ ngủ trừ khi đang cắm sạc và dùng màn hình ngoài";
+"keep_awake.state_off" = "Tắt";
+"keep_awake.state_on_indefinite" = "Bật — giữ thức cho đến khi bạn tắt (∞)";
+"keep_awake.state_on_remaining" = "Bật — còn %@";
+"keep_awake.state_auto_active" = "Tự động — Claude Code đang làm việc";
+"keep_awake.state_auto_grace" = "Tự động — Claude đã xong, giữ thức thêm %@";
+"keep_awake.state_auto_armed" = "Tự động đang bật — giữ máy Mac thức khi Claude Code làm việc";
+"keep_awake.hint_click_on" = "Nhấp để bật — giữ máy Mac thức khi Claude Code làm việc";
+"keep_awake.hint_click_off" = "Nhấp để tắt";
+"keep_awake.hint_click_auto_off" = "Nhấp để tắt chế độ tự động — sẽ tắt cho đến khi bạn bật lại";
+"keep_awake.menu_for" = "Giữ thức trong %@";
+"keep_awake.menu_indefinite" = "Giữ thức cho đến khi tắt";
+"keep_awake.menu_off" = "Tắt giữ máy thức";
+"keep_awake.consent_title" = "Thêm hook của Claude Code?";
+"keep_awake.consent_message" = "Để biết khi nào Claude Code đang làm việc, Keep Awake thêm hook vào ~/.claude/settings.json và chỉ lắng nghe trên máy Mac này. Các hook và cài đặt khác của bạn được giữ nguyên. Bạn có thể gỡ chúng bằng cách tắt tùy chọn này.";
+"keep_awake.consent_confirm" = "Thêm hook và bật";
+"keep_awake.problem_hooks" = "Chế độ tự động không thấy Claude Code: thiếu hook trong ~/.claude/settings.json. Tắt rồi bật lại chế độ tự động để cài lại.";
+"keep_awake.problem_listener" = "Chế độ tự động không thấy Claude Code: cổng của trình lắng nghe cục bộ đang được ứng dụng khác hoặc một bản Claude Usage khác sử dụng.";

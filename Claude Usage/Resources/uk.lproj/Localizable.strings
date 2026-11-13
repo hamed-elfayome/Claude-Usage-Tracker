@@ -58,12 +58,15 @@
 /* ==================== */
 "menubar.claude_usage" = "Використання Claude";
 "menubar.session_usage" = "Використання сесії";
+"menubar.session_remaining" = "Залишок сесії";
 "menubar.weekly_usage" = "Тижневе";
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";
 "menubar.fable_usage" = "Fable";
 "menubar.design_usage" = "Дизайн";
 "menubar.extra_usage" = "Додаткове використання";
+"menubar.organization" = "Організація";
+"menubar.monthly_spend" = "Місячні витрати";
 "menubar.api_credits" = "Кредити API";
 "menubar.api_cost" = "Вартість API";
 "menubar.this_month" = "Цього місяця";
@@ -260,6 +263,8 @@
 /* MARK: - Error Messages */
 /* ==================== */
 "error.session_key_not_found" = "Ключ сесії не знайдено";
+"error.cli_login_expired" = "Збережений вхід Claude Code для %@ прострочено";
+"error.cli_login_expired_suggestion" = "Перемикання скасовано, а поточний вхід залишено без змін, тож запущені сесії Claude Code працюють далі. Щоб знову підключити %@, виконайте /login у Claude Code з цим обліковим записом, а потім знову перемкніться на %@.";
 "error.session_key_not_found.suggestion" = "Будь ласка, налаштуйте ключ сесії Claude у Налаштуваннях";
 "error.session_key_invalid" = "Невірний ключ сесії";
 "error.session_key_invalid.suggestion" = "Будь ласка, перевірте формат ключа сесії. Він має починатися з «sk-ant-»";
@@ -374,6 +379,10 @@
 "claudecode.component_weekly_description" = "Тижневе використання токенів з баром та часом скидання";
 "claudecode.component_extra_usage" = "Показати додаткове використання";
 "claudecode.component_extra_usage_description" = "Індикатор вартості (напр., 9,49 USD)";
+"claudecode.component_cache" = "Show Prompt Cache";
+"claudecode.component_cache_description" = "Cache hit rate, with the cause of a recent miss (e.g., ⚡ 94% ✗ tools)";
+"claudecode.component_fable" = "Показувати тижневий Fable";
+"claudecode.component_fable_description" = "Тижневий ліміт Fable (напр., Fable: 24%)";
 "claudecode.weekly_label" = "Показати мітку \"Weekly:\"";
 "claudecode.requirement_sessionkey" = "• Ключ сесії налаштовано в Облікові дані → вкладка Claude.ai";
 "claudecode.requirement_restart" = "• Перезапустіть Claude CLI після застосування змін";
@@ -463,6 +472,8 @@
 "appearance.show_pace_marker_description" = "Колір часового маркера залежить від прогнозованого темпу використання (зелений → фіолетовий). Застосовується до показників сесії та тижневих.";
 "appearance.pace_coloring_title" = "Кольори смуг за темпом";
 "appearance.pace_coloring_description" = "Колір смуг прогресу залежить від прогнозованого темпу, а не від поточного рівня використання. Проєктує, чи досягнете ви лімітів до кінця циклу.";
+"appearance.exclude_weekends_title" = "Не враховувати вихідні в тижневому темпі";
+"appearance.exclude_weekends_description" = "Тижневий часовий маркер і темп рухаються лише в робочі дні та зупиняються на вихідних. Корисно, якщо ви користуєтеся Claude переважно протягом робочого тижня.";
 "appearance.multiprofile_locked_title" = "Налаштування зовнішнього вигляду заблоковано";
 "appearance.multiprofile_locked_description" = "Ці налаштування недоступні, поки активно відображення кількох профілів. Кожен профіль використовує власний зовнішній вигляд у режимі кількох профілів.";
 "appearance.disable_multiprofile" = "Вимкнути відображення кількох профілів";
@@ -550,6 +561,9 @@
 "general.refresh_seconds" = "%d секунд";
 "general.refresh_min" = "10с";
 "general.refresh_max" = "300с";
+"general.spend_target_title" = "Місячна ціль витрат";
+"general.spend_target_subtitle" = "Необов'язковий особистий бюджет на місяць. Установіть, щоб показати смугу місячних витрат у спливаючому вікні; залиште порожнім, щоб показувати лише суму.";
+"general.spend_target_placeholder" = "напр. 1500";
 "general.autostart_title" = "Автозапуск сесії";
 "general.autostart_subtitle" = "Автоматично запускати нову сесію за потреби";
 "general.autostart_toggle" = "Автозапуск нової сесії";
@@ -913,6 +927,11 @@
 "popover.time_format_24h" = "24-годинний";
 "popover.time_format_system" = "Системний";
 "popover.overage_balance" = "Баланс";
+"popover.no_limits_reported" = "Цей план не повідомляє лімітів використання, тому тут нічого відстежувати.";
+
+// MARK: - Monthly Spend
+"popover.monthly_spend_period" = "Цей місяць";
+
 "popover.banner.credentials_expired" = "Облікові дані застаріли. Оновіть у Налаштуваннях.";
 "popover.banner.refresh_failed" = "Оновлення не вдалося %d разів";
 "popover.banner.updated_ago" = "Оновлено %dхв тому";
@@ -1016,9 +1035,50 @@
 "notch.server.port_busy" = "Порт %@ зайнятий — можливо, запущено іншу копію застосунку?";
 "notch.server.retry" = "Повторити";
 
+/* Keep Awake */
+"section.keep_awake_title" = "Не давати засинати";
+"section.keep_awake_desc" = "Запобігає переходу Mac у режим сну";
+"keep_awake.manual_title" = "Ручне керування";
+"keep_awake.manual_desc" = "Вмикайте самостійно, з необов'язковим таймером";
+"keep_awake.enable" = "Не давати Mac засинати";
+"keep_awake.enable_desc" = "Тимчасово запобігає переходу Mac у режим сну";
+"keep_awake.status_active" = "Зараз Mac утримується активним";
+"keep_awake.remaining" = "Вимкнеться через %@";
+"keep_awake.duration" = "Тривалість";
+"keep_awake.duration.indefinite" = "Доки не вимкнете";
+"keep_awake.duration.custom" = "Власна…";
+"keep_awake.custom_hours" = "%d год";
+"keep_awake.auto_title" = "Автоматично";
+"keep_awake.auto_card_desc" = "Рекомендовано: тримає Mac активним лише тоді, коли Claude Code справді працює";
+"keep_awake.auto" = "Не засинати, поки Claude Code працює";
+"keep_awake.auto_desc" = "Залишається активним під час сеансів Claude Code, а потім знову дозволяє сон. Встановлює хуки Claude Code";
+"keep_awake.grace" = "Коли Claude Code завершить роботу";
+"keep_awake.grace.immediately" = "Одразу заснути";
+"keep_awake.grace.stay" = "Лишатися активним %@";
+"keep_awake.hooks_note" = "Активність визначається через хуки Claude Code у ~/.claude/settings.json";
+"keep_awake.sleep_type" = "Запобігання сну";
+"keep_awake.sleep_type_desc" = "Виберіть, чи залишається екран увімкненим, поки Mac активний";
+"keep_awake.sleep_type.system" = "Екран може вимикатися";
+"keep_awake.sleep_type.display" = "Тримати екран увімкненим";
+"keep_awake.lid_note" = "Із закритою кришкою Mac все одно засне, якщо він не підключений до живлення із зовнішнім дисплеєм";
+"keep_awake.state_off" = "Вимкнено";
+"keep_awake.state_on_indefinite" = "Увімкнено — активний, доки не вимкнете (∞)";
+"keep_awake.state_on_remaining" = "Увімкнено — залишилось %@";
+"keep_awake.state_auto_active" = "Авто — Claude Code працює";
+"keep_awake.state_auto_grace" = "Авто — Claude завершив, активний ще %@";
+"keep_awake.state_auto_armed" = "Авто увімкнено — тримає Mac активним, поки Claude Code працює";
+"keep_awake.hint_click_on" = "Натисніть, щоб увімкнути — тримає Mac активним, поки Claude Code працює";
+"keep_awake.hint_click_off" = "Натисніть, щоб вимкнути";
+"keep_awake.hint_click_auto_off" = "Натисніть, щоб вимкнути авторежим — лишається вимкненим, доки не увімкнете знову";
+"keep_awake.menu_for" = "Не засинати %@";
+"keep_awake.menu_indefinite" = "Не засинати, доки не вимкнено";
+"keep_awake.menu_off" = "Вимкнути утримання";
+
 /* Sponsor slot */
 "sponsor.slot_title" = "Це місце доступне для спонсорів";
 "sponsor.slot_cta" = "Звʼязатися";
+"sponsor.label" = "Спонсор";
+"sponsor.open_in_browser" = "Відкрити в браузері";
 
 /* Multi-Provider / OpenAI Codex */
 "section.codex_account_title" = "Обліковий запис Codex";
@@ -1088,3 +1148,8 @@
 "support.popup_signature" = "команда з однієї людини за Claude Usage";
 "support.popup_body" = "Безплатний, з відкритим кодом, зроблений однією людиною — без реклами й стеження. Якщо він урятував вас від спаленого ліміту сесії, кава тримає його живим.";
 "support.popup_days" = "Пильнує ваші ліміти вже %d днів — завжди безплатно";
+"keep_awake.consent_title" = "Додати хуки Claude Code?";
+"keep_awake.consent_message" = "Щоб знати, коли Claude Code працює, Keep Awake додає хуки до ~/.claude/settings.json і приймає їх лише на цьому Mac. Інші ваші хуки та налаштування не змінюються. Їх можна прибрати, вимкнувши цю опцію.";
+"keep_awake.consent_confirm" = "Додати хуки й увімкнути";
+"keep_awake.problem_hooks" = "Автоматичний режим не бачить Claude Code: його хуків немає в ~/.claude/settings.json. Вимкніть і знову ввімкніть автоматичний режим, щоб перевстановити їх.";
+"keep_awake.problem_listener" = "Автоматичний режим не бачить Claude Code: порт локального слухача зайнятий іншою програмою або іншою копією Claude Usage.";

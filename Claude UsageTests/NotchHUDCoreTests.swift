@@ -132,10 +132,42 @@ final class NotchHookEventTests: XCTestCase {
                                            payload: ["session_id": "s", "cwd": "/p"]),
                        .sessionStart(id: "s", cwd: "/p"))
         XCTAssertEqual(NotchHookEvent.from(pathSuffix: "stop", payload: ["session_id": "s"]),
-                       .stop(id: "s"))
+                       .stop(id: "s", cwd: nil))
         XCTAssertEqual(NotchHookEvent.from(pathSuffix: "notification",
                                            payload: ["session_id": "s", "message": "waiting"]),
-                       .notification(id: "s", message: "waiting"))
+                       .notification(id: "s", cwd: nil, message: "waiting"))
+    }
+
+    func testSessionTitleDecodesFromStartAndPrompt() {
+        XCTAssertEqual(NotchHookEvent.from(pathSuffix: "session-start",
+                                           payload: ["session_id": "s", "session_title": "auth refactor"]),
+                       .sessionStart(id: "s", cwd: nil, title: "auth refactor"))
+        XCTAssertEqual(NotchHookEvent.from(pathSuffix: "user-prompt-submit",
+                                           payload: ["session_id": "s", "prompt": "hi", "session_title": "auth refactor"]),
+                       .userPromptSubmit(id: "s", cwd: nil, prompt: "hi", title: "auth refactor"))
+    }
+
+    func testStopReportsBackgroundWorkOnlyForAgentTasks() {
+        func stop(_ types: [String]) -> NotchHookEvent? {
+            NotchHookEvent.from(pathSuffix: "stop", payload: [
+                "session_id": "s",
+                "background_tasks": types.map { ["id": "t", "type": $0, "status": "running"] },
+            ])
+        }
+        XCTAssertEqual(stop([]), .stop(id: "s", cwd: nil, backgroundWork: false))
+        XCTAssertEqual(stop(["subagent"]), .stop(id: "s", cwd: nil, backgroundWork: true))
+        XCTAssertEqual(stop(["shell", "workflow"]), .stop(id: "s", cwd: nil, backgroundWork: true))
+        // A dev server or log tail outlives the work; it must not read as busy.
+        XCTAssertEqual(stop(["shell", "monitor"]), .stop(id: "s", cwd: nil, backgroundWork: false))
+    }
+
+    func testIdlePromptNotificationDecodesAsIdleNudge() {
+        XCTAssertEqual(NotchHookEvent.from(pathSuffix: "notification",
+                                           payload: ["session_id": "s", "notification_type": "idle_prompt"]),
+                       .notification(id: "s", cwd: nil, message: nil, isIdleNudge: true))
+        XCTAssertEqual(NotchHookEvent.from(pathSuffix: "notification",
+                                           payload: ["session_id": "s", "notification_type": "permission_prompt"]),
+                       .notification(id: "s", cwd: nil, message: nil, isIdleNudge: false))
     }
 }
 
@@ -157,35 +189,92 @@ final class NotchSessionStoreTests: XCTestCase {
         XCTAssertEqual(store.sessions[0].displayName, "proj")
     }
 
+    func testLateObservedSessionIsNamedFromAnyEventCwd() {
+        // Sessions first seen mid-flight (tracker restart, sub-process without
+        // a SessionStart) must not be stuck as "Session XXXXX".
+        store.apply(.notification(id: "late", cwd: "/Users/dev/webapp", message: "waiting"))
+        XCTAssertEqual(store.sessions[0].displayName, "webapp")
+
+        store.apply(.stop(id: "sub", cwd: "/Users/dev/api-server"))
+        XCTAssertEqual(store.sessions[1].displayName, "api-server")
+    }
+
     func testNotificationSetsAttentionAndNextActivityClearsIt() {
         store.apply(.sessionStart(id: "s1", cwd: "/p"))
-        store.apply(.notification(id: "s1", message: "Claude needs your permission"))
+        store.apply(.notification(id: "s1", cwd: nil, message: "Claude needs your permission"))
         XCTAssertEqual(store.sessions[0].status, .needsAttention)
 
         store.apply(.preToolUse(id: "s1", cwd: nil, status: .runningCommand, task: "ls"))
         XCTAssertEqual(store.sessions[0].status, .runningCommand)
     }
 
+    func testNotificationAfterStopKeepsSessionIdle() {
+        store.apply(.sessionStart(id: "s1", cwd: nil))
+        store.apply(.stop(id: "s1", cwd: nil))
+        XCTAssertEqual(store.sessions[0].status, .idle)
+
+        // Claude Code's "waiting for your input" nudge fires ~60s after Stop.
+        // A finished session must stay idle so auto keep-awake doesn't re-arm
+        // and hold the Mac awake until the terminal closes.
+        store.apply(.notification(id: "s1", cwd: nil, message: "Claude is waiting for your input"))
+        XCTAssertEqual(store.sessions[0].status, .idle)
+    }
+
     func testStopSetsIdleAndSessionEndRemoves() {
         store.apply(.sessionStart(id: "s1", cwd: nil))
-        store.apply(.stop(id: "s1"))
+        store.apply(.stop(id: "s1", cwd: nil))
         XCTAssertEqual(store.sessions[0].status, .idle)
         store.apply(.sessionEnd(id: "s1"))
         XCTAssertTrue(store.sessions.isEmpty)
     }
 
+    func testCustomTitleNamesTheSessionAndFollowsARename() {
+        store.apply(.sessionStart(id: "s1", cwd: "/Users/dev/api-server"))
+        XCTAssertEqual(store.sessions[0].displayName, "api-server")
+
+        store.apply(.userPromptSubmit(id: "s1", cwd: "/Users/dev/api-server", prompt: "hi", title: "auth refactor"))
+        XCTAssertEqual(store.sessions[0].displayName, "auth refactor")
+
+        // Events without a title leave the one already known in place.
+        store.apply(.userPromptSubmit(id: "s1", cwd: "/Users/dev/api-server", prompt: "more"))
+        XCTAssertEqual(store.sessions[0].displayName, "auth refactor")
+
+        store.apply(.sessionStart(id: "s2", cwd: "/Users/dev/api-server", title: "billing bug"))
+        XCTAssertEqual(store.sessions[1].displayName, "billing bug")
+    }
+
+    func testStopWithBackgroundWorkStaysWorkingUntilAFinalStop() {
+        store.apply(.sessionStart(id: "s1", cwd: nil))
+        store.apply(.stop(id: "s1", cwd: nil, backgroundWork: true))
+        XCTAssertEqual(store.sessions[0].status, .thinking)
+        XCTAssertNotNil(store.sessions[0].currentTask)
+
+        // The idle reminder fires ~60s after any Stop; the session is waiting
+        // on its subagents, not on the user.
+        store.apply(.notification(id: "s1", cwd: nil, message: "waiting", isIdleNudge: true))
+        XCTAssertEqual(store.sessions[0].status, .thinking)
+
+        // A real prompt from the background work still raises the cue.
+        store.apply(.notification(id: "s1", cwd: nil, message: "permission"))
+        XCTAssertEqual(store.sessions[0].status, .needsAttention)
+
+        store.apply(.stop(id: "s1", cwd: nil))
+        XCTAssertEqual(store.sessions[0].status, .idle)
+        XCTAssertNil(store.sessions[0].currentTask)
+    }
+
     func testToolFailureSetsErrorFlagAndPostToolUseClearsIt() {
         store.apply(.sessionStart(id: "s1", cwd: nil))
-        store.apply(.toolFailure(id: "s1"))
+        store.apply(.toolFailure(id: "s1", cwd: nil))
         XCTAssertTrue(store.sessions[0].hasRecentError)
-        store.apply(.postToolUse(id: "s1"))
+        store.apply(.postToolUse(id: "s1", cwd: nil))
         XCTAssertFalse(store.sessions[0].hasRecentError)
     }
 
     func testPrimarySessionPrefersAttention() {
         store.apply(.preToolUse(id: "busy", cwd: nil, status: .runningCommand, task: "build"))
         store.apply(.sessionStart(id: "waiting", cwd: nil))
-        store.apply(.notification(id: "waiting", message: "input needed"))
+        store.apply(.notification(id: "waiting", cwd: nil, message: "input needed"))
         XCTAssertEqual(store.primarySession?.id, "waiting")
     }
 
@@ -195,7 +284,7 @@ final class NotchSessionStoreTests: XCTestCase {
 
         store.apply(.sessionStart(id: "old", cwd: nil))
         store.apply(.sessionStart(id: "attention", cwd: nil))
-        store.apply(.notification(id: "attention", message: "waiting"))
+        store.apply(.notification(id: "attention", cwd: nil, message: "waiting"))
 
         // 3 minutes later: normal session swept (120s), attention survives (600s grace)
         fakeNow = fakeNow.addingTimeInterval(180)
@@ -209,7 +298,7 @@ final class NotchSessionStoreTests: XCTestCase {
     }
 
     func testPromptTruncatedTo80() {
-        store.apply(.userPromptSubmit(id: "s1", prompt: String(repeating: "p", count: 200)))
+        store.apply(.userPromptSubmit(id: "s1", cwd: nil, prompt: String(repeating: "p", count: 200)))
         XCTAssertEqual(store.sessions[0].lastUserPrompt?.count, 80)
     }
 }

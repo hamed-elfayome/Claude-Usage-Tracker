@@ -58,12 +58,15 @@
 /* ==================== */
 "menubar.claude_usage" = "Claude Kullanım";
 "menubar.session_usage" = "Oturum Kullanımı";
+"menubar.session_remaining" = "Kalan Oturum";
 "menubar.weekly_usage" = "Haftalık";
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";
 "menubar.fable_usage" = "Fable";
 "menubar.design_usage" = "Tasarım";
 "menubar.extra_usage" = "Ek Kullanım";
+"menubar.organization" = "Kuruluş";
+"menubar.monthly_spend" = "Aylık Harcama";
 "menubar.api_credits" = "API Kredileri";
 "menubar.api_cost" = "API Maliyeti";
 "menubar.this_month" = "Bu Ay";
@@ -260,6 +263,8 @@
 /* MARK: - Error Messages */
 /* ==================== */
 "error.session_key_not_found" = "Oturum anahtarı bulunamadı";
+"error.cli_login_expired" = "%@ için kayıtlı Claude Code oturumunun süresi doldu";
+"error.cli_login_expired_suggestion" = "Geçiş iptal edildi ve mevcut oturumunuz olduğu gibi bırakıldı, bu nedenle çalışan Claude Code oturumları çalışmaya devam ediyor. %@ hesabını yeniden bağlamak için Claude Code'da o hesapla /login komutunu çalıştırın, ardından tekrar %@ profiline geçin.";
 "error.session_key_not_found.suggestion" = "Lütfen Ayarlar'dan Claude oturum anahtarınızı yapılandırın";
 "error.session_key_invalid" = "Geçersiz oturum anahtarı";
 "error.session_key_invalid.suggestion" = "Lütfen oturum anahtarınızın biçimini kontrol edin. 'sk-ant-' ile başlamalıdır";
@@ -374,6 +379,10 @@
 "claudecode.component_weekly_description" = "Çubuk ve sıfırlanma zamanı ile haftalık token kullanımı";
 "claudecode.component_extra_usage" = "Ekstra Kullanımı Göster";
 "claudecode.component_extra_usage_description" = "Maliyet göstergesi (ör. 9,49 USD)";
+"claudecode.component_cache" = "Show Prompt Cache";
+"claudecode.component_cache_description" = "Cache hit rate, with the cause of a recent miss (e.g., ⚡ 94% ✗ tools)";
+"claudecode.component_fable" = "Haftalık Fable'ı göster";
+"claudecode.component_fable_description" = "Haftalık Fable sınırı (ör. Fable: 24%)";
 "claudecode.weekly_label" = "\"Haftalık:\" etiketini göster";
 "claudecode.requirement_sessionkey" = "• Kimlik Bilgileri → Claude.ai sekmesinde oturum anahtarı yapılandırılmış olmalı";
 "claudecode.requirement_restart" = "• Değişiklikleri uyguladıktan sonra Claude CLI'ı yeniden başlatın";
@@ -463,6 +472,8 @@
 "appearance.pace_marker_section_subtitle" = "Sıfırlama dönemlerine göre kullanım temposunu takip edin";
 "appearance.show_pace_marker_title" = "İşaretçiyi Tempoya Göre Renklendir";
 "appearance.show_pace_marker_description" = "Zaman işaretçisini tahmini kullanım temposuna göre renklendir (yeşil → mor). Oturum ve haftalık metriklere uygulanır.";
+"appearance.exclude_weekends_title" = "Haftalık Tempodan Hafta Sonlarını Hariç Tut";
+"appearance.exclude_weekends_description" = "Haftalık zaman işaretçisi ve tempo yalnızca hafta içi ilerler, hafta sonu durur. Claude'u çoğunlukla iş haftası boyunca kullanıyorsanız kullanışlıdır.";
 "appearance.multiprofile_locked_title" = "Görünüm Ayarları Kilitli";
 "appearance.multiprofile_locked_description" = "Çoklu Profil Görünümü etkinken bu ayarlar devre dışıdır. Çoklu profil modunda her profil kendi görünümünü kullanır.";
 "appearance.disable_multiprofile" = "Çoklu Profil Görünümünü Kapat";
@@ -550,6 +561,9 @@
 "general.refresh_seconds" = "%d saniye";
 "general.refresh_min" = "10sn";
 "general.refresh_max" = "300sn";
+"general.spend_target_title" = "Aylık Harcama Hedefi";
+"general.spend_target_subtitle" = "İsteğe bağlı aylık kişisel bütçe. Açılır pencerede bir Aylık Harcama çubuğu göstermek için ayarlayın; yalnızca tutarı göstermek için boş bırakın.";
+"general.spend_target_placeholder" = "örn. 1500";
 "general.autostart_title" = "Oturumu Otomatik Başlat";
 "general.autostart_subtitle" = "Gerektiğinde otomatik olarak yeni bir oturum başlat";
 "general.autostart_toggle" = "Yeni Oturumu Otomatik Başlat";
@@ -960,6 +974,10 @@
 
 // MARK: - Overage Balance
 "popover.overage_balance" = "Bakiye";
+"popover.no_limits_reported" = "Bu plan kullanım sınırı bildirmiyor; bu yüzden burada izlenecek bir şey yok.";
+
+// MARK: - Monthly Spend
+"popover.monthly_spend_period" = "Bu ay";
 
 // MARK: - Setup Wizard CLI Detection
 "setup.cli_detecting" = "CLI kimlik bilgileri kontrol ediliyor...";
@@ -1013,9 +1031,50 @@
 "notch.server.port_busy" = "%@ bağlantı noktası kullanımda — uygulamanın başka bir kopyası mı çalışıyor?";
 "notch.server.retry" = "Yeniden dene";
 
+/* Keep Awake */
+"section.keep_awake_title" = "Uyanık Tut";
+"section.keep_awake_desc" = "Mac'in uykuya geçmesini engeller";
+"keep_awake.manual_title" = "Elle denetim";
+"keep_awake.manual_desc" = "İstediğinizde kendiniz açın, isteğe bağlı zamanlayıcıyla";
+"keep_awake.enable" = "Mac'i uyanık tut";
+"keep_awake.enable_desc" = "Mac'in uykuya geçmesini geçici olarak engeller";
+"keep_awake.status_active" = "Mac şu anda uyanık tutuluyor";
+"keep_awake.remaining" = "%@ sonra kapanır";
+"keep_awake.duration" = "Süre";
+"keep_awake.duration.indefinite" = "Kapatana kadar";
+"keep_awake.duration.custom" = "Özel…";
+"keep_awake.custom_hours" = "%d saat";
+"keep_awake.auto_title" = "Otomatik";
+"keep_awake.auto_card_desc" = "Önerilen: Mac'i yalnızca Claude Code gerçekten çalışırken uyanık tutar";
+"keep_awake.auto" = "Claude Code çalışırken uyanık tut";
+"keep_awake.auto_desc" = "Etkin Claude Code oturumları sırasında uyanık kalır, ardından uykuya yeniden izin verir. Claude Code kancalarını kurar";
+"keep_awake.grace" = "Claude Code çalışmayı bıraktığında";
+"keep_awake.grace.immediately" = "Hemen uykuya geç";
+"keep_awake.grace.stay" = "%@ uyanık kal";
+"keep_awake.hooks_note" = "Etkinlik, ~/.claude/settings.json içindeki Claude Code kancalarıyla algılanır";
+"keep_awake.sleep_type" = "Uyku engelleme";
+"keep_awake.sleep_type_desc" = "Mac uyanık tutulurken ekranın açık kalıp kalmayacağını seçin";
+"keep_awake.sleep_type.system" = "Ekran uyuyabilir";
+"keep_awake.sleep_type.display" = "Ekranı açık tut";
+"keep_awake.lid_note" = "Kapak kapalıyken Mac, güce bağlı ve harici ekran kullanmıyorsa yine de uykuya geçer";
+"keep_awake.state_off" = "Kapalı";
+"keep_awake.state_on_indefinite" = "Açık — siz kapatana kadar uyanık (∞)";
+"keep_awake.state_on_remaining" = "Açık — %@ kaldı";
+"keep_awake.state_auto_active" = "Otomatik — Claude Code çalışıyor";
+"keep_awake.state_auto_grace" = "Otomatik — Claude bitirdi, %@ daha uyanık";
+"keep_awake.state_auto_armed" = "Otomatik açık — Claude Code çalışırken Mac'i uyanık tutar";
+"keep_awake.hint_click_on" = "Açmak için tıklayın — Claude Code çalışırken Mac'i uyanık tutar";
+"keep_awake.hint_click_off" = "Kapatmak için tıklayın";
+"keep_awake.hint_click_auto_off" = "Otomatik modu kapatmak için tıklayın — yeniden açana kadar kapalı kalır";
+"keep_awake.menu_for" = "%@ boyunca uyanık tut";
+"keep_awake.menu_indefinite" = "Kapatana kadar uyanık tut";
+"keep_awake.menu_off" = "Uyanık tutmayı kapat";
+
 /* Sponsor slot */
 "sponsor.slot_title" = "Bu alan sponsorlara açıktır";
 "sponsor.slot_cta" = "İletişime geçin";
+"sponsor.label" = "Sponsor";
+"sponsor.open_in_browser" = "Tarayıcıda Aç";
 
 /* Multi-Provider / OpenAI Codex */
 "section.codex_account_title" = "Codex Hesabı";
@@ -1085,3 +1144,8 @@
 "support.popup_signature" = "Claude Usage'ın arkasındaki tek kişilik ekip";
 "support.popup_body" = "Ücretsiz, açık kaynak, tek kişi tarafından yapıldı — reklam yok, izleme yok. Sizi bir oturum limitini yakmaktan kurtardıysa, bir kahve onu ayakta tutar.";
 "support.popup_days" = "%d gündür limitlerinizi izliyor — her zaman ücretsiz";
+"keep_awake.consent_title" = "Claude Code kancaları eklensin mi?";
+"keep_awake.consent_message" = "Claude Code'un ne zaman çalıştığını anlamak için Keep Awake, ~/.claude/settings.json dosyasına kancalar ekler ve bunları yalnızca bu Mac'te dinler. Diğer kancalarınız ve ayarlarınız olduğu gibi kalır. Bu seçeneği kapatarak kaldırabilirsiniz.";
+"keep_awake.consent_confirm" = "Kancaları ekle ve aç";
+"keep_awake.problem_hooks" = "Otomatik mod Claude Code'u göremiyor: kancalar ~/.claude/settings.json dosyasında eksik. Yeniden kurmak için otomatik modu kapatıp tekrar açın.";
+"keep_awake.problem_listener" = "Otomatik mod Claude Code'u göremiyor: yerel dinleyicinin portu başka bir uygulama veya başka bir Claude Usage kopyası tarafından kullanılıyor.";

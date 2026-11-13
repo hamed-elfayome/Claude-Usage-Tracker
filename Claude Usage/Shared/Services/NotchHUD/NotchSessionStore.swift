@@ -40,19 +40,22 @@ final class NotchSessionStore: ObservableObject {
 
     func apply(_ event: NotchHookEvent) {
         switch event {
-        case let .sessionStart(id, cwd):
+        case let .sessionStart(id, cwd, title):
             upsert(id: id, cwd: cwd) { session in
                 session.status = .thinking
                 session.currentTask = nil
+                if let title = title, !title.isEmpty { session.title = title }
             }
 
         case let .sessionEnd(id):
             sessions.removeAll { $0.id == id }
 
-        case let .userPromptSubmit(id, prompt):
-            upsert(id: id) { session in
+        case let .userPromptSubmit(id, cwd, prompt, title):
+            upsert(id: id, cwd: cwd) { session in
                 session.status = .thinking
                 session.currentTask = nil
+                // Picks up a /rename made mid-session on the next prompt.
+                if let title = title, !title.isEmpty { session.title = title }
                 if let prompt = prompt, !prompt.isEmpty {
                     session.lastUserPrompt = String(prompt.prefix(80))
                 }
@@ -64,25 +67,38 @@ final class NotchSessionStore: ObservableObject {
                 session.currentTask = task
             }
 
-        case let .postToolUse(id):
-            upsert(id: id) { session in
+        case let .postToolUse(id, cwd):
+            upsert(id: id, cwd: cwd) { session in
                 session.status = .thinking
                 session.hasRecentError = false
             }
 
-        case let .toolFailure(id):
-            upsert(id: id) { session in
+        case let .toolFailure(id, cwd):
+            upsert(id: id, cwd: cwd) { session in
                 session.hasRecentError = true
             }
 
-        case let .stop(id):
-            upsert(id: id) { session in
-                session.status = .idle
-                session.currentTask = nil
+        case let .stop(id, cwd, backgroundWork):
+            upsert(id: id, cwd: cwd) { session in
+                // A turn that ends with subagents still running is waiting on
+                // them, so it keeps reading as working until the Stop that
+                // follows their return.
+                session.status = backgroundWork ? .thinking : .idle
+                session.currentTask = backgroundWork ? "notch.task.subagent".localized : nil
             }
 
-        case let .notification(id, message):
-            upsert(id: id) { session in
+        case let .notification(id, cwd, message, isIdleNudge):
+            upsert(id: id, cwd: cwd) { session in
+                // A notification arriving while the session is already .idle is
+                // Claude Code's "waiting for your input" nudge, fired ~60s after
+                // the Stop hook: the task is finished, not blocked. Re-raising
+                // attention here would let auto keep-awake re-arm on a done
+                // session and hold the Mac awake until the terminal closes. A
+                // genuine permission prompt arrives mid-work (the session is
+                // never .idle then) and still raises the cue.
+                // The same nudge reaches a session paused on background
+                // work, which is not idle; there it is told apart by type.
+                guard session.status != .idle, !isIdleNudge else { return }
                 session.status = .needsAttention
                 if let message = message, !message.isEmpty {
                     session.currentTask = String(message.prefix(80))

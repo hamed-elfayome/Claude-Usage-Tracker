@@ -135,6 +135,25 @@ final class UsageStatusCalculatorTests: XCTestCase {
         )
     }
 
+    // MARK: - Popover Percentage Labels
+
+    @MainActor
+    func testUsageRowLabelsMatchDisplayMode() {
+        for usedPercentage in [0.0, 65.0, 100.0, 110.0] {
+            let usedRow = UsageRow(
+                title: "Session", subtitle: nil, usedPercentage: usedPercentage,
+                showRemaining: false, resetTime: nil, periodDuration: nil
+            )
+            let remainingRow = UsageRow(
+                title: "Session", subtitle: nil, usedPercentage: usedPercentage,
+                showRemaining: true, resetTime: nil, periodDuration: nil
+            )
+
+            XCTAssertEqual(usedRow.percentageText, "\(Int(usedPercentage))% \("menubar.used".localized)")
+            XCTAssertEqual(remainingRow.percentageText, "\(Int(max(0, 100 - usedPercentage)))% \("menubar.remaining".localized)")
+        }
+    }
+
     // MARK: - Edge Cases
 
     func testBoundaryConditions_UsedMode() {
@@ -201,5 +220,159 @@ final class UsageStatusCalculatorTests: XCTestCase {
             UsageStatusCalculator.getDisplayPercentage(usedPercentage: 110, showRemaining: true),
             0.0  // max(0, 100 - 110) = 0
         )
+    }
+
+    // MARK: - Elapsed Fraction Excluding Weekends
+
+    func testExcludingWeekends_FridayNightIsHalfwayThroughWorkWeek() {
+        // Weekly reset on Wednesday at noon: by Friday midnight 2.5 of the 5 weekdays have passed
+        let calendar = makeCalendar()
+        let reset = makeDate(calendar, month: 9, day: 16, hour: 12)  // Wednesday
+        let fridayMidnight = makeDate(calendar, month: 9, day: 12)
+
+        XCTAssertEqual(weeklyFraction(reset: reset, now: fridayMidnight, calendar: calendar), 0.5, accuracy: 1e-9)
+        // Counting weekends, only 2.5 of 7 days have passed
+        XCTAssertEqual(
+            weeklyFraction(reset: reset, now: fridayMidnight, calendar: calendar, excludingWeekends: false),
+            2.5 / 7,
+            accuracy: 1e-9
+        )
+    }
+
+    func testExcludingWeekends_HoldsStillOverWeekend() {
+        let calendar = makeCalendar()
+        let reset = makeDate(calendar, month: 9, day: 16, hour: 12)
+        let saturdayMorning = makeDate(calendar, month: 9, day: 12, hour: 9)
+        let sundayNight = makeDate(calendar, month: 9, day: 13, hour: 23)
+        let mondayMidnight = makeDate(calendar, month: 9, day: 14)
+
+        for now in [saturdayMorning, sundayNight, mondayMidnight] {
+            XCTAssertEqual(weeklyFraction(reset: reset, now: now, calendar: calendar), 0.5, accuracy: 1e-9)
+        }
+    }
+
+    func testExcludingWeekends_AdvancesOnWeekdays() {
+        let calendar = makeCalendar()
+        let reset = makeDate(calendar, month: 9, day: 16, hour: 12)
+        let thursdayMidnight = makeDate(calendar, month: 9, day: 10)
+        let mondayNoon = makeDate(calendar, month: 9, day: 14, hour: 12)
+        let wednesdayMidnight = makeDate(calendar, month: 9, day: 16)
+
+        XCTAssertEqual(weeklyFraction(reset: reset, now: thursdayMidnight, calendar: calendar), 0.1, accuracy: 1e-9)
+        XCTAssertEqual(weeklyFraction(reset: reset, now: mondayNoon, calendar: calendar), 0.6, accuracy: 1e-9)
+        XCTAssertEqual(weeklyFraction(reset: reset, now: wednesdayMidnight, calendar: calendar), 0.9, accuracy: 1e-9)
+    }
+
+    func testExcludingWeekends_ResetDuringWeekend() {
+        // Reset on Sunday at 10:00: the fraction stays at 0 until Monday and reaches 1 by Saturday
+        let calendar = makeCalendar()
+        let reset = makeDate(calendar, month: 9, day: 13, hour: 10)
+        let sundayEvening = makeDate(calendar, month: 9, day: 6, hour: 20)
+        let mondayNoon = makeDate(calendar, month: 9, day: 7, hour: 12)
+        let saturdayMorning = makeDate(calendar, month: 9, day: 12, hour: 9)
+
+        XCTAssertEqual(weeklyFraction(reset: reset, now: sundayEvening, calendar: calendar), 0.0, accuracy: 1e-9)
+        XCTAssertEqual(weeklyFraction(reset: reset, now: mondayNoon, calendar: calendar), 0.1, accuracy: 1e-9)
+        XCTAssertEqual(weeklyFraction(reset: reset, now: saturdayMorning, calendar: calendar), 1.0, accuracy: 1e-9)
+    }
+
+    func testExcludingWeekends_ShowRemainingInverts() {
+        let calendar = makeCalendar()
+        let reset = makeDate(calendar, month: 9, day: 16, hour: 12)
+        let mondayNoon = makeDate(calendar, month: 9, day: 14, hour: 12)
+
+        XCTAssertEqual(
+            weeklyFraction(reset: reset, now: mondayNoon, calendar: calendar, showRemaining: true),
+            0.4,
+            accuracy: 1e-9
+        )
+    }
+
+    func testExcludingWeekends_ExpiredOrMissingReset() {
+        let calendar = makeCalendar()
+        let reset = makeDate(calendar, month: 9, day: 16, hour: 12)
+        let afterReset = makeDate(calendar, month: 9, day: 17)
+
+        XCTAssertEqual(weeklyFraction(reset: reset, now: afterReset, calendar: calendar), 1.0)
+        XCTAssertEqual(weeklyFraction(reset: reset, now: afterReset, calendar: calendar, showRemaining: true), 0.0)
+        XCTAssertNil(UsageStatusCalculator.elapsedFraction(
+            resetTime: nil,
+            duration: 7 * 24 * 60 * 60,
+            showRemaining: false,
+            excludingWeekends: true
+        ))
+    }
+
+    func testExcludingWeekends_FollowsRegionalWeekend() {
+        // In Israel the weekend is Friday–Saturday, so Sunday counts as a weekday
+        let calendar = makeCalendar(timeZone: "Asia/Jerusalem", locale: "he_IL")
+        let reset = makeDate(calendar, month: 9, day: 16, hour: 12)
+        let sundayMidnight = makeDate(calendar, month: 9, day: 13)
+        let sundayNoon = makeDate(calendar, month: 9, day: 13, hour: 12)
+
+        // Half of Wednesday and all of Thursday: 36 of the 120 weekday hours
+        XCTAssertEqual(weeklyFraction(reset: reset, now: sundayMidnight, calendar: calendar), 36.0 / 120.0, accuracy: 1e-9)
+        XCTAssertEqual(weeklyFraction(reset: reset, now: sundayNoon, calendar: calendar), 48.0 / 120.0, accuracy: 1e-9)
+    }
+
+    func testExcludingWeekends_HandlesDaylightSavingTransition() {
+        // Paris falls back an hour on Sunday Oct 25, 2026: the 168-hour window
+        // opens Wednesday at 13:00 CEST and holds 119 weekday hours
+        let calendar = makeCalendar()
+        let reset = makeDate(calendar, month: 10, day: 28, hour: 12)
+        let saturdayMidnight = makeDate(calendar, month: 10, day: 24)
+        let mondayMidnight = makeDate(calendar, month: 10, day: 26)
+        let expected = 59.0 / 119.0  // 11h on Wednesday + Thursday + Friday
+
+        XCTAssertEqual(weeklyFraction(reset: reset, now: saturdayMidnight, calendar: calendar), expected, accuracy: 1e-9)
+        XCTAssertEqual(weeklyFraction(reset: reset, now: mondayMidnight, calendar: calendar), expected, accuracy: 1e-9)
+    }
+
+    func testWeekdayTime_SkipsWeekendDays() {
+        let calendar = makeCalendar()
+        let fridayNoon = makeDate(calendar, month: 9, day: 11, hour: 12)
+        let saturdayNoon = makeDate(calendar, month: 9, day: 12, hour: 12)
+        let sundayNoon = makeDate(calendar, month: 9, day: 13, hour: 12)
+        let mondayNoon = makeDate(calendar, month: 9, day: 14, hour: 12)
+
+        XCTAssertEqual(
+            UsageStatusCalculator.weekdayTime(from: fridayNoon, to: mondayNoon, calendar: calendar),
+            24 * 60 * 60,
+            accuracy: 1e-6
+        )
+        XCTAssertEqual(UsageStatusCalculator.weekdayTime(from: saturdayNoon, to: sundayNoon, calendar: calendar), 0)
+        XCTAssertEqual(UsageStatusCalculator.weekdayTime(from: mondayNoon, to: fridayNoon, calendar: calendar), 0)
+    }
+
+    // MARK: - Helpers
+
+    /// Gregorian calendar pinned to a time zone and locale, so weekend days are deterministic
+    private func makeCalendar(timeZone: String = "Europe/Paris", locale: String = "en_US") -> Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: timeZone)!
+        calendar.locale = Locale(identifier: locale)
+        return calendar
+    }
+
+    private func makeDate(_ calendar: Calendar, month: Int, day: Int, hour: Int = 0) -> Date {
+        calendar.date(from: DateComponents(year: 2026, month: month, day: day, hour: hour))!
+    }
+
+    /// Elapsed fraction of a 7-day window, or NaN (which fails any comparison) when unavailable
+    private func weeklyFraction(
+        reset: Date,
+        now: Date,
+        calendar: Calendar,
+        excludingWeekends: Bool = true,
+        showRemaining: Bool = false
+    ) -> Double {
+        UsageStatusCalculator.elapsedFraction(
+            resetTime: reset,
+            duration: 7 * 24 * 60 * 60,
+            showRemaining: showRemaining,
+            excludingWeekends: excludingWeekends,
+            now: now,
+            calendar: calendar
+        ) ?? .nan
     }
 }

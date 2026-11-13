@@ -59,12 +59,15 @@
 /* ==================== */
 "menubar.claude_usage" = "Claude 使用情況";
 "menubar.session_usage" = "Session 使用量";
+"menubar.session_remaining" = "Session 剩餘量";
 "menubar.weekly_usage" = "每週";
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";
 "menubar.fable_usage" = "Fable";
 "menubar.design_usage" = "設計";
 "menubar.extra_usage" = "額外使用量";
+"menubar.organization" = "組織";
+"menubar.monthly_spend" = "每月支出";
 "menubar.api_credits" = "API 額度";
 "menubar.5_hour_window" = "5 小時滑動視窗";
 "menubar.all_models" = "所有模型";
@@ -261,6 +264,8 @@
 /* MARK: - Error Messages */
 /* ==================== */
 "error.session_key_not_found" = "未找到 Session 金鑰";
+"error.cli_login_expired" = "%@ 儲存的 Claude Code 登入已過期";
+"error.cli_login_expired_suggestion" = "切換已取消，目前的登入保持不變，正在執行的 Claude Code 工作階段會繼續運作。若要重新連結 %@，請在 Claude Code 中使用該帳號執行 /login，然後再次切換到 %@。";
 "error.session_key_not_found.suggestion" = "請在設定中設定您的 Claude Session 金鑰";
 "error.session_key_invalid" = "無效的 Session 金鑰";
 "error.session_key_invalid.suggestion" = "請檢查您的 Session 金鑰格式。它應該以 'sk-ant-' 開頭";
@@ -375,6 +380,10 @@
 "claudecode.component_weekly_description" = "帶進度條和重置時間的每週 token 使用量";
 "claudecode.component_extra_usage" = "顯示額外使用量";
 "claudecode.component_extra_usage_description" = "費用指標（例如 9.49 USD）";
+"claudecode.component_cache" = "Show Prompt Cache";
+"claudecode.component_cache_description" = "Cache hit rate, with the cause of a recent miss (e.g., ⚡ 94% ✗ tools)";
+"claudecode.component_fable" = "顯示 Fable 每週用量";
+"claudecode.component_fable_description" = "Fable 每週限額（例如 Fable: 24%）";
 "claudecode.weekly_label" = "顯示 \"Weekly:\" 標籤";
 "claudecode.requirement_sessionkey" = "• 在憑證 → Claude.ai 分頁中設定了 Session 金鑰";
 "claudecode.requirement_restart" = "• 套用變更後重新啟動 Claude CLI";
@@ -464,6 +473,8 @@
 "appearance.show_pace_marker_description" = "根據預計使用速率為時間標記著色（綠色→紫色）。適用於 Session 和每週指標。";
 "appearance.pace_coloring_title" = "基於節奏的進度條色彩";
 "appearance.pace_coloring_description" = "根據預測節奏而非目前使用程度為進度條著色。預測您是否會在週期結束前達到限制。";
+"appearance.exclude_weekends_title" = "每週節奏排除週末";
+"appearance.exclude_weekends_description" = "每週時間標記與節奏只在工作日推進，週末暫停。適合主要在工作日使用 Claude 的使用者。";
 "appearance.multiprofile_locked_title" = "外觀設定已鎖定";
 "appearance.multiprofile_locked_description" = "當多設定檔顯示啟用時，這些設定會被停用。在多設定檔模式下，每個設定檔使用自己的外觀。";
 "appearance.disable_multiprofile" = "關閉多設定檔顯示";
@@ -551,6 +562,9 @@
 "general.refresh_seconds" = "%d 秒";
 "general.refresh_min" = "10 秒";
 "general.refresh_max" = "300 秒";
+"general.spend_target_title" = "每月支出目標";
+"general.spend_target_subtitle" = "選填的每月個人預算。設定後會在彈出視窗中顯示每月支出進度條；留空則僅顯示金額。";
+"general.spend_target_placeholder" = "例如 1500";
 "general.autostart_title" = "自動啟動 Session";
 "general.autostart_subtitle" = "需要時自動啟動新 Session";
 "general.autostart_toggle" = "自動啟動新 Session";
@@ -954,6 +968,10 @@
 
 // MARK: - Overage Balance
 "popover.overage_balance" = "餘額";
+"popover.no_limits_reported" = "此方案未回報使用限額，因此這裡沒有可顯示的內容。";
+
+// MARK: - Monthly Spend
+"popover.monthly_spend_period" = "本月";
 
 // MARK: - Setup Wizard CLI Detection
 "setup.cli_detecting" = "正在檢查 CLI 憑證...";
@@ -1007,9 +1025,50 @@
 "notch.server.port_busy" = "連接埠 %@ 已被占用 — 是否有另一個 App 正在執行？";
 "notch.server.retry" = "重試";
 
+/* Keep Awake */
+"section.keep_awake_title" = "保持喚醒";
+"section.keep_awake_desc" = "防止 Mac 進入睡眠";
+"keep_awake.manual_title" = "手動控制";
+"keep_awake.manual_desc" = "自行開啟保持喚醒,可選擇計時器";
+"keep_awake.enable" = "讓 Mac 保持喚醒";
+"keep_awake.enable_desc" = "暫時防止 Mac 進入睡眠";
+"keep_awake.status_active" = "目前正在讓 Mac 保持喚醒";
+"keep_awake.remaining" = "%@ 後關閉";
+"keep_awake.duration" = "持續時間";
+"keep_awake.duration.indefinite" = "直到手動關閉";
+"keep_awake.duration.custom" = "自訂…";
+"keep_awake.custom_hours" = "%d 小時";
+"keep_awake.auto_title" = "自動";
+"keep_awake.auto_card_desc" = "建議:僅在 Claude Code 實際工作時讓 Mac 保持喚醒";
+"keep_awake.auto" = "Claude Code 工作時保持喚醒";
+"keep_awake.auto_desc" = "Claude Code 工作階段進行中保持喚醒,結束後恢復允許睡眠。將安裝 Claude Code 掛鉤";
+"keep_awake.grace" = "Claude Code 停止工作後";
+"keep_awake.grace.immediately" = "立即睡眠";
+"keep_awake.grace.stay" = "保持喚醒 %@";
+"keep_awake.hooks_note" = "透過 ~/.claude/settings.json 中的 Claude Code 掛鉤偵測活動";
+"keep_awake.sleep_type" = "睡眠防止方式";
+"keep_awake.sleep_type_desc" = "選擇保持喚醒時螢幕是否維持開啟";
+"keep_awake.sleep_type.system" = "螢幕可睡眠";
+"keep_awake.sleep_type.display" = "保持螢幕開啟";
+"keep_awake.lid_note" = "闔上螢幕後,除非接上電源並使用外接顯示器,Mac 仍會進入睡眠";
+"keep_awake.state_off" = "關閉";
+"keep_awake.state_on_indefinite" = "開啟 — 保持喚醒直到手動關閉(∞)";
+"keep_awake.state_on_remaining" = "開啟 — 剩餘 %@";
+"keep_awake.state_auto_active" = "自動 — Claude Code 工作中";
+"keep_awake.state_auto_grace" = "自動 — Claude 已完成,再保持喚醒 %@";
+"keep_awake.state_auto_armed" = "自動已開啟 — Claude Code 工作時讓 Mac 保持喚醒";
+"keep_awake.hint_click_on" = "按一下開啟 — Claude Code 工作時讓 Mac 保持喚醒";
+"keep_awake.hint_click_off" = "按一下關閉";
+"keep_awake.hint_click_auto_off" = "按一下關閉自動模式 — 將保持關閉,直到再次開啟";
+"keep_awake.menu_for" = "保持喚醒 %@";
+"keep_awake.menu_indefinite" = "保持喚醒直到關閉";
+"keep_awake.menu_off" = "關閉保持喚醒";
+
 /* Sponsor slot */
 "sponsor.slot_title" = "此位置開放贊助";
 "sponsor.slot_cta" = "與我聯繫";
+"sponsor.label" = "贊助商";
+"sponsor.open_in_browser" = "在瀏覽器中打開";
 
 /* Multi-Provider / OpenAI Codex */
 "section.codex_account_title" = "Codex 帳戶";
@@ -1079,3 +1138,8 @@
 "support.popup_signature" = "Claude Usage 背後的一人團隊";
 "support.popup_body" = "免費、開源、一人開發——沒有廣告，沒有追蹤。如果它曾幫你避免燒掉工作階段額度，一杯咖啡就能讓它繼續前進。";
 "support.popup_days" = "已守護你的額度 %d 天 — 永遠免費";
+"keep_awake.consent_title" = "加入 Claude Code 掛鉤？";
+"keep_awake.consent_message" = "為了知道 Claude Code 何時在工作，Keep Awake 會在 ~/.claude/settings.json 加入掛鉤，並且只在這台 Mac 上接收。你的其他掛鉤和設定維持不變。關閉此選項即可移除。";
+"keep_awake.consent_confirm" = "加入掛鉤並開啟";
+"keep_awake.problem_hooks" = "自動模式無法偵測到 Claude Code：~/.claude/settings.json 中缺少掛鉤。關閉後再重新開啟自動模式即可重新安裝。";
+"keep_awake.problem_listener" = "自動模式無法偵測到 Claude Code：本機監聽連接埠被其他 App 或另一個 Claude Usage 佔用。";

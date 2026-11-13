@@ -1,9 +1,38 @@
 import SwiftUI
 import Charts
 
+// MARK: - Opaque fallback for macOS 26+
+/// On macOS 26 (Tahoe) and later, hosting an `NSVisualEffectView` material under
+/// SwiftUI content can crash inside the system's material pipeline
+/// (`MaterialProviderBox.resolveLayers`, no app frames; #279, #333). Those
+/// systems get a plain, theme-aware opaque layer instead. Earlier systems keep
+/// the vibrancy background.
+enum OpaqueBackground {
+    static var isRequired: Bool {
+        if #available(macOS 26.0, *) { return true }
+        return false
+    }
+
+    static func make(dark: CGFloat, light: CGFloat) -> NSView {
+        let view = NSView()
+        apply(to: view, dark: dark, light: light)
+        return view
+    }
+
+    static func apply(to view: NSView, dark: CGFloat, light: CGFloat) {
+        view.wantsLayer = true
+        let isDark = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        view.layer?.backgroundColor = NSColor(calibratedWhite: isDark ? dark : light, alpha: 1.0).cgColor
+    }
+}
+
 // MARK: - Always-active vibrancy background
 struct VisualEffectBackground: NSViewRepresentable {
     func makeNSView(context: Context) -> NSView {
+        if OpaqueBackground.isRequired {
+            return OpaqueBackground.make(dark: 0.12, light: 0.96)
+        }
+
         let container = NSView()
 
         // Base vibrancy layer
@@ -41,6 +70,11 @@ struct VisualEffectBackground: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {
+        if OpaqueBackground.isRequired {
+            OpaqueBackground.apply(to: nsView, dark: 0.12, light: 0.96)
+            return
+        }
+
         // Update tint for appearance changes
         if let tintView = nsView.subviews.last {
             tintView.wantsLayer = true
@@ -100,6 +134,15 @@ struct PopoverContentView: View {
             profileManager.profiles.first(where: { $0.id == id })
         } ?? profileManager.activeProfile
         return viewingProfile?.provider ?? .anthropic
+    }
+
+    /// Monthly spend target of the profile being viewed (clicked profile in
+    /// multi-profile mode, else the active profile).
+    private var displayMonthlySpendLimitCents: Double? {
+        let viewingProfile = manager.clickedProfileId.flatMap { id in
+            profileManager.profiles.first(where: { $0.id == id })
+        } ?? profileManager.activeProfile
+        return viewingProfile?.monthlySpendLimitCents
     }
 
     var body: some View {
@@ -208,7 +251,12 @@ struct PopoverContentView: View {
             }
 
             // Usage
-            SmartUsageDashboard(usage: displayUsage, apiUsage: displayAPIUsage, provider: displayProvider)
+            SmartUsageDashboard(
+                usage: displayUsage,
+                apiUsage: displayAPIUsage,
+                provider: displayProvider,
+                monthlySpendLimitCents: displayMonthlySpendLimitCents
+            )
 
             // Contextual Insights
             if showInsights {
@@ -313,7 +361,7 @@ struct ProfileSwitcherCompact: View {
         .buttonStyle(.plain)
         // The popover window can hand this Menu first-responder status on open,
         // which draws an accent-colored focus ring around the header label.
-        .focusEffectDisabled()
+        .focusEffectDisabledCompat()
     }
 }
 
@@ -434,7 +482,7 @@ struct ProfileSwitcherBar: View {
         .menuStyle(.borderlessButton)
         .buttonStyle(.plain)
         // See ProfileSwitcherCompact: suppress the first-responder focus ring.
-        .focusEffectDisabled()
+        .focusEffectDisabledCompat()
         .onHover { hovering in
             withAnimation(.easeInOut(duration: 0.15)) {
                 isHovered = hovering
@@ -523,6 +571,9 @@ struct SmartHeader: View {
             Spacer()
 
             HStack(alignment: .center, spacing: 2) {
+                // Keep awake
+                KeepAwakeHeaderButton()
+
                 // Refresh
                 HeaderIconButton(
                     icon: "arrow.clockwise",
@@ -583,11 +634,260 @@ struct HeaderIconButton: View {
     }
 }
 
+// MARK: - Keep Awake Header Button
+
+/// Header toggle for KeepAwakeService. Lights up (with a one-shot ripple and
+/// a soft breathing glow) whenever the assertion is held — including holds
+/// from auto mode — so it doubles as an "is my Mac staying awake?" indicator.
+/// Hovering shows a live status card; right-click offers durations and auto mode.
+///
+/// The looping glow and steam live in `KeepAwakeAmbientLayerView` (Core
+/// Animation), not SwiftUI: a `.repeatForever` animation here re-renders the
+/// whole popover every frame while it's open. Only one-shot effects stay in
+/// SwiftUI.
+struct KeepAwakeHeaderButton: View {
+    @ObservedObject private var service = KeepAwakeService.shared
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var isHovered = false
+    @State private var rippleID = 0
+    @State private var showHoverCard = false
+    @State private var hoverCardTask: DispatchWorkItem?
+
+    private static let menuDurations: [TimeInterval] = [15 * 60, 3600, 2 * 3600, 8 * 3600]
+
+    private var isActive: Bool { service.isAssertionHeld }
+    /// Auto mode is on but not currently holding: dimmed-orange filled cup so
+    /// the first click (and every armed idle state) has visible feedback.
+    private var isArmed: Bool { service.autoEnabled && !isActive }
+
+    private var iconColor: Color {
+        if isActive { return .orange }
+        if isArmed { return service.autoModeProblem == nil ? Color.orange.opacity(0.55) : .yellow }
+        return isHovered ? .primary : .secondary
+    }
+
+    /// A click that would turn auto mode on for the first time adds hooks to
+    /// ~/.claude/settings.json, so it asks before doing that.
+    private func toggleFromClick() {
+        if !service.isManualOn, service.enablingAutoInstallsHooks, !KeepAwakeHookConsent.confirm() {
+            return
+        }
+        service.smartToggle()
+    }
+
+    var body: some View {
+        Button(action: { toggleFromClick() }) {
+            ZStack {
+                if !reduceMotion, rippleID > 0, isActive || isArmed {
+                    KeepAwakeActivationRipple()
+                        .id(rippleID)
+                    KeepAwakeActivationRipple(delay: 0.18)
+                        .id(-rippleID)
+                }
+
+                if isActive {
+                    KeepAwakeAmbientLayerView(animates: !reduceMotion)
+                        .frame(width: 24, height: 24)
+                        .allowsHitTesting(false)
+                }
+
+                Image(systemName: isActive || isArmed ? "cup.and.saucer.fill" : "cup.and.saucer")
+                    .font(.system(size: 10.5, weight: .medium))
+                    .imageScale(.medium)
+                    .symbolReplaceTransitionCompat()
+                    .symbolBounceCompat(value: isActive)
+                    .symbolBounceCompat(value: service.autoEnabled)
+                    .shadow(color: isActive ? Color.orange.opacity(0.3) : .clear, radius: 3)
+            }
+            .foregroundColor(iconColor)
+            .frame(width: 24, height: 24, alignment: .center)
+            .background(
+                RoundedRectangle(cornerRadius: 5)
+                    .fill(
+                        isActive
+                            ? Color.orange.opacity(isHovered ? 0.16 : 0.10)
+                            : (isArmed
+                                ? Color.orange.opacity(isHovered ? 0.12 : 0.06)
+                                : (isHovered ? Color.primary.opacity(0.08) : Color.clear))
+                    )
+            )
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .contextMenu {
+            if isActive {
+                Button("keep_awake.menu_off".localized) { service.smartToggle() }
+            } else {
+                Button("keep_awake.menu_indefinite".localized) {
+                    service.setManual(on: true, duration: 0)
+                }
+                ForEach(Self.menuDurations, id: \.self) { duration in
+                    Button("keep_awake.menu_for".localized(with: KeepAwakeTimeFormat.interval(duration))) {
+                        service.setManual(on: true, duration: duration)
+                    }
+                }
+            }
+            Divider()
+            Toggle("keep_awake.auto".localized, isOn: Binding(
+                get: { SharedDataStore.shared.loadKeepAwakeAutoEnabled() },
+                set: { enabled in
+                    if enabled, service.enablingAutoInstallsHooks, !KeepAwakeHookConsent.confirm() {
+                        return
+                    }
+                    service.setAutoEnabled(enabled)
+                }
+            ))
+        }
+        .popover(isPresented: $showHoverCard, arrowEdge: .bottom) {
+            KeepAwakeHoverCard(service: service)
+        }
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.15)) {
+                isHovered = hovering
+            }
+            hoverCardTask?.cancel()
+            if hovering {
+                let task = DispatchWorkItem { showHoverCard = true }
+                hoverCardTask = task
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: task)
+            } else {
+                showHoverCard = false
+            }
+        }
+        .onChangeCompat(of: isActive) { active in
+            if active { rippleID += 1 }
+        }
+        .onChangeCompat(of: service.autoEnabled) { enabled in
+            // Arming auto (usually the first-ever click) plays the ripple even
+            // though no assertion is held yet — the click must feel received.
+            if enabled, !isActive {
+                rippleID += 1
+            }
+        }
+    }
+}
+
+/// Live status card shown while hovering the keep-awake button: current mode
+/// (off / on / auto), time remaining or ∞, and what a click will do.
+private struct KeepAwakeHoverCard: View {
+    @ObservedObject var service: KeepAwakeService
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 1)) { context in
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 5) {
+                    Image(systemName: service.isAssertionHeld ? "cup.and.saucer.fill" : "cup.and.saucer")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(service.isAssertionHeld ? .orange : .secondary)
+                    Text("section.keep_awake_title".localized)
+                        .font(.system(size: 11, weight: .semibold))
+                }
+
+                Text(statusText(at: context.date))
+                    .font(.system(size: 11))
+                    .foregroundColor(.primary)
+
+                // A manual hold is showing above, but auto is also armed:
+                // say so, so its behavior is never a surprise.
+                if service.autoEnabled, !service.isAutoHolding, service.isManualOn {
+                    Text("keep_awake.state_auto_armed".localized)
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                }
+
+                if let problem = service.autoModeProblem {
+                    Text(problem.message)
+                        .font(.system(size: 10))
+                        .foregroundColor(.orange)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Text(hintText)
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+            }
+            .padding(10)
+            .frame(width: 230, alignment: .leading)
+        }
+    }
+
+    private func statusText(at reference: Date) -> String {
+        if service.isManualOn {
+            guard let expiry = service.manualExpiry else {
+                return "keep_awake.state_on_indefinite".localized
+            }
+            return "keep_awake.state_on_remaining".localized(
+                with: KeepAwakeTimeFormat.remaining(until: expiry, from: reference))
+        }
+        if service.isAutoHolding {
+            guard let graceEnd = service.autoGraceExpiry else {
+                return "keep_awake.state_auto_active".localized
+            }
+            return "keep_awake.state_auto_grace".localized(
+                with: KeepAwakeTimeFormat.remaining(until: graceEnd, from: reference))
+        }
+        if service.autoEnabled {
+            // Armed but idle: auto will hold as soon as Claude Code works.
+            return "keep_awake.state_auto_armed".localized
+        }
+        return "keep_awake.state_off".localized
+    }
+
+    private var hintText: String {
+        if service.isManualOn {
+            return "keep_awake.hint_click_off".localized
+        }
+        return service.autoEnabled
+            ? "keep_awake.hint_click_auto_off".localized
+            : "keep_awake.hint_click_on".localized
+    }
+}
+
+/// Shared duration formatting for the keep-awake button, menu, and hover card.
+enum KeepAwakeTimeFormat {
+    static func interval(_ interval: TimeInterval) -> String {
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = interval < 3600 ? [.minute] : [.hour]
+        formatter.unitsStyle = .abbreviated
+        return formatter.string(from: interval) ?? ""
+    }
+
+    static func remaining(until deadline: Date, from reference: Date) -> String {
+        let remaining = max(0, deadline.timeIntervalSince(reference))
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = remaining < 3600 ? [.minute, .second] : [.hour, .minute]
+        formatter.unitsStyle = .abbreviated
+        return formatter.string(from: remaining) ?? ""
+    }
+}
+
+/// One-shot expanding ring played on activation; re-created via `.id` so each
+/// activation replays it from the start. Two staggered rings give the "drop
+/// in water" feel.
+private struct KeepAwakeActivationRipple: View {
+    var delay: Double = 0
+    @State private var expanded = false
+
+    var body: some View {
+        Circle()
+            .stroke(Color.orange.opacity(expanded ? 0 : 0.6), lineWidth: 1.5)
+            .frame(width: 18, height: 18)
+            .scaleEffect(expanded ? 1.9 : 0.7)
+            .allowsHitTesting(false)
+            .onAppear {
+                withAnimation(.easeOut(duration: 0.6).delay(delay)) {
+                    expanded = true
+                }
+            }
+    }
+}
+
 // MARK: - Smart Usage Dashboard
 struct SmartUsageDashboard: View {
     let usage: ClaudeUsage
     let apiUsage: APIUsage?
     var provider: Provider = .anthropic
+    var monthlySpendLimitCents: Double? = nil
     @StateObject private var profileManager = ProfileManager.shared
     private var capabilities: ProviderCapabilities {
         provider.descriptor.capabilities
@@ -621,25 +921,34 @@ struct SmartUsageDashboard: View {
         return profileManager.activeProfile?.iconConfig.showPaceMarker ?? true
     }
 
+    private var excludeWeekendsFromWeeklyPace: Bool {
+        if profileManager.displayMode == .multi {
+            return profileManager.multiProfileConfig.excludeWeekendsFromWeeklyPace
+        }
+        return profileManager.activeProfile?.iconConfig.excludeWeekendsFromWeeklyPace ?? false
+    }
+
     private var timeDisplay: PopoverTimeDisplay {
         SharedDataStore.shared.loadPopoverTimeDisplay()
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            // Primary: Session Usage
-            UsageRow(
-                title: "menubar.session_usage".localized,
-                subtitle: "menubar.5_hour_window".localized,
-                usedPercentage: usage.effectiveSessionPercentage,
-                showRemaining: showRemainingPercentage,
-                resetTime: usage.sessionResetTime,
-                periodDuration: Constants.sessionWindow,
-                showTimeMarker: showTimeMarker,
-                showPaceMarker: showPaceMarker,
-                usePaceColoring: usePaceColoring,
-                timeDisplay: timeDisplay
-            )
+            // Primary: Session Usage (absent on plans without a 5-hour window, e.g. Ultra)
+            if usage.hasSessionLimit {
+                UsageRow(
+                    title: (showRemainingPercentage ? "menubar.session_remaining" : "menubar.session_usage").localized,
+                    subtitle: "menubar.5_hour_window".localized,
+                    usedPercentage: usage.effectiveSessionPercentage,
+                    showRemaining: showRemainingPercentage,
+                    resetTime: usage.sessionResetTime,
+                    periodDuration: Constants.sessionWindow,
+                    showTimeMarker: showTimeMarker,
+                    showPaceMarker: showPaceMarker,
+                    usePaceColoring: usePaceColoring,
+                    timeDisplay: timeDisplay
+                )
+            }
 
             if usage.designWeeklyTokensUsed > 0 {
                 UsageRow(
@@ -654,20 +963,31 @@ struct SmartUsageDashboard: View {
                 )
             }
 
-            // All Models (Weekly)
-            UsageRow(
-                title: "menubar.all_models".localized,
-                tag: "menubar.weekly".localized,
-                subtitle: nil,
-                usedPercentage: usage.weeklyPercentage,
-                showRemaining: showRemainingPercentage,
-                resetTime: usage.weeklyResetTime,
-                periodDuration: Constants.weeklyWindow,
-                showTimeMarker: showTimeMarker,
-                showPaceMarker: showPaceMarker,
-                usePaceColoring: usePaceColoring,
-                timeDisplay: timeDisplay
-            )
+            // All Models (Weekly). Absent when the plan reports no limits at all,
+            // as the free plan does (#312); a 0% bar there would look like a reading.
+            if usage.hasWeeklyLimit {
+                UsageRow(
+                    title: "menubar.all_models".localized,
+                    tag: "menubar.weekly".localized,
+                    subtitle: nil,
+                    usedPercentage: usage.weeklyPercentage,
+                    showRemaining: showRemainingPercentage,
+                    resetTime: usage.weeklyResetTime,
+                    periodDuration: Constants.weeklyWindow,
+                    showTimeMarker: showTimeMarker,
+                    showPaceMarker: showPaceMarker,
+                    usePaceColoring: usePaceColoring,
+                    excludeWeekends: excludeWeekendsFromWeeklyPace,
+                    timeDisplay: timeDisplay
+                )
+            } else if !usage.hasSessionLimit {
+                Text("popover.no_limits_reported".localized)
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 8)
+            }
 
             if usage.fableWeeklyTokensUsed > 0 {
                 UsageRow(
@@ -711,6 +1031,9 @@ struct SmartUsageDashboard: View {
                 let usedPercentage = (used / limit) * 100.0
                 UsageRow(
                     title: "menubar.extra_usage".localized,
+                    // When the account also reports the member's own spend, this figure
+                    // is the organization's total, not the member's (#325).
+                    tag: usage.personalSpendUsed != nil ? "menubar.organization".localized : nil,
                     subtitle: String(format: "%.2f / %.2f %@", used / 100.0, limit / 100.0, currency),
                     usedPercentage: usedPercentage,
                     showRemaining: showRemainingPercentage,
@@ -730,6 +1053,16 @@ struct SmartUsageDashboard: View {
                             .foregroundColor(.adaptiveGreen)
                     }
                 }
+            }
+
+            // Monthly spend (member's own month-to-date; distinct from org-wide Extra Usage)
+            if capabilities.personalSpend, let personalUsed = usage.personalSpendUsed {
+                MonthlySpendRow(
+                    usedMinorUnits: personalUsed,
+                    currency: usage.personalSpendCurrency ?? "USD",
+                    limitCents: monthlySpendLimitCents,
+                    showRemaining: showRemainingPercentage
+                )
             }
 
             // Plan / credits (providers that report them, e.g. Codex)
@@ -786,6 +1119,7 @@ struct UsageRow: View {
     var showTimeMarker: Bool = true
     var showPaceMarker: Bool = true
     var usePaceColoring: Bool = true
+    var excludeWeekends: Bool = false
     var timeDisplay: PopoverTimeDisplay = .resetTime
 
     private var displayPercentage: Double {
@@ -795,11 +1129,20 @@ struct UsageRow: View {
         )
     }
 
+    private var percentageLabel: String {
+        (showRemaining ? "menubar.remaining" : "menubar.used").localized
+    }
+
+    var percentageText: String {
+        "\(Int(displayPercentage))% \(percentageLabel)"
+    }
+
     private var rawElapsedFraction: Double? {
         UsageStatusCalculator.elapsedFraction(
             resetTime: resetTime,
             duration: periodDuration ?? 0,
-            showRemaining: false
+            showRemaining: false,
+            excludingWeekends: excludeWeekends
         )
     }
 
@@ -850,6 +1193,7 @@ struct UsageRow: View {
                             Text(tag)
                                 .font(.system(size: 9, weight: .medium))
                                 .foregroundColor(.secondary)
+                                .fixedSize()
                                 .padding(.horizontal, 5)
                                 .padding(.vertical, 1)
                                 .background(
@@ -866,11 +1210,18 @@ struct UsageRow: View {
                     }
                 }
 
-                Spacer()
+                Spacer(minLength: 4)
 
-                Text("\(Int(displayPercentage))%")
+                // Number stays prominent; the Used/Remaining word is smaller so
+                // the title keeps its room in the 280pt popover.
+                (Text("\(Int(displayPercentage))%")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
+                 + Text(" \(percentageLabel)")
+                    .font(.system(size: 10, weight: .medium)))
                     .foregroundColor(statusColor)
+                    .lineLimit(1)
+                    .fixedSize()
+                    .accessibilityLabel(percentageText)
             }
 
             // Progress bar
@@ -918,6 +1269,55 @@ struct UsageRow: View {
             return "menubar.resets_in".localized(with: reset.timeRemainingString())
         case .both:
             return "menubar.resets_both".localized(with: reset.timeRemainingString(), reset.resetTimeString())
+        }
+    }
+}
+
+// MARK: - Monthly Spend Row
+
+/// The member's own month-to-date spend. Renders as a progress bar when the
+/// profile has a monthly target; otherwise shows just the amount.
+struct MonthlySpendRow: View {
+    let usedMinorUnits: Double
+    let currency: String
+    let limitCents: Double?
+    let showRemaining: Bool
+
+    private var usedDollars: Double { usedMinorUnits / 100.0 }
+
+    var body: some View {
+        if let limit = limitCents, limit > 0 {
+            UsageRow(
+                title: "menubar.monthly_spend".localized,
+                subtitle: String(format: "%.2f / %.2f %@", usedDollars, limit / 100.0, currency),
+                usedPercentage: (usedMinorUnits / limit) * 100.0,
+                showRemaining: showRemaining,
+                resetTime: nil,
+                periodDuration: nil
+            )
+        } else {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("menubar.monthly_spend".localized)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.primary)
+                    Text("popover.monthly_spend_period".localized)
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                Text(String(format: "%.2f %@", usedDollars, currency))
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .foregroundColor(.adaptiveGreen)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .strokeBorder(Color.primary.opacity(0.1), lineWidth: 0.5)
+            )
         }
     }
 }

@@ -1,0 +1,19 @@
+/* Claude Usage Widget */
+"widget.no_data" = "Claude Usage を起動すると使用状況が表示されます";
+"widget.session" = "セッション";
+"widget.weekly" = "週間";
+"widget.session.name" = "セッション使用量";
+"widget.session.desc" = "アクティブなプロファイルの5時間セッション使用量。";
+"widget.overview.name" = "使用量オーバービュー";
+"widget.overview.desc" = "表示中の全プロファイルのセッション・週間使用量。";
+"widget.active.name" = "アクティブなプロファイル";
+"widget.active.desc" = "アクティブなプロファイルのセッション・週間使用量とリセットまでの時間。";
+"widget.rings.name" = "使用量リング";
+"widget.rings.desc" = "セッション・週間使用量をリングで表示。アクティブなプロファイルまたは表示中の全プロファイル。";
+"widget.dial.name" = "使用量ダイヤル";
+"widget.dial.desc" = "アクティブなプロファイルの現在の使用量をダイヤルで表示。";
+"widget.reset.name" = "次回リセット";
+"widget.reset.desc" = "アクティブなプロファイルの上限がリセットされるまでの時間。";
+"widget.config.title" = "プロファイル";
+"widget.config.profile" = "プロファイル";
+"widget.config.desc" = "プロファイルを選択します。空のままにするとアクティブなプロファイルに従います。";
