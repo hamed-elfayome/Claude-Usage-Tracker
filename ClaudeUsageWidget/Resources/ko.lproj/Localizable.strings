@@ -14,3 +14,6 @@
 "widget.dial.desc" = "활성 프로필의 현재 사용량을 다이얼로 표시합니다.";
 "widget.reset.name" = "다음 재설정";
 "widget.reset.desc" = "활성 프로필의 한도가 재설정되기까지 남은 시간.";
+"widget.config.title" = "프로필";
+"widget.config.profile" = "프로필";
+"widget.config.desc" = "프로필을 선택하거나, 비워 두면 활성 프로필을 따릅니다.";

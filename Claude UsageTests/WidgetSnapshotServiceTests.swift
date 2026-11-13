@@ -227,4 +227,19 @@ final class WidgetSnapshotServiceTests: XCTestCase {
         service.publish(profiles: [reset], activeProfileId: id)
         XCTAssertEqual(writtenSnapshots.count, 2, "a real reset still publishes")
     }
+
+    func testProfilesNotOnDisplayArePublishedForThePickerButMarkedAsSuch() {
+        let service = makeService()
+        let active = makeProfile(hasSessionLimit: true, sessionReset: currentDate.addingTimeInterval(3600))
+        var usage = ClaudeUsage.empty
+        usage.weeklyPercentage = 5
+        let hidden = Profile(name: "Hidden", claudeUsage: usage, isSelectedForDisplay: false)
+        let neverFetched = Profile(name: "Empty")
+
+        service.publish(profiles: [active, hidden, neverFetched], activeProfileId: active.id)
+
+        let published = writtenSnapshots.last?.profiles ?? []
+        XCTAssertEqual(published.map(\.name), ["Ultra", "Hidden"], "a profile with no reading has nothing to show")
+        XCTAssertEqual(published.first(where: { $0.name == "Hidden" })?.isDisplayed, false)
+    }
 }

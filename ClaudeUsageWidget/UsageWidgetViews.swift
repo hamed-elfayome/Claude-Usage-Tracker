@@ -1,3 +1,4 @@
+import AppIntents
 import SwiftUI
 import WidgetKit
 
@@ -69,9 +70,74 @@ extension UsageEntry {
     /// first displayed one.
     var focusProfile: WidgetSnapshot.ProfileEntry? {
         let profiles = snapshot?.profiles ?? []
+        // A picked profile that has since been deleted falls back to the active one.
+        if let profileID, let picked = profiles.first(where: { $0.id == profileID }) {
+            return picked
+        }
         return profiles.first(where: \.isActive)
             ?? profiles.first(where: \.isDisplayed)
             ?? profiles.first
+    }
+}
+
+// MARK: - Profile picker
+
+/// A profile as it appears in a widget's "Edit Widget" settings.
+struct WidgetProfileEntity: AppEntity {
+    static var typeDisplayRepresentation: TypeDisplayRepresentation = "widget.config.profile"
+    static var defaultQuery = WidgetProfileQuery()
+
+    let id: String
+    let name: String
+
+    var displayRepresentation: DisplayRepresentation {
+        DisplayRepresentation(title: "\(name)")
+    }
+}
+
+/// Lists the profiles the app last published. The widget has no other view of them.
+struct WidgetProfileQuery: EntityQuery {
+    private func allProfiles() -> [WidgetProfileEntity] {
+        (WidgetSnapshot.load()?.profiles ?? []).map {
+            WidgetProfileEntity(id: $0.id.uuidString, name: $0.name)
+        }
+    }
+
+    func entities(for identifiers: [String]) async throws -> [WidgetProfileEntity] {
+        allProfiles().filter { identifiers.contains($0.id) }
+    }
+
+    func suggestedEntities() async throws -> [WidgetProfileEntity] {
+        allProfiles()
+    }
+}
+
+/// Settings for the single-profile widgets. With no profile picked, the
+/// widget follows whichever profile is active in the app.
+struct SelectProfileIntent: WidgetConfigurationIntent {
+    static var title: LocalizedStringResource = "widget.config.title"
+    static var description = IntentDescription("widget.config.desc")
+
+    @Parameter(title: "widget.config.profile")
+    var profile: WidgetProfileEntity?
+}
+
+struct ProfileTimelineProvider: AppIntentTimelineProvider {
+    private func profileID(_ configuration: SelectProfileIntent) -> UUID? {
+        configuration.profile.flatMap { UUID(uuidString: $0.id) }
+    }
+
+    func placeholder(in context: Context) -> UsageEntry {
+        UsageEntry(date: Date(), snapshot: UsageEntry.placeholderSnapshot())
+    }
+
+    func snapshot(for configuration: SelectProfileIntent, in context: Context) async -> UsageEntry {
+        let snapshot = context.isPreview ? UsageEntry.placeholderSnapshot() : WidgetSnapshot.load()
+        return UsageEntry(date: Date(), snapshot: snapshot, profileID: profileID(configuration))
+    }
+
+    func timeline(for configuration: SelectProfileIntent, in context: Context) async -> Timeline<UsageEntry> {
+        UsageTimelineProvider.makeTimeline(profileID: profileID(configuration))
     }
 }
 
@@ -297,7 +363,7 @@ struct SessionUsageWidgetView: View {
 
 struct SessionUsageWidget: Widget {
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: "SessionUsageWidget", provider: UsageTimelineProvider()) { entry in
+        AppIntentConfiguration(kind: "SessionUsageWidget", intent: SelectProfileIntent.self, provider: ProfileTimelineProvider()) { entry in
             SessionUsageWidgetView(entry: entry)
         }
         .configurationDisplayName(String(localized: "widget.session.name"))
@@ -670,7 +736,9 @@ struct UsageRingsContent: View {
     let isMedium: Bool
 
     private var profiles: [WidgetSnapshot.ProfileEntry] {
-        guard isMedium else { return entry.focusProfile.map { [$0] } ?? [] }
+        // A picked profile is shown alone at either size; with none picked the
+        // medium size shows every displayed profile.
+        guard isMedium, entry.profileID == nil else { return entry.focusProfile.map { [$0] } ?? [] }
         return Array((entry.snapshot?.profiles ?? []).filter(\.isDisplayed).prefix(4))
     }
 
@@ -720,7 +788,7 @@ struct UsageRingsWidgetView: View {
 
 struct UsageRingsWidget: Widget {
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: "UsageRingsWidget", provider: UsageTimelineProvider()) { entry in
+        AppIntentConfiguration(kind: "UsageRingsWidget", intent: SelectProfileIntent.self, provider: ProfileTimelineProvider()) { entry in
             UsageRingsWidgetView(entry: entry)
         }
         .configurationDisplayName(String(localized: "widget.rings.name"))
@@ -782,7 +850,7 @@ struct UsageDialContent: View {
 
 struct UsageDialWidget: Widget {
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: "UsageDialWidget", provider: UsageTimelineProvider()) { entry in
+        AppIntentConfiguration(kind: "UsageDialWidget", intent: SelectProfileIntent.self, provider: ProfileTimelineProvider()) { entry in
             UsageDialContent(entry: entry)
                 .containerBackground(.fill.tertiary, for: .widget)
         }
@@ -855,7 +923,7 @@ struct NextResetContent: View {
 
 struct NextResetWidget: Widget {
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: "NextResetWidget", provider: UsageTimelineProvider()) { entry in
+        AppIntentConfiguration(kind: "NextResetWidget", intent: SelectProfileIntent.self, provider: ProfileTimelineProvider()) { entry in
             NextResetContent(entry: entry)
                 .containerBackground(.fill.tertiary, for: .widget)
         }
@@ -930,7 +998,7 @@ struct ActiveProfileContent: View {
 
 struct ActiveProfileWidget: Widget {
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: "ActiveProfileWidget", provider: UsageTimelineProvider()) { entry in
+        AppIntentConfiguration(kind: "ActiveProfileWidget", intent: SelectProfileIntent.self, provider: ProfileTimelineProvider()) { entry in
             ActiveProfileContent(entry: entry)
                 .containerBackground(.fill.tertiary, for: .widget)
         }

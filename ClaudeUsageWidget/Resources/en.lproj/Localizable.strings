@@ -14,3 +14,6 @@
 "widget.dial.desc" = "The active profile's current usage on a dial.";
 "widget.reset.name" = "Next Reset";
 "widget.reset.desc" = "Time until the active profile's limits reset.";
+"widget.config.title" = "Profile";
+"widget.config.profile" = "Profile";
+"widget.config.desc" = "Pick a profile, or leave it empty to follow the active profile.";

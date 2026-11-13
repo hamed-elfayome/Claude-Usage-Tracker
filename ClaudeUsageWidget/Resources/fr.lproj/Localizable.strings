@@ -14,3 +14,6 @@
 "widget.dial.desc" = "L'utilisation actuelle du profil actif sur un cadran.";
 "widget.reset.name" = "Prochaine réinitialisation";
 "widget.reset.desc" = "Temps avant la réinitialisation des limites du profil actif.";
+"widget.config.title" = "Profil";
+"widget.config.profile" = "Profil";
+"widget.config.desc" = "Choisissez un profil, ou laissez vide pour suivre le profil actif.";

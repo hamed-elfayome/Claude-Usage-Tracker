@@ -14,3 +14,6 @@
 "widget.dial.desc" = "O uso atual do perfil ativo em um mostrador.";
 "widget.reset.name" = "Próxima redefinição";
 "widget.reset.desc" = "Tempo até os limites do perfil ativo serem redefinidos.";
+"widget.config.title" = "Perfil";
+"widget.config.profile" = "Perfil";
+"widget.config.desc" = "Escolha um perfil ou deixe vazio para seguir o perfil ativo.";

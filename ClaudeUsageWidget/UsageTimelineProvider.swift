@@ -4,6 +4,8 @@ import WidgetKit
 struct UsageEntry: TimelineEntry {
     let date: Date
     let snapshot: WidgetSnapshot?
+    /// The profile picked in the widget's settings; nil follows the active profile.
+    var profileID: UUID? = nil
 
     /// Data at least this old is rendered dimmed — the app is probably not
     /// running (or a profile stopped refreshing), so the numbers can no
@@ -69,6 +71,11 @@ struct UsageTimelineProvider: TimelineProvider {
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<UsageEntry>) -> Void) {
+        completion(Self.makeTimeline(profileID: nil))
+    }
+
+    /// Shared by the fixed widgets and the ones with a profile picker.
+    static func makeTimeline(profileID: UUID?) -> Timeline<UsageEntry> {
         let snapshot = WidgetSnapshot.load()
         let now = Date()
         let refresh = now.addingTimeInterval(Self.refreshInterval)
@@ -93,7 +100,7 @@ struct UsageTimelineProvider: TimelineProvider {
             }
         }
 
-        let entries = dates.sorted().map { UsageEntry(date: $0, snapshot: snapshot) }
-        completion(Timeline(entries: entries, policy: .after(refresh)))
+        let entries = dates.sorted().map { UsageEntry(date: $0, snapshot: snapshot, profileID: profileID) }
+        return Timeline(entries: entries, policy: .after(refresh))
     }
 }

@@ -14,3 +14,6 @@
 "widget.dial.desc" = "在錶盤上顯示目前設定檔的用量。";
 "widget.reset.name" = "下次重置";
 "widget.reset.desc" = "距離目前設定檔的限額重置還有多久。";
+"widget.config.title" = "設定檔";
+"widget.config.profile" = "設定檔";
+"widget.config.desc" = "選擇一個設定檔，留空則跟隨目前設定檔。";

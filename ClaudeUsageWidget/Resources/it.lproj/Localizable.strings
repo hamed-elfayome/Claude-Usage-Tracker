@@ -14,3 +14,6 @@
 "widget.dial.desc" = "L'utilizzo attuale del profilo attivo su un quadrante.";
 "widget.reset.name" = "Prossimo ripristino";
 "widget.reset.desc" = "Tempo al ripristino dei limiti del profilo attivo.";
+"widget.config.title" = "Profilo";
+"widget.config.profile" = "Profilo";
+"widget.config.desc" = "Scegli un profilo, oppure lascia vuoto per seguire il profilo attivo.";

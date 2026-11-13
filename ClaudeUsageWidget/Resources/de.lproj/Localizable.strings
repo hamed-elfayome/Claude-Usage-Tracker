@@ -14,3 +14,6 @@
 "widget.dial.desc" = "Die aktuelle Nutzung des aktiven Profils auf einer Skala.";
 "widget.reset.name" = "Nächstes Zurücksetzen";
 "widget.reset.desc" = "Zeit, bis die Limits des aktiven Profils zurückgesetzt werden.";
+"widget.config.title" = "Profil";
+"widget.config.profile" = "Profil";
+"widget.config.desc" = "Wähle ein Profil oder lass das Feld leer, um dem aktiven Profil zu folgen.";

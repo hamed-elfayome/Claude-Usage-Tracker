@@ -14,3 +14,6 @@
 "widget.dial.desc" = "在表盘上显示当前配置的用量。";
 "widget.reset.name" = "下次重置";
 "widget.reset.desc" = "距离当前配置的限额重置还有多久。";
+"widget.config.title" = "配置";
+"widget.config.profile" = "配置";
+"widget.config.desc" = "选择一个配置，留空则跟随当前配置。";

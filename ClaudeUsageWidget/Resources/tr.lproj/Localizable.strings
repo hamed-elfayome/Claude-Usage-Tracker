@@ -14,3 +14,6 @@
 "widget.dial.desc" = "Etkin profilin güncel kullanımı bir kadranda.";
 "widget.reset.name" = "Sonraki Sıfırlama";
 "widget.reset.desc" = "Etkin profilin sınırlarının sıfırlanmasına kalan süre.";
+"widget.config.title" = "Profil";
+"widget.config.profile" = "Profil";
+"widget.config.desc" = "Bir profil seçin veya etkin profili izlemek için boş bırakın.";

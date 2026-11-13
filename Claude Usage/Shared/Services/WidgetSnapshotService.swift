@@ -77,9 +77,9 @@ nonisolated final class WidgetSnapshotService: @unchecked Sendable {
     func publish(profiles: [Profile], activeProfileId: UUID?) {
         let entries: [WidgetSnapshot.ProfileEntry] = profiles.compactMap { profile in
             let isActive = profile.id == activeProfileId
-            // The active profile is always included so the small widget can
-            // show it even when it is deselected from menu bar display.
-            guard profile.isSelectedForDisplay || isActive else { return nil }
+            // Every profile with a reading is included, so a widget's profile
+            // picker can offer any of them; the overview widget still shows
+            // only the displayed ones (`isDisplayed`).
             guard let usage = profile.claudeUsage else { return nil }
             return WidgetSnapshot.ProfileEntry(
                 id: profile.id,
