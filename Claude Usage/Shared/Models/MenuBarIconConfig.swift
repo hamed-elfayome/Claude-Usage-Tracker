@@ -12,6 +12,7 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
     case session
     case week
     case api
+    case fable
 
     var id: String { rawValue }
 
@@ -23,6 +24,8 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
             return "Week Usage"
         case .api:
             return "API Credits"
+        case .fable:
+            return "Fable Weekly Usage"
         }
     }
 
@@ -34,6 +37,8 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
             return "W:"
         case .api:
             return "API:"
+        case .fable:
+            return "F:"
         }
     }
 
@@ -45,6 +50,8 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
             return "Weekly token usage (all models)"
         case .api:
             return "API Console billing credits"
+        case .fable:
+            return "Weekly Fable usage (plans with a Fable limit)"
         }
     }
 
@@ -56,6 +63,8 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
             return "calendar.badge.clock"
         case .api:
             return "dollarsign.circle.fill"
+        case .fable:
+            return "sparkles"
         }
     }
 }
@@ -206,6 +215,16 @@ struct MetricIconConfig: Codable, Equatable {
             iconStyle: .battery,
             order: 1,
             weekDisplayMode: .percentage
+        )
+    }
+
+    /// Default config for the Fable weekly limit (disabled by default, #318)
+    static var fableDefault: MetricIconConfig {
+        MetricIconConfig(
+            metricType: .fable,
+            isEnabled: false,
+            iconStyle: .battery,
+            order: 3
         )
     }
 
@@ -379,7 +398,8 @@ struct MenuBarIconConfiguration: Codable, Equatable {
         metrics: [MetricIconConfig] = [
             .sessionDefault,
             .weekDefault,
-            .apiDefault
+            .apiDefault,
+            .fableDefault
         ]
     ) {
         self.colorMode = colorMode
@@ -426,6 +446,10 @@ struct MenuBarIconConfiguration: Codable, Equatable {
         usePaceColoring = try container.decodeIfPresent(Bool.self, forKey: .usePaceColoring) ?? false
         excludeWeekendsFromWeeklyPace = try container.decodeIfPresent(Bool.self, forKey: .excludeWeekendsFromWeeklyPace) ?? false
         metrics = try container.decode([MetricIconConfig].self, forKey: .metrics)
+        // Configurations saved before the Fable metric existed gain it, switched off.
+        if !metrics.contains(where: { $0.metricType == .fable }) {
+            metrics.append(.fableDefault)
+        }
     }
 
     func encode(to encoder: Encoder) throws {

@@ -205,6 +205,21 @@ struct AppearanceSettingsView: View {
                             )
                         }
 
+                        // Fable weekly limit (Claude profiles only, #318)
+                        if profileManager.activeProfile?.provider == .anthropic,
+                           let fableIndex = configuration.metrics.firstIndex(where: { $0.metricType == .fable }) {
+                            MetricIconCard(
+                                metricType: .fable,
+                                config: Binding(
+                                    get: { configuration.metrics[fableIndex] },
+                                    set: { newValue in
+                                        configuration.metrics[fableIndex] = newValue
+                                    }
+                                ),
+                                onConfigChanged: { saveConfiguration() }
+                            )
+                        }
+
                         // API Credits (console-billing providers only)
                         if profileManager.activeProfile?.provider.descriptor.capabilities.consoleBilling ?? true,
                            let apiIndex = configuration.metrics.firstIndex(where: { $0.metricType == .api }) {

@@ -59,3 +59,25 @@ final class MenuBarIconConfigTests: XCTestCase {
         return try JSONSerialization.data(withJSONObject: object)
     }
 }
+
+/// The Fable weekly menu bar metric (#318).
+final class FableMetricConfigTests: XCTestCase {
+    func testFableMetricIsOffByDefault() {
+        let fable = MenuBarIconConfiguration.default.config(for: .fable)
+        XCTAssertNotNil(fable)
+        XCTAssertEqual(fable?.isEnabled, false)
+    }
+
+    func testConfigurationSavedBeforeFableExistedGainsItSwitchedOff() throws {
+        var legacy = MenuBarIconConfiguration.default
+        legacy.metrics.removeAll { $0.metricType == .fable }
+        if let sessionIndex = legacy.metrics.firstIndex(where: { $0.metricType == .session }) {
+            legacy.metrics[sessionIndex].iconStyle = .percentageOnly
+        }
+        let decoded = try JSONDecoder().decode(MenuBarIconConfiguration.self, from: JSONEncoder().encode(legacy))
+
+        XCTAssertEqual(decoded.config(for: .fable)?.isEnabled, false)
+        XCTAssertEqual(decoded.config(for: .session)?.iconStyle, .percentageOnly)
+        XCTAssertEqual(decoded.metrics.filter { $0.metricType == .fable }.count, 1)
+    }
+}

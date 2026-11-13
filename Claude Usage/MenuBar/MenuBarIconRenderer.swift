@@ -227,6 +227,31 @@ final class MenuBarIconRenderer {
                 sessionResetTime: nil
             )
 
+        case .fable:
+            let usedPercentage = usage.fableWeeklyPercentage
+            let displayPercentage = UsageStatusCalculator.getDisplayPercentage(
+                usedPercentage: usedPercentage,
+                showRemaining: showRemaining
+            )
+            let fableElapsed: Double? = usePaceColoring
+                ? UsageStatusCalculator.elapsedFraction(
+                    resetTime: usage.fableWeeklyResetTime ?? usage.weeklyResetTime,
+                    duration: Constants.weeklyWindow,
+                    showRemaining: false,
+                    excludingWeekends: excludeWeekends
+                )
+                : nil
+            return MetricData(
+                percentage: displayPercentage,
+                displayText: "\(Int(displayPercentage))%",
+                statusLevel: UsageStatusCalculator.calculateStatus(
+                    usedPercentage: usedPercentage,
+                    showRemaining: showRemaining,
+                    elapsedFraction: fableElapsed
+                ),
+                sessionResetTime: nil
+            )
+
         case .api:
             guard let apiUsage = apiUsage else {
                 return MetricData(
@@ -360,8 +385,14 @@ final class MenuBarIconRenderer {
                 text = resetTime.timeRemainingHoursString() as NSString
             }
         } else if showIconName {
-            // Show full word: "Session" or "Week"
-            text = (metricType == .session ? "Session" : "Week") as NSString
+            // Show full word: "Session", "Week" or "Fable"
+            let word: String
+            switch metricType {
+            case .session: word = "Session"
+            case .fable: word = "Fable"
+            case .week, .api: word = "Week"
+            }
+            text = word as NSString
         } else {
             // No label mode - show percentage instead
             text = "\(Int(metricData.percentage))%" as NSString
@@ -1415,6 +1446,9 @@ final class MenuBarIconRenderer {
         case .week:
             resetTime = usage.weeklyResetTime
             duration = Constants.weeklyWindow
+        case .fable:
+            resetTime = usage.fableWeeklyResetTime ?? usage.weeklyResetTime
+            duration = Constants.weeklyWindow
         case .api:
             return nil
         }
@@ -1423,7 +1457,7 @@ final class MenuBarIconRenderer {
             resetTime: resetTime,
             duration: duration,
             showRemaining: showRemaining,
-            excludingWeekends: excludeWeekends && metricType == .week
+            excludingWeekends: excludeWeekends && (metricType == .week || metricType == .fable)
         ) else { return nil }
         return CGFloat(f)
     }
