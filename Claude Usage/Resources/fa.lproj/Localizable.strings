@@ -58,6 +58,7 @@
 /* ==================== */
 "menubar.claude_usage" = "مصرف Claude";
 "menubar.session_usage" = "مصرف نشست";
+"menubar.session_remaining" = "باقی‌ماندهٔ نشست";
 "menubar.weekly_usage" = "هفتگی";
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";
