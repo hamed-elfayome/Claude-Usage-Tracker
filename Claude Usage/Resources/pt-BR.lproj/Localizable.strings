@@ -1081,6 +1081,8 @@
 /* Sponsor slot */
 "sponsor.slot_title" = "Este espaço está disponível para patrocinadores";
 "sponsor.slot_cta" = "Entre em contato";
+"sponsor.label" = "Patrocinador";
+"sponsor.open_in_browser" = "Abrir no navegador";
 
 /* Multi-Provider / OpenAI Codex */
 "section.codex_account_title" = "Conta Codex";

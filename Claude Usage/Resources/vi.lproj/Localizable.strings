@@ -1038,6 +1038,8 @@
 /* Sponsor slot */
 "sponsor.slot_title" = "Vị trí này dành cho nhà tài trợ";
 "sponsor.slot_cta" = "Liên hệ ngay";
+"sponsor.label" = "Nhà tài trợ";
+"sponsor.open_in_browser" = "Mở trong trình duyệt";
 
 // MARK: - Providers & Codex (v3.3.0)
 "codex.cli_detected" = "Đã phát hiện Codex CLI";

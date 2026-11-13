@@ -1090,6 +1090,8 @@
 /* Sponsor slot */
 "sponsor.slot_title" = "이 공간은 스폰서에게 제공됩니다";
 "sponsor.slot_cta" = "문의하기";
+"sponsor.label" = "스폰서";
+"sponsor.open_in_browser" = "브라우저에서 열기";
 
 /* Multi-Provider / OpenAI Codex */
 "section.codex_account_title" = "Codex 계정";

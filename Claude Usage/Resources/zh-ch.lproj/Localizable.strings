@@ -1067,6 +1067,8 @@
 /* Sponsor slot */
 "sponsor.slot_title" = "此位置开放赞助";
 "sponsor.slot_cta" = "与我联系";
+"sponsor.label" = "赞助商";
+"sponsor.open_in_browser" = "在浏览器中打开";
 
 /* Multi-Provider / OpenAI Codex */
 "section.codex_account_title" = "Codex 账户";

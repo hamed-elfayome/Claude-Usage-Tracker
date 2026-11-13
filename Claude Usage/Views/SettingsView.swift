@@ -274,8 +274,8 @@ struct SettingsView: View {
                     .padding(.horizontal, 12)
                     .padding(.top, 8)
 
-                // Sponsor slot (available placement)
-                SponsorSlotCard()
+                // Sponsor placement (content comes from the site's endpoint)
+                SponsorSlotCard(selectedSection: $selectedSection)
                     .padding(.horizontal, 12)
                     .padding(.top, 8)
 
@@ -342,6 +342,8 @@ struct SettingsView: View {
                     DebugNetworkLogView()
                 case .about:
                     AboutView()
+                case .sponsor:
+                    SponsorSectionView()
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -458,46 +460,123 @@ struct ProfileSectionContainer: View {
 
 // MARK: - Sponsor Slot
 
-/// A reserved placement in the settings sidebar, offered to sponsors.
-/// Clicking opens a pre-addressed mail for sponsorship inquiries.
+/// The sponsor placement in the settings sidebar. Its content comes from
+/// `SponsorService`: a sponsor when there is one, otherwise the open-placement
+/// card. Clicking shows the linked page in the content area; with no page to
+/// show, the open placement writes an email as before.
 struct SponsorSlotCard: View {
-    private static let contactURL = URL(
+    @Binding var selectedSection: SettingsSection
+    @ObservedObject private var service = SponsorService.shared
+
+    private static let contactMailURL = URL(
         string: "mailto:hamedelfayome@gmail.com?subject=Claude%20Usage%20Tracker%20%E2%80%94%20Sponsorship"
     )
 
+    private var isSelected: Bool { selectedSection == .sponsor }
+
     var body: some View {
-        Button {
-            if let url = Self.contactURL {
-                NSWorkspace.shared.open(url)
-            }
-        } label: {
-            VStack(spacing: 5) {
-                Image(systemName: "star.circle")
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(.secondary)
-                Text("sponsor.slot_title".localized)
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                Text("sponsor.slot_cta".localized)
-                    .font(.system(size: 9, weight: .medium))
-                    .foregroundColor(.accentColor)
+        Button(action: open) {
+            Group {
+                if let sponsor = service.slot.sponsor {
+                    sponsorLabel(sponsor)
+                } else {
+                    availableLabel
+                }
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
             .padding(.horizontal, 8)
             .background(
                 RoundedRectangle(cornerRadius: 6)
-                    .fill(Color.primary.opacity(0.03))
+                    .fill(Color.primary.opacity(isSelected ? 0.08 : 0.03))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 6)
-                    .strokeBorder(Color.primary.opacity(0.12), style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+                    .strokeBorder(
+                        Color.primary.opacity(0.12),
+                        style: StrokeStyle(lineWidth: 1, dash: service.slot.sponsor == nil ? [4, 3] : [])
+                    )
             )
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .help("hamedelfayome@gmail.com")
+        .help(service.slot.sponsor?.url.host ?? service.slot.contactURL?.host ?? "hamedelfayome@gmail.com")
+        .onAppear { service.refreshIfNeeded() }
+    }
+
+    private func open() {
+        if service.slot.sponsor != nil || service.slot.contactURL != nil {
+            selectedSection = .sponsor
+        } else if let url = Self.contactMailURL {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    private var availableLabel: some View {
+        VStack(spacing: 5) {
+            Image(systemName: "star.circle")
+                .font(.system(size: 15, weight: .medium))
+                .foregroundColor(.secondary)
+            Text("sponsor.slot_title".localized)
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+            Text("sponsor.slot_cta".localized)
+                .font(.system(size: 9, weight: .medium))
+                .foregroundColor(.accentColor)
+        }
+    }
+
+    private func sponsorLabel(_ sponsor: SponsorSlot.Sponsor) -> some View {
+        VStack(spacing: 5) {
+            Text("sponsor.label".localized)
+                .font(.system(size: 8, weight: .semibold))
+                .foregroundColor(.secondary)
+            if let logoURL = sponsor.logoURL {
+                AsyncImage(url: logoURL) { phase in
+                    if let image = phase.image {
+                        image.resizable().scaledToFit()
+                    } else {
+                        Color.clear
+                    }
+                }
+                .frame(maxWidth: 120, maxHeight: 26)
+            }
+            Text(sponsor.name)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundColor(.primary)
+                .lineLimit(1)
+            if let tagline = sponsor.tagline {
+                Text(tagline)
+                    .font(.system(size: 9))
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(3)
+            }
+            if let callToAction = sponsor.callToAction {
+                Text(callToAction)
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundColor(.accentColor)
+                    .lineLimit(1)
+            }
+        }
+    }
+}
+
+/// Content area for the sponsor placement: the sponsor's page, or the
+/// sponsorship page while the placement is open.
+struct SponsorSectionView: View {
+    @ObservedObject private var service = SponsorService.shared
+
+    var body: some View {
+        if let url = service.slot.sponsor?.url ?? service.slot.contactURL {
+            SponsorPageView(url: url)
+        } else {
+            // The sponsor was withdrawn while this section was open.
+            Text("sponsor.slot_title".localized)
+                .font(.system(size: 12))
+                .foregroundColor(.secondary)
+        }
     }
 }
 
@@ -518,7 +597,7 @@ struct AppSettingsSection: View {
         }
         let showClaudeCode = hasCLISyncProfile || StatuslineService.shared.isInstalled
         return SettingsSection.allCases.filter {
-            guard !$0.isProfileSetting && !$0.isCredential && !$0.isBottomBarItem else { return false }
+            guard !$0.isProfileSetting && !$0.isCredential && !$0.isBottomBarItem, $0 != .sponsor else { return false }
             if $0 == .claudeCode && !showClaudeCode { return false }
             return true
         }
@@ -645,6 +724,8 @@ enum SettingsSection: String, CaseIterable {
     case popover
     case debug
     case about
+    /// The sponsor's page. Reached from the sponsor card, never listed in the sidebar.
+    case sponsor
 
     var title: String {
         switch self {
@@ -668,6 +749,7 @@ enum SettingsSection: String, CaseIterable {
         case .popover: return "section.popover_title".localized
         case .debug: return "section.debug_title".localized
         case .about: return "settings.about".localized
+        case .sponsor: return "sponsor.label".localized
         }
     }
 
@@ -693,6 +775,7 @@ enum SettingsSection: String, CaseIterable {
         case .popover: return "rectangle.topthird.inset.filled"
         case .debug: return "ladybug.fill"
         case .about: return "info.circle.fill"
+        case .sponsor: return "star.circle"
         }
     }
 
@@ -718,6 +801,7 @@ enum SettingsSection: String, CaseIterable {
         case .popover: return "section.popover_desc".localized
         case .debug: return "section.debug_desc".localized
         case .about: return "settings.about.description".localized
+        case .sponsor: return ""
         }
     }
 

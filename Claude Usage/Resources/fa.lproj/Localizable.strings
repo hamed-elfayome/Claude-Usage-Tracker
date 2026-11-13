@@ -1023,6 +1023,8 @@
 /* Sponsor slot */
 "sponsor.slot_title" = "این جایگاه برای حامیان مالی در دسترس است";
 "sponsor.slot_cta" = "ارتباط با ما";
+"sponsor.label" = "حامی مالی";
+"sponsor.open_in_browser" = "باز کردن در مرورگر";
 
 /* Multi-Provider / OpenAI Codex */
 "section.codex_account_title" = "حساب Codex";
