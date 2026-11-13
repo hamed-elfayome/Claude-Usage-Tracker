@@ -56,6 +56,7 @@
 /* ==================== */
 "menubar.claude_usage" = "Uso do Claude";
 "menubar.session_usage" = "Uso da Sessão";
+"menubar.session_remaining" = "Sessão restante";
 "menubar.weekly_usage" = "Semanal";
 "menubar.opus_usage" = "Opus";
 "menubar.sonnet_usage" = "Sonnet";
