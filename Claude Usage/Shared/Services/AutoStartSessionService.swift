@@ -32,6 +32,10 @@ final class AutoStartSessionService {
     // Track last captured reset time per profile to prevent duplicate auto-starts
     private var lastCapturedResetTime: [UUID: Date] = [:]
 
+    // Spaces out retries after a failed start, so a start that keeps failing is not
+    // attempted (and announced) on every 5-minute cycle (#334)
+    private var retryBackoff = AutoStartRetryBackoff()
+
     private convenience init() {
         self.init(
             session: .shared,
@@ -224,6 +228,13 @@ final class AutoStartSessionService {
                     }
                 }
 
+                if let wait = retryBackoff.waitRemaining(for: profile.id, now: Date()) {
+                    LoggingService.shared.logDebug(
+                        "Profile '\(profile.name)': skipping auto-start - retrying in \(Int(wait / 60))m after a failed start"
+                    )
+                    return
+                }
+
                 LoggingService.shared.logInfo("Session at 0% for profile '\(profile.name)' - triggering auto-start")
 
                 // Auto-start the session
@@ -254,6 +265,7 @@ final class AutoStartSessionService {
                 LoggingService.shared.logInfo("Captured session reset time for '\(profile.name)': \(resetTime)")
             }
 
+            retryBackoff.recordSuccess(for: profile.id)
             LoggingService.shared.logInfo("Successfully auto-started session for profile '\(profile.name)'")
 
             // Send success notification
@@ -263,8 +275,45 @@ final class AutoStartSessionService {
             // Initialization can fail during transport or response validation.
             logError("Failed to auto-start session for profile '\(profile.name)': \(error.localizedDescription)")
 
-            // Send failure notification
-            notify(profile, false, error.localizedDescription)
+            // Announce the first failure of a streak only; the retries that follow are
+            // spaced out and would otherwise repeat the same notification.
+            let isFirstFailure = retryBackoff.recordFailure(for: profile.id, now: Date())
+            if isFirstFailure {
+                notify(profile, false, error.localizedDescription)
+            }
         }
+    }
+}
+
+/// Retry spacing for auto-start attempts that fail (#334).
+///
+/// Each consecutive failure doubles the wait before the next attempt, from 15
+/// minutes up to 2 hours. A successful start clears the streak.
+struct AutoStartRetryBackoff {
+    static let baseDelay: TimeInterval = 15 * 60
+    static let maxDelay: TimeInterval = 2 * 60 * 60
+
+    private var failures: [UUID: Int] = [:]
+    private var nextAttempt: [UUID: Date] = [:]
+
+    /// Time left before `profileId` may be tried again, or nil if it may be tried now.
+    func waitRemaining(for profileId: UUID, now: Date) -> TimeInterval? {
+        guard let next = nextAttempt[profileId], next > now else { return nil }
+        return next.timeIntervalSince(now)
+    }
+
+    /// Records a failed start. Returns true when it is the first failure of a streak.
+    @discardableResult
+    mutating func recordFailure(for profileId: UUID, now: Date) -> Bool {
+        let count = (failures[profileId] ?? 0) + 1
+        failures[profileId] = count
+        let delay = min(Self.baseDelay * pow(2, Double(count - 1)), Self.maxDelay)
+        nextAttempt[profileId] = now.addingTimeInterval(delay)
+        return count == 1
+    }
+
+    mutating func recordSuccess(for profileId: UUID) {
+        failures.removeValue(forKey: profileId)
+        nextAttempt.removeValue(forKey: profileId)
     }
 }
