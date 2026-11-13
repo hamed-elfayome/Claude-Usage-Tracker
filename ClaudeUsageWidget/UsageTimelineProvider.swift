@@ -78,6 +78,9 @@ struct UsageTimelineProvider: TimelineProvider {
         // reset times (countdown disappears). Without them those transitions
         // would lag until the next reload, up to `refreshInterval` late.
         var dates: Set<Date> = [now]
+        // The countdowns and the "now" needle are drawn from the entry's date, so a
+        // mid-cycle entry keeps them within five minutes of the truth.
+        dates.insert(now.addingTimeInterval(Self.refreshInterval / 2))
         if let snapshot {
             var boundaries = [snapshot.generatedAt.addingTimeInterval(UsageEntry.staleInterval)]
             for profile in snapshot.profiles {
