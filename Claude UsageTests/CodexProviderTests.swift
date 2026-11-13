@@ -392,4 +392,35 @@ final class CodexProviderTests: XCTestCase {
         let url = CodexAPIService.shared.usageURL(env: [:], configContents: "chatgpt_base_url = \"https://chatgpt.com/\"")
         XCTAssertEqual(url.absoluteString, "https://chatgpt.com/backend-api/wham/usage")
     }
+
+    // MARK: - Shared auth.json fallback (#335)
+
+    func testActiveProfileMayUseSharedAuthFile() {
+        let codex = Profile(name: "Codex", provider: .codex)
+        let other = Profile(name: "Codex 2", provider: .codex)
+        XCTAssertTrue(CodexUsageProvider.mayUseSharedAuthFile(codex, activeProfileId: codex.id, profiles: [codex, other]))
+    }
+
+    func testLoneCodexProfileMayUseSharedAuthFileWhileInactive() {
+        let claude = Profile(name: "Claude", provider: .anthropic)
+        let codex = Profile(name: "Codex", provider: .codex)
+        XCTAssertTrue(CodexUsageProvider.mayUseSharedAuthFile(codex, activeProfileId: claude.id, profiles: [claude, codex]))
+    }
+
+    func testCodexProfileWithPastedCredentialsDoesNotMakeTheFileAmbiguous() {
+        let claude = Profile(name: "Claude", provider: .anthropic)
+        let pasted = Profile(name: "Codex pasted", provider: .codex, codexCredentialsJSON: "{}")
+        let shared = Profile(name: "Codex shared", provider: .codex)
+        XCTAssertTrue(CodexUsageProvider.mayUseSharedAuthFile(shared, activeProfileId: claude.id, profiles: [claude, pasted, shared]))
+    }
+
+    func testTwoCredentialLessCodexProfilesKeepTheFileForTheActiveOne() {
+        let claude = Profile(name: "Claude", provider: .anthropic)
+        let first = Profile(name: "Codex 1", provider: .codex)
+        let second = Profile(name: "Codex 2", provider: .codex)
+        let all = [claude, first, second]
+        XCTAssertFalse(CodexUsageProvider.mayUseSharedAuthFile(first, activeProfileId: claude.id, profiles: all))
+        XCTAssertFalse(CodexUsageProvider.mayUseSharedAuthFile(second, activeProfileId: claude.id, profiles: all))
+        XCTAssertTrue(CodexUsageProvider.mayUseSharedAuthFile(first, activeProfileId: first.id, profiles: all))
+    }
 }

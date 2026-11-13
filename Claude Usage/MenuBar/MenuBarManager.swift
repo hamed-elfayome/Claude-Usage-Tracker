@@ -1037,7 +1037,18 @@ class MenuBarManager: NSObject, ObservableObject {
                 do {
                     let newUsage = try await fetchUsageForProfile(profile)
 
+                    // A provider with no usable live credential hands back the
+                    // profile's cached reading unchanged. It stays on display, but
+                    // it is not a new sample: feeding it to reset detection and the
+                    // history charts would record stale points as if they were live.
+                    let isCachedReading = previousUsage.map { $0 == newUsage } ?? false
+                    if isCachedReading {
+                        LoggingService.shared.log("MenuBarManager: No live reading for profile '\(profile.name)' - keeping the cached one")
+                    }
+
                     await MainActor.run {
+                        guard !isCachedReading else { return }
+
                         // Check for resets before updating usage
                         self.checkAndRecordSessionReset(
                             profileId: profile.id,
