@@ -963,6 +963,7 @@
 
 // MARK: - Overage Balance
 "popover.overage_balance" = "Saldo";
+"popover.no_limits_reported" = "Este plano não informa limites de uso, então não há nada para acompanhar aqui.";
 
 // MARK: - Monthly Spend
 "popover.monthly_spend_period" = "Este mês";

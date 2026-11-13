@@ -965,6 +965,7 @@
 
 // MARK: - Overage Balance
 "popover.overage_balance" = "موجودی";
+"popover.no_limits_reported" = "این طرح هیچ سقف مصرفی گزارش نمی‌کند، بنابراین چیزی برای نمایش در اینجا وجود ندارد.";
 
 // MARK: - Setup Wizard CLI Detection
 "setup.cli_detecting" = "در حال بررسی اعتبارنامه‌های CLI…";

@@ -712,21 +712,31 @@ struct SmartUsageDashboard: View {
                 )
             }
 
-            // All Models (Weekly)
-            UsageRow(
-                title: "menubar.all_models".localized,
-                tag: "menubar.weekly".localized,
-                subtitle: nil,
-                usedPercentage: usage.weeklyPercentage,
-                showRemaining: showRemainingPercentage,
-                resetTime: usage.weeklyResetTime,
-                periodDuration: Constants.weeklyWindow,
-                showTimeMarker: showTimeMarker,
-                showPaceMarker: showPaceMarker,
-                usePaceColoring: usePaceColoring,
-                excludeWeekends: excludeWeekendsFromWeeklyPace,
-                timeDisplay: timeDisplay
-            )
+            // All Models (Weekly). Absent when the plan reports no limits at all,
+            // as the free plan does (#312); a 0% bar there would look like a reading.
+            if usage.hasWeeklyLimit {
+                UsageRow(
+                    title: "menubar.all_models".localized,
+                    tag: "menubar.weekly".localized,
+                    subtitle: nil,
+                    usedPercentage: usage.weeklyPercentage,
+                    showRemaining: showRemainingPercentage,
+                    resetTime: usage.weeklyResetTime,
+                    periodDuration: Constants.weeklyWindow,
+                    showTimeMarker: showTimeMarker,
+                    showPaceMarker: showPaceMarker,
+                    usePaceColoring: usePaceColoring,
+                    excludeWeekends: excludeWeekendsFromWeeklyPace,
+                    timeDisplay: timeDisplay
+                )
+            } else if !usage.hasSessionLimit {
+                Text("popover.no_limits_reported".localized)
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 8)
+            }
 
             if usage.fableWeeklyTokensUsed > 0 {
                 UsageRow(

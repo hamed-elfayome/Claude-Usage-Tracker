@@ -967,6 +967,7 @@
 
 // MARK: - Overage Balance
 "popover.overage_balance" = "餘額";
+"popover.no_limits_reported" = "此方案未回報使用限額，因此這裡沒有可顯示的內容。";
 
 // MARK: - Monthly Spend
 "popover.monthly_spend_period" = "本月";

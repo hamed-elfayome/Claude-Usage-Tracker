@@ -926,6 +926,7 @@
 "popover.time_format_24h" = "24-годинний";
 "popover.time_format_system" = "Системний";
 "popover.overage_balance" = "Баланс";
+"popover.no_limits_reported" = "Цей план не повідомляє лімітів використання, тому тут нічого відстежувати.";
 
 // MARK: - Monthly Spend
 "popover.monthly_spend_period" = "Цей місяць";

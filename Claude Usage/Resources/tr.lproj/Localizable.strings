@@ -973,6 +973,7 @@
 
 // MARK: - Overage Balance
 "popover.overage_balance" = "Bakiye";
+"popover.no_limits_reported" = "Bu plan kullanım sınırı bildirmiyor; bu yüzden burada izlenecek bir şey yok.";
 
 // MARK: - Monthly Spend
 "popover.monthly_spend_period" = "Bu ay";

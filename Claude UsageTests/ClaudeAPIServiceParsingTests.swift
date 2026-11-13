@@ -50,6 +50,38 @@ final class ClaudeAPIServiceParsingTests: XCTestCase {
         XCTAssertEqual(usage.weeklyResetTime.timeIntervalSince1970, 1_793_725_200, accuracy: 1)
     }
 
+    func testFreePlanResponseWithEverythingNullReportsNoLimits() throws {
+        // Free-plan response from issue #312: every window is null and limits[] is empty.
+        let json = #"""
+        {"five_hour":null,"seven_day":null,"seven_day_opus":null,"seven_day_sonnet":null,
+         "seven_day_omelette":null,"extra_usage":null,"limits":[],"spend":null}
+        """#
+        let usage = try service.parseUsageResponse(Data(json.utf8))
+
+        XCTAssertFalse(usage.hasSessionLimit)
+        XCTAssertFalse(usage.hasWeeklyLimit)
+    }
+
+    func testUltraResponseStillHasAWeeklyLimit() throws {
+        let json = #"""
+        {"five_hour":null,"seven_day":{"utilization":47.0,"resets_at":"2026-11-03T17:00:00.036205+00:00"},"limits":[]}
+        """#
+        let usage = try service.parseUsageResponse(Data(json.utf8))
+
+        XCTAssertFalse(usage.hasSessionLimit)
+        XCTAssertTrue(usage.hasWeeklyLimit)
+    }
+
+    func testUsageSavedBeforeTheWeeklyFlagExistedKeepsItsWeeklyRow() throws {
+        var usage = ClaudeUsage.empty
+        usage.hasWeeklyLimit = false
+        var object = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(usage)) as? [String: Any])
+        object.removeValue(forKey: "hasWeeklyLimit")
+        let decoded = try JSONDecoder().decode(ClaudeUsage.self, from: JSONSerialization.data(withJSONObject: object))
+
+        XCTAssertTrue(decoded.hasWeeklyLimit)
+    }
+
     func testResponseWithFiveHourKeepsSessionValues() throws {
         let json = #"""
         {

@@ -977,6 +977,7 @@
 
 // MARK: - Overage Balance
 "popover.overage_balance" = "Số dư";
+"popover.no_limits_reported" = "Gói này không báo cáo giới hạn sử dụng nên không có gì để theo dõi ở đây.";
 
 // MARK: - Monthly Spend
 "popover.monthly_spend_period" = "Tháng này";

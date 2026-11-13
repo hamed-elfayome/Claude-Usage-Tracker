@@ -980,6 +980,7 @@
 
 // MARK: - Overage Balance
 "popover.overage_balance" = "잔액";
+"popover.no_limits_reported" = "이 요금제는 사용량 한도를 보고하지 않아 여기에 표시할 내용이 없습니다.";
 
 // MARK: - Monthly Spend
 "popover.monthly_spend_period" = "이번 달";

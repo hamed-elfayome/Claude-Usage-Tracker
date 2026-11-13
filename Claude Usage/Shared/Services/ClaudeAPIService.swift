@@ -1076,6 +1076,8 @@ class ClaudeAPIService: APIServiceProtocol {
                 sessionPercentage: sessionPercentage,
                 sessionResetTime: sessionResetTime,
                 hasSessionLimit: fiveHour != nil || hasNonWeeklyLimit,
+                hasWeeklyLimit: json["seven_day"] is [String: Any]
+                    || !((json["limits"] as? [[String: Any]]) ?? []).isEmpty,
                 weeklyTokensUsed: weeklyTokens,
                 weeklyLimit: weeklyLimit,
                 weeklyPercentage: weeklyPercentage,
