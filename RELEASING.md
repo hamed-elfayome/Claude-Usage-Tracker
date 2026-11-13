@@ -20,6 +20,7 @@ Edit `Claude Usage.xcodeproj/project.pbxproj`:
 ```
 
 **Important:**
+- The widget extension target (`Claude UsageWidget`) has its own `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in the project file. Bump both to the same values as the app, or the shipped widget keeps an old version.
 - `MARKETING_VERSION` is the user-facing version (e.g., 2.2.0)
 - `CURRENT_PROJECT_VERSION` is the build number used by Sparkle for update detection
 - **ALWAYS increment CURRENT_PROJECT_VERSION** for each release, even for patches!

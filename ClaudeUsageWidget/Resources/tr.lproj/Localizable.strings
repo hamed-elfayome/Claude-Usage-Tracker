@@ -1,0 +1,8 @@
+/* Claude Usage Widget */
+"widget.no_data" = "Kullanım verilerini yüklemek için Claude Usage'ı açın";
+"widget.session" = "Oturum";
+"widget.weekly" = "Haftalık";
+"widget.session.name" = "Oturum Kullanımı";
+"widget.session.desc" = "Etkin profilin mevcut 5 saatlik oturum kullanımı.";
+"widget.overview.name" = "Kullanım Özeti";
+"widget.overview.desc" = "Görüntülenen tüm profillerin oturum ve haftalık kullanımı.";
