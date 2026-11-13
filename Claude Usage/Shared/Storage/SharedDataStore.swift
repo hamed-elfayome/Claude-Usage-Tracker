@@ -154,6 +154,55 @@ class SharedDataStore {
         return token
     }
 
+    // MARK: - Keep Awake
+
+    func saveKeepAwakeAutoEnabled(_ enabled: Bool) {
+        defaults.set(enabled, forKey: Constants.UserDefaultsKeys.keepAwakeAutoEnabled)
+    }
+
+    func loadKeepAwakeAutoEnabled() -> Bool {
+        // Default false: nothing is active until the user's first click on the
+        // popover button (or the settings toggle), which enables auto mode and
+        // installs the hooks — that click is the explicit opt-in. Once turned
+        // off, it stays off until turned back on.
+        return defaults.bool(forKey: Constants.UserDefaultsKeys.keepAwakeAutoEnabled)
+    }
+
+    func saveKeepAwakeSleepMode(_ rawValue: String) {
+        defaults.set(rawValue, forKey: Constants.UserDefaultsKeys.keepAwakeSleepMode)
+    }
+
+    func loadKeepAwakeSleepMode() -> String? {
+        return defaults.string(forKey: Constants.UserDefaultsKeys.keepAwakeSleepMode)
+    }
+
+    /// Default manual keep-awake duration in seconds. 0 means indefinite.
+    func saveKeepAwakeDefaultDuration(_ duration: TimeInterval) {
+        defaults.set(duration, forKey: Constants.UserDefaultsKeys.keepAwakeDefaultDuration)
+    }
+
+    func loadKeepAwakeDefaultDuration() -> TimeInterval {
+        return defaults.double(forKey: Constants.UserDefaultsKeys.keepAwakeDefaultDuration)
+    }
+
+    /// How long auto mode keeps the Mac awake after Claude Code goes idle.
+    func saveKeepAwakeAutoGracePeriod(_ period: TimeInterval) {
+        defaults.set(period, forKey: Constants.UserDefaultsKeys.keepAwakeAutoGracePeriod)
+    }
+
+    /// Shortest (and default) grace period. A session with no hook events for two
+    /// minutes is dropped from the session store, which happens during any long
+    /// build or command, so a shorter grace would let the Mac sleep mid-task.
+    static let keepAwakeMinimumGracePeriod: TimeInterval = 15 * 60
+
+    func loadKeepAwakeAutoGracePeriod() -> TimeInterval {
+        guard defaults.object(forKey: Constants.UserDefaultsKeys.keepAwakeAutoGracePeriod) != nil else {
+            return Self.keepAwakeMinimumGracePeriod
+        }
+        return max(Self.keepAwakeMinimumGracePeriod,
+                   defaults.double(forKey: Constants.UserDefaultsKeys.keepAwakeAutoGracePeriod))
+    }
+
     // MARK: - Statusline Configuration
 
     func saveStatuslineShowModel(_ show: Bool) {

@@ -64,7 +64,9 @@ struct NotchHUDSettingsView: View {
             SharedDataStore.shared.saveNotchHUDEnabled(newValue)
             if newValue {
                 NotchHookInstaller.shared.install()
-            } else {
+            } else if !SharedDataStore.shared.loadKeepAwakeAutoEnabled() {
+                // Keep Awake's auto mode shares the hooks — only remove them
+                // when no feature needs session events anymore.
                 NotchHookInstaller.shared.uninstall()
             }
             hookStatus = NotchHookInstaller.shared.checkStatus()
