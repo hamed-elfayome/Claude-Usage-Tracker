@@ -4,9 +4,6 @@
 <dict>
 	<key>com.apple.security.app-sandbox</key>
 	<true/>
-	<!-- Read-only access to the snapshot the main app publishes.
-	     Deliberately NOT an App Group: group entitlements trigger Keychain
-	     prompts for Developer ID distribution (see CONTRIBUTING guidelines). -->
 	<key>com.apple.security.temporary-exception.files.home-relative-path.read-only</key>
 	<array>
 		<string>/Library/Application Support/Claude Usage/widget/</string>

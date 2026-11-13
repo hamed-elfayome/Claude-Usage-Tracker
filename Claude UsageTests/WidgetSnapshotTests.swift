@@ -36,7 +36,7 @@ final class WidgetSnapshotTests: XCTestCase {
         decoder.dateDecodingStrategy = .iso8601
         let decoded = try decoder.decode(WidgetSnapshot.self, from: data)
 
-        XCTAssertEqual(decoded.schemaVersion, 1)
+        XCTAssertEqual(decoded.schemaVersion, WidgetSnapshot.currentSchemaVersion)
         XCTAssertEqual(decoded.profiles.count, 1)
         XCTAssertEqual(decoded.profiles[0].name, "Test")
         XCTAssertEqual(decoded.profiles[0].sessionPercentage, 42, accuracy: 0.01)

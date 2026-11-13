@@ -82,17 +82,20 @@ struct SessionUsageWidgetView: View {
                             .font(.caption.bold())
                             .lineLimit(1)
                     }
-                    Gauge(value: min(max(profile.sessionPercentage, 0), 100), in: 0...100) {
-                        Text("widget.session")
+                    // Plans without a 5-hour window show weekly usage here.
+                    let percentage = profile.hasSessionLimit ? profile.sessionPercentage : profile.weeklyPercentage
+                    let resetTime = profile.hasSessionLimit ? profile.sessionResetTime : profile.weeklyResetTime
+                    Gauge(value: min(max(percentage, 0), 100), in: 0...100) {
+                        Text(profile.hasSessionLimit ? "widget.session" : "widget.weekly")
                     } currentValueLabel: {
-                        Text("\(Int(profile.sessionPercentage))%")
+                        Text("\(Int(percentage))%")
                             .font(.callout.monospacedDigit().bold())
                     }
                     .gaugeStyle(.accessoryCircularCapacity)
-                    .tint(usageColor(profile.sessionPercentage))
+                    .tint(usageColor(percentage))
                     .frame(maxWidth: .infinity)
-                    if profile.sessionResetTime > entry.date {
-                        Text(profile.sessionResetTime, style: .relative)
+                    if resetTime > entry.date {
+                        Text(resetTime, style: .relative)
                             .font(.system(size: 9))
                             .foregroundStyle(.tertiary)
                             .frame(maxWidth: .infinity, alignment: .center)
@@ -164,13 +167,15 @@ struct UsageOverviewWidgetView: View {
                         Spacer(minLength: 0)
                     }
                     HStack(alignment: .top, spacing: 16) {
-                        UsageBar(
-                            label: "widget.session",
-                            percentage: profile.sessionPercentage,
-                            resetTime: profile.sessionResetTime,
-                            now: entry.date,
-                            compact: false
-                        )
+                        if profile.hasSessionLimit {
+                            UsageBar(
+                                label: "widget.session",
+                                percentage: profile.sessionPercentage,
+                                resetTime: profile.sessionResetTime,
+                                now: entry.date,
+                                compact: false
+                            )
+                        }
                         UsageBar(
                             label: "widget.weekly",
                             percentage: profile.weeklyPercentage,
@@ -200,12 +205,14 @@ struct UsageOverviewWidgetView: View {
                         .font(.caption.bold())
                         .lineLimit(1)
                         .frame(width: 78, alignment: .leading)
-                    UsageBar(
-                        label: "widget.session",
-                        percentage: profile.sessionPercentage,
-                        resetTime: profile.sessionResetTime,
-                        now: entry.date
-                    )
+                    if profile.hasSessionLimit {
+                        UsageBar(
+                            label: "widget.session",
+                            percentage: profile.sessionPercentage,
+                            resetTime: profile.sessionResetTime,
+                            now: entry.date
+                        )
+                    }
                     UsageBar(
                         label: "widget.weekly",
                         percentage: profile.weeklyPercentage,

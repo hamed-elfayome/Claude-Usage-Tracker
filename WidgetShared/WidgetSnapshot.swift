@@ -21,6 +21,10 @@ struct WidgetSnapshot: Codable {
         let isDisplayed: Bool
         let sessionPercentage: Double
         let sessionResetTime: Date
+        /// False on plans without a 5-hour window (Claude Ultra, Codex Pro). The
+        /// session fields then hold placeholders, and the widget shows weekly
+        /// usage in their place.
+        var hasSessionLimit: Bool = true
         let weeklyPercentage: Double
         let weeklyResetTime: Date
         /// When this profile's usage was last fetched. Can lag behind
@@ -32,7 +36,8 @@ struct WidgetSnapshot: Codable {
     /// Bump when the on-disk format changes so an old widget build can
     /// detect a snapshot written by a newer app (and vice versa).
     /// `load` rejects snapshots whose version doesn't match.
-    static let currentSchemaVersion = 1
+    /// 2: added `hasSessionLimit`.
+    static let currentSchemaVersion = 2
 
     var schemaVersion: Int = WidgetSnapshot.currentSchemaVersion
     let generatedAt: Date

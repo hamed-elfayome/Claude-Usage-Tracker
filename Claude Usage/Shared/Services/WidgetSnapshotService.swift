@@ -10,7 +10,12 @@ import WidgetKit
 /// changes, but the snapshot itself is rewritten at least every
 /// `heartbeatInterval` — the widget uses `generatedAt` as an app-alive
 /// signal, so a healthy app with flat usage must still refresh it.
-final class WidgetSnapshotService {
+///
+/// `nonisolated`: the app target defaults to main-actor isolation, but this type
+/// guards its own state with a lock and is published to from any thread. Left
+/// main-actor-bound, releasing an instance off the actor's executor crashed in
+/// the Swift runtime (every test that created one aborted on macOS 26.0).
+nonisolated final class WidgetSnapshotService: @unchecked Sendable {
     static let shared = WidgetSnapshotService()
 
     /// Serializes all publish state; `publish` may be called from any thread.
@@ -83,6 +88,7 @@ final class WidgetSnapshotService {
                 isDisplayed: profile.isSelectedForDisplay,
                 sessionPercentage: usage.effectiveSessionPercentage,
                 sessionResetTime: usage.sessionResetTime,
+                hasSessionLimit: usage.hasSessionLimit,
                 weeklyPercentage: usage.weeklyPercentage,
                 weeklyResetTime: usage.weeklyResetTime,
                 lastUpdated: usage.lastUpdated
@@ -141,6 +147,16 @@ final class WidgetSnapshotService {
         }
     }
 
+    /// A reset time that moved by less than this is the same window. When the API
+    /// reports no reset time the app fills in "now + window", which shifts on every
+    /// refresh; comparing to the second turned that into a rewrite of the snapshot
+    /// and a widget reload on every cycle.
+    static let resetTimeTolerance: TimeInterval = 5 * 60
+
+    private static func resetMoved(_ old: Date, _ new: Date) -> Bool {
+        abs(new.timeIntervalSince(old)) > resetTimeTolerance
+    }
+
     /// Whole-percent or reset-time changes are worth a widget reload;
     /// sub-percent jitter is not.
     private func hasMeaningfulChange(_ entries: [WidgetSnapshot.ProfileEntry]) -> Bool {
@@ -150,10 +166,13 @@ final class WidgetSnapshotService {
         for (old, new) in zip(previous, entries) {
             let identityChanged = old.id != new.id || old.name != new.name
                 || old.isActive != new.isActive || old.isDisplayed != new.isDisplayed
-            let sessionChanged = Int(old.sessionPercentage) != Int(new.sessionPercentage)
-                || Int(old.sessionResetTime.timeIntervalSince1970) != Int(new.sessionResetTime.timeIntervalSince1970)
+                || old.hasSessionLimit != new.hasSessionLimit
+            // Without a session limit the session fields are placeholders.
+            let sessionChanged = new.hasSessionLimit
+                && (Int(old.sessionPercentage) != Int(new.sessionPercentage)
+                    || Self.resetMoved(old.sessionResetTime, new.sessionResetTime))
             let weeklyChanged = Int(old.weeklyPercentage) != Int(new.weeklyPercentage)
-                || Int(old.weeklyResetTime.timeIntervalSince1970) != Int(new.weeklyResetTime.timeIntervalSince1970)
+                || Self.resetMoved(old.weeklyResetTime, new.weeklyResetTime)
             if identityChanged || sessionChanged || weeklyChanged {
                 return true
             }

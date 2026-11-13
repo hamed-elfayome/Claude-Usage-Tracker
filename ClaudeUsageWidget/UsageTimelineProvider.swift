@@ -50,7 +50,12 @@ struct UsageEntry: TimelineEntry {
 /// The app requests a timeline reload after every refresh cycle, so entries
 /// here only need a coarse fallback cadence for the case where the app quit.
 struct UsageTimelineProvider: TimelineProvider {
-    private static let refreshInterval: TimeInterval = 15 * 60
+    /// Must stay at or below `staleInterval` minus the app's 5-minute heartbeat.
+    /// The newest snapshot a reload can see is up to one heartbeat old, so its
+    /// stale boundary is at least 10 minutes away. With a longer refresh that
+    /// boundary fell inside the timeline and dimmed the widget for part of
+    /// every cycle while the app was running normally.
+    private static let refreshInterval: TimeInterval = 10 * 60
 
     func placeholder(in context: Context) -> UsageEntry {
         UsageEntry(date: Date(), snapshot: UsageEntry.placeholderSnapshot())

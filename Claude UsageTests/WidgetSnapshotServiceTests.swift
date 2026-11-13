@@ -172,4 +172,59 @@ final class WidgetSnapshotServiceTests: XCTestCase {
         XCTAssertEqual(sanitized.count, 64)
         XCTAssertTrue(sanitized.hasPrefix("badname"))
     }
+
+    // MARK: - Profile mapping and plans without a 5-hour window
+
+    private func makeProfile(id: UUID = UUID(), hasSessionLimit: Bool, sessionReset: Date, weekly: Double = 17) -> Profile {
+        var usage = ClaudeUsage.empty
+        usage.hasSessionLimit = hasSessionLimit
+        usage.sessionPercentage = 99
+        usage.sessionResetTime = sessionReset
+        usage.weeklyPercentage = weekly
+        usage.weeklyResetTime = Date(timeIntervalSince1970: 1_700_080_000)
+        return Profile(id: id, name: "Ultra", claudeUsage: usage)
+    }
+
+    func testProfileWithoutSessionLimitIsPublishedAsSuch() {
+        let service = makeService()
+        let profile = makeProfile(hasSessionLimit: false, sessionReset: currentDate.addingTimeInterval(5 * 3600))
+        service.publish(profiles: [profile], activeProfileId: profile.id)
+
+        let entry = writtenSnapshots.last?.profiles.first
+        XCTAssertEqual(entry?.hasSessionLimit, false)
+        XCTAssertEqual(entry?.weeklyPercentage, 17)
+        XCTAssertEqual(entry?.isActive, true)
+    }
+
+    func testPlaceholderSessionResetTimeDoesNotRewriteEveryRefresh() {
+        let service = makeService()
+        let id = UUID()
+        let profile = makeProfile(id: id, hasSessionLimit: false, sessionReset: currentDate.addingTimeInterval(5 * 3600))
+        service.publish(profiles: [profile], activeProfileId: id)
+
+        // The placeholder reset time moves with the clock on each 30 s refresh.
+        for _ in 0..<5 {
+            currentDate = currentDate.addingTimeInterval(30)
+            let next = makeProfile(id: id, hasSessionLimit: false, sessionReset: currentDate.addingTimeInterval(5 * 3600))
+            service.publish(profiles: [next], activeProfileId: id)
+        }
+
+        XCTAssertEqual(writtenSnapshots.count, 1)
+        XCTAssertEqual(reloadCount, 1)
+    }
+
+    func testResetTimeDriftWithinToleranceIsNotAChange() {
+        let service = makeService()
+        let id = UUID()
+        let profile = makeProfile(id: id, hasSessionLimit: true, sessionReset: currentDate.addingTimeInterval(3600))
+        service.publish(profiles: [profile], activeProfileId: id)
+
+        let drifted = makeProfile(id: id, hasSessionLimit: true, sessionReset: currentDate.addingTimeInterval(3600 + 45))
+        service.publish(profiles: [drifted], activeProfileId: id)
+        XCTAssertEqual(writtenSnapshots.count, 1)
+
+        let reset = makeProfile(id: id, hasSessionLimit: true, sessionReset: currentDate.addingTimeInterval(6 * 3600))
+        service.publish(profiles: [reset], activeProfileId: id)
+        XCTAssertEqual(writtenSnapshots.count, 2, "a real reset still publishes")
+    }
 }
