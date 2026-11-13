@@ -22,7 +22,7 @@ struct KeepAwakeSettingsView: View {
     @State private var autoEnabled: Bool = SharedDataStore.shared.loadKeepAwakeAutoEnabled()
     @State private var sleepMode: KeepAwakeService.SleepMode =
         SharedDataStore.shared.loadKeepAwakeSleepMode()
-            .flatMap(KeepAwakeService.SleepMode.init(rawValue:)) ?? .preventDisplaySleep
+            .flatMap(KeepAwakeService.SleepMode.init(rawValue:)) ?? .default
 
     @State private var durationChoice: TimeInterval = 0
     @State private var customDurationHours: Int = 3
@@ -137,13 +137,33 @@ struct KeepAwakeSettingsView: View {
                     title: "keep_awake.auto".localized,
                     description: "keep_awake.auto_desc".localized,
                     badge: .beta,
-                    isOn: $autoEnabled
+                    isOn: Binding(
+                        get: { autoEnabled },
+                        set: { newValue in
+                            // Turning it on adds hooks to Claude Code's settings: ask first.
+                            if newValue, service.enablingAutoInstallsHooks, !KeepAwakeHookConsent.confirm() {
+                                return
+                            }
+                            autoEnabled = newValue
+                        }
+                    )
                 )
+
+                if let problem = service.autoModeProblem {
+                    HStack(alignment: .top, spacing: 6) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.orange)
+                        Text(problem.message)
+                            .font(DesignTokens.Typography.caption)
+                            .foregroundColor(SettingsColors.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Spacer()
+                    }
+                }
 
                 Group {
                     pickerRow(label: "keep_awake.grace".localized) {
                         Picker("", selection: $graceChoice) {
-                            Text("keep_awake.grace.immediately".localized).tag(TimeInterval(0))
                             ForEach(Self.gracePresets, id: \.self) { preset in
                                 Text("keep_awake.grace.stay".localized(with: Self.format(preset))).tag(preset)
                             }
@@ -228,7 +248,7 @@ struct KeepAwakeSettingsView: View {
         }
 
         let grace = SharedDataStore.shared.loadKeepAwakeAutoGracePeriod()
-        if grace == 0 || Self.gracePresets.contains(grace) {
+        if Self.gracePresets.contains(grace) {
             graceChoice = grace
         } else {
             graceChoice = Self.customTag
@@ -273,4 +293,31 @@ struct KeepAwakeSettingsView: View {
 #Preview {
     KeepAwakeSettingsView()
         .frame(width: 520, height: 560)
+}
+
+// MARK: - Hook consent and problem text
+
+/// Auto mode works through Claude Code hooks. Adding them changes a file the
+/// user owns, so the first time it would happen the user is asked.
+enum KeepAwakeHookConsent {
+    @MainActor
+    static func confirm() -> Bool {
+        let alert = NSAlert()
+        alert.messageText = "keep_awake.consent_title".localized
+        alert.informativeText = "keep_awake.consent_message".localized
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "keep_awake.consent_confirm".localized)
+        alert.addButton(withTitle: "common.cancel".localized)
+        NSApp.activate(ignoringOtherApps: true)
+        return alert.runModal() == .alertFirstButtonReturn
+    }
+}
+
+extension KeepAwakeService.AutoModeProblem {
+    var message: String {
+        switch self {
+        case .hooksMissing: return "keep_awake.problem_hooks".localized
+        case .listenerUnavailable: return "keep_awake.problem_listener".localized
+        }
+    }
 }

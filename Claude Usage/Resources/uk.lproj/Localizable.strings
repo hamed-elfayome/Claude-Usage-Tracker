@@ -1145,3 +1145,8 @@
 "support.popup_signature" = "команда з однієї людини за Claude Usage";
 "support.popup_body" = "Безплатний, з відкритим кодом, зроблений однією людиною — без реклами й стеження. Якщо він урятував вас від спаленого ліміту сесії, кава тримає його живим.";
 "support.popup_days" = "Пильнує ваші ліміти вже %d днів — завжди безплатно";
+"keep_awake.consent_title" = "Додати хуки Claude Code?";
+"keep_awake.consent_message" = "Щоб знати, коли Claude Code працює, Keep Awake додає хуки до ~/.claude/settings.json і приймає їх лише на цьому Mac. Інші ваші хуки та налаштування не змінюються. Їх можна прибрати, вимкнувши цю опцію.";
+"keep_awake.consent_confirm" = "Додати хуки й увімкнути";
+"keep_awake.problem_hooks" = "Автоматичний режим не бачить Claude Code: його хуків немає в ~/.claude/settings.json. Вимкніть і знову ввімкніть автоматичний режим, щоб перевстановити їх.";
+"keep_awake.problem_listener" = "Автоматичний режим не бачить Claude Code: порт локального слухача зайнятий іншою програмою або іншою копією Claude Usage.";

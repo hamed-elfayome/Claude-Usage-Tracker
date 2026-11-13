@@ -22,12 +22,14 @@ final class KeepAwakeService: ObservableObject {
     static let shared = KeepAwakeService()
 
     enum SleepMode: String, CaseIterable {
-        /// System stays awake, display may sleep. Battery-friendlier, but a
-        /// dark, locked display can look like the Mac actually slept.
+        /// System stays awake, display may sleep (default). Battery-friendlier,
+        /// and the display can still lock on its normal schedule.
         case allowDisplaySleep
-        /// Display and system both stay awake (default — keeps the awake state
-        /// visible at a glance).
+        /// Display and system both stay awake.
         case preventDisplaySleep
+
+        /// Used until the user picks one.
+        static let `default`: SleepMode = .allowDisplaySleep
 
         var assertionType: String {
             switch self {
@@ -59,11 +61,23 @@ final class KeepAwakeService: ObservableObject {
     /// Published: the popover button renders an "armed" state from this, and
     /// flipping it while idle changes no other published property.
     @Published private(set) var autoEnabled = false
-    private(set) var sleepMode: SleepMode = .preventDisplaySleep
+
+    /// Why auto mode cannot detect Claude Code right now. While one of these
+    /// holds, auto mode looks armed but would let the Mac sleep mid-task.
+    enum AutoModeProblem: Equatable {
+        /// The Claude Code hooks are not (fully) present in ~/.claude/settings.json.
+        case hooksMissing
+        /// The local listener the hooks report to could not take its port.
+        case listenerUnavailable
+    }
+
+    /// Set while auto mode is on but cannot work; nil otherwise.
+    @Published private(set) var autoModeProblem: AutoModeProblem?
+    private(set) var sleepMode: SleepMode = .default
     /// Manual duration in seconds; 0 = indefinite.
     private(set) var defaultDuration: TimeInterval = 0
     /// Auto mode keeps the assertion this long after sessions go idle; 0 = release immediately.
-    private(set) var gracePeriod: TimeInterval = 60 * 60
+    private(set) var gracePeriod: TimeInterval = SharedDataStore.keepAwakeMinimumGracePeriod
 
     // MARK: - Test seams
 
@@ -82,9 +96,13 @@ final class KeepAwakeService: ObservableObject {
     var releaseAssertion: (IOPMAssertionID) -> Void = { id in
         IOPMAssertionRelease(id)
     }
+    /// Whether the Claude Code hooks auto mode depends on are installed.
+    var hooksInstalled: () -> Bool = {
+        NotchHookInstaller.shared.checkStatus() == .installed
+    }
     var loadSettings: () -> (autoEnabled: Bool, sleepMode: SleepMode, defaultDuration: TimeInterval, gracePeriod: TimeInterval) = {
         let store = SharedDataStore.shared
-        let mode = store.loadKeepAwakeSleepMode().flatMap(SleepMode.init(rawValue:)) ?? .preventDisplaySleep
+        let mode = store.loadKeepAwakeSleepMode().flatMap(SleepMode.init(rawValue:)) ?? .default
         return (
             autoEnabled: store.loadKeepAwakeAutoEnabled(),
             sleepMode: mode,
@@ -103,6 +121,7 @@ final class KeepAwakeService: ObservableObject {
     private var deadlineTimer: Timer?
     private var cancellables: Set<AnyCancellable> = []
     private var started = false
+    private var hooksAreInstalled = true
 
     init(sessionStore: NotchSessionStore = .shared) {
         self.sessionStore = sessionStore
@@ -121,6 +140,13 @@ final class KeepAwakeService: ObservableObject {
                 self?.reconcile(sessions: sessions)
             }
             .store(in: &cancellables)
+        sessionStore.$serverStatus
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] status in
+                self?.refreshAutoModeProblem(serverStatus: status)
+            }
+            .store(in: &cancellables)
+        refreshAutoModeProblem(recheckHooks: true)
         reconcile()
     }
 
@@ -191,7 +217,32 @@ final class KeepAwakeService: ObservableObject {
     /// release + re-acquire the assertion with the new type).
     func settingsChanged() {
         reloadSettings()
+        refreshAutoModeProblem(recheckHooks: true)
         reconcile()
+    }
+
+    /// True when turning auto mode on would add hooks to ~/.claude/settings.json,
+    /// which the caller should confirm with the user first.
+    var enablingAutoInstallsHooks: Bool {
+        !autoEnabled && !hooksInstalled()
+    }
+
+    /// `serverStatus` overrides the store's value when delivered via the Combine
+    /// sink. The hook check reads settings.json, so it only runs when asked.
+    func refreshAutoModeProblem(serverStatus: NotchSessionStore.ServerStatus? = nil, recheckHooks: Bool = false) {
+        if recheckHooks {
+            hooksAreInstalled = hooksInstalled()
+        }
+        let status = serverStatus ?? sessionStore.serverStatus
+        if !autoEnabled {
+            autoModeProblem = nil
+        } else if !hooksAreInstalled {
+            autoModeProblem = .hooksMissing
+        } else if status == .portBusy {
+            autoModeProblem = .listenerUnavailable
+        } else {
+            autoModeProblem = nil
+        }
     }
 
     // MARK: - Reconcile

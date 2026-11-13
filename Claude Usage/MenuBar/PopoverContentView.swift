@@ -662,12 +662,21 @@ struct KeepAwakeHeaderButton: View {
 
     private var iconColor: Color {
         if isActive { return .orange }
-        if isArmed { return Color.orange.opacity(0.55) }
+        if isArmed { return service.autoModeProblem == nil ? Color.orange.opacity(0.55) : .yellow }
         return isHovered ? .primary : .secondary
     }
 
+    /// A click that would turn auto mode on for the first time adds hooks to
+    /// ~/.claude/settings.json, so it asks before doing that.
+    private func toggleFromClick() {
+        if !service.isManualOn, service.enablingAutoInstallsHooks, !KeepAwakeHookConsent.confirm() {
+            return
+        }
+        service.smartToggle()
+    }
+
     var body: some View {
-        Button(action: { service.smartToggle() }) {
+        Button(action: { toggleFromClick() }) {
             ZStack {
                 if !reduceMotion, rippleID > 0, isActive || isArmed {
                     KeepAwakeActivationRipple()
@@ -721,7 +730,12 @@ struct KeepAwakeHeaderButton: View {
             Divider()
             Toggle("keep_awake.auto".localized, isOn: Binding(
                 get: { SharedDataStore.shared.loadKeepAwakeAutoEnabled() },
-                set: { service.setAutoEnabled($0) }
+                set: { enabled in
+                    if enabled, service.enablingAutoInstallsHooks, !KeepAwakeHookConsent.confirm() {
+                        return
+                    }
+                    service.setAutoEnabled(enabled)
+                }
             ))
         }
         .popover(isPresented: $showHoverCard, arrowEdge: .bottom) {
@@ -779,6 +793,13 @@ private struct KeepAwakeHoverCard: View {
                     Text("keep_awake.state_auto_armed".localized)
                         .font(.system(size: 10))
                         .foregroundColor(.secondary)
+                }
+
+                if let problem = service.autoModeProblem {
+                    Text(problem.message)
+                        .font(.system(size: 10))
+                        .foregroundColor(.orange)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 Text(hintText)

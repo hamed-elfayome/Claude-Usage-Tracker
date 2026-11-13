@@ -1145,3 +1145,8 @@
 "support.popup_signature" = "the one-person team behind Claude Usage";
 "support.popup_body" = "Free, open source, built by one person — no ads, no tracking. If it has ever saved you from burning a session limit, a coffee keeps it going.";
 "support.popup_days" = "Watching your limits for %d days — always free";
+"keep_awake.consent_title" = "Add Claude Code hooks?";
+"keep_awake.consent_message" = "To know when Claude Code is working, Keep Awake adds hooks to ~/.claude/settings.json and listens for them on this Mac only. Your other hooks and settings are left as they are. You can remove them by turning this off.";
+"keep_awake.consent_confirm" = "Add Hooks and Turn On";
+"keep_awake.problem_hooks" = "Auto mode can't see Claude Code: its hooks are missing from ~/.claude/settings.json. Turn auto mode off and on again to reinstall them.";
+"keep_awake.problem_listener" = "Auto mode can't see Claude Code: the local listener's port is in use by another app or another copy of Claude Usage.";

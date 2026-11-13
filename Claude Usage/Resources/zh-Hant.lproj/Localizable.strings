@@ -1135,3 +1135,8 @@
 "support.popup_signature" = "Claude Usage 背後的一人團隊";
 "support.popup_body" = "免費、開源、一人開發——沒有廣告，沒有追蹤。如果它曾幫你避免燒掉工作階段額度，一杯咖啡就能讓它繼續前進。";
 "support.popup_days" = "已守護你的額度 %d 天 — 永遠免費";
+"keep_awake.consent_title" = "加入 Claude Code 掛鉤？";
+"keep_awake.consent_message" = "為了知道 Claude Code 何時在工作，Keep Awake 會在 ~/.claude/settings.json 加入掛鉤，並且只在這台 Mac 上接收。你的其他掛鉤和設定維持不變。關閉此選項即可移除。";
+"keep_awake.consent_confirm" = "加入掛鉤並開啟";
+"keep_awake.problem_hooks" = "自動模式無法偵測到 Claude Code：~/.claude/settings.json 中缺少掛鉤。關閉後再重新開啟自動模式即可重新安裝。";
+"keep_awake.problem_listener" = "自動模式無法偵測到 Claude Code：本機監聽連接埠被其他 App 或另一個 Claude Usage 佔用。";

@@ -1130,3 +1130,8 @@
 "support.popup_signature" = "el equipo unipersonal detrás de Claude Usage";
 "support.popup_body" = "Esta app es gratuita y de código abierto: sin anuncios, sin rastreo, sin muros de pago. Cada actualización se construye en mis tardes y fines de semana. Si Claude Usage te ha salvado alguna vez de quemar un límite de sesión, un café es lo que la mantiene viva y mejorando.";
 "support.popup_days" = "Vigilando tus límites desde hace %d días — siempre gratis";
+"keep_awake.consent_title" = "¿Añadir hooks de Claude Code?";
+"keep_awake.consent_message" = "Para saber cuándo Claude Code está trabajando, Keep Awake añade hooks a ~/.claude/settings.json y los escucha solo en este Mac. Tus otros hooks y ajustes no se modifican. Puedes quitarlos desactivando esta opción.";
+"keep_awake.consent_confirm" = "Añadir hooks y activar";
+"keep_awake.problem_hooks" = "El modo automático no puede ver Claude Code: faltan sus hooks en ~/.claude/settings.json. Desactiva y vuelve a activar el modo automático para reinstalarlos.";
+"keep_awake.problem_listener" = "El modo automático no puede ver Claude Code: el puerto del receptor local está en uso por otra app u otra copia de Claude Usage.";

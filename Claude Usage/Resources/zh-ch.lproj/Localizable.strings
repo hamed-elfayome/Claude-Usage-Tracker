@@ -1135,3 +1135,8 @@
 "support.popup_signature" = "Claude Usage 背后的一人团队";
 "support.popup_body" = "免费、开源、一人开发——没有广告，没有跟踪。如果它曾帮你避免烧掉会话额度，一杯咖啡就能让它继续前进。";
 "support.popup_days" = "已守护你的额度 %d 天 — 永久免费";
+"keep_awake.consent_title" = "添加 Claude Code 钩子？";
+"keep_awake.consent_message" = "为了知道 Claude Code 何时在工作，Keep Awake 会向 ~/.claude/settings.json 添加钩子，并且只在这台 Mac 上接收。你的其他钩子和设置保持不变。关闭此选项即可移除。";
+"keep_awake.consent_confirm" = "添加钩子并开启";
+"keep_awake.problem_hooks" = "自动模式无法检测到 Claude Code：~/.claude/settings.json 中缺少钩子。关闭再重新开启自动模式即可重新安装。";
+"keep_awake.problem_listener" = "自动模式无法检测到 Claude Code：本地监听端口被其他应用或另一个 Claude Usage 占用。";

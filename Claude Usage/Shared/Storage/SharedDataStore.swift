@@ -190,14 +190,17 @@ class SharedDataStore {
         defaults.set(period, forKey: Constants.UserDefaultsKeys.keepAwakeAutoGracePeriod)
     }
 
+    /// Shortest (and default) grace period. A session with no hook events for two
+    /// minutes is dropped from the session store, which happens during any long
+    /// build or command, so a shorter grace would let the Mac sleep mid-task.
+    static let keepAwakeMinimumGracePeriod: TimeInterval = 15 * 60
+
     func loadKeepAwakeAutoGracePeriod() -> TimeInterval {
-        if defaults.object(forKey: Constants.UserDefaultsKeys.keepAwakeAutoGracePeriod) == nil {
-            // Hooks emit no events while Claude Code compacts or streams a long
-            // response without tool calls, so sessions can look idle mid-work;
-            // a generous default bridges those gaps.
-            return 60 * 60
+        guard defaults.object(forKey: Constants.UserDefaultsKeys.keepAwakeAutoGracePeriod) != nil else {
+            return Self.keepAwakeMinimumGracePeriod
         }
-        return defaults.double(forKey: Constants.UserDefaultsKeys.keepAwakeAutoGracePeriod)
+        return max(Self.keepAwakeMinimumGracePeriod,
+                   defaults.double(forKey: Constants.UserDefaultsKeys.keepAwakeAutoGracePeriod))
     }
 
     // MARK: - Statusline Configuration

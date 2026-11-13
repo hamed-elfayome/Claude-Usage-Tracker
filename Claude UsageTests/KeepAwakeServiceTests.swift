@@ -43,6 +43,8 @@ final class KeepAwakeServiceTests: XCTestCase {
             configure(autoEnabled: enabled, sleepMode: currentSleepMode,
                       defaultDuration: currentDuration, gracePeriod: currentGrace)
         }
+        // Never read the real ~/.claude/settings.json from a test.
+        service.hooksInstalled = { true }
         // Neutral defaults; individual tests override via configure().
         configure(autoEnabled: false, sleepMode: .preventDisplaySleep, defaultDuration: 0, gracePeriod: 15 * 60)
         service.start()
@@ -416,5 +418,46 @@ final class KeepAwakeServiceTests: XCTestCase {
         XCTAssertFalse(service.isAssertionHeld)
         XCTAssertFalse(service.isManualOn)
         XCTAssertEqual(releasedIDs, [1])
+    }
+
+    // MARK: - Auto mode problems and hook consent
+
+    func testAutoModeReportsMissingHooks() {
+        service.hooksInstalled = { false }
+        configure(autoEnabled: true)
+        XCTAssertEqual(service.autoModeProblem, .hooksMissing)
+
+        service.hooksInstalled = { true }
+        configure(autoEnabled: true)
+        XCTAssertNil(service.autoModeProblem)
+    }
+
+    func testAutoModeReportsABusyListener() {
+        configure(autoEnabled: true)
+        service.refreshAutoModeProblem(serverStatus: .portBusy)
+        XCTAssertEqual(service.autoModeProblem, .listenerUnavailable)
+
+        service.refreshAutoModeProblem(serverStatus: .running)
+        XCTAssertNil(service.autoModeProblem)
+    }
+
+    func testNoProblemIsReportedWhileAutoModeIsOff() {
+        service.hooksInstalled = { false }
+        configure(autoEnabled: false)
+        service.refreshAutoModeProblem(serverStatus: .portBusy)
+        XCTAssertNil(service.autoModeProblem)
+    }
+
+    func testTurningAutoOnNeedsConsentOnlyWhenHooksWouldBeAdded() {
+        service.hooksInstalled = { false }
+        configure(autoEnabled: false)
+        XCTAssertTrue(service.enablingAutoInstallsHooks)
+
+        service.hooksInstalled = { true }
+        XCTAssertFalse(service.enablingAutoInstallsHooks, "hooks already there, e.g. the Dynamic Island is on")
+
+        service.hooksInstalled = { false }
+        configure(autoEnabled: true)
+        XCTAssertFalse(service.enablingAutoInstallsHooks, "already on: the click turns it off")
     }
 }

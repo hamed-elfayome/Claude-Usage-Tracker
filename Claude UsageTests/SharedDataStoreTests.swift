@@ -213,13 +213,15 @@ final class SharedDataStoreTests: XCTestCase {
 
     func testKeepAwakeAutoGracePeriod() {
         UserDefaults.standard.removeObject(forKey: Constants.UserDefaultsKeys.keepAwakeAutoGracePeriod)
-        XCTAssertEqual(sharedDataStore.loadKeepAwakeAutoGracePeriod(), 60 * 60, "defaults to 1 hour")
+        XCTAssertEqual(sharedDataStore.loadKeepAwakeAutoGracePeriod(), 15 * 60, "defaults to 15 minutes")
 
         sharedDataStore.saveKeepAwakeAutoGracePeriod(60 * 60)
         XCTAssertEqual(sharedDataStore.loadKeepAwakeAutoGracePeriod(), 60 * 60)
 
         sharedDataStore.saveKeepAwakeAutoGracePeriod(0)
-        XCTAssertEqual(sharedDataStore.loadKeepAwakeAutoGracePeriod(), 0, "explicit 0 (immediately) survives")
+        XCTAssertEqual(sharedDataStore.loadKeepAwakeAutoGracePeriod(), 15 * 60,
+                       "a stored 0 is raised to the minimum, or long commands would let the Mac sleep")
+        UserDefaults.standard.removeObject(forKey: Constants.UserDefaultsKeys.keepAwakeAutoGracePeriod)
     }
 
     func testResetGitHubStarPromptForTesting() {

@@ -1127,3 +1127,8 @@
 "support.popup_signature" = "l'équipe d'une seule personne derrière Claude Usage";
 "support.popup_body" = "Gratuit, open source, fait par une seule personne — sans pubs ni pistage. Si Claude Usage vous a déjà évité de griller une limite de session, un café le fait vivre.";
 "support.popup_days" = "Veille sur vos limites depuis %d jours — toujours gratuit";
+"keep_awake.consent_title" = "Ajouter les hooks Claude Code ?";
+"keep_awake.consent_message" = "Pour savoir quand Claude Code travaille, Keep Awake ajoute des hooks à ~/.claude/settings.json et les écoute uniquement sur ce Mac. Vos autres hooks et réglages ne sont pas modifiés. Vous pouvez les retirer en désactivant cette option.";
+"keep_awake.consent_confirm" = "Ajouter les hooks et activer";
+"keep_awake.problem_hooks" = "Le mode automatique ne voit pas Claude Code : ses hooks sont absents de ~/.claude/settings.json. Désactivez puis réactivez le mode automatique pour les réinstaller.";
+"keep_awake.problem_listener" = "Le mode automatique ne voit pas Claude Code : le port de l'écouteur local est utilisé par une autre app ou une autre copie de Claude Usage.";

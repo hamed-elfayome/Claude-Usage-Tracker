@@ -1141,3 +1141,8 @@
 "support.popup_signature" = "Claude Usage'ın arkasındaki tek kişilik ekip";
 "support.popup_body" = "Ücretsiz, açık kaynak, tek kişi tarafından yapıldı — reklam yok, izleme yok. Sizi bir oturum limitini yakmaktan kurtardıysa, bir kahve onu ayakta tutar.";
 "support.popup_days" = "%d gündür limitlerinizi izliyor — her zaman ücretsiz";
+"keep_awake.consent_title" = "Claude Code kancaları eklensin mi?";
+"keep_awake.consent_message" = "Claude Code'un ne zaman çalıştığını anlamak için Keep Awake, ~/.claude/settings.json dosyasına kancalar ekler ve bunları yalnızca bu Mac'te dinler. Diğer kancalarınız ve ayarlarınız olduğu gibi kalır. Bu seçeneği kapatarak kaldırabilirsiniz.";
+"keep_awake.consent_confirm" = "Kancaları ekle ve aç";
+"keep_awake.problem_hooks" = "Otomatik mod Claude Code'u göremiyor: kancalar ~/.claude/settings.json dosyasında eksik. Yeniden kurmak için otomatik modu kapatıp tekrar açın.";
+"keep_awake.problem_listener" = "Otomatik mod Claude Code'u göremiyor: yerel dinleyicinin portu başka bir uygulama veya başka bir Claude Usage kopyası tarafından kullanılıyor.";
