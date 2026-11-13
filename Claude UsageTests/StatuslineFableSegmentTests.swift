@@ -15,10 +15,11 @@ final class StatuslineFableSegmentTests: XCTestCase {
         try? FileManager.default.removeItem(at: home)
     }
 
-    private func runScript(showFable: String?, cache: [String]) throws -> String {
+    private func runScript(showFable: String?, cache: [String], input: String = "{}", extraConfig: [String] = []) throws -> String {
         let claudeDir = home.appendingPathComponent(".claude")
         var config = ["SHOW_USAGE=1", "SHOW_USAGE_LABEL=1", "COLOR_MODE=monochrome"]
         if let showFable { config.append("SHOW_FABLE=\(showFable)") }
+        config += extraConfig
         try config.joined(separator: "\n").write(to: claudeDir.appendingPathComponent("statusline-config.txt"), atomically: true, encoding: .utf8)
         try cache.joined(separator: "\n").write(to: claudeDir.appendingPathComponent(".statusline-usage-cache"), atomically: true, encoding: .utf8)
         let script = claudeDir.appendingPathComponent("statusline-command.sh")
@@ -33,7 +34,7 @@ final class StatuslineFableSegmentTests: XCTestCase {
         process.standardOutput = stdout
         process.standardError = Pipe()
         try process.run()
-        stdin.fileHandleForWriting.write(Data("{}".utf8))
+        stdin.fileHandleForWriting.write(Data(input.utf8))
         stdin.fileHandleForWriting.closeFile()
         let output = stdout.fileHandleForReading.readDataToEndOfFile()
         process.waitUntilExit()
@@ -66,6 +67,42 @@ final class StatuslineFableSegmentTests: XCTestCase {
         let stale = ["UTILIZATION=12", "RESETS_AT=2030-01-01T00:00:00Z",
                      "TIMESTAMP=\(Int(Date().timeIntervalSince1970) - 3600)", "FABLE_UTILIZATION=24"]
         XCTAssertFalse(try runScript(showFable: "1", cache: stale).contains("Fable"))
+    }
+
+    // MARK: - Old cache (#322)
+
+    private func cache(ageSeconds: Int) -> [String] {
+        ["UTILIZATION=12", "RESETS_AT=2030-01-01T00:00:00Z",
+         "TIMESTAMP=\(Int(Date().timeIntervalSince1970) - ageSeconds)",
+         "WEEKLY_UTILIZATION=40", "WEEKLY_RESETS_AT=2030-01-03T00:00:00Z"]
+    }
+
+    private let rateLimitsInput = #"""
+    {"rate_limits":{"five_hour":{"used_percentage":23.5,"resets_at":1893456000},"seven_day":{"used_percentage":41.2,"resets_at":1893888000}}}
+    """#
+
+    func testOldCacheFallsBackToTheRateLimitsClaudeCodeReports() throws {
+        let output = try runScript(showFable: nil, cache: cache(ageSeconds: 900), input: rateLimitsInput,
+                                   extraConfig: ["SHOW_WEEKLY=1", "SHOW_WEEKLY_LABEL=1"])
+        XCTAssertTrue(output.contains("Usage: 24%"), output)
+        XCTAssertTrue(output.contains("Weekly: 41%"), output)
+        XCTAssertFalse(output.contains("stale"), output)
+    }
+
+    func testFreshCacheWinsOverStdin() throws {
+        let output = try runScript(showFable: nil, cache: cache(ageSeconds: 10), input: rateLimitsInput)
+        XCTAssertTrue(output.contains("Usage: 12%"), output)
+    }
+
+    func testOldCacheWithNothingElseIsShownWithItsAge() throws {
+        let output = try runScript(showFable: nil, cache: cache(ageSeconds: 13 * 60))
+        XCTAssertTrue(output.contains("Usage: 12%"), output)
+        XCTAssertTrue(output.contains("(stale 13m)"), output)
+    }
+
+    func testVeryOldCacheIsNotShown() throws {
+        let output = try runScript(showFable: nil, cache: cache(ageSeconds: 7 * 3600))
+        XCTAssertFalse(output.contains("12%"), output)
     }
 
     // MARK: - settings.json check (#191)

@@ -457,12 +457,42 @@ if [ "$show_usage" = "1" ]; then
     fi
   fi
 
-  # Fall back to swift script if cache is stale or missing
+  # The app's cache is older than 5 minutes (it refreshes less often than that
+  # in ordinary use, #322). Claude Code reports the session's own rate limits on
+  # stdin, so use those before anything slower.
+  stale_note=""
+  if [ -z "$swift_result" ]; then
+    rl_block=$(echo "$input" | grep -o '"five_hour": *{[^}]*}' | head -1)
+    rl_pct=$(echo "$rl_block" | grep -o '"used_percentage": *[0-9.]*' | sed 's/.*: *//')
+    rl_reset=$(echo "$rl_block" | grep -o '"resets_at": *[0-9]*' | sed 's/.*: *//')
+    if [ -n "$rl_pct" ]; then
+      rl_iso=""
+      [ -n "$rl_reset" ] && rl_iso=$(date -u -r "$rl_reset" "+%Y-%m-%dT%H:%M:%SZ" 2>/dev/null)
+      swift_result="$(printf '%.0f' "$rl_pct")|${rl_iso}"
+    fi
+  fi
+
+  # Then the swift script
   if [ -z "$swift_result" ]; then
     swift_result=$(swift "$HOME/.claude/fetch-claude-usage.swift" 2>/dev/null)
   fi
 
-  if [ $? -eq 0 ] && [ -n "$swift_result" ]; then
+  # Last resort: the old cached reading, marked with its age, for up to 6 hours.
+  # A dated number is more use than a blank segment.
+  if [ -z "$swift_result" ] && [ -f "$cache_file" ] && [ -n "$cache_ts" ] && [ "$cache_age" -lt 21600 ]; then
+    cache_util=$(grep "^UTILIZATION=" "$cache_file" | cut -d= -f2)
+    cache_reset=$(grep "^RESETS_AT=" "$cache_file" | cut -d= -f2)
+    if [ -n "$cache_util" ]; then
+      swift_result="${cache_util}|${cache_reset}"
+      if [ "$cache_age" -ge 3600 ]; then
+        stale_note=" (stale $((cache_age / 3600))h)"
+      else
+        stale_note=" (stale $((cache_age / 60))m)"
+      fi
+    fi
+  fi
+
+  if [ -n "$swift_result" ]; then
     utilization=$(echo "$swift_result" | cut -d'|' -f1)
     resets_at=$(echo "$swift_result" | cut -d'|' -f2)
 
@@ -590,9 +620,9 @@ if [ "$show_usage" = "1" ]; then
       fi
 
       if [ "$show_usage_label" = "1" ]; then
-        usage_text="${usage_color}Usage: ${utilization}%${progress_bar}${reset_time_display}${RESET}"
+        usage_text="${usage_color}Usage: ${utilization}%${progress_bar}${reset_time_display}${stale_note}${RESET}"
       else
-        usage_text="${usage_color}${utilization}%${progress_bar}${reset_time_display}${RESET}"
+        usage_text="${usage_color}${utilization}%${progress_bar}${reset_time_display}${stale_note}${RESET}"
       fi
     else
       if [ "$show_usage_label" = "1" ]; then
@@ -624,6 +654,17 @@ if [ "$show_weekly" = "1" ] && [ "$show_usage" = "1" ]; then
         weekly_util=$(grep "^WEEKLY_UTILIZATION=" "$cache_file" | cut -d= -f2)
         weekly_reset=$(grep "^WEEKLY_RESETS_AT=" "$cache_file" | cut -d= -f2)
       fi
+    fi
+  fi
+
+  # Cache too old: take the weekly window Claude Code reports on stdin (#322)
+  if [ -z "$weekly_util" ]; then
+    rl_block=$(echo "$input" | grep -o '"seven_day": *{[^}]*}' | head -1)
+    rl_pct=$(echo "$rl_block" | grep -o '"used_percentage": *[0-9.]*' | sed 's/.*: *//')
+    rl_reset=$(echo "$rl_block" | grep -o '"resets_at": *[0-9]*' | sed 's/.*: *//')
+    if [ -n "$rl_pct" ]; then
+      weekly_util=$(printf '%.0f' "$rl_pct")
+      [ -n "$rl_reset" ] && weekly_reset=$(date -u -r "$rl_reset" "+%Y-%m-%dT%H:%M:%SZ" 2>/dev/null)
     fi
   fi
 
