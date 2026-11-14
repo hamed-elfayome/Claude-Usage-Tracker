@@ -4,7 +4,7 @@
   "agent": "claude@Kevins-MacBook-Air",
   "status": "active",
   "branch": "lean/MT-8",
-  "claimed_at": "2026-11-14T12:22:47",
-  "heartbeat": "2026-11-14T12:22:47",
+  "claimed_at": "2026-11-14T12:24:02",
+  "heartbeat": "2026-11-14T12:24:02",
   "next": "Claimed; packet cut, builder stopped before writing code. Rebuild from scratch (no resume flag)."
 }
