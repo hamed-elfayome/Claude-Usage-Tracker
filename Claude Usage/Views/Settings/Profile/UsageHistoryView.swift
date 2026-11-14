@@ -30,6 +30,7 @@ struct UsageHistoryView: View {
     @StateObject private var profileManager = ProfileManager.shared
     @State private var historyData: UsageHistoryData = UsageHistoryData()
     @State private var selectedTimeScale: ChartTimeScale = .hours24
+    @State private var selectedHistoryKey: String?
 
     var body: some View {
         ScrollView {
@@ -57,7 +58,9 @@ struct UsageHistoryView: View {
                     .frame(width: 110)
                 }
 
-                if let _ = profileManager.activeProfile {
+                if let profile = profileManager.activeProfile {
+                    teamPicker(for: profile)
+
                     // Combined Usage Chart (session + weekly)
                     CombinedUsageChart(
                         sessionSnapshots: historyData.sessionSnapshots,
@@ -83,8 +86,41 @@ struct UsageHistoryView: View {
             loadHistory()
         }
         .onChangeCompat(of: profileManager.activeProfile?.id) { _ in
+            selectedHistoryKey = nil
             loadHistory()
         }
+        .onChangeCompat(of: selectedHistoryKey) { _ in
+            loadHistory()
+        }
+    }
+
+    // MARK: - Team picker
+
+    @ViewBuilder
+    private func teamPicker(for profile: Profile) -> some View {
+        let choices = TeamsSectionView.historyChoices(for: profile)
+        if !choices.isEmpty {
+            HStack {
+                Text("multiteam.ui.history_team".localized)
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
+                Picker("", selection: Binding(
+                    get: { selectedHistoryKey ?? TeamsSectionView.defaultHistoryKey(for: profile) ?? "" },
+                    set: { selectedHistoryKey = $0 }
+                )) {
+                    ForEach(choices, id: \.key) { Text($0.label).tag($0.key) }
+                }
+                .pickerStyle(.menu)
+                .frame(maxWidth: 220)
+                Spacer()
+            }
+        }
+    }
+
+    /// nil = today's UUID-keyed calls (<= 1 pair or no orgTracking).
+    private func activeHistoryKey(_ profile: Profile) -> String? {
+        guard TeamsSectionView.historyChoices(for: profile).isEmpty == false else { return nil }
+        return selectedHistoryKey ?? TeamsSectionView.defaultHistoryKey(for: profile)
     }
 
     // MARK: - Billing Section
@@ -174,21 +210,26 @@ struct UsageHistoryView: View {
     // MARK: - Actions
 
     private func loadHistory() {
-        guard let profileId = profileManager.activeProfile?.id else {
+        guard let profile = profileManager.activeProfile else {
             historyData = UsageHistoryData()
             return
         }
 
-        historyData = UsageHistoryService.shared.loadHistory(for: profileId)
+        if let key = activeHistoryKey(profile) {
+            historyData = UsageHistoryService.shared.loadHistory(forKey: key)
+        } else {
+            historyData = UsageHistoryService.shared.loadHistory(for: profile.id)
+        }
     }
 
     private func exportHistory(format: UsageHistoryService.ExportFormat) {
-        guard let profileId = profileManager.activeProfile?.id else { return }
+        guard let profile = profileManager.activeProfile else { return }
 
-        UsageHistoryService.shared.exportToFile(
-            for: profileId,
-            format: format
-        )
+        if let key = activeHistoryKey(profile) {
+            UsageHistoryService.shared.exportToFile(forKey: key, format: format)
+        } else {
+            UsageHistoryService.shared.exportToFile(for: profile.id, format: format)
+        }
     }
 }
 

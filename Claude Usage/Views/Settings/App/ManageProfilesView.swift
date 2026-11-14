@@ -13,6 +13,7 @@ struct ManageProfilesView: View {
     @State private var newProfileName = ""
     @State private var newProfileProvider: Provider = .anthropic
     @State private var errorMessage: String?
+    @AppStorage(TeamTrackingSettings.enabledKey) private var teamTrackingEnabled = false
 
     var body: some View {
         ScrollView {
@@ -63,6 +64,14 @@ struct ManageProfilesView: View {
                                     NotificationCenter.default.post(name: .displayModeChanged, object: nil)
                                 }
                             )
+                        )
+
+                        Divider()
+
+                        SettingToggle(
+                            title: "multiteam.ui.tracking_title".localized,
+                            description: "multiteam.ui.tracking_description".localized,
+                            isOn: $teamTrackingEnabled
                         )
 
                         // Profile selection (visible when multi-profile is ON)
