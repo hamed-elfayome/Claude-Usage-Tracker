@@ -30,7 +30,39 @@ R9. **"Most room left" view**: one list of all (account, org) pairs sorted by re
 R10. **Migration**: existing profiles upgrade without data loss (current org becomes first tracked org; existing history attached to it).
 R11. Known limit to document: two changes within one polling interval collapse into the final state.
 
+Owner note (14 Nov 2026): the owner mainly uses the **Claude desktop app**, whose active org is stored in its
+encrypted storage and must not be read. So R3's "active" marker only exists for Claude Code logins; for desktop-app
+use, all orgs are tracked and an owner switch shows up only as usage moving between orgs (no "Now using" event).
+
+R12. **Old teams** (an org the account no longer belongs to, e.g. after an admin move): the owner can delete one
+by hand (confirm dialog), and it is deleted automatically **15 days after it was last seen** in the org list.
+If the org reappears before then, it becomes current again with its history intact. Orgs the account still
+belongs to are never auto-deleted, however idle. Deleting removes that org's history file and settings only.
+R13. **Group moves**: the owner has 5 Google-login accounts, and a team change moves all 5 at once. When one
+account detects a move (R4), immediately refresh the org list of every other account that shared the old org,
+and report the result as one grouped event ("5 accounts moved: A → B"), not 5 notifications. Accounts that did
+not move are listed in that event.
+R14. **Google sign-in**: all accounts sign in with Google. Check whether the app's in-app claude.ai sign-in works
+with Google (Google often blocks embedded web views); if it does not, the spec must say which existing path works
+(pasted session key, or the Claude Code login, which uses the system browser) and the UI must point there.
+
+## Owner revision (14 Nov 2026) — OVERRIDES R1, R3, R7, R9 where they conflict
+Model: **follow the account the owner is using**, not live tracking of everything.
+- R15. Exactly one (account, org) pair is **current**; it is polled live (30 s). Every other pair is **saved**:
+  its last reading and reset times are kept, it is not polled at the 30 s rate.
+- R16. **Detect current from usage**: every signed-in account is probed lightly every 5 min. The pair whose
+  5-hour usage rose since the previous probe becomes current (if several rose, the largest rise wins; ties keep
+  the existing current). The old current becomes saved with its last reading. Event: "Now on account B (team X)".
+  A manual "Make current" menu item overrides detection until usage rises on another account.
+- R17. **Saved projection**: when a saved pair's `resets_at` passes, show that window as reset (0%, next reset
+  unknown until the next probe) instead of stale numbers; mark it "projected". The next probe replaces it.
+- R18. Budget: 5 accounts × 1-2 orgs at 5-min probes + 1 current at 30 s; concurrency cap and 429 backoff from R7 still apply.
+- R2, R4, R5, R6, R8, R10, R11, R12, R13, R14 still apply. R13 grouped move detection runs on the probes.
+- Known limit: a switch is noticed only after the first message on the new account, up to 5 min late.
+- "Most room left" (R9) becomes optional; keep it only if it is a thin view over saved/current data.
+
 ## Non-goals
+- No account switcher in the app (owner declined it).
 - No credential handling by the agent; no automatic account switching; no change to how logins are created.
 - Do not rewrite unrelated features (Codex, Console API, widget) beyond what the data-model change forces.
 
