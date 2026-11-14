@@ -27,3 +27,4 @@
 {"at": "2026-11-14T11:57:34", "agent": "claude@Kevins-MacBook-Air", "event": "pass", "task": "MT-3", "note": "grade -: MT-3: grade A, 1 fix round(s), last r1 sonnet-medium (fix)"}
 {"at": "2026-11-14T11:57:40", "agent": "claude@Kevins-MacBook-Air", "event": "merge", "task": "MT-3"}
 {"at": "2026-11-14T11:57:48", "agent": "claude@Kevins-MacBook-Air", "event": "lesson", "task": "MT-3", "note": "TeamEvent.groupMove title counts movers only (moves.count), not notMoved or unchecked peers."}
+{"at": "2026-11-14T11:57:59", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-8", "note": ""}
