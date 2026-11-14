@@ -1,65 +1,100 @@
-### MT-6 — Wire the coordinator into the menu bar loop, token refresh and notifications
+### MT-6 — TeamTracker: probe rounds, org lists, detection, group moves, persistence, history, events
 
-Size: M
+Size: L
 Risk: high
 Importance: high
-After: MT-5
+After: MT-2, MT-3, MT-4, MT-5
 
-**Goal:** Make the running app use the coordinator: the existing 30 s loop stays the active-pair poller
-but asks the coordinator before fetching and hands every anthropic sample to it; per-pair history and
-events replace the old reset checks for anthropic profiles; `invalid_grant` reaches the coordinator;
-events become macOS notifications; a dead login shows "Log in again". Codex profiles keep today's path.
-Spec: `docs/specs/multi-team-tracking.md` §6, §7, §8.
+**Goal:** One `@MainActor` tracker that runs the whole follow model for anthropic profiles: org lists, probe
+rounds, per-account rules (MT-2), current detection and group events (MT-3), scheduling and backoff (MT-5),
+persistence of `orgTracking` and global state, per-pair history, invariants 2–3, notifications through a
+protocol, and the contract the menu bar loop uses (MT-7). No edits to MenuBarManager or any view here.
+Spec `docs/specs/multi-team-tracking.md` §3–§7, §10, §12 — read them first.
 
 **Files**
-- `Claude Usage/MenuBar/MenuBarManager.swift` (1924 lines; touch only `setup()` :121, `cleanup()` :261,
-  `cleanupProfile` :316, `observeProfileChanges` :326, `refreshAllSelectedProfiles` :1007-1160,
-  `refreshUsage` :1201-1418)
-- `Claude Usage/Shared/Services/Providers/Anthropic/AnthropicUsageProvider.swift` (:49-60)
-- `Claude Usage/Shared/Services/NotificationManager.swift` (add an extension at the end)
-- NEW `Claude UsageTests/OrgEventNotificationTests.swift`
-- Read only: `MultiTeamCoordinator.swift`, `OrgTrackingModels.swift`.
+- NEW `Claude Usage/Shared/MultiTeam/TeamTracker.swift`
+- NEW `Claude Usage/Shared/MultiTeam/TeamTrackerAdapters.swift`
+- NEW `Claude UsageTests/TeamTrackerTests.swift` (fakes inside or in NEW `Claude UsageTests/Fixtures/TeamTrackerFakes.swift`)
+- Read only: all `Claude Usage/Shared/MultiTeam/*.swift`, `Claude UsageTests/Fixtures/TeamFixtures.swift`,
+  `Shared/Services/ProfileManager.swift` (`updateOrgTracking`, `updateOrganizationId`, `saveClaudeUsage`),
+  `Shared/Services/UsageHistoryService.swift` (`forKey:` API), `Providers/Anthropic/AnthropicUsageProvider.swift:37-95`.
 
 **Steps**
-1. `setup()`: `MultiTeamCoordinator.shared.notifier = NotificationManager.shared`;
-   `onActiveOrgChanged = { [weak self] _ in self?.refreshUsage() }`; `start()`. `cleanup()`: `stop()`.
-2. `refreshAllSelectedProfiles`: before the loop call `setLoopProfiles(Set(selectedProfiles.map(\.id)))`.
-   For a profile with `provider == .anthropic`: `guard let ticket = coordinator.beginActivePoll(for: profile)`
-   else log and `continue` (cached value stays on screen). After a successful fetch, in the existing
-   `MainActor.run`: call `coordinator.ingestActive(ticket, result: .success(newUsage), isCachedReading:)`
-   and skip `checkAndRecordSessionReset`, `checkAndRecordWeeklyReset`, `recordSessionPeriodic`,
-   `recordWeeklyPeriodic` and the `resetJustRecorded` bookkeeping for that profile; keep
-   `saveClaudeUsage`, active-profile `self.usage`, and the statusline cache exactly as today. In `catch`,
-   call `ingestActive(ticket, result: .failure(error), isCachedReading: false)`.
-   Non-anthropic profiles: unchanged code path.
-3. `refreshUsage` (single mode): `setLoopProfiles([profile.id])`; the same ticket / ingest / skip pattern
-   for the anthropic case around `fetchUsageForActiveProfile`.
-4. After each refresh pass, if the active profile's `orgTracking?.authState` is `.needsLogin`, set
-   `hasCredentialError = true` and `lastRefreshError` to an `AppError(code: .apiUnauthorized,
-   message: "multiteam.login_again".localized, …)` so the existing banner shows; do not reset it to
-   false in the same pass. Otherwise keep today's handling.
-5. `cleanupProfile` and the profiles-changed observer: call `MultiTeamCoordinator.shared.syncJobs()`.
-6. `AnthropicUsageProvider.fetchUsage(for:)`: pass `onRefreshRejected:` to `ensureFreshCredentials`
-   that hops to the main actor and calls `MultiTeamCoordinator.shared.reportRefreshRejected(profileId: profile.id)`.
-   No other change to the priority chain.
-7. `NotificationManager`: `extension NotificationManager: OrgEventNotifying` with
-   `notify(_ event:, profile:)` → skip unless `profile.notificationSettings.enabled` and `event.notifies`;
-   build content with a pure `static func orgEventContent(_ event: OrgEvent, profileName: String) -> (identifier: String, title: String, body: String)`
-   (identifier `org-event-<event.id>`, title = event title, body = "<profileName>: <event body>") and post
-   it the same way `sendAutoSwitchNotification` (:308) does.
-8. Tests, then Validate. Then launch-free check: build succeeds and the full suite is green.
+1. Protocols (in `TeamTracker.swift`):
+   ```swift
+   protocol TeamUsageFetching { func fetchOrganizations(sessionKey: String) async throws -> [ClaudeAPIService.AccountInfo]
+     func fetchUsageOnly(sessionKey: String, organizationId: String) async throws -> ClaudeUsage
+     func fetchUsageViaProvider(_ profile: Profile) async throws -> ClaudeUsage }        // OAuth-only probes
+   protocol TeamCredentialReading { func sessionKey(for p: Profile) -> String?; func hasCredential(_ p: Profile) -> Bool
+     func credentialOrg(for p: Profile) -> (orgId: String?, seat: SeatFingerprint?); func fingerprint(for p: Profile) -> String? }
+   @MainActor protocol TeamProfileStore { var trackedProfiles: [Profile] { get }; var activeProfileId: UUID? { get }
+     func updateOrgTracking(_ s: OrgTrackingState, for id: UUID); func updateOrganizationId(_ o: String?, for id: UUID)
+     func saveClaudeUsage(_ u: ClaudeUsage, for id: UUID) }
+   protocol PairHistoryRecording { /* the forKey: record*Periodic, record*Reset and deleteHistory(forKey:) of MT-1, same parameters */ }
+   @MainActor protocol TeamEventNotifying { func post(_ event: TeamEvent, profiles: [Profile]) }
+   ```
+2. Adapters (`TeamTrackerAdapters.swift`): `ClaudeAPITeamFetcher` (wraps `ClaudeAPIService.fetchAllOrganizations(sessionKey:)`,
+   `fetchUsageOnly`, and `ProviderRegistry.service(for: .anthropic).fetchUsage(for:)`); `StoredCredentialReader`
+   (session key = `profile.claudeSessionKey`; credential org/seat via `CredentialOrgParser` on `cliCredentialsJSON`,
+   else `oauthAccountJSON`; fingerprint = first 16 hex chars of SHA256 (CryptoKit) of session key + `claudeAiOauth.refreshToken`;
+   never logged); `extension ProfileManager: TeamProfileStore` (anthropic profiles only); `extension UsageHistoryService:
+   PairHistoryRecording`; `NoopTeamEventNotifier`. Keychain reads: none.
+3. `@MainActor final class TeamTracker: ObservableObject` with
+   `init(store:fetcher:credentials:history:notifier:globalStore:policy:clock:random:)`, `static let shared`
+   (real adapters, `NoopTeamEventNotifier`, `TeamTrackingGlobalStore()`), `var notifier` settable. Public contract
+   exactly spec §10 plus `internal func tick(now: Date) async` for tests.
+4. `start()`: no-op unless `TeamTrackingSettings.isEnabled()`; `scheduler.start(now)`; a `Task` loop calling
+   `tick(now: clock())` then sleeping `policy.tick`. `stop()` cancels it and bumps a `generation` counter; any
+   async result whose generation is stale is dropped before persisting. Ticks never overlap (`isTicking`).
+5. `tick(now:)` order: (a) register/unregister accounts in the scheduler (`hasOrgList` = has session key); (b) repair
+   `current` by the start rule (§4); (c) due lists via `BoundedTaskRunner` (cap 4, 1 per account) → observation
+   with `orgList` (map `AccountInfo` → `OrgListEntry`, seat via `CredentialOrgParser.seat(rateLimitTier:ravenType:billingType:)`,
+   `canChat = capabilities.contains("chat")`; non-CF 401/403 → `orgListAuthFailed`; Cloudflare → no observation;
+   outcome to `scheduler.listFinished`); (d) if `isRoundDue` → round (step 6); (e) save global state if changed.
+6. Round: `roundStarted`; eligible saved pairs (spec §4) probed via runner — session key → `fetchUsageOnly`,
+   OAuth-only credential org → `fetchUsageViaProvider` (a result with `lastUpdated ≤ lastSampleAt` is no sample).
+   Errors: `isRateLimited` → `scheduler.record(.rateLimited(retryAfterSeconds))`; non-CF `isMembershipFailure` →
+   `usageMembershipFailures`, and `.apiUnauthorized` on OAuth-only → `oauthUnauthorized`; others `.failed`.
+   Then one `AccountRules.apply` per tracked account (empty samples allowed; X runs), then for accounts with a
+   membership failure `forceList` + inline list + apply again. Then `CurrentPairDetector.evaluate` over every
+   `member` pair of `.ok` accounts (current's candidate = its `lastUsage` if `lastSampleAt > lastRoundAt`); write
+   `roundReading`s, `lastRoundAt`, clear `manualPickAt` when told, apply switch effects (§4).
+7. One private `process(profileId:result:)` for every path: `updateOrgTracking`; `followedOrgId` → for session-key
+   accounts `updateOrganizationId`, and `saveClaudeUsage(followed pair lastUsage)`; `resetSnapshots` →
+   `record*Reset(forKey: historyKey, …)` with the previous window's reset time, skip that window's periodic
+   record; periodic records for every accepted sample; probe sample of the followed pair of a non-current account →
+   `saveClaudeUsage` + `onSample`; `deletedHistoryKeys` → `deleteHistory`; events → `global.appendEvent`, post when
+   `notifies` (`nowOn`: only if ≥ 900 s since `lastSwitchNotificationAt`, then set it); if the current pair became
+   `old` → current = move target (or nil), `onCurrentChanged`.
+8. Group move (§6): when `confirmedRemovals` has org A and peers exist, withhold this account's move/removed event
+   for A, force peer lists (`bypassDebounce: true`) through the runner with `timeout: 60`, apply each with
+   `peerConfirmedRemovals = [A]`, withhold their A events, map outcomes to `PeerOutcome`, append and post one
+   `GroupMoveAggregator.event(...)`.
+9. `liveTarget`, `ingestLive`, `makeCurrent`, `deleteOldPair`, `reportRefreshRejected` per spec §10 and §4/§6.
+   `ingestLive` success never calls `saveClaudeUsage` (the loop does); failures map like step 6; a membership
+   failure forces the list in a `Task`.
+10. Tests with fakes (fetcher returning `TeamFixtures` bodies, credential reader, in-memory store, recording history
+    and notifier, `UserDefaults(suiteName:)` global store, controllable clock, fixed random), then Validate.
 
 **Acceptance criteria**
-1. Anthropic profile in multi mode → `beginActivePoll` called before fetch; `ingestActive` called after; no call to `checkAndRecordSessionReset`/`checkAndRecordWeeklyReset`/periodic recorders for it (verified by code reading in the walkthrough).
-2. Codex profile → old reset checks and periodic recording still run (unchanged lines).
-3. `beginActivePoll` returns nil → no network fetch for that profile in that pass.
-4. `orgEventContent` for `adminMove(A→B)` and profile "Work" → identifier `org-event-<uuid>`, title "Moved by admin: A → B", body starting "Work: ".
-5. `notify` with `notificationSettings.enabled == false` or `event.notifies == false` → nothing posted (test through an injectable post closure or by checking the early return path in a unit test).
-6. `ensureFreshCredentials` in `AnthropicUsageProvider` receives a non-nil `onRefreshRejected`.
-7. Active profile `needsLogin` → `hasCredentialError == true` after the pass, banner text "Log in again".
-8. Full suite passes, including all pre-existing tests.
+1. Detected switch: current (P1, A) idle; (P2, B) probe 10 % → 14 % over two rounds → current (P2, B), P2 `organizationId == "B"`, one "Now on" notification; a second switch 5 min later → event logged, no notification.
+2. Manual pick: `makeCurrent((P3, C))` → current immediately, no notification; the next round with P1 rising does not switch; the round after does.
+3. Admin move: probe of (P1, A) returns 404, inline list [B] → `adminMove(A→B)`, A `.old` and never probed again, P1 `organizationId == "B"`, current follows to (P1, B) when A was current.
+4. Group move: P1…P5 share A; P1's list confirms A gone → peers listed at once; P2–P4 moved to B, P5 still lists A → exactly one notification "4 accounts moved: A → B", P5 in `notMoved`; no individual `adminMove` events.
+5. Group move with a peer backing off → that peer in `unchecked`.
+6. Seat change: list `orgsAStandard` then `orgsAPremium` → one `seatChange` notification.
+7. Early reset: live samples 60 → 5 → 6 (reset 3 h away) via `ingestLive` → one `earlyReset` notification and one session reset in history under the pair's key.
+8. 429: probe `.apiRateLimited` with Retry-After 120 → account skipped by the next round and lists; `liveTarget()` nil when the current account is backing off.
+9. Login loss: `reportRefreshRejected(P1)` → `needsLogin`, no probes/lists for P1, `liveTarget()` nil if current; fingerprint changes + successful probe → `.ok`, no notification.
+10. Migration: a legacy profile records periodic history under `profile.id.uuidString`.
+11. Old team: `old` pair last seen 16 days ago → deleted at the next round, `deleteHistory` called with its key; `deleteOldPair` on a `member` pair → false.
+12. Invariant 3: a probe sample of a saved non-followed org never changes `claudeUsage`; of the followed org of a non-current account it does; `ingestLive` never does.
+13. `stop()` during a round → nothing persisted from that round.
+14. Tracking disabled → `start()` does nothing, `liveTarget()` nil.
+15. Full suite passes.
 
-**Tests:** `OrgEventNotificationTests` for lines 4–5 and every `OrgEvent.Kind` producing a non-empty
-title. Edge cases: event with an org id missing from `orgNames`; profile name with emoji/unicode.
+**Tests:** one test per line 1–14. Edge cases: profile deleted while a probe is in flight (no store write);
+Cloudflare 403 on a probe → no event, no list; two profiles with the same org id stay independent; no anthropic
+profiles → tick is a no-op.
 
 **Validate:** `xcodebuild test -project "Claude Usage.xcodeproj" -scheme "Claude Usage" -configuration Debug -derivedDataPath build -destination "platform=macOS" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO` `git diff --check`

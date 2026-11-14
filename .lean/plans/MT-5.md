@@ -1,101 +1,72 @@
-### MT-5 — Multi-team coordinator with injected adapters
+### MT-5 — Poll scheduler (rounds, org lists, forced lists, 429 backoff) and bounded task runner
 
 Size: M
 Risk: high
-Importance: high
-After: MT-2, MT-3, MT-4
+Importance: normal
 
-**Goal:** One `@MainActor` coordinator that owns, for every anthropic profile: org-list refresh,
-idle-pair polling through the scheduler, credential-org reading, classification, persistence of
-`orgTracking`, the `claudeUsage`/`organizationId` invariants, per-pair history and event
-notifications. It also exposes the small contract the menu bar loop will call in MT-6. No edits to
-MenuBarManager here. Spec: `docs/specs/multi-team-tracking.md` §4, §6, §7, §9.
+**Goal:** Two small, self-contained pieces the tracker (MT-6) drives: a pure value-type scheduler that says
+when the next probe round and each account's org list are due, debounces forced lists and keeps per-account
+429 backoff; and a runner that executes async work with at most 4 in flight and at most 1 per account. They
+know nothing about orgs, profiles or the API. Spec `docs/specs/multi-team-tracking.md` §7.
 
 **Files**
-- NEW `Claude Usage/Shared/MultiTeam/MultiTeamCoordinator.swift`
-- NEW `Claude Usage/Shared/MultiTeam/MultiTeamAdapters.swift`
-- `Claude UsageTests/Fixtures/MultiTeamFixtures.swift` (extend only)
-- NEW `Claude UsageTests/MultiTeamCoordinatorTests.swift`
-- Read only: `OrgEventClassifier.swift`, `CredentialOrgParser.swift`, `MultiOrgPollScheduler.swift`,
-  `AppError+MultiTeam.swift`, `ClaudeCodeSyncService.swift` (:679-725 `readOAuthAccount`/`systemHoldsAccount`,
-  :880-930 token helpers, :957 `readKeychainCredentials(serviceName:)`), `AnthropicUsageProvider.swift`.
+- NEW `Claude Usage/Shared/MultiTeam/TeamPollScheduler.swift`
+- NEW `Claude Usage/Shared/MultiTeam/BoundedTaskRunner.swift`
+- NEW `Claude UsageTests/TeamPollSchedulerTests.swift`, `Claude UsageTests/BoundedTaskRunnerTests.swift`
 
 **Steps**
-1. Protocols (in the coordinator file):
+1. Types:
    ```swift
-   protocol OrgUsageFetching { func fetchOrganizations(sessionKey: String) async throws -> [ClaudeAPIService.AccountInfo]
-     func fetchUsageOnly(sessionKey: String, organizationId: String) async throws -> ClaudeUsage
-     func fetchUsage(oauthAccessToken: String) async throws -> ClaudeUsage }
-   protocol CredentialOrgReading { func credentialOrg(for profile: Profile) -> (orgId: String?, seat: SeatFingerprint?)
-     func usableAccessToken(for profile: Profile) -> String?        // never refreshes
-     func credentialFingerprint(for profile: Profile) -> String? }  // changes when session key or refresh token changes
-   @MainActor protocol OrgTrackingStore { var trackedProfiles: [Profile] { get }
-     func updateOrgTracking(_ s: OrgTrackingState, for id: UUID); func updateOrganizationId(_ id: String?, for profileId: UUID)
-     func saveClaudeUsage(_ u: ClaudeUsage, for id: UUID) }
-   protocol PairHistoryRecording { recordSessionPeriodic/recordWeeklyPeriodic/recordSessionReset/recordWeeklyReset (forKey: variants from MT-1) }
-   @MainActor protocol OrgEventNotifying { func notify(_ event: OrgEvent, profile: Profile) }
-   struct ActivePollTicket { let profileId: UUID; let orgId: String; let credentialOrgAtStart: String?; let startedAt: Date }
+   enum PollOutcome: Equatable { case success; case rateLimited(retryAfter: TimeInterval?); case failed }
+   struct PollPolicy: Equatable { var roundInterval: TimeInterval = 300; var firstRoundDelay: TimeInterval = 15
+     var listInterval: TimeInterval = 900; var listStartSpread: TimeInterval = 10; var forcedListDebounce: TimeInterval = 60
+     var backoffBase: TimeInterval = 60; var backoffCap: TimeInterval = 900; var retryAfterCap: TimeInterval = 3600
+     var jitter = 0.2; var maxConcurrent = 4; var maxPerAccount = 1; var tick: TimeInterval = 15; static let `default` = PollPolicy() }
    ```
-2. Adapters in `MultiTeamAdapters.swift`: `ClaudeAPIOrgFetcher` (wraps `ClaudeAPIService`:
-   `fetchAllOrganizations(sessionKey:)`, `fetchUsageOnly`, `fetchUsageData(oauthAccessToken:)`);
-   `SystemCredentialOrgReader` (spec §4 order 1–4 via `CredentialOrgParser` + `ClaudeCodeSyncService`;
-   60 s cache per profile; `usableAccessToken` = token from the pinned keychain entry or
-   `cliCredentialsJSON` only when not expired, never `ensureFreshCredentials`; fingerprint = SHA256 prefix
-   of session key + refresh token, never logged); `extension ProfileManager: OrgTrackingStore`
-   (`trackedProfiles` = anthropic profiles); `extension UsageHistoryService: PairHistoryRecording`;
-   `NoopOrgEventNotifier`.
-3. `MultiTeamCoordinator` (`@MainActor final class`, `ObservableObject`), `init(store:fetcher:credentials:scheduler:history:notifier:clock:)`;
-   `static let shared` wires the real adapters with `NoopOrgEventNotifier`; `var notifier` is settable (MT-6 swaps it).
-4. Public contract:
-   - `start()` → `syncJobs()` then one `Task` running `scheduler.run(execute:)`; `stop()` cancels it.
-   - `syncJobs()` registers per profile: org-list job when it has a session key (900 s); usage jobs
-     (300 s) for every `.idle` pair reachable by session key, and for the `.active` pair when the profile
-     is not in `loopProfileIds` and is reachable (session key, or credential org with a usable token);
-     900 s for pairs with `consecutiveUsageAuthFailures ≥ 3`; unregisters everything else, deleted profiles,
-     and accounts in `needsLogin`.
-   - `setLoopProfiles(_ ids: Set<UUID>)` stores `loopProfileIds` and calls `syncJobs()` when it changed.
-   - `beginActivePoll(for:) -> ActivePollTicket?` — nil when the account is backing off, or `needsLogin`
-     and the credential fingerprint has not changed. Org = session key + `organizationId` ? that org :
-     credential org ?? `TrackedOrg.unknownOrgId`.
-   - `ingestActive(_:result:isCachedReading:)`, `reportRefreshRejected(profileId:)`, `isBackingOff(_:)`,
-     `var onActiveOrgChanged: ((UUID) -> Void)?`.
-5. One private `process(profileId:observation:)` used by every path: classify → `updateOrgTracking` →
-   if session key and `activeOrgId != organizationId` → `updateOrganizationId` → history: for each
-   `resetSnapshot` record the reset (`resetTime` = previous window reset time) and skip that window's
-   periodic record; periodic records for every accepted sample → events with `notifies` → `notifier.notify`
-   → if `activeOrgId` changed: `saveClaudeUsage(newActive.lastUsage)` when present and call
-   `onActiveOrgChanged` → `syncJobs()` if any status changed.
-6. Job execution: org list → `fetchOrganizations`, map `AccountInfo` → `OrgListEntry` (seat via
-   `CredentialOrgParser.seat(rateLimitTier:ravenType:billingType:)`, `canChat = capabilities.contains("chat")`).
-   Usage → `fetchUsageOnly` or OAuth. Before classifying, read the credential org; if it differs from
-   `state.lastCredentialOrgId` and the profile has a session key, fetch the list inline first. A usage
-   error with `isMembershipFailure` → add to `usageMembershipFailures`, then fetch the list inline when
-   `scheduler.forceSoon(orgList job)` returns true. Cloudflare → no observation. Outcome mapping:
-   `isRateLimited` → `.rateLimited(retryAfterSeconds)`, success → `.success`, else `.failed`.
-   Scheduler-path samples of the active pair also `saveClaudeUsage` (invariant 1).
-7. `ingestActive`: cached reading → nothing. Re-read the credential org; if it differs from
-   `ticket.credentialOrgAtStart` → drop the sample but still process the credential change. Success →
-   observation with `samples[ticket.orgId]` (do not `saveClaudeUsage`; the loop does). Failure →
-   rate-limit → `scheduler.record`; membership failure → as step 6; `.apiUnauthorized` on an
-   OAuth-only profile → `oauthUnauthorized = true`.
-8. Tests with fakes (fake fetcher returning fixtures from `MultiTeamFixtures`, fake credentials,
-   in-memory store, recording history and notifier, scheduler with test clock). Then Validate.
+2. `struct TeamPollScheduler` (value type; `random: () -> Double` injected in `init(policy:random:)`; every
+   method takes `now: Date`; no `Date()` inside):
+   - `mutating func start(now:)` → first round due at `now + firstRoundDelay`.
+   - `mutating func register(accountId: UUID, hasOrgList: Bool, now:)` — idempotent; list due at
+     `now + random()·listStartSpread`; accounts without org list get no list job.
+   - `mutating func unregister(accountId:)`; `var registeredAccounts: Set<UUID>`.
+   - `func isRoundDue(now:) -> Bool`; `mutating func roundStarted(now:)` → next round `now + roundInterval`.
+   - `func dueLists(now:) -> [UUID]` ordered by due time, skipping accounts in backoff.
+   - `mutating func listFinished(accountId:, outcome:, now:)` → next list `now + listInterval`, then `record`.
+   - `mutating func forceList(accountId:, now:, bypassDebounce: Bool = false) -> Bool` — makes the list due now
+     unless forced within `forcedListDebounce` (and not bypassed) or the account is backing off; returns whether it did.
+   - `mutating func record(accountId:, outcome:, now:)` — backoff: k = consecutive `rateLimited`; delay =
+     min(base·2^(k−1), cap) · (1 − jitter + 2·jitter·random()); if `retryAfter` is larger use
+     min(retryAfter, retryAfterCap). `success` → k = 0, backoff cleared. `failed` → unchanged.
+   - `func isBackingOff(_:, now:) -> Bool`, `func backoffUntil(_:) -> Date?`.
+3. `BoundedTaskRunner`:
+   ```swift
+   enum BoundedTaskRunner {
+     static func run<Item, Result>(_ items: [Item], key: (Item) -> UUID, maxConcurrent: Int, maxPerKey: Int,
+       timeout: TimeInterval? = nil, body: @escaping @Sendable (Item) async -> Result) async -> [(Item, Result?)] }
+   ```
+   Uses a `TaskGroup`; never more than `maxConcurrent` bodies running, never more than `maxPerKey` for one
+   key; returns every item in input order with `nil` result when the overall `timeout` elapsed before it
+   finished (remaining child tasks cancelled). Respect cancellation of the calling task.
+4. Tests, then Validate.
 
 **Acceptance criteria**
-1. Scenario switch: credentials A→B with list [A,B] → store state active B, `organizationId == "B"`, one notification "Now using team B".
-2. Scenario move: usage of A returns 404, inline list [B] → `adminMove(A→B)`, A `.removed`, A not scheduled any more.
-3. Scenario seat change: list with `rate_limit_tier` std→premium → one `seatChange` notification.
-4. Scenario early reset: two active samples 60 % → 5 % → 6 % with reset 3 h away → one `earlyReset` notification and one session reset in history under A's key.
-5. Scenario 429: idle poll returns `.apiRateLimited` with Retry-After 120 → `isBackingOff == true`; `beginActivePoll` returns nil for that profile.
-6. Scenario login loss: `reportRefreshRejected` → state `needsLogin`, its jobs unregistered, `beginActivePoll` nil; after the fake fingerprint changes, `beginActivePoll` returns a ticket and a success restores `.ok`.
-7. Migration scenario: a legacy profile (migrated by MT-1) with history key = profile UUID records periodic history under that key.
-8. Ticket dropped: credential org changes between `beginActivePoll` and `ingestActive` → sample not stored in any pair.
-9. Idle pair sample never changes `profile.claudeUsage`; active pair sample from the scheduler does.
-10. `orgAdded` / `loginRestored` events → no notification.
-11. Full suite passes.
+1. `start(now: t)` → `isRoundDue(t+14) == false`, `isRoundDue(t+15) == true`; after `roundStarted(t+15)` next due `t+315`.
+2. `register` with random 0.5 → list due at +5 s; after `listFinished(.success)` at t → due again at t+900.
+3. Account without org list → never in `dueLists`.
+4. 429 outcomes 1…6 with random 0.5 → backoff 60, 120, 240, 480, 900, 900 s.
+5. random 0 / random 0.999 → delay within [0.8, 1.2] × nominal.
+6. `rateLimited(retryAfter: 1800)` at k=1 → 1800 s; `retryAfter: 7200` → 3600 s.
+7. Backing-off account → not in `dueLists`, `forceList` returns false; other accounts unaffected.
+8. `success` after backoff → `isBackingOff == false`; next 429 starts at 60 s again.
+9. `forceList` twice within 60 s → true, false; with `bypassDebounce: true` → true; after 60 s → true.
+10. `unregister` → its list never due; `record` for an unknown account → no crash.
+11. Runner: 10 items over 10 keys, bodies sleep 50 ms → observed max concurrency 4.
+12. Runner: 3 items of one key → never 2 at once.
+13. Runner: `timeout` 0.1 s with a body sleeping 2 s → that item returns nil, call returns in < 1 s.
+14. Full suite passes.
 
-**Tests:** one test per acceptance line 1–10. Edge cases: profile deleted while a job is in flight (no
-crash, no store write for it); Cloudflare 403 → no event and no list fetch; credential org unreadable →
-active org stays the stored pick; two profiles sharing an org id are independent.
+**Tests:** fixed `random` closures, explicit `Date` values; runner tests count concurrency with an actor
+counter. Edge cases: register same account twice (due time kept); `listFinished` for an unregistered account
+(not re-added); empty item list.
 
 **Validate:** `xcodebuild test -project "Claude Usage.xcodeproj" -scheme "Claude Usage" -configuration Debug -derivedDataPath build -destination "platform=macOS" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO` `git diff --check`

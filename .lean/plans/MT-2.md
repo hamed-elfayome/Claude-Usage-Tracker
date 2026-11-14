@@ -1,90 +1,84 @@
-### MT-2 — Pure event classifier and credential-org parser
+### MT-2 — Per-account event rules and credential-org parser (pure)
 
 Size: M
 Risk: normal
 Importance: high
 After: MT-1
 
-**Goal:** Implement the §5 event state machine of `docs/specs/multi-team-tracking.md` as a pure,
-fully tested function, plus pure parsing of the Claude Code login's org and seat. No network, no
-Keychain, no singletons. Read spec §4 and §5 before coding; the rules and thresholds there are the
-decisions — do not change them.
+**Goal:** Implement the per-account part of the event state machine (spec `docs/specs/multi-team-tracking.md`
+§6: rules U, L, M, T, S, R, X) as one pure, fully tested function, plus pure parsing of the org and seat in
+stored Claude Code credentials. No network, Keychain, singletons or `Date()`. The thresholds in §6 are
+decisions: do not change them. Cross-account logic (current detection, group events) is MT-3, not here.
 
 **Files**
-- NEW `Claude Usage/Shared/MultiTeam/OrgEventClassifier.swift`
+- NEW `Claude Usage/Shared/MultiTeam/AccountRules.swift`
 - NEW `Claude Usage/Shared/MultiTeam/CredentialOrgParser.swift`
-- NEW `Claude UsageTests/Fixtures/MultiTeamFixtures.swift` (Swift string literals + builders)
-- NEW `Claude UsageTests/OrgEventClassifierTests.swift`, `Claude UsageTests/CredentialOrgParserTests.swift`
-- Read only: `Claude Usage/Shared/MultiTeam/OrgTrackingModels.swift` (from MT-1), `Shared/Models/ClaudeUsage.swift`,
-  `Shared/Models/UsageHistory.swift:323-335` (`ResetDetection.tolerance`, reuse it).
+- NEW `Claude UsageTests/AccountRulesTests.swift`, `Claude UsageTests/CredentialOrgParserTests.swift`
+- Read only: `MultiTeam/TeamTrackingModels.swift`, `TeamTrackingMigration.swift`, `Claude UsageTests/Fixtures/TeamFixtures.swift`,
+  `Shared/Models/ClaudeUsage.swift`, `Shared/Models/UsageHistory.swift:326-335` (reuse `ResetDetection.tolerance`).
 
 **Steps**
-1. `CredentialOrgParser` (enum, static funcs):
-   - `orgId(fromCredentialsJSON:) -> String?`: root `organizationUuid`, else `claudeAiOauth.organizationUuid`; empty → nil.
-   - `orgId(fromOAuthAccountJSON:) -> String?` and `orgName(fromOAuthAccountJSON:) -> String?`.
-   - `seat(fromCredentialsJSON:) -> SeatFingerprint?`: present non-empty `claudeAiOauth.rateLimitTier`,
-     `claudeAiOauth.subscriptionType` joined by `|`, source `.credentials`; none → nil.
-   - `seat(rateLimitTier:ravenType:billingType:) -> SeatFingerprint?` (source `.orgList`, same join order).
-2. In the classifier file define `OrgListEntry { orgId, name, seat: SeatFingerprint?, canChat: Bool }`,
-   `AccountObservation` (fields and defaults exactly as spec §5, plus `credentialChanged: Bool = false`),
-   `ResetSnapshot { orgId, window, previous: ClaudeUsage }`, and
-   `ClassificationResult { state, events, acceptedSamples: [String: ClaudeUsage], resetSnapshots: [ResetSnapshot] }`.
-3. `enum OrgEventClassifier { static func apply(_ obs: AccountObservation, to state: OrgTrackingState, profileId: UUID) -> ClassificationResult }`.
-   Use `obs.now` for every time decision (never `Date()`). Order inside: unknown-org rename → L → M → W → S → R,
-   with precedence L > M > W > S > R as spec §5. Implement each rule as a private static func.
-4. Details the spec leaves to code:
-   - Ignore list entries with `canChat == false`.
-   - New org history key: if `!legacyHistoryKeyAssigned` → `profileId.uuidString` and set the flag;
-     else `OrgTrackingMigration.pairHistoryKey(profileId:orgId:)`.
-   - Unknown-org rename: a pair with `unknownOrgId` and a known credential org (or the only chat org
-     in a list) → set its `orgId` in place unless that org is already tracked; then mark the unknown pair `.removed`.
-   - `missingFromListCount` increments only when `obs.now − state.lastOrgListAt ≥ 60 s` (or no previous list);
-     reset to 0 when listed. Set `lastOrgListAt = obs.now` after a successful list.
-   - Usage membership failure (`usageMembershipFailures`) sets `lastMembershipFailureAt = now` and
-     increments `consecutiveUsageAuthFailures`; any accepted sample resets it to 0.
-   - L3 uses `consecutiveUsageAuthFailures ≥ 2` on the credential org pair with `oauthUnauthorized`.
-   - While `authState` is `needsLogin`: samples for that account are still accepted only if
-     `credentialChanged` or any sample arrived (that is the restore signal → `loginRestored`).
-   - Window presence: session = `hasSessionLimit` in both samples; weekly = `hasWeeklyLimit` in both.
-     S2 per-model windows: `opusWeeklyPercentage`, `sonnetWeeklyPercentage` when previous ≥ 5.
-   - When the S2 candidate test matches a sample, R is not evaluated for that pair in that run
-     (S > R), so a proportional drop becomes `pending(.seatInferred)`, never `pending(.earlyReset)`.
-   - Confirmed early reset → event + a `ResetSnapshot` with the baseline usage. Natural reset → `ResetSnapshot` only.
-   - Every accepted sample updates `lastUsage`, `lastSampleAt`; identity events restart the baseline
-     (`baselineStartedAt = now`, `pending = nil`).
-   - Events get `orgNames` from tracked orgs + list entries. Append via `appendEvent`.
-   - Active org selection fallback = first live `canChat` org in list order.
-5. Fixtures (`MultiTeamFixtures`): org list JSON strings `orgsAB`, `orgsB`, `orgsABC`, `orgsAStandard`,
-   `orgsAPremium` (`rate_limit_tier` differs), `orgsAPIOnly`; `usageJSON(session:weekly:sessionReset:weeklyReset:)`
-   builder producing `/usage` bodies (`five_hour`, `seven_day`, `seven_day_opus`, ISO8601 with fractional
-   seconds) and `usageNoFiveHour`; credentials JSON `credentialsOrgA/B/NoOrg`; `oauthAccountOrgA/B`.
-   Decode usage bodies with `ClaudeAPIService().parseUsageResponse(_:)` in tests so samples are real parser output.
-6. Write the tests. Run Validate.
+1. `CredentialOrgParser` (enum, static, never throws):
+   - `orgId(fromCredentialsJSON:)`: root `organizationUuid`, else `claudeAiOauth.organizationUuid`; empty → nil.
+   - `orgId(fromOAuthAccountJSON:)`, `orgName(fromOAuthAccountJSON:)` (top level or nested `oauthAccount`).
+   - `seat(fromCredentialsJSON:)`: present non-empty `claudeAiOauth.rateLimitTier`, `claudeAiOauth.subscriptionType`
+     joined by `|`, source `.credentials`; none → nil.
+   - `seat(rateLimitTier:ravenType:billingType:)`: same join order, source `.orgList`; none → nil.
+2. In `AccountRules.swift` define `OrgListEntry`, `AccountObservation` (fields as spec §6, all with defaults
+   so tests set only what they need; `now` required), `ResetSnapshot { orgId, window, previous: ClaudeUsage }`,
+   `ConfirmedRemoval { orgId, movedTo: String? }` and `AccountResult { state, events: [TeamEvent],
+   resetSnapshots, confirmedRemovals, followedOrgId: String?, deletedHistoryKeys: [String], acceptedSamples: [String: ClaudeUsage] }`.
+3. `enum AccountRules { static func apply(_ obs: AccountObservation, to state: OrgTrackingState, profileId: UUID, profileName: String, followedOrgId: String?) -> AccountResult }`.
+   Order U → L → M → T → S → R → X; precedence per pair L > M > T > S > R. One private static func per rule.
+4. Decisions the spec leaves to code:
+   - New pair history key: `!legacyHistoryKeyAssigned` → `profileId.uuidString` and set the flag; else
+     `TeamTrackingMigration.pairHistoryKey(profileId:orgId:)`.
+   - Missing-count increments only when `obs.now − state.lastOrgListAt ≥ 60 s` or there was no previous list;
+     set `lastOrgListAt = obs.now` after a successful non-empty list.
+   - `usageMembershipFailures` sets `lastMembershipFailureAt = now` on that pair.
+   - L3 uses `consecutiveOAuthUnauthorized` (+1 on `oauthUnauthorized`, 0 on any accepted sample) ≥ 2, and
+     only when `hasSessionKey == false`.
+   - While `needsLogin`: samples are accepted only if `credentialFingerprint` differs from the stored one or a
+     sample/list succeeded — that is the restore signal (`loginRestored`). Store `credentialFingerprint` every run.
+   - Samples for orgs that are not `member` are ignored (never revive an `old` pair from a stray sample).
+   - Window presence: session = `hasSessionLimit` in both; weekly = `hasWeeklyLimit` in both. S2 per-model
+     windows: `opusWeeklyPercentage`, `sonnetWeeklyPercentage` when previous ≥ 5.
+   - When the S2 candidate test matches, R is not evaluated for that pair in that run.
+   - Confirmed early reset → event + `ResetSnapshot` with the baseline. Natural reset → `ResetSnapshot` only.
+   - Every accepted sample sets `lastUsage`, `lastSampleAt`, goes to `acceptedSamples`. Identity events set
+     `baselineStartedAt = now`, `pending = nil`. Do not touch `roundReading` (MT-3/MT-6 own it).
+   - Events carry `names` (org ids → names from tracked orgs and list entries; `profileId.uuidString` → `profileName`).
+   - `followedOrgId` in the result is non-nil only when it must change (move target, first member after a
+     removal without target, T's new org, U's rename of the followed org).
+   - X runs every call (also with an empty observation).
+5. Tests, then Validate.
 
 **Acceptance criteria**
-1. Credential org A→B, list has A and B → one `ownerSwitch(A→B)`; B `.active`, A `.idle`; no reset event.
-2. Credential org A→B, `hasOrgListAccess == false` → `orgChanged(A→B)`; A `.readOnly`.
-3. List [A,B] then [B] (≥ 60 s later) then [B] (≥ 60 s later) with A active → `adminMove(A→B)` on the confirming list; A `.removed`, history key kept.
-4. List [B] once + A had a 404 within 10 min → `adminMove(A→B)` immediately.
-5. List [A] → [] or failed list (`orgList == nil`) → no membership change.
-6. Org A missing (confirmed) and no new org → `orgRemoved(A)`.
-7. Removed A appears again → A `.idle`, `orgRejoined(A)` with `notifies == false`.
-8. Same org, seat fingerprint `orgList` "std" → "premium" → `seatChange(inferred: false)`; source change credentials→orgList → no event.
-9. No fingerprint; session 40→10 and weekly 20→5 with unchanged reset times, next sample 11/5 → `seatChange(inferred: true)`; next sample 40/20 instead → no event.
-10. Session 60 → 5 with reset 3 h away, next sample 6 → `earlyReset(session, 60, 6)` + one `ResetSnapshot`; next sample 61 instead → nothing.
-11. Session 60 → 0 when `prev.sessionResetTime ≤ now + 5 min` and reset time moved → natural `ResetSnapshot`, no event.
-12. Reset time moved 2 h while not due and no drop → no snapshot, no event.
-13. `five_hour` missing in the new sample (parsed as 0 %) → no event for the session window.
-14. `ownerSwitch` and a session drop in the same observation → only `ownerSwitch`, pending cleared.
-15. `refreshRejected` → `needsLogin`, `loginLost` event; next observation with a sample → `.ok`, `loginRestored`.
-16. `orgListAuthFailed` → `needsLogin`; OAuth-only 401 once → still `.ok`; twice → `needsLogin`.
-17. Pending early reset older than 30 min → discarded with no event.
-18. Pair `unknown-org` + credential org "A" (not tracked) → pair renamed to "A", same historyKey, no event.
-19. `CredentialOrgParser` reads root and nested `organizationUuid`, returns nil for garbage JSON.
-20. Full suite passes.
+1. List [A,B] then [B] (≥ 60 s later) then [B] (≥ 60 s later), A followed → `adminMove(A→B)` on the third call; A `.old`, history key kept; `followedOrgId == "B"`; `confirmedRemovals == [(A, B)]`.
+2. List [B] once + A had a membership failure 5 min earlier → `adminMove(A→B)` on that call.
+3. List [B] once + `peerConfirmedRemovals == ["A"]` → A confirmed gone on that call.
+4. List [A] then `orgList == nil` or `[]` → no membership change, no event.
+5. A confirmed gone, no new org → `teamRemoved(A)`.
+6. `old` A listed again → `.member`, `teamRejoined`, `notifies == false`, same historyKey.
+7. New org C in the list → `.member`, `teamAdded` (silent), history key `<uuid>_C`.
+8. OAuth-only (`hasSessionKey false`), `credentialOrgId` A → B → `teamChanged(A→B)`; A `.unreachable`; followed B.
+9. Seat fingerprint `.orgList` std → premium → `seatChange(inferred: false)`; source `.credentials` → `.orgList` → no event.
+10. No fingerprint; session 40→10, weekly 20→5, reset times unchanged; next sample 11/5 → `seatChange(inferred: true)`; next 40/20 instead → no event.
+11. Session 60 → 5 with reset 3 h away; next sample 6 → `earlyReset(session, 60, 6)` + one `ResetSnapshot`; next 61 instead → nothing.
+12. Session 60 → 0 when `prev.sessionResetTime ≤ now + 5 min` and reset moved → natural `ResetSnapshot`, no event.
+13. Reset time moved 2 h, not due, no drop → no snapshot, no event.
+14. `usageNoFiveHour` sample after a 60 % session → no session event.
+15. Pending early reset older than 30 min → discarded, no event.
+16. `refreshRejected` → `needsLogin`, `loginLost`; next call with a new fingerprint and a sample → `.ok`, `loginRestored` (silent).
+17. `orgListAuthFailed` → `needsLogin`; OAuth-only 401 once → `.ok`; twice in a row → `needsLogin`.
+18. `old` pair with `lastSeenInListAt` 15 days + 1 s ago → removed, key in `deletedHistoryKeys`, `oldTeamDeleted(manual: false)`; 14 days → kept; `member` idle 60 days → kept; `unreachable` 60 days → kept.
+19. Pair `unknown-org` + list with only chat org A → renamed to A, same historyKey, no event.
+20. Sample for an `old` org → ignored (no `lastUsage` change).
+21. `CredentialOrgParser` reads root and nested `organizationUuid`, nil for garbage/empty JSON; seat join order as step 1.
+22. Full suite passes.
 
-**Tests:** one XCTest method per acceptance line 1–19, plus edge cases: list containing only an
-API-only org; two orgs added at once with no credential org (newest `firstSeenAt` wins); A→B→C between
-two observations (collapses to A→C, R11); weekly-only plan (`hasSessionLimit == false`).
+**Tests:** one test per acceptance line 1–21, built from `TeamFixtures`. Edge cases: list with only an
+API-only org; two new orgs in one list (newest `firstSeenAt` wins as target); A→B→C between two lists
+collapses to `adminMove(A→C)` (R11); weekly-only plan; move and session drop in the same call → only the move.
 
 **Validate:** `xcodebuild test -project "Claude Usage.xcodeproj" -scheme "Claude Usage" -configuration Debug -derivedDataPath build -destination "platform=macOS" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO` `git diff --check`

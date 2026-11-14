@@ -1,63 +1,58 @@
-### MT-4 — Multi-org poll scheduler with concurrency cap and 429 backoff
+### MT-4 — API signals: tier fields, 404/429 mapping with Retry-After, usage-only fetch
 
-Size: M
-Risk: high
+Size: S
+Risk: normal
 Importance: normal
 
-**Goal:** A self-contained actor that decides which poll jobs are due, runs at most 4 at once and at
-most 1 per account, spreads start-up, and keeps per-account exponential 429 backoff. It knows nothing
-about orgs' meaning, Profiles or the API: it schedules opaque jobs. Spec: `docs/specs/multi-team-tracking.md` §6.
+**Goal:** Give the team tracker the API signals it needs without changing behaviour for existing callers:
+optional seat-tier fields on the org list, a distinct "not found" error, `Retry-After` on 429, a 429 code on
+the OAuth path, and a one-request usage fetch for probes. Spec `docs/specs/multi-team-tracking.md` §2 (status
+mapping row), §6 (M, S1), §7.
 
 **Files**
-- NEW `Claude Usage/Shared/MultiTeam/MultiOrgPollScheduler.swift`
-- NEW `Claude UsageTests/MultiOrgPollSchedulerTests.swift`
+- `Claude Usage/Shared/Services/ClaudeAPIService+Types.swift` (`AccountInfo` :28-32)
+- `Claude Usage/Shared/Services/ClaudeAPIService.swift` (1369 lines; touch only: next to `fetchUsageData(sessionKey:organizationId:)` :513-542, `fetchUsageData(oauthAccessToken:)` :545-570, the status switch used by `performRequest` :807-866)
+- NEW `Claude Usage/Shared/MultiTeam/AppError+MultiTeam.swift`
+- NEW `Claude UsageTests/ClaudeAPIServiceMultiTeamTests.swift`
 
 **Steps**
-1. Types:
-   ```swift
-   struct PollJob: Hashable { enum Kind: Hashable { case orgList; case usage(orgId: String) }; let accountId: UUID; let kind: Kind }
-   enum PollOutcome: Equatable { case success; case rateLimited(retryAfter: TimeInterval?); case failed }
-   struct PollPolicy { var idleInterval: TimeInterval = 300; var orgListInterval: TimeInterval = 900
-     var maxConcurrent = 4; var maxPerAccount = 1; var backoffBase: TimeInterval = 60; var backoffCap: TimeInterval = 900
-     var retryAfterCap: TimeInterval = 3600; var jitter = 0.2; var forcedListDebounce: TimeInterval = 60
-     var tick: TimeInterval = 15; static let `default` = PollPolicy() }
-   ```
-2. `actor MultiOrgPollScheduler` with `init(policy: PollPolicy = .default, clock: @escaping @Sendable () -> Date = { Date() }, random: @escaping @Sendable () -> Double = { Double.random(in: 0..<1) })`.
-3. API (all `async` actor methods):
-   - `register(_ job: PollJob, interval: TimeInterval)` — idempotent; first due time = now + random·interval
-     (org list jobs: now + random·10 s); re-register with a new interval keeps the due time if earlier.
-   - `unregister(_ job:)`, `unregisterAll(accountId:)`.
-   - `forceSoon(_ job:) -> Bool` — makes the job due now unless it was forced within `forcedListDebounce`; returns whether it was forced.
-   - `dueJobs(now: Date? = nil) -> [PollJob]` — due jobs ordered by due time, skipping accounts in backoff,
-     respecting `maxConcurrent − inFlight` and `maxPerAccount`; does NOT mark them started.
-   - `markStarted(_:)`, `markFinished(_:outcome:)` — finished sets next due = now + interval and applies the outcome.
-   - `record(accountId:outcome:)` — applies an outcome without a job (used by the menu bar loop).
-   - `isBackingOff(_ accountId:) -> Bool`, `backoffUntil(_:) -> Date?`.
-   - `run(execute: @escaping @Sendable (PollJob) async -> PollOutcome)` — loop until the Task is cancelled:
-     take `dueJobs`, mark started, run each in a child task (TaskGroup or detached children), mark finished;
-     sleep `policy.tick` between passes (`Task.sleep`). Must not run two instances of the same job.
-4. Backoff per account: k = consecutive `rateLimited` outcomes; delay = min(base·2^(k−1), cap) ·
-   (1 − jitter + 2·jitter·random); if `retryAfter` is larger use min(retryAfter, retryAfterCap).
-   `success` resets k and clears backoff; `failed` leaves backoff unchanged.
-5. No `Date()` calls outside the injected clock. No singletons. Tests, then Validate.
+1. `AccountInfo`: add `var rateLimitTier: String? = nil`, `var billingType: String? = nil`,
+   `var ravenType: String? = nil` and `CodingKeys` mapping `uuid`, `name`, `capabilities`, `rate_limit_tier`,
+   `billing_type`, `raven_type`. `uuid`, `name`, `capabilities` stay as required as today. The memberwise
+   `AccountInfo(uuid:name:capabilities:)` must still compile (`PreferredOrganizationTests`).
+2. Extract the status switch of `performRequest` into
+   `static func error(forStatus status: Int, data: Data, response: HTTPURLResponse, endpoint: String) -> AppError?`
+   (nil for 2xx). `performRequest` throws its result. Same messages as today, except:
+   - 404 → `AppError(code: .apiNotFound, …)` (was `.apiGenericError`);
+   - 429 → `technicalDetails` gains a line `Retry-After: <seconds>` when the header holds integer seconds
+     (HTTP-date values ignored).
+3. Before step 2's 404 change: `grep -rn "apiGenericError" "Claude Usage"` and confirm no caller depends on a 404
+   being generic; write the result in the walkthrough.
+4. `fetchUsageData(oauthAccessToken:)`: 429 → `.apiRateLimited` with the same `Retry-After` line; 401/403 →
+   `.apiUnauthorized` as today; everything else unchanged.
+5. `func fetchUsageOnly(sessionKey: String, organizationId: String) async throws -> ClaudeUsage` next to
+   `fetchUsageData(sessionKey:organizationId:)`: one `performRequest` to `/organizations/<id>/usage`, then
+   `parseUsageResponse`. No overage/credit/spend calls.
+6. `AppError+MultiTeam.swift`: `extension AppError { var retryAfterSeconds: TimeInterval?` (parses the
+   `Retry-After:` line, must be ≥ 0), `var isCloudflareChallenge: Bool { code == .apiServiceUnavailable }`,
+   `var isMembershipFailure: Bool { code == .apiUnauthorized || code == .apiNotFound }`,
+   `var isRateLimited: Bool { code == .apiRateLimited } }`.
+7. Tests, then Validate.
 
 **Acceptance criteria**
-1. Registered usage job with random=0 → due at registration time; after `markFinished(.success)` due again exactly 300 s later.
-2. Random=0.5 → first due at +150 s (usage) and +5 s (org list).
-3. 10 due jobs over 10 accounts → `dueJobs` returns 4; after marking 4 started, returns 0 until one finishes.
-4. 3 due jobs of one account → `dueJobs` returns 1.
-5. 429 outcomes 1..6 with random=0.5 (jitter neutral) → backoff 60, 120, 240, 480, 900, 900 s.
-6. Random=0 / random≈1 → delay within [0.8, 1.2] × nominal.
-7. `rateLimited(retryAfter: 1800)` at k=1 → backoff 1800 s; `retryAfter: 7200` → 3600 s.
-8. While backing off, the account's jobs are not returned; other accounts' jobs are.
-9. `success` after backoff → `isBackingOff == false`, next 429 starts at 60 s again.
-10. `forceSoon` twice within 60 s → first true, second false; after 60 s true again.
-11. `unregisterAll(accountId:)` → none of its jobs returned.
-12. `run` with an execute closure that sleeps → observed max concurrency ≤ 4 and per-account ≤ 1 (test with a short `tick`, cancel after a few passes).
-13. Full suite passes.
+1. Decoding `[{"uuid":"a","name":"A","capabilities":["chat"],"rate_limit_tier":"t1","billing_type":"b","raven_type":"team"}]` → three fields set.
+2. The same JSON without the three fields → nil fields, no error.
+3. `error(forStatus: 404, …)` → `.apiNotFound`, `isMembershipFailure == true`.
+4. `error(forStatus: 429, …)` with header `Retry-After: 120` → `.apiRateLimited`, `retryAfterSeconds == 120`, `isRateLimited`.
+5. 429 without the header, or with `Retry-After: abc` → `retryAfterSeconds == nil`.
+6. 403 with a body containing "Just a moment" → `.apiServiceUnavailable`, `isCloudflareChallenge`, not a membership failure.
+7. 401 plain → `.apiUnauthorized`, `isMembershipFailure`.
+8. 200 → nil; 500 → `.apiServerError` (as today).
+9. `fetchUsageOnly` calls `performRequest` exactly once (code reading, noted in the walkthrough).
+10. `grep` result of step 3 recorded; no behaviour change for other callers besides 404.
+11. Full suite passes, including `PreferredOrganizationTests` and `ClaudeAPIServiceParsingTests`.
 
-**Tests:** inject a mutable test clock (class box) and fixed random. Edge cases: register same job twice,
-unregister unknown job, `markFinished` for a job that was unregistered meanwhile (no crash, not re-added),
-`record(accountId:)` for an account with no jobs.
+**Tests:** build `HTTPURLResponse(url:statusCode:httpVersion:headerFields:)` directly, no network. Edge cases:
+`Retry-After: 0`, `cf-mitigated` header with 401, lower-case `retry-after` header name.
 
 **Validate:** `xcodebuild test -project "Claude Usage.xcodeproj" -scheme "Claude Usage" -configuration Debug -derivedDataPath build -destination "platform=macOS" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO` `git diff --check`
