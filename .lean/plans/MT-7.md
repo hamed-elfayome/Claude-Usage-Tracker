@@ -77,4 +77,6 @@ Spec `docs/specs/multi-team-tracking.md` §4 (switch effects), §7, §10, §11.
 **Tests:** `TeamEventNotificationTests` for lines 6–7 and a non-empty title for every `TeamEvent.Kind`. Edge cases:
 group event where only one involved profile has notifications on (posted); event naming a deleted profile.
 
-**Validate:** `xcodebuild test -project "Claude Usage.xcodeproj" -scheme "Claude Usage" -configuration Debug -derivedDataPath build -destination "platform=macOS" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO` `git diff --check`
+**Validate:** `scripts/validate-clt.sh` (runs `xcodebuild test` automatically when full Xcode is present) `git diff --check`
+
+**Coverage limit:** without Xcode the harness does not build the widget extension, the asset catalog or other resources, and compiles DynamicNotchKit/Sparkle against stubs; one full `xcodebuild` build+test run is required at release time (see `multi-team.md`).

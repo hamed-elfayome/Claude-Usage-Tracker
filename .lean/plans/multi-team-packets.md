@@ -90,7 +90,7 @@ New `.swift` files join the targets automatically. Do not edit `project.pbxproj`
 empty and malformed `oauthAccountJSON`; `claudeUsage == nil`; history key with `-` and `_`; unknown org id in
 an event title (prefix fallback); `groupMove` with empty `notMoved`/`unchecked`.
 
-**Validate:** `xcodebuild test -project "Claude Usage.xcodeproj" -scheme "Claude Usage" -configuration Debug -derivedDataPath build -destination "platform=macOS" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO` `git diff --check`
+**Validate:** `scripts/validate-clt.sh` (runs `xcodebuild test` automatically when full Xcode is present) `git diff --check` (coverage limit: see `multi-team.md`)
 
 ### MT-2 — Per-account event rules and credential-org parser (pure)
 
@@ -175,7 +175,7 @@ decisions: do not change them. Cross-account logic (current detection, group eve
 API-only org; two new orgs in one list (newest `firstSeenAt` wins as target); A→B→C between two lists
 collapses to `adminMove(A→C)` (R11); weekly-only plan; move and session drop in the same call → only the move.
 
-**Validate:** `xcodebuild test -project "Claude Usage.xcodeproj" -scheme "Claude Usage" -configuration Debug -derivedDataPath build -destination "platform=macOS" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO` `git diff --check`
+**Validate:** `scripts/validate-clt.sh` (runs `xcodebuild test` automatically when full Xcode is present) `git diff --check` (coverage limit: see `multi-team.md`)
 
 ### MT-3 — Current-pair detection, saved-window projection, group-move event, Teams rows (pure)
 
@@ -257,7 +257,7 @@ Do not edit `AccountRules.swift`, `CredentialOrgParser.swift` (MT-2) or any Loca
 candidates; current pair not among candidates; three-way tie with no current (first in order); usage > 100 %
 (left clamped to 0); `lastSeenInListAt` nil on an `old` pair (use `firstSeenAt`).
 
-**Validate:** `xcodebuild test -project "Claude Usage.xcodeproj" -scheme "Claude Usage" -configuration Debug -derivedDataPath build -destination "platform=macOS" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO` `git diff --check`
+**Validate:** `scripts/validate-clt.sh` (runs `xcodebuild test` automatically when full Xcode is present) `git diff --check` (coverage limit: see `multi-team.md`)
 
 ### MT-4 — API signals: tier fields, 404/429 mapping with Retry-After, usage-only fetch
 
@@ -316,7 +316,7 @@ mapping row), §6 (M, S1), §7.
 **Tests:** build `HTTPURLResponse(url:statusCode:httpVersion:headerFields:)` directly, no network. Edge cases:
 `Retry-After: 0`, `cf-mitigated` header with 401, lower-case `retry-after` header name.
 
-**Validate:** `xcodebuild test -project "Claude Usage.xcodeproj" -scheme "Claude Usage" -configuration Debug -derivedDataPath build -destination "platform=macOS" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO` `git diff --check`
+**Validate:** `scripts/validate-clt.sh` (runs `xcodebuild test` automatically when full Xcode is present) `git diff --check` (coverage limit: see `multi-team.md`)
 
 ### MT-5 — Poll scheduler (rounds, org lists, forced lists, 429 backoff) and bounded task runner
 
@@ -389,7 +389,7 @@ know nothing about orgs, profiles or the API. Spec `docs/specs/multi-team-tracki
 counter. Edge cases: register same account twice (due time kept); `listFinished` for an unregistered account
 (not re-added); empty item list.
 
-**Validate:** `xcodebuild test -project "Claude Usage.xcodeproj" -scheme "Claude Usage" -configuration Debug -derivedDataPath build -destination "platform=macOS" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO` `git diff --check`
+**Validate:** `scripts/validate-clt.sh` (runs `xcodebuild test` automatically when full Xcode is present) `git diff --check` (coverage limit: see `multi-team.md`)
 
 ### MT-6 — TeamTracker: probe rounds, org lists, detection, group moves, persistence, history, events
 
@@ -490,7 +490,7 @@ Spec `docs/specs/multi-team-tracking.md` §3–§7, §10, §12 — read them fir
 Cloudflare 403 on a probe → no event, no list; two profiles with the same org id stay independent; no anthropic
 profiles → tick is a no-op.
 
-**Validate:** `xcodebuild test -project "Claude Usage.xcodeproj" -scheme "Claude Usage" -configuration Debug -derivedDataPath build -destination "platform=macOS" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO` `git diff --check`
+**Validate:** `scripts/validate-clt.sh` (runs `xcodebuild test` automatically when full Xcode is present) `git diff --check` (coverage limit: see `multi-team.md`)
 
 ### MT-7 — Wire the tracker into the menu bar loop, popover, token refresh and notifications
 
@@ -571,7 +571,7 @@ Spec `docs/specs/multi-team-tracking.md` §4 (switch effects), §7, §10, §11.
 **Tests:** `TeamEventNotificationTests` for lines 6–7 and a non-empty title for every `TeamEvent.Kind`. Edge cases:
 group event where only one involved profile has notifications on (posted); event naming a deleted profile.
 
-**Validate:** `xcodebuild test -project "Claude Usage.xcodeproj" -scheme "Claude Usage" -configuration Debug -derivedDataPath build -destination "platform=macOS" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO` `git diff --check`
+**Validate:** `scripts/validate-clt.sh` (runs `xcodebuild test` automatically when full Xcode is present) `git diff --check` (coverage limit: see `multi-team.md`)
 
 ### MT-8 — Teams UI: Teams section view, history org picker, tracking toggle, Google sign-in hint
 
@@ -639,7 +639,7 @@ Do not edit `PopoverContentView.swift`, `MenuBarManager.swift`, `NotificationMan
 **Tests:** `TeamsSectionViewTests` for lines 1–6 with `TeamRow` values built by hand (fixed `now`). Edge cases: very
 long profile and team names (layout still within width; check no crash), a row with `view.headroom == nil`.
 
-**Validate:** `xcodebuild test -project "Claude Usage.xcodeproj" -scheme "Claude Usage" -configuration Debug -derivedDataPath build -destination "platform=macOS" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO` `git diff --check`
+**Validate:** `scripts/validate-clt.sh` (runs `xcodebuild test` automatically when full Xcode is present) `git diff --check` (coverage limit: see `multi-team.md`)
 
 ### MT-9 — User docs and changelog for Team tracking
 
@@ -691,5 +691,5 @@ sign in with Google, and its limits. Spec `docs/specs/multi-team-tracking.md` §
 
 **Tests:** none beyond the suite (docs only). Check links with `grep -n "](" docs/profiles.md` by eye.
 
-**Validate:** `xcodebuild test -project "Claude Usage.xcodeproj" -scheme "Claude Usage" -configuration Debug -derivedDataPath build -destination "platform=macOS" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO` `git diff --check`
+**Validate:** `scripts/validate-clt.sh` (runs `xcodebuild test` automatically when full Xcode is present) `git diff --check` (coverage limit: see `multi-team.md`)
 
