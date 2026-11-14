@@ -120,7 +120,7 @@ struct TeamEvent: Codable, Equatable, Identifiable {
         case let .adminMove(_, from, to):
             return key("adminMove", "title").localized(with: name(from), name(to))
         case let .groupMove(from, to, moves, notMoved, unchecked):
-            let count = moves.count + notMoved.count + unchecked.count
+            let count = moves.count
             if let to {
                 return key("groupMove", "title").localized(with: count, name(from), name(to))
             }
