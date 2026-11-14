@@ -23,3 +23,4 @@
 {"at": "2026-11-14T11:32:49", "agent": "claude@Kevins-MacBook-Air", "event": "merge", "task": "MT-4"}
 {"at": "2026-11-14T11:32:57", "agent": "claude@Kevins-MacBook-Air", "event": "lesson", "task": "MT-4", "note": "Optional hint fields in decoded API payloads need a lenient try? decode, because a String? field still throws on a type "}
 {"at": "2026-11-14T11:33:31", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-2", "note": ""}
+{"at": "2026-11-14T11:33:48", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-3", "note": ""}
