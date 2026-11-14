@@ -423,4 +423,157 @@ final class AccountRulesTests: XCTestCase {
         XCTAssertEqual(r.events[0].names["A"], "Team A")
         XCTAssertEqual(r.events[0].names[pid.uuidString], "Me")
     }
+
+    // MARK: Tester additions (MT-2 test round)
+
+    // Boundary of the 60 s list debounce: a list less than 60 s after the previous one adds no miss; exactly 60 s does.
+    func testMissingDebounceBoundary() {
+        let s = state([org("A"), org("B")], lastList: 0)
+        var r = run(AccountObservation(now: at(59), orgList: [entry("B")]), s, followed: "A")
+        XCTAssertEqual(r.state.org("A")?.missingFromListCount, 0)
+        XCTAssertTrue(r.events.isEmpty)
+        r = run(AccountObservation(now: at(119), orgList: [entry("B")]), r.state, followed: "A")
+        XCTAssertEqual(r.state.org("A")?.missingFromListCount, 1)   // exactly 60 s after the previous list
+        XCTAssertTrue(r.events.isEmpty)
+        r = run(AccountObservation(now: at(179), orgList: [entry("B")]), r.state, followed: "A")
+        XCTAssertEqual(kinds(r), [.adminMove(profileId: pid, from: "A", to: "B")])
+    }
+
+    // The membership failure counts for 10 min exactly (inclusive); one second later it no longer confirms a removal.
+    func testMembershipFailureWindowBoundary() {
+        for (age, confirmed) in [(600.0, true), (601.0, false)] {
+            let s = state([org("A", failure: 0), org("B")])
+            let r = run(AccountObservation(now: at(age), orgList: [entry("B")]), s)
+            XCTAssertEqual(kinds(r).contains(.adminMove(profileId: pid, from: "A", to: "B")), confirmed, "age \(age)s")
+        }
+    }
+
+    // R6 thresholds: candidate needs prev >= 10, new <= prev * 0.5 (inclusive) and a drop of at least 10 points.
+    func testEarlyResetCandidateThresholds() throws {
+        let cases: [(prev: Double, new: Double, candidate: Bool)] = [
+            (60, 30, true),    // exactly half
+            (60, 31, false),   // just above half
+            (20, 10, true),    // drop of exactly 10 points
+            (15, 7, false),    // halved, but drop of 8 points
+        ]
+        for c in cases {
+            let r = run(AccountObservation(now: at(0), samples: ["A": try u(c.new, 20)]),
+                        state([org("A", usage: try u(c.prev, 20))]))
+            XCTAssertEqual(r.state.org("A")?.pending?.kind == .earlyReset(.session), c.candidate, "\(c.prev) -> \(c.new)")
+        }
+    }
+
+    // R natural = now >= prev reset - 5 min (inclusive): at the edge the drop is a reset; 1 s earlier it is a candidate.
+    func testNaturalResetBoundary() throws {
+        let prev = try u(60, 20, sessionReset: at(1000))
+        let moved = try u(0, 20, sessionReset: at(1000 + 5 * 3600))
+        let edge = run(AccountObservation(now: at(700), samples: ["A": moved]), state([org("A", usage: prev)]))
+        XCTAssertEqual(edge.resetSnapshots, [ResetSnapshot(orgId: "A", window: .session, previous: prev)])
+        XCTAssertNil(edge.state.org("A")?.pending)
+        let early = run(AccountObservation(now: at(699), samples: ["A": moved]), state([org("A", usage: prev)]))
+        XCTAssertTrue(early.resetSnapshots.isEmpty)
+        XCTAssertEqual(early.state.org("A")?.pending?.kind, .earlyReset(.session))
+    }
+
+    // S2 direction and spread: all ratios lean the same way, and max/min ratio must be at most 1.3.
+    func testSeatCandidateDirectionAndSpread() throws {
+        let cases: [(name: String, prev: (Double, Double), new: (Double, Double), candidate: Bool)] = [
+            ("upgrade, both windows double", (20, 10), (40, 20), true),
+            ("mixed directions", (40, 20), (10, 32), false),
+            ("spread 1.67 above 1.3", (40, 20), (20, 6), false),
+            ("spread 1.25 within 1.3", (40, 20), (20, 8), true),
+        ]
+        for c in cases {
+            let r = run(AccountObservation(now: at(0), samples: ["A": try u(c.new.0, c.new.1)]),
+                        state([org("A", usage: try u(c.prev.0, c.prev.1))]))
+            XCTAssertEqual(r.state.org("A")?.pending?.kind == .seatInferred, c.candidate, c.name)
+        }
+    }
+
+    // S2 reset guard: a session reset moved by more than 5 min disqualifies the seat candidate; 5 min exactly does not.
+    func testSeatCandidateResetTimeTolerance() throws {
+        for (shift, candidate) in [(300.0, true), (301.0, false)] {
+            let moved = try u(10, 5, sessionReset: TeamFixtures.defaultSessionReset.addingTimeInterval(shift))
+            let r = run(AccountObservation(now: at(0), samples: ["A": moved]),
+                        state([org("A", usage: try u(40, 20))]))
+            XCTAssertEqual(r.state.org("A")?.pending?.kind == .seatInferred, candidate, "shift \(shift)s")
+        }
+    }
+
+    // needsLogin is left by a successful non-empty list (spec L); an empty list is not a success.
+    func testListRestoresLoginOnlyWhenNonEmpty() {
+        var s = state([org("A")])
+        s.credentialFingerprint = "fp1"
+        s.authState = .needsLogin(reason: "x", since: at(-10))
+        let blocked = run(AccountObservation(now: at(0), credentialFingerprint: "fp1", orgList: []), s)
+        XCTAssertNotEqual(blocked.state.authState, .ok)
+        XCTAssertTrue(blocked.events.isEmpty)
+        let restored = run(AccountObservation(now: at(10), credentialFingerprint: "fp1", orgList: [entry("A")]), blocked.state)
+        XCTAssertEqual(restored.state.authState, .ok)
+        XCTAssertEqual(kinds(restored), [.loginRestored(profileId: pid)])
+    }
+
+    // R13: a peer's confirmation only removes a pair that is missing from this account's own list.
+    func testPeerRemovalIgnoredWhenStillListed() {
+        let s = state([org("A"), org("B")])
+        let r = run(AccountObservation(now: at(100), orgList: [entry("A"), entry("B")], peerConfirmedRemovals: ["A"]),
+                    s, followed: "A")
+        XCTAssertTrue(r.events.isEmpty)
+        XCTAssertEqual(status(r, "A"), .member)
+        XCTAssertTrue(r.confirmedRemovals.isEmpty)
+        XCTAssertNil(r.followedOrgId)
+    }
+
+    // Two new orgs in one list share firstSeenAt = now, so the move target tie goes to the first listed org.
+    func testTwoNewOrgsTieGoesToFirstListed() {
+        let s = state([org("A", lastSeen: 0, missing: 1)], lastList: 0)
+        let r = run(AccountObservation(now: at(100), orgList: [entry("B"), entry("C")]), s, followed: "A")
+        XCTAssertTrue(kinds(r).contains(.adminMove(profileId: pid, from: "A", to: "B")))
+        XCTAssertEqual(r.confirmedRemovals, [ConfirmedRemoval(orgId: "A", movedTo: "B")])
+        XCTAssertEqual(r.followedOrgId, "B")
+    }
+
+    // Org ids match exactly: a Cyrillic look-alike of a tracked id is a different org, never the same pair.
+    func testConfusableOrgIdIsADifferentOrg() {
+        let lookalike = "org-\u{0430}"   // CYRILLIC SMALL LETTER A, tracked id; the list carries LATIN a
+        let s = state([org(lookalike)], lastList: 0)
+        let r = run(AccountObservation(now: at(10), orgList: [entry("org-a")]), s, followed: lookalike)
+        XCTAssertEqual(kinds(r), [.teamAdded(profileId: pid, org: "org-a")])
+        XCTAssertEqual(status(r, lookalike), .member)
+        XCTAssertEqual(r.state.org(lookalike)?.missingFromListCount, 0)   // 10 s after the list: no miss counted
+        XCTAssertNil(r.followedOrgId)
+    }
+
+    func testUnresolvedPlaceholderIsNeverConfirmedGone() {
+        var s = state([org(TrackedOrg.unknownOrgId)])
+        s.legacyHistoryKeyAssigned = true
+        var r = run(AccountObservation(now: at(1000), orgList: [entry("A"), entry("B")]), s, followed: TrackedOrg.unknownOrgId)
+        XCTAssertEqual(kinds(r), [.teamAdded(profileId: pid, org: "A"), .teamAdded(profileId: pid, org: "B")])
+        XCTAssertNil(r.followedOrgId)
+        XCTAssertTrue(r.confirmedRemovals.isEmpty)
+        for t in [1100.0, 1200.0] {
+            r = run(AccountObservation(now: at(t), orgList: [entry("A"), entry("B")]), r.state, followed: TrackedOrg.unknownOrgId)
+            XCTAssertTrue(r.events.isEmpty)
+            XCTAssertEqual(status(r, TrackedOrg.unknownOrgId), .member)
+            XCTAssertNil(r.followedOrgId)
+            XCTAssertTrue(r.confirmedRemovals.isEmpty)
+        }
+    }
+
+    func testMaxToProShapeIsSeatCandidate() throws {
+        let prev = try TeamFixtures.usage(session: 40, weekly: 20, opus: 30)
+        let s = state([org("A", usage: prev)])
+        var r = run(AccountObservation(now: at(100), samples: ["A": try TeamFixtures.usage(session: 10, weekly: 5, opus: nil)]), s)
+        XCTAssertEqual(r.state.org("A")?.pending?.kind, .seatInferred)
+        XCTAssertTrue(r.events.isEmpty)
+        r = run(AccountObservation(now: at(130), samples: ["A": try TeamFixtures.usage(session: 10, weekly: 5, opus: nil)]), r.state)
+        XCTAssertEqual(kinds(r), [.seatChange(PairRef(profileId: pid, orgId: "A"), from: nil, to: nil, inferred: true)])
+    }
+
+    func testPerModelWindowsQualifyWhenPresent() throws {
+        let prev = try TeamFixtures.usage(session: 40, weekly: 20, opus: 30)
+        let r = run(AccountObservation(now: at(0), samples: ["A": try TeamFixtures.usage(session: 20, weekly: 8, opus: 12)]),
+                    state([org("A", usage: prev)]))
+        XCTAssertEqual(r.state.org("A")?.pending?.kind, .seatInferred)
+    }
 }

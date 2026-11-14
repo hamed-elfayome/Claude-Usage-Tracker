@@ -241,7 +241,7 @@ enum AccountRules {
 
         // Missing members: count, then decide who is confirmed gone.
         var gone: [TrackedOrg] = []
-        for org in run.state.orgs where org.status == .member && !listedIds.contains(org.orgId) {
+        for org in run.state.orgs where org.status == .member && org.orgId != TrackedOrg.unknownOrgId && !listedIds.contains(org.orgId) {
             var count = org.missingFromListCount
             if canCount { count += 1 }
             run.state.updateOrg(org.orgId) { $0.missingFromListCount = count }
@@ -362,8 +362,9 @@ enum AccountRules {
         var w: [(Double, Double, Bool)] = []
         if prev.hasSessionLimit && new.hasSessionLimit { w.append((prev.sessionPercentage, new.sessionPercentage, false)) }
         if prev.hasWeeklyLimit && new.hasWeeklyLimit { w.append((prev.weeklyPercentage, new.weeklyPercentage, true)) }
-        w.append((prev.opusWeeklyPercentage, new.opusWeeklyPercentage, false))
-        w.append((prev.sonnetWeeklyPercentage, new.sonnetWeeklyPercentage, false))
+        // The API maps a null per-model window to 0.0, so 0 means absent, not a drop.
+        if new.opusWeeklyPercentage > 0 { w.append((prev.opusWeeklyPercentage, new.opusWeeklyPercentage, false)) }
+        if new.sonnetWeeklyPercentage > 0 { w.append((prev.sonnetWeeklyPercentage, new.sonnetWeeklyPercentage, false)) }
         return w.map { (prev: $0.0, new: $0.1, weekly: $0.2) }
     }
 

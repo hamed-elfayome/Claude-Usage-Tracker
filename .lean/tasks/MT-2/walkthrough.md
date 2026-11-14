@@ -8,15 +8,37 @@ No network/Keychain/Date(); thresholds follow spec §6.
 - Claude UsageTests/AccountRulesTests.swift, CredentialOrgParserTests.swift: tests.
 
 ## Acceptance
-AC1-21 met: one test each (comments "// ACn" in AccountRulesTests; parser tests = AC21). AC22: validate-clt.sh, 473 ok, 0 failed, 2 skipped (pre-existing).
+AC1: met - testAdminMoveAfterThreeLists (ok)
+AC2: met - testMembershipFailureConfirmsImmediately (ok)
+AC3: met - testPeerConfirmedRemoval (ok)
+AC4: met - testNilOrEmptyListChangesNothing (ok)
+AC5: met - testTeamRemovedWithoutTarget (ok)
+AC6: met - testRejoin (ok)
+AC7: met - testNewOrgAdded (ok)
+AC8: met - testOAuthOnlyTeamChange (ok)
+AC9: met - testSeatChangeFingerprint, testSeatSourceChangeIsSilent (ok)
+AC10: met - testInferredSeatChangeConfirmed, testInferredSeatChangeDiscarded, testMaxToProShapeIsSeatCandidate (ok)
+AC11: met - testEarlyResetConfirmed, testEarlyResetBounceBack (ok)
+AC12: met - testNaturalResetSnapshotOnly (ok)
+AC13: met - testResetTimeMovedWithoutDropIsQuiet (ok)
+AC14: met - testNoFiveHourSampleGivesNoSessionEvent (ok)
+AC15: met - testStalePendingDiscarded (ok)
+AC16: met - testRefreshRejectedThenRestored (ok)
+AC17: met - testListAuthFailedNeedsLogin, testOAuthUnauthorizedTwice (ok)
+AC18: met - testOldTeamExpiry (ok)
+AC19: met - testUnknownOrgRenamed, testUnresolvedPlaceholderIsNeverConfirmedGone (ok)
+AC20: met - testSampleForOldOrgIgnored (ok)
+AC21: met - CredentialOrgParserTests (all) (ok)
+AC22: met - scripts/validate-clt.sh: Executed 492 tests: 490 ok, 0 failed, 2 skipped (pre-existing).
 
 ## Flow
 Caller (MT-3) builds AccountObservation -> apply(): U, L (may block), fingerprint store, M, T, S, R, record samples, X -> AccountResult.
 
 ## Tests
-`scripts/validate-clt.sh`: Executed 475 tests: 473 ok, 0 failed, 2 skipped. `git diff --check` clean.
+`scripts/validate-clt.sh`: Executed 492 tests: 490 ok, 0 failed, 2 skipped. Round 1 added testUnresolvedPlaceholderIsNeverConfirmedGone, testMaxToProShapeIsSeatCandidate, testPerModelWindowsQualifyWhenPresent. `git diff --check` clean.
 
 ## Edge cases
+Round 1: unknown-org placeholder is never counted missing (only U removes it); per-model windows (opus/sonnet) count only when new value > 0 because the API maps null to 0.
 API-only list (chat list empty) = no membership change (but lastOrgListAt set). Move target must be listed, not itself gone; move target is marked identity (skips S/R, baseline restarts). Ties on firstSeenAt: first in list. Pending (either kind) older than 30 min discarded. While needsLogin, samples are ignored unless fingerprint changed or a non-empty list arrived. A pair whose pending was resolved/created in a run does not get a fresh candidate that run. Not handled: first-sighting of an OAuth credential org on an empty state (MT-3).
 
 ## Shortcuts
