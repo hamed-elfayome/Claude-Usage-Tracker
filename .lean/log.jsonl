@@ -36,3 +36,4 @@
 {"at": "2026-11-14T12:24:02", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-8", "note": ""}
 {"at": "2026-11-14T13:00:58", "agent": "claude@Kevins-MacBook-Air", "event": "pass", "task": "MT-8", "note": "grade -: MT-8: grade A, 0 fix round(s)"}
 {"at": "2026-11-14T13:01:04", "agent": "claude@Kevins-MacBook-Air", "event": "merge", "task": "MT-8"}
+{"at": "2026-11-14T13:01:16", "agent": "claude@Kevins-MacBook-Air", "event": "lesson", "task": "MT-8", "note": "A view that stores a selected key must re-check it against the live choice list on every use, because a removed team oth"}

@@ -4,3 +4,4 @@
 - Grep for an existing method of the same name before adding one to a large class; a duplicate declaration blocks every build and test. (MT-1, claude@Kevins-MacBook-Air, 2026-11-14)
 - Optional hint fields in decoded API payloads need a lenient try? decode, because a String? field still throws on a type mismatch. (MT-4, claude@Kevins-MacBook-Air, 2026-11-14)
 - TeamEvent.groupMove title counts movers only (moves.count), not notMoved or unchecked peers. (MT-3, claude@Kevins-MacBook-Air, 2026-11-14)
+- A view that stores a selected key must re-check it against the live choice list on every use, because a removed team otherwise leaves a stale selection that still drives the load. (MT-8, claude@Kevins-MacBook-Air, 2026-11-14)
