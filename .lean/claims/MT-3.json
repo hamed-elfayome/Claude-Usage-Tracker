@@ -2,9 +2,10 @@
   "task": "MT-3",
   "history": [],
   "agent": "claude@Kevins-MacBook-Air",
-  "status": "active",
+  "status": "passed",
   "branch": "lean/MT-3",
   "claimed_at": "2026-11-14T11:33:48",
-  "heartbeat": "2026-11-14T11:33:48",
-  "next": null
+  "heartbeat": "2026-11-14T11:57:34",
+  "next": null,
+  "grade": null
 }
