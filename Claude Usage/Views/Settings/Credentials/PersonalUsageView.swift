@@ -272,6 +272,11 @@ struct EnterKeyStep: View {
                 .buttonStyle(.borderedProminent)
                 .controlSize(.regular)
                 .disabled(wizardState.validationState == .validating)
+
+                Text("multiteam.ui.google_hint".localized)
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .sheet(isPresented: $wizardState.showingAuthSheet) {
                 ConsoleAuthSheet(

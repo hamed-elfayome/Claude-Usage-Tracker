@@ -1193,3 +1193,22 @@
 "multiteam.event.loginRestored.body" = "%@ is signed in again.";
 "multiteam.event.oldTeamDeleted.title" = "Old team %@ deleted";
 "multiteam.event.oldTeamDeleted.body" = "Old team %@ was removed from %@.";
+
+/* Multi-team UI (MT-8) */
+"multiteam.ui.teams" = "Teams";
+"multiteam.ui.now" = "Now";
+"multiteam.ui.five_hour_left" = "5h %d%% left";
+"multiteam.ui.week_left" = "Week %d%% left";
+"multiteam.ui.projected" = "projected";
+"multiteam.ui.min_ago" = "%d min ago";
+"multiteam.ui.old_days" = "Old team · deleted in %d days";
+"multiteam.ui.old" = "Old team";
+"multiteam.ui.make_current" = "Make current";
+"multiteam.ui.delete" = "Delete";
+"multiteam.ui.cancel" = "Cancel";
+"multiteam.ui.delete_confirm" = "Delete old team %@ for %@? Its history is removed.";
+"multiteam.ui.history_team" = "Team";
+"multiteam.ui.history_old_suffix" = "(old)";
+"multiteam.ui.tracking_title" = "Team tracking (follow the account in use)";
+"multiteam.ui.tracking_description" = "Detects which account and team you are using from rising usage; other teams are checked every 5 minutes.";
+"multiteam.ui.google_hint" = "Google sign-in blocked? Sign in at claude.ai in your browser and paste the session key below, or use the Claude Code login. In the Google window, pick the right account.";
