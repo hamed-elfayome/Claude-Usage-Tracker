@@ -9,21 +9,36 @@ v2 replaces v1 entirely: v1's live tracking of every pair, Claude Code owner-swi
 
 | Packet | Title | Size | Risk | Importance | After |
 |---|---|---|---|---|---|
-| MT-1 | Data model, stores, migration, pair-keyed history, shared fixtures | M | high | high | — |
+| MT-0 | Xcode-free validation harness `scripts/validate-clt.sh` | M | normal | high | — |
+| MT-1 | Data model, stores, migration, pair-keyed history, shared fixtures | M | high | high | MT-0 |
 | MT-2 | Per-account event rules + credential-org parser (pure) | M | normal | high | MT-1 |
 | MT-3 | Current detection, projection, group-move event, Teams rows (pure) | M | normal | high | MT-1 |
-| MT-4 | API signals: tier fields, 404/429 + Retry-After, usage-only fetch | S | normal | normal | — |
-| MT-5 | Poll scheduler + bounded task runner | M | high | normal | — |
+| MT-4 | API signals: tier fields, 404/429 + Retry-After, usage-only fetch | S | normal | normal | MT-0 |
+| MT-5 | Poll scheduler + bounded task runner (**merged**) | M | high | normal | — |
 | MT-6 | TeamTracker coordinator + adapters | L | high | high | MT-2, MT-3, MT-4, MT-5 |
 | MT-7 | Wire tracker into loop, popover, provider, notifications | M | high | high | MT-6, MT-8 |
 | MT-8 | Teams UI, history picker, toggle, Google sign-in hint | M | normal | normal | MT-3 |
 | MT-9 | User docs and changelog | S | normal | low | MT-7 |
 
-Critical path: MT-1 → MT-2 → MT-6 → MT-7 → MT-9. No packet edits `project.pbxproj` (file-system synchronized
-groups). Every packet's Validate is the full XCTest suite plus `git diff --check`:
-`xcodebuild test -project "Claude Usage.xcodeproj" -scheme "Claude Usage" -configuration Debug -derivedDataPath build -destination "platform=macOS" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO`
+Critical path: MT-0 → MT-1 → MT-2 → MT-6 → MT-7 → MT-9. No packet edits `project.pbxproj` (file-system synchronized
+groups). Every packet's Validate is the full test suite plus `git diff --check`:
+`scripts/validate-clt.sh` `git diff --check`
+
+Why (14 Nov 2026): this Mac has only Command Line Tools, so `xcodebuild test` cannot run and no gate could pass.
+MT-0 adds `scripts/validate-clt.sh`: when full Xcode is present it runs the real
+`xcodebuild test -project "Claude Usage.xcodeproj" -scheme "Claude Usage" …` (previous Validate); otherwise it
+compiles the whole app module with swiftc (stub DynamicNotchKit/Sparkle modules, `@State`/`#Preview` macro
+workaround) and runs every XCTestCase test against a small XCTest shim module.
+**Coverage limit:** without Xcode the widget extension, the asset catalog and other resources, Info.plist
+processing, code signing and the real DynamicNotchKit/Sparkle APIs are NOT built or checked, and `#Preview`
+bodies are not compiled. One full `xcodebuild` build+test run on a Mac with Xcode is required before the
+release that ships this feature.
+MT-1 and MT-4 (built, fixed, awaiting retest) wait for MT-0; their worktree packet copies run the harness as
+`bash /Users/kuke/Coding/Claude-Usage-Tracker/scripts/validate-clt.sh --root .`, which needs MT-0 merged into
+`feat/multi-team-tracking` at the main checkout (or merge feat into their branches first).
 
 File ownership while lanes overlap (no two parallel packets edit the same file):
+- MT-0: `scripts/validate-clt.sh`, `scripts/clt/**`, `CONTRIBUTING.md` (no app or test sources).
 - MT-1: `Profile.swift`, `ProfileManager.swift`, `UsageHistoryService.swift`, `Localizable.strings` (first), `MultiTeam/TeamTracking*.swift`, `Fixtures/TeamFixtures.swift`.
 - MT-4: `ClaudeAPIService.swift`, `ClaudeAPIService+Types.swift`, `MultiTeam/AppError+MultiTeam.swift`.
 - MT-5: `MultiTeam/TeamPollScheduler.swift`, `MultiTeam/BoundedTaskRunner.swift`.
@@ -38,9 +53,11 @@ File ownership while lanes overlap (no two parallel packets edit the same file):
 
 | Lane | Tasks | Runs alongside | Saves (min) |
 |---|---|---|---|
-| A (critical path) | MT-1 → MT-2 → MT-6 → MT-7 → MT-9 | — | 0 |
+| A (critical path) | MT-0 → MT-1 → MT-2 → MT-6 → MT-7 → MT-9 | — | 0 |
 | B | MT-3 → MT-8 (after MT-1) | MT-2, then MT-6 | ~75 |
-| C | MT-4 | MT-1 | ~20 |
-| D | MT-5 | MT-1, MT-2 | ~35 |
+| C | MT-4 (after MT-0; retest only) | MT-1 retest | ~20 |
+| D | MT-5 | — (merged) | — |
 
-TASKS: [{"id":"MT-1","size":"M","risk":"high","importance":"high","after":[]},{"id":"MT-2","size":"M","risk":"normal","importance":"high","after":["MT-1"]},{"id":"MT-3","size":"M","risk":"normal","importance":"high","after":["MT-1"]},{"id":"MT-4","size":"S","risk":"normal","importance":"normal","after":[]},{"id":"MT-5","size":"M","risk":"high","importance":"normal","after":[]},{"id":"MT-6","size":"L","risk":"high","importance":"high","after":["MT-2","MT-3","MT-4","MT-5"]},{"id":"MT-7","size":"M","risk":"high","importance":"high","after":["MT-6","MT-8"]},{"id":"MT-8","size":"M","risk":"normal","importance":"normal","after":["MT-3"]},{"id":"MT-9","size":"S","risk":"normal","importance":"low","after":["MT-7"]}]
+MT-5 is merged and left out of the TASKS line; MT-6's dependency on it is already met.
+
+TASKS: [{"id":"MT-0","size":"M","risk":"normal","importance":"high","after":[]},{"id":"MT-1","size":"M","risk":"high","importance":"high","after":["MT-0"]},{"id":"MT-2","size":"M","risk":"normal","importance":"high","after":["MT-1"]},{"id":"MT-3","size":"M","risk":"normal","importance":"high","after":["MT-1"]},{"id":"MT-4","size":"S","risk":"normal","importance":"normal","after":["MT-0"]},{"id":"MT-6","size":"L","risk":"high","importance":"high","after":["MT-2","MT-3","MT-4"]},{"id":"MT-7","size":"M","risk":"high","importance":"high","after":["MT-6","MT-8"]},{"id":"MT-8","size":"M","risk":"normal","importance":"normal","after":["MT-3"]},{"id":"MT-9","size":"S","risk":"normal","importance":"low","after":["MT-7"]}]

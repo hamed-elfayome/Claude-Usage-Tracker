@@ -64,4 +64,6 @@ Do not edit `PopoverContentView.swift`, `MenuBarManager.swift`, `NotificationMan
 **Tests:** `TeamsSectionViewTests` for lines 1–6 with `TeamRow` values built by hand (fixed `now`). Edge cases: very
 long profile and team names (layout still within width; check no crash), a row with `view.headroom == nil`.
 
-**Validate:** `xcodebuild test -project "Claude Usage.xcodeproj" -scheme "Claude Usage" -configuration Debug -derivedDataPath build -destination "platform=macOS" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO` `git diff --check`
+**Validate:** `scripts/validate-clt.sh` (runs `xcodebuild test` automatically when full Xcode is present) `git diff --check`
+
+**Coverage limit:** without Xcode the harness does not build the widget extension, the asset catalog or other resources, and compiles DynamicNotchKit/Sparkle against stubs; one full `xcodebuild` build+test run is required at release time (see `multi-team.md`).

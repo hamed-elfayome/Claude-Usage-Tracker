@@ -3,6 +3,7 @@
 Size: M
 Risk: high
 Importance: high
+After: MT-0
 
 **Goal:** Add the v2 data model (spec `docs/specs/multi-team-tracking.md` §3, copy the types exactly), store
 per-account state on `Profile` and global state in its own store, migrate existing profiles without data loss
@@ -90,4 +91,6 @@ New `.swift` files join the targets automatically. Do not edit `project.pbxproj`
 empty and malformed `oauthAccountJSON`; `claudeUsage == nil`; history key with `-` and `_`; unknown org id in
 an event title (prefix fallback); `groupMove` with empty `notMoved`/`unchecked`.
 
-**Validate:** `xcodebuild test -project "Claude Usage.xcodeproj" -scheme "Claude Usage" -configuration Debug -derivedDataPath build -destination "platform=macOS" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO` `git diff --check`
+**Validate:** `scripts/validate-clt.sh` (runs `xcodebuild test` automatically when full Xcode is present) `git diff --check`
+
+**Coverage limit:** without Xcode the harness does not build the widget extension, the asset catalog or other resources, and compiles DynamicNotchKit/Sparkle against stubs; one full `xcodebuild` build+test run is required at release time (see `multi-team.md`).

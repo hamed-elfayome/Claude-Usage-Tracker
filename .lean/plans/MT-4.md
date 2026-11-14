@@ -3,6 +3,7 @@
 Size: S
 Risk: normal
 Importance: normal
+After: MT-0
 
 **Goal:** Give the team tracker the API signals it needs without changing behaviour for existing callers:
 optional seat-tier fields on the org list, a distinct "not found" error, `Retry-After` on 429, a 429 code on
@@ -55,4 +56,6 @@ mapping row), §6 (M, S1), §7.
 **Tests:** build `HTTPURLResponse(url:statusCode:httpVersion:headerFields:)` directly, no network. Edge cases:
 `Retry-After: 0`, `cf-mitigated` header with 401, lower-case `retry-after` header name.
 
-**Validate:** `xcodebuild test -project "Claude Usage.xcodeproj" -scheme "Claude Usage" -configuration Debug -derivedDataPath build -destination "platform=macOS" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO` `git diff --check`
+**Validate:** `scripts/validate-clt.sh` (runs `xcodebuild test` automatically when full Xcode is present) `git diff --check`
+
+**Coverage limit:** without Xcode the harness does not build the widget extension, the asset catalog or other resources, and compiles DynamicNotchKit/Sparkle against stubs; one full `xcodebuild` build+test run is required at release time (see `multi-team.md`).
