@@ -2,10 +2,11 @@
   "task": "MT-8",
   "history": [],
   "agent": "claude@Kevins-MacBook-Air",
-  "status": "passed",
+  "status": "merged",
   "branch": "lean/MT-8",
   "claimed_at": "2026-11-14T12:24:02",
-  "heartbeat": "2026-11-14T13:00:58",
+  "heartbeat": "2026-11-14T13:01:04",
   "next": "Claimed; packet cut, builder stopped before writing code. Rebuild from scratch (no resume flag).",
-  "grade": null
+  "grade": null,
+  "merged_at": "2026-11-14T13:01:04"
 }
