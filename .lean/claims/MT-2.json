@@ -2,9 +2,9 @@
   "task": "MT-2",
   "history": [],
   "agent": "claude@Kevins-MacBook-Air",
-  "status": "active",
+  "status": "handoff",
   "branch": "lean/MT-2",
   "claimed_at": "2026-11-14T11:33:31",
-  "heartbeat": "2026-11-14T11:33:31",
-  "next": null
+  "heartbeat": "2026-11-14T12:02:08",
+  "next": "Built; Opus arch re-review PASS after one FIX round (round 1 spent). Code uncommitted in wt/MT-2. Resume in lean-swarm with resume:'test', round:1 (tester, then verify/review)."
 }
