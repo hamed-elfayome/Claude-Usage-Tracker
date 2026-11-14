@@ -12,3 +12,4 @@
 {"at": "2026-11-14T11:04:13", "agent": "claude@Kevins-MacBook-Air", "event": "pass", "task": "MT-0", "note": "grade -: MT-0: grade B, 1 fix round(s), last r1 sonnet-medium (fix)"}
 {"at": "2026-11-14T11:04:19", "agent": "claude@Kevins-MacBook-Air", "event": "merge", "task": "MT-0"}
 {"at": "2026-11-14T11:04:25", "agent": "claude@Kevins-MacBook-Air", "event": "lesson", "task": "MT-0", "note": "Test runners that never yield the main actor between tests expose races with unawaited @MainActor Tasks; pause between t"}
+{"at": "2026-11-14T11:04:34", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-1", "note": ""}
