@@ -2,9 +2,9 @@
   "task": "MT-8",
   "history": [],
   "agent": "claude@Kevins-MacBook-Air",
-  "status": "active",
+  "status": "handoff",
   "branch": "lean/MT-8",
   "claimed_at": "2026-11-14T11:57:59",
-  "heartbeat": "2026-11-14T11:57:59",
-  "next": null
+  "heartbeat": "2026-11-14T12:02:17",
+  "next": "Claimed; packet cut, builder stopped before writing code. Rebuild from scratch (no resume flag)."
 }
