@@ -21,3 +21,4 @@
 {"at": "2026-11-14T11:22:08", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-3", "note": ""}
 {"at": "2026-11-14T11:32:43", "agent": "claude@Kevins-MacBook-Air", "event": "pass", "task": "MT-4", "note": "grade -: MT-4: grade B, 2 fix round(s), last r2 sonnet-high (fix)"}
 {"at": "2026-11-14T11:32:49", "agent": "claude@Kevins-MacBook-Air", "event": "merge", "task": "MT-4"}
+{"at": "2026-11-14T11:32:57", "agent": "claude@Kevins-MacBook-Air", "event": "lesson", "task": "MT-4", "note": "Optional hint fields in decoded API payloads need a lenient try? decode, because a String? field still throws on a type "}
