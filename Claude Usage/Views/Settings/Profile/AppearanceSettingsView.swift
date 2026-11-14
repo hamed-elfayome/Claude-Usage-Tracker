@@ -17,6 +17,12 @@ struct AppearanceSettingsView: View {
         profileManager.displayMode == .multi
     }
 
+    /// The active profile's last fetched usage reports no 5-hour session limit
+    /// (e.g. Ultra). `false` until usage has been fetched once.
+    private var isSessionLimitAbsent: Bool {
+        profileManager.activeProfile?.claudeUsage?.hasSessionLimit == false
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: DesignTokens.Spacing.section) {
@@ -113,6 +119,18 @@ struct AppearanceSettingsView: View {
                                 }
                             )
                         )
+
+                        SettingToggle(
+                            title: "appearance.exclude_weekends_title".localized,
+                            description: "appearance.exclude_weekends_description".localized,
+                            isOn: Binding(
+                                get: { configuration.excludeWeekendsFromWeeklyPace },
+                                set: { newValue in
+                                    configuration.excludeWeekendsFromWeeklyPace = newValue
+                                    saveConfiguration()
+                                }
+                            )
+                        )
                     }
                 }
                 .disabled(isMultiProfileMode)
@@ -151,16 +169,26 @@ struct AppearanceSettingsView: View {
 
                         // Session Usage
                         if let sessionIndex = configuration.metrics.firstIndex(where: { $0.metricType == .session }) {
+                            // Without a session limit the card reads as off and collapses,
+                            // but the saved isEnabled is kept for when a session limit returns
                             MetricIconCard(
                                 metricType: .session,
                                 config: Binding(
-                                    get: { configuration.metrics[sessionIndex] },
+                                    get: {
+                                        var config = configuration.metrics[sessionIndex]
+                                        if isSessionLimitAbsent {
+                                            config.isEnabled = false
+                                        }
+                                        return config
+                                    },
                                     set: { newValue in
                                         configuration.metrics[sessionIndex] = newValue
                                     }
                                 ),
                                 onConfigChanged: { saveConfiguration() }
                             )
+                            .disabled(isSessionLimitAbsent)
+                            .opacity(isSessionLimitAbsent ? 0.5 : 1.0)
                         }
 
                         // Week Usage
@@ -171,6 +199,21 @@ struct AppearanceSettingsView: View {
                                     get: { configuration.metrics[weekIndex] },
                                     set: { newValue in
                                         configuration.metrics[weekIndex] = newValue
+                                    }
+                                ),
+                                onConfigChanged: { saveConfiguration() }
+                            )
+                        }
+
+                        // Fable weekly limit (Claude profiles only, #318)
+                        if profileManager.activeProfile?.provider == .anthropic,
+                           let fableIndex = configuration.metrics.firstIndex(where: { $0.metricType == .fable }) {
+                            MetricIconCard(
+                                metricType: .fable,
+                                config: Binding(
+                                    get: { configuration.metrics[fableIndex] },
+                                    set: { newValue in
+                                        configuration.metrics[fableIndex] = newValue
                                     }
                                 ),
                                 onConfigChanged: { saveConfiguration() }
@@ -206,7 +249,7 @@ struct AppearanceSettingsView: View {
                 configuration = activeProfile.iconConfig
             }
         }
-        .onChange(of: profileManager.activeProfile?.id) { _, newProfileId in
+        .onChangeCompat(of: profileManager.activeProfile?.id) { newProfileId in
             // Reload configuration when profile changes
             if let activeProfile = profileManager.activeProfile {
                 configuration = activeProfile.iconConfig

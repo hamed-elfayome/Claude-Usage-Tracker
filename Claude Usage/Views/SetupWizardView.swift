@@ -651,10 +651,12 @@ struct SelectOrgStepSetup: View {
         }
         .onAppear {
             // Auto-select first org if none selected
-            if wizardState.selectedOrgId == nil,
-               let firstOrg = wizardState.testedOrganizations.first {
-                wizardState.selectedOrgId = firstOrg.uuid
-            }
+            // Also replaces a selection carried over from a previous sign-in that the
+            // account just tested does not belong to (#266).
+            wizardState.selectedOrgId = ClaudeAPIService.preferredOrganization(
+                from: wizardState.testedOrganizations,
+                current: wizardState.selectedOrgId
+            )?.uuid ?? wizardState.selectedOrgId
         }
     }
 }

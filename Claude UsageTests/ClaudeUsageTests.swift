@@ -97,6 +97,18 @@ final class ClaudeUsageTests: XCTestCase {
         XCTAssertEqual(decoded.fableWeeklyTokensUsed, 0)
         XCTAssertEqual(decoded.fableWeeklyPercentage, 0)
         XCTAssertNil(decoded.fableWeeklyResetTime)
+        // Saved data predates the absent-session state, so it had a session limit
+        XCTAssertTrue(decoded.hasSessionLimit)
+    }
+
+    func testEncodeDecodeWithoutSessionLimit() throws {
+        var original = createUsage(sessionPercentage: 0)
+        original.hasSessionLimit = false
+
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(ClaudeUsage.self, from: data)
+
+        XCTAssertFalse(decoded.hasSessionLimit)
     }
 
     func testEncodeDecodeFableFields() throws {

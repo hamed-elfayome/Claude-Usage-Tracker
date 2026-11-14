@@ -203,7 +203,7 @@ struct APIBillingView: View {
             loadExistingConfiguration()
             loadCurrentCredentials()
         }
-        .onChange(of: profileManager.activeProfile?.id) { _, _ in
+        .onChangeCompat(of: profileManager.activeProfile?.id) { _ in
             // Reload when profile changes
             loadExistingConfiguration()
             loadCurrentCredentials()

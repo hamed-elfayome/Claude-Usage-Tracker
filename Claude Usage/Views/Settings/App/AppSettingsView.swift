@@ -31,7 +31,7 @@ struct AppSettingsView: View {
             }
             .padding()
         }
-        .onChange(of: launchAtLogin) { _, newValue in
+        .onChangeCompat(of: launchAtLogin) { newValue in
             LaunchAtLoginManager.shared.setEnabled(newValue)
         }
     }

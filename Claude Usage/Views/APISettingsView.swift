@@ -41,7 +41,7 @@ struct APISettingsView: View {
                 description: "api.enable_billing_description".localized,
                 isOn: $apiTrackingEnabled
             )
-            .onChange(of: apiTrackingEnabled) { _, newValue in
+            .onChangeCompat(of: apiTrackingEnabled) { newValue in
                 DataStore.shared.saveAPITrackingEnabled(newValue)
             }
 
@@ -106,7 +106,7 @@ struct APISettingsView: View {
                         }
                         .pickerStyle(.menu)
                         .frame(maxWidth: 300)
-                        .onChange(of: selectedOrganizationId) { _, newValue in
+                        .onChangeCompat(of: selectedOrganizationId) { newValue in
                             DataStore.shared.saveAPIOrganizationId(newValue)
                         }
 

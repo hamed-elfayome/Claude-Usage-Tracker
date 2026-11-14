@@ -213,7 +213,7 @@ struct CLIAccountView: View {
                                     Text("Keychain entry")
                                 }
                                 .pickerStyle(.menu)
-                                .onChange(of: selectedKeychainSvc) { _, newValue in
+                                .onChangeCompat(of: selectedKeychainSvc) { newValue in
                                     updateCustomKeychain(newValue)
                                 }
 
@@ -286,7 +286,7 @@ struct CLIAccountView: View {
             syncSelectedKeychainFromProfile()
             reloadKeychainList()
         }
-        .onChange(of: profileManager.activeProfile?.id) { _, _ in
+        .onChangeCompat(of: profileManager.activeProfile?.id) { _ in
             // Reload when profile changes
             loadCLIAccountInfo()
             syncError = nil

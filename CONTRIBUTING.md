@@ -41,7 +41,7 @@ This project adheres to a code of conduct that all contributors are expected to 
 
 Before you begin, ensure you have the following installed:
 
-- **macOS 14.0+** (Sonoma or later)
+- **macOS 13.0+** (Ventura or later)
 - **Xcode 15.0+** (latest stable recommended)
 - **Git** for version control
 - **A Claude AI account** for testing (to obtain a session key)
@@ -144,7 +144,7 @@ We love feature suggestions! Please:
 2. **Comment on the issue** to let others know you're working on it
 3. **Fork and create a branch** (see [Branch Naming](#branch-naming))
 4. **Make your changes** following our [guidelines](#development-guidelines)
-5. **Test thoroughly** on macOS 14.0+
+5. **Test thoroughly** on macOS 13.0+
 6. **Submit a pull request**
 
 ## Development Guidelines
@@ -284,7 +284,7 @@ Use descriptive branch names with prefixes:
 3. **Make your changes**
    - Write clean, documented code
    - Follow the style guidelines
-   - Test on macOS 14.0+
+   - Test on macOS 13.0+
 
 4. **Commit your changes**
    ```bash
@@ -314,7 +314,7 @@ Use descriptive branch names with prefixes:
 - [ ] Self-reviewed my own code
 - [ ] Added comments for complex logic
 - [ ] Updated documentation if needed
-- [ ] Tested on macOS 14.0+
+- [ ] Tested on macOS 13.0+
 - [ ] No new warnings in Xcode
 - [ ] UI changes include screenshots
 

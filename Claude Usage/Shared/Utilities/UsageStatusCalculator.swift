@@ -52,18 +52,56 @@ final class UsageStatusCalculator {
     ///   - resetTime: When the period resets
     ///   - duration: Total period duration in seconds
     ///   - showRemaining: If true, returns inverted fraction (1 - elapsed)
+    ///   - excludingWeekends: If true, only weekday time counts, so the fraction holds still over the weekend
+    ///   - now: Reference date (defaults to the current date)
+    ///   - calendar: Calendar whose time zone and locale define days and weekend days
     /// - Returns: Elapsed fraction, or nil if inputs are invalid
     static func elapsedFraction(
         resetTime: Date?,
         duration: TimeInterval,
-        showRemaining: Bool
+        showRemaining: Bool,
+        excludingWeekends: Bool = false,
+        now: Date = Date(),
+        calendar: Calendar = .current
     ) -> Double? {
         guard let reset = resetTime, duration > 0 else { return nil }
-        guard reset > Date() else { return showRemaining ? 0.0 : 1.0 }
-        let remaining = reset.timeIntervalSince(Date())
+        guard reset > now else { return showRemaining ? 0.0 : 1.0 }
+        let remaining = reset.timeIntervalSince(now)
         let elapsed = duration - remaining
-        let fraction = min(max(elapsed / duration, 0), 1)
+        var fraction = min(max(elapsed / duration, 0), 1)
+
+        if excludingWeekends {
+            let start = reset.addingTimeInterval(-duration)
+            let totalWeekdayTime = weekdayTime(from: start, to: reset, calendar: calendar)
+            // A period that lies entirely within a weekend keeps the linear fraction
+            if totalWeekdayTime > 0 {
+                let elapsedWeekdayTime = weekdayTime(from: start, to: now, calendar: calendar)
+                fraction = min(max(elapsedWeekdayTime / totalWeekdayTime, 0), 1)
+            }
+        }
+
         return showRemaining ? 1.0 - fraction : fraction
+    }
+
+    /// Seconds between two dates that fall on weekdays, i.e. outside the weekend
+    /// defined by the calendar's locale (Saturday and Sunday in most regions)
+    /// - Parameters:
+    ///   - start: Start of the interval
+    ///   - end: End of the interval
+    ///   - calendar: Calendar whose time zone and locale define days and weekend days
+    /// - Returns: Weekday seconds in the interval, or 0 if `end` is not after `start`
+    static func weekdayTime(from start: Date, to end: Date, calendar: Calendar) -> TimeInterval {
+        var total: TimeInterval = 0
+        var cursor = start
+        // Walk day by day; day intervals follow DST, so 23- and 25-hour days are measured exactly
+        while cursor < end, let day = calendar.dateInterval(of: .day, for: cursor), day.end > cursor {
+            let segmentEnd = min(day.end, end)
+            if !calendar.isDateInWeekend(cursor) {
+                total += segmentEnd.timeIntervalSince(cursor)
+            }
+            cursor = segmentEnd
+        }
+        return total
     }
 
     /// Get the display percentage based on mode

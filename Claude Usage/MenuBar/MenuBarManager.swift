@@ -154,7 +154,7 @@ class MenuBarManager: NSObject, ObservableObject {
                     }
                 )
             } else {
-                displayConfig = config
+                displayConfig = configAdjustedForPlanLimits(config)
             }
 
             statusBarUIManager?.setup(target: self, action: #selector(togglePopover), config: displayConfig)
@@ -457,7 +457,7 @@ class MenuBarManager: NSObject, ObservableObject {
                 }
             )
         } else {
-            displayConfig = config
+            displayConfig = configAdjustedForPlanLimits(config)
         }
 
         statusBarUIManager?.updateConfiguration(
@@ -817,6 +817,14 @@ class MenuBarManager: NSObject, ObservableObject {
                     // Reconfigure menu bar to show default logo
                     let config = self.profileManager.activeProfile?.iconConfig ?? .default
                     self.updateMenuBarDisplay(with: config)
+
+                    // No refresh will run, so publish directly: this clears
+                    // (or trims) the widget snapshot instead of letting stale
+                    // usage linger until the widget's stale threshold.
+                    WidgetSnapshotService.shared.publish(
+                        profiles: self.profileManager.profiles,
+                        activeProfileId: self.profileManager.activeProfile?.id
+                    )
                     return
                 }
 
@@ -944,6 +952,12 @@ class MenuBarManager: NSObject, ObservableObject {
         return ProviderRegistry.service(for: profile.provider).hasCredentials(for: profile)
     }
 
+    /// The icon config to display for the active profile's last usage, so the
+    /// session icon is hidden on plans without a session limit (see `effective(for:)`).
+    private func configAdjustedForPlanLimits(_ config: MenuBarIconConfiguration) -> MenuBarIconConfiguration {
+        config.effective(for: profileManager.activeProfile?.claudeUsage ?? usage)
+    }
+
     private func setupMultiProfileMode() {
         let selectedProfiles = profileManager.getSelectedProfiles()
         let config = profileManager.multiProfileConfig
@@ -1031,7 +1045,18 @@ class MenuBarManager: NSObject, ObservableObject {
                 do {
                     let newUsage = try await fetchUsageForProfile(profile)
 
+                    // A provider with no usable live credential hands back the
+                    // profile's cached reading unchanged. It stays on display, but
+                    // it is not a new sample: feeding it to reset detection and the
+                    // history charts would record stale points as if they were live.
+                    let isCachedReading = previousUsage.map { $0 == newUsage } ?? false
+                    if isCachedReading {
+                        LoggingService.shared.log("MenuBarManager: No live reading for profile '\(profile.name)' - keeping the cached one")
+                    }
+
                     await MainActor.run {
+                        guard !isCachedReading else { return }
+
                         // Check for resets before updating usage
                         self.checkAndRecordSessionReset(
                             profileId: profile.id,
@@ -1119,6 +1144,11 @@ class MenuBarManager: NSObject, ObservableObject {
                 self.lastSuccessfulRefreshTime = Date()
                 self.isRefreshing = false
 
+                WidgetSnapshotService.shared.publish(
+                    profiles: self.profileManager.profiles,
+                    activeProfileId: self.profileManager.activeProfile?.id
+                )
+
                 // Check auto-switch for the active profile
                 if let activeProfile = self.profileManager.activeProfile,
                    let activeUsage = activeProfile.claudeUsage {
@@ -1155,7 +1185,7 @@ class MenuBarManager: NSObject, ObservableObject {
                 }
             )
         } else {
-            displayConfig = config
+            displayConfig = configAdjustedForPlanLimits(config)
         }
 
         statusBarUIManager?.setup(target: self, action: #selector(togglePopover), config: displayConfig)
@@ -1247,6 +1277,13 @@ class MenuBarManager: NSObject, ObservableObject {
                         self.profileManager.saveClaudeUsage(newUsage, for: profileId)
                     }
 
+                    // The session icon is shown or hidden by the plan's limits, so
+                    // rebuild the status items when the session limit appears or goes away
+                    if newUsage.hasSessionLimit != previousUsage.hasSessionLimit,
+                       let activeProfile = self.profileManager.activeProfile {
+                        self.updateMenuBarDisplay(with: activeProfile.iconConfig)
+                    }
+
                     // Write statusline cache for instant CLI rendering (Claude Code only)
                     if profile.provider.descriptor.capabilities.cliAccountSync,
                        StatuslineService.shared.isInstalled {
@@ -1281,6 +1318,11 @@ class MenuBarManager: NSObject, ObservableObject {
                     self.lastRefreshError = nil
                     self.hasCredentialError = false
                     self.lastSuccessfulRefreshTime = Date()
+
+                    WidgetSnapshotService.shared.publish(
+                        profiles: self.profileManager.profiles,
+                        activeProfileId: self.profileManager.activeProfile?.id
+                    )
                 }
 
             } catch {
@@ -1419,7 +1461,11 @@ class MenuBarManager: NSObject, ObservableObject {
         let toName = nextProfile.name
         let notificationSettings = currentProfile.notificationSettings
         Task {
-            await profileManager.activateProfile(nextProfile.id)
+            // A cancelled switch (e.g. the target's saved CLI login is dead) must not be announced
+            guard await profileManager.activateProfile(nextProfile.id) else {
+                LoggingService.shared.log("AutoSwitch: switch to '\(toName)' did not complete, staying on '\(fromName)'")
+                return
+            }
 
             await MainActor.run {
                 // Send notification
@@ -1462,21 +1508,19 @@ class MenuBarManager: NSObject, ObservableObject {
 
     // MARK: - Reset Detection for History Recording
 
-    /// Normalizes a date to minute precision for comparison (ignores seconds)
-    private func normalizeToMinute(_ date: Date) -> Date {
-        let calendar = Calendar.current
-        let components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date)
-        return calendar.date(from: components) ?? date
-    }
-
     /// Checks if a session reset occurred and records a snapshot if so
     private func checkAndRecordSessionReset(
         profileId: UUID,
         previousUsage: ClaudeUsage?,
         newUsage: ClaudeUsage
     ) {
+        guard newUsage.hasSessionLimit else {
+            lastKnownSessionResetTime.removeValue(forKey: profileId)
+            return
+        }
+
         let lastKnown = lastKnownSessionResetTime[profileId]
-        let newResetTime = normalizeToMinute(newUsage.sessionResetTime)
+        let newResetTime = newUsage.sessionResetTime
 
         // First time seeing this profile - just record the reset time
         if lastKnown == nil {
@@ -1484,21 +1528,18 @@ class MenuBarManager: NSObject, ObservableObject {
             return
         }
 
-        // Normalize the last known time for comparison
-        let normalizedLastKnown = normalizeToMinute(lastKnown!)
-
-        // Check if reset time changed (indicates a reset occurred)
-        // Use != instead of > to handle clock changes and backward time jumps
-        if newResetTime != normalizedLastKnown {
+        // Check if reset time moved beyond API jitter (indicates a reset occurred).
+        // Compare in both directions to handle clock changes and backward time jumps.
+        if ResetDetection.isReset(from: lastKnown!, to: newResetTime) {
             // Reset detected! Record snapshot of the previous usage
-            LoggingService.shared.log("History: Session reset detected for profile \(profileId.uuidString.prefix(8)). Old: \(normalizedLastKnown), New: \(newResetTime)")
+            LoggingService.shared.log("History: Session reset detected for profile \(profileId.uuidString.prefix(8)). Old: \(lastKnown!), New: \(newResetTime)")
             if let prevUsage = previousUsage {
                 let provider = profileManager.profiles.first(where: { $0.id == profileId })?.provider ?? .anthropic
                 Task { @MainActor in
                     UsageHistoryService.shared.recordSessionReset(
                         for: profileId,
                         previousUsage: prevUsage,
-                        resetTime: prevUsage.sessionResetTime,  // Use original reset time, not normalized
+                        resetTime: prevUsage.sessionResetTime,
                         provider: provider
                     )
                 }
@@ -1521,7 +1562,7 @@ class MenuBarManager: NSObject, ObservableObject {
         newUsage: ClaudeUsage
     ) {
         let lastKnown = lastKnownWeeklyResetTime[profileId]
-        let newResetTime = normalizeToMinute(newUsage.weeklyResetTime)
+        let newResetTime = newUsage.weeklyResetTime
 
         // First time seeing this profile - just record the reset time
         if lastKnown == nil {
@@ -1530,21 +1571,18 @@ class MenuBarManager: NSObject, ObservableObject {
             return
         }
 
-        // Normalize the last known time for comparison
-        let normalizedLastKnown = normalizeToMinute(lastKnown!)
-
-        // Check if reset time changed (indicates a reset occurred)
-        // Use != instead of > to handle clock changes and backward time jumps
-        if newResetTime != normalizedLastKnown {
+        // Check if reset time moved beyond API jitter (indicates a reset occurred).
+        // Compare in both directions to handle clock changes and backward time jumps.
+        if ResetDetection.isReset(from: lastKnown!, to: newResetTime) {
             // Reset detected! Record snapshot of the previous usage
-            LoggingService.shared.log("History: Weekly reset detected for profile \(profileId.uuidString.prefix(8)). Old: \(normalizedLastKnown), New: \(newResetTime)")
+            LoggingService.shared.log("History: Weekly reset detected for profile \(profileId.uuidString.prefix(8)). Old: \(lastKnown!), New: \(newResetTime)")
             if let prevUsage = previousUsage {
                 let provider = profileManager.profiles.first(where: { $0.id == profileId })?.provider ?? .anthropic
                 Task { @MainActor in
                     UsageHistoryService.shared.recordWeeklyReset(
                         for: profileId,
                         previousUsage: prevUsage,
-                        resetTime: prevUsage.weeklyResetTime,  // Use original reset time, not normalized
+                        resetTime: prevUsage.weeklyResetTime,
                         provider: provider
                     )
                 }
@@ -1567,7 +1605,7 @@ class MenuBarManager: NSObject, ObservableObject {
         newUsage: APIUsage
     ) {
         let lastKnown = lastKnownAPIResetTime[profileId]
-        let newResetTime = normalizeToMinute(newUsage.resetsAt)
+        let newResetTime = newUsage.resetsAt
 
         // First time seeing this profile - just record the reset time
         if lastKnown == nil {
@@ -1576,20 +1614,17 @@ class MenuBarManager: NSObject, ObservableObject {
             return
         }
 
-        // Normalize the last known time for comparison
-        let normalizedLastKnown = normalizeToMinute(lastKnown!)
-
-        // Check if reset time changed (indicates a reset occurred)
-        // Use != instead of > to handle clock changes and backward time jumps
-        if newResetTime != normalizedLastKnown {
+        // Check if reset time moved beyond API jitter (indicates a reset occurred).
+        // Compare in both directions to handle clock changes and backward time jumps.
+        if ResetDetection.isReset(from: lastKnown!, to: newResetTime) {
             // Reset detected! Record snapshot of the previous usage
-            LoggingService.shared.log("History: Billing cycle reset detected for profile \(profileId.uuidString.prefix(8)). Old: \(normalizedLastKnown), New: \(newResetTime)")
+            LoggingService.shared.log("History: Billing cycle reset detected for profile \(profileId.uuidString.prefix(8)). Old: \(lastKnown!), New: \(newResetTime)")
             if let prevUsage = previousUsage {
                 Task { @MainActor in
                     UsageHistoryService.shared.recordBillingCycleReset(
                         for: profileId,
                         previousUsage: prevUsage,
-                        resetTime: prevUsage.resetsAt  // Use original reset time, not normalized
+                        resetTime: prevUsage.resetsAt
                     )
                 }
             }

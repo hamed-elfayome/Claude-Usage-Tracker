@@ -55,10 +55,22 @@ func fetchUsageData(cookieHeader: String, orgId: String) async throws -> (utiliz
         throw NSError(domain: "ClaudeAPI", code: 3, userInfo: [NSLocalizedDescriptionKey: "Failed to fetch usage"])
     }
 
-    if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-       let fiveHour = json["five_hour"] as? [String: Any],
+    guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+        throw NSError(domain: "ClaudeAPI", code: 4, userInfo: [NSLocalizedDescriptionKey: "Invalid response format"])
+    }
+
+    if let fiveHour = json["five_hour"] as? [String: Any],
        let utilization = fiveHour["utilization"] as? Int {
         let resetsAt = fiveHour["resets_at"] as? String
+        return (utilization, resetsAt)
+    }
+
+    // Plans without a 5-hour window (e.g. Ultra) return five_hour: null,
+    // so fall back to the weekly window. Weekly utilization can be fractional.
+    if json["five_hour"] is NSNull || json["five_hour"] == nil,
+       let sevenDay = json["seven_day"] as? [String: Any],
+       let utilization = (sevenDay["utilization"] as? NSNumber)?.intValue {
+        let resetsAt = sevenDay["resets_at"] as? String
         return (utilization, resetsAt)
     }
 
@@ -114,7 +126,8 @@ exit(1)
     /// Bash script that builds the statusline display.
     /// Installed to ~/.claude/statusline-command.sh and configured in Claude Code settings.json.
     /// Reads user preferences from ~/.claude/statusline-config.txt and displays selected components.
-    private let bashScript = """
+    /// Internal so tests can run the script that gets installed.
+    let bashScript = """
 #!/bin/bash
 config_file="$HOME/.claude/statusline-config.txt"
 if [ -f "$config_file" ]; then
@@ -143,6 +156,8 @@ if [ -f "$config_file" ]; then
   show_weekly_reset=$SHOW_WEEKLY_RESET_TIME
   show_weekly_label=$SHOW_WEEKLY_LABEL
   show_extra_usage=$SHOW_EXTRA_USAGE
+  show_fable=$SHOW_FABLE
+  show_cache=$SHOW_CACHE
   element_color_dir=$ELEMENT_COLOR_DIR
   element_color_branch=$ELEMENT_COLOR_BRANCH
   element_color_model=$ELEMENT_COLOR_MODEL
@@ -178,6 +193,8 @@ else
   show_weekly_reset=1
   show_weekly_label=1
   show_extra_usage=0
+  show_fable=0
+  show_cache=0
   element_color_dir="#0000EE"
   element_color_branch="#00BB00"
   element_color_model="#BBBB00"
@@ -440,12 +457,42 @@ if [ "$show_usage" = "1" ]; then
     fi
   fi
 
-  # Fall back to swift script if cache is stale or missing
+  # The app's cache is older than 5 minutes (it refreshes less often than that
+  # in ordinary use, #322). Claude Code reports the session's own rate limits on
+  # stdin, so use those before anything slower.
+  stale_note=""
+  if [ -z "$swift_result" ]; then
+    rl_block=$(echo "$input" | grep -o '"five_hour": *{[^}]*}' | head -1)
+    rl_pct=$(echo "$rl_block" | grep -o '"used_percentage": *[0-9.]*' | sed 's/.*: *//')
+    rl_reset=$(echo "$rl_block" | grep -o '"resets_at": *[0-9]*' | sed 's/.*: *//')
+    if [ -n "$rl_pct" ]; then
+      rl_iso=""
+      [ -n "$rl_reset" ] && rl_iso=$(date -u -r "$rl_reset" "+%Y-%m-%dT%H:%M:%SZ" 2>/dev/null)
+      swift_result="$(printf '%.0f' "$rl_pct")|${rl_iso}"
+    fi
+  fi
+
+  # Then the swift script
   if [ -z "$swift_result" ]; then
     swift_result=$(swift "$HOME/.claude/fetch-claude-usage.swift" 2>/dev/null)
   fi
 
-  if [ $? -eq 0 ] && [ -n "$swift_result" ]; then
+  # Last resort: the old cached reading, marked with its age, for up to 6 hours.
+  # A dated number is more use than a blank segment.
+  if [ -z "$swift_result" ] && [ -f "$cache_file" ] && [ -n "$cache_ts" ] && [ "$cache_age" -lt 21600 ]; then
+    cache_util=$(grep "^UTILIZATION=" "$cache_file" | cut -d= -f2)
+    cache_reset=$(grep "^RESETS_AT=" "$cache_file" | cut -d= -f2)
+    if [ -n "$cache_util" ]; then
+      swift_result="${cache_util}|${cache_reset}"
+      if [ "$cache_age" -ge 3600 ]; then
+        stale_note=" (stale $((cache_age / 3600))h)"
+      else
+        stale_note=" (stale $((cache_age / 60))m)"
+      fi
+    fi
+  fi
+
+  if [ -n "$swift_result" ]; then
     utilization=$(echo "$swift_result" | cut -d'|' -f1)
     resets_at=$(echo "$swift_result" | cut -d'|' -f2)
 
@@ -573,9 +620,9 @@ if [ "$show_usage" = "1" ]; then
       fi
 
       if [ "$show_usage_label" = "1" ]; then
-        usage_text="${usage_color}Usage: ${utilization}%${progress_bar}${reset_time_display}${RESET}"
+        usage_text="${usage_color}Usage: ${utilization}%${progress_bar}${reset_time_display}${stale_note}${RESET}"
       else
-        usage_text="${usage_color}${utilization}%${progress_bar}${reset_time_display}${RESET}"
+        usage_text="${usage_color}${utilization}%${progress_bar}${reset_time_display}${stale_note}${RESET}"
       fi
     else
       if [ "$show_usage_label" = "1" ]; then
@@ -607,6 +654,17 @@ if [ "$show_weekly" = "1" ] && [ "$show_usage" = "1" ]; then
         weekly_util=$(grep "^WEEKLY_UTILIZATION=" "$cache_file" | cut -d= -f2)
         weekly_reset=$(grep "^WEEKLY_RESETS_AT=" "$cache_file" | cut -d= -f2)
       fi
+    fi
+  fi
+
+  # Cache too old: take the weekly window Claude Code reports on stdin (#322)
+  if [ -z "$weekly_util" ]; then
+    rl_block=$(echo "$input" | grep -o '"seven_day": *{[^}]*}' | head -1)
+    rl_pct=$(echo "$rl_block" | grep -o '"used_percentage": *[0-9.]*' | sed 's/.*: *//')
+    rl_reset=$(echo "$rl_block" | grep -o '"resets_at": *[0-9]*' | sed 's/.*: *//')
+    if [ -n "$rl_pct" ]; then
+      weekly_util=$(printf '%.0f' "$rl_pct")
+      [ -n "$rl_reset" ] && weekly_reset=$(date -u -r "$rl_reset" "+%Y-%m-%dT%H:%M:%SZ" 2>/dev/null)
     fi
   fi
 
@@ -781,6 +839,66 @@ if [ "$show_extra_usage" = "1" ] && [ "$show_usage" = "1" ]; then
   fi
 fi
 
+# Fable weekly limit, from the cache the app writes on each refresh (#323).
+# Hidden when the account has no Fable limit or the cache is stale.
+fable_text=""
+if [ "$show_fable" = "1" ] && [ "$show_usage" = "1" ]; then
+  cache_file="$HOME/.claude/.statusline-usage-cache"
+  if [ -f "$cache_file" ]; then
+    cache_ts=$(grep "^TIMESTAMP=" "$cache_file" 2>/dev/null | cut -d= -f2)
+    fable_util=$(grep "^FABLE_UTILIZATION=" "$cache_file" 2>/dev/null | cut -d= -f2)
+    if [ -n "$cache_ts" ] && [ -n "$fable_util" ] && [ $(( $(date +%s) - cache_ts )) -lt 300 ]; then
+      fable_level=$(( (fable_util + 9) / 10 ))
+      [ "$fable_level" -lt 1 ] && fable_level=1
+      [ "$fable_level" -gt 10 ] && fable_level=10
+      fable_level_var="LEVEL_${fable_level}"
+      fable_text="${!fable_level_var}Fable: ${fable_util}%${RESET}"
+    fi
+  fi
+fi
+
+# Prompt-cache health: Claude Code reports it under "prompt_cache" once the first
+# API response has landed (hit_ratio 0-1, warm flag, and the likely cause of the
+# last miss). Absent until then, so the element simply stays hidden.
+cache_text=""
+if [ "$show_cache" = "1" ]; then
+  hit_ratio=$(echo "$input" | grep -o '"hit_ratio": *[0-9.]*' | head -1 | sed 's/.*: *//')
+  cache_warm=$(echo "$input" | grep -o '"warm": *\\(true\\|false\\)' | head -1 | sed 's/.*: *//')
+  miss_cause=$(echo "$input" | grep -o '"causes": *\\["[a-z0-9_]*"' | head -1 | sed 's/.*\\["//;s/"$//')
+  last_miss_at=$(echo "$input" | grep -o '"last_miss_at": *[0-9]*' | head -1 | sed 's/.*: *//')
+
+  if [ -n "$hit_ratio" ]; then
+    cache_pct=$(awk "BEGIN { print int($hit_ratio * 100 + 0.5) }")
+    if [ "$cache_warm" = "false" ]; then
+      cache_color="$GRAY"
+    elif [ "$cache_pct" -ge 90 ]; then
+      cache_color="$LEVEL_3"
+    elif [ "$cache_pct" -ge 70 ]; then
+      cache_color="$LEVEL_6"
+    else
+      cache_color="$LEVEL_9"
+    fi
+    cache_text="${cache_color}⚡ ${cache_pct}%${RESET}"
+
+    # A miss inside the last ten minutes is annotated with its likely cause
+    if [ -n "$miss_cause" ] && [ -n "$last_miss_at" ]; then
+      miss_age=$(( $(date +%s) - last_miss_at ))
+      if [ "$miss_age" -ge 0 ] && [ "$miss_age" -lt 600 ]; then
+        case "$miss_cause" in
+          system_prompt_changed) miss_label="system" ;;
+          tools_changed) miss_label="tools" ;;
+          model_changed) miss_label="model" ;;
+          messages_rewritten) miss_label="history" ;;
+          ttl_expired_5m|ttl_expired_1h) miss_label="ttl" ;;
+          likely_server_side) miss_label="server" ;;
+          *) miss_label="$miss_cause" ;;
+        esac
+        cache_text="${cache_text}${LEVEL_9} ✗ ${miss_label}${RESET}"
+      fi
+    fi
+  fi
+fi
+
 output=""
 separator="${GRAY} │ ${RESET}"
 
@@ -824,10 +942,22 @@ if [ -n "$weekly_text" ]; then
   output="${output}${weekly_text}"
 fi
 
+# Then Fable weekly
+if [ -n "$fable_text" ]; then
+  [ -n "$output" ] && output="${output}${separator}"
+  output="${output}${fable_text}"
+fi
+
 # Then extra usage
 if [ -n "$extra_usage_text" ]; then
   [ -n "$output" ] && output="${output}${separator}"
   output="${output}${extra_usage_text}"
+fi
+
+# Then prompt cache
+if [ -n "$cache_text" ]; then
+  [ -n "$output" ] && output="${output}${separator}"
+  output="${output}${cache_text}"
 fi
 
 printf "%s\\n" "$output"
@@ -895,7 +1025,14 @@ printf "%s\\n" "$output"
 
         // Install bash script
         let bashDestination = claudeDir.appendingPathComponent("statusline-command.sh")
-        try bashScript.write(to: bashDestination, atomically: true, encoding: .utf8)
+        if Self.shouldWriteBashScript(
+            installed: try? String(contentsOf: bashDestination, encoding: .utf8),
+            new: bashScript
+        ) {
+            backUpEditedBashScriptIfNeeded(at: bashDestination)
+            try bashScript.write(to: bashDestination, atomically: true, encoding: .utf8)
+            UserDefaults.standard.set(Self.contentFingerprint(bashScript), forKey: Self.lastWrittenBashScriptKey)
+        }
         try FileManager.default.setAttributes(
             // Owner-only: the script embeds the raw session key (GHSA-mfxh-xpwm-23c7 / #267)
             // and is only ever executed by Claude Code running as the same user.
@@ -904,6 +1041,50 @@ printf "%s\\n" "$output"
         )
 
         print("[StatuslineService] Bash script installed to: \(bashDestination.path)")
+    }
+
+    // MARK: - Protecting hand-edited scripts (#321)
+
+    /// UserDefaults key holding the fingerprint of the bash script this app last wrote.
+    static let lastWrittenBashScriptKey = "statuslineLastWrittenBashScriptFingerprint"
+
+    /// A stable fingerprint of a script's text.
+    static func contentFingerprint(_ content: String) -> String {
+        ClaudeCodeSyncService.shared.sha256HexPrefix(content, length: 64)
+    }
+
+    /// The installed script is only rewritten when the shipped one differs from it,
+    /// so a launch that changes nothing leaves the file (and its modification date) alone.
+    static func shouldWriteBashScript(installed: String?, new: String) -> Bool {
+        installed != new
+    }
+
+    /// Whether the installed script was changed by someone other than this app:
+    /// it differs from the text this app last wrote. With no record of a previous
+    /// write (first launch after this check was added) the script counts as edited,
+    /// so the one unknown case errs towards keeping a copy.
+    static func isUserEdited(installed: String, lastWrittenFingerprint: String?) -> Bool {
+        contentFingerprint(installed) != lastWrittenFingerprint
+    }
+
+    /// Copies a hand-edited `statusline-command.sh` to `statusline-command.sh.backup`
+    /// before it is replaced, and logs that it did so.
+    private func backUpEditedBashScriptIfNeeded(at url: URL) {
+        guard let installed = try? String(contentsOf: url, encoding: .utf8),
+              Self.isUserEdited(
+                  installed: installed,
+                  lastWrittenFingerprint: UserDefaults.standard.string(forKey: Self.lastWrittenBashScriptKey)
+              ) else {
+            return
+        }
+        let backupURL = url.appendingPathExtension("backup")
+        do {
+            try installed.write(to: backupURL, atomically: true, encoding: .utf8)
+            try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: backupURL.path)
+            LoggingService.shared.log("Statusline: the installed script had local changes; saved a copy to \(backupURL.lastPathComponent) before updating it")
+        } catch {
+            LoggingService.shared.logError("Statusline: could not back up the edited script before updating it", error: error)
+        }
     }
 
     /// Removes the session key from the statusline Swift script
@@ -949,7 +1130,9 @@ printf "%s\\n" "$output"
         showWeeklyPaceMarker: Bool = true,
         showWeeklyResetTime: Bool = true,
         showWeeklyLabel: Bool = true,
-        showExtraUsage: Bool = false
+        showExtraUsage: Bool = false,
+        showCache: Bool = false,
+        showFable: Bool = false
     ) throws {
         let configPath = Constants.ClaudePaths.claudeDirectory
             .appendingPathComponent("statusline-config.txt")
@@ -993,6 +1176,8 @@ SHOW_WEEKLY_PACE_MARKER=\(showWeeklyPaceMarker ? "1" : "0")
 SHOW_WEEKLY_RESET_TIME=\(showWeeklyResetTime ? "1" : "0")
 SHOW_WEEKLY_LABEL=\(showWeeklyLabel ? "1" : "0")
 SHOW_EXTRA_USAGE=\(showExtraUsage ? "1" : "0")
+SHOW_FABLE=\(showFable ? "1" : "0")
+SHOW_CACHE=\(showCache ? "1" : "0")
 ELEMENT_COLOR_DIR=\(elementColors.directoryHex)
 ELEMENT_COLOR_BRANCH=\(elementColors.branchHex)
 ELEMENT_COLOR_MODEL=\(elementColors.modelHex)
@@ -1098,9 +1283,12 @@ ELEMENT_COLOR_EXTRA=\(elementColors.extraUsageBaseHex ?? "")
             .appendingPathComponent(".statusline-usage-cache")
 
         let formatter = ISO8601DateFormatter()
+        // Without a session limit the "Usage:" segment shows weekly instead
+        let utilization = usage.hasSessionLimit ? usage.effectiveSessionPercentage : usage.weeklyPercentage
+        let resetsAt = usage.hasSessionLimit ? usage.sessionResetTime : usage.weeklyResetTime
         var cacheContent = """
-        UTILIZATION=\(Int(usage.effectiveSessionPercentage))
-        RESETS_AT=\(formatter.string(from: usage.sessionResetTime))
+        UTILIZATION=\(Int(utilization))
+        RESETS_AT=\(formatter.string(from: resetsAt))
         TIMESTAMP=\(Int(Date().timeIntervalSince1970))
         """
 
@@ -1111,6 +1299,11 @@ ELEMENT_COLOR_EXTRA=\(elementColors.extraUsageBaseHex ?? "")
         let weeklyPct = Int(usage.weeklyPercentage)
         cacheContent += "\nWEEKLY_UTILIZATION=\(weeklyPct)"
         cacheContent += "\nWEEKLY_RESETS_AT=\(formatter.string(from: usage.weeklyResetTime))"
+
+        // Only accounts with a Fable weekly limit report one (#323)
+        if usage.fableWeeklyTokensUsed > 0 || usage.fableWeeklyPercentage > 0 || usage.fableWeeklyResetTime != nil {
+            cacheContent += "\nFABLE_UTILIZATION=\(Int(usage.fableWeeklyPercentage))"
+        }
 
         if let costUsed = usage.costUsed, let costLimit = usage.costLimit, let costCurrency = usage.costCurrency, costLimit > 0 {
             let usedStr = String(format: "%.2f", costUsed / 100.0)
@@ -1125,8 +1318,29 @@ ELEMENT_COLOR_EXTRA=\(elementColors.extraUsageBaseHex ?? "")
 
     /// Updates scripts only if already installed (installation is optional)
     func updateScriptsIfInstalled() throws {
-        guard isInstalled else { return }
+        // Script files left behind after the statusline was reset, or while the user
+        // runs a statusline of their own, are not touched: refreshing them would put
+        // the session key back on disk for a feature that is switched off (#191).
+        guard isInstalled, isEnabledInClaudeSettings else { return }
         try installScripts(injectSessionKey: true)
+    }
+
+    /// Whether Claude Code's settings.json currently runs this app's statusline.
+    var isEnabledInClaudeSettings: Bool {
+        let settingsPath = Constants.ClaudePaths.claudeDirectory.appendingPathComponent("settings.json")
+        guard let data = try? Data(contentsOf: settingsPath),
+              let settings = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return false
+        }
+        return Self.statusLineUsesOurScript(settings)
+    }
+
+    static func statusLineUsesOurScript(_ settings: [String: Any]) -> Bool {
+        guard let statusLine = settings["statusLine"] as? [String: Any],
+              let command = statusLine["command"] as? String else {
+            return false
+        }
+        return command.contains("statusline-command.sh")
     }
 
     /// Checks if active profile has a valid session key

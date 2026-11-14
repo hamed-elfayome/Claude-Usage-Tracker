@@ -20,9 +20,16 @@ struct ClaudeCodeSession: Identifiable {
     var lastUserPrompt: String?
     /// Set when the most recent tool use failed; cleared on the next successful tool use.
     var hasRecentError: Bool = false
+    /// The session's custom title (`--name`, `/rename`), when it has one.
+    var title: String?
 
-    /// Display name derived from projectPath (last path component) or session ID.
+    /// Display name: the custom title if the session has one, else the
+    /// projectPath's last path component, else the session ID. The title comes
+    /// first because it is what tells two sessions in one project apart.
     var displayName: String {
+        if let title = title, !title.isEmpty {
+            return title
+        }
         if let path = projectPath, !path.isEmpty {
             return (path as NSString).lastPathComponent
         }

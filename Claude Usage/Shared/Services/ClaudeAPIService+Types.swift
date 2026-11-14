@@ -31,6 +31,20 @@ extension ClaudeAPIService {
         let capabilities: [String]
     }
 
+    /// The organization to use when the user has not picked one.
+    ///
+    /// `current` is kept only if the signed-in account still belongs to it: an ID
+    /// left over from a previous sign-in makes every usage request fail with
+    /// 403 "Invalid authorization for organization" (#266). Otherwise an
+    /// organization with claude.ai chat access is preferred over an API-only
+    /// one, which has no usage endpoint, and the first one is the last resort.
+    static func preferredOrganization(from organizations: [AccountInfo], current: String? = nil) -> AccountInfo? {
+        if let current, let match = organizations.first(where: { $0.uuid == current }) {
+            return match
+        }
+        return organizations.first(where: { $0.capabilities.contains("chat") }) ?? organizations.first
+    }
+
     struct OverageSpendLimitResponse: Codable {
         let monthlyCreditLimit: Double?
         let currency: String?
@@ -54,6 +68,28 @@ extension ClaudeAPIService {
             case remainingBalance = "remaining_balance"
             case currency
             case totalGranted = "total_granted"
+        }
+    }
+
+    /// Response from `/organizations/{org}/usage/spend`. Although the URL is
+    /// org-scoped, claude.ai returns only the calling member's own figures when
+    /// the org has "individual usage analytics" enabled — the same data shown on
+    /// the Settings → Usage page. `totals` holds one entry per group (e.g. per
+    /// product surface); summing their `cost_minor_units` gives the member's
+    /// spend for the requested date range, in minor units of `currency`.
+    ///
+    /// Every field is optional so a new or renamed server field degrades to a
+    /// hidden row rather than failing the whole decode.
+    struct UsageSpendResponse: Codable {
+        let currency: String?
+        let totals: [Total]?
+
+        struct Total: Codable {
+            let costMinorUnits: Double?
+
+            enum CodingKeys: String, CodingKey {
+                case costMinorUnits = "cost_minor_units"
+            }
         }
     }
 

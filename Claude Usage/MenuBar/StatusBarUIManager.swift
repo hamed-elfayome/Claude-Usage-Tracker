@@ -20,7 +20,12 @@ final class StatusBarUIManager {
     // Current display mode
     private var isMultiProfileMode: Bool = false
 
+    /// Space on each side of a compact dot in multi-profile mode (#316).
+    private static let compactDotHorizontalMargin: CGFloat = 4
+
     private var appearanceObservers: [NSKeyValueObservation] = []
+    private var buttonAppearanceObservers: [ObjectIdentifier: NSKeyValueObservation] = [:]
+    private var appearanceTracker = MenuBarAppearanceTracker()
     private var appearanceDebounceTimer: Timer?
 
     // Image cache to avoid redundant button.image assignments (which trigger KVO)
@@ -359,14 +364,20 @@ final class StatusBarUIManager {
             }
 
             // Get actual menu bar appearance from the button (based on wallpaper, not system mode)
-            let menuBarIsDark = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            let menuBarIsDark = resolveMenuBarIsDark(for: button)
 
             // Get usage data for this profile
             let usage = profile.claudeUsage ?? ClaudeUsage.empty
             let showRemaining = config.showRemainingPercentage
 
+            // Plans without a 5-hour window (e.g. Ultra) draw weekly in the
+            // session (primary) slot and drop the secondary week value, so
+            // weekly isn't drawn twice. The session* values below then hold weekly.
+            let hasSessionLimit = usage.hasSessionLimit
+            let showWeek = config.showWeek && hasSessionLimit
+
             // Calculate percentages
-            let sessionUsed = usage.effectiveSessionPercentage
+            let sessionUsed = hasSessionLimit ? usage.effectiveSessionPercentage : usage.weeklyPercentage
             let weekUsed = usage.weeklyPercentage
 
             let sessionDisplay = UsageStatusCalculator.getDisplayPercentage(
@@ -379,14 +390,15 @@ final class StatusBarUIManager {
             )
 
             let sessionElapsed = UsageStatusCalculator.elapsedFraction(
-                resetTime: usage.sessionResetTime,
-                duration: Constants.sessionWindow,
+                resetTime: hasSessionLimit ? usage.sessionResetTime : usage.weeklyResetTime,
+                duration: hasSessionLimit ? Constants.sessionWindow : Constants.weeklyWindow,
                 showRemaining: false
             )
             let weekElapsed = UsageStatusCalculator.elapsedFraction(
                 resetTime: usage.weeklyResetTime,
                 duration: Constants.weeklyWindow,
-                showRemaining: false
+                showRemaining: false,
+                excludingWeekends: config.excludeWeekendsFromWeeklyPace
             )
             let sessionStatus = UsageStatusCalculator.calculateStatus(
                 usedPercentage: sessionUsed,
@@ -428,7 +440,7 @@ final class StatusBarUIManager {
                 if config.showProfileLabel {
                     image = renderer.createConcentricIconWithLabel(
                         sessionPercentage: sessionDisplay,
-                        weekPercentage: config.showWeek ? weekDisplay : 0,
+                        weekPercentage: showWeek ? weekDisplay : 0,
                         sessionStatus: sessionStatus,
                         weekStatus: weekStatus,
                         profileName: profile.name,
@@ -436,15 +448,16 @@ final class StatusBarUIManager {
                         isDarkMode: menuBarIsDark,
                         useSystemColor: false,
                         sessionTimeMarker: sessionMarker,
-                        weekTimeMarker: config.showWeek ? weekMarker : nil,
+                        weekTimeMarker: showWeek ? weekMarker : nil,
                         sessionPaceStatus: sessionPaceStatus,
-                        weekPaceStatus: config.showWeek ? weekPaceStatus : nil,
-                        showPaceMarker: config.showPaceMarker
+                        weekPaceStatus: showWeek ? weekPaceStatus : nil,
+                        showPaceMarker: config.showPaceMarker,
+                        showWeek: showWeek
                     )
                 } else {
                     image = renderer.createConcentricIcon(
                         sessionPercentage: sessionDisplay,
-                        weekPercentage: config.showWeek ? weekDisplay : 0,
+                        weekPercentage: showWeek ? weekDisplay : 0,
                         sessionStatus: sessionStatus,
                         weekStatus: weekStatus,
                         profileInitial: String(profile.name.prefix(1)),
@@ -452,16 +465,17 @@ final class StatusBarUIManager {
                         isDarkMode: menuBarIsDark,
                         useSystemColor: false,
                         sessionTimeMarker: sessionMarker,
-                        weekTimeMarker: config.showWeek ? weekMarker : nil,
+                        weekTimeMarker: showWeek ? weekMarker : nil,
                         sessionPaceStatus: sessionPaceStatus,
-                        weekPaceStatus: config.showWeek ? weekPaceStatus : nil,
-                        showPaceMarker: config.showPaceMarker
+                        weekPaceStatus: showWeek ? weekPaceStatus : nil,
+                        showPaceMarker: config.showPaceMarker,
+                        showWeek: showWeek
                     )
                 }
             case .progressBar:
                 image = renderer.createMultiProfileProgressBar(
                     sessionPercentage: sessionDisplay,
-                    weekPercentage: config.showWeek ? weekDisplay : nil,
+                    weekPercentage: showWeek ? weekDisplay : nil,
                     sessionStatus: sessionStatus,
                     weekStatus: weekStatus,
                     profileName: config.showProfileLabel ? profile.name : nil,
@@ -469,9 +483,9 @@ final class StatusBarUIManager {
                     isDarkMode: menuBarIsDark,
                     useSystemColor: false,
                     sessionTimeMarker: sessionMarker,
-                    weekTimeMarker: config.showWeek ? weekMarker : nil,
+                    weekTimeMarker: showWeek ? weekMarker : nil,
                     sessionPaceStatus: sessionPaceStatus,
-                    weekPaceStatus: config.showWeek ? weekPaceStatus : nil,
+                    weekPaceStatus: showWeek ? weekPaceStatus : nil,
                     showPaceMarker: config.showPaceMarker
                 )
             case .compact:
@@ -488,7 +502,7 @@ final class StatusBarUIManager {
             case .percentage:
                 image = renderer.createMultiProfilePercentage(
                     sessionPercentage: sessionDisplay,
-                    weekPercentage: config.showWeek ? weekDisplay : nil,
+                    weekPercentage: showWeek ? weekDisplay : nil,
                     sessionStatus: sessionStatus,
                     weekStatus: weekStatus,
                     profileName: config.showProfileLabel ? profile.name : nil,
@@ -496,7 +510,7 @@ final class StatusBarUIManager {
                     isDarkMode: menuBarIsDark,
                     useSystemColor: false,
                     sessionPaceStatus: sessionPaceStatus,
-                    weekPaceStatus: config.showWeek ? weekPaceStatus : nil,
+                    weekPaceStatus: showWeek ? weekPaceStatus : nil,
                     showPaceMarker: config.showPaceMarker
                 )
             }
@@ -523,7 +537,17 @@ final class StatusBarUIManager {
             // per-pixel width jitter between updates (e.g. "5%" vs "45%") would still
             // crash. Round the width up to a coarse grid so ordinary data changes never
             // move the length, and only assign when it genuinely changes.
-            let stableLength = ceil(finalImage.size.width / 32.0) * 32.0
+            //
+            // The compact dot is the exception (#316): its image width comes from
+            // fixed constants, never from usage data, so it is already constant
+            // across refreshes. Rounding it up to the grid doubled the gap between
+            // dots; a fixed margin keeps the length constant without the padding.
+            let stableLength: CGFloat
+            if config.iconStyle == .compact {
+                stableLength = finalImage.size.width + Self.compactDotHorizontalMargin * 2
+            } else {
+                stableLength = ceil(finalImage.size.width / 32.0) * 32.0
+            }
             if abs(statusItem.length - stableLength) > 0.5 {
                 statusItem.length = stableLength
             }
@@ -577,9 +601,9 @@ final class StatusBarUIManager {
         usage: ClaudeUsage,
         apiUsage: APIUsage?
     ) {
-        // Get config from active profile
+        // Get config from active profile, adjusted for the plan's limits
         let profile = ProfileManager.shared.activeProfile
-        let config = profile?.iconConfig ?? .default
+        let config = (profile?.iconConfig ?? .default).effective(for: usage)
 
         // Keep the render path aligned with ClaudeAPIService/MenuBarManager auth
         // fallback logic so users authenticated only via `claude login` don't
@@ -590,7 +614,7 @@ final class StatusBarUIManager {
             if let statusItem = statusItems[.session],  // We use .session as placeholder key
                let button = statusItem.button {
                 // Get actual menu bar appearance from the button
-                let menuBarIsDark = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+                let menuBarIsDark = resolveMenuBarIsDark(for: button)
                 let logoImage = renderer.createDefaultAppLogo(isDarkMode: menuBarIsDark)
                 logoImage.isTemplate = true  // Let macOS handle the color
                 setButtonImage(button, image: logoImage)
@@ -606,7 +630,7 @@ final class StatusBarUIManager {
             }
 
             // Get actual menu bar appearance from the button
-            let menuBarIsDark = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            let menuBarIsDark = resolveMenuBarIsDark(for: button)
 
             // Create image directly using our renderer
             let image = renderer.createImage(
@@ -638,14 +662,14 @@ final class StatusBarUIManager {
             return
         }
 
-        // Get config from active profile
-        let config = ProfileManager.shared.activeProfile?.iconConfig ?? .default
+        // Get config from active profile, adjusted for the plan's limits
+        let config = (ProfileManager.shared.activeProfile?.iconConfig ?? .default).effective(for: usage)
         guard let metricConfig = config.config(for: metricType) else {
             return
         }
 
         // Get the actual menu bar appearance from the button's effective appearance
-        let menuBarIsDark = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        let menuBarIsDark = resolveMenuBarIsDark(for: button)
 
         // Create image directly using our renderer
         let image = renderer.createImage(
@@ -693,10 +717,10 @@ final class StatusBarUIManager {
     /// Get the first enabled metric's button (for backwards compatibility)
     var primaryButton: NSStatusBarButton? {
         let config = DataStore.shared.loadMenuBarIconConfiguration()
-        guard let firstMetric = config.enabledMetrics.first else {
-            return nil
-        }
-        return statusItems[firstMetric.metricType]?.button
+        // The session item is hidden on plans without a session limit, so take
+        // the first enabled metric that has an item, then the week fallback.
+        let metricTypes = config.enabledMetrics.map(\.metricType) + [.week]
+        return metricTypes.lazy.compactMap { self.statusItems[$0]?.button }.first
     }
 
     /// Find which metric type owns the given button (sender)
@@ -720,9 +744,8 @@ final class StatusBarUIManager {
         appearanceObservers.forEach { $0.invalidate() }
         appearanceObservers.removeAll()
 
-        // IMPORTANT: Do NOT observe per-button effectiveAppearance.
-        // Setting button.image triggers effectiveAppearance KVO on the button,
-        // which causes an infinite redraw loop.
+        // System-wide light/dark switch. Per-button observation (below) covers
+        // the menu bar's own tint changing without the system theme changing.
         let appObserver = NSApp.observe(\.effectiveAppearance, options: [.new]) { [weak self] _, change in
             guard let self = self else { return }
             let newName = change.newValue?.name
@@ -733,6 +756,77 @@ final class StatusBarUIManager {
             self.delegate?.statusBarAppearanceDidChange()
         }
         appearanceObservers.append(appObserver)
+    }
+
+    /// Resolves the light/dark appearance the menu bar is actually showing
+    /// behind `button` (which follows the wallpaper of the current Space, not
+    /// just the system theme), records it as the value this render bakes in,
+    /// and makes sure the button is being watched for future flips.
+    private func resolveMenuBarIsDark(for button: NSStatusBarButton) -> Bool {
+        let isDark = Self.isDark(button.effectiveAppearance)
+        appearanceTracker.recordRender(for: ObjectIdentifier(button), isDark: isDark)
+        observeButtonAppearance(button)
+        return isDark
+    }
+
+    private static func isDark(_ appearance: NSAppearance) -> Bool {
+        appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+    }
+
+    /// Watches a single button's effectiveAppearance so a Space switch onto a
+    /// differently-tinted menu bar recolors the digits immediately instead of
+    /// waiting for the next usage refresh tick.
+    ///
+    /// The value visible *inside* the KVO callback is not trustworthy: while
+    /// `button.image` is being assigned, AppKit transiently resolves the button
+    /// to the app's own appearance (e.g. `darkAqua` on a dark-mode system) and
+    /// fires this observer before settling back on the menu bar's real
+    /// vibrant appearance. Acting on that transient value is what turned
+    /// per-button observation into an infinite redraw loop before. So the
+    /// callback never reads or decides anything; it just asks for a
+    /// debounced re-check, which reads the settled appearance and redraws
+    /// only if it differs from what each button was last rendered with.
+    private func observeButtonAppearance(_ button: NSStatusBarButton) {
+        let buttonId = ObjectIdentifier(button)
+        guard buttonAppearanceObservers[buttonId] == nil else { return }
+
+        buttonAppearanceObservers[buttonId] = button.observe(\.effectiveAppearance) { [weak self] _, _ in
+            self?.scheduleSettledAppearanceCheck()
+        }
+    }
+
+    /// Coalesces bursts of per-button KVO into one check after the appearance
+    /// has settled.
+    private func scheduleSettledAppearanceCheck() {
+        appearanceDebounceTimer?.invalidate()
+        appearanceDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: false) { [weak self] _ in
+            self?.redrawIfMenuBarTintChanged()
+        }
+    }
+
+    /// Re-reads every tracked button's settled appearance and triggers one
+    /// redraw if any of them no longer matches the appearance it was drawn with.
+    private func redrawIfMenuBarTintChanged() {
+        pruneButtonAppearanceObservers()
+        let liveButtons = (Array(statusItems.values) + Array(multiProfileStatusItems.values)).compactMap { $0.button }
+        let stale = liveButtons.filter {
+            appearanceTracker.needsRedraw(for: ObjectIdentifier($0), currentIsDark: Self.isDark($0.effectiveAppearance))
+        }
+        guard !stale.isEmpty else { return }
+        LoggingService.shared.logUIEvent("Menu bar tint changed under \(stale.count) status item(s); redrawing")
+        lastImageData.removeAll()
+        delegate?.statusBarAppearanceDidChange()
+    }
+
+    /// Drop observers and bookkeeping for buttons whose status items are gone.
+    private func pruneButtonAppearanceObservers() {
+        let liveButtons = (Array(statusItems.values) + Array(multiProfileStatusItems.values)).compactMap { $0.button }
+        let liveIds = Set(liveButtons.map { ObjectIdentifier($0) })
+        for (id, observer) in buttonAppearanceObservers where !liveIds.contains(id) {
+            observer.invalidate()
+            buttonAppearanceObservers[id] = nil
+        }
+        appearanceTracker.retain(only: liveIds)
     }
 
     /// Only sets button.image if the image data actually changed.
@@ -749,15 +843,6 @@ final class StatusBarUIManager {
         if lastImageData[buttonId] == newData { return }
         lastImageData[buttonId] = newData
         button.image = image
-    }
-
-    /// Debounces appearance change notifications so multiple displays/buttons
-    /// coalesce into a single delegate callback
-    private func scheduleAppearanceUpdate() {
-        appearanceDebounceTimer?.invalidate()
-        appearanceDebounceTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: false) { [weak self] _ in
-            self?.delegate?.statusBarAppearanceDidChange()
-        }
     }
 }
 

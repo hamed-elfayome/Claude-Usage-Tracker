@@ -224,6 +224,21 @@ struct ManageProfilesView: View {
                                 )
                             )
 
+                            // Exclude Weekends from Weekly Pace Toggle
+                            SettingToggle(
+                                title: "appearance.exclude_weekends_title".localized,
+                                description: "appearance.exclude_weekends_description".localized,
+                                isOn: Binding(
+                                    get: { profileManager.multiProfileConfig.excludeWeekendsFromWeeklyPace },
+                                    set: { excludeWeekends in
+                                        var config = profileManager.multiProfileConfig
+                                        config.excludeWeekendsFromWeeklyPace = excludeWeekends
+                                        profileManager.updateMultiProfileConfig(config)
+                                        NotificationCenter.default.post(name: .multiProfileConfigChanged, object: nil)
+                                    }
+                                )
+                            )
+
                             // Show Remaining Percentage Toggle
                             SettingToggle(
                                 title: "appearance.show_remaining_title".localized,

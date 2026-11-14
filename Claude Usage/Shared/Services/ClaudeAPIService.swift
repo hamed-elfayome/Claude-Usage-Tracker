@@ -132,14 +132,67 @@ class ClaudeAPIService: APIServiceProtocol {
     /// challenged or rejected with E3000 permission errors even when the
     /// session is valid (#204, #277) — every claude.ai call must go through
     /// this, not just `performRequest`.
-    static func sessionCookieHeader(sessionKey: String, url: URL) -> String {
+    static func sessionCookieHeader(sessionKey: String, url: URL, storage: HTTPCookieStorage = .shared) -> String {
         var cookiePairs = ["sessionKey=\(sessionKey)"]
-        if let stored = HTTPCookieStorage.shared.cookies(for: url) {
-            for cookie in stored where ["cf_clearance", "__cf_bm", "anthropic-device-id"].contains(cookie.name) {
-                cookiePairs.append("\(cookie.name)=\(cookie.value)")
-            }
+        for cookie in clearanceCookies(host: url.host ?? "", in: storage.cookies ?? []) {
+            cookiePairs.append("\(cookie.name)=\(cookie.value)")
         }
         return cookiePairs.joined(separator: "; ")
+    }
+
+    /// Cookies (besides `sessionKey`) that claude.ai's Cloudflare front expects
+    /// to see next to a session.
+    static let clearanceCookieNames: Set<String> = ["cf_clearance", "__cf_bm", "anthropic-device-id"]
+
+    /// Picks the clearance cookies for `host` out of a cookie-jar snapshot.
+    ///
+    /// On current macOS `HTTPCookieStorage.cookies(for:)` leaves out partitioned
+    /// cookies (CHIPS), and Cloudflare sets `cf_clearance` with the
+    /// `Partitioned` attribute. So the one cookie that proves the sign-in
+    /// webview passed a challenge never reached the header: every request went
+    /// out as `sessionKey; __cf_bm; anthropic-device-id`, which Cloudflare
+    /// challenges again on networks it distrusts — a 403 "Just a moment" page
+    /// (E3006) seconds after a successful sign-in. `HTTPCookieStorage.cookies`
+    /// does include partitioned entries, so match the whole jar by cookie
+    /// domain instead and keep the freshest unexpired cookie per name.
+    static func clearanceCookies(host: String, in jar: [HTTPCookie]) -> [HTTPCookie] {
+        let host = host.lowercased()
+        let createdKey = HTTPCookiePropertyKey("Created")
+        var byName: [String: HTTPCookie] = [:]
+
+        // A domain cookie (".claude.ai") covers the host and its subdomains; a
+        // host-only cookie ("claude.ai") covers exactly that host.
+        func matchesHost(_ cookie: HTTPCookie) -> Bool {
+            let domain = cookie.domain.lowercased()
+            guard !domain.isEmpty else { return false }
+            if domain.hasPrefix(".") {
+                let bare = String(domain.dropFirst())
+                return host == bare || host.hasSuffix("." + bare)
+            }
+            return host == domain
+        }
+        // Newest wins on duplicates: the jar records each cookie's creation
+        // time, and Cloudflare stamps a fresh expiry on every clearance it
+        // issues. Creation time decides, expiry breaks ties, and the value is a
+        // last resort so the header is deterministic.
+        func created(_ cookie: HTTPCookie) -> Double {
+            (cookie.properties?[createdKey] as? NSNumber)?.doubleValue ?? 0
+        }
+        func isFresher(_ candidate: HTTPCookie, than current: HTTPCookie) -> Bool {
+            if created(candidate) != created(current) { return created(candidate) > created(current) }
+            let candidateExpiry = candidate.expiresDate ?? .distantPast
+            let currentExpiry = current.expiresDate ?? .distantPast
+            if candidateExpiry != currentExpiry { return candidateExpiry > currentExpiry }
+            return candidate.value > current.value
+        }
+
+        for cookie in jar {
+            guard clearanceCookieNames.contains(cookie.name), matchesHost(cookie) else { continue }
+            if let expiry = cookie.expiresDate, expiry < Date() { continue }
+            if let current = byName[cookie.name], !isFresher(cookie, than: current) { continue }
+            byName[cookie.name] = cookie
+        }
+        return byName.values.sorted { $0.name < $1.name }
     }
 
     /// Builds an authenticated request with the appropriate headers for the auth type
@@ -435,7 +488,13 @@ class ClaudeAPIService: APIServiceProtocol {
         let organizations = try await fetchAllOrganizations(sessionKey: sessionKey)
 
         // Auto-select organization (prefer first one for now - user can change later)
-        let selectedOrg = organizations.first!
+        guard let selectedOrg = Self.preferredOrganization(from: organizations) else {
+            throw AppError(
+                code: .apiInvalidResponse,
+                message: "No organizations found for this account",
+                isRecoverable: true
+            )
+        }
         LoggingService.shared.logInfo("Auto-selected organization: \(selectedOrg.name) (ID: \(selectedOrg.uuid))")
 
         // Store the selected org ID in active profile
@@ -455,6 +514,7 @@ class ClaudeAPIService: APIServiceProtocol {
         async let usageDataTask = performRequest(endpoint: "/organizations/\(organizationId)/usage", sessionKey: sessionKey)
         async let overageDataTask: Data? = performRequest(endpoint: "/organizations/\(organizationId)/overage_spend_limit", sessionKey: sessionKey)
         async let creditGrantTask: Data? = performRequest(endpoint: "/organizations/\(organizationId)/overage_credit_grant", sessionKey: sessionKey)
+        async let personalSpendTask = fetchPersonalSpend(organizationId: organizationId, sessionKey: sessionKey)
 
         let usageData = try await usageDataTask
         var claudeUsage = try parseUsageResponse(usageData)
@@ -471,6 +531,11 @@ class ClaudeAPIService: APIServiceProtocol {
            let creditGrant = try? JSONDecoder().decode(OverageCreditGrantResponse.self, from: creditData) {
             claudeUsage.overageBalance = creditGrant.remainingBalance
             claudeUsage.overageBalanceCurrency = creditGrant.currency
+        }
+
+        if let personal = await personalSpendTask {
+            claudeUsage.personalSpendUsed = personal.usedMinorUnits
+            claudeUsage.personalSpendCurrency = personal.currency
         }
 
         return claudeUsage
@@ -519,6 +584,7 @@ class ClaudeAPIService: APIServiceProtocol {
             let checkOverage = ProfileManager.shared.activeProfile?.checkOverageLimitEnabled ?? true
             async let overageDataTask: Data? = checkOverage ? performRequest(endpoint: "/organizations/\(orgId)/overage_spend_limit", sessionKey: sessionKey) : nil
             async let creditGrantTask: Data? = checkOverage ? performRequest(endpoint: "/organizations/\(orgId)/overage_credit_grant", sessionKey: sessionKey) : nil
+            async let personalSpendTask = fetchPersonalSpend(organizationId: orgId, sessionKey: sessionKey)
 
             let usageData = try await usageDataTask
             var claudeUsage = try parseUsageResponse(usageData)
@@ -539,12 +605,24 @@ class ClaudeAPIService: APIServiceProtocol {
                 claudeUsage.overageBalanceCurrency = creditGrant.currency
             }
 
+            if let personal = await personalSpendTask {
+                claudeUsage.personalSpendUsed = personal.usedMinorUnits
+                claudeUsage.personalSpendCurrency = personal.currency
+            }
+
             return claudeUsage
 
-        case .cliOAuth:
-            // The dedicated OAuth usage endpoint (api.anthropic.com/api/oauth/usage) is disabled.
-            // Instead, make a minimal Messages API call and extract usage from response headers.
-            LoggingService.shared.log("ClaudeAPIService: Fetching usage via Messages API headers (OAuth)")
+        case .cliOAuth(let accessToken):
+            // Prefer the dedicated OAuth usage endpoint (api.anthropic.com/api/oauth/usage):
+            // it is the only source of the per-model weekly quotas (Fable/Opus/Sonnet/Design
+            // via the limits[] array). The Messages-API header fallback below cannot see
+            // those, so per-model bars stay at 0 for CLI-credential profiles without this.
+            if let usage = try? await fetchUsageData(oauthAccessToken: accessToken) {
+                return usage
+            }
+
+            // Fallback: make a minimal Messages API call and extract usage from response headers.
+            LoggingService.shared.log("ClaudeAPIService: OAuth usage endpoint unavailable; falling back to Messages API headers")
 
             guard let url = URL(string: "https://api.anthropic.com/v1/messages") else {
                 throw AppError(
@@ -610,8 +688,10 @@ class ClaudeAPIService: APIServiceProtocol {
             // what we're here to measure. The unified rate-limit headers are
             // still present on 429 responses, so parse them instead of
             // failing the refresh right when the user most needs the data.
+            // Plans without a 5-hour window only send the 7d headers.
             let has429UsageHeaders = httpResponse.statusCode == 429
-                && httpResponse.value(forHTTPHeaderField: "anthropic-ratelimit-unified-5h-utilization") != nil
+                && (httpResponse.value(forHTTPHeaderField: "anthropic-ratelimit-unified-5h-utilization") != nil
+                    || httpResponse.value(forHTTPHeaderField: "anthropic-ratelimit-unified-7d-utilization") != nil)
 
             guard httpResponse.statusCode == 200 || has429UsageHeaders else {
                 let responsePreview = String(data: data, encoding: .utf8)?.prefix(200) ?? "Unable to read response"
@@ -786,9 +866,75 @@ class ClaudeAPIService: APIServiceProtocol {
         }
     }
 
+    // MARK: - Personal Spend
+
+    /// Fetches the authenticated member's OWN month-to-date spend from
+    /// `/organizations/{org}/usage/spend`. The URL is org-scoped but claude.ai
+    /// returns only the calling member's figures (the same number shown on
+    /// claude.ai/settings/usage), provided the org has "individual usage
+    /// analytics" enabled.
+    ///
+    /// Non-throwing by design: any failure (endpoint absent for the plan,
+    /// analytics disabled, network or parse error) resolves to `nil` so this can
+    /// never break the primary usage fetch.
+    ///
+    /// - Returns: Spend in minor units (cents) plus its currency, or `nil`.
+    private func fetchPersonalSpend(organizationId: String, sessionKey: String) async -> (usedMinorUnits: Double, currency: String)? {
+        do {
+            let calendar = Calendar.current
+            let now = Date()
+            guard let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: now)) else {
+                return nil
+            }
+
+            // Match claude.ai's Settings → Usage query: calendar month-to-date.
+            let dateFormatter = DateFormatter()
+            dateFormatter.calendar = Calendar(identifier: .gregorian)
+            dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+            dateFormatter.dateFormat = "yyyy-MM-dd"
+
+            let url = try URLBuilder(baseURL: baseURL)
+                .appendingPathComponents(["/organizations", organizationId, "/usage/spend"])
+                .addingQueryParameter(name: "start_date", value: dateFormatter.string(from: startOfMonth))
+                .addingQueryParameter(name: "end_date", value: dateFormatter.string(from: now))
+                .addingQueryParameter(name: "group_by", value: "product_surface")
+                .addingQueryParameter(name: "granularity", value: "daily")
+                .build()
+
+            // buildAuthenticatedRequest applies `sessionCookieHeader`, so the
+            // Cloudflare clearance and device cookies travel with this call too.
+            var request = buildAuthenticatedRequest(url: url, auth: .claudeAISession(sessionKey))
+            request.httpMethod = "GET"
+            request.timeoutInterval = 30
+
+            LoggingService.shared.logAPIRequest("/organizations/\(organizationId)/usage/spend")
+            let (data, response) = try await URLSession.shared.data(for: request)
+
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                return nil
+            }
+
+            guard let spend = try? JSONDecoder().decode(UsageSpendResponse.self, from: data),
+                  let totals = spend.totals, !totals.isEmpty else {
+                return nil
+            }
+
+            // Sum across every group (e.g. all product surfaces) for the grand total.
+            let usedMinorUnits = totals.reduce(0.0) { $0 + ($1.costMinorUnits ?? 0) }
+            return (usedMinorUnits, spend.currency?.uppercased() ?? "USD")
+        } catch {
+            LoggingService.shared.logAPIError("/organizations/\(organizationId)/usage/spend", error: error)
+            return nil
+        }
+    }
+
     // MARK: - Response Parsing
 
-    private func parseUsageResponse(_ data: Data) throws -> ClaudeUsage {
+    /// Parses the `/usage` JSON response into a `ClaudeUsage`.
+    /// - Parameter data: Raw response body from `GET /api/organizations/{org}/usage`
+    /// - Returns: The parsed usage; `hasSessionLimit` is `false` when the plan has no 5-hour window
+    /// - Throws: `AppError` with `.apiParsingFailed` if the body isn't a JSON object
+    func parseUsageResponse(_ data: Data) throws -> ClaudeUsage {
         // Parse Claude's actual API response structure
 
         if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
@@ -800,7 +946,8 @@ class ClaudeAPIService: APIServiceProtocol {
             // Extract session usage (five_hour)
             var sessionPercentage = 0.0
             var sessionResetTime = Date().addingTimeInterval(5 * 3600)
-            if let fiveHour = json["five_hour"] as? [String: Any] {
+            let fiveHour = json["five_hour"] as? [String: Any]
+            if let fiveHour {
                 if let utilization = fiveHour["utilization"] {
                     sessionPercentage = parseUtilization(utilization)
                 }
@@ -871,8 +1018,16 @@ class ClaudeAPIService: APIServiceProtocol {
             //  "scope":{"model":{"id":null,"display_name":"Fable"}}}
             // limits[] is therefore the source of truth: when an entry is
             // present it overrides whatever the legacy fields said.
+            // Plans without a 5-hour window (e.g. Ultra) return five_hour: null
+            // and only weekly entries in limits[]. A non-weekly entry means a
+            // session window exists even if five_hour is null, so both must
+            // agree before the session limit is treated as absent.
+            var hasNonWeeklyLimit = false
             if let limits = json["limits"] as? [[String: Any]] {
                 for limit in limits {
+                    if let group = limit["group"] as? String, group != "weekly" {
+                        hasNonWeeklyLimit = true
+                    }
                     guard limit["kind"] as? String == "weekly_scoped",
                           let scope = limit["scope"] as? [String: Any],
                           let model = scope["model"] as? [String: Any],
@@ -920,6 +1075,9 @@ class ClaudeAPIService: APIServiceProtocol {
                 sessionLimit: sessionLimit,
                 sessionPercentage: sessionPercentage,
                 sessionResetTime: sessionResetTime,
+                hasSessionLimit: fiveHour != nil || hasNonWeeklyLimit,
+                hasWeeklyLimit: json["seven_day"] is [String: Any]
+                    || !((json["limits"] as? [[String: Any]]) ?? []).isEmpty,
                 weeklyTokensUsed: weeklyTokens,
                 weeklyLimit: weeklyLimit,
                 weeklyPercentage: weeklyPercentage,
@@ -966,7 +1124,9 @@ class ClaudeAPIService: APIServiceProtocol {
     /// Parses usage data from Messages API rate limit response headers.
     /// Headers use format: anthropic-ratelimit-unified-{window}-{field}
     /// Utilization values are 0.0-1.0 (converted to 0-100 percentage).
-    private func parseUsageFromRateLimitHeaders(_ response: HTTPURLResponse) -> ClaudeUsage {
+    /// - Parameter response: The Messages API response carrying the unified rate-limit headers
+    /// - Returns: The parsed usage; `hasSessionLimit` is `false` when no `5h-*` headers are present
+    func parseUsageFromRateLimitHeaders(_ response: HTTPURLResponse) -> ClaudeUsage {
         func headerDouble(_ name: String) -> Double? {
             if let value = response.value(forHTTPHeaderField: name) {
                 return Double(value)
@@ -975,10 +1135,15 @@ class ClaudeAPIService: APIServiceProtocol {
         }
 
         // Session (5h) usage — utilization is 0.0-1.0, convert to 0-100
-        let sessionUtilization = headerDouble("anthropic-ratelimit-unified-5h-utilization") ?? 0
+        let sessionUtilizationHeader = headerDouble("anthropic-ratelimit-unified-5h-utilization")
+        let sessionResetHeader = headerDouble("anthropic-ratelimit-unified-5h-reset")
+        // Plans without a 5-hour window (e.g. Ultra) send no 5h-* headers at all
+        let hasSessionLimit = sessionUtilizationHeader != nil || sessionResetHeader != nil
+
+        let sessionUtilization = sessionUtilizationHeader ?? 0
         var sessionPercentage = sessionUtilization * 100.0
 
-        let sessionResetTimestamp = headerDouble("anthropic-ratelimit-unified-5h-reset") ?? 0
+        let sessionResetTimestamp = sessionResetHeader ?? 0
         let sessionResetTime = sessionResetTimestamp > 0
             ? Date(timeIntervalSince1970: sessionResetTimestamp)
             : Date().addingTimeInterval(5 * 3600)
@@ -1008,6 +1173,7 @@ class ClaudeAPIService: APIServiceProtocol {
             sessionLimit: 0,
             sessionPercentage: sessionPercentage,
             sessionResetTime: sessionResetTime,
+            hasSessionLimit: hasSessionLimit,
             weeklyTokensUsed: weeklyTokens,
             weeklyLimit: weeklyLimit,
             weeklyPercentage: weeklyPercentage,

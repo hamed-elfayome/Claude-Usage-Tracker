@@ -82,7 +82,7 @@ struct UsageHistoryView: View {
         .onAppear {
             loadHistory()
         }
-        .onChange(of: profileManager.activeProfile?.id) {
+        .onChangeCompat(of: profileManager.activeProfile?.id) { _ in
             loadHistory()
         }
     }
@@ -338,7 +338,7 @@ struct SimpleUsageChart: View {
         }
         .background(DesignTokens.Colors.cardBackground)
         .cornerRadius(8)
-        .onChange(of: timeScale) {
+        .onChangeCompat(of: timeScale) { _ in
             // Reset to now when scale changes
             timeOffset = 0
         }
@@ -586,7 +586,7 @@ struct CombinedUsageChart: View {
         }
         .background(DesignTokens.Colors.cardBackground)
         .cornerRadius(8)
-        .onChange(of: timeScale) {
+        .onChangeCompat(of: timeScale) { _ in
             timeOffset = 0
         }
     }

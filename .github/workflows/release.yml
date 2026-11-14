@@ -102,6 +102,16 @@ jobs:
           # DO NOT use --deep flag as it breaks XPC service signatures
           # Reference: https://sparkle-project.org/documentation/sandboxing/
 
+          # 0. Sign the embedded widget extension first — nested code must
+          #    carry its own signature before the outer app is signed, and
+          #    the outer codesign call deliberately omits --deep.
+          echo "Signing Claude UsageWidget.appex..."
+          codesign --force --sign "$SIGNING_IDENTITY" \
+            --timestamp \
+            --options runtime \
+            --entitlements "ClaudeUsageWidget/ClaudeUsageWidget.entitlements" \
+            "$APP_PATH/Contents/PlugIns/Claude UsageWidget.appex"
+
           # 1. Sign XPC Services first
           echo "Signing Installer.xpc..."
           codesign --force --sign "$SIGNING_IDENTITY" \

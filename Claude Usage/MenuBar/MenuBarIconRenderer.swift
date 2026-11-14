@@ -32,7 +32,8 @@ final class MenuBarIconRenderer {
             usage: usage,
             apiUsage: apiUsage,
             showRemaining: globalConfig.showRemainingPercentage,
-            usePaceColoring: globalConfig.usePaceColoring
+            usePaceColoring: globalConfig.usePaceColoring,
+            excludeWeekends: globalConfig.excludeWeekendsFromWeeklyPace
         )
 
         // Calculate time marker fraction for session/week metrics
@@ -40,7 +41,8 @@ final class MenuBarIconRenderer {
             ? calculateTimeMarkerFraction(
                 metricType: metricType,
                 usage: usage,
-                showRemaining: globalConfig.showRemainingPercentage
+                showRemaining: globalConfig.showRemainingPercentage,
+                excludeWeekends: globalConfig.excludeWeekendsFromWeeklyPace
             )
             : nil
 
@@ -49,7 +51,8 @@ final class MenuBarIconRenderer {
             guard globalConfig.showPaceMarker, metricType != .api else { return nil }
             // Get raw elapsed fraction (always non-inverted)
             guard let rawElapsed = calculateTimeMarkerFraction(
-                metricType: metricType, usage: usage, showRemaining: false
+                metricType: metricType, usage: usage, showRemaining: false,
+                excludeWeekends: globalConfig.excludeWeekendsFromWeeklyPace
             ) else { return nil }
             // Get raw used percentage
             let rawUsed: Double = metricType == .session
@@ -155,7 +158,8 @@ final class MenuBarIconRenderer {
         usage: ClaudeUsage,
         apiUsage: APIUsage?,
         showRemaining: Bool,
-        usePaceColoring: Bool = true
+        usePaceColoring: Bool = true,
+        excludeWeekends: Bool = false
     ) -> MetricData {
         switch metricType {
         case .session:
@@ -194,7 +198,8 @@ final class MenuBarIconRenderer {
                 ? UsageStatusCalculator.elapsedFraction(
                     resetTime: usage.weeklyResetTime,
                     duration: Constants.weeklyWindow,
-                    showRemaining: false
+                    showRemaining: false,
+                    excludingWeekends: excludeWeekends
                 )
                 : nil
             let statusLevel = UsageStatusCalculator.calculateStatus(
@@ -219,6 +224,31 @@ final class MenuBarIconRenderer {
                 percentage: displayPercentage,
                 displayText: displayText,
                 statusLevel: statusLevel,
+                sessionResetTime: nil
+            )
+
+        case .fable:
+            let usedPercentage = usage.fableWeeklyPercentage
+            let displayPercentage = UsageStatusCalculator.getDisplayPercentage(
+                usedPercentage: usedPercentage,
+                showRemaining: showRemaining
+            )
+            let fableElapsed: Double? = usePaceColoring
+                ? UsageStatusCalculator.elapsedFraction(
+                    resetTime: usage.fableWeeklyResetTime ?? usage.weeklyResetTime,
+                    duration: Constants.weeklyWindow,
+                    showRemaining: false,
+                    excludingWeekends: excludeWeekends
+                )
+                : nil
+            return MetricData(
+                percentage: displayPercentage,
+                displayText: "\(Int(displayPercentage))%",
+                statusLevel: UsageStatusCalculator.calculateStatus(
+                    usedPercentage: usedPercentage,
+                    showRemaining: showRemaining,
+                    elapsedFraction: fableElapsed
+                ),
                 sessionResetTime: nil
             )
 
@@ -355,8 +385,14 @@ final class MenuBarIconRenderer {
                 text = resetTime.timeRemainingHoursString() as NSString
             }
         } else if showIconName {
-            // Show full word: "Session" or "Week"
-            text = (metricType == .session ? "Session" : "Week") as NSString
+            // Show full word: "Session", "Week" or "Fable"
+            let word: String
+            switch metricType {
+            case .session: word = "Session"
+            case .fable: word = "Fable"
+            case .week, .api: word = "Week"
+            }
+            text = word as NSString
         } else {
             // No label mode - show percentage instead
             text = "\(Int(metricData.percentage))%" as NSString
@@ -753,7 +789,8 @@ final class MenuBarIconRenderer {
         weekTimeMarker: CGFloat? = nil,
         sessionPaceStatus: PaceStatus? = nil,
         weekPaceStatus: PaceStatus? = nil,
-        showPaceMarker: Bool = false
+        showPaceMarker: Bool = false,
+        showWeek: Bool = true
     ) -> NSImage {
         let size: CGFloat = 24
         let image = NSImage(size: NSSize(width: size, height: size))
@@ -830,10 +867,10 @@ final class MenuBarIconRenderer {
         )
         backgroundColor.setStroke()
         innerBgPath.lineWidth = innerStrokeWidth
-        innerBgPath.stroke()
+        if showWeek { innerBgPath.stroke() }
 
         // Week progress ring (inner - secondary metric, clockwise from 12 o'clock)
-        if weekPercentage > 0 {
+        if showWeek && weekPercentage > 0 {
             let weekEndAngle = 90 - (360 * CGFloat(weekPercentage / 100.0))
             let innerProgressPath = NSBezierPath()
             innerProgressPath.appendArc(
@@ -850,7 +887,7 @@ final class MenuBarIconRenderer {
         }
 
         // Week time marker on inner ring
-        if let fraction = weekTimeMarker {
+        if showWeek, let fraction = weekTimeMarker {
             let tickAngle = (90 - 360 * fraction) * .pi / 180
             let innerR = innerRadius - 2.0
             let outerR = innerRadius + 2.0
@@ -890,7 +927,8 @@ final class MenuBarIconRenderer {
         weekTimeMarker: CGFloat? = nil,
         sessionPaceStatus: PaceStatus? = nil,
         weekPaceStatus: PaceStatus? = nil,
-        showPaceMarker: Bool = false
+        showPaceMarker: Bool = false,
+        showWeek: Bool = true
     ) -> NSImage {
         let circleSize: CGFloat = 20
         let labelHeight: CGFloat = 10
@@ -973,10 +1011,10 @@ final class MenuBarIconRenderer {
         )
         backgroundColor.setStroke()
         innerBgPath.lineWidth = innerStrokeWidth
-        innerBgPath.stroke()
+        if showWeek { innerBgPath.stroke() }
 
         // Week progress ring (inner - secondary metric, clockwise from 12 o'clock)
-        if weekPercentage > 0 {
+        if showWeek && weekPercentage > 0 {
             let weekEndAngle = 90 - (360 * CGFloat(weekPercentage / 100.0))
             let innerProgressPath = NSBezierPath()
             innerProgressPath.appendArc(
@@ -993,7 +1031,7 @@ final class MenuBarIconRenderer {
         }
 
         // Week time marker on inner ring
-        if let fraction = weekTimeMarker {
+        if showWeek, let fraction = weekTimeMarker {
             let tickAngle = (90 - 360 * fraction) * .pi / 180
             let innerR = innerRadius - 2.0
             let outerR = innerRadius + 2.0
@@ -1395,7 +1433,8 @@ final class MenuBarIconRenderer {
     private func calculateTimeMarkerFraction(
         metricType: MenuBarMetricType,
         usage: ClaudeUsage,
-        showRemaining: Bool
+        showRemaining: Bool,
+        excludeWeekends: Bool = false
     ) -> CGFloat? {
         let resetTime: Date?
         let duration: TimeInterval
@@ -1407,6 +1446,9 @@ final class MenuBarIconRenderer {
         case .week:
             resetTime = usage.weeklyResetTime
             duration = Constants.weeklyWindow
+        case .fable:
+            resetTime = usage.fableWeeklyResetTime ?? usage.weeklyResetTime
+            duration = Constants.weeklyWindow
         case .api:
             return nil
         }
@@ -1414,7 +1456,8 @@ final class MenuBarIconRenderer {
         guard let f = UsageStatusCalculator.elapsedFraction(
             resetTime: resetTime,
             duration: duration,
-            showRemaining: showRemaining
+            showRemaining: showRemaining,
+            excludingWeekends: excludeWeekends && (metricType == .week || metricType == .fable)
         ) else { return nil }
         return CGFloat(f)
     }

@@ -61,6 +61,12 @@ enum Constants {
         static let notchHUDEnabled = "notchHUDEnabled"
         static let notchHUDAutoHide = "notchHUDAutoHide"
         static let notchHUDPathToken = "notchHUDPathToken"
+
+        // Keep Awake
+        static let keepAwakeAutoEnabled = "keepAwakeAutoEnabled"
+        static let keepAwakeSleepMode = "keepAwakeSleepMode"
+        static let keepAwakeDefaultDuration = "keepAwakeDefaultDuration"
+        static let keepAwakeAutoGracePeriod = "keepAwakeAutoGracePeriod"
     }
 
     // Claude Code notch HUD (hook listener + display)
@@ -76,6 +82,9 @@ enum Constants {
         static let attentionStaleTimeout: TimeInterval = 600
         /// Delay before the HUD hides once every session is idle (auto-hide on).
         static let idleHideDelay: TimeInterval = 5
+        /// Expanded HUD collapses back to compact after this long without the
+        /// pointer over it (expansion is transient, like the iOS island).
+        static let expandedAutoCollapseDelay: TimeInterval = 8
         /// Hook body cap. Sized off a sample of real Claude Code hook
         /// traffic: the median over-cap body was ~210 KB and the max
         /// ~680 KB (image Reads dominate; Claude Code downscales images before

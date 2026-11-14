@@ -64,7 +64,7 @@ private struct NotchSessionRow: View {
             Image(systemName: session.status.sfSymbolName)
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(session.status.tintColor)
-                .symbolEffect(.pulse, isActive: session.status == .needsAttention)
+                .symbolPulseCompat(isActive: session.status == .needsAttention)
                 .frame(width: 16)
 
             VStack(alignment: .leading, spacing: 1.5) {

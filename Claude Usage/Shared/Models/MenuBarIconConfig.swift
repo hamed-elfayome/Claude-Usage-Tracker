@@ -12,6 +12,7 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
     case session
     case week
     case api
+    case fable
 
     var id: String { rawValue }
 
@@ -23,6 +24,8 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
             return "Week Usage"
         case .api:
             return "API Credits"
+        case .fable:
+            return "Fable Weekly Usage"
         }
     }
 
@@ -34,6 +37,8 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
             return "W:"
         case .api:
             return "API:"
+        case .fable:
+            return "F:"
         }
     }
 
@@ -45,6 +50,8 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
             return "Weekly token usage (all models)"
         case .api:
             return "API Console billing credits"
+        case .fable:
+            return "Weekly Fable usage (plans with a Fable limit)"
         }
     }
 
@@ -56,6 +63,8 @@ enum MenuBarMetricType: String, Codable, CaseIterable, Identifiable {
             return "calendar.badge.clock"
         case .api:
             return "dollarsign.circle.fill"
+        case .fable:
+            return "sparkles"
         }
     }
 }
@@ -209,6 +218,16 @@ struct MetricIconConfig: Codable, Equatable {
         )
     }
 
+    /// Default config for the Fable weekly limit (disabled by default, #318)
+    static var fableDefault: MetricIconConfig {
+        MetricIconConfig(
+            metricType: .fable,
+            isEnabled: false,
+            iconStyle: .battery,
+            order: 3
+        )
+    }
+
     /// Default config for API (disabled by default)
     static var apiDefault: MetricIconConfig {
         MetricIconConfig(
@@ -291,6 +310,7 @@ struct MultiProfileDisplayConfig: Codable, Equatable {
     var showTimeMarker: Bool  // If true, show time-elapsed tick mark on progress indicators
     var showPaceMarker: Bool  // If true, color time marker by projected usage pace (6-tier)
     var usePaceColoring: Bool // If true, color indicators based on projected usage pace
+    var excludeWeekendsFromWeeklyPace: Bool // If true, weekly time progress only advances on weekdays
     var showRemainingPercentage: Bool // If true, show remaining capacity instead of used percentage
     var showActiveProfileIndicator: Bool // If true, show a green underline on the active profile's icon
 
@@ -302,6 +322,7 @@ struct MultiProfileDisplayConfig: Codable, Equatable {
         showTimeMarker: Bool = true,
         showPaceMarker: Bool = true,
         usePaceColoring: Bool = true,
+        excludeWeekendsFromWeeklyPace: Bool = false,
         showRemainingPercentage: Bool = false,
         showActiveProfileIndicator: Bool = false
     ) {
@@ -312,6 +333,7 @@ struct MultiProfileDisplayConfig: Codable, Equatable {
         self.showTimeMarker = showTimeMarker
         self.showPaceMarker = showPaceMarker
         self.usePaceColoring = usePaceColoring
+        self.excludeWeekendsFromWeeklyPace = excludeWeekendsFromWeeklyPace
         self.showRemainingPercentage = showRemainingPercentage
         self.showActiveProfileIndicator = showActiveProfileIndicator
     }
@@ -326,6 +348,7 @@ struct MultiProfileDisplayConfig: Codable, Equatable {
         case showTimeMarker
         case showPaceMarker
         case usePaceColoring
+        case excludeWeekendsFromWeeklyPace
         case showRemainingPercentage
         case showActiveProfileIndicator
     }
@@ -341,6 +364,7 @@ struct MultiProfileDisplayConfig: Codable, Equatable {
         showTimeMarker = try container.decodeIfPresent(Bool.self, forKey: .showTimeMarker) ?? true
         showPaceMarker = try container.decodeIfPresent(Bool.self, forKey: .showPaceMarker) ?? false
         usePaceColoring = try container.decodeIfPresent(Bool.self, forKey: .usePaceColoring) ?? false
+        excludeWeekendsFromWeeklyPace = try container.decodeIfPresent(Bool.self, forKey: .excludeWeekendsFromWeeklyPace) ?? false
         showRemainingPercentage = try container.decodeIfPresent(Bool.self, forKey: .showRemainingPercentage) ?? false
         showActiveProfileIndicator = try container.decodeIfPresent(Bool.self, forKey: .showActiveProfileIndicator) ?? false
     }
@@ -359,6 +383,7 @@ struct MenuBarIconConfiguration: Codable, Equatable {
     var showTimeMarker: Bool
     var showPaceMarker: Bool
     var usePaceColoring: Bool
+    var excludeWeekendsFromWeeklyPace: Bool
     var metrics: [MetricIconConfig]
 
     init(
@@ -369,10 +394,12 @@ struct MenuBarIconConfiguration: Codable, Equatable {
         showTimeMarker: Bool = true,
         showPaceMarker: Bool = true,
         usePaceColoring: Bool = true,
+        excludeWeekendsFromWeeklyPace: Bool = false,
         metrics: [MetricIconConfig] = [
             .sessionDefault,
             .weekDefault,
-            .apiDefault
+            .apiDefault,
+            .fableDefault
         ]
     ) {
         self.colorMode = colorMode
@@ -382,6 +409,7 @@ struct MenuBarIconConfiguration: Codable, Equatable {
         self.showTimeMarker = showTimeMarker
         self.showPaceMarker = showPaceMarker
         self.usePaceColoring = usePaceColoring
+        self.excludeWeekendsFromWeeklyPace = excludeWeekendsFromWeeklyPace
         self.metrics = metrics
     }
 
@@ -396,6 +424,7 @@ struct MenuBarIconConfiguration: Codable, Equatable {
         case showTimeMarker
         case showPaceMarker
         case usePaceColoring
+        case excludeWeekendsFromWeeklyPace
         case metrics
     }
 
@@ -415,7 +444,12 @@ struct MenuBarIconConfiguration: Codable, Equatable {
         showTimeMarker = try container.decodeIfPresent(Bool.self, forKey: .showTimeMarker) ?? true
         showPaceMarker = try container.decodeIfPresent(Bool.self, forKey: .showPaceMarker) ?? false
         usePaceColoring = try container.decodeIfPresent(Bool.self, forKey: .usePaceColoring) ?? false
+        excludeWeekendsFromWeeklyPace = try container.decodeIfPresent(Bool.self, forKey: .excludeWeekendsFromWeeklyPace) ?? false
         metrics = try container.decode([MetricIconConfig].self, forKey: .metrics)
+        // Configurations saved before the Fable metric existed gain it, switched off.
+        if !metrics.contains(where: { $0.metricType == .fable }) {
+            metrics.append(.fableDefault)
+        }
     }
 
     func encode(to encoder: Encoder) throws {
@@ -427,6 +461,7 @@ struct MenuBarIconConfiguration: Codable, Equatable {
         try container.encode(showTimeMarker, forKey: .showTimeMarker)
         try container.encode(showPaceMarker, forKey: .showPaceMarker)
         try container.encode(usePaceColoring, forKey: .usePaceColoring)
+        try container.encode(excludeWeekendsFromWeeklyPace, forKey: .excludeWeekendsFromWeeklyPace)
         try container.encode(metrics, forKey: .metrics)
         // Note: We don't encode monochromeMode anymore - it's only for reading legacy data
     }
@@ -436,6 +471,25 @@ struct MenuBarIconConfiguration: Codable, Equatable {
         metrics
             .filter { $0.isEnabled }
             .sorted { $0.order < $1.order }
+    }
+
+    /// The configuration to display for the given usage. Plans without a 5-hour
+    /// session limit (e.g. Ultra) hide the session icon, and if that leaves no
+    /// icon the week icon shows instead. The saved configuration is unchanged,
+    /// so the session icon comes back on its own when a session limit returns.
+    func effective(for usage: ClaudeUsage) -> MenuBarIconConfiguration {
+        guard !usage.hasSessionLimit,
+              let sessionIndex = metrics.firstIndex(where: { $0.metricType == .session && $0.isEnabled }) else {
+            return self
+        }
+
+        var adjusted = self
+        adjusted.metrics[sessionIndex].isEnabled = false
+        if adjusted.enabledMetrics.isEmpty,
+           let weekIndex = adjusted.metrics.firstIndex(where: { $0.metricType == .week }) {
+            adjusted.metrics[weekIndex].isEnabled = true
+        }
+        return adjusted
     }
 
     /// Get config for specific metric type

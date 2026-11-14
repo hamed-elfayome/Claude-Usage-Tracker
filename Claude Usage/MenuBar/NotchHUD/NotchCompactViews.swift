@@ -18,16 +18,20 @@ struct NotchCompactLeadingView: View {
                 Image(systemName: session.status.sfSymbolName)
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(session.status.tintColor)
-                    .symbolEffect(.pulse, isActive: session.status == .needsAttention)
-                    .contentTransition(.symbolEffect(.replace))
+                    .symbolPulseCompat(isActive: session.status == .needsAttention)
+                    .symbolReplaceTransitionCompat()
 
                 Text(session.displayName)
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(.white)
                     .lineLimit(1)
-                    .truncationMode(.middle)
-                    .frame(maxWidth: 96, alignment: .leading)
+                    // Long project names shrink a little before truncating,
+                    // so the bar never grows past its cap.
+                    .minimumScaleFactor(0.8)
+                    .truncationMode(.tail)
+                    .frame(maxWidth: 150, alignment: .leading)
             }
+            .help(session.displayName)
             .contentShape(Rectangle())
             .onTapGesture { NotchHUDController.shared.toggleExpanded() }
         }

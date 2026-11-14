@@ -17,7 +17,7 @@
 - **Do NOT use App Groups Keychain with app group identifiers.** This app is distributed outside the App Store via a Developer ID certificate. App Group entitlements require Keychain access prompts on every launch, which breaks the user experience. Use standard `UserDefaults` and standard Keychain access (without group identifiers) instead.
 - Follow existing code patterns and architecture (MVVM, protocol-oriented)
 - Add localization keys for any new user-facing strings (9 languages supported)
-- Test on macOS 14.0+ (Sonoma)
+- Test on macOS 13.0+ (Ventura)
 
 ## Checklist
 

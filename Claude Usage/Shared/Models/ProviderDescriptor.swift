@@ -63,6 +63,11 @@ struct ProviderCapabilities {
     /// Provider supports overage/extra-usage spend checks.
     let overageChecks: Bool
 
+    /// Provider reports the authenticated member's own month-to-date spend
+    /// (separate from any org-wide overage figure). Gates the Monthly Spend
+    /// popover row and its per-profile target field in General settings.
+    let personalSpend: Bool
+
     /// Provider reports a prepaid credits balance.
     let credits: Bool
 }

@@ -64,6 +64,7 @@ class LanguageManager: ObservableObject {
         case ukrainian = "uk"
         case turkish = "tr"
         case vietnamese = "vi"
+        case persian = "fa"
 
         var id: String { rawValue }
 
@@ -87,6 +88,7 @@ class LanguageManager: ObservableObject {
             case .ukrainian: return "Українська"
             case .turkish: return "Türkçe"
             case .vietnamese: return "Tiếng Việt"
+            case .persian: return "فارسی"
             }
         }
 
@@ -107,6 +109,7 @@ class LanguageManager: ObservableObject {
             case .ukrainian: return "Ukrainian"
             case .turkish: return "Turkish"
             case .vietnamese: return "Vietnamese"
+            case .persian: return "Persian"
             }
         }
 
@@ -127,6 +130,7 @@ class LanguageManager: ObservableObject {
             case .ukrainian: return "🇺🇦"
             case .turkish: return "🇹🇷"
             case .vietnamese: return "🇻🇳"
+            case .persian: return "🇮🇷"
             }
         }
     }

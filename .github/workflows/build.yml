@@ -54,6 +54,15 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
 
+      - name: Check Widget Timeline Freshness
+        run: |
+          swiftc \
+            WidgetShared/WidgetSnapshot.swift \
+            ClaudeUsageWidget/UsageTimelineProvider.swift \
+            scripts/WidgetTimelineFreshnessTests.swift \
+            -o "$RUNNER_TEMP/widget-freshness-tests"
+          "$RUNNER_TEMP/widget-freshness-tests"
+
       - name: Build Release
         run: |
           xcodebuild build \
