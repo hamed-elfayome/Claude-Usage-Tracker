@@ -1,0 +1,10 @@
+{
+  "task": "MT-5",
+  "history": [],
+  "agent": "claude@Kevins-MacBook-Air",
+  "status": "active",
+  "branch": "lean/MT-5",
+  "claimed_at": "2026-11-14T06:27:54",
+  "heartbeat": "2026-11-14T06:27:54",
+  "next": null
+}
