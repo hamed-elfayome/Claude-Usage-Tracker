@@ -34,7 +34,7 @@ class UsageHistoryService {
 
     /// In-memory copy of each profile's history, so recording a snapshot doesn't
     /// re-read and re-decode the whole file every time (#337).
-    private var historyCache: [UUID: UsageHistoryData] = [:]
+    private var historyCache: [String: UsageHistoryData] = [:]
 
     /// Recording intervals for periodic snapshots
     private let sessionRecordingInterval: TimeInterval = 10 * 60  // 10 minutes
@@ -43,9 +43,20 @@ class UsageHistoryService {
     /// UserDefaults key marking that the one-time UserDefaults→file migration ran.
     private let historyMigrationDoneKey = "usageHistoryMigratedToFiles_v1"
 
+    /// Test override for the history directory (nil in production).
+    private let directoryOverride: URL?
+
     private init() {
         self.defaults = UserDefaults.standard
+        self.directoryOverride = nil
         migrateHistoryToFilesIfNeeded()
+    }
+
+    /// For tests: injected defaults and directory; skips the legacy blob migration.
+    init(defaults: UserDefaults, directory: URL) {
+        self.defaults = defaults
+        self.directoryOverride = directory
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     }
 
     // MARK: - File-Based History Storage (#260)
@@ -56,6 +67,7 @@ class UsageHistoryService {
     /// the domain — including profile credentials. Storing it as files keeps the
     /// UserDefaults domain small so credential/profile saves persist reliably.
     private var historyDirectory: URL {
+        if let directoryOverride { return directoryOverride }
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? Constants.ClaudePaths.homeDirectory.appendingPathComponent("Library/Application Support")
         let dir = base
@@ -68,8 +80,8 @@ class UsageHistoryService {
     }
 
     /// File URL for a profile's history JSON.
-    private func historyFileURL(for profileId: UUID) -> URL {
-        historyDirectory.appendingPathComponent("usageHistory_\(profileId.uuidString).json")
+    private func historyFileURL(forKey key: String) -> URL {
+        historyDirectory.appendingPathComponent("usageHistory_\(key).json")
     }
 
     /// One-time migration: move any existing `usageHistory_*` blobs out of
@@ -85,7 +97,7 @@ class UsageHistoryService {
             if let data = value as? Data {
                 let idString = String(key.dropFirst(historyKeyPrefix.count))
                 if let profileId = UUID(uuidString: idString) {
-                    let url = historyFileURL(for: profileId)
+                    let url = historyFileURL(forKey: profileId.uuidString)
                     if (try? data.write(to: url, options: [.atomic])) != nil {
                         migrated += 1
                     }
@@ -102,53 +114,53 @@ class UsageHistoryService {
     // MARK: - Persistent Timestamp Tracking
 
     /// Gets the last session recording time for a profile (persisted)
-    private func getLastSessionRecordTime(for profileId: UUID) -> Date? {
-        return defaults.object(forKey: "\(lastSessionRecordTimePrefix)\(profileId.uuidString)") as? Date
+    private func getLastSessionRecordTime(forKey key: String) -> Date? {
+        return defaults.object(forKey: "\(lastSessionRecordTimePrefix)\(key)") as? Date
     }
 
     /// Sets the last session recording time for a profile (persisted)
-    private func setLastSessionRecordTime(_ date: Date, for profileId: UUID) {
-        defaults.set(date, forKey: "\(lastSessionRecordTimePrefix)\(profileId.uuidString)")
+    private func setLastSessionRecordTime(_ date: Date, forKey key: String) {
+        defaults.set(date, forKey: "\(lastSessionRecordTimePrefix)\(key)")
     }
 
     /// Gets the last weekly recording time for a profile (persisted)
-    private func getLastWeeklyRecordTime(for profileId: UUID) -> Date? {
-        return defaults.object(forKey: "\(lastWeeklyRecordTimePrefix)\(profileId.uuidString)") as? Date
+    private func getLastWeeklyRecordTime(forKey key: String) -> Date? {
+        return defaults.object(forKey: "\(lastWeeklyRecordTimePrefix)\(key)") as? Date
     }
 
     /// Sets the last weekly recording time for a profile (persisted)
-    private func setLastWeeklyRecordTime(_ date: Date, for profileId: UUID) {
-        defaults.set(date, forKey: "\(lastWeeklyRecordTimePrefix)\(profileId.uuidString)")
+    private func setLastWeeklyRecordTime(_ date: Date, forKey key: String) {
+        defaults.set(date, forKey: "\(lastWeeklyRecordTimePrefix)\(key)")
     }
 
     // MARK: - Storage Key
 
     /// Generates the storage key for a specific profile's history
-    private func storageKey(for profileId: UUID) -> String {
-        return "\(historyKeyPrefix)\(profileId.uuidString)"
+    private func storageKey(forKey key: String) -> String {
+        return "\(historyKeyPrefix)\(key)"
     }
 
     // MARK: - Save/Load History
 
     /// Saves usage history for a profile (to a JSON file, not UserDefaults — see #260)
-    func saveHistory(_ history: UsageHistoryData, for profileId: UUID) {
-        historyCache[profileId] = history
+    func saveHistory(_ history: UsageHistoryData, forKey key: String) {
+        historyCache[key] = history
         do {
             let data = try encoder.encode(history)
-            try data.write(to: historyFileURL(for: profileId), options: [.atomic])
-            LoggingService.shared.logStorageSave("usageHistory for profile \(profileId.uuidString.prefix(8))")
+            try data.write(to: historyFileURL(forKey: key), options: [.atomic])
+            LoggingService.shared.logStorageSave("usageHistory for profile \(key.prefix(8))")
         } catch {
             LoggingService.shared.logStorageError("saveHistory", error: error)
         }
     }
 
     /// Loads usage history for a profile (from its JSON file — see #260)
-    func loadHistory(for profileId: UUID) -> UsageHistoryData {
-        if let cached = historyCache[profileId] {
+    func loadHistory(forKey key: String) -> UsageHistoryData {
+        if let cached = historyCache[key] {
             return cached
         }
 
-        let url = historyFileURL(for: profileId)
+        let url = historyFileURL(forKey: key)
         guard let data = try? Data(contentsOf: url) else {
             return UsageHistoryData()
         }
@@ -157,10 +169,10 @@ class UsageHistoryService {
             var history = try decoder.decode(UsageHistoryData.self, from: data)
             // Clean up files bloated by spurious reset snapshots (#337)
             if history.prune(limits: snapshotLimits) {
-                LoggingService.shared.logInfo("UsageHistory: pruned history for profile \(profileId.uuidString.prefix(8)) to \(history.count) snapshots")
-                saveHistory(history, for: profileId)
+                LoggingService.shared.logInfo("UsageHistory: pruned history for profile \(key.prefix(8)) to \(history.count) snapshots")
+                saveHistory(history, forKey: key)
             }
-            historyCache[profileId] = history
+            historyCache[key] = history
             return history
         } catch {
             LoggingService.shared.logStorageError("loadHistory", error: error)
@@ -169,17 +181,17 @@ class UsageHistoryService {
     }
 
     /// Appends a snapshot, enforces per-type limits, and persists the result.
-    private func appendSnapshot(_ snapshot: UsageSnapshot, for profileId: UUID) {
-        var history = loadHistory(for: profileId)
+    private func appendSnapshot(_ snapshot: UsageSnapshot, forKey key: String) {
+        var history = loadHistory(forKey: key)
         history.addSnapshot(snapshot)
         history.prune(limits: snapshotLimits)
-        saveHistory(history, for: profileId)
+        saveHistory(history, forKey: key)
     }
 
     // MARK: - Record Resets
 
     /// Records a session reset snapshot
-    func recordSessionReset(for profileId: UUID, previousUsage: ClaudeUsage?, resetTime: Date, provider: Provider = .anthropic) {
+    func recordSessionReset(forKey key: String, previousUsage: ClaudeUsage?, resetTime: Date, provider: Provider = .anthropic) {
         guard let usage = previousUsage else {
             LoggingService.shared.logInfo("recordSessionReset: No previous usage data to record")
             return
@@ -194,12 +206,12 @@ class UsageHistoryService {
         }
 
         let snapshot = UsageSnapshot.fromSessionReset(usage, resetTime: resetTime, provider: provider)
-        appendSnapshot(snapshot, for: profileId)
-        LoggingService.shared.logInfo("Recorded session reset snapshot for profile \(profileId.uuidString.prefix(8)): \(usage.sessionPercentage)% usage")
+        appendSnapshot(snapshot, forKey: key)
+        LoggingService.shared.logInfo("Recorded session reset snapshot for profile \(key.prefix(8)): \(usage.sessionPercentage)% usage")
     }
 
     /// Records a weekly reset snapshot
-    func recordWeeklyReset(for profileId: UUID, previousUsage: ClaudeUsage?, resetTime: Date, provider: Provider = .anthropic) {
+    func recordWeeklyReset(forKey key: String, previousUsage: ClaudeUsage?, resetTime: Date, provider: Provider = .anthropic) {
         guard let usage = previousUsage else {
             LoggingService.shared.logInfo("recordWeeklyReset: No previous usage data to record")
             return
@@ -212,9 +224,9 @@ class UsageHistoryService {
         }
 
         let snapshot = UsageSnapshot.fromWeeklyReset(usage, resetTime: resetTime, provider: provider)
-        appendSnapshot(snapshot, for: profileId)
+        appendSnapshot(snapshot, forKey: key)
 
-        LoggingService.shared.logInfo("Recorded weekly reset snapshot for profile \(profileId.uuidString.prefix(8)): \(usage.weeklyPercentage)% usage")
+        LoggingService.shared.logInfo("Recorded weekly reset snapshot for profile \(key.prefix(8)): \(usage.weeklyPercentage)% usage")
     }
 
     /// Records a billing cycle reset snapshot
@@ -231,7 +243,7 @@ class UsageHistoryService {
         }
 
         let snapshot = UsageSnapshot.fromBillingCycleReset(usage, resetTime: resetTime)
-        appendSnapshot(snapshot, for: profileId)
+        appendSnapshot(snapshot, forKey: profileId.uuidString)
 
         LoggingService.shared.logInfo("Recorded billing cycle snapshot for profile \(profileId.uuidString.prefix(8)): \(usage.formattedUsed) spent")
     }
@@ -239,13 +251,13 @@ class UsageHistoryService {
     // MARK: - Periodic Recording
 
     /// Records session usage periodically (every 10 minutes)
-    func recordSessionPeriodic(for profileId: UUID, usage: ClaudeUsage, provider: Provider = .anthropic) {
+    func recordSessionPeriodic(forKey key: String, usage: ClaudeUsage, provider: Provider = .anthropic) {
         guard usage.hasSessionLimit else { return }
 
         let now = Date()
 
         // Check if enough time has passed since last recording (using persisted timestamp)
-        if let lastRecord = getLastSessionRecordTime(for: profileId) {
+        if let lastRecord = getLastSessionRecordTime(forKey: key) {
             let elapsed = now.timeIntervalSince(lastRecord)
             if elapsed < sessionRecordingInterval {
                 return  // Not enough time passed
@@ -262,17 +274,17 @@ class UsageHistoryService {
             triggeringResetTime: now
         )
 
-        appendSnapshot(snapshot, for: profileId)
-        setLastSessionRecordTime(now, for: profileId)
+        appendSnapshot(snapshot, forKey: key)
+        setLastSessionRecordTime(now, forKey: key)
         LoggingService.shared.logInfo("Recorded periodic session snapshot: \(usage.sessionPercentage)%")
     }
 
     /// Records weekly usage periodically (every 2 hours)
-    func recordWeeklyPeriodic(for profileId: UUID, usage: ClaudeUsage, provider: Provider = .anthropic) {
+    func recordWeeklyPeriodic(forKey key: String, usage: ClaudeUsage, provider: Provider = .anthropic) {
         let now = Date()
 
         // Check if enough time has passed since last recording (using persisted timestamp)
-        if let lastRecord = getLastWeeklyRecordTime(for: profileId) {
+        if let lastRecord = getLastWeeklyRecordTime(forKey: key) {
             let elapsed = now.timeIntervalSince(lastRecord)
             if elapsed < weeklyRecordingInterval {
                 return  // Not enough time passed
@@ -295,38 +307,38 @@ class UsageHistoryService {
             triggeringResetTime: now
         )
 
-        appendSnapshot(snapshot, for: profileId)
-        setLastWeeklyRecordTime(now, for: profileId)
+        appendSnapshot(snapshot, forKey: key)
+        setLastWeeklyRecordTime(now, forKey: key)
         LoggingService.shared.logInfo("Recorded periodic weekly snapshot: \(usage.weeklyPercentage)%")
     }
 
     // MARK: - Query Methods
 
     /// Gets session snapshots for a profile (sorted newest first)
-    func getSessionSnapshots(for profileId: UUID) -> [UsageSnapshot] {
-        return loadHistory(for: profileId).sessionSnapshots
+    func getSessionSnapshots(forKey key: String) -> [UsageSnapshot] {
+        return loadHistory(forKey: key).sessionSnapshots
     }
 
     /// Gets weekly snapshots for a profile (sorted newest first)
-    func getWeeklySnapshots(for profileId: UUID) -> [UsageSnapshot] {
-        return loadHistory(for: profileId).weeklySnapshots
+    func getWeeklySnapshots(forKey key: String) -> [UsageSnapshot] {
+        return loadHistory(forKey: key).weeklySnapshots
     }
 
     /// Gets billing cycle snapshots for a profile (sorted newest first)
     func getBillingCycleSnapshots(for profileId: UUID) -> [UsageSnapshot] {
-        return loadHistory(for: profileId).billingCycleSnapshots
+        return loadHistory(forKey: profileId.uuidString).billingCycleSnapshots
     }
 
     /// Gets all snapshots for a profile (sorted newest first)
     func getAllSnapshots(for profileId: UUID) -> [UsageSnapshot] {
-        return loadHistory(for: profileId).snapshots.sorted { $0.timestamp > $1.timestamp }
+        return loadHistory(forKey: profileId.uuidString).snapshots.sorted { $0.timestamp > $1.timestamp }
     }
 
     // MARK: - Export
 
     /// Exports history to file in specified format
-    func exportToFile(for profileId: UUID, resetType: ResetType? = nil, format: ExportFormat = .json) {
-        let history = loadHistory(for: profileId)
+    func exportToFile(forKey key: String, resetType: ResetType? = nil, format: ExportFormat = .json) {
+        let history = loadHistory(forKey: key)
         let content: String
         let fileExtension: String
 
@@ -384,28 +396,72 @@ class UsageHistoryService {
     // MARK: - Cleanup
 
     /// Deletes all history for a profile
-    func deleteHistory(for profileId: UUID) {
-        historyCache.removeValue(forKey: profileId)
-        try? FileManager.default.removeItem(at: historyFileURL(for: profileId))
+    func deleteHistory(forKey key: String) {
+        historyCache.removeValue(forKey: key)
+        try? FileManager.default.removeItem(at: historyFileURL(forKey: key))
         // Best-effort removal of any legacy UserDefaults blob (pre-migration installs).
-        defaults.removeObject(forKey: storageKey(for: profileId))
+        defaults.removeObject(forKey: storageKey(forKey: key))
         // Also delete persisted timestamps
-        defaults.removeObject(forKey: "\(lastSessionRecordTimePrefix)\(profileId.uuidString)")
-        defaults.removeObject(forKey: "\(lastWeeklyRecordTimePrefix)\(profileId.uuidString)")
-        LoggingService.shared.logInfo("Deleted usage history for profile \(profileId.uuidString.prefix(8))")
+        defaults.removeObject(forKey: "\(lastSessionRecordTimePrefix)\(key)")
+        defaults.removeObject(forKey: "\(lastWeeklyRecordTimePrefix)\(key)")
+        LoggingService.shared.logInfo("Deleted usage history for profile \(key.prefix(8))")
     }
 
     /// Clears all snapshots for a profile but keeps the history structure
     func clearHistory(for profileId: UUID) {
-        saveHistory(UsageHistoryData(), for: profileId)
+        saveHistory(UsageHistoryData(), forKey: profileId.uuidString)
         LoggingService.shared.logInfo("Cleared usage history for profile \(profileId.uuidString.prefix(8))")
     }
 
     /// Clears snapshots of a specific type for a profile
     func clearHistory(for profileId: UUID, resetType: ResetType) {
-        var history = loadHistory(for: profileId)
+        var history = loadHistory(forKey: profileId.uuidString)
         history.snapshots.removeAll { $0.resetType == resetType }
-        saveHistory(history, for: profileId)
+        saveHistory(history, forKey: profileId.uuidString)
         LoggingService.shared.logInfo("Cleared \(resetType.rawValue) history for profile \(profileId.uuidString.prefix(8))")
+    }
+}
+
+// MARK: - UUID API (delegates to the string-keyed storage)
+
+extension UsageHistoryService {
+    func saveHistory(_ history: UsageHistoryData, for profileId: UUID) {
+        saveHistory(history, forKey: profileId.uuidString)
+    }
+
+    func loadHistory(for profileId: UUID) -> UsageHistoryData {
+        loadHistory(forKey: profileId.uuidString)
+    }
+
+    func recordSessionReset(for profileId: UUID, previousUsage: ClaudeUsage?, resetTime: Date, provider: Provider = .anthropic) {
+        recordSessionReset(forKey: profileId.uuidString, previousUsage: previousUsage, resetTime: resetTime, provider: provider)
+    }
+
+    func recordWeeklyReset(for profileId: UUID, previousUsage: ClaudeUsage?, resetTime: Date, provider: Provider = .anthropic) {
+        recordWeeklyReset(forKey: profileId.uuidString, previousUsage: previousUsage, resetTime: resetTime, provider: provider)
+    }
+
+    func recordSessionPeriodic(for profileId: UUID, usage: ClaudeUsage, provider: Provider = .anthropic) {
+        recordSessionPeriodic(forKey: profileId.uuidString, usage: usage, provider: provider)
+    }
+
+    func recordWeeklyPeriodic(for profileId: UUID, usage: ClaudeUsage, provider: Provider = .anthropic) {
+        recordWeeklyPeriodic(forKey: profileId.uuidString, usage: usage, provider: provider)
+    }
+
+    func getSessionSnapshots(for profileId: UUID) -> [UsageSnapshot] {
+        getSessionSnapshots(forKey: profileId.uuidString)
+    }
+
+    func getWeeklySnapshots(for profileId: UUID) -> [UsageSnapshot] {
+        getWeeklySnapshots(forKey: profileId.uuidString)
+    }
+
+    func exportToFile(for profileId: UUID, resetType: ResetType? = nil, format: ExportFormat = .json) {
+        exportToFile(forKey: profileId.uuidString, resetType: resetType, format: format)
+    }
+
+    func deleteHistory(for profileId: UUID) {
+        deleteHistory(forKey: profileId.uuidString)
     }
 }

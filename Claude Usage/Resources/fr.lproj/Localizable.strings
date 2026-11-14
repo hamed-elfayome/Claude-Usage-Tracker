@@ -1135,3 +1135,39 @@
 "keep_awake.consent_confirm" = "Ajouter les hooks et activer";
 "keep_awake.problem_hooks" = "Le mode automatique ne voit pas Claude Code : ses hooks sont absents de ~/.claude/settings.json. Désactivez puis réactivez le mode automatique pour les réinstaller.";
 "keep_awake.problem_listener" = "Le mode automatique ne voit pas Claude Code : le port de l'écouteur local est utilisé par une autre app ou une autre copie de Claude Usage.";
+
+/* ==================== */
+/* MARK: - Multi-team tracking */
+/* ==================== */
+"multiteam.login_again" = "Log in again";
+"multiteam.not_signed_in" = "Not signed in";
+"multiteam.window.session" = "5-hour";
+"multiteam.window.weekly" = "weekly";
+"multiteam.event.nowOn.title" = "Now on %@ (%@)";
+"multiteam.event.nowOn.body" = "%@ is now the account in use, on team %@.";
+"multiteam.event.adminMove.title" = "Moved by admin: %@ → %@";
+"multiteam.event.adminMove.body" = "%@ was moved from %@ to %@.";
+"multiteam.event.groupMove.title" = "%d accounts moved: %@ → %@";
+"multiteam.event.groupMove.removed.title" = "%d accounts removed from %@";
+"multiteam.event.groupMove.body" = "Another target: %@";
+"multiteam.event.groupMove.notMoved" = "Not moved: %@";
+"multiteam.event.groupMove.unchecked" = "Not checked: %@";
+"multiteam.event.teamRemoved.title" = "Removed from team %@";
+"multiteam.event.teamRemoved.body" = "%@ is no longer in team %@.";
+"multiteam.event.teamChanged.title" = "Team changed: %@ → %@";
+"multiteam.event.teamChanged.body" = "%@ changed from team %@ to team %@.";
+"multiteam.event.teamAdded.title" = "Added to team %@";
+"multiteam.event.teamAdded.body" = "%@ was added to team %@.";
+"multiteam.event.teamRejoined.title" = "Back in team %@";
+"multiteam.event.teamRejoined.body" = "%@ is back in team %@.";
+"multiteam.event.seatChange.title" = "Seat changed in %@";
+"multiteam.event.seatChange.inferred.title" = "Limit size changed in %@";
+"multiteam.event.seatChange.body" = "The seat of %@ changed in team %@.";
+"multiteam.event.earlyReset.title" = "Early reset: %@ %@ limit";
+"multiteam.event.earlyReset.body" = "%@ in %@: the %@ limit dropped from %.0f%% to %.0f%%.";
+"multiteam.event.loginLost.title" = "Log in again: %@";
+"multiteam.event.loginLost.body" = "%@ needs a new login (%@).";
+"multiteam.event.loginRestored.title" = "Login restored: %@";
+"multiteam.event.loginRestored.body" = "%@ is signed in again.";
+"multiteam.event.oldTeamDeleted.title" = "Old team %@ deleted";
+"multiteam.event.oldTeamDeleted.body" = "Old team %@ was removed from %@.";
