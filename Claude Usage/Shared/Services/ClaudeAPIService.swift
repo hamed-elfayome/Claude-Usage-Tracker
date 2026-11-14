@@ -541,6 +541,12 @@ class ClaudeAPIService: APIServiceProtocol {
         return claudeUsage
     }
 
+    /// One request to /usage only (no overage, credit or spend calls); for probes.
+    func fetchUsageOnly(sessionKey: String, organizationId: String) async throws -> ClaudeUsage {
+        let data = try await performRequest(endpoint: "/organizations/\(organizationId)/usage", sessionKey: sessionKey)
+        return try parseUsageResponse(data)
+    }
+
     /// Fetches usage data via OAuth access token (CLI credential flow)
     func fetchUsageData(oauthAccessToken: String) async throws -> ClaudeUsage {
         guard let url = URL(string: "https://api.anthropic.com/api/oauth/usage") else {
@@ -558,10 +564,12 @@ class ClaudeAPIService: APIServiceProtocol {
         }
 
         guard httpResponse.statusCode == 200 else {
+            let status = httpResponse.statusCode
             throw AppError(
-                code: httpResponse.statusCode == 401 || httpResponse.statusCode == 403
-                    ? .apiUnauthorized : .apiGenericError,
-                message: "OAuth fetch failed (status \(httpResponse.statusCode))",
+                code: status == 401 || status == 403 ? .apiUnauthorized
+                    : status == 429 ? .apiRateLimited : .apiGenericError,
+                message: "OAuth fetch failed (status \(status))",
+                technicalDetails: status == 429 ? "Endpoint: oauth/usage" + Self.retryAfterLine(httpResponse) : nil,
                 isRecoverable: true
             )
         }
@@ -804,9 +812,17 @@ class ClaudeAPIService: APIServiceProtocol {
             }
         }
 
-        switch httpResponse.statusCode {
-        case 200:
-            return data
+        if let error = Self.error(forStatus: httpResponse.statusCode, data: data, response: httpResponse, endpoint: endpoint) {
+            throw error
+        }
+        return data
+    }
+
+    /// Maps an HTTP status to an AppError (nil for 2xx).
+    static func error(forStatus status: Int, data: Data, response httpResponse: HTTPURLResponse, endpoint: String) -> AppError? {
+        switch status {
+        case 200..<300:
+            return nil
 
         case 401, 403:
             // Include response body in error for debugging
@@ -819,52 +835,68 @@ class ClaudeAPIService: APIServiceProtocol {
             // (#277).
             if responsePreview.contains("Just a moment") || responsePreview.contains("cf-mitigated")
                 || httpResponse.value(forHTTPHeaderField: "cf-mitigated") != nil {
-                throw AppError(
+                return AppError(
                     code: .apiServiceUnavailable,
                     message: "Request blocked by Cloudflare protection.",
-                    technicalDetails: "Endpoint: \(endpoint)\nStatus: \(httpResponse.statusCode)\nCloudflare challenge page returned",
+                    technicalDetails: "Endpoint: \(endpoint)\nStatus: \(status)\nCloudflare challenge page returned",
                     isRecoverable: true,
                     recoverySuggestion: "Your session key is likely still valid — this usually resolves on the next refresh. If it persists, re-sign-in via Settings to refresh Cloudflare cookies."
                 )
             }
 
-            throw AppError(
+            return AppError(
                 code: .apiUnauthorized,
                 message: "Unauthorized. Your session key may have expired.",
-                technicalDetails: "Endpoint: \(endpoint)\nStatus: \(httpResponse.statusCode)\nResponse: \(responsePreview)",
+                technicalDetails: "Endpoint: \(endpoint)\nStatus: \(status)\nResponse: \(responsePreview)",
                 isRecoverable: true,
                 recoverySuggestion: "Please update your session key in Settings"
             )
 
+        case 404:
+            return AppError(
+                code: .apiNotFound,
+                message: "Resource not found",
+                technicalDetails: "Endpoint: \(endpoint)\nStatus: 404",
+                isRecoverable: true
+            )
+
         case 429:
-            throw AppError(
+            return AppError(
                 code: .apiRateLimited,
                 message: "Rate limited by Claude API",
-                technicalDetails: "Endpoint: \(endpoint)",
+                technicalDetails: "Endpoint: \(endpoint)" + Self.retryAfterLine(httpResponse),
                 isRecoverable: true,
                 recoverySuggestion: "Please wait a few minutes before trying again"
             )
 
         case 500...599:
             let responsePreview = String(data: data, encoding: .utf8)?.prefix(200) ?? "Unable to read response"
-            throw AppError(
+            return AppError(
                 code: .apiServerError,
                 message: "Claude API server error",
-                technicalDetails: "Endpoint: \(endpoint)\nStatus: \(httpResponse.statusCode)\nResponse: \(responsePreview)",
+                technicalDetails: "Endpoint: \(endpoint)\nStatus: \(status)\nResponse: \(responsePreview)",
                 isRecoverable: true,
                 recoverySuggestion: "Please try again later"
             )
 
         default:
             let responsePreview = String(data: data, encoding: .utf8)?.prefix(200) ?? "Unable to read response"
-            throw AppError(
+            return AppError(
                 code: .apiGenericError,
                 message: "Unexpected API response",
-                technicalDetails: "Endpoint: \(endpoint)\nStatus: \(httpResponse.statusCode)\nResponse: \(responsePreview)",
+                technicalDetails: "Endpoint: \(endpoint)\nStatus: \(status)\nResponse: \(responsePreview)",
                 isRecoverable: true
             )
         }
     }
+
+    /// "\nRetry-After: N" when the header holds integer seconds, else "".
+    static func retryAfterLine(_ response: HTTPURLResponse) -> String {
+        guard let raw = response.value(forHTTPHeaderField: "Retry-After")?.trimmingCharacters(in: .whitespaces),
+              let secs = Int(raw), secs >= 0 else { return "" }
+        return "\nRetry-After: \(secs)"
+    }
+
 
     // MARK: - Personal Spend
 
