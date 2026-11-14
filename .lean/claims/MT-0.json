@@ -2,10 +2,11 @@
   "task": "MT-0",
   "history": [],
   "agent": "claude@Kevins-MacBook-Air",
-  "status": "passed",
+  "status": "merged",
   "branch": "lean/MT-0",
   "claimed_at": "2026-11-14T10:04:49",
-  "heartbeat": "2026-11-14T11:04:13",
+  "heartbeat": "2026-11-14T11:04:19",
   "next": null,
-  "grade": null
+  "grade": null,
+  "merged_at": "2026-11-14T11:04:19"
 }
