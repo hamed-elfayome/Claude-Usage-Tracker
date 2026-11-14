@@ -352,3 +352,10 @@ Contributors are recognized in:
 - README acknowledgments for major features
 
 Thank you for helping make Claude Usage Tracker better! 🙏
+
+## Testing without Xcode
+
+Run `scripts/validate-clt.sh` (`--self-test` checks the harness itself, `--root DIR` validates another worktree). With full Xcode it runs `xcodebuild test`; with only Command Line Tools it builds the app as a library and runs every test with an XCTest shim.
+It skips and does not check: the widget extension, the asset catalog, Info.plist processing, code signing, the real DynamicNotchKit/Sparkle APIs, and `#Preview` bodies.
+Tests that must not run on CLT go in `scripts/clt/skip-list.txt` (`Class.method  # reason`).
+Release rule: run one full `xcodebuild` build and test before any release.

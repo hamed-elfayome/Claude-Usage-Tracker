@@ -1,0 +1,8 @@
+# Tests that the Command Line Tools harness (scripts/validate-clt.sh) must not run.
+# Format, one per line:   Class.method  # reason     or     Class  # reason
+# '#' at the start of a line is a comment. A reason is required (exit 2 otherwise).
+# An entry that matches no discovered test is an error (exit 2, "stale skip entry").
+#
+# Note (not an entry): ProfileKeychainMigrationTests skip themselves through
+# XCTSkipUnless when the Keychain is unavailable, so they need no entry here.
+# No active entries: none are needed today.
