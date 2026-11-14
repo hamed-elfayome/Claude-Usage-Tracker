@@ -58,6 +58,9 @@ struct Profile: Codable, Identifiable, Equatable {
 
     // MARK: - Usage Data (Per-Profile)
     var claudeUsage: ClaudeUsage?
+
+    /// Multi-team tracking state (not a secret). nil until migrated.
+    var orgTracking: OrgTrackingState?
     var apiUsage: APIUsage?
 
     // MARK: - Appearance Settings (Per-Profile)
@@ -100,6 +103,7 @@ struct Profile: Codable, Identifiable, Equatable {
         terminalLauncherSlug: String? = nil,
         oauthAccountJSON: String? = nil,
         claudeUsage: ClaudeUsage? = nil,
+        orgTracking: OrgTrackingState? = nil,
         apiUsage: APIUsage? = nil,
         iconConfig: MenuBarIconConfiguration = .default,
         refreshInterval: TimeInterval = 30.0,
@@ -127,6 +131,7 @@ struct Profile: Codable, Identifiable, Equatable {
         self.terminalLauncherSlug = terminalLauncherSlug
         self.oauthAccountJSON = oauthAccountJSON
         self.claudeUsage = claudeUsage
+        self.orgTracking = orgTracking
         self.apiUsage = apiUsage
         self.iconConfig = iconConfig
         self.refreshInterval = refreshInterval
@@ -158,6 +163,7 @@ struct Profile: Codable, Identifiable, Equatable {
         case terminalLauncherSlug
         case oauthAccountJSON
         case claudeUsage, apiUsage
+        case orgTracking
         case iconConfig
         case refreshInterval, autoStartSessionEnabled, checkOverageLimitEnabled
         case monthlySpendLimitCents
@@ -193,6 +199,7 @@ struct Profile: Codable, Identifiable, Equatable {
         // profile decode and wipe the profile list.
         claudeUsage = (try? c.decodeIfPresent(ClaudeUsage.self, forKey: .claudeUsage)) ?? nil
         apiUsage = (try? c.decodeIfPresent(APIUsage.self, forKey: .apiUsage)) ?? nil
+        orgTracking = (try? c.decodeIfPresent(OrgTrackingState.self, forKey: .orgTracking)) ?? nil
         iconConfig = try c.decodeIfPresent(MenuBarIconConfiguration.self, forKey: .iconConfig) ?? .default
         refreshInterval = try c.decodeIfPresent(TimeInterval.self, forKey: .refreshInterval) ?? 30.0
         autoStartSessionEnabled = try c.decodeIfPresent(Bool.self, forKey: .autoStartSessionEnabled) ?? false
@@ -227,6 +234,7 @@ struct Profile: Codable, Identifiable, Equatable {
         try c.encodeIfPresent(oauthAccountJSON, forKey: .oauthAccountJSON)
         try c.encodeIfPresent(claudeUsage, forKey: .claudeUsage)
         try c.encodeIfPresent(apiUsage, forKey: .apiUsage)
+        try c.encodeIfPresent(orgTracking, forKey: .orgTracking)
         try c.encode(iconConfig, forKey: .iconConfig)
         try c.encode(refreshInterval, forKey: .refreshInterval)
         try c.encode(autoStartSessionEnabled, forKey: .autoStartSessionEnabled)

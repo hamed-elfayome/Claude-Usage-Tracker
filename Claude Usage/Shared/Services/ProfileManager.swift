@@ -30,6 +30,13 @@ class ProfileManager: ObservableObject {
     func loadProfiles() {
         profiles = profileStore.loadProfiles()
 
+        // Multi-team tracking migration (idempotent); persist once if anything changed
+        let migratedProfiles = profiles.map { TeamTrackingMigration.migrate($0) }
+        if migratedProfiles != profiles {
+            profiles = migratedProfiles
+            profileStore.saveProfiles(profiles)
+        }
+
         // Ensure minimum 1 profile
         if profiles.isEmpty {
             let defaultProfile = createDefaultProfile()
@@ -447,6 +454,17 @@ class ProfileManager: ObservableObject {
         // Save to persistent storage
         profileStore.saveProfiles(profiles)
         LoggingService.shared.log("Saved Claude usage for profile: \(profiles[index].name)")
+    }
+
+    /// Saves the multi-team tracking state for a profile
+    func updateOrgTracking(_ state: OrgTrackingState, for profileId: UUID) {
+        guard let index = profiles.firstIndex(where: { $0.id == profileId }) else {
+            LoggingService.shared.logError("updateOrgTracking: Profile not found with ID: \(profileId)")
+            return
+        }
+        profiles[index].orgTracking = state
+        if activeProfile?.id == profileId { activeProfile = profiles[index] }
+        profileStore.saveProfiles(profiles)
     }
 
     /// Loads Claude usage data for a specific profile
