@@ -17,3 +17,4 @@
 {"at": "2026-11-14T11:21:26", "agent": "claude@Kevins-MacBook-Air", "event": "pass", "task": "MT-1", "note": "grade -: MT-1: grade B, 1 fix round(s), last r1 sonnet-medium (fix, resumed)"}
 {"at": "2026-11-14T11:21:31", "agent": "claude@Kevins-MacBook-Air", "event": "merge", "task": "MT-1"}
 {"at": "2026-11-14T11:21:39", "agent": "claude@Kevins-MacBook-Air", "event": "lesson", "task": "MT-1", "note": "Grep for an existing method of the same name before adding one to a large class; a duplicate declaration blocks every bu"}
+{"at": "2026-11-14T11:21:50", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-2", "note": ""}
