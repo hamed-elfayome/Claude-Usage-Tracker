@@ -560,6 +560,18 @@ final class AccountRulesTests: XCTestCase {
         }
     }
 
+    // Fallback follow target must skip the legacy placeholder even when it comes first in state order.
+    func testFollowedFallbackNeverPicksPlaceholder() {
+        let day: TimeInterval = 86_400
+        let s = state([org(TrackedOrg.unknownOrgId), org("A", lastSeen: 5 * day), org("B"), org("C")], lastList: 5 * day)
+        var r = run(AccountObservation(now: at(5 * day + 100), orgList: [entry("B"), entry("C")]), s, followed: "A")
+        XCTAssertTrue(r.events.isEmpty)
+        r = run(AccountObservation(now: at(5 * day + 200), orgList: [entry("B"), entry("C")]), r.state, followed: "A")
+        XCTAssertEqual(kinds(r), [.teamRemoved(profileId: pid, org: "A")])
+        XCTAssertEqual(r.followedOrgId, "B")
+        XCTAssertEqual(status(r, TrackedOrg.unknownOrgId), .member)
+    }
+
     func testMaxToProShapeIsSeatCandidate() throws {
         let prev = try TeamFixtures.usage(session: 40, weekly: 20, opus: 30)
         let s = state([org("A", usage: prev)])
@@ -575,5 +587,9 @@ final class AccountRulesTests: XCTestCase {
         let r = run(AccountObservation(now: at(0), samples: ["A": try TeamFixtures.usage(session: 20, weekly: 8, opus: 12)]),
                     state([org("A", usage: prev)]))
         XCTAssertEqual(r.state.org("A")?.pending?.kind, .seatInferred)
+        // The present Opus window takes part in the spread check: 30 -> 2 is far outside 1.3, so no seat candidate.
+        let wide = AccountRules.apply(AccountObservation(now: at(0), samples: ["A": try TeamFixtures.usage(session: 20, weekly: 8, opus: 2)]),
+                                      to: state([org("A", usage: prev)]), profileId: pid, profileName: "Me", followedOrgId: nil)
+        XCTAssertNotEqual(wide.state.org("A")?.pending?.kind, .seatInferred)
     }
 }

@@ -273,7 +273,7 @@ enum AccountRules {
             }
             run.result.confirmedRemovals.append(ConfirmedRemoval(orgId: a.orgId, movedTo: target?.orgId))
             if run.followed == a.orgId {
-                if let b = target?.orgId ?? run.state.orgs.first(where: { $0.status == .member && $0.orgId != a.orgId && !goneIds.contains($0.orgId) })?.orgId {
+                if let b = target?.orgId ?? run.state.orgs.first(where: { $0.status == .member && $0.orgId != a.orgId && $0.orgId != TrackedOrg.unknownOrgId && !goneIds.contains($0.orgId) })?.orgId {
                     run.setFollowed(b)
                 }
             }

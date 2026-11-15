@@ -55,3 +55,8 @@ none
 - Changed existing test testRefreshRejectedThenRestored: its "still blocked" step sent a sample, which now restores per spec; the step now sends no sample/list (a sample-restores case has its own test).
 - Result: scripts/validate-clt.sh: Executed 479 tests: 477 ok, 0 failed, 2 skipped; git diff --check clean.
 - MT-3 must state it handles the first sighting of an OAuth-only credential org on an empty state.
+
+## Round 2 fix
+- Root cause: round 1 patched the "missing" loop only; the followed-org fallback in `ruleM` (AccountRules.swift ~276) used the same candidate set without the `TrackedOrg.unknownOrgId` exclusion. Added it.
+- Test added: `testFollowedFallbackNeverPicksPlaceholder` (placeholder first in state order, A followed, list [B,C] twice -> `teamRemoved(A)`, `followedOrgId == "B"`). Fails without the exclusion.
+- Result: `scripts/validate-clt.sh` -> `Executed 493 tests: 491 ok, 0 failed, 2 skipped`, rc=0; `git diff --check` clean.
