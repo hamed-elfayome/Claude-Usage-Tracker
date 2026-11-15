@@ -194,8 +194,13 @@ class ProfileManager: ObservableObject {
     /// target's saved CLI login is dead). With `cancelIfLoginExpired: false` a dead login does
     /// not cancel: the profile is still activated, but its snapshot is not written to the
     /// keychain (used when the active profile was deleted and something must take its place).
+    ///
+    /// When the target's saved login is dead and the live login is a different account, a
+    /// user-initiated switch (`interactive: true`) asks whether to switch anyway — without
+    /// applying the dead snapshot — so the profile can be re-linked with `/login` (#363).
+    /// Programmatic switches (auto-switch) cancel as before.
     @discardableResult
-    func activateProfile(_ id: UUID, cancelIfLoginExpired: Bool = true) async -> Bool {
+    func activateProfile(_ id: UUID, cancelIfLoginExpired: Bool = true, interactive: Bool = false) async -> Bool {
         guard !switchingSemaphore else {
             LoggingService.shared.log("Profile switch already in progress, ignoring")
             return false
@@ -287,15 +292,29 @@ class ProfileManager: ObservableObject {
                 if adopted {
                     applySnapshot = false
                 } else if cancelIfLoginExpired {
-                    LoggingService.shared.logError("Switch to '\(updatedProfile.name)' cancelled: its saved CLI login could not be refreshed, and the live login was left untouched")
-                    switchingSemaphore = false
-                    isSwitchingProfile = false
-                    ErrorPresenter.shared.showAlert(for: AppError(
-                        code: .providerAuthRefreshFailed,
-                        message: String(format: "error.cli_login_expired".localized, updatedProfile.name),
-                        recoverySuggestion: String(format: "error.cli_login_expired_suggestion".localized, updatedProfile.name, updatedProfile.name)
-                    ))
-                    return false
+                    // The snapshot is dead and the live login is not (provably) this
+                    // account, so writing the snapshot would log out every running
+                    // Claude Code session. A user-initiated switch is offered the
+                    // alternative of switching WITHOUT applying the snapshot: the target
+                    // becomes active so its owner can run /login and re-link it. Without
+                    // this the suggested recovery was unreachable — you cannot log in as
+                    // the target account while another profile is active (#363).
+                    if interactive, ErrorPresenter.shared.confirmExpiredLoginSwitch(profileName: updatedProfile.name) {
+                        LoggingService.shared.logError("Activating '\(updatedProfile.name)' without its saved CLI login (user chose to switch anyway); the live login was left untouched")
+                        applySnapshot = false
+                    } else {
+                        LoggingService.shared.logError("Switch to '\(updatedProfile.name)' cancelled: its saved CLI login could not be refreshed, and the live login was left untouched")
+                        switchingSemaphore = false
+                        isSwitchingProfile = false
+                        if !interactive {
+                            ErrorPresenter.shared.showAlert(for: AppError(
+                                code: .providerAuthRefreshFailed,
+                                message: String(format: "error.cli_login_expired".localized, updatedProfile.name),
+                                recoverySuggestion: String(format: "error.cli_login_expired_suggestion".localized, updatedProfile.name, updatedProfile.name)
+                            ))
+                        }
+                        return false
+                    }
                 } else {
                     LoggingService.shared.logError("Activating '\(updatedProfile.name)' without its saved CLI login (could not be refreshed); the live login was left untouched")
                     applySnapshot = false

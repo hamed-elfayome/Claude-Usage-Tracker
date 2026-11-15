@@ -266,6 +266,8 @@
 "error.session_key_not_found" = "未找到 Session 金鑰";
 "error.cli_login_expired" = "%@ 儲存的 Claude Code 登入已過期";
 "error.cli_login_expired_suggestion" = "切換已取消，目前的登入保持不變，正在執行的 Claude Code 工作階段會繼續運作。若要重新連結 %@，請在 Claude Code 中使用該帳號執行 /login，然後再次切換到 %@。";
+"error.cli_login_expired_switch_prompt" = "目前的登入保持不變，因此正在執行的 Claude Code 工作階段會繼續運作。仍要切換到 %@ 以重新連結嗎？切換後，請在 Claude Code 中使用 %@ 的帳號執行 /login。";
+"error.cli_login_expired_switch_anyway" = "仍然切換";
 "error.session_key_not_found.suggestion" = "請在設定中設定您的 Claude Session 金鑰";
 "error.session_key_invalid" = "無效的 Session 金鑰";
 "error.session_key_invalid.suggestion" = "請檢查您的 Session 金鑰格式。它應該以 'sk-ant-' 開頭";

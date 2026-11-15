@@ -265,6 +265,8 @@
 "error.session_key_not_found" = "Oturum anahtarı bulunamadı";
 "error.cli_login_expired" = "%@ için kayıtlı Claude Code oturumunun süresi doldu";
 "error.cli_login_expired_suggestion" = "Geçiş iptal edildi ve mevcut oturumunuz olduğu gibi bırakıldı, bu nedenle çalışan Claude Code oturumları çalışmaya devam ediyor. %@ hesabını yeniden bağlamak için Claude Code'da o hesapla /login komutunu çalıştırın, ardından tekrar %@ profiline geçin.";
+"error.cli_login_expired_switch_prompt" = "Mevcut oturumunuz olduğu gibi bırakılır, bu nedenle çalışan Claude Code oturumları çalışmaya devam eder. Yeniden bağlamak için yine de %@ profilini seçmek ister misiniz? Geçişten sonra Claude Code'da %@ hesabıyla /login komutunu çalıştırın.";
+"error.cli_login_expired_switch_anyway" = "Yine de geç";
 "error.session_key_not_found.suggestion" = "Lütfen Ayarlar'dan Claude oturum anahtarınızı yapılandırın";
 "error.session_key_invalid" = "Geçersiz oturum anahtarı";
 "error.session_key_invalid.suggestion" = "Lütfen oturum anahtarınızın biçimini kontrol edin. 'sk-ant-' ile başlamalıdır";

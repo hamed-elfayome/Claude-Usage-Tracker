@@ -82,6 +82,26 @@ class ErrorPresenter {
         }
     }
 
+    // MARK: - Confirmations
+
+    /// Asks whether to switch to a profile whose saved Claude Code login has expired and
+    /// could not be refreshed. Returns `true` for "Switch Anyway".
+    ///
+    /// Either answer leaves the live login untouched, so running Claude Code sessions keep
+    /// working. Choosing to switch only makes the profile active so its account can be
+    /// re-linked by running `/login` (#363).
+    @MainActor
+    func confirmExpiredLoginSwitch(profileName: String) -> Bool {
+        let alert = NSAlert()
+        alert.messageText = String(format: "error.cli_login_expired".localized, profileName)
+        alert.informativeText = String(format: "error.cli_login_expired_switch_prompt".localized, profileName, profileName)
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "error.cli_login_expired_switch_anyway".localized)
+        alert.addButton(withTitle: "common.cancel".localized)
+        NSApp.activate(ignoringOtherApps: true)
+        return alert.runModal() == .alertFirstButtonReturn
+    }
+
     // MARK: - Toast Notifications
 
     /// Show a brief error toast
