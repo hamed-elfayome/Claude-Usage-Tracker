@@ -1106,6 +1106,8 @@
 "claudecode.component_fable_description" = "سقف هفتگی Fable (مثلاً Fable: 24%)";
 "error.cli_login_expired" = "ورود ذخیره‌شدهٔ Claude Code برای %@ منقضی شده است";
 "error.cli_login_expired_suggestion" = "جابه‌جایی لغو شد و ورود فعلی شما دست‌نخورده ماند، بنابراین نشست‌های در حال اجرای Claude Code به کار خود ادامه می‌دهند. برای اتصال دوبارهٔ %@، در Claude Code با همان حساب دستور ‎/login را اجرا کنید و سپس دوباره به %@ جابه‌جا شوید.";
+"error.cli_login_expired_switch_prompt" = "ورود فعلی شما دست‌نخورده می‌ماند، بنابراین نشست‌های در حال اجرای Claude Code به کار خود ادامه می‌دهند. با این حال به %@ جابه‌جا شوید تا دوباره متصل شود؟ پس از جابه‌جایی، در Claude Code با حساب %@ دستور ‎/login را اجرا کنید.";
+"error.cli_login_expired_switch_anyway" = "با این حال جابه‌جا شو";
 "general.spend_target_title" = "هدف هزینهٔ ماهانه";
 "general.spend_target_subtitle" = "بودجهٔ شخصی اختیاری برای ماه. با تنظیم آن، نوار «هزینهٔ ماهانه» در پنجرهٔ بازشو نمایش داده می‌شود؛ اگر خالی بماند فقط مبلغ نشان داده می‌شود.";
 "general.spend_target_placeholder" = "مثلاً 1500";

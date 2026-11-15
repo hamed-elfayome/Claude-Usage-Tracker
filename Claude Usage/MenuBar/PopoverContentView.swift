@@ -301,7 +301,7 @@ struct ProfileSwitcherCompact: View {
             ForEach(profileManager.profiles) { profile in
                 Button(action: {
                     Task {
-                        await profileManager.activateProfile(profile.id)
+                        await profileManager.activateProfile(profile.id, interactive: true)
                     }
                 }) {
                     HStack(spacing: 8) {
@@ -377,7 +377,7 @@ struct ProfileSwitcherBar: View {
             ForEach(profileManager.profiles) { profile in
                 Button(action: {
                     Task {
-                        await profileManager.activateProfile(profile.id)
+                        await profileManager.activateProfile(profile.id, interactive: true)
                     }
                 }) {
                     HStack(spacing: 8) {
