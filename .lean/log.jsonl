@@ -40,3 +40,4 @@
 {"at": "2026-11-14T13:42:18", "agent": "claude@Kevins-MacBook-Air", "event": "handoff", "task": "MT-2", "note": "Paused by user (5-hour usage 53%). Round 0 review FAILed (grade B, verdict.md: 2 Must fix in AccountRules.swift: unknown"}
 {"at": "2026-11-15T04:28:05", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-2", "note": ""}
 {"at": "2026-11-15T05:10:56", "agent": "claude@Kevins-MacBook-Air", "event": "pass", "task": "MT-2", "note": "grade B: MT-2: grade B, 2 fix rounds (round 2 PASS; verdict.md restored from reviewer res"}
+{"at": "2026-11-15T05:11:02", "agent": "claude@Kevins-MacBook-Air", "event": "merge", "task": "MT-2"}
