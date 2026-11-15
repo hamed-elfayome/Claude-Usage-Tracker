@@ -41,3 +41,4 @@
 {"at": "2026-11-15T04:28:05", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-2", "note": ""}
 {"at": "2026-11-15T05:10:56", "agent": "claude@Kevins-MacBook-Air", "event": "pass", "task": "MT-2", "note": "grade B: MT-2: grade B, 2 fix rounds (round 2 PASS; verdict.md restored from reviewer res"}
 {"at": "2026-11-15T05:11:02", "agent": "claude@Kevins-MacBook-Air", "event": "merge", "task": "MT-2"}
+{"at": "2026-11-15T05:11:24", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-6", "note": ""}
