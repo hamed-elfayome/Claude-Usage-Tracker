@@ -72,3 +72,4 @@
 {"at": "2026-11-17T16:55:49", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "FU-2", "note": ""}
 {"at": "2026-11-17T17:36:47", "agent": "claude@Kevins-MacBook-Air", "event": "pass", "task": "FU-2", "note": "grade -: FU-2: grade A, 1 fix round(s), last r1 opus-max (fix)"}
 {"at": "2026-11-17T17:36:54", "agent": "claude@Kevins-MacBook-Air", "event": "merge", "task": "FU-2"}
+{"at": "2026-11-17T17:37:01", "agent": "claude@Kevins-MacBook-Air", "event": "lesson", "task": "FU-2", "note": "A single-flight gate that drops passes must check the tracker's live target again after it releases and re-run only for "}
