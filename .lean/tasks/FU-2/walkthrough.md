@@ -1,62 +1,67 @@
 ## Summary
-Added `LivePollGate`, which lets only one Team-tracking live fetch of the current pair run at a time, across the three tracker live-fetch sites in `MenuBarManager`.
-When a pass finds the gate busy, it skips the usage fetch and keeps the cached value, the same way the existing `.skip` does.
-A `defer` in the async body releases the gate after success, failure or cancellation. When tracking is turned off, the gate is reset.
+Fix round 1. The one-in-flight `LivePollGate` no longer loses a pass for a *different* pair: when a tracker live fetch ends, `endGatedLivePoll` frees the gate first and then, if the tracker's live target moved to another pair meanwhile, runs `refreshUsage()` once (all three sites).
+In single mode a tracker-owned reading reaches `usage`, the statusline cache and the icons only while its account is still the shown one (`showsFetchedReading`); its save and `ingestLive` are unchanged.
+A pass for the *same* pair is still dropped and is never re-run, so the fix adds no duplicate request.
 
 ## Changes
 - `Claude Usage/MenuBar/MenuBarManager.swift`:
-  - Added `struct LivePollGate` at the end of the file.
-  - Added `private var livePollGate`.
-  - Added the static helper `startGatedLivePoll(gate:release:poll:)`, which the background (Codex-shown) poll site uses. It is also the test seam.
-  - Gated the single-mode `.tracked` branch. When the gate is busy, that branch falls through to the skip path, and a `defer` in the `if !skipsUsage` block releases the gate.
-  - Gated the multi-mode current-account fetch. When the gate is busy, `liveOrgIds` is emptied and the current account is added to `usageSkip`. A `defer` in the loop's usage block releases the gate at the current account.
-  - Reset the gate in the disabled branch of `teamTrackingSettingChanged`.
-- `Claude UsageTests/MenuBarTeamWiringEdgeTests.swift`: added 4 tests (FU-2 section). They use a real tracker and a fake fetch that waits on a continuation.
+  - `static func endGatedLivePoll(fetched:tracker:release:rerun:)` (~221): calls `release`, then `rerun` once when `tracker.liveTarget()` is non-nil and its pair differs from `fetched` (profile id or org id). Pure seam the tests drive with a real tracker.
+  - `static func showsFetchedReading(trackerOwned:fetchedId:shownId:)` (~232): the stale-write rule, `!trackerOwned || fetchedId == shownId`.
+  - `private func endLivePoll(fetched:)` (~279): wires the seam to `livePollGate.end()` and `refreshUsage()`.
+  - The three gated sites now end through `endLivePoll` instead of a bare `end()`: background site release closure (~1529), single-mode `.tracked` defer (~1602), multi-mode loop defer (~1304).
+  - Single-mode `.tracked` Task (~1636-1667): `self.usage`, the session-limit `updateMenuBarDisplay`, the statusline cache and `updateAllStatusBarIcons()` run only when `isShown`. `saveClaudeUsage`, notifications, auto-switch and `ingestLive` for the fetched account are unchanged (verdict part 1).
+  - `ponytail` comment in `teamTrackingSettingChanged` (~330) now also names the re-run check; `LivePollGate` doc comment names the re-run.
+- `Claude UsageTests/MenuBarTeamWiringEdgeTests.swift`: section "FU-2 fix round 1": helpers `rerunningPass` (the background site's exact wiring: gate, poll, `endGatedLivePoll` whose re-run starts the pass again) and `passOnCurrentChanged` (the production `onCurrentChanged` → `refreshUsage()` hop), and 4 tests.
 
 ## Acceptance
+Packet criteria:
 1. Met. `testLivePollGateBeginEnd`.
-2. Met. `testSecondLivePassWhileFirstInFlightDoesNotFetch`: two passes start back to back, the second both before and after the first fetch is suspended, and the fetcher is called once. Once it ends, the next pass fetches.
-3. Met. `testLivePassFailureReleasesGate`: the fetch throws `URLError`, after which `gate.inFlight` is false and the next pass fetches.
-4. Met. The tracker-off and codex/legacy paths are not gated (`.legacy` is untouched, and multi mode only calls `begin()` when `plan.liveOrgIds` is not empty, which is empty with the tracker off). All existing tests pass unchanged.
-5. Met. `testToggleOffWhileInFlightThenOnFetchesAgain`. The test does the reset itself, the same way `teamTrackingSettingChanged` does. The production reset line is covered by reading only (see Tests).
-6. Met. `bash scripts/validate-clt.sh` gives "Executed 604 tests: 602 ok, 0 failed, 2 skipped" (the 2 skipped are the existing keychain tests), exit 0. `git diff --check` is clean.
+2. Met. `testSecondLivePassWhileFirstInFlightDoesNotFetch` (fetcher called once); `testSamePairPassWhileInFlightStaysDroppedWithoutRerun` (the dropped duplicate is not re-run after the release either).
+3. Met. `testLivePassFailureReleasesGate`; also cancel (`testCancelledLivePassReleasesGate`) and 429 (`testRateLimitedLivePassReleasesGateAndFetchesAfterBackoff`).
+4. Met. Tracker off: `.legacy` never calls `begin()` or `endLivePoll`, and `showsFetchedReading(trackerOwned: false, …)` is always true (last assertion of `testTrackedReadingReachesMenuBarOnlyWhileItsAccountIsShown`), so every write runs as before. All 610 pre-existing tests pass unchanged.
+5. Met. `testToggleOffWhileInFlightThenOnFetchesAgain`. With the tracker stopped, `liveTarget()` is nil, so an old fetch's end never re-runs.
+6. Met. `bash scripts/validate-clt.sh`: "Executed 614 tests: 612 ok, 0 failed, 2 skipped", exit 0.
+
+Verdict "Must fix":
+- Part 1 (stale write in single-mode `.tracked`): met. `testTrackedReadingReachesMenuBarOnlyWhileItsAccountIsShown` (helper with the real `menuBarProfile` rule and a real tracker: B shown, A made current mid-fetch, tracker stopped). The call site (~1639) is covered by reading.
+- Part 2 (re-run once after the release when the live target moved, all three sites): met. `testCurrentMovedWhileFetchInFlightFetchesNewPairOnceAfterRelease` (user `makeCurrent`) and `testLiveSampleSwitchFetchesNewPairOnceAfterRelease` (switch inside the fetch's own `ingestLive`), both through the background-site seam. The `.tracked` and multi-mode defers call the same `endLivePoll` (reading).
+- Keep the same-pair skip: met. `testSamePairPassWhileInFlightStaysDroppedWithoutRerun`.
 
 ## Flow
-- Inputs to the gate: the 30 s timer, `TeamTracker.onCurrentChanged`, and the toggle all call `refreshUsage()`.
-- Single mode:
-  - Codex shown: `backgroundLiveTarget` → `startGatedLivePoll(&livePollGate, release: end)` → Task { defer release; `pollLiveTarget` → fetch → `tracker.ingestLive` }. Returns nil when the gate is busy.
-  - Anthropic shown: `shownFetchPlan` → `.tracked` → `livePollGate.begin()`. If true: the usual fetch, and the Task's `if !skipsUsage` block ends with `end()` in a defer. If false: same as `.skip` (status and console billing still run, then `applyTeamLoginState`).
-- Multi mode: `multiFetchPlan` → when `liveOrgIds` is not empty, `begin()`. If false: the current account goes into `usageSkip` (its console billing still runs if it is selected). If true: the loop visits the current account first and its usage block's defer calls `end()`.
-- Toggle off: `teamTrackingSettingChanged` → `tracker.stop()` → `livePollGate = LivePollGate()`.
-- One gate is shared by all three sites, so a single-mode fetch and a multi-mode pass (for example after a display-mode switch) cannot overlap either.
+- Inputs: the 30 s timer, `TeamTracker.onCurrentChanged` and the toggle all call `refreshUsage()`.
+- Single mode, Codex shown: `backgroundLiveTarget` → `startGatedLivePoll(&livePollGate, release: endLivePoll(fetched))` → Task { defer release; `pollLiveTarget` → fetch → save → `tracker.ingestLive` }. If that sample moves the current pair, `onCurrentChanged` → `refreshUsage()` runs synchronously and finds the gate busy (dropped). Then release → `endGatedLivePoll`: `livePollGate.end()`, then `liveTarget()` ≠ fetched pair → `refreshUsage()` once, which now takes the gate.
+- Single mode, anthropic shown: `shownFetchPlan` → `.tracked` → `begin()` → Task: fetch → MainActor block { `isShown = showsFetchedReading(…, shownId: menuBarProfile?.id)`; if shown: `usage`, display rebuild, statusline, icons; always: save, notify, `ingestLive` } → end of the usage block: defer → `endLivePoll(fetched)`.
+- Multi mode: `multiFetchPlan` → `begin()` when `liveOrgIds` is not empty → the loop visits the current account first; its usage block's defer → `endLivePoll(fetched)`; a re-run starts a fresh `refreshAllSelectedProfiles()` pass.
+- Toggle off: `tracker.stop()` → `livePollGate = LivePollGate()`; an old fetch's end then sees `liveTarget()` nil and does not re-run.
 
 ## Tests
-- `Claude UsageTests/MenuBarTeamWiringEdgeTests.swift`, 4 new tests:
-  - `testLivePollGateBeginEnd` (AC1)
-  - `testSecondLivePassWhileFirstInFlightDoesNotFetch` (AC2)
-  - `testLivePassFailureReleasesGate` (AC3)
-  - `testToggleOffWhileInFlightThenOnFetchesAgain` (AC5)
-
-  AC2 and AC3 drive the production `startGatedLivePoll` together with `pollLiveTarget`.
-- Command: `bash scripts/validate-clt.sh`, result "Executed 604 tests: 602 ok, 0 failed, 2 skipped", exit 0. `git diff --check`: no output, exit 0.
-- Mutation check: I removed `guard !inFlight` from `begin()` and the `defer { release() }` from the helper. Result: `testLivePollGateBeginEnd` FAIL, `testLivePassFailureReleasesGate` FAIL, `testSecondLivePassWhileFirstInFlightDoesNotFetch` TIMEOUT. I restored the code afterwards.
-- Covered by reading only, because `MenuBarManager` cannot be built in tests (it uses `ProfileManager.shared` and `TeamTracker.shared` and needs a status bar):
-  - the `begin()` and `defer end()` in single-mode `.tracked` inside `refreshUsage()`
-  - the multi-mode `begin()` and the loop `defer` in `refreshAllSelectedProfiles()`
-  - the reset in `teamTrackingSettingChanged()`
-  - the call site of `startGatedLivePoll` in `refreshUsage()`
+- `Claude UsageTests/MenuBarTeamWiringEdgeTests.swift`, section "FU-2 fix round 1" (real `TeamTracker`, fake fetch parked on a continuation, a counter of fetches in flight):
+  - `testCurrentMovedWhileFetchInFlightFetchesNewPairOnceAfterRelease`: B parked, `makeCurrent(A)` → A's pass dropped; resume B → exactly one re-run, A fetched once, never two in flight, A's own release does not re-run, B's reading still saved.
+  - `testLiveSampleSwitchFetchesNewPairOnceAfterRelease`: OAuth-only B whose credential now names org-a; B's sample moves current to (B, org-a) inside `ingestLive` (pass dropped); after the release (B, org-a) is fetched once and sampled. Same profile, other org: pins the org-id half of the pair comparison.
+  - `testSamePairPassWhileInFlightStaysDroppedWithoutRerun`: a timer pass for B while B is in flight is dropped, and B's release starts nothing.
+  - `testTrackedReadingReachesMenuBarOnlyWhileItsAccountIsShown`: the stale-write rule over shown / moved / stopped, and today's path never filtered.
+- Command: `bash scripts/validate-clt.sh` → "Executed 614 tests: 612 ok, 0 failed, 2 skipped" (the 2 skips are the existing keychain tests), exit 0. `git diff --check` → no output, exit 0.
+- Mutation check (scratch copies, production file in the worktree untouched; trimmed suite = Fixtures + this test file):
+  - No re-run in `endGatedLivePoll` + `showsFetchedReading` always true: "29 tests: 26 ok, 3 failed": `testCurrentMovedWhileFetchInFlightFetchesNewPairOnceAfterRelease` (:673, 0 != 1), `testLiveSampleSwitchFetchesNewPairOnceAfterRelease` (:714), `testTrackedReadingReachesMenuBarOnlyWhileItsAccountIsShown`. The same-pair test stays green, as it should.
+  - Re-run whenever a target exists (same pair too): "26 ok, 3 failed": `testSamePairPassWhileInFlightStaysDroppedWithoutRerun` (:740), plus the two re-run tests (:682 and :722, 2 != 1 re-runs).
+  - Pair compared by profile id only: "28 ok, 1 failed": `testLiveSampleSwitchFetchesNewPairOnceAfterRelease` (:714).
+  - (The mutant runs end with exit 129 from the script's trailing `git diff --check` in a non-git scratch copy; the runner lines above are the test outcome.)
+- Covered by reading only (`MenuBarManager` needs `ProfileManager.shared`, `TeamTracker.shared` and a status bar): the `isShown` call site, the `endLivePoll` calls in the `.tracked` defer and the multi-mode loop defer, the reset in `teamTrackingSettingChanged`.
 
 ## Edge cases
-- Handled: a fetch that throws, or a Task that is cancelled, still releases the gate, because the release is in a `defer`.
-- Handled: in multi mode, the current account is always first in `plan.profiles` and never in `plan.usageSkip`, so the loop `defer` is always reached when the gate was taken. The `begin()` call comes after the empty-selection guard, so no early return can leave the gate held.
-- Handled: an unselected current account in multi mode with the gate busy gets neither a usage fetch nor console billing, as before.
-- Handled: in single mode, the `.legacy` early return (no credentials) happens before any `begin()`.
-- Not handled: after a toggle off/on while a fetch is in flight, the old fetch's `end()` can clear a newer fetch's gate, which allows at most one duplicate. This is a deliberate shortcut, see below.
-- Not handled: `onCurrentChanged` firing while the old pair's fetch is in flight skips the new current's fetch, so it waits until the next timer pass (up to 30 s). This is inherent to the one-in-flight spec.
+- Handled: current moved by the user, or by the fetch's own live sample, while a fetch is in flight → the release re-runs once (`endGatedLivePoll`). The release runs after `ingestLive`, so a switch the sample itself causes is seen.
+- Handled: same profile, other org → the pair is compared by profile id and org id, so it re-runs.
+- Handled: same pair → no re-run (no added request).
+- Handled: the new target backed off (429 on the same account) or the tracker stopped → `liveTarget()` nil → no re-run.
+- Handled: failure and cancellation still reach `endLivePoll` (defers).
+- Handled: the gate is freed before the re-run, so the re-run takes it; never two tracker fetches in flight (`maxFetchesInFlight == 1`).
+- Handled: B's late reading while A is shown is saved to B and given to the tracker, but not shown; B's threshold notification keeps B's own name and settings (unchanged).
+- Not handled: toggle off/on during a fetch: the old fetch's `end()` can clear a newer holder, and its re-run check can start one more pass (the `ponytail`).
+- Not handled (by design, same as before FU-2): a re-run repeats the whole pass, so in multi mode status and console billing run again and with Codex shown the Codex fetch runs again. That is the pass `onCurrentChanged` started at once before FU-2, so the request count matches pre-FU-2.
+- Not handled (pre-existing, outside FU-2): a `.legacy` fetch started with the tracker off still writes `usage` if tracking is turned on mid-fetch.
 
 ## Shortcuts
-- `ponytail:` in `teamTrackingSettingChanged` (disabled branch): the stale-`end()` issue described above. Upgrade path: `begin()` returns a generation token and `end(token)` only clears a matching generation.
+- `ponytail:` in `teamTrackingSettingChanged` (disabled branch): a stale `end()` after a toggle off/on can clear a newer fetch's gate, and its re-run check can start one more pass (one duplicate at most). Upgrade path: `begin()` returns a generation token, `end(token)` and the re-run check act only for a matching generation.
 
 ## Lessons
-- The app target uses `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`, so `Task {}` in `MenuBarManager` runs on the main actor and a `defer` that mutates `self.livePollGate` is safe. Pass a `var` struct property as `inout` only when the escaping closures that touch it run later, never synchronously during the call, or exclusivity traps.
-- Captured `var`s in `Task {}` closures should be turned into `let` copies before the Task (as `liveOrgIds`/`usageSkip` are here).
+- `TeamTracker.onCurrentChanged` fires synchronously inside `ingestLive` (and `makeCurrent`), so any pass it starts while a gated fetch is still running always finds the gate held. A gate that drops passes must re-check the tracker's live target after it releases, or the new current account waits a full timer interval.

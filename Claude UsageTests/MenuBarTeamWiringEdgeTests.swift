@@ -768,4 +768,117 @@ final class MenuBarTeamWiringEdgeTests: XCTestCase {
         XCTAssertFalse(MenuBarManager.showsFetchedReading(trackerOwned: true, fetchedId: b.id, shownId: nil))
         XCTAssertTrue(MenuBarManager.showsFetchedReading(trackerOwned: false, fetchedId: b.id, shownId: a.id))
     }
+
+    // MARK: FU-2 tester, retest round 1 (re-run edge cases the fix round's tests leave open)
+
+    /// B parked, then A made current through the production onCurrentChanged hop (dropped).
+    private func movedWhileInFlight() async throws -> (a: Profile, b: Profile, first: Task<Void, Never>?) {
+        gate = LivePollGate()
+        let a = member("A", org: "org-a"), b = member("B", org: "org-b")
+        let c = Profile(name: "C", provider: .codex)
+        build([a, b], current: PairRef(profileId: b.id, orgId: "org-b"))
+        await tracker.tick(now: t0)
+        passOnCurrentChanged(c)
+        let first = rerunningPass(c)
+        XCTAssertNotNil(first)
+        try await waitParked(1)
+        tracker.makeCurrent(PairRef(profileId: a.id, orgId: "org-a"))
+        XCTAssertEqual(changePasses.map { $0 == nil }, [true])
+        return (a, b, first)
+    }
+
+    /// The re-run must not depend on B's fetch succeeding: a timeout, a cancellation and a 429 on B all
+    /// end in the release path, and A (another account, not backed off) is fetched once after it.
+    func testMovedWhileInFlightRerunsNewPairAfterFailedFetch() async throws {
+        let failures: [(String, Error)] = [
+            ("timeout", URLError(.timedOut)),
+            ("cancelled", CancellationError()),
+            ("429", AppError(code: .apiRateLimited, message: "test", technicalDetails: "Retry-After: 120")),
+        ]
+        for (name, error) in failures {
+            reruns = []; changePasses = []; startedPairs = []; gatedFetched = []; parked = []
+            fetchesInFlight = 0; maxFetchesInFlight = 0
+            let saved = store.savedUsage.count
+            let (a, b, first) = try await movedWhileInFlight()
+            resumeAll(.failure(error))
+            await first?.value
+            XCTAssertEqual(reruns.count, 1, name)
+            XCTAssertNotNil(reruns.first ?? nil, "\(name): the re-run found the gate busy")
+            try await waitParked(1)
+            XCTAssertEqual(gatedFetched, [b.id, a.id], name)
+            XCTAssertEqual(maxFetchesInFlight, 1, name)
+            XCTAssertEqual(store.savedUsage.count, saved, name)          // B's failure saved nothing
+            resumeAll(.success(try usage(30)))
+            await (reruns.first ?? nil)?.value
+            XCTAssertEqual(reruns.count, 1, name)
+            XCTAssertFalse(gate.inFlight, name)
+        }
+    }
+
+    /// The current pair moves away and back while B is in flight: at the release the target is B again,
+    /// the pair just fetched, so nothing re-runs (the fix must not add a duplicate request for B).
+    func testMovedAwayAndBackWhileInFlightDoesNotRerun() async throws {
+        let (_, b, first) = try await movedWhileInFlight()
+        tracker.makeCurrent(PairRef(profileId: b.id, orgId: "org-b"))
+        XCTAssertEqual(changePasses.map { $0 == nil }, [true, true])   // both passes dropped
+        resumeAll(.success(try usage(20)))
+        await first?.value
+        XCTAssertTrue(reruns.isEmpty)
+        try await Task.sleep(nanoseconds: 20_000_000)
+        XCTAssertEqual(gatedFetched, [b.id])
+        XCTAssertTrue(parked.isEmpty)
+        XCTAssertFalse(gate.inFlight)
+    }
+
+    /// Tracking turned off while B is in flight (after A was made current): the release still frees the
+    /// gate, and with no live target it starts nothing.
+    func testTrackerStoppedWhileInFlightReleasesWithoutRerun() async throws {
+        let (_, b, first) = try await movedWhileInFlight()
+        tracker.stop()
+        resumeAll(.success(try usage(20)))
+        await first?.value
+        XCTAssertTrue(reruns.isEmpty)
+        XCTAssertFalse(gate.inFlight)
+        try await Task.sleep(nanoseconds: 20_000_000)
+        XCTAssertEqual(gatedFetched, [b.id])
+        XCTAssertTrue(parked.isEmpty)
+    }
+
+    /// A chain: while A's re-run is in flight the current moves back to B. A's release re-runs B once,
+    /// and B's release (same pair) ends the chain. Never two fetches in flight.
+    func testRerunItselfRerunsWhenCurrentMovesAgain() async throws {
+        let (a, b, first) = try await movedWhileInFlight()
+        resumeAll(.success(try usage(20)))
+        await first?.value
+        try await waitParked(1)                                    // A's re-run fetch
+        tracker.makeCurrent(PairRef(profileId: b.id, orgId: "org-b"))
+        XCTAssertEqual(changePasses.map { $0 == nil }, [true, true])   // dropped: A holds the gate
+        resumeAll(.success(try usage(30)))
+        await (reruns.first ?? nil)?.value
+        XCTAssertEqual(reruns.count, 2)
+        XCTAssertNotNil(reruns.last ?? nil)
+        try await waitParked(1)
+        XCTAssertEqual(gatedFetched, [b.id, a.id, b.id])
+        resumeAll(.success(try usage(40)))
+        await (reruns.last ?? nil)?.value
+        XCTAssertEqual(reruns.count, 2)
+        XCTAssertEqual(maxFetchesInFlight, 1)
+        XCTAssertFalse(gate.inFlight)
+    }
+
+    /// `endGatedLivePoll` frees the gate before the re-run (the re-run must be able to take it), and
+    /// calls `release` exactly once whether or not it re-runs.
+    func testEndGatedLivePollReleasesFirstAndOnce() async throws {
+        let a = member("A", org: "org-a"), b = member("B", org: "org-b")
+        build([a, b], current: PairRef(profileId: a.id, orgId: "org-a"))
+        await tracker.tick(now: t0)
+        var calls: [String] = []
+        MenuBarManager.endGatedLivePoll(fetched: PairRef(profileId: b.id, orgId: "org-b"), tracker: tracker,
+                                        release: { calls.append("release") }, rerun: { calls.append("rerun") })
+        XCTAssertEqual(calls, ["release", "rerun"])
+        calls = []
+        MenuBarManager.endGatedLivePoll(fetched: PairRef(profileId: a.id, orgId: "org-a"), tracker: tracker,
+                                        release: { calls.append("release") }, rerun: { calls.append("rerun") })
+        XCTAssertEqual(calls, ["release"])
+    }
 }

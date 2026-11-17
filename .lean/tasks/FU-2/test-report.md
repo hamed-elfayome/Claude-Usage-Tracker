@@ -1,24 +1,25 @@
 ## Tester result
-All green.
+All green (retest round 1).
 
 ## Suites run
-- `bash scripts/validate-clt.sh` gives "Executed 610 tests: 608 ok, 0 failed, 2 skipped" and exits 0. The 2 skipped are the existing keychain tests. The builder's run had 604 tests; this run adds the 6 new ones.
-- `git diff --check` prints nothing and exits 0.
-- Mutation check (production file restored afterwards, verified with `cmp`): I made two changes in `startGatedLivePoll`. First, the busy branch calls `release()`. Second, the Task calls `release()` before `await poll()` instead of in a `defer`. With both in place, `testGatedLivePollBusyRunsNothingAndKeepsHolderGate` FAIL (:502, 1 != 0), `testGatedLivePollReleasesOnceAfterPollReturns` FAIL (:518, 1 != 0) and `testCancelledLivePassReleasesGate` FAIL (:541). After that, the run stopped with "Fatal access conflict" in one of the builder's tests, because the mutated busy branch calls `release()` while the `inout` gate is still being accessed.
+- `bash scripts/validate-clt.sh` → "Executed 619 tests: 617 ok, 0 failed, 2 skipped", exit 0 (the 2 skips are the existing keychain tests; 614 from the fix round + 5 new).
+- `git diff --check` → no output, exit 0.
+- Mutation check (scratch copies of the worktree; production file in the worktree untouched; the mutant runs exit 129 only from the script's trailing `git diff --check` outside a git repo):
+  - m1, `endGatedLivePoll` calls `rerun` before `release`: "619 tests: 612 ok, 5 failed", including the new `testEndGatedLivePollReleasesFirstAndOnce`, `testMovedWhileInFlightRerunsNewPairAfterFailedFetch` and `testRerunItselfRerunsWhenCurrentMovesAgain`.
+  - m2, re-run whenever a target exists (same pair too): "610 ok, 7 failed", including the new `testMovedAwayAndBackWhileInFlightDoesNotRerun`, `testEndGatedLivePollReleasesFirstAndOnce` and `testRerunItselfRerunsWhenCurrentMovesAgain`.
+  - m3, no re-run: "611 ok, 5 failed", including the new `testMovedWhileInFlightRerunsNewPairAfterFailedFetch`, `testRerunItselfRerunsWhenCurrentMovesAgain` and `testEndGatedLivePollReleasesFirstAndOnce`.
 
 ## New tests
-File: `Claude UsageTests/MenuBarTeamWiringEdgeTests.swift`, section "FU-2 tester", 6 tests.
-- `testGatedLivePollBusyRunsNothingAndKeepsHolderGate`: a busy pass returns nil. It never runs `poll` and never calls `release`, so it cannot free the gate that the in-flight fetch holds.
-- `testGatedLivePollReleasesOnceAfterPollReturns`: the gate stays held for the whole time the fetch is suspended. `release` runs exactly once, after `poll` returns.
-- `testCancelledLivePassReleasesGate`: the pass Task is cancelled while the real-tracker fetch is suspended (`Task.sleep` throws `CancellationError`). The gate is released, nothing is saved, and the next pass fetches.
-- `testRateLimitedLivePassReleasesGateAndFetchesAfterBackoff`: this is the case the packet was written for. A 429 (`AppError .apiRateLimited`, Retry-After 120) still releases the gate. During the backoff the pass has no target and does not touch the gate. After the backoff ends, the next pass fetches.
-- `testBackgroundSiteNeverTakesGateWithoutTarget`: covers AC4 for the background site. With an anthropic subject, or with the tracker off, there is no target, no gate is taken and no fetch runs. With the tracker off, multi-mode `liveOrgIds` is empty, so the multi site never calls `begin()`.
-- `testMultiFetchPlanLiveAccountIsReleasable`: a table over 6 selection shapes (empty, current only, current last or middle, Codex mixed in, current unselected). In every shape, `liveOrgIds` has exactly the current account as its key, that account is `profiles[0]` and appears only once, and it is never in `usageSkip`. This pins the release invariant that arch-review.md says would break silently.
+The builder's fix round already covers each verdict "Tests to add" line: `testCurrentMovedWhileFetchInFlightFetchesNewPairOnceAfterRelease`, `testLiveSampleSwitchFetchesNewPairOnceAfterRelease`, `testSamePairPassWhileInFlightStaysDroppedWithoutRerun` and `testTrackedReadingReachesMenuBarOnlyWhileItsAccountIsShown`. I checked that each one asserts what its verdict line asks for. The tests below cover the edges of those lines that the builder left open.
+File: `Claude UsageTests/MenuBarTeamWiringEdgeTests.swift`, section "FU-2 tester, retest round 1". Every test drives the background-site seam (`startGatedLivePoll` + `endGatedLivePoll`) with a real `TeamTracker` and the production `onCurrentChanged` → pass hop. There are 5 tests.
+- `testMovedWhileInFlightRerunsNewPairAfterFailedFetch`: a table over three ways B's fetch can fail after A was made current: timeout, `CancellationError`, and 429 (`Retry-After: 120`). In every case A is re-run exactly once, the re-run takes the gate, B's failure saves nothing, there is never more than one fetch in flight, and the gate ends free. The 429 row matters because a backoff on B must not suppress A's fetch.
+- `testMovedAwayAndBackWhileInFlightDoesNotRerun`: while B is in flight, the current pair moves A → B. Both passes are dropped, and at release the target is the fetched pair again, so nothing re-runs (no duplicate B request).
+- `testTrackerStoppedWhileInFlightReleasesWithoutRerun`: A is made current, then tracking is stopped while B is in flight. The release frees the gate and starts nothing.
+- `testRerunItselfRerunsWhenCurrentMovesAgain`: a chain. While A's re-run is in flight, the current pair moves back to B, and A's release re-runs B once. B's own release ends the chain. Fetch order is [B, A, B], and there is never more than one fetch in flight.
+- `testEndGatedLivePollReleasesFirstAndOnce`: pure ordering. The calls run as `release` and then `rerun` when the target moved, and only `release` for the same pair. Release runs exactly once either way.
 
 ## Bugs
 None found.
-
-Notes (by reading the code, not bugs against the spec):
-- Live-sample switch delays the new current's fetch. In `TeamTracker.swift:439`, `apply` calls `moveCurrent`, and that calls `onCurrentChanged` synchronously inside `ingestLive`. All three gated sites call `ingestLive` while they still hold the gate. So when a live sample causes a switch, the `refreshUsage()` that `onCurrentChanged` starts always finds the gate busy, and the new current account waits for the next 30 s tick. The walkthrough lists the general case as "Not handled". This case happens every time, not just in a rare race. If that matters, the fix is a per-pair gate or releasing the gate before `ingestLive`.
-- The stale `end()` after a toggle off/on is the documented `ponytail` shortcut. I did not test it.
-- The single-mode `.tracked` site, the multi-mode loop `defer` and the reset in `teamTrackingSettingChanged` can still only be checked by reading the code. I read them: every `begin()` that succeeds reaches its `defer`.
+Notes, from reading the code only (both are already documented, so I do not count them as bugs):
+- The `.tracked` defer, the multi-mode loop defer, the `isShown` call site and the toggle reset are still covered only by reading, as the walkthrough states. I read them: each successful `begin()` reaches `endLivePoll` with the pair it fetched.
+- The `ponytail` problem still applies. After the toggle goes off and on, a stale `end()` can clear a newer holder, and its re-run check can start one extra pass. That is one duplicate at most, it is documented, and I did not test it.
