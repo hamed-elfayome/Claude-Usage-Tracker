@@ -112,10 +112,13 @@ struct TeamsSectionView: View {
                             .foregroundColor(.accentColor)
                     }
                 }
-                Text(Self.detail(row, now: now).joined(separator: " · "))
-                    .font(.system(size: 10))
-                    .foregroundColor(.secondary)
-                    .lineLimit(2)
+                let detailText = Self.detail(row, now: now).joined(separator: " · ")
+                if !detailText.isEmpty {
+                    Text(detailText)
+                        .font(.system(size: 10))
+                        .foregroundColor(.secondary)
+                        .lineLimit(2)
+                }
             }
             Spacer(minLength: 0)
             if Self.canDelete(row) {
@@ -154,5 +157,13 @@ struct TeamsSectionView: View {
     static func defaultHistoryKey(for profile: Profile) -> String? {
         guard let orgs = profile.orgTracking?.orgs, orgs.count > 1 else { return nil }
         return (orgs.first { $0.orgId == profile.organizationId } ?? orgs[0]).historyKey
+    }
+
+    /// `selected` if it is still a live choice, else the default; nil when the picker is hidden.
+    static func effectiveHistoryKey(selected: String?, profile: Profile) -> String? {
+        if let selected, historyChoices(for: profile).contains(where: { $0.key == selected }) {
+            return selected
+        }
+        return defaultHistoryKey(for: profile)
     }
 }

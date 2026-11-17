@@ -105,7 +105,7 @@ struct UsageHistoryView: View {
                     .font(.system(size: 12))
                     .foregroundColor(.secondary)
                 Picker("", selection: Binding(
-                    get: { selectedHistoryKey ?? TeamsSectionView.defaultHistoryKey(for: profile) ?? "" },
+                    get: { TeamsSectionView.effectiveHistoryKey(selected: selectedHistoryKey, profile: profile) ?? "" },
                     set: { selectedHistoryKey = $0 }
                 )) {
                     ForEach(choices, id: \.key) { Text($0.label).tag($0.key) }
@@ -119,8 +119,12 @@ struct UsageHistoryView: View {
 
     /// nil = today's UUID-keyed calls (<= 1 pair or no orgTracking).
     private func activeHistoryKey(_ profile: Profile) -> String? {
-        guard TeamsSectionView.historyChoices(for: profile).isEmpty == false else { return nil }
-        return selectedHistoryKey ?? TeamsSectionView.defaultHistoryKey(for: profile)
+        let key = TeamsSectionView.effectiveHistoryKey(selected: selectedHistoryKey, profile: profile)
+        if let selected = selectedHistoryKey, selected != key {
+            // Stale (deleted pair): drop it; onChange reloads with the default key.
+            DispatchQueue.main.async { selectedHistoryKey = nil }
+        }
+        return key
     }
 
     // MARK: - Billing Section

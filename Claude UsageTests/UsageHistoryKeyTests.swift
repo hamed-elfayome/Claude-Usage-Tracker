@@ -93,4 +93,36 @@ final class UsageHistoryKeyTests: XCTestCase {
         XCTAssertEqual(service.getWeeklySnapshots(forKey: "kr").count, 1)
         XCTAssertTrue(exists("usageHistory_kr.json"))
     }
+
+    // MARK: FU-3 effectiveHistoryKey
+
+    private func org(_ id: String) -> TrackedOrg {
+        TrackedOrg(orgId: id, name: id, status: .member, historyKey: "k-\(id)", seat: nil, lastUsage: nil,
+                   lastSampleAt: nil, firstSeenAt: Date(), lastSeenInListAt: nil, missingFromListCount: 0,
+                   lastMembershipFailureAt: nil, pending: nil, baselineStartedAt: Date(), roundReading: nil)
+    }
+
+    private func profile(_ ids: [String], followed: String) -> Profile {
+        var st = OrgTrackingState.empty
+        st.orgs = ids.map(org)
+        return Profile(name: "P", organizationId: followed, orgTracking: st)
+    }
+
+    func testDeletedSelectedKeyFallsBackToDefault() {
+        // {A, B} with B selected, then B deleted (A and C remain).
+        let p = profile(["A", "C"], followed: "A")
+        XCTAssertEqual(TeamsSectionView.effectiveHistoryKey(selected: "k-B", profile: p), "k-A")
+    }
+
+    func testValidSelectedKeyIsKept() {
+        let p = profile(["A", "B"], followed: "A")
+        XCTAssertEqual(TeamsSectionView.effectiveHistoryKey(selected: "k-B", profile: p), "k-B")
+        XCTAssertEqual(TeamsSectionView.effectiveHistoryKey(selected: nil, profile: p), "k-A")
+    }
+
+    func testSinglePairReturnsNil() {
+        let p = profile(["A"], followed: "A")
+        XCTAssertNil(TeamsSectionView.effectiveHistoryKey(selected: "k-B", profile: p))
+        XCTAssertNil(TeamsSectionView.effectiveHistoryKey(selected: "k-A", profile: p))
+    }
 }
