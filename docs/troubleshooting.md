@@ -29,6 +29,14 @@ Update to 3.4.0 or later, then sign in again under **Settings → Claude.ai**.
 
 The profile's saved Claude Code login had expired. Run `/login` in Claude Code with that account, then switch to the profile again. See [Profiles](profiles.md).
 
+## It says Log in again
+
+The saved login for that account stopped working. Sign in to claude.ai again for that account in **Settings**, or run `claude /login` with that account. The app never logs in for you.
+
+## The wrong account is shown
+
+Open the Teams list and click **Make current** on the right account. Detection needs your first message on the new account, so it can take up to 5 minutes. See [Profiles](profiles.md).
+
 ## Statusline
 
 - **Nothing appears:** restart Claude Code after clicking **Apply**, and check that `~/.claude/settings.json` has a `statusLine` entry.
