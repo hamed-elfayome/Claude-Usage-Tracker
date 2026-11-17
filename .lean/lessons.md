@@ -9,3 +9,4 @@
 - A test that claims "skipped because of condition C" must fail when you delete the line that sets up C. Run that one mutation before handover. (MT-6, claude@Kevins-MacBook-Air, 2026-11-17)
 - TeamTracker never probes the current pair, so any rule that changes which profile the single-mode loop shows must still fetch liveTarget() every pass; prove it with a real tracker and a probe round where a small riser would otherwise take over. (MT-7, claude@Kevins-MacBook-Air, 2026-11-17)
 - When you change a format specifier, check that each call site's argument type matches the new specifier. (FU-3, claude@Kevins-MacBook-Air, 2026-11-17)
+- Test clocks run ahead of the wall clock, so any rule that compares ClaudeUsage.lastUpdated (stamped with Date()) with the tracker's now needs fakes to set lastUpdated explicitly. Packets should also list the fixture files they expect to change. (FU-1, claude@Kevins-MacBook-Air, 2026-11-17)
