@@ -1,0 +1,75 @@
+{"at": "2026-11-14T06:27:10", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-1", "note": ""}
+{"at": "2026-11-14T06:27:30", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-4", "note": ""}
+{"at": "2026-11-14T06:27:54", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-5", "note": ""}
+{"at": "2026-11-14T06:28:48", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-1", "note": ""}
+{"at": "2026-11-14T06:29:08", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-4", "note": ""}
+{"at": "2026-11-14T06:29:27", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-5", "note": ""}
+{"at": "2026-11-14T06:51:59", "agent": "claude@Kevins-MacBook-Air", "event": "pass", "task": "MT-5", "note": "grade -: MT-5: grade B, 2 fix round(s), last r2 sonnet-high (fix)"}
+{"at": "2026-11-14T06:52:05", "agent": "claude@Kevins-MacBook-Air", "event": "merge", "task": "MT-5"}
+{"at": "2026-11-14T06:52:14", "agent": "claude@Kevins-MacBook-Air", "event": "lesson", "task": "MT-5", "note": "Clamp Double-to-UInt64 conversions (timeouts) so .infinity or huge values do not trap."}
+{"at": "2026-11-14T10:00:53", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-0", "note": ""}
+{"at": "2026-11-14T10:04:49", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-0", "note": ""}
+{"at": "2026-11-14T11:04:13", "agent": "claude@Kevins-MacBook-Air", "event": "pass", "task": "MT-0", "note": "grade -: MT-0: grade B, 1 fix round(s), last r1 sonnet-medium (fix)"}
+{"at": "2026-11-14T11:04:19", "agent": "claude@Kevins-MacBook-Air", "event": "merge", "task": "MT-0"}
+{"at": "2026-11-14T11:04:25", "agent": "claude@Kevins-MacBook-Air", "event": "lesson", "task": "MT-0", "note": "Test runners that never yield the main actor between tests expose races with unawaited @MainActor Tasks; pause between t"}
+{"at": "2026-11-14T11:04:34", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-1", "note": ""}
+{"at": "2026-11-14T11:04:51", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-4", "note": ""}
+{"at": "2026-11-14T11:21:26", "agent": "claude@Kevins-MacBook-Air", "event": "pass", "task": "MT-1", "note": "grade -: MT-1: grade B, 1 fix round(s), last r1 sonnet-medium (fix, resumed)"}
+{"at": "2026-11-14T11:21:31", "agent": "claude@Kevins-MacBook-Air", "event": "merge", "task": "MT-1"}
+{"at": "2026-11-14T11:21:39", "agent": "claude@Kevins-MacBook-Air", "event": "lesson", "task": "MT-1", "note": "Grep for an existing method of the same name before adding one to a large class; a duplicate declaration blocks every bu"}
+{"at": "2026-11-14T11:21:50", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-2", "note": ""}
+{"at": "2026-11-14T11:22:08", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-3", "note": ""}
+{"at": "2026-11-14T11:32:43", "agent": "claude@Kevins-MacBook-Air", "event": "pass", "task": "MT-4", "note": "grade -: MT-4: grade B, 2 fix round(s), last r2 sonnet-high (fix)"}
+{"at": "2026-11-14T11:32:49", "agent": "claude@Kevins-MacBook-Air", "event": "merge", "task": "MT-4"}
+{"at": "2026-11-14T11:32:57", "agent": "claude@Kevins-MacBook-Air", "event": "lesson", "task": "MT-4", "note": "Optional hint fields in decoded API payloads need a lenient try? decode, because a String? field still throws on a type "}
+{"at": "2026-11-14T11:33:31", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-2", "note": ""}
+{"at": "2026-11-14T11:33:48", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-3", "note": ""}
+{"at": "2026-11-14T11:57:34", "agent": "claude@Kevins-MacBook-Air", "event": "pass", "task": "MT-3", "note": "grade -: MT-3: grade A, 1 fix round(s), last r1 sonnet-medium (fix)"}
+{"at": "2026-11-14T11:57:40", "agent": "claude@Kevins-MacBook-Air", "event": "merge", "task": "MT-3"}
+{"at": "2026-11-14T11:57:48", "agent": "claude@Kevins-MacBook-Air", "event": "lesson", "task": "MT-3", "note": "TeamEvent.groupMove title counts movers only (moves.count), not notMoved or unchecked peers."}
+{"at": "2026-11-14T11:57:59", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-8", "note": ""}
+{"at": "2026-11-14T12:02:08", "agent": "claude@Kevins-MacBook-Air", "event": "handoff", "task": "MT-2", "note": "Built; Opus arch re-review PASS after one FIX round (round 1 spent). Code uncommitted in wt/MT-2. Resume in lean-swarm w"}
+{"at": "2026-11-14T12:02:17", "agent": "claude@Kevins-MacBook-Air", "event": "handoff", "task": "MT-8", "note": "Claimed; packet cut, builder stopped before writing code. Rebuild from scratch (no resume flag)."}
+{"at": "2026-11-14T12:22:36", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-2", "note": ""}
+{"at": "2026-11-14T12:22:47", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-8", "note": ""}
+{"at": "2026-11-14T12:23:39", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-2", "note": ""}
+{"at": "2026-11-14T12:24:02", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-8", "note": ""}
+{"at": "2026-11-14T13:00:58", "agent": "claude@Kevins-MacBook-Air", "event": "pass", "task": "MT-8", "note": "grade -: MT-8: grade A, 0 fix round(s)"}
+{"at": "2026-11-14T13:01:04", "agent": "claude@Kevins-MacBook-Air", "event": "merge", "task": "MT-8"}
+{"at": "2026-11-14T13:01:16", "agent": "claude@Kevins-MacBook-Air", "event": "lesson", "task": "MT-8", "note": "A view that stores a selected key must re-check it against the live choice list on every use, because a removed team oth"}
+{"at": "2026-11-14T13:42:18", "agent": "claude@Kevins-MacBook-Air", "event": "handoff", "task": "MT-2", "note": "Paused by user (5-hour usage 53%). Round 0 review FAILed (grade B, verdict.md: 2 Must fix in AccountRules.swift: unknown"}
+{"at": "2026-11-15T04:28:05", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-2", "note": ""}
+{"at": "2026-11-15T05:10:56", "agent": "claude@Kevins-MacBook-Air", "event": "pass", "task": "MT-2", "note": "grade B: MT-2: grade B, 2 fix rounds (round 2 PASS; verdict.md restored from reviewer res"}
+{"at": "2026-11-15T05:11:02", "agent": "claude@Kevins-MacBook-Air", "event": "merge", "task": "MT-2"}
+{"at": "2026-11-15T05:11:24", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-6", "note": ""}
+{"at": "2026-11-15T05:34:26", "agent": "claude@Kevins-MacBook-Air", "event": "handoff", "task": "MT-6", "note": "Paused by user (5-hour usage 70%). Built (sonnet-low); Opus arch review r1 = FIX (1 must-fix in .lean/tasks/MT-6/arch-re"}
+{"at": "2026-11-15T05:34:32", "agent": "claude@Kevins-MacBook-Air", "event": "lesson", "task": "MT-2", "note": "A reviewer that returns PASS must also rewrite verdict.md; the merge worker reads that file, so a stale FAIL left there "}
+{"at": "2026-11-16T11:01:00", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-6", "note": ""}
+{"at": "2026-11-17T09:22:46", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-6", "note": ""}
+{"at": "2026-11-17T10:01:46", "agent": "claude@Kevins-MacBook-Air", "event": "pass", "task": "MT-6", "note": "grade -: MT-6: grade B, 2 fix round(s), last r2 opus-max (fix)"}
+{"at": "2026-11-17T10:01:53", "agent": "claude@Kevins-MacBook-Air", "event": "merge", "task": "MT-6"}
+{"at": "2026-11-17T10:02:02", "agent": "claude@Kevins-MacBook-Air", "event": "lesson", "task": "MT-6", "note": "A test that claims \"skipped because of condition C\" must fail when you delete the line that sets up C. Run that one muta"}
+{"at": "2026-11-17T10:02:13", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-7", "note": ""}
+{"at": "2026-11-17T10:02:47", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-7", "note": ""}
+{"at": "2026-11-17T11:45:47", "agent": "claude@Kevins-MacBook-Air", "event": "handoff", "task": "MT-7", "note": "Paused by user. Built (opus-medium); arch PASS; round-1 fix done; round-1 review FAIL (see .lean/tasks/MT-7/verdict.md: "}
+{"at": "2026-11-17T11:55:02", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-7", "note": ""}
+{"at": "2026-11-17T13:12:00", "agent": "claude@Kevins-MacBook-Air", "event": "pass", "task": "MT-7", "note": "grade -: MT-7: grade B, 2 fix round(s), last r2 opus-max (fix)"}
+{"at": "2026-11-17T13:12:11", "agent": "claude@Kevins-MacBook-Air", "event": "merge", "task": "MT-7"}
+{"at": "2026-11-17T13:12:23", "agent": "claude@Kevins-MacBook-Air", "event": "lesson", "task": "MT-7", "note": "TeamTracker never probes the current pair, so any rule that changes which profile the single-mode loop shows must still "}
+{"at": "2026-11-17T13:12:41", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-9", "note": ""}
+{"at": "2026-11-17T13:23:51", "agent": "claude@Kevins-MacBook-Air", "event": "pass", "task": "MT-9", "note": "grade -: MT-9: grade A, 0 fix round(s)"}
+{"at": "2026-11-17T13:23:57", "agent": "claude@Kevins-MacBook-Air", "event": "merge", "task": "MT-9"}
+{"at": "2026-11-17T15:26:58", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "FU-1", "note": ""}
+{"at": "2026-11-17T15:27:18", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "FU-2", "note": ""}
+{"at": "2026-11-17T15:27:37", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "FU-3", "note": ""}
+{"at": "2026-11-17T15:40:19", "agent": "claude@Kevins-MacBook-Air", "event": "pass", "task": "FU-3", "note": "grade -: FU-3: grade A, 0 fix round(s)"}
+{"at": "2026-11-17T15:40:25", "agent": "claude@Kevins-MacBook-Air", "event": "merge", "task": "FU-3"}
+{"at": "2026-11-17T15:40:37", "agent": "claude@Kevins-MacBook-Air", "event": "lesson", "task": "FU-3", "note": "When you change a format specifier, check that each call site's argument type matches the new specifier."}
+{"at": "2026-11-17T16:24:27", "agent": "claude@Kevins-MacBook-Air", "event": "pass", "task": "FU-1", "note": "grade -: FU-1: grade A, 0 fix round(s)"}
+{"at": "2026-11-17T16:24:33", "agent": "claude@Kevins-MacBook-Air", "event": "merge", "task": "FU-1"}
+{"at": "2026-11-17T16:24:42", "agent": "claude@Kevins-MacBook-Air", "event": "lesson", "task": "FU-1", "note": "Test clocks run ahead of the wall clock, so any rule that compares ClaudeUsage.lastUpdated (stamped with Date()) with th"}
+{"at": "2026-11-17T16:28:20", "agent": "claude@Kevins-MacBook-Air", "event": "handoff", "task": "FU-2", "note": "Paused by user mid fix r1 (opus-max). Review r0 FAIL grade C: the bool gate drops refreshUsage() for a NEW current pair "}
+{"at": "2026-11-17T16:55:49", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "FU-2", "note": ""}
+{"at": "2026-11-17T17:36:47", "agent": "claude@Kevins-MacBook-Air", "event": "pass", "task": "FU-2", "note": "grade -: FU-2: grade A, 1 fix round(s), last r1 opus-max (fix)"}
+{"at": "2026-11-17T17:36:54", "agent": "claude@Kevins-MacBook-Air", "event": "merge", "task": "FU-2"}
+{"at": "2026-11-17T17:37:01", "agent": "claude@Kevins-MacBook-Air", "event": "lesson", "task": "FU-2", "note": "A single-flight gate that drops passes must check the tracker's live target again after it releases and re-run only for "}

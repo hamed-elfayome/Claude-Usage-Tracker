@@ -29,6 +29,38 @@ extension ClaudeAPIService {
         let uuid: String
         let name: String
         let capabilities: [String]
+        var rateLimitTier: String? = nil
+        var billingType: String? = nil
+        var ravenType: String? = nil
+
+        enum CodingKeys: String, CodingKey {
+            case uuid, name, capabilities
+            case rateLimitTier = "rate_limit_tier"
+            case billingType = "billing_type"
+            case ravenType = "raven_type"
+        }
+
+        init(uuid: String, name: String, capabilities: [String],
+             rateLimitTier: String? = nil, billingType: String? = nil, ravenType: String? = nil) {
+            self.uuid = uuid
+            self.name = name
+            self.capabilities = capabilities
+            self.rateLimitTier = rateLimitTier
+            self.billingType = billingType
+            self.ravenType = ravenType
+        }
+
+        /// The tier fields are optional hints: a value of the wrong type becomes nil
+        /// instead of failing the whole organization list.
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            uuid = try c.decode(String.self, forKey: .uuid)
+            name = try c.decode(String.self, forKey: .name)
+            capabilities = try c.decode([String].self, forKey: .capabilities)
+            rateLimitTier = try? c.decode(String.self, forKey: .rateLimitTier)
+            billingType = try? c.decode(String.self, forKey: .billingType)
+            ravenType = try? c.decode(String.self, forKey: .ravenType)
+        }
     }
 
     /// The organization to use when the user has not picked one.

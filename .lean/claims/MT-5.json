@@ -1,0 +1,12 @@
+{
+  "task": "MT-5",
+  "history": [],
+  "agent": "claude@Kevins-MacBook-Air",
+  "status": "merged",
+  "branch": "lean/MT-5",
+  "claimed_at": "2026-11-14T06:29:27",
+  "heartbeat": "2026-11-14T06:52:05",
+  "next": null,
+  "grade": null,
+  "merged_at": "2026-11-14T06:52:05"
+}

@@ -118,6 +118,227 @@ class MenuBarManager: NSObject, ObservableObject {
     private var updateDebounceTimer: Timer?
     private var cachedIsDarkMode: Bool = false
 
+    // MARK: - Team tracking (docs/specs/multi-team-tracking.md §7, §10, §11)
+
+    /// Banner text when the shown account needs a new login (Team tracking only); nil otherwise.
+    @Published private(set) var teamLoginMessage: String?
+    private var teamTrackingObserver: NSObjectProtocol?
+    private var teamTrackingWasEnabled = false
+    private var livePollGate = LivePollGate()   // one tracker live fetch in flight at a time
+
+    /// The profile the menu bar and popover show: the current account while Team tracking runs
+    /// (without activating it), else the active profile. A Codex active profile is always shown.
+    var menuBarProfile: Profile? {
+        let tracker = TeamTracker.shared
+        return Self.menuBarProfile(running: tracker.isRunning, current: tracker.global.current,
+                                   profiles: profileManager.profiles, active: profileManager.activeProfile)
+    }
+
+    static func menuBarProfile(running: Bool, current: PairRef?, profiles: [Profile], active: Profile?) -> Profile? {
+        // Codex profiles never change: a non-anthropic active profile stays shown (and on today's path).
+        // No active profile while running: the current account, as there is nothing else to show.
+        guard running, (active?.provider ?? .anthropic) == .anthropic, let current,
+              let p = profiles.first(where: { $0.id == current.profileId }) else { return active }
+        return p
+    }
+
+    /// Console API usage the single-mode popover shows for `menuBarProfile`.
+    var shownAPIUsage: APIUsage? {
+        Self.shownAPIUsage(shown: menuBarProfile, activeId: profileManager.activeProfile?.id, live: apiUsage)
+    }
+
+    /// `live` (`apiUsage`, refreshed for the active profile) only when the shown profile is the active
+    /// one; else the shown profile's own saved data, so the current account's view never carries the
+    /// active profile's console billing.
+    static func shownAPIUsage(shown: Profile?, activeId: UUID?, live: APIUsage?) -> APIUsage? {
+        guard let shown, shown.id != activeId else { return live }
+        return shown.apiUsage
+    }
+
+    /// How single mode refreshes the shown profile.
+    enum ShownFetchPlan: Equatable {
+        case legacy                                  // tracker off or not anthropic: today's path
+        case skip                                    // tracker owns it but has no live target: keep cached
+        case tracked(orgId: String, byProfile: Bool) // byProfile: fetchUsage(for:), never activating it
+    }
+
+    static func shownFetchPlan(subject: Profile, activeId: UUID?, running: Bool,
+                               target: (profile: Profile, orgId: String)?) -> ShownFetchPlan {
+        guard running, subject.provider == .anthropic else { return .legacy }
+        guard let target, target.profile.id == subject.id else { return .skip }
+        return .tracked(orgId: target.orgId, byProfile: subject.id != activeId)
+    }
+
+    /// Single mode with a non-anthropic shown profile (Codex): the tracker's live target, which the
+    /// pass also polls without showing it. The tracker never probes the current pair (spec §4, §7),
+    /// so without this poll it gets no live sample and cannot defend at detection. Nil when the
+    /// tracker is off or the subject is anthropic (`shownFetchPlan` covers those).
+    static func backgroundLiveTarget(subject: Profile, running: Bool,
+                                     target: (profile: Profile, orgId: String)?) -> (profile: Profile, orgId: String)? {
+        guard running, subject.provider != .anthropic else { return nil }
+        return target
+    }
+
+    /// Polls `target` without showing it, the way multi mode fetches an unselected current account:
+    /// a fresh reading is saved to that account and every result goes to the tracker. `usage`, the
+    /// credential banner, the statusline, threshold alerts and auto-switch stay with the shown profile.
+    static func pollLiveTarget(_ target: (profile: Profile, orgId: String), tracker: TeamTracker,
+                               store: TeamProfileStore, fetch: (Profile) async throws -> ClaudeUsage) async {
+        let id = target.profile.id
+        do {
+            let newUsage = try await fetch(target.profile)
+            // A provider with no usable live credential hands back the cached reading: no new sample.
+            let isCachedReading = target.profile.claudeUsage == newUsage
+            if !isCachedReading { store.saveClaudeUsage(newUsage, for: id) }
+            tracker.ingestLive(profileId: id, orgId: target.orgId, result: .success(newUsage),
+                               isCachedReading: isCachedReading)
+        } catch {
+            LoggingService.shared.logError("MenuBarManager: Live poll of current account '\(target.profile.name)' failed: \(error.localizedDescription)")
+            tracker.ingestLive(profileId: id, orgId: target.orgId, result: .failure(error), isCachedReading: false)
+        }
+    }
+
+    /// Starts `poll` in a Task when `gate` is free and releases the gate when it ends (success,
+    /// failure or cancellation). Nil, and nothing started, when a live fetch is already in flight:
+    /// the pass keeps the cached value.
+    @discardableResult
+    static func startGatedLivePoll(gate: inout LivePollGate, release: @escaping () -> Void,
+                                   poll: @escaping () async -> Void) -> Task<Void, Never>? {
+        guard gate.begin() else {
+            LoggingService.shared.log("MenuBarManager: Team tracking live fetch already in flight - keeping cached usage")
+            return nil
+        }
+        return Task {
+            defer { release() }
+            await poll()
+        }
+    }
+
+    /// Ends a tracker live fetch of `fetched`: `release` frees the gate first, then `rerun` runs once
+    /// when the tracker's live target is now another pair. That pair's pass found the gate busy and was
+    /// dropped (`onCurrentChanged` fired while the fetch was in flight, or inside its own `ingestLive`).
+    /// A pass for the same pair stays dropped: that duplicate is what the gate exists to stop.
+    static func endGatedLivePoll(fetched: PairRef, tracker: TeamTracker, release: () -> Void, rerun: () -> Void) {
+        release()
+        guard let target = tracker.liveTarget(),
+              PairRef(profileId: target.profile.id, orgId: target.orgId) != fetched else { return }
+        LoggingService.shared.log("MenuBarManager: Team tracking live target moved during a live fetch - refreshing the new current account")
+        rerun()
+    }
+
+    /// Single mode: whether a fetched reading reaches the menu bar (`usage`, icons, statusline cache).
+    /// Tracker-owned only while the fetched account is still the shown one, as the current account can
+    /// move while the fetch is in flight; today's path (tracker off) always.
+    static func showsFetchedReading(trackerOwned: Bool, fetchedId: UUID, shownId: UUID?) -> Bool {
+        !trackerOwned || fetchedId == shownId
+    }
+
+    /// One multi-mode pass. Tracker off: the selection as is, nothing skipped (today's loop).
+    struct MultiFetchPlan: Equatable {
+        var profiles: [Profile]                // loop order
+        var liveOrgIds: [UUID: String] = [:]   // tracker-owned usage fetch: org per profile
+        var usageSkip: Set<UUID> = []          // no claude.ai usage fetch (the tracker keeps it)
+        var consoleSkip: Set<UUID> = []        // no console-billing fetch (not selected)
+    }
+
+    /// Tracker running: the current account first (the live target, fetched even when not selected),
+    /// then the rest of the selection. Other selected anthropic profiles skip only the claude.ai usage
+    /// fetch; console billing still runs for every selected profile, and never for an unselected one.
+    static func multiFetchPlan(selected: [Profile], allProfiles: [Profile], running: Bool,
+                               target: (profile: Profile, orgId: String)?) -> MultiFetchPlan {
+        var plan = MultiFetchPlan(profiles: selected)
+        guard running else { return plan }
+        plan.usageSkip = Set(selected.filter { $0.provider == .anthropic && $0.id != target?.profile.id }.map(\.id))
+        guard let target else { return plan }
+        let current = allProfiles.first { $0.id == target.profile.id } ?? target.profile
+        if !selected.contains(where: { $0.id == current.id }) { plan.consoleSkip = [current.id] }
+        plan.profiles = [current] + selected.filter { $0.id != current.id }
+        plan.liveOrgIds = [current.id: target.orgId]
+        return plan
+    }
+
+    static func teamLoginMessage(for shown: Profile?) -> String? {
+        guard let shown, shown.provider == .anthropic,
+              case .needsLogin = shown.orgTracking?.authState else { return nil }
+        return "multiteam.login_again".localized
+    }
+
+    /// Runs after each refresh pass: a shown account that needs a login keeps the credential banner up.
+    private func applyTeamLoginState() {
+        guard TeamTracker.shared.isRunning, let message = Self.teamLoginMessage(for: menuBarProfile) else {
+            if teamLoginMessage != nil { teamLoginMessage = nil }
+            return
+        }
+        hasCredentialError = true
+        lastRefreshError = message
+        teamLoginMessage = message
+    }
+
+    /// Frees the live poll gate after a tracker live fetch of `fetched`, then runs the pass it dropped
+    /// for a pair the tracker moved to meanwhile (`endGatedLivePoll`).
+    private func endLivePoll(fetched: PairRef) {
+        Self.endGatedLivePoll(fetched: fetched, tracker: TeamTracker.shared,
+                              release: { livePollGate.end() }, rerun: { refreshUsage() })
+    }
+
+    private func setupTeamTracking() {
+        let tracker = TeamTracker.shared
+        tracker.notifier = NotificationManager.shared
+        tracker.onCurrentChanged = { [weak self] _ in
+            guard let self else { return }
+            if self.profileManager.displayMode != .multi, let shown = self.menuBarProfile {
+                self.clickedProfileId = shown.id  // an open popover (e.g. "Make current") follows it
+                self.usage = shown.claudeUsage ?? .empty
+                self.updateAllStatusBarIcons()
+            }
+            self.refreshUsage()
+        }
+        tracker.onSample = { [weak self] id, sample in
+            guard let self else { return }
+            if let active = self.profileManager.activeProfile, id == active.id,
+               active.provider.descriptor.capabilities.cliAccountSync,
+               StatuslineService.shared.isInstalled {
+                StatuslineService.shared.writeUsageCache(usage: sample, profileName: active.name)
+            }
+            if self.profileManager.displayMode != .multi, id == self.menuBarProfile?.id {
+                self.usage = sample
+            }
+            self.updateAllStatusBarIcons()
+        }
+        tracker.start()
+        teamTrackingWasEnabled = TeamTrackingSettings.isEnabled()
+        if let teamTrackingObserver { NotificationCenter.default.removeObserver(teamTrackingObserver) }
+        teamTrackingObserver = NotificationCenter.default.addObserver(
+            forName: UserDefaults.didChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+            Task { @MainActor in self.teamTrackingSettingChanged() }
+        }
+    }
+
+    private func teamTrackingSettingChanged() {
+        let enabled = TeamTrackingSettings.isEnabled()
+        guard enabled != teamTrackingWasEnabled else { return }
+        teamTrackingWasEnabled = enabled
+        if enabled {
+            TeamTracker.shared.start()
+        } else {
+            TeamTracker.shared.stop()
+            // A fetch still in flight must not block the next start.
+            // ponytail: that old fetch's end() can later clear a newer fetch's gate, and its re-run check can
+            // start one more pass (one duplicate at most); a generation token in begin()/end() closes it if ever needed.
+            livePollGate = LivePollGate()
+            teamLoginMessage = nil
+            if profileManager.displayMode != .multi, let active = profileManager.activeProfile {
+                usage = active.claudeUsage ?? .empty
+            }
+        }
+        updateAllStatusBarIcons()
+        refreshUsage()
+    }
+
     func setup() {
         // Initialize cached appearance to avoid layout recursion
         cachedIsDarkMode = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
@@ -163,16 +384,20 @@ class MenuBarManager: NSObject, ObservableObject {
         // Setup popover
         setupPopover()
 
+        // Team tracking: start before the first reads so the menu bar shows the current account.
+        setupTeamTracking()
+
         // Load saved data from active profile first (provides immediate feedback).
         // Credential check includes system Keychain CLI fallback so users who
         // authenticated only via `claude login` still see usage data.
-        if let profile = profileManager.activeProfile {
+        if let profile = menuBarProfile {
             if hasAnyAvailableCredentials() {
                 // Credentials available - show saved usage data if present
                 if let savedUsage = profile.claudeUsage {
                     usage = savedUsage
                 }
-                if let savedAPIUsage = profile.apiUsage {
+                // Console billing follows the active profile (same as the refresh writes).
+                if let savedAPIUsage = profileManager.activeProfile?.apiUsage {
                     apiUsage = savedAPIUsage
                 }
             } else {
@@ -259,6 +484,11 @@ class MenuBarManager: NSObject, ObservableObject {
     }
 
     func cleanup() {
+        TeamTracker.shared.stop()
+        if let teamTrackingObserver = teamTrackingObserver {
+            NotificationCenter.default.removeObserver(teamTrackingObserver)
+            self.teamTrackingObserver = nil
+        }
         ShortcutManager.shared.stopListening()
         refreshTimer?.invalidate()
         refreshTimer = nil
@@ -366,7 +596,12 @@ class MenuBarManager: NSObject, ObservableObject {
 
         // 1. Load saved data from new profile (for immediate display)
         await MainActor.run {
-            if let savedUsage = profile.claudeUsage {
+            // Team tracking: the menu bar keeps showing the current account, not the newly active
+            // one (a Codex active profile is shown as before).
+            let tracker = TeamTracker.shared
+            let shown = Self.menuBarProfile(running: tracker.isRunning, current: tracker.global.current,
+                                            profiles: self.profileManager.profiles, active: profile) ?? profile
+            if let savedUsage = shown.claudeUsage {
                 self.usage = savedUsage
             } else {
                 self.usage = .empty
@@ -553,10 +788,11 @@ class MenuBarManager: NSObject, ObservableObject {
             clickedProfileAPIUsage = profile.apiUsage
             LoggingService.shared.log("Multi-profile popover: showing data for '\(profile.name)'")
         } else {
-            // Single profile mode - use active profile
-            clickedProfileId = profileManager.activeProfile?.id
+            // Single profile mode - view the shown profile (the active profile, or the current
+            // account while Team tracking runs)
+            clickedProfileId = menuBarProfile?.id
             clickedProfileUsage = nil  // Will use manager.usage
-            clickedProfileAPIUsage = nil  // Will use manager.apiUsage
+            clickedProfileAPIUsage = nil  // Will use manager.shownAPIUsage
         }
 
         // If there's a detached window, close it
@@ -955,7 +1191,7 @@ class MenuBarManager: NSObject, ObservableObject {
     /// The icon config to display for the active profile's last usage, so the
     /// session icon is hidden on plans without a session limit (see `effective(for:)`).
     private func configAdjustedForPlanLimits(_ config: MenuBarIconConfiguration) -> MenuBarIconConfiguration {
-        config.effective(for: profileManager.activeProfile?.claudeUsage ?? usage)
+        config.effective(for: menuBarProfile?.claudeUsage ?? usage)
     }
 
     private func setupMultiProfileMode() {
@@ -1009,13 +1245,34 @@ class MenuBarManager: NSObject, ObservableObject {
         // whose CLI OAuth token has expired are still polled — `fetchUsageForProfile`
         // will transparently refresh expired tokens via the refresh_token grant.
         // Excluding them here would prevent the refresh path from ever running.
-        let selectedProfiles = profileManager.profiles.filter { $0.isSelectedForDisplay && $0.hasAnyCredentials }
+        let selected = profileManager.profiles.filter { $0.isSelectedForDisplay && $0.hasAnyCredentials }
+
+        // Team tracking: anthropic accounts other than the current one skip the usage fetch (their
+        // claudeUsage is rendered as the tracker keeps it) but keep their console billing; the current
+        // account is fetched even when it is not selected. Every set is empty with the tracker off.
+        let tracker = TeamTracker.shared
+        let plan = Self.multiFetchPlan(selected: selected, allProfiles: profileManager.profiles,
+                                       running: tracker.isRunning, target: tracker.isRunning ? tracker.liveTarget() : nil)
+        let selectedProfiles = plan.profiles
+        let consoleSkip = plan.consoleSkip
 
         guard !selectedProfiles.isEmpty else {
             LoggingService.shared.log("MenuBarManager: No selected profiles with usage credentials to refresh")
             updateAllStatusBarIcons()
+            applyTeamLoginState()
             return
         }
+
+        // One tracker live fetch in flight at a time: when another pass is still fetching the current
+        // account, this pass skips its usage fetch and keeps the cached value. The gate taken here is
+        // released by the defer in the loop below, at the current account (always first in the plan).
+        let gateBusy = !plan.liveOrgIds.isEmpty && !livePollGate.begin()
+        if gateBusy {
+            LoggingService.shared.log("MenuBarManager: Team tracking live fetch already in flight - keeping cached usage")
+        }
+        let liveOrgIds = gateBusy ? [:] : plan.liveOrgIds
+        let usageSkip = gateBusy ? plan.usageSkip.union(plan.liveOrgIds.keys) : plan.usageSkip
+        let holdsLiveGate = !liveOrgIds.isEmpty
 
         LoggingService.shared.log("MenuBarManager: Refreshing \(selectedProfiles.count) selected profiles for multi-profile mode")
 
@@ -1037,77 +1294,115 @@ class MenuBarManager: NSObject, ObservableObject {
 
             // Fetch usage for each selected profile
             for profile in selectedProfiles {
-                LoggingService.shared.log("MenuBarManager: Fetching usage for profile '\(profile.name)'")
-
-                // Capture previous usage for reset detection
-                let previousUsage = profile.claudeUsage
-
-                do {
-                    let newUsage = try await fetchUsageForProfile(profile)
-
-                    // A provider with no usable live credential hands back the
-                    // profile's cached reading unchanged. It stays on display, but
-                    // it is not a new sample: feeding it to reset detection and the
-                    // history charts would record stale points as if they were live.
-                    let isCachedReading = previousUsage.map { $0 == newUsage } ?? false
-                    if isCachedReading {
-                        LoggingService.shared.log("MenuBarManager: No live reading for profile '\(profile.name)' - keeping the cached one")
+                // Team tracking: the tracker keeps this account's usage, so only its console billing
+                // below runs this pass (usageSkip is empty with the tracker off).
+                if !usageSkip.contains(profile.id) {
+                    // Team tracking: release the live poll gate on success, failure or cancellation, then
+                    // re-run the pass if the tracker moved its live target meanwhile.
+                    defer {
+                        if holdsLiveGate, let orgId = liveOrgIds[profile.id] {
+                            self.endLivePoll(fetched: PairRef(profileId: profile.id, orgId: orgId))
+                        }
                     }
+                    LoggingService.shared.log("MenuBarManager: Fetching usage for profile '\(profile.name)'")
 
-                    await MainActor.run {
-                        guard !isCachedReading else { return }
+                    // Capture previous usage for reset detection
+                    let previousUsage = profile.claudeUsage
 
-                        // Check for resets before updating usage
-                        self.checkAndRecordSessionReset(
-                            profileId: profile.id,
-                            previousUsage: previousUsage,
-                            newUsage: newUsage
-                        )
-                        self.checkAndRecordWeeklyReset(
-                            profileId: profile.id,
-                            previousUsage: previousUsage,
-                            newUsage: newUsage
-                        )
+                    do {
+                        let newUsage = try await fetchUsageForProfile(profile)
 
-                        // Record periodic snapshots for history charts (skip if reset just occurred)
-                        let flags = self.resetJustRecorded[profile.id] ?? (session: false, weekly: false)
-
-                        if !flags.session {
-                            UsageHistoryService.shared.recordSessionPeriodic(for: profile.id, usage: newUsage, provider: profile.provider)
+                        // A provider with no usable live credential hands back the
+                        // profile's cached reading unchanged. It stays on display, but
+                        // it is not a new sample: feeding it to reset detection and the
+                        // history charts would record stale points as if they were live.
+                        let isCachedReading = previousUsage.map { $0 == newUsage } ?? false
+                        if isCachedReading {
+                            LoggingService.shared.log("MenuBarManager: No live reading for profile '\(profile.name)' - keeping the cached one")
                         }
 
-                        if !flags.weekly {
-                            UsageHistoryService.shared.recordWeeklyPeriodic(for: profile.id, usage: newUsage, provider: profile.provider)
+                        if let orgId = liveOrgIds[profile.id] {
+                            // Tracker-owned: per-pair history replaces the profile reset checks and recorders.
+                            await MainActor.run {
+                                if !isCachedReading {
+                                    self.profileManager.saveClaudeUsage(newUsage, for: profile.id)
+                                    if profile.id == self.profileManager.activeProfile?.id {
+                                        self.usage = newUsage
+                                        if profile.provider.descriptor.capabilities.cliAccountSync,
+                                           StatuslineService.shared.isInstalled {
+                                            StatuslineService.shared.writeUsageCache(usage: newUsage, profileName: profile.name)
+                                        }
+                                    }
+                                }
+                                TeamTracker.shared.ingestLive(profileId: profile.id, orgId: orgId, result: .success(newUsage),
+                                                              isCachedReading: isCachedReading)
+                            }
                         }
 
-                        // Clear reset flags for next cycle
-                        self.resetJustRecorded[profile.id] = (session: false, weekly: false)
+                        await MainActor.run {
+                            // Tracker-owned profiles were handled above (liveOrgIds is empty with the tracker off).
+                            guard !isCachedReading, liveOrgIds[profile.id] == nil else { return }
 
-                        // Save to profile
-                        self.profileManager.saveClaudeUsage(newUsage, for: profile.id)
-                        LoggingService.shared.log("MenuBarManager: Saved usage for profile '\(profile.name)' - session: \(newUsage.sessionPercentage)%")
+                            // Check for resets before updating usage
+                            self.checkAndRecordSessionReset(
+                                profileId: profile.id,
+                                previousUsage: previousUsage,
+                                newUsage: newUsage
+                            )
+                            self.checkAndRecordWeeklyReset(
+                                profileId: profile.id,
+                                previousUsage: previousUsage,
+                                newUsage: newUsage
+                            )
 
-                        // If this is the active profile, also update the manager's usage
-                        if profile.id == self.profileManager.activeProfile?.id {
-                            self.usage = newUsage
+                            // Record periodic snapshots for history charts (skip if reset just occurred)
+                            let flags = self.resetJustRecorded[profile.id] ?? (session: false, weekly: false)
 
-                            // Write statusline cache for instant CLI rendering (Claude Code only)
-                            if profile.provider.descriptor.capabilities.cliAccountSync,
-                               StatuslineService.shared.isInstalled {
-                                StatuslineService.shared.writeUsageCache(
-                                    usage: newUsage,
-                                    profileName: profile.name
-                                )
+                            if !flags.session {
+                                UsageHistoryService.shared.recordSessionPeriodic(for: profile.id, usage: newUsage, provider: profile.provider)
+                            }
+
+                            if !flags.weekly {
+                                UsageHistoryService.shared.recordWeeklyPeriodic(for: profile.id, usage: newUsage, provider: profile.provider)
+                            }
+
+                            // Clear reset flags for next cycle
+                            self.resetJustRecorded[profile.id] = (session: false, weekly: false)
+
+                            // Save to profile
+                            self.profileManager.saveClaudeUsage(newUsage, for: profile.id)
+                            LoggingService.shared.log("MenuBarManager: Saved usage for profile '\(profile.name)' - session: \(newUsage.sessionPercentage)%")
+
+                            // If this is the active profile, also update the manager's usage
+                            if profile.id == self.profileManager.activeProfile?.id {
+                                self.usage = newUsage
+
+                                // Write statusline cache for instant CLI rendering (Claude Code only)
+                                if profile.provider.descriptor.capabilities.cliAccountSync,
+                                   StatuslineService.shared.isInstalled {
+                                    StatuslineService.shared.writeUsageCache(
+                                        usage: newUsage,
+                                        profileName: profile.name
+                                    )
+                                }
+                            }
+                        }
+                    } catch {
+                        LoggingService.shared.logError("Failed to refresh profile '\(profile.name)': \(error.localizedDescription)")
+                        if let orgId = liveOrgIds[profile.id] {
+                            await MainActor.run {
+                                TeamTracker.shared.ingestLive(profileId: profile.id, orgId: orgId, result: .failure(error),
+                                                              isCachedReading: false)
                             }
                         }
                     }
-                } catch {
-                    LoggingService.shared.logError("Failed to refresh profile '\(profile.name)': \(error.localizedDescription)")
                 }
 
                 // Fetch API usage if this profile's provider has console billing
-                // and the profile has API console credentials
-                if profile.provider.descriptor.capabilities.consoleBilling,
+                // and the profile has API console credentials (Team tracking: not for an
+                // unselected current account; consoleSkip is empty with the tracker off)
+                if !consoleSkip.contains(profile.id),
+                   profile.provider.descriptor.capabilities.consoleBilling,
                    let apiSessionKey = profile.apiSessionKey,
                    let orgId = profile.apiOrganizationId {
                     do {
@@ -1143,6 +1438,7 @@ class MenuBarManager: NSObject, ObservableObject {
                 self.hasCredentialError = false
                 self.lastSuccessfulRefreshTime = Date()
                 self.isRefreshing = false
+                self.applyTeamLoginState()
 
                 WidgetSnapshotService.shared.publish(
                     profiles: self.profileManager.profiles,
@@ -1205,8 +1501,9 @@ class MenuBarManager: NSObject, ObservableObject {
             return
         }
 
-        // Single profile mode - refresh only active profile
-        guard let profile = profileManager.activeProfile else {
+        // Single profile mode - refresh only the shown profile (the active profile, or the
+        // current account while Team tracking runs)
+        guard let profile = menuBarProfile else {
             LoggingService.shared.log("MenuBarManager.refreshUsage: No active profile")
             return
         }
@@ -1216,16 +1513,67 @@ class MenuBarManager: NSObject, ObservableObject {
         LoggingService.shared.log("  - Profile: '\(profile.name)'")
         LoggingService.shared.log("  - hasUsageCredentials: \(profile.hasUsageCredentials)")
 
-        // Check for ANY available credentials, including system Keychain CLI fallback.
-        // Without this fallback, users who only authenticated via `claude login`
-        // would be gated off here before ClaudeAPIService.getAuthentication() could
-        // discover their system-level credentials.
-        guard hasAnyAvailableCredentials() else {
-            LoggingService.shared.log("MenuBarManager: Skipping refresh - no credentials available (profile or system keychain)")
-            // Update icons to show default logo if needed
-            updateAllStatusBarIcons()
-            return
+        // Team tracking owns anthropic subjects: fetch only the tracker's live target, never
+        // activating it. Nil when the tracker is off or the subject is not anthropic (old path).
+        let tracker = TeamTracker.shared
+        let liveTarget = tracker.isRunning ? tracker.liveTarget() : nil
+        let plan = Self.shownFetchPlan(subject: profile, activeId: profileManager.activeProfile?.id,
+                                       running: tracker.isRunning, target: liveTarget)
+
+        // A Codex shown profile stays on today's path below, and the current pair still gets its
+        // live poll this pass: per profile, never activated, not shown. It starts before the
+        // credentials guard, which checks the active (Codex) profile. Nil with the tracker off or
+        // an anthropic subject.
+        if let background = Self.backgroundLiveTarget(subject: profile, running: tracker.isRunning, target: liveTarget) {
+            let fetched = PairRef(profileId: background.profile.id, orgId: background.orgId)
+            Self.startGatedLivePoll(gate: &livePollGate, release: { [weak self] in self?.endLivePoll(fetched: fetched) }) {
+                await Self.pollLiveTarget(background, tracker: tracker, store: self.profileManager) {
+                    try await ProviderRegistry.service(for: .anthropic).fetchUsage(for: $0)
+                }
+            }
         }
+
+        let trackerOrgId: String?
+        let fetchesByProfile: Bool
+        let skipsUsage: Bool
+        switch plan {
+        case .skip:
+            // Only the usage fetch is skipped: the status and the active profile's console
+            // billing still run, and the pass ends with applyTeamLoginState().
+            LoggingService.shared.log("MenuBarManager: Team tracking has no live target for '\(profile.name)' - keeping cached usage")
+            trackerOrgId = nil
+            fetchesByProfile = false
+            skipsUsage = true
+        case let .tracked(orgId, byProfile):
+            if livePollGate.begin() {
+                // Released by the defer in the usage-fetch block of the Task below.
+                trackerOrgId = orgId
+                fetchesByProfile = byProfile
+                skipsUsage = false
+            } else {
+                // A live fetch of the current pair is already in flight: skip like `.skip`.
+                LoggingService.shared.log("MenuBarManager: Team tracking live fetch already in flight - keeping cached usage for '\(profile.name)'")
+                trackerOrgId = nil
+                fetchesByProfile = false
+                skipsUsage = true
+            }
+        case .legacy:
+            trackerOrgId = nil
+            fetchesByProfile = false
+            skipsUsage = false
+
+            // Check for ANY available credentials, including system Keychain CLI fallback.
+            // Without this fallback, users who only authenticated via `claude login`
+            // would be gated off here before ClaudeAPIService.getAuthentication() could
+            // discover their system-level credentials.
+            guard hasAnyAvailableCredentials() else {
+                LoggingService.shared.log("MenuBarManager: Skipping refresh - no credentials available (profile or system keychain)")
+                // Update icons to show default logo if needed
+                updateAllStatusBarIcons()
+                return
+            }
+        }
+        let isTrackerOwned = trackerOrgId != nil
 
         LoggingService.shared.log("MenuBarManager: Proceeding with refresh")
         Task {
@@ -1242,114 +1590,152 @@ class MenuBarManager: NSObject, ObservableObject {
             // Fetch usage and status in parallel (usage via the profile's provider;
             // for Anthropic this is the same no-arg fetchUsageData() chain as before)
             let providerService = ProviderRegistry.service(for: profile.provider)
-            async let usageResult = providerService.fetchUsageForActiveProfile(profile)
             async let statusResult = statusServiceForActiveProfile.fetchStatus()
 
             var usageSuccess = false
 
-            // Fetch usage with proper error handling
-            do {
-                let newUsage = try await usageResult
-
-                await MainActor.run {
-                    // Check for resets before updating usage
-                    if let profileId = currentProfileId {
-                        self.checkAndRecordSessionReset(
-                            profileId: profileId,
-                            previousUsage: previousUsage,
-                            newUsage: newUsage
-                        )
-                        self.checkAndRecordWeeklyReset(
-                            profileId: profileId,
-                            previousUsage: previousUsage,
-                            newUsage: newUsage
-                        )
-
-                        // Record periodic snapshots for history charts
-                        UsageHistoryService.shared.recordSessionPeriodic(for: profileId, usage: newUsage, provider: profile.provider)
-                        UsageHistoryService.shared.recordWeeklyPeriodic(for: profileId, usage: newUsage, provider: profile.provider)
-                    }
-
-                    self.usage = newUsage
-
-                    // Save to active profile instead of global DataStore
-                    if let profileId = self.profileManager.activeProfile?.id {
-                        self.profileManager.saveClaudeUsage(newUsage, for: profileId)
-                    }
-
-                    // The session icon is shown or hidden by the plan's limits, so
-                    // rebuild the status items when the session limit appears or goes away
-                    if newUsage.hasSessionLimit != previousUsage.hasSessionLimit,
-                       let activeProfile = self.profileManager.activeProfile {
-                        self.updateMenuBarDisplay(with: activeProfile.iconConfig)
-                    }
-
-                    // Write statusline cache for instant CLI rendering (Claude Code only)
-                    if profile.provider.descriptor.capabilities.cliAccountSync,
-                       StatuslineService.shared.isInstalled {
-                        StatuslineService.shared.writeUsageCache(
-                            usage: newUsage,
-                            profileName: self.profileManager.activeProfile?.name
-                        )
-                    }
-
-                    // Update all menu bar icons
-                    self.updateAllStatusBarIcons()
-
-                    // Check if we should send notifications (using active profile's settings)
-                    if let profile = self.profileManager.activeProfile {
-                        NotificationManager.shared.checkAndNotify(
-                            usage: newUsage,
-                            profileName: profile.name,
-                            settings: profile.notificationSettings
-                        )
-
-                        // Check if auto-switch should trigger
-                        self.checkAutoSwitchIfNeeded(usage: newUsage, currentProfile: profile)
-                    }
+            // Team tracking without a live target (.skip): no usage fetch, the cached usage stays.
+            if !skipsUsage {
+                // Team tracking: release the live poll gate taken above on success, failure or cancellation,
+                // then re-run the pass if the tracker moved its live target meanwhile.
+                defer {
+                    if let orgId = trackerOrgId { self.endLivePoll(fetched: PairRef(profileId: profile.id, orgId: orgId)) }
                 }
 
-                // Record success for circuit breaker
-                ErrorRecovery.shared.recordSuccess(for: .api)
-                usageSuccess = true
+                // Team tracking, current account != active profile: per-profile fetch, so the account is
+                // never activated and the active profile's Claude Code credentials are not touched.
+                async let usageResult = fetchesByProfile
+                    ? providerService.fetchUsage(for: profile)
+                    : providerService.fetchUsageForActiveProfile(profile)
 
-                await MainActor.run {
-                    self.consecutiveRefreshFailures = 0
-                    self.lastRefreshError = nil
-                    self.hasCredentialError = false
-                    self.lastSuccessfulRefreshTime = Date()
+                // Fetch usage with proper error handling
+                do {
+                    let newUsage = try await usageResult
+                    // A per-profile fetch with no live credential hands back the cached reading: no new sample.
+                    let isCachedReading = isTrackerOwned && (profile.claudeUsage.map { $0 == newUsage } ?? false)
 
-                    WidgetSnapshotService.shared.publish(
-                        profiles: self.profileManager.profiles,
-                        activeProfileId: self.profileManager.activeProfile?.id
-                    )
-                }
+                    await MainActor.run {
+                        // Check for resets before updating usage (tracker-owned: per-pair history instead)
+                        if !isTrackerOwned, let profileId = currentProfileId {
+                            self.checkAndRecordSessionReset(
+                                profileId: profileId,
+                                previousUsage: previousUsage,
+                                newUsage: newUsage
+                            )
+                            self.checkAndRecordWeeklyReset(
+                                profileId: profileId,
+                                previousUsage: previousUsage,
+                                newUsage: newUsage
+                            )
 
-            } catch {
-                // Convert to AppError and log
-                let appError = AppError.wrap(error)
-                ErrorLogger.shared.log(appError, severity: .error)
+                            // Record periodic snapshots for history charts
+                            UsageHistoryService.shared.recordSessionPeriodic(for: profileId, usage: newUsage, provider: profile.provider)
+                            UsageHistoryService.shared.recordWeeklyPeriodic(for: profileId, usage: newUsage, provider: profile.provider)
+                        }
 
-                // Record failure for circuit breaker
-                ErrorRecovery.shared.recordFailure(for: .api)
+                        // Tracker-owned: the current account can move while this fetch is in flight. The
+                        // reading is still saved and goes to the tracker, but it reaches the menu bar only
+                        // while its account is the shown one.
+                        let isShown = Self.showsFetchedReading(trackerOwned: isTrackerOwned, fetchedId: profile.id,
+                                                               shownId: self.menuBarProfile?.id)
+                        if isShown { self.usage = newUsage }
 
-                // Track error state for UI banners
-                await MainActor.run {
-                    self.consecutiveRefreshFailures += 1
-                    self.lastRefreshError = appError.message
+                        // Save to active profile instead of global DataStore (tracker-owned: the shown account)
+                        if let profileId = isTrackerOwned ? profile.id : self.profileManager.activeProfile?.id {
+                            self.profileManager.saveClaudeUsage(newUsage, for: profileId)
+                        }
 
-                    // Track credential errors specifically
-                    if appError.code == .apiUnauthorized || appError.code == .sessionKeyExpired {
-                        self.hasCredentialError = true
+                        // The session icon is shown or hidden by the plan's limits, so
+                        // rebuild the status items when the session limit appears or goes away
+                        if isShown, newUsage.hasSessionLimit != previousUsage.hasSessionLimit,
+                           let activeProfile = self.profileManager.activeProfile {
+                            self.updateMenuBarDisplay(with: activeProfile.iconConfig)
+                        }
+
+                        // Write statusline cache for instant CLI rendering (Claude Code only;
+                        // tracker-owned: only when the shown account is the active profile)
+                        if isShown, !isTrackerOwned || profile.id == self.profileManager.activeProfile?.id,
+                           profile.provider.descriptor.capabilities.cliAccountSync,
+                           StatuslineService.shared.isInstalled {
+                            StatuslineService.shared.writeUsageCache(
+                                usage: newUsage,
+                                profileName: self.profileManager.activeProfile?.name
+                            )
+                        }
+
+                        // Update all menu bar icons
+                        if isShown { self.updateAllStatusBarIcons() }
+
+                        // Check if we should send notifications (using active profile's settings;
+                        // tracker-owned: the shown account's)
+                        let notifyProfile = isTrackerOwned
+                            ? (self.profileManager.profiles.first { $0.id == profile.id } ?? profile)
+                            : self.profileManager.activeProfile
+                        if let profile = notifyProfile {
+                            NotificationManager.shared.checkAndNotify(
+                                usage: newUsage,
+                                profileName: profile.name,
+                                settings: profile.notificationSettings
+                            )
+
+                            // Check if auto-switch should trigger (only on the active profile's own usage)
+                            if profile.id == self.profileManager.activeProfile?.id {
+                                self.checkAutoSwitchIfNeeded(usage: newUsage, currentProfile: profile)
+                            }
+                        }
+
+                        if let orgId = trackerOrgId {
+                            TeamTracker.shared.ingestLive(profileId: profile.id, orgId: orgId, result: .success(newUsage),
+                                                          isCachedReading: isCachedReading)
+                        }
                     }
 
-                    // Check if this refresh was triggered within last 5 seconds
-                    // (indicates user-initiated action like saving session key)
-                    if abs(self.lastRefreshTriggerTime.timeIntervalSinceNow) < 5 {
-                        ErrorPresenter.shared.showAlert(for: appError)
-                    } else {
-                        // Background refresh - just log
-                        LoggingService.shared.logError("MenuBarManager: Failed to fetch usage - [\(appError.code.rawValue)] \(appError.message)")
+                    // Record success for circuit breaker
+                    ErrorRecovery.shared.recordSuccess(for: .api)
+                    usageSuccess = true
+
+                    await MainActor.run {
+                        self.consecutiveRefreshFailures = 0
+                        self.lastRefreshError = nil
+                        self.hasCredentialError = false
+                        self.lastSuccessfulRefreshTime = Date()
+
+                        WidgetSnapshotService.shared.publish(
+                            profiles: self.profileManager.profiles,
+                            activeProfileId: self.profileManager.activeProfile?.id
+                        )
+                    }
+
+                } catch {
+                    // Convert to AppError and log
+                    let appError = AppError.wrap(error)
+                    ErrorLogger.shared.log(appError, severity: .error)
+
+                    // Record failure for circuit breaker
+                    ErrorRecovery.shared.recordFailure(for: .api)
+
+                    // Track error state for UI banners
+                    await MainActor.run {
+                        if let orgId = trackerOrgId {
+                            TeamTracker.shared.ingestLive(profileId: profile.id, orgId: orgId, result: .failure(error),
+                                                          isCachedReading: false)
+                        }
+                        self.consecutiveRefreshFailures += 1
+                        self.lastRefreshError = appError.message
+
+                        // Track credential errors specifically
+                        if appError.code == .apiUnauthorized || appError.code == .sessionKeyExpired {
+                            self.hasCredentialError = true
+                        }
+
+                        // Check if this refresh was triggered within last 5 seconds
+                        // (indicates user-initiated action like saving session key)
+                        if abs(self.lastRefreshTriggerTime.timeIntervalSinceNow) < 5 {
+                            ErrorPresenter.shared.showAlert(for: appError)
+                        } else {
+                            // Background refresh - just log
+                            LoggingService.shared.logError("MenuBarManager: Failed to fetch usage - [\(appError.code.rawValue)] \(appError.message)")
+                        }
                     }
                 }
             }
@@ -1406,6 +1792,7 @@ class MenuBarManager: NSObject, ObservableObject {
             // Clear loading state
             await MainActor.run {
                 self.isRefreshing = false
+                self.applyTeamLoginState()
 
                 // Show success notification if this was user-triggered and successful
                 if usageSuccess && abs(self.lastRefreshTriggerTime.timeIntervalSinceNow) < 5 {
@@ -1921,4 +2308,22 @@ extension MenuBarManager: NSWindowDelegate {
             }
         }
     }
+}
+
+// MARK: - Team tracking live poll gate
+
+/// One tracker live fetch in flight at a time: the refresh timer and `TeamTracker.onCurrentChanged`
+/// can both start a pass, and a duplicate request raises the 429 risk that backs off the current account.
+/// A dropped pass for another pair runs when the fetch ends (`MenuBarManager.endGatedLivePoll`).
+struct LivePollGate {
+    private(set) var inFlight = false
+
+    /// False when a fetch is already in flight; else claims the gate.
+    mutating func begin() -> Bool {
+        guard !inFlight else { return false }
+        inFlight = true
+        return true
+    }
+
+    mutating func end() { inFlight = false }
 }

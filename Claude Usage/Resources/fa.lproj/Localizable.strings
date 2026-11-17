@@ -1155,3 +1155,58 @@
 "keep_awake.consent_confirm" = "افزودن هوک‌ها و روشن کردن";
 "keep_awake.problem_hooks" = "حالت خودکار Claude Code را نمی‌بیند: هوک‌های آن در ‎~/.claude/settings.json‎ وجود ندارند. برای نصب دوباره، حالت خودکار را خاموش و دوباره روشن کنید.";
 "keep_awake.problem_listener" = "حالت خودکار Claude Code را نمی‌بیند: درگاه شنوندهٔ محلی توسط برنامهٔ دیگر یا نسخهٔ دیگری از Claude Usage در حال استفاده است.";
+
+/* ==================== */
+/* MARK: - Multi-team tracking */
+/* ==================== */
+"multiteam.login_again" = "Log in again";
+"multiteam.not_signed_in" = "Not signed in";
+"multiteam.window.session" = "5-hour";
+"multiteam.window.weekly" = "weekly";
+"multiteam.event.nowOn.title" = "Now on %@ (%@)";
+"multiteam.event.nowOn.body" = "%@ is now the account in use, on team %@.";
+"multiteam.event.adminMove.title" = "Moved by admin: %@ → %@";
+"multiteam.event.adminMove.body" = "%@ was moved from %@ to %@.";
+"multiteam.event.groupMove.title" = "%d accounts moved: %@ → %@";
+"multiteam.event.groupMove.removed.title" = "%d accounts removed from %@";
+"multiteam.event.groupMove.body" = "Another target: %@";
+"multiteam.event.groupMove.notMoved" = "Not moved: %@";
+"multiteam.event.groupMove.unchecked" = "Not checked: %@";
+"multiteam.event.teamRemoved.title" = "Removed from team %@";
+"multiteam.event.teamRemoved.body" = "%@ is no longer in team %@.";
+"multiteam.event.teamChanged.title" = "Team changed: %@ → %@";
+"multiteam.event.teamChanged.body" = "%@ changed from team %@ to team %@.";
+"multiteam.event.teamAdded.title" = "Added to team %@";
+"multiteam.event.teamAdded.body" = "%@ was added to team %@.";
+"multiteam.event.teamRejoined.title" = "Back in team %@";
+"multiteam.event.teamRejoined.body" = "%@ is back in team %@.";
+"multiteam.event.seatChange.title" = "Seat changed in %@";
+"multiteam.event.seatChange.inferred.title" = "Limit size changed in %@";
+"multiteam.event.seatChange.body" = "The seat of %@ changed in team %@.";
+"multiteam.event.earlyReset.title" = "Early reset: %@ %@ limit";
+"multiteam.event.earlyReset.body" = "%@ in %@: the %@ limit dropped from %.0f%% to %.0f%%.";
+"multiteam.event.loginLost.title" = "Log in again: %@";
+"multiteam.event.loginLost.body" = "%@ needs a new login (%@).";
+"multiteam.event.loginRestored.title" = "Login restored: %@";
+"multiteam.event.loginRestored.body" = "%@ is signed in again.";
+"multiteam.event.oldTeamDeleted.title" = "Old team %@ deleted";
+"multiteam.event.oldTeamDeleted.body" = "Old team %@ was removed from %@.";
+
+/* Multi-team UI (MT-8) */
+"multiteam.ui.teams" = "Teams";
+"multiteam.ui.now" = "Now";
+"multiteam.ui.five_hour_left" = "5h %ld%% left";
+"multiteam.ui.week_left" = "Week %ld%% left";
+"multiteam.ui.projected" = "projected";
+"multiteam.ui.min_ago" = "%ld min ago";
+"multiteam.ui.old_days" = "Old team · deleted in %ld days";
+"multiteam.ui.old" = "Old team";
+"multiteam.ui.make_current" = "Make current";
+"multiteam.ui.delete" = "Delete";
+"multiteam.ui.cancel" = "Cancel";
+"multiteam.ui.delete_confirm" = "Delete old team %@ for %@? Its history is removed.";
+"multiteam.ui.history_team" = "Team";
+"multiteam.ui.history_old_suffix" = "(old)";
+"multiteam.ui.tracking_title" = "Team tracking (follow the account in use)";
+"multiteam.ui.tracking_description" = "Detects which account and team you are using from rising usage; other teams are checked every 5 minutes.";
+"multiteam.ui.google_hint" = "Google sign-in blocked? Sign in at claude.ai in your browser and paste the session key below, or use the Claude Code login. In the Google window, pick the right account.";

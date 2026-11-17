@@ -1,0 +1,2 @@
+.lean/log.jsonl merge=union
+.lean/lessons.md merge=union

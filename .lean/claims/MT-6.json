@@ -1,0 +1,12 @@
+{
+  "task": "MT-6",
+  "history": [],
+  "agent": "claude@Kevins-MacBook-Air",
+  "status": "merged",
+  "branch": "lean/MT-6",
+  "claimed_at": "2026-11-17T09:22:46",
+  "heartbeat": "2026-11-17T10:01:53",
+  "next": "Paused by user (5-hour usage 70%). Built (sonnet-low); Opus arch review r1 = FIX (1 must-fix in .lean/tasks/MT-6/arch-review.md: TeamTracker.syncAccounts must re-register an account with the scheduler when its sessionKey presence changes, plus a test). Fix r1 sonnet-medium was stopped mid-run: TeamTracker.swift may be partly edited, check the diff. Resume: lean-swarm tasks [{id:MT-6, resume:fix, round:1, kind:fix}, MT-7 after MT-6, MT-9 after MT-7]. MT-2 merged at d2dcd10.",
+  "grade": null,
+  "merged_at": "2026-11-17T10:01:53"
+}
