@@ -6,3 +6,4 @@
 - TeamEvent.groupMove title counts movers only (moves.count), not notMoved or unchecked peers. (MT-3, claude@Kevins-MacBook-Air, 2026-11-14)
 - A view that stores a selected key must re-check it against the live choice list on every use, because a removed team otherwise leaves a stale selection that still drives the load. (MT-8, claude@Kevins-MacBook-Air, 2026-11-14)
 - A reviewer that returns PASS must also rewrite verdict.md; the merge worker reads that file, so a stale FAIL left there blocks a passed task. (MT-2, claude@Kevins-MacBook-Air, 2026-11-15)
+- A test that claims "skipped because of condition C" must fail when you delete the line that sets up C. Run that one mutation before handover. (MT-6, claude@Kevins-MacBook-Air, 2026-11-17)
