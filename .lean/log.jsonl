@@ -65,3 +65,4 @@
 {"at": "2026-11-17T15:40:19", "agent": "claude@Kevins-MacBook-Air", "event": "pass", "task": "FU-3", "note": "grade -: FU-3: grade A, 0 fix round(s)"}
 {"at": "2026-11-17T15:40:25", "agent": "claude@Kevins-MacBook-Air", "event": "merge", "task": "FU-3"}
 {"at": "2026-11-17T15:40:37", "agent": "claude@Kevins-MacBook-Air", "event": "lesson", "task": "FU-3", "note": "When you change a format specifier, check that each call site's argument type matches the new specifier."}
+{"at": "2026-11-17T16:24:27", "agent": "claude@Kevins-MacBook-Air", "event": "pass", "task": "FU-1", "note": "grade -: FU-1: grade A, 0 fix round(s)"}
