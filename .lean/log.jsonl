@@ -58,3 +58,4 @@
 {"at": "2026-11-17T13:12:23", "agent": "claude@Kevins-MacBook-Air", "event": "lesson", "task": "MT-7", "note": "TeamTracker never probes the current pair, so any rule that changes which profile the single-mode loop shows must still "}
 {"at": "2026-11-17T13:12:41", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-9", "note": ""}
 {"at": "2026-11-17T13:23:51", "agent": "claude@Kevins-MacBook-Air", "event": "pass", "task": "MT-9", "note": "grade -: MT-9: grade A, 0 fix round(s)"}
+{"at": "2026-11-17T13:23:57", "agent": "claude@Kevins-MacBook-Air", "event": "merge", "task": "MT-9"}
