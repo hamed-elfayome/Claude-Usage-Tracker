@@ -48,3 +48,48 @@ When you create a profile, choose **OpenAI Codex** as its provider to track Code
 - Claude-only features (statusline, auto-start, Dynamic Island) are hidden for Codex profiles.
 
 Adding another provider is documented in [ADDING_A_PROVIDER.md](ADDING_A_PROVIDER.md).
+
+## Team tracking (several accounts and teams)
+
+Team tracking follows the account you are using and the teams each account belongs to.
+
+**Turn it on:** **Settings → Profiles**, then switch on Team tracking.
+
+**How it finds the account in use.** Every 5 minutes the app checks which account's 5-hour usage went up. That account becomes the current one and is shown in the menu bar. The app never switches any login to do this. If it picks the wrong one, open the Teams list and click **Make current**.
+
+**Other teams.** The other teams are checked every 5 minutes too. After a team's reset time passes, its numbers show as "projected" until the next check. A team that disappears is deleted 15 days later. You can also delete it by hand.
+
+### Events
+
+- **Now on account (team):** you started using another account or team, and it is now the current one.
+- **Moved by admin:** an admin moved your account to another team.
+- **N accounts moved:** several of your accounts were moved to another team at the same time.
+- **Removed from team:** an account no longer belongs to a team it was in.
+- **Team changed:** the account is now in a different team, but the app cannot tell whether you switched or were moved.
+- **Seat changed / Limit size changed:** the account's seat type or usage limit got bigger or smaller.
+- **Early reset:** the usage went back to zero before the reset time.
+- **Log in again:** the saved login for this account stopped working. Sign in again.
+
+### Signing in with Google
+
+Google may block the in-app sign-in window. If it does, use one of these instead:
+
+- Sign in at claude.ai in your browser, copy the session key and paste it into the app.
+- Use the Claude Code login. This shows only one team.
+
+In the Google window, pick the Google account you want to track.
+
+Checked by the owner on TBD (owner): in-app Google sign-in TBD (owner) (works / is blocked).
+
+### Limits
+
+- A switch is seen only after your first message on the new account, so it can show up to 5 minutes late.
+- Using two accounts at once (for example the desktop app on one and Claude Code on another) flips the current account back and forth.
+- Any use of an account counts, including another device or a teammate on a shared login.
+- Two changes between checks show as one.
+- The app uses Claude endpoints that are not documented. They may change. If they do, events stop showing instead of showing wrong ones.
+- A seat change without a tier field may show as an early reset.
+- Accounts that only use the Claude Code (OAuth) login see one team.
+- When the Claude Code profile is not the current one, its statusline refreshes every 5 minutes.
+
+**Please help:** capture a redacted `/api/organizations` response for each seat type (**Settings → Debug network log**) and send it to us. Remove names, emails and IDs first.
