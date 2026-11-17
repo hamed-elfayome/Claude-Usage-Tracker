@@ -28,7 +28,13 @@ final class FakeTeamFetcher: TeamUsageFetching, @unchecked Sendable {
     func setUsage(_ sessionKey: String, org: String, error: Error) {
         lock.lock(); usages["\(sessionKey)|\(org)"] = .failure(error); lock.unlock()
     }
-    func setOAuth(_ id: UUID, _ usage: ClaudeUsage) { lock.lock(); oauth[id] = .success(usage); lock.unlock() }
+    /// A provider reading. `lastUpdated` defaults to a fresh fetch (after any test clock); pass an older
+    /// date to model the provider's fall-back to a cached reading.
+    func setOAuth(_ id: UUID, _ usage: ClaudeUsage, lastUpdated: Date = .distantFuture) {
+        var u = usage
+        u.lastUpdated = lastUpdated
+        lock.lock(); oauth[id] = .success(u); lock.unlock()
+    }
     func blockOAuth() { lock.lock(); gateOAuth = true; _release = false; lock.unlock() }
     func releaseOAuth() { lock.lock(); _release = true; lock.unlock() }
 

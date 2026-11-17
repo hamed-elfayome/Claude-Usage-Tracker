@@ -535,4 +535,269 @@ final class TeamTrackerTests: XCTestCase {
         XCTAssertEqual(store.trackingWrites, 0)
         XCTAssertNil(tracker.global.lastRoundAt)
     }
+
+    // MARK: FU-1 makeCurrent only accepts a pair that can be live
+
+    private func assertMakeCurrentRefused(_ pair: PairRef, current: PairRef, file: StaticString = #filePath, line: UInt = #line) {
+        let before = events.count
+        tracker.makeCurrent(pair)
+        XCTAssertEqual(tracker.global.current, current, file: file, line: line)
+        XCTAssertNil(tracker.global.manualPickAt, file: file, line: line)
+        XCTAssertEqual(events.count, before, file: file, line: line)
+        XCTAssertTrue(notifier.posted.isEmpty, file: file, line: line)
+    }
+
+    func testMakeCurrentRefusesOldPair() async throws {
+        let p1 = profile("P1", key: "k1", ids: ["org-a"])
+        let id2 = UUID()
+        let p2 = profile("P2", key: "k2", orgs: [tracked(id2, "org-b", status: .old)], id: id2)
+        build([p1, p2], current: ref(p1, "org-a"))
+        assertMakeCurrentRefused(ref(p2, "org-b"), current: ref(p1, "org-a"))
+    }
+
+    func testMakeCurrentRefusesUnreachablePair() async throws {
+        let p1 = profile("P1", key: "k1", ids: ["org-a"])
+        let id2 = UUID()
+        let p2 = profile("P2", key: "k2", orgs: [tracked(id2, "org-b", status: .unreachable)], id: id2)
+        build([p1, p2], current: ref(p1, "org-a"))
+        assertMakeCurrentRefused(ref(p2, "org-b"), current: ref(p1, "org-a"))
+    }
+
+    func testMakeCurrentRefusesPairOfLoggedOutAccount() async throws {
+        let p1 = profile("P1", key: "k1", ids: ["org-a"])
+        var p2 = profile("P2", key: "k2", ids: ["org-b"])
+        p2.orgTracking?.authState = .needsLogin(reason: "claude.ai session expired", since: t0)
+        build([p1, p2], current: ref(p1, "org-a"))
+        assertMakeCurrentRefused(ref(p2, "org-b"), current: ref(p1, "org-a"))
+    }
+
+    func testMakeCurrentRefusesPairOfBackingOffAccountThenAcceptsHealthyPair() async throws {
+        let p1 = profile("P1", key: "k1", ids: ["org-a"])
+        let p2 = profile("P2", key: "k2", ids: ["org-b"])
+        let p3 = profile("P3", key: "k3", ids: ["org-c"])
+        build([p1, p2, p3], current: ref(p1, "org-a"))
+        await boot()
+        tracker.ingestLive(profileId: p2.id, orgId: "org-b",
+                           result: .failure(err(.apiRateLimited, "Retry-After: 3000")), isCachedReading: false)
+        assertMakeCurrentRefused(ref(p2, "org-b"), current: ref(p1, "org-a"))
+        tracker.makeCurrent(ref(p3, "org-c"))                    // control: a healthy pair still moves
+        XCTAssertEqual(tracker.global.current, ref(p3, "org-c"))
+        XCTAssertEqual(tracker.global.manualPickAt, clock.now)
+    }
+
+    // MARK: FU-1 group move peer list failures
+
+    /// P1's live 404 forces its list, which confirms A gone, so P2 (also on A) gets a group-move list.
+    private func groupMoveWithPeerList(_ peerList: AppError?, peerBackingOff: Bool = false) async throws -> (Profile, Profile) {
+        let p1 = profile("P1", key: "k1", ids: ["org-a"])
+        let p2 = profile("P2", key: "k2", ids: ["org-a"])
+        build([p1, p2], current: ref(p1, "org-a"))
+        fetcher.setList("k1", json: TeamFixtures.orgsAB)
+        fetcher.setList("k2", json: TeamFixtures.orgsAB)
+        await boot()
+        XCTAssertEqual(state(p2).authState, .ok)
+        if peerBackingOff {
+            tracker.ingestLive(profileId: p2.id, orgId: "org-a",
+                               result: .failure(err(.apiRateLimited, "Retry-After: 3000")), isCachedReading: false)
+        }
+        fetcher.setList("k1", json: TeamFixtures.orgsB)
+        if let peerList { fetcher.setList("k2", error: peerList) }
+        tracker.ingestLive(profileId: p1.id, orgId: "org-a", result: .failure(err(.apiNotFound)), isCachedReading: false)
+        await tracker.backgroundTask?.value
+        XCTAssertEqual(state(p1).org("org-a")?.status, .old)
+        return (p1, p2)
+    }
+
+    private var groupMoveUnchecked: [[UUID]] {
+        events.compactMap { e -> [UUID]? in
+            if case let .groupMove(_, _, _, _, unchecked) = e.kind { return unchecked } else { return nil }
+        }
+    }
+
+    func testGroupMovePeerListUnauthorizedAppliesRuleLAndCountsUnchecked() async throws {
+        let (_, p2) = try await groupMoveWithPeerList(err(.apiUnauthorized))
+        XCTAssertEqual(fetcher.callCount(prefix: "list:k2"), 2)   // boot + the group-move list
+        guard case let .needsLogin(reason, since) = state(p2).authState else { return XCTFail("expected needsLogin") }
+        XCTAssertEqual(reason, "claude.ai session expired")         // rule L, as runDueLists would apply
+        XCTAssertEqual(since, t0)
+        XCTAssertTrue(events.contains { if case .loginLost(p2.id, _) = $0.kind { return true } else { return false } })
+        XCTAssertEqual(state(p2).org("org-a")?.status, .member)    // no peer-confirmed removal
+        XCTAssertEqual(groupMoveUnchecked, [[p2.id]])
+    }
+
+    func testGroupMovePeerListCloudflareLeavesPeerUnchanged() async throws {
+        let (_, p2) = try await groupMoveWithPeerList(err(.apiServiceUnavailable))
+        XCTAssertEqual(fetcher.callCount(prefix: "list:k2"), 2)
+        XCTAssertEqual(state(p2).authState, .ok)
+        XCTAssertEqual(state(p2).org("org-a")?.status, .member)
+        XCTAssertFalse(events.contains { if case .loginLost = $0.kind { return true } else { return false } })
+        XCTAssertEqual(groupMoveUnchecked, [[p2.id]])
+    }
+
+    func testGroupMovePeerBackingOffWithUnauthorizedListIsUncheckedWithoutApply() async throws {
+        let (_, p2) = try await groupMoveWithPeerList(err(.apiUnauthorized), peerBackingOff: true)
+        XCTAssertEqual(fetcher.callCount(prefix: "list:k2"), 1)   // boot only: no group-move list
+        XCTAssertEqual(state(p2).authState, .ok)
+        XCTAssertEqual(groupMoveUnchecked, [[p2.id]])
+    }
+
+    // MARK: FU-1 OAuth-only first sample
+
+    func testOAuthOnlyFirstReadingOlderThanOneRoundIsNoSample() async throws {
+        let p = oauthProfile()
+        let p1 = profile("P1", key: "k1", ids: ["org-a"])
+        build([p1, p], current: ref(p1, "org-a"))
+        XCTAssertNil(state(p).org("org-b")?.lastSampleAt)
+        let roundAt = t0.addingTimeInterval(15)
+        fetcher.setOAuth(p.id, try u(33), lastUpdated: roundAt.addingTimeInterval(-PollPolicy.default.roundInterval - 1))
+        var sampled: [UUID] = []
+        tracker.onSample = { id, _ in sampled.append(id) }
+        await boot()
+        await round(0)
+        XCTAssertEqual(clock.now, roundAt)
+        XCTAssertEqual(fetcher.callCount(prefix: "oauth:\(p.id.uuidString)"), 1)
+        XCTAssertTrue(store.savedUsage.filter { $0.0 == p.id }.isEmpty)
+        XCTAssertNil(store.profile(p.id).claudeUsage)
+        XCTAssertTrue(sampled.isEmpty)
+        XCTAssertNil(state(p).org("org-b")?.lastSampleAt)
+    }
+
+    func testOAuthOnlyFirstReadingAtRoundTimeIsSample() async throws {
+        let p = oauthProfile()
+        let p1 = profile("P1", key: "k1", ids: ["org-a"])
+        build([p1, p], current: ref(p1, "org-a"))
+        let roundAt = t0.addingTimeInterval(15)
+        fetcher.setOAuth(p.id, try u(33), lastUpdated: roundAt)
+        var sampled: [UUID] = []
+        tracker.onSample = { id, _ in sampled.append(id) }
+        await boot()
+        await round(0)
+        XCTAssertEqual(store.savedUsage.filter { $0.0 == p.id }.map { $0.1.sessionPercentage }, [33])
+        XCTAssertEqual(sampled, [p.id])
+    }
+
+    // MARK: FU-1 tester: extra edges
+
+    /// Like assertMakeCurrentRefused, for a tracker that already posted notifications: nothing new is posted.
+    private func assertPickRefusedAfterActivity(_ pair: PairRef, current: PairRef, file: StaticString = #filePath, line: UInt = #line) {
+        let before = (events.count, notifier.posted.count)
+        tracker.makeCurrent(pair)
+        XCTAssertEqual(tracker.global.current, current, file: file, line: line)
+        XCTAssertNil(tracker.global.manualPickAt, file: file, line: line)
+        XCTAssertEqual(events.count, before.0, file: file, line: line)
+        XCTAssertEqual(notifier.posted.count, before.1, file: file, line: line)
+    }
+
+    /// The backoff check uses the clock at the call: refused one second before the backoff ends, accepted at its end.
+    func testMakeCurrentBackoffBoundaryUsesCallTimeClock() async throws {
+        let p1 = profile("P1", key: "k1", ids: ["org-a"])
+        let p2 = profile("P2", key: "k2", ids: ["org-b"])
+        build([p1, p2], current: ref(p1, "org-a"))
+        await boot()
+        // random 0: nominal 60 * 0.8 = 48 s < Retry-After 120, so the backoff ends at t0 + 120.
+        tracker.ingestLive(profileId: p2.id, orgId: "org-b",
+                           result: .failure(err(.apiRateLimited, "Retry-After: 120")), isCachedReading: false)
+        clock.now = t0.addingTimeInterval(119)
+        assertMakeCurrentRefused(ref(p2, "org-b"), current: ref(p1, "org-a"))
+        clock.now = t0.addingTimeInterval(120)
+        tracker.makeCurrent(ref(p2, "org-b"))
+        XCTAssertEqual(tracker.global.current, ref(p2, "org-b"))
+        XCTAssertEqual(tracker.global.manualPickAt, clock.now)
+    }
+
+    /// Two peers in one group move: one list 401s (rule L, unchecked), the other confirms the move.
+    /// Afterwards neither of the dead pairs can be picked by hand.
+    func testGroupMoveMixedPeersUnauthorizedAndMoved() async throws {
+        let p1 = profile("P1", key: "k1", ids: ["org-a"])
+        let p2 = profile("P2", key: "k2", ids: ["org-a"])
+        let p3 = profile("P3", key: "k3", ids: ["org-a"])
+        build([p1, p2, p3], current: ref(p1, "org-a"))
+        for k in ["k1", "k2", "k3"] { fetcher.setList(k, json: TeamFixtures.orgsAB) }
+        await boot()
+        fetcher.setList("k1", json: TeamFixtures.orgsB)
+        fetcher.setList("k2", error: err(.apiUnauthorized))
+        fetcher.setList("k3", json: TeamFixtures.orgsB)
+        tracker.ingestLive(profileId: p1.id, orgId: "org-a", result: .failure(err(.apiNotFound)), isCachedReading: false)
+        await tracker.backgroundTask?.value
+
+        let groups = events.compactMap { e -> ([UUID: String?], [UUID], [UUID])? in
+            if case let .groupMove(_, _, moves, notMoved, unchecked) = e.kind { return (moves, notMoved, unchecked) }
+            return nil
+        }
+        XCTAssertEqual(groups.count, 1)
+        XCTAssertEqual(groups.first.map { Set($0.0.keys) }, [p1.id, p3.id])   // the trigger counts as a mover
+        XCTAssertEqual(groups.first?.1, [])
+        XCTAssertEqual(groups.first?.2, [p2.id])
+        guard case .needsLogin = state(p2).authState else { return XCTFail("expected needsLogin for P2") }
+        XCTAssertEqual(state(p2).org("org-a")?.status, .member)
+        XCTAssertEqual(state(p3).authState, .ok)
+        XCTAssertEqual(state(p3).org("org-a")?.status, .old)
+        XCTAssertEqual(events.filter { if case .loginLost(p2.id, _) = $0.kind { return true } else { return false } }.count, 1)
+        XCTAssertFalse(events.contains { if case .loginLost(p3.id, _) = $0.kind { return true } else { return false } })
+
+        let current = try XCTUnwrap(tracker.global.current)
+        assertPickRefusedAfterActivity(ref(p2, "org-a"), current: current)   // logged out by the group-move 401
+        assertPickRefusedAfterActivity(ref(p3, "org-a"), current: current)   // moved away: .old
+    }
+
+    /// A 429 on the peer's group-move list is no rule-L case: unchecked, still logged in, and backing off,
+    /// so a manual pick of that peer is refused until the backoff ends.
+    func testGroupMovePeerListRateLimitedIsUncheckedAndBlocksManualPickUntilBackoffEnds() async throws {
+        let (_, p2) = try await groupMoveWithPeerList(err(.apiRateLimited, "Retry-After: 3000"))
+        XCTAssertEqual(fetcher.callCount(prefix: "list:k2"), 2)
+        XCTAssertEqual(state(p2).authState, .ok)
+        XCTAssertEqual(state(p2).org("org-a")?.status, .member)
+        XCTAssertFalse(events.contains { if case .loginLost = $0.kind { return true } else { return false } })
+        XCTAssertEqual(groupMoveUnchecked, [[p2.id]])
+        let current = try XCTUnwrap(tracker.global.current)
+        assertPickRefusedAfterActivity(ref(p2, "org-a"), current: current)
+        clock.now = t0.addingTimeInterval(3000)
+        tracker.makeCurrent(ref(p2, "org-a"))
+        XCTAssertEqual(tracker.global.current, ref(p2, "org-a"))
+    }
+
+    private func oauthProfile(lastSampleAt: Date?) -> Profile {
+        var p = oauthProfile()
+        p.orgTracking?.orgs[0].lastSampleAt = lastSampleAt
+        return p
+    }
+
+    /// With no sample yet the cutoff is `now - roundInterval`, and a reading exactly at the cutoff is cached.
+    func testOAuthOnlyFirstReadingCutoffBoundary() async throws {
+        let atCutoff = oauthProfile(), justAfter = oauthProfile()
+        let p1 = profile("P1", key: "k1", ids: ["org-a"])
+        build([p1, atCutoff, justAfter], current: ref(p1, "org-a"))
+        let cutoff = t0.addingTimeInterval(15 - PollPolicy.default.roundInterval)
+        fetcher.setOAuth(atCutoff.id, try u(31), lastUpdated: cutoff)
+        fetcher.setOAuth(justAfter.id, try u(32), lastUpdated: cutoff.addingTimeInterval(1))
+        var sampled: [UUID] = []
+        tracker.onSample = { id, _ in sampled.append(id) }
+        await boot()
+        await round(0)
+        XCTAssertEqual(fetcher.callCount(prefix: "oauth:\(atCutoff.id.uuidString)"), 1)
+        XCTAssertEqual(sampled, [justAfter.id])
+        XCTAssertTrue(store.savedUsage.filter { $0.0 == atCutoff.id }.isEmpty)
+        XCTAssertNil(state(atCutoff).org("org-b")?.lastSampleAt)
+        XCTAssertEqual(store.savedUsage.filter { $0.0 == justAfter.id }.map { $0.1.sessionPercentage }, [32])
+    }
+
+    /// Once a sample exists the cutoff is that sample, not the one-round window: a reading newer than the
+    /// last sample is accepted even when it is older than one round, and one equal to it is rejected.
+    func testOAuthOnlyWithPriorSampleUsesLastSampleNotRoundWindow() async throws {
+        let roundAt = t0.addingTimeInterval(15)
+        let stale = oauthProfile(lastSampleAt: roundAt.addingTimeInterval(-900))
+        let repeatReading = oauthProfile(lastSampleAt: roundAt.addingTimeInterval(-60))
+        let p1 = profile("P1", key: "k1", ids: ["org-a"])
+        build([p1, stale, repeatReading], current: ref(p1, "org-a"))
+        fetcher.setOAuth(stale.id, try u(41), lastUpdated: roundAt.addingTimeInterval(-600))
+        fetcher.setOAuth(repeatReading.id, try u(42), lastUpdated: roundAt.addingTimeInterval(-60))
+        var sampled: [UUID] = []
+        tracker.onSample = { id, _ in sampled.append(id) }
+        await boot()
+        await round(0)
+        XCTAssertEqual(fetcher.callCount(prefix: "oauth:\(repeatReading.id.uuidString)"), 1)
+        XCTAssertEqual(sampled, [stale.id])
+        XCTAssertEqual(store.savedUsage.filter { $0.0 == stale.id }.map { $0.1.sessionPercentage }, [41])
+        XCTAssertTrue(store.savedUsage.filter { $0.0 == repeatReading.id }.isEmpty)
+    }
 }
