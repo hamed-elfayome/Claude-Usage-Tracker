@@ -102,6 +102,7 @@ struct PopoverContentView: View {
     // the window-resize loop.
     @State private var appeared = false
     @StateObject private var profileManager = ProfileManager.shared
+    @ObservedObject private var teamTracker = TeamTracker.shared
 
     private func profileInitials(for name: String) -> String {
         let words = name.split(separator: " ")
@@ -124,25 +125,34 @@ struct PopoverContentView: View {
         if manager.clickedProfileUsage != nil {
             return manager.clickedProfileAPIUsage
         }
-        return manager.apiUsage
+        return manager.shownAPIUsage
     }
 
     /// Provider of the profile being viewed (clicked profile in multi-profile
-    /// mode, else the active profile).
+    /// mode, else the shown profile, `menuBarProfile`).
     private var displayProvider: Provider {
         let viewingProfile = manager.clickedProfileId.flatMap { id in
             profileManager.profiles.first(where: { $0.id == id })
-        } ?? profileManager.activeProfile
+        } ?? manager.menuBarProfile
         return viewingProfile?.provider ?? .anthropic
     }
 
     /// Monthly spend target of the profile being viewed (clicked profile in
-    /// multi-profile mode, else the active profile).
+    /// multi-profile mode, else the shown profile, `menuBarProfile`).
     private var displayMonthlySpendLimitCents: Double? {
         let viewingProfile = manager.clickedProfileId.flatMap { id in
             profileManager.profiles.first(where: { $0.id == id })
-        } ?? profileManager.activeProfile
+        } ?? manager.menuBarProfile
         return viewingProfile?.monthlySpendLimitCents
+    }
+
+    /// Rows of the Teams section, or nil when the tracker is off or there are fewer than 2.
+    private var teamRows: [TeamRow]? {
+        guard teamTracker.isRunning else { return nil }
+        let reader = StoredCredentialReader()
+        let rows = TeamRow.build(profiles: profileManager.profiles, global: teamTracker.global,
+                                 hasCredential: { reader.hasCredential($0) }, now: Date())
+        return rows.count >= 2 ? rows : nil
     }
 
     var body: some View {
@@ -174,7 +184,7 @@ struct PopoverContentView: View {
             if manager.hasCredentialError {
                 StatusBannerView(
                     icon: "exclamationmark.triangle.fill",
-                    message: "popover.banner.credentials_expired".localized,
+                    message: manager.teamLoginMessage ?? "popover.banner.credentials_expired".localized,
                     color: .orange
                 ) {
                     onPreferences()
@@ -203,7 +213,7 @@ struct PopoverContentView: View {
             if profileManager.displayMode == .multi,
                let viewingProfile = manager.clickedProfileId.flatMap({ id in
                    profileManager.profiles.first(where: { $0.id == id })
-               }) ?? profileManager.activeProfile {
+               }) ?? manager.menuBarProfile {
                 HStack(spacing: 8) {
                     // Profile initials avatar
                     ZStack {
@@ -263,6 +273,18 @@ struct PopoverContentView: View {
                 PopoverDivider()
                 ContextualInsights(usage: displayUsage)
                     .transition(.opacity)
+            }
+
+            // Teams (spec §11): only while Team tracking runs and there are at least 2 pairs
+            if let rows = teamRows {
+                PopoverDivider()
+                TeamsSectionView(
+                    rows: rows,
+                    events: TeamRow.recentEvents(teamTracker.global),
+                    now: Date(),
+                    onMakeCurrent: { TeamTracker.shared.makeCurrent($0) },
+                    onDelete: { _ = TeamTracker.shared.deleteOldPair($0) }
+                )
             }
 
         }

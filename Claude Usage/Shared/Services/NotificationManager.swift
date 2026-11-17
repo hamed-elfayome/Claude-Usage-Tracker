@@ -465,3 +465,35 @@ extension NotificationManager {
         }
     }
 }
+
+// MARK: - Team tracking events (docs/specs/multi-team-tracking.md §10)
+
+extension NotificationManager: TeamEventNotifying {
+    /// Early-return rule: only notifying events, and only when at least one involved profile
+    /// (the tracker passes the event's accounts that still exist) has notifications on.
+    static func shouldPostTeamEvent(_ event: TeamEvent, profiles: [Profile]) -> Bool {
+        event.notifies && profiles.contains { $0.notificationSettings.enabled }
+    }
+
+    static func teamEventContent(_ e: TeamEvent) -> (identifier: String, title: String, body: String) {
+        ("team-event-\(e.id.uuidString)", e.title, e.body)
+    }
+
+    func post(_ event: TeamEvent, profiles: [Profile]) {
+        guard Self.shouldPostTeamEvent(event, profiles: profiles) else { return }
+        let c = Self.teamEventContent(event)
+
+        let content = UNMutableNotificationContent()
+        content.title = c.title
+        content.body = c.body
+        content.sound = .default
+        content.categoryIdentifier = "INFO_ALERT"
+
+        let request = UNNotificationRequest(identifier: c.identifier, content: content, trigger: nil)
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                LoggingService.shared.logError("Failed to send team event notification: \(error)")
+            }
+        }
+    }
+}

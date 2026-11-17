@@ -51,8 +51,12 @@ final class AnthropicUsageProvider: UsageProviderService {
         // If `ensureFreshCredentials` returns nil (e.g. network failure during refresh), fall
         // back to the stored cliCredentialsJSON so a still-valid cached token isn't wasted.
         if profile.cliCredentialsJSON != nil || profile.customKeychainServiceName != nil {
-            let usableJSON = await ClaudeCodeSyncService.shared.ensureFreshCredentials(for: profile.id)
-                ?? profile.cliCredentialsJSON
+            // invalid_grant reaches Team tracking (spec §7); the tracker ignores it when not running.
+            let profileId = profile.id
+            let usableJSON = await ClaudeCodeSyncService.shared.ensureFreshCredentials(
+                for: profile.id,
+                onRefreshRejected: Self.refreshRejectedHandler(profileId: profileId)
+            ) ?? profile.cliCredentialsJSON
             if let usableJSON = usableJSON,
                !ClaudeCodeSyncService.shared.isTokenExpired(usableJSON),
                let accessToken = ClaudeCodeSyncService.shared.extractAccessToken(from: usableJSON) {
@@ -87,6 +91,14 @@ final class AnthropicUsageProvider: UsageProviderService {
             message: "Missing credentials for profile '\(profile.name)'",
             isRecoverable: false
         )
+    }
+
+    /// Handler passed to `ensureFreshCredentials`: hops to the main actor and reports the dead
+    /// refresh token to the Team tracker.
+    static func refreshRejectedHandler(profileId: UUID,
+                                       report: @escaping @MainActor (UUID) -> Void = { TeamTracker.shared.reportRefreshRejected(profileId: $0) }
+    ) -> () -> Void {
+        { Task { @MainActor in report(profileId) } }
     }
 
     /// The single-profile refresh path historically used the no-arg
