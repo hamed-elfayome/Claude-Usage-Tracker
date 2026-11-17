@@ -1,61 +1,53 @@
-## Verdict
-FAIL. The hunter's major finding reproduces. With Team tracking on and a Codex active profile in single mode, nothing polls the current anthropic pair, so it gets no live samples and loses to any small riser. This breaks R15, spec §7 ("Current pair: 30 s, existing loop"), the packet Goal, and AC2 for this case.
+## Verdict PASS
+PASS. Round 2 fixes the one Must fix. With Team tracking on and a Codex active profile in single mode, every loop pass now also polls the current anthropic pair per profile (never activated, never shown) and hands each result to `ingestLive`. Gates are green on my own rerun.
 
 ## How it's going
-Grade B. Round 1 fixed all three previous Must fix lines cleanly, with a test for each and a mutation check. Gates are green: my rerun gave 599 tests, 597 ok, 0 failed, 2 skipped (this includes 3 reviewer repro tests), and `git diff --check` is clean.
-The one gap left comes from my own round-0 prescription. Keeping Codex shown also needs a background poll of the current pair, as multi mode already does.
+Grade B. The round-2 change is small and matches the prescription: two pure static helpers and a 7-line call site, covered by a pure-helper test and three real-tracker tests that fail when the poll is removed.
+It took two fix rounds, and the `refreshUsage()` call sites are still checked by code reading only.
 
 ## Done well
-- Must fix 1 met. `menuBarProfile` returns a non-anthropic active profile. `handleProfileSwitch` uses the same static helper. The nil-active case is decided and commented.
-- Must fix 2 met:
-  - single-mode `togglePopover` views `menuBarProfile`;
-  - `shownAPIUsage` never shows the active profile's console data under another account;
-  - `onCurrentChanged` moves `clickedProfileId` together with `usage`.
-- Must fix 3 met:
-  - `MultiFetchPlan` keeps every selected profile in the loop, with `usageSkip` and `consoleSkip`;
-  - single-mode `.skip` skips only the usage fetch. Status, console billing and `applyTeamLoginState()` still run (read :1433-1668; no `return` in between).
-- Test intent was kept when moving to the new plan contract (whole-plan equality for tracker-off). The tester's new unselected-current test catches a mutation that none of the builder's tests caught.
-- No skips, `noqa` or weakened assertions were added. No tracked test file changed, and the CLT skip list is unchanged.
+- Must fix 1 is met, point by point:
+  - `backgroundLiveTarget(subject:running:target:)` (MenuBarManager.swift:175) returns the target only when `running && subject.provider != .anthropic`.
+  - `pollLiveTarget` (:184) fetches only through `ProviderRegistry.service(for: .anthropic).fetchUsage(for:)`.
+    - Success: saves the reading unless it is the cached one (`target.profile.claudeUsage == newUsage`), then calls `ingestLive(.success, isCachedReading:)`.
+    - Error: calls `ingestLive(.failure)`.
+    - It leaves `usage`, the banner, the statusline, threshold alerts and auto-switch alone.
+  - It runs on the main actor. The app target and the CLT build both use default MainActor isolation, so the static func and its `Task` are main-actor isolated.
+  - The call site (:1464-1470) starts the poll before the `.legacy` credentials guard (:1496), so a Codex profile without credentials does not starve the pair. The only earlier exits (multi mode, nil `menuBarProfile`) never have a Codex profile shown.
+  - With the tracker off or an anthropic subject, the helper returns nil and no `Task` is created, so those paths are byte-for-byte unchanged.
+- AC2 holds for the Codex case:
+  - The polled account is never the active profile (Codex is), so `ensureFreshCredentials` never takes the system-keychain branch (ClaudeCodeSyncService.swift:1070) and never rotates an unpinned token (:1163).
+  - `fetchUsage(for:)` reads the system keychain only for the active profile (AnthropicUsageProvider.swift:71).
+  - `moveCurrent` keeps `organizationId == current.orgId` for session-key accounts (TeamTracker.swift:447), so each reading is filed under the right pair.
+- Round 2 is purely additive. I diffed against the round-1 review copy. The only changes are:
+  - the two helpers and the call site;
+  - one pure-helper test and three real-tracker tests;
+  - a mutable `ClockBox` in `build()` that stays at t0 for the old tests.
+- Nothing was weakened or removed:
+  - no assertion was weakened and no test deleted (596 tests became 600);
+  - no skip was added, and the CLT skip list is still empty;
+  - `scripts/` and the pbxproj are untouched (the test folder is a synchronized group);
+  - no MT-7 file has a compiler warning (all 333 warning lines are in older files).
+- The walkthrough's Acceptance section has one line with evidence per criterion. AC2 and AC4 name the new tests, as the last verdict asked.
 
 ## Must fix
-1. `Claude Usage/MenuBar/MenuBarManager.swift`, `refreshUsage()` single mode (plan block :1424-1460, Task :1463-1675).
-   - Problem: with the tracker running and a Codex active profile, `menuBarProfile` is the Codex profile and `shownFetchPlan` is `.legacy`, so the 30 s loop fetches only Codex. `TeamTracker.runRound` skips the current pair on purpose (TeamTracker.swift:348). The current anthropic pair therefore gets no live sample at all:
-     - no `ingestLive`;
-     - no membership-failure or 429 handling;
-     - a stale Teams row;
-     - no per-pair history;
-     - it cannot defend at detection. Reviewer repro: the user works on B (+30), A rises 2 points, and current flips to A. With an anthropic active profile, the same usage keeps B.
-   - This breaks R15, spec §7, the packet Goal ("the existing 30 s loop polls only the current pair and hands every sample to the tracker"), and AC2: the current account differs from the active profile, yet it is never fetched.
-   - Exact change: keep Codex shown and on `.legacy`. In the same pass, also fetch the tracker's live target without rendering it, the way multi mode fetches an unselected current account:
-     - Add a pure `static func backgroundLiveTarget(subject: Profile, running: Bool, target: (profile: Profile, orgId: String)?) -> (profile: Profile, orgId: String)?`. It returns `target` only when `running && subject.provider != .anthropic`; otherwise nil.
-     - When it is non-nil, the Task also calls `ProviderRegistry.service(for: .anthropic).fetchUsage(for: target.profile)`. Never `fetchUsageForActiveProfile`, and never activate the account.
-     - On success, on the main actor: call `profileManager.saveClaudeUsage(newUsage, for: target.profile.id)` unless the reading is cached (`target.profile.claudeUsage == newUsage`). Then call `TeamTracker.shared.ingestLive(profileId: target.profile.id, orgId: target.orgId, result: .success(newUsage), isCachedReading:)`.
-     - On error: `ingestLive(... .failure(error) ...)`.
-     - Do not touch `usage`, `hasCredentialError`, `lastRefreshError`, the statusline, threshold notifications or auto-switch.
-     - With tracking off, or an anthropic subject, the helper returns nil, so those paths stay exactly as they are.
-     - Update the walkthrough's Acceptance lines for AC2 and AC4 with the new test.
+(none)
 
 ## Tests to add
-- Pure helper `backgroundLiveTarget`:
-  - Codex subject, running, live target: returns the current pair, with its orgId;
-  - Codex subject, no target: nil;
-  - `running == false`: nil;
-  - anthropic subject: nil.
-- Real `TeamTracker` with fakes and a `ClockBox`, like `MenuBarTeamWiringEdgeTests.build`:
-  - Setup: Codex active; tracked accounts A and B; current is B.
-  - Loop passes use the helper and ingest B's sample at t0+10 (20%) and at t0+300 (50%).
-  - Probe rounds run at t0+15 and t0+315, with A going from 10% to 12%.
-  - Expected: `global.current` stays B, and B's `lastSampleAt` is set.
-  - Today this flips to A (reviewer repro `testCurrentPairCannotDefendWhileCodexIsActive`).
+(none)
 
 ## Hunter
-- Major, "Codex active in single mode starves the current pair": **confirmed.**
-  - Reran in a fresh scratch copy of the worktree. Output: `REVIEWER-REPRO1 shown=C plan=legacy liveTarget=Optional("org-b") currentPairUsageCalls=0 calls=["list:k-B"]`, the same as the hunter's.
-  - Effect test: with Codex active, `switchedToA=true livePasses=0`. With an anthropic active profile, `switchedToA=false livePasses=2`.
+- No findings this round (HUNTER: []). No Gemini cross-review this round.
+- The previous major finding, "Codex active in single mode starves the current pair", is fixed. I checked this with a reviewer mutation on a scratch copy: `backgroundLiveTarget` always returns nil, which is the round-1 behaviour.
+  - Result: `Executed 600 tests: 594 ok, 4 failed, 2 skipped`. Only the four new tests failed.
+  - `testCodexActiveLoopPollsCurrentPairSoItDefends` failed at :334 with current = `(A, org-a)`, the same flip as the round-1 repro, so the test checks real tracker behaviour and not only the fetch count.
 
 ## Improve later
-- `.skip` and `.tracked` bypass the `hasAnyAvailableCredentials()` guard. Status (and console billing, if configured) can then run in a pass without usage credentials. Harmless.
-- The single-mode catch passes the raw `error` to `ingestLive`. Passing `appError` would be tidier (arch note).
-- The `UserDefaults.didChangeNotification` observer fires on every defaults write. A KVO on the one key would be tighter.
-- `teamRows` builds a `StoredCredentialReader` on every body pass.
-- With a Codex active profile, no "Log in again" banner appears for the hidden current account; only the Teams row and the `loginLost` notification report it. This matches spec §11 ("shown account").
+- The `refreshUsage()` call site (:1464-1470) is checked by code reading only. The tests drive the same helpers, but not the `MenuBarManager.shared` path. A seam that returns the plan and the background target together would let one test cover the wiring.
+- Two passes close together (the timer plus `onCurrentChanged`) poll the current pair twice. An in-flight flag would keep spec §7's budget of 4 requests per 30 s during bursts. The existing `.tracked` path behaves the same way.
+- Carried over from earlier rounds:
+  - `.skip` and `.tracked` bypass `hasAnyAvailableCredentials()`;
+  - the catch paths pass the raw `error` to `ingestLive` (passing an `AppError` would be tidier);
+  - the `UserDefaults.didChangeNotification` observer fires on every defaults write;
+  - `teamRows` builds a `StoredCredentialReader` on every body pass;
+  - with Codex shown, a hidden current account that needs a new login shows no banner. This matches spec §11 ("shown account").
