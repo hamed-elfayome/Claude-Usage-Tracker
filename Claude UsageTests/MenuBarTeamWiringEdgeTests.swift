@@ -369,4 +369,516 @@ final class MenuBarTeamWiringEdgeTests: XCTestCase {
         XCTAssertNil(store.profile(b.id).orgTracking?.org("org-b")?.lastSampleAt)
         XCTAssertNotNil(tracker.liveTarget())
     }
+
+    // MARK: FU-2 (one tracker live fetch in flight at a time)
+
+    private var gate = LivePollGate()
+    private var gatedFetched: [UUID] = []
+    private var parked: [CheckedContinuation<ClaudeUsage, Error>] = []
+
+    /// One Codex-shown pass through the production gate helper: the fake fetch records the profile and
+    /// suspends until the test resumes it. Nil when the pass was skipped (gate busy or no target).
+    private func gatedCodexPass(_ c: Profile) -> Task<Void, Never>? {
+        guard let target = MenuBarManager.backgroundLiveTarget(subject: c, running: tracker.isRunning,
+                                                               target: tracker.liveTarget()) else { return nil }
+        let t = tracker!, s = store!
+        return MenuBarManager.startGatedLivePoll(gate: &gate, release: { [unowned self] in self.gate.end() }) {
+            await MenuBarManager.pollLiveTarget(target, tracker: t, store: s) { p in
+                self.gatedFetched.append(p.id)
+                return try await withCheckedThrowingContinuation { self.parked.append($0) }
+            }
+        }
+    }
+
+    /// Lets started passes run until `count` fetches are suspended.
+    private func waitParked(_ count: Int) async throws {
+        for _ in 0..<200 where parked.count < count { try await Task.sleep(nanoseconds: 1_000_000) }
+        XCTAssertEqual(parked.count, count)
+    }
+
+    private func resumeAll(_ result: Result<ClaudeUsage, Error>) {
+        let all = parked
+        parked = []
+        all.forEach { $0.resume(with: result) }
+    }
+
+    private func gatedSetUp() async -> Profile {
+        gate = LivePollGate()
+        gatedFetched = []
+        parked = []
+        let b = member("B", org: "org-b")
+        build([b], current: PairRef(profileId: b.id, orgId: "org-b"))
+        await tracker.tick(now: t0)
+        return Profile(name: "C", provider: .codex)
+    }
+
+    func testLivePollGateBeginEnd() {
+        var g = LivePollGate()
+        XCTAssertFalse(g.inFlight)
+        XCTAssertTrue(g.begin())
+        XCTAssertTrue(g.inFlight)
+        XCTAssertFalse(g.begin())
+        g.end()
+        XCTAssertFalse(g.inFlight)
+        XCTAssertTrue(g.begin())
+    }
+
+    /// The timer pass and an onCurrentChanged pass back to back while the first fetch is suspended:
+    /// one request only. Once it ends, the next pass fetches again.
+    func testSecondLivePassWhileFirstInFlightDoesNotFetch() async throws {
+        let c = await gatedSetUp()
+        let first = gatedCodexPass(c)
+        XCTAssertNotNil(first)
+        XCTAssertNil(gatedCodexPass(c))          // started before the first Task even ran
+        try await waitParked(1)
+        XCTAssertNil(gatedCodexPass(c))          // the first fetch is suspended
+        XCTAssertEqual(gatedFetched.count, 1)
+
+        resumeAll(.success(try usage(20)))
+        await first?.value
+        XCTAssertFalse(gate.inFlight)
+        XCTAssertEqual(store.savedUsage.map { $0.1.sessionPercentage }, [20])
+
+        let third = gatedCodexPass(c)
+        XCTAssertNotNil(third)
+        try await waitParked(1)
+        XCTAssertEqual(gatedFetched.count, 2)
+        resumeAll(.success(try usage(30)))
+        await third?.value
+    }
+
+    /// A fetch that throws still releases the gate: the next pass fetches.
+    func testLivePassFailureReleasesGate() async throws {
+        let c = await gatedSetUp()
+        let first = gatedCodexPass(c)
+        try await waitParked(1)
+        resumeAll(.failure(URLError(.timedOut)))
+        await first?.value
+        XCTAssertFalse(gate.inFlight)
+        XCTAssertNotNil(tracker.liveTarget())
+
+        let second = gatedCodexPass(c)
+        XCTAssertNotNil(second)
+        try await waitParked(1)
+        XCTAssertEqual(gatedFetched.count, 2)
+        resumeAll(.success(try usage(30)))
+        await second?.value
+    }
+
+    /// Toggle off while a fetch is in flight (the menu bar resets the gate, as in
+    /// `teamTrackingSettingChanged`), then on: the next pass fetches without waiting for the old one.
+    func testToggleOffWhileInFlightThenOnFetchesAgain() async throws {
+        let c = await gatedSetUp()
+        let first = gatedCodexPass(c)
+        try await waitParked(1)
+
+        tracker.stop()
+        gate = LivePollGate()
+        XCTAssertNil(MenuBarManager.backgroundLiveTarget(subject: c, running: tracker.isRunning,
+                                                         target: tracker.liveTarget()))
+        tracker.start()
+
+        let second = gatedCodexPass(c)
+        XCTAssertNotNil(second)
+        try await waitParked(2)
+        XCTAssertEqual(gatedFetched.count, 2)
+        resumeAll(.success(try usage(30)))
+        await first?.value
+        await second?.value
+    }
+
+    // MARK: FU-2 tester (gate edge cases the builder's tests leave open)
+
+    /// A busy pass must neither run its poll nor call `release`: releasing there would free the gate
+    /// the in-flight fetch still holds and let the next pass send a duplicate request.
+    func testGatedLivePollBusyRunsNothingAndKeepsHolderGate() async throws {
+        var g = LivePollGate()
+        XCTAssertTrue(g.begin())
+        var polls = 0, releases = 0
+        let t = MenuBarManager.startGatedLivePoll(gate: &g, release: { releases += 1 }) { polls += 1 }
+        XCTAssertNil(t)
+        try await Task.sleep(nanoseconds: 20_000_000)
+        XCTAssertEqual(polls, 0)
+        XCTAssertEqual(releases, 0)
+        XCTAssertTrue(g.inFlight)
+    }
+
+    /// The gate stays held for the whole suspended fetch and is released once, after the poll returns.
+    func testGatedLivePollReleasesOnceAfterPollReturns() async throws {
+        var g = LivePollGate()
+        var releases = 0
+        var waiting: CheckedContinuation<Void, Never>?
+        let t = MenuBarManager.startGatedLivePoll(gate: &g, release: { releases += 1 }) {
+            await withCheckedContinuation { waiting = $0 }
+        }
+        XCTAssertNotNil(t)
+        for _ in 0..<200 where waiting == nil { try await Task.sleep(nanoseconds: 1_000_000) }
+        XCTAssertNotNil(waiting)
+        XCTAssertTrue(g.inFlight)
+        XCTAssertEqual(releases, 0)
+        waiting?.resume()
+        await t?.value
+        XCTAssertEqual(releases, 1)
+    }
+
+    /// A pass whose Task is cancelled mid-fetch releases the gate: the next pass fetches.
+    func testCancelledLivePassReleasesGate() async throws {
+        let c = await gatedSetUp()
+        guard let target = MenuBarManager.backgroundLiveTarget(subject: c, running: tracker.isRunning,
+                                                               target: tracker.liveTarget()) else {
+            return XCTFail("no live target")
+        }
+        let t = tracker!, s = store!
+        let first = MenuBarManager.startGatedLivePoll(gate: &gate, release: { [unowned self] in self.gate.end() }) {
+            await MenuBarManager.pollLiveTarget(target, tracker: t, store: s) { p in
+                self.gatedFetched.append(p.id)
+                try await Task.sleep(nanoseconds: 60_000_000_000)
+                return try TeamFixtures.usage(session: 99, weekly: 20)
+            }
+        }
+        for _ in 0..<200 where gatedFetched.isEmpty { try await Task.sleep(nanoseconds: 1_000_000) }
+        XCTAssertEqual(gatedFetched.count, 1)
+        XCTAssertTrue(gate.inFlight)
+        first?.cancel()
+        await first?.value
+        XCTAssertFalse(gate.inFlight)
+        XCTAssertTrue(store.savedUsage.isEmpty)
+
+        let second = gatedCodexPass(c)
+        XCTAssertNotNil(second)
+        try await waitParked(1)
+        XCTAssertEqual(gatedFetched.count, 2)
+        resumeAll(.success(try usage(30)))
+        await second?.value
+    }
+
+    /// The motivating case: a 429 backs the current account off. The gate is still released, so once
+    /// the backoff ends the next pass fetches (no stuck gate on top of the backoff).
+    func testRateLimitedLivePassReleasesGateAndFetchesAfterBackoff() async throws {
+        let c = await gatedSetUp()
+        clock.now = t0.addingTimeInterval(10)
+        let first = gatedCodexPass(c)
+        try await waitParked(1)
+        resumeAll(.failure(AppError(code: .apiRateLimited, message: "test", technicalDetails: "Retry-After: 120")))
+        await first?.value
+        XCTAssertFalse(gate.inFlight)
+        XCTAssertNil(tracker.liveTarget())
+        XCTAssertNil(gatedCodexPass(c))           // backed off: no target, gate untouched
+        XCTAssertFalse(gate.inFlight)
+
+        clock.now = t0.addingTimeInterval(10 + 121)
+        let second = gatedCodexPass(c)
+        XCTAssertNotNil(second)
+        try await waitParked(1)
+        XCTAssertEqual(gatedFetched.count, 2)
+        resumeAll(.success(try usage(30)))
+        await second?.value
+        XCTAssertFalse(gate.inFlight)
+    }
+
+    /// Tracker off, or an anthropic subject (its fetch goes through `shownFetchPlan`): the background
+    /// site has no target, so it never takes the gate and never fetches.
+    func testBackgroundSiteNeverTakesGateWithoutTarget() async throws {
+        let c = await gatedSetUp()
+        let anthropic = store.profiles[0]
+        XCTAssertNil(MenuBarManager.backgroundLiveTarget(subject: anthropic, running: tracker.isRunning,
+                                                         target: tracker.liveTarget()))
+        tracker.stop()
+        XCTAssertNil(gatedCodexPass(c))
+        XCTAssertFalse(gate.inFlight)
+        XCTAssertTrue(gatedFetched.isEmpty)
+        // Multi mode takes the gate only for a non-empty liveOrgIds: empty with the tracker off.
+        let a = member("A", org: "org-a")
+        XCTAssertTrue(MenuBarManager.multiFetchPlan(selected: [a, c], allProfiles: [a, c], running: false,
+                                                    target: (a, "org-a")).liveOrgIds.isEmpty)
+    }
+
+    /// The multi-mode site releases the gate in the loop's usage block of the account in `liveOrgIds`.
+    /// That is only reached when that account is in `profiles` and not in `usageSkip`, and it must be
+    /// the only key so the gate is released once. Pinned for every selection shape.
+    func testMultiFetchPlanLiveAccountIsReleasable() {
+        let a = member("A", org: "org-a"), b = member("B", org: "org-b"), d = member("D", org: "org-d")
+        let x = Profile(name: "X", provider: .codex)
+        let selections: [[Profile]] = [[], [b], [a, b], [a, d, b], [x, a], [b, x, a, d]]
+        for selected in selections {
+            let plan = MenuBarManager.multiFetchPlan(selected: selected, allProfiles: [a, b, d, x],
+                                                     running: true, target: (b, "org-b"))
+            let names = selected.map(\.name)
+            XCTAssertEqual(plan.liveOrgIds, [b.id: "org-b"], "\(names)")
+            XCTAssertEqual(plan.profiles.first?.id, b.id, "\(names)")
+            XCTAssertEqual(plan.profiles.filter { $0.id == b.id }.count, 1, "\(names)")
+            XCTAssertFalse(plan.usageSkip.contains(b.id), "\(names)")
+        }
+    }
+
+    // MARK: FU-2 fix round 1 (verdict: the gate dropped the new current pair's pass)
+
+    private var reruns: [Task<Void, Never>?] = []
+    private var changePasses: [Task<Void, Never>?] = []
+    private var startedPairs: [PairRef] = []
+    private var fetchesInFlight = 0
+    private var maxFetchesInFlight = 0
+
+    /// One Codex-shown pass as the production background site runs it: the gate, the poll, and on release
+    /// `endGatedLivePoll`, whose re-run starts this pass again (production: `refreshUsage()`). The fake
+    /// fetch suspends until the test resumes it and counts the fetches in flight.
+    private func rerunningPass(_ c: Profile) -> Task<Void, Never>? {
+        guard let target = MenuBarManager.backgroundLiveTarget(subject: c, running: tracker.isRunning,
+                                                               target: tracker.liveTarget()) else { return nil }
+        let t = tracker!, s = store!
+        let fetched = PairRef(profileId: target.profile.id, orgId: target.orgId)
+        return MenuBarManager.startGatedLivePoll(gate: &gate, release: { [unowned self] in
+            MenuBarManager.endGatedLivePoll(fetched: fetched, tracker: t, release: { self.gate.end() }) {
+                let next = self.rerunningPass(c)
+                self.reruns.append(next)
+            }
+        }) {
+            self.startedPairs.append(fetched)
+            await MenuBarManager.pollLiveTarget(target, tracker: t, store: s) { p in
+                self.gatedFetched.append(p.id)
+                self.fetchesInFlight += 1
+                self.maxFetchesInFlight = max(self.maxFetchesInFlight, self.fetchesInFlight)
+                defer { self.fetchesInFlight -= 1 }
+                return try await withCheckedThrowingContinuation { self.parked.append($0) }
+            }
+        }
+    }
+
+    /// Production `onCurrentChanged` calls `refreshUsage()`, which starts this same pass.
+    private func passOnCurrentChanged(_ c: Profile) {
+        tracker.onCurrentChanged = { [unowned self] _ in
+            let pass = self.rerunningPass(c)
+            self.changePasses.append(pass)
+        }
+    }
+
+    /// The user makes A current while B's fetch is in flight: A's pass finds the gate busy and is dropped.
+    /// B's release re-runs it, so A is fetched once with no new timer pass, and never alongside B.
+    func testCurrentMovedWhileFetchInFlightFetchesNewPairOnceAfterRelease() async throws {
+        let a = member("A", org: "org-a"), b = member("B", org: "org-b")
+        let c = Profile(name: "C", provider: .codex)
+        build([a, b], current: PairRef(profileId: b.id, orgId: "org-b"))
+        await tracker.tick(now: t0)
+        passOnCurrentChanged(c)
+
+        let first = rerunningPass(c)
+        XCTAssertNotNil(first)
+        try await waitParked(1)
+        tracker.makeCurrent(PairRef(profileId: a.id, orgId: "org-a"))
+        XCTAssertEqual(changePasses.map { $0 == nil }, [true])   // dropped: B still holds the gate
+        XCTAssertEqual(gatedFetched, [b.id])
+
+        resumeAll(.success(try usage(20)))
+        await first?.value
+        XCTAssertEqual(reruns.count, 1)
+        try await waitParked(1)
+        XCTAssertEqual(gatedFetched, [b.id, a.id])
+        XCTAssertEqual(startedPairs, [PairRef(profileId: b.id, orgId: "org-b"), PairRef(profileId: a.id, orgId: "org-a")])
+        XCTAssertEqual(maxFetchesInFlight, 1)
+
+        resumeAll(.success(try usage(30)))
+        let rerun = try XCTUnwrap(reruns.first ?? nil)
+        await rerun.value
+        XCTAssertEqual(reruns.count, 1)                           // A's own release: same pair, no re-run
+        XCTAssertEqual(gatedFetched, [b.id, a.id])
+        XCTAssertEqual(store.savedUsage.map { $0.1.sessionPercentage }, [20, 30])   // B's reading still saved
+        XCTAssertFalse(gate.inFlight)
+    }
+
+    /// A live sample that moves the current pair: B is OAuth-only and its token now names org-a, so
+    /// `ingestLive` follows it and fires `onCurrentChanged` while B's pass still holds the gate.
+    /// After the release the new pair is fetched once.
+    func testLiveSampleSwitchFetchesNewPairOnceAfterRelease() async throws {
+        let id = UUID()
+        var b = Profile(id: id, name: "B", claudeSessionKey: nil, organizationId: nil,
+                        cliCredentialsJSON: TeamFixtures.credentialsOrgB)
+        var st = OrgTrackingState.empty
+        st.orgs = [tracked(id, "org-b")]
+        st.legacyHistoryKeyAssigned = true
+        st.credentialOrgId = "org-b"
+        b.orgTracking = st
+        let c = Profile(name: "C", provider: .codex)
+        build([b], current: PairRef(profileId: id, orgId: "org-b"))
+        await tracker.tick(now: t0)
+        passOnCurrentChanged(c)
+
+        let first = rerunningPass(c)
+        XCTAssertNotNil(first)
+        try await waitParked(1)
+        store.profiles[0].cliCredentialsJSON = TeamFixtures.credentialsOrgA   // logged in to team A meanwhile
+        resumeAll(.success(try usage(20)))
+        await first?.value
+
+        XCTAssertEqual(tracker.global.current, PairRef(profileId: id, orgId: "org-a"))
+        XCTAssertEqual(changePasses.map { $0 == nil }, [true])   // fired inside ingestLive: gate still held
+        XCTAssertEqual(reruns.count, 1)
+        try await waitParked(1)
+        XCTAssertEqual(startedPairs, [PairRef(profileId: id, orgId: "org-b"), PairRef(profileId: id, orgId: "org-a")])
+        XCTAssertEqual(maxFetchesInFlight, 1)
+
+        resumeAll(.success(try usage(30)))
+        let rerun = try XCTUnwrap(reruns.first ?? nil)
+        await rerun.value
+        XCTAssertEqual(reruns.count, 1)
+        XCTAssertEqual(gatedFetched, [id, id])
+        XCTAssertEqual(store.profile(id).orgTracking?.org("org-a")?.lastSampleAt, t0)
+        XCTAssertFalse(gate.inFlight)
+    }
+
+    /// A second pass for the pair in flight stays dropped, and the release does not re-run it: the fix
+    /// must not turn the dropped duplicate into a delayed one.
+    func testSamePairPassWhileInFlightStaysDroppedWithoutRerun() async throws {
+        let c = await gatedSetUp()
+        let b = store.profiles[0]
+        let first = rerunningPass(c)
+        XCTAssertNotNil(first)
+        try await waitParked(1)
+        XCTAssertNil(rerunningPass(c))                            // the timer pass while B is in flight
+
+        resumeAll(.success(try usage(20)))
+        await first?.value
+        XCTAssertTrue(reruns.isEmpty)
+        XCTAssertFalse(gate.inFlight)
+        try await Task.sleep(nanoseconds: 20_000_000)
+        XCTAssertEqual(gatedFetched, [b.id])
+        XCTAssertTrue(parked.isEmpty)
+    }
+
+    /// Single-mode stale-write guard with the real tracker: B's tracker-owned reading reaches the menu bar
+    /// while B is shown, not once A is made current mid-fetch, nor once tracking stops and the active
+    /// profile A is shown. Today's path (tracker off when the pass started) is never filtered.
+    func testTrackedReadingReachesMenuBarOnlyWhileItsAccountIsShown() async throws {
+        let a = member("A", org: "org-a"), b = member("B", org: "org-b")
+        build([a, b], current: PairRef(profileId: b.id, orgId: "org-b"))
+        await tracker.tick(now: t0)
+        func shows(_ fetched: Profile) -> Bool {
+            let shown = MenuBarManager.menuBarProfile(running: tracker.isRunning, current: tracker.global.current,
+                                                      profiles: store.profiles, active: a)
+            return MenuBarManager.showsFetchedReading(trackerOwned: true, fetchedId: fetched.id, shownId: shown?.id)
+        }
+        XCTAssertTrue(shows(b))
+        XCTAssertFalse(shows(a))
+        tracker.makeCurrent(PairRef(profileId: a.id, orgId: "org-a"))
+        XCTAssertFalse(shows(b))
+        XCTAssertTrue(shows(a))
+        tracker.makeCurrent(PairRef(profileId: b.id, orgId: "org-b"))
+        XCTAssertTrue(shows(b))
+        tracker.stop()                                            // toggle off mid-fetch: active A is shown
+        XCTAssertFalse(shows(b))
+        XCTAssertFalse(MenuBarManager.showsFetchedReading(trackerOwned: true, fetchedId: b.id, shownId: nil))
+        XCTAssertTrue(MenuBarManager.showsFetchedReading(trackerOwned: false, fetchedId: b.id, shownId: a.id))
+    }
+
+    // MARK: FU-2 tester, retest round 1 (re-run edge cases the fix round's tests leave open)
+
+    /// B parked, then A made current through the production onCurrentChanged hop (dropped).
+    private func movedWhileInFlight() async throws -> (a: Profile, b: Profile, first: Task<Void, Never>?) {
+        gate = LivePollGate()
+        let a = member("A", org: "org-a"), b = member("B", org: "org-b")
+        let c = Profile(name: "C", provider: .codex)
+        build([a, b], current: PairRef(profileId: b.id, orgId: "org-b"))
+        await tracker.tick(now: t0)
+        passOnCurrentChanged(c)
+        let first = rerunningPass(c)
+        XCTAssertNotNil(first)
+        try await waitParked(1)
+        tracker.makeCurrent(PairRef(profileId: a.id, orgId: "org-a"))
+        XCTAssertEqual(changePasses.map { $0 == nil }, [true])
+        return (a, b, first)
+    }
+
+    /// The re-run must not depend on B's fetch succeeding: a timeout, a cancellation and a 429 on B all
+    /// end in the release path, and A (another account, not backed off) is fetched once after it.
+    func testMovedWhileInFlightRerunsNewPairAfterFailedFetch() async throws {
+        let failures: [(String, Error)] = [
+            ("timeout", URLError(.timedOut)),
+            ("cancelled", CancellationError()),
+            ("429", AppError(code: .apiRateLimited, message: "test", technicalDetails: "Retry-After: 120")),
+        ]
+        for (name, error) in failures {
+            reruns = []; changePasses = []; startedPairs = []; gatedFetched = []; parked = []
+            fetchesInFlight = 0; maxFetchesInFlight = 0
+            let saved = store.savedUsage.count
+            let (a, b, first) = try await movedWhileInFlight()
+            resumeAll(.failure(error))
+            await first?.value
+            XCTAssertEqual(reruns.count, 1, name)
+            XCTAssertNotNil(reruns.first ?? nil, "\(name): the re-run found the gate busy")
+            try await waitParked(1)
+            XCTAssertEqual(gatedFetched, [b.id, a.id], name)
+            XCTAssertEqual(maxFetchesInFlight, 1, name)
+            XCTAssertEqual(store.savedUsage.count, saved, name)          // B's failure saved nothing
+            resumeAll(.success(try usage(30)))
+            await (reruns.first ?? nil)?.value
+            XCTAssertEqual(reruns.count, 1, name)
+            XCTAssertFalse(gate.inFlight, name)
+        }
+    }
+
+    /// The current pair moves away and back while B is in flight: at the release the target is B again,
+    /// the pair just fetched, so nothing re-runs (the fix must not add a duplicate request for B).
+    func testMovedAwayAndBackWhileInFlightDoesNotRerun() async throws {
+        let (_, b, first) = try await movedWhileInFlight()
+        tracker.makeCurrent(PairRef(profileId: b.id, orgId: "org-b"))
+        XCTAssertEqual(changePasses.map { $0 == nil }, [true, true])   // both passes dropped
+        resumeAll(.success(try usage(20)))
+        await first?.value
+        XCTAssertTrue(reruns.isEmpty)
+        try await Task.sleep(nanoseconds: 20_000_000)
+        XCTAssertEqual(gatedFetched, [b.id])
+        XCTAssertTrue(parked.isEmpty)
+        XCTAssertFalse(gate.inFlight)
+    }
+
+    /// Tracking turned off while B is in flight (after A was made current): the release still frees the
+    /// gate, and with no live target it starts nothing.
+    func testTrackerStoppedWhileInFlightReleasesWithoutRerun() async throws {
+        let (_, b, first) = try await movedWhileInFlight()
+        tracker.stop()
+        resumeAll(.success(try usage(20)))
+        await first?.value
+        XCTAssertTrue(reruns.isEmpty)
+        XCTAssertFalse(gate.inFlight)
+        try await Task.sleep(nanoseconds: 20_000_000)
+        XCTAssertEqual(gatedFetched, [b.id])
+        XCTAssertTrue(parked.isEmpty)
+    }
+
+    /// A chain: while A's re-run is in flight the current moves back to B. A's release re-runs B once,
+    /// and B's release (same pair) ends the chain. Never two fetches in flight.
+    func testRerunItselfRerunsWhenCurrentMovesAgain() async throws {
+        let (a, b, first) = try await movedWhileInFlight()
+        resumeAll(.success(try usage(20)))
+        await first?.value
+        try await waitParked(1)                                    // A's re-run fetch
+        tracker.makeCurrent(PairRef(profileId: b.id, orgId: "org-b"))
+        XCTAssertEqual(changePasses.map { $0 == nil }, [true, true])   // dropped: A holds the gate
+        resumeAll(.success(try usage(30)))
+        await (reruns.first ?? nil)?.value
+        XCTAssertEqual(reruns.count, 2)
+        XCTAssertNotNil(reruns.last ?? nil)
+        try await waitParked(1)
+        XCTAssertEqual(gatedFetched, [b.id, a.id, b.id])
+        resumeAll(.success(try usage(40)))
+        await (reruns.last ?? nil)?.value
+        XCTAssertEqual(reruns.count, 2)
+        XCTAssertEqual(maxFetchesInFlight, 1)
+        XCTAssertFalse(gate.inFlight)
+    }
+
+    /// `endGatedLivePoll` frees the gate before the re-run (the re-run must be able to take it), and
+    /// calls `release` exactly once whether or not it re-runs.
+    func testEndGatedLivePollReleasesFirstAndOnce() async throws {
+        let a = member("A", org: "org-a"), b = member("B", org: "org-b")
+        build([a, b], current: PairRef(profileId: a.id, orgId: "org-a"))
+        await tracker.tick(now: t0)
+        var calls: [String] = []
+        MenuBarManager.endGatedLivePoll(fetched: PairRef(profileId: b.id, orgId: "org-b"), tracker: tracker,
+                                        release: { calls.append("release") }, rerun: { calls.append("rerun") })
+        XCTAssertEqual(calls, ["release", "rerun"])
+        calls = []
+        MenuBarManager.endGatedLivePoll(fetched: PairRef(profileId: a.id, orgId: "org-a"), tracker: tracker,
+                                        release: { calls.append("release") }, rerun: { calls.append("rerun") })
+        XCTAssertEqual(calls, ["release"])
+    }
 }

@@ -124,6 +124,7 @@ class MenuBarManager: NSObject, ObservableObject {
     @Published private(set) var teamLoginMessage: String?
     private var teamTrackingObserver: NSObjectProtocol?
     private var teamTrackingWasEnabled = false
+    private var livePollGate = LivePollGate()   // one tracker live fetch in flight at a time
 
     /// The profile the menu bar and popover show: the current account while Team tracking runs
     /// (without activating it), else the active profile. A Codex active profile is always shown.
@@ -197,6 +198,41 @@ class MenuBarManager: NSObject, ObservableObject {
         }
     }
 
+    /// Starts `poll` in a Task when `gate` is free and releases the gate when it ends (success,
+    /// failure or cancellation). Nil, and nothing started, when a live fetch is already in flight:
+    /// the pass keeps the cached value.
+    @discardableResult
+    static func startGatedLivePoll(gate: inout LivePollGate, release: @escaping () -> Void,
+                                   poll: @escaping () async -> Void) -> Task<Void, Never>? {
+        guard gate.begin() else {
+            LoggingService.shared.log("MenuBarManager: Team tracking live fetch already in flight - keeping cached usage")
+            return nil
+        }
+        return Task {
+            defer { release() }
+            await poll()
+        }
+    }
+
+    /// Ends a tracker live fetch of `fetched`: `release` frees the gate first, then `rerun` runs once
+    /// when the tracker's live target is now another pair. That pair's pass found the gate busy and was
+    /// dropped (`onCurrentChanged` fired while the fetch was in flight, or inside its own `ingestLive`).
+    /// A pass for the same pair stays dropped: that duplicate is what the gate exists to stop.
+    static func endGatedLivePoll(fetched: PairRef, tracker: TeamTracker, release: () -> Void, rerun: () -> Void) {
+        release()
+        guard let target = tracker.liveTarget(),
+              PairRef(profileId: target.profile.id, orgId: target.orgId) != fetched else { return }
+        LoggingService.shared.log("MenuBarManager: Team tracking live target moved during a live fetch - refreshing the new current account")
+        rerun()
+    }
+
+    /// Single mode: whether a fetched reading reaches the menu bar (`usage`, icons, statusline cache).
+    /// Tracker-owned only while the fetched account is still the shown one, as the current account can
+    /// move while the fetch is in flight; today's path (tracker off) always.
+    static func showsFetchedReading(trackerOwned: Bool, fetchedId: UUID, shownId: UUID?) -> Bool {
+        !trackerOwned || fetchedId == shownId
+    }
+
     /// One multi-mode pass. Tracker off: the selection as is, nothing skipped (today's loop).
     struct MultiFetchPlan: Equatable {
         var profiles: [Profile]                // loop order
@@ -236,6 +272,13 @@ class MenuBarManager: NSObject, ObservableObject {
         hasCredentialError = true
         lastRefreshError = message
         teamLoginMessage = message
+    }
+
+    /// Frees the live poll gate after a tracker live fetch of `fetched`, then runs the pass it dropped
+    /// for a pair the tracker moved to meanwhile (`endGatedLivePoll`).
+    private func endLivePoll(fetched: PairRef) {
+        Self.endGatedLivePoll(fetched: fetched, tracker: TeamTracker.shared,
+                              release: { livePollGate.end() }, rerun: { refreshUsage() })
     }
 
     private func setupTeamTracking() {
@@ -283,6 +326,10 @@ class MenuBarManager: NSObject, ObservableObject {
             TeamTracker.shared.start()
         } else {
             TeamTracker.shared.stop()
+            // A fetch still in flight must not block the next start.
+            // ponytail: that old fetch's end() can later clear a newer fetch's gate, and its re-run check can
+            // start one more pass (one duplicate at most); a generation token in begin()/end() closes it if ever needed.
+            livePollGate = LivePollGate()
             teamLoginMessage = nil
             if profileManager.displayMode != .multi, let active = profileManager.activeProfile {
                 usage = active.claudeUsage ?? .empty
@@ -1207,8 +1254,6 @@ class MenuBarManager: NSObject, ObservableObject {
         let plan = Self.multiFetchPlan(selected: selected, allProfiles: profileManager.profiles,
                                        running: tracker.isRunning, target: tracker.isRunning ? tracker.liveTarget() : nil)
         let selectedProfiles = plan.profiles
-        let liveOrgIds = plan.liveOrgIds
-        let usageSkip = plan.usageSkip
         let consoleSkip = plan.consoleSkip
 
         guard !selectedProfiles.isEmpty else {
@@ -1217,6 +1262,17 @@ class MenuBarManager: NSObject, ObservableObject {
             applyTeamLoginState()
             return
         }
+
+        // One tracker live fetch in flight at a time: when another pass is still fetching the current
+        // account, this pass skips its usage fetch and keeps the cached value. The gate taken here is
+        // released by the defer in the loop below, at the current account (always first in the plan).
+        let gateBusy = !plan.liveOrgIds.isEmpty && !livePollGate.begin()
+        if gateBusy {
+            LoggingService.shared.log("MenuBarManager: Team tracking live fetch already in flight - keeping cached usage")
+        }
+        let liveOrgIds = gateBusy ? [:] : plan.liveOrgIds
+        let usageSkip = gateBusy ? plan.usageSkip.union(plan.liveOrgIds.keys) : plan.usageSkip
+        let holdsLiveGate = !liveOrgIds.isEmpty
 
         LoggingService.shared.log("MenuBarManager: Refreshing \(selectedProfiles.count) selected profiles for multi-profile mode")
 
@@ -1241,6 +1297,13 @@ class MenuBarManager: NSObject, ObservableObject {
                 // Team tracking: the tracker keeps this account's usage, so only its console billing
                 // below runs this pass (usageSkip is empty with the tracker off).
                 if !usageSkip.contains(profile.id) {
+                    // Team tracking: release the live poll gate on success, failure or cancellation, then
+                    // re-run the pass if the tracker moved its live target meanwhile.
+                    defer {
+                        if holdsLiveGate, let orgId = liveOrgIds[profile.id] {
+                            self.endLivePoll(fetched: PairRef(profileId: profile.id, orgId: orgId))
+                        }
+                    }
                     LoggingService.shared.log("MenuBarManager: Fetching usage for profile '\(profile.name)'")
 
                     // Capture previous usage for reset detection
@@ -1462,7 +1525,8 @@ class MenuBarManager: NSObject, ObservableObject {
         // credentials guard, which checks the active (Codex) profile. Nil with the tracker off or
         // an anthropic subject.
         if let background = Self.backgroundLiveTarget(subject: profile, running: tracker.isRunning, target: liveTarget) {
-            Task {
+            let fetched = PairRef(profileId: background.profile.id, orgId: background.orgId)
+            Self.startGatedLivePoll(gate: &livePollGate, release: { [weak self] in self?.endLivePoll(fetched: fetched) }) {
                 await Self.pollLiveTarget(background, tracker: tracker, store: self.profileManager) {
                     try await ProviderRegistry.service(for: .anthropic).fetchUsage(for: $0)
                 }
@@ -1481,9 +1545,18 @@ class MenuBarManager: NSObject, ObservableObject {
             fetchesByProfile = false
             skipsUsage = true
         case let .tracked(orgId, byProfile):
-            trackerOrgId = orgId
-            fetchesByProfile = byProfile
-            skipsUsage = false
+            if livePollGate.begin() {
+                // Released by the defer in the usage-fetch block of the Task below.
+                trackerOrgId = orgId
+                fetchesByProfile = byProfile
+                skipsUsage = false
+            } else {
+                // A live fetch of the current pair is already in flight: skip like `.skip`.
+                LoggingService.shared.log("MenuBarManager: Team tracking live fetch already in flight - keeping cached usage for '\(profile.name)'")
+                trackerOrgId = nil
+                fetchesByProfile = false
+                skipsUsage = true
+            }
         case .legacy:
             trackerOrgId = nil
             fetchesByProfile = false
@@ -1523,6 +1596,12 @@ class MenuBarManager: NSObject, ObservableObject {
 
             // Team tracking without a live target (.skip): no usage fetch, the cached usage stays.
             if !skipsUsage {
+                // Team tracking: release the live poll gate taken above on success, failure or cancellation,
+                // then re-run the pass if the tracker moved its live target meanwhile.
+                defer {
+                    if let orgId = trackerOrgId { self.endLivePoll(fetched: PairRef(profileId: profile.id, orgId: orgId)) }
+                }
+
                 // Team tracking, current account != active profile: per-profile fetch, so the account is
                 // never activated and the active profile's Claude Code credentials are not touched.
                 async let usageResult = fetchesByProfile
@@ -1554,7 +1633,12 @@ class MenuBarManager: NSObject, ObservableObject {
                             UsageHistoryService.shared.recordWeeklyPeriodic(for: profileId, usage: newUsage, provider: profile.provider)
                         }
 
-                        self.usage = newUsage
+                        // Tracker-owned: the current account can move while this fetch is in flight. The
+                        // reading is still saved and goes to the tracker, but it reaches the menu bar only
+                        // while its account is the shown one.
+                        let isShown = Self.showsFetchedReading(trackerOwned: isTrackerOwned, fetchedId: profile.id,
+                                                               shownId: self.menuBarProfile?.id)
+                        if isShown { self.usage = newUsage }
 
                         // Save to active profile instead of global DataStore (tracker-owned: the shown account)
                         if let profileId = isTrackerOwned ? profile.id : self.profileManager.activeProfile?.id {
@@ -1563,14 +1647,14 @@ class MenuBarManager: NSObject, ObservableObject {
 
                         // The session icon is shown or hidden by the plan's limits, so
                         // rebuild the status items when the session limit appears or goes away
-                        if newUsage.hasSessionLimit != previousUsage.hasSessionLimit,
+                        if isShown, newUsage.hasSessionLimit != previousUsage.hasSessionLimit,
                            let activeProfile = self.profileManager.activeProfile {
                             self.updateMenuBarDisplay(with: activeProfile.iconConfig)
                         }
 
                         // Write statusline cache for instant CLI rendering (Claude Code only;
                         // tracker-owned: only when the shown account is the active profile)
-                        if !isTrackerOwned || profile.id == self.profileManager.activeProfile?.id,
+                        if isShown, !isTrackerOwned || profile.id == self.profileManager.activeProfile?.id,
                            profile.provider.descriptor.capabilities.cliAccountSync,
                            StatuslineService.shared.isInstalled {
                             StatuslineService.shared.writeUsageCache(
@@ -1580,7 +1664,7 @@ class MenuBarManager: NSObject, ObservableObject {
                         }
 
                         // Update all menu bar icons
-                        self.updateAllStatusBarIcons()
+                        if isShown { self.updateAllStatusBarIcons() }
 
                         // Check if we should send notifications (using active profile's settings;
                         // tracker-owned: the shown account's)
@@ -2224,4 +2308,22 @@ extension MenuBarManager: NSWindowDelegate {
             }
         }
     }
+}
+
+// MARK: - Team tracking live poll gate
+
+/// One tracker live fetch in flight at a time: the refresh timer and `TeamTracker.onCurrentChanged`
+/// can both start a pass, and a duplicate request raises the 429 risk that backs off the current account.
+/// A dropped pass for another pair runs when the fetch ends (`MenuBarManager.endGatedLivePoll`).
+struct LivePollGate {
+    private(set) var inFlight = false
+
+    /// False when a fetch is already in flight; else claims the gate.
+    mutating func begin() -> Bool {
+        guard !inFlight else { return false }
+        inFlight = true
+        return true
+    }
+
+    mutating func end() { inFlight = false }
 }
