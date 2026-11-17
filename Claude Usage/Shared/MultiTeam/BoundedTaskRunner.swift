@@ -23,10 +23,13 @@ enum BoundedTaskRunner {
             var timerRunning = false
             var expired = false
 
-            if let timeout {
+            // A non-finite (infinite or NaN) timeout means no timer; a finite one is clamped so the
+            // nanosecond conversion can never trap.
+            if let timeout, timeout.isFinite {
+                let seconds = min(max(0, timeout), 86_400)
                 timerRunning = true
                 group.addTask {
-                    try? await Task.sleep(nanoseconds: UInt64(max(0, timeout) * 1_000_000_000))
+                    try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
                     return .timedOut
                 }
             }

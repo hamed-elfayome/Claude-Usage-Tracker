@@ -171,9 +171,12 @@ final class TeamTracker: ObservableObject {
     }
 
     func makeCurrent(_ pair: PairRef) {
-        guard isRunning, pair != global.current, let p = trackedProfile(pair.profileId),
-              p.orgTracking?.org(pair.orgId) != nil else { return }
         let now = clock()
+        // Same conditions as liveTarget(): only a pair that can be live may become current.
+        guard isRunning, pair != global.current, let p = trackedProfile(pair.profileId),
+              let state = p.orgTracking, state.authState == .ok,
+              state.org(pair.orgId)?.status == .member,
+              !scheduler.isBackingOff(p.id, now: now) else { return }
         global.manualPickAt = now
         moveCurrent(to: pair, manual: true, now: now)
         persistGlobal()
@@ -376,7 +379,9 @@ final class TeamTracker: ObservableObject {
             switch res {
             case .success(let usage):
                 // A provider fall-back to the cached reading carries an old lastUpdated: that is no sample.
-                if item.sessionKey == nil, let last = item.lastSampleAt, usage.lastUpdated <= last { continue }
+                // With no sample yet, anything older than one round counts as cached.
+                if item.sessionKey == nil,
+                   usage.lastUpdated <= (item.lastSampleAt ?? now.addingTimeInterval(-policy.roundInterval)) { continue }
                 gathered[id, default: Gathered()].samples[item.orgId] = usage
                 scheduler.record(accountId: id, outcome: .success, now: now)
             case .failure(let error):
@@ -613,8 +618,17 @@ final class TeamTracker: ObservableObject {
         guard gen == generation else { return }
         for (item, res) in results {
             let id = item.profileId
-            guard let p = trackedProfile(id), var obs = listObservation(p, res, now: now),
-                  !(obs.orgList ?? []).isEmpty else {
+            guard let p = trackedProfile(id), var obs = listObservation(p, res, now: now) else {
+                outcomes[id] = .unchecked
+                continue
+            }
+            if obs.orgListAuthFailed {
+                // Same rule-L effect as runDueLists; the peer's removal stays unconfirmed.
+                apply(obs, profileId: id, source: .list, withholding: [], allowGroup: false)
+                outcomes[id] = .unchecked
+                continue
+            }
+            guard !(obs.orgList ?? []).isEmpty else {
                 outcomes[id] = .unchecked
                 continue
             }

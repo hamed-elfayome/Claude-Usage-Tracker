@@ -55,4 +55,48 @@ final class BoundedTaskRunnerTests: XCTestCase {
         let r = await BoundedTaskRunner.run([Int](), key: { _ in UUID() }, maxConcurrent: 4, maxPerKey: 1) { $0 }
         XCTAssertTrue(r.isEmpty)
     }
+
+    /// A slow-enough body so a zero or tiny timer (the pre-fix NaN path) would drop the results.
+    private func runWith(timeout: TimeInterval) async -> [Int?] {
+        let r = await BoundedTaskRunner.run([1, 2, 3], key: { _ in UUID() }, maxConcurrent: 4, maxPerKey: 1,
+                                            timeout: timeout) { i in
+            try? await Task.sleep(nanoseconds: 20_000_000)
+            return i
+        }
+        return r.map { $0.1 }
+    }
+
+    func testInfiniteTimeoutReturnsAllResults() async {
+        let r = await runWith(timeout: .infinity)
+        XCTAssertEqual(r, [1, 2, 3])
+    }
+
+    func testNaNTimeoutReturnsAllResults() async {
+        let r = await runWith(timeout: .nan)
+        XCTAssertEqual(r, [1, 2, 3])
+    }
+
+    func testHugeFiniteTimeoutReturnsAllResults() async {
+        let r = await runWith(timeout: 1e300)
+        XCTAssertEqual(r, [1, 2, 3])
+    }
+
+    /// -infinity is non-finite: no timer at all (the old max(0, t) turned it into a zero timer).
+    func testNegativeInfiniteTimeoutReturnsAllResults() async {
+        let r = await runWith(timeout: -.infinity)
+        XCTAssertEqual(r, [1, 2, 3])
+    }
+
+    /// A negative finite timeout is clamped to 0, not dropped: the timer still fires at once.
+    func testNegativeFiniteTimeoutClampsToZeroAndExpires() async {
+        let start = Date()
+        let r = await BoundedTaskRunner.run([1, 2], key: { _ in UUID() }, maxConcurrent: 4, maxPerKey: 1,
+                                            timeout: -5) { i in
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            return i
+        }
+        XCTAssertEqual(r.map { $0.0 }, [1, 2])
+        XCTAssertEqual(r.compactMap { $0.1 }, [])
+        XCTAssertLessThan(Date().timeIntervalSince(start), 1)
+    }
 }
