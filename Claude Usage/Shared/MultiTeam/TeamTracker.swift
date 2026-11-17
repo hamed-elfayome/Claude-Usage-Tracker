@@ -224,9 +224,12 @@ final class TeamTracker: ObservableObject {
         let profiles = store.trackedProfiles
         let ids = Set(profiles.map(\.id))
         for p in profiles {
+            // The scheduler keeps hasOrgList from the first register, so a session key that appears or
+            // goes away re-registers the account (unregister is a no-op for a new one). This also clears
+            // its 429 backoff on purpose: the key change moves it to another request path.
             let hasKey = credentials.sessionKey(for: p) != nil
-            if let old = registeredOrgList[p.id], old != hasKey { scheduler.unregister(accountId: p.id) }
             if registeredOrgList[p.id] != hasKey {
+                scheduler.unregister(accountId: p.id)
                 scheduler.register(accountId: p.id, hasOrgList: hasKey, now: now)
                 registeredOrgList[p.id] = hasKey
             }
@@ -508,8 +511,11 @@ final class TeamTracker: ObservableObject {
         for key in r.deletedHistoryKeys { history.deleteHistory(forKey: key) }
 
         // Invariant 3: a probe sample of the followed org of a non-current account is that account's claudeUsage.
+        // An OAuth-only account follows its credential org (rule T, the org its probe asked for): its
+        // organizationId belongs to the claude.ai credentials, so it is nil and the tracker never writes it.
         if source != .live, global.current?.profileId != id,
-           let followed = r.followedOrgId ?? p.organizationId, let u = r.acceptedSamples[followed] {
+           let followed = r.followedOrgId ?? (credentials.sessionKey(for: p) != nil ? p.organizationId : r.state.credentialOrgId),
+           let u = r.acceptedSamples[followed] {
             store.saveClaudeUsage(u, for: id)
             onSample?(id, u)
         }

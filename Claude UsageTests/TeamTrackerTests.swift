@@ -126,21 +126,6 @@ final class TeamTrackerTests: XCTestCase {
         XCTAssertEqual(notifier.posted.count, 1)
     }
 
-    func testSessionKeyAddedAfterFirstTickGetsOrgListAndConfirmsMove() async throws {
-        let id = UUID()
-        let p1 = profile("P1", key: nil, orgs: [tracked(id, "org-a")], id: id, cli: TeamFixtures.credentialsOrgB)
-        let p2 = profile("P2", key: "k2", ids: ["org-z"])
-        build([p1, p2], current: ref(p2, "org-z"))
-        await boot()
-        store.profiles[0].claudeSessionKey = "k1"
-        fetcher.setUsage("k1", org: "org-a", error: err(.apiNotFound))
-        fetcher.setList("k1", json: TeamFixtures.orgsB)
-        await round(0)
-        XCTAssertEqual(state(p1).org("org-a")?.status, .old)
-        XCTAssertEqual(store.profile(id).organizationId, "org-b")
-        guard case .adminMove(_, "org-a", "org-b") = notifier.posted.last?.kind else { return XCTFail("expected adminMove") }
-    }
-
     // MARK: 3 admin move
 
     func testAdminMoveFromProbe() async throws {
@@ -157,6 +142,61 @@ final class TeamTrackerTests: XCTestCase {
         guard case .adminMove(_, "org-a", "org-b") = notifier.posted[0].kind else { return XCTFail("expected adminMove") }
         await round(1)
         XCTAssertEqual(fetcher.callCount(prefix: "usage:k1|org-a"), 1)
+    }
+
+    /// An OAuth-only account that gets a session key after its first tick must get org lists: otherwise
+    /// its probe 404 never brings the list that confirms the move, and it probes the 404 every round.
+    func testSessionKeyAddedAfterFirstTickGetsOrgListAndConfirmsMove() async throws {
+        let id = UUID()
+        let p1 = profile("P1", key: nil, orgs: [tracked(id, "org-a")], followed: "org-a", id: id,
+                         cli: TeamFixtures.credentialsOrgA)
+        let p2 = profile("P2", key: "k2", ids: ["org-z"])
+        build([p1, p2], current: ref(p2, "org-z"))
+        await boot()                                  // P1 registers without an org list
+        store.profiles[0].claudeSessionKey = "k1"
+        fetcher.setUsage("k1", org: "org-a", error: err(.apiNotFound))
+        fetcher.setList("k1", json: TeamFixtures.orgsB)
+        await round(0)
+        // The list due after re-registering counts A missing once; only the list forced by the 404 confirms it.
+        XCTAssertEqual(fetcher.callCount(prefix: "list:k1"), 2)
+        XCTAssertEqual(state(p1).org("org-a")?.status, .old)
+        XCTAssertEqual(store.profile(id).organizationId, "org-b")
+        XCTAssertEqual(notifier.posted.count, 1)
+        guard case .adminMove(_, "org-a", "org-b") = notifier.posted.first?.kind else { return XCTFail("expected adminMove") }
+        await round(1)
+        XCTAssertEqual(fetcher.callCount(prefix: "usage:k1|org-a"), 1)
+    }
+
+    /// Reverse path of the arch fix: a key that goes away re-registers the account without lists, so a key
+    /// that comes back re-registers it again and lists at once (not at the old 900 s list slot).
+    func testSessionKeyRemovedThenRestoredReRegistersAndListsAtOnce() async throws {
+        let p1 = profile("P1", key: "k1", ids: ["org-a"])
+        build([p1], current: ref(p1, "org-a"))
+        fetcher.setList("k1", json: TeamFixtures.orgsAStandard)
+        await boot()                                  // list due at t0 (random 0), next one at t0 + 900
+        XCTAssertEqual(fetcher.callCount(prefix: "list:k1"), 1)
+        store.profiles[0].claudeSessionKey = nil
+        await round(0)                                // t0 + 15: re-registered without a list
+        XCTAssertEqual(fetcher.callCount(prefix: "list:k1"), 1)
+        store.profiles[0].claudeSessionKey = "k1"
+        await round(1)                                // t0 + 315: re-registered with a list due now
+        XCTAssertEqual(fetcher.callCount(prefix: "list:k1"), 2)
+    }
+
+    /// The unregister loop clears `registeredOrgList`: a profile that disappears for a tick and comes back
+    /// with the same id must be registered again (lists due at once), not skipped by a stale map entry.
+    func testProfileRemovedAndReAddedIsRegisteredAgain() async throws {
+        let p1 = profile("P1", key: "k1", ids: ["org-a"])
+        let p2 = profile("P2", key: "k2", ids: ["org-z"])
+        build([p1, p2], current: ref(p2, "org-z"))
+        fetcher.setList("k1", json: TeamFixtures.orgsAStandard)
+        await boot()
+        XCTAssertEqual(fetcher.callCount(prefix: "list:k1"), 1)
+        let saved = store.profiles.removeFirst()
+        await round(0)                                // P1 gone: unregistered
+        store.profiles.insert(saved, at: 0)
+        await round(1)                                // t0 + 315: P1 back, list due at once
+        XCTAssertEqual(fetcher.callCount(prefix: "list:k1"), 2)
     }
 
     func testAdminMoveCurrentFollowsViaLiveFailure() async throws {
@@ -204,21 +244,31 @@ final class TeamTrackerTests: XCTestCase {
         XCTAssertFalse(events.contains { if case .adminMove = $0.kind { return true } else { return false } })
     }
 
+    /// The group move must happen while P2 is backing off, and P2 must count as unchecked because of that
+    /// backoff, not because a list failed: its list would say "moved" if it were fetched.
     func testGroupMovePeerBackingOffIsUnchecked() async throws {
         let ps = fiveAccounts { i, id in i == 1 ? [self.tracked(id, "org-a", missing: 1)] : nil }
-        let three = Array(ps.prefix(3))
+        var three = Array(ps.prefix(3))
+        three[0].orgTracking?.lastOrgListAt = t0.addingTimeInterval(-30)   // the boot list cannot count A missing
         build(three)
         fetcher.setUsage("k2", org: "org-a", error: err(.apiRateLimited, "Retry-After: 3000"))
         fetcher.setList("k1", json: TeamFixtures.orgsB)
         fetcher.setList("k3", json: TeamFixtures.orgsB)
+        var groupMoves: [(date: Date, unchecked: [UUID])] {
+            events.compactMap { e -> (date: Date, unchecked: [UUID])? in
+                if case let .groupMove(_, _, _, _, unchecked) = e.kind { return (e.date, unchecked) } else { return nil }
+            }
+        }
         await boot()
-        await round(0)
-        clock.now = t0.addingTimeInterval(915)
+        XCTAssertTrue(groupMoves.isEmpty)
+        await round(0)                                    // P2's probe gets a 429: backoff until t0 + 3015
+        fetcher.setList("k2", json: TeamFixtures.orgsB)   // P2 would count as moved if it were listed
+        clock.now = t0.addingTimeInterval(915)            // P1's and P3's lists are due: A missing twice
         await tracker.tick(now: clock.now)
-        guard let unchecked = events.compactMap({ e -> [UUID]? in
-            if case let .groupMove(_, _, _, _, unchecked) = e.kind { return unchecked } else { return nil }
-        }).first else { return XCTFail("no group move") }
-        XCTAssertEqual(unchecked, [three[1].id])
+        XCTAssertEqual(groupMoves.count, 1)
+        XCTAssertEqual(groupMoves.first?.date, clock.now)
+        XCTAssertEqual(groupMoves.first?.unchecked, [three[1].id])
+        XCTAssertEqual(fetcher.callCount(prefix: "list:k2"), 1)   // the boot list only
     }
 
     // MARK: 6 seat change
@@ -299,6 +349,25 @@ final class TeamTrackerTests: XCTestCase {
         XCTAssertNotNil(tracker.liveTarget())
     }
 
+    /// AC9 "no probes/lists" at a time when both are due: P1's 900 s list and a probe round of its
+    /// saved pair (P2 is current, so P1's org-a would be probed if P1 were not logged out).
+    func testNeedsLoginSkipsDueListAndProbe() async throws {
+        let p1 = profile("P1", key: "k1", ids: ["org-a"])
+        let p2 = profile("P2", key: "k2", ids: ["org-z"])
+        creds.fingerprints[p1.id] = "fp1"
+        build([p1, p2], current: ref(p2, "org-z"))
+        fetcher.setList("k1", json: TeamFixtures.orgsAStandard)
+        await boot()
+        XCTAssertEqual(fetcher.callCount(prefix: "list:k1"), 1)
+        tracker.reportRefreshRejected(profileId: p1.id)
+        guard case .needsLogin = state(p1).authState else { return XCTFail("expected needsLogin") }
+        clock.now = t0.addingTimeInterval(915)
+        await tracker.tick(now: clock.now)
+        XCTAssertNotNil(tracker.global.lastRoundAt)                  // the round ran
+        XCTAssertEqual(fetcher.callCount(prefix: "list:k1"), 1)
+        XCTAssertEqual(fetcher.callCount(prefix: "usage:k1"), 0)
+    }
+
     // MARK: 10 migration
 
     func testLegacyProfileRecordsHistoryUnderUuid() async throws {
@@ -350,6 +419,24 @@ final class TeamTrackerTests: XCTestCase {
         XCTAssertEqual(sampled.map { $0.1 }, [11])
         tracker.ingestLive(profileId: p1.id, orgId: "org-a", result: .success(try u(40)), isCachedReading: false)
         XCTAssertTrue(store.savedUsage.filter { $0.0 == p1.id }.isEmpty)
+    }
+
+    /// An OAuth-only account has no organizationId: it follows its credential org, so a probe sample of that
+    /// org is its claudeUsage while another account is current. Its organizationId is never written.
+    func testOAuthOnlyProbeOfCredentialOrgSavesClaudeUsage() async throws {
+        let p = oauthProfile()
+        let p1 = profile("P1", key: "k1", ids: ["org-a"])
+        build([p1, p], current: ref(p1, "org-a"))
+        fetcher.setOAuth(p.id, try u(33))
+        var sampled: [UUID] = []
+        tracker.onSample = { id, _ in sampled.append(id) }
+        await boot()
+        await round(0)
+        XCTAssertEqual(fetcher.callCount(prefix: "oauth:\(p.id.uuidString)"), 1)
+        XCTAssertEqual(store.savedUsage.filter { $0.0 == p.id }.map { $0.1.sessionPercentage }, [33])
+        XCTAssertEqual(sampled, [p.id])
+        XCTAssertNil(store.profile(p.id).organizationId)
+        XCTAssertTrue(store.orgIdWrites.filter { $0.0 == p.id }.isEmpty)
     }
 
     // MARK: 13 stop during a round
