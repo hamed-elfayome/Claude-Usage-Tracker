@@ -47,3 +47,4 @@
 {"at": "2026-11-16T11:01:00", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-6", "note": ""}
 {"at": "2026-11-17T09:22:46", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-6", "note": ""}
 {"at": "2026-11-17T10:01:46", "agent": "claude@Kevins-MacBook-Air", "event": "pass", "task": "MT-6", "note": "grade -: MT-6: grade B, 2 fix round(s), last r2 opus-max (fix)"}
+{"at": "2026-11-17T10:01:53", "agent": "claude@Kevins-MacBook-Air", "event": "merge", "task": "MT-6"}
