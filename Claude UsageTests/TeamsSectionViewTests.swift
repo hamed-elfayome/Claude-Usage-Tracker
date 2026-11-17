@@ -116,10 +116,38 @@ final class TeamsSectionViewTests: XCTestCase {
         for lang in langs {
             let path = try XCTUnwrap(bundle.path(forResource: "Localizable", ofType: "strings", inDirectory: nil, forLocalization: lang), lang)
             let dict = try XCTUnwrap(NSDictionary(contentsOfFile: path) as? [String: String], lang)
-            for key in ["multiteam.ui.google_hint", "multiteam.ui.tracking_title", "multiteam.ui.delete_confirm"] {
+            for key in Self.uiKeys {
                 XCTAssertNotNil(dict[key], "\(lang) missing \(key)")
             }
+            for (key, value) in dict where key.hasPrefix("multiteam.ui.") {
+                XCTAssertFalse(value.contains("%d"), "\(lang) \(key) uses bare %d")
+            }
+            for key in ["multiteam.ui.five_hour_left", "multiteam.ui.week_left", "multiteam.ui.min_ago", "multiteam.ui.old_days"] {
+                XCTAssertTrue(dict[key]?.contains("%ld") == true, "\(lang) \(key) lacks %ld")
+            }
         }
+    }
+
+    private static let uiKeys = [
+        "multiteam.ui.teams", "multiteam.ui.now", "multiteam.ui.five_hour_left", "multiteam.ui.week_left",
+        "multiteam.ui.projected", "multiteam.ui.min_ago", "multiteam.ui.old_days", "multiteam.ui.old",
+        "multiteam.ui.make_current", "multiteam.ui.delete", "multiteam.ui.cancel", "multiteam.ui.delete_confirm",
+        "multiteam.ui.history_team", "multiteam.ui.history_old_suffix", "multiteam.ui.tracking_title",
+        "multiteam.ui.tracking_description", "multiteam.ui.google_hint",
+    ]
+
+    func testUIKeyListHas17Keys() {
+        XCTAssertEqual(Set(Self.uiKeys).count, 17)
+    }
+
+    // FU-3 AC5: .ok row without usage has empty detail and still lays out.
+    func testOkRowWithNoUsageHasEmptyDetailAndLaysOut() {
+        let empty = row("a", view: PairView())
+        XCTAssertEqual(TeamsSectionView.detail(empty, now: now), [])
+        let emptySize = layout([empty], events: [])
+        let fullSize = layout([row("a")], events: [])
+        XCTAssertLessThanOrEqual(emptySize.width, 280)
+        XCTAssertLessThan(emptySize.height, fullSize.height, "empty detail line must not take space")
     }
 
     func testToggleKey() {

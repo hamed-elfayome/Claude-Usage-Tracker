@@ -1178,11 +1178,11 @@
 /* Multi-team UI (MT-8) */
 "multiteam.ui.teams" = "Teams";
 "multiteam.ui.now" = "Now";
-"multiteam.ui.five_hour_left" = "5h %d%% left";
-"multiteam.ui.week_left" = "Week %d%% left";
+"multiteam.ui.five_hour_left" = "5h %ld%% left";
+"multiteam.ui.week_left" = "Week %ld%% left";
 "multiteam.ui.projected" = "projected";
-"multiteam.ui.min_ago" = "%d min ago";
-"multiteam.ui.old_days" = "Old team · deleted in %d days";
+"multiteam.ui.min_ago" = "%ld min ago";
+"multiteam.ui.old_days" = "Old team · deleted in %ld days";
 "multiteam.ui.old" = "Old team";
 "multiteam.ui.make_current" = "Make current";
 "multiteam.ui.delete" = "Delete";
