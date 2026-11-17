@@ -2,9 +2,9 @@
   "task": "FU-2",
   "history": [],
   "agent": "claude@Kevins-MacBook-Air",
-  "status": "active",
+  "status": "handoff",
   "branch": "lean/FU-2",
   "claimed_at": "2026-11-17T15:27:18",
-  "heartbeat": "2026-11-17T15:27:18",
-  "next": null
+  "heartbeat": "2026-11-17T16:28:20",
+  "next": "Paused by user mid fix r1 (opus-max). Review r0 FAIL grade C: the bool gate drops refreshUsage() for a NEW current pair while the old pair's fetch is in flight, so the old reading lands under the new menuBarProfile (verdict.md, Must fix, MenuBarManager.swift ~1565-1640). Worktree wt/FU-2 has uncommitted partial fix edits in MenuBarManager.swift and MenuBarTeamWiringEdgeTests.swift. Resume: lean-swarm with plan .lean/plans/multi-team-followups.md, gemini:false, task {id:FU-2,size:S,risk:high,resume:fix,round:1,kind:fix}. FU-1, FU-3 merged grade A."
 }
