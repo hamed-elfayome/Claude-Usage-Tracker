@@ -2,9 +2,10 @@
   "task": "MT-7",
   "history": [],
   "agent": "claude@Kevins-MacBook-Air",
-  "status": "active",
+  "status": "passed",
   "branch": "lean/MT-7",
   "claimed_at": "2026-11-17T11:55:02",
-  "heartbeat": "2026-11-17T11:55:02",
-  "next": "Paused by user. Built (opus-medium); arch PASS; round-1 fix done; round-1 review FAIL (see .lean/tasks/MT-7/verdict.md: Team tracking on + Codex active profile in single mode leaves the current anthropic pair unpolled, breaks R15/spec \u00a77/AC2). Round-2 fix may have started and been stopped: check the diff. Resume: lean-swarm plan .lean/plans/multi-team-packets.md, gemini:false, tasks [{id:MT-7,size:M,risk:high,importance:high,resume:fix,round:2,kind:fix}, {id:MT-9,size:S,importance:low,after:[MT-7]}]. MT-6 merged at 4ffa469."
+  "heartbeat": "2026-11-17T13:12:00",
+  "next": "Paused by user. Built (opus-medium); arch PASS; round-1 fix done; round-1 review FAIL (see .lean/tasks/MT-7/verdict.md: Team tracking on + Codex active profile in single mode leaves the current anthropic pair unpolled, breaks R15/spec \u00a77/AC2). Round-2 fix may have started and been stopped: check the diff. Resume: lean-swarm plan .lean/plans/multi-team-packets.md, gemini:false, tasks [{id:MT-7,size:M,risk:high,importance:high,resume:fix,round:2,kind:fix}, {id:MT-9,size:S,importance:low,after:[MT-7]}]. MT-6 merged at 4ffa469.",
+  "grade": null
 }
