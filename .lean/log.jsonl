@@ -51,3 +51,4 @@
 {"at": "2026-11-17T10:02:02", "agent": "claude@Kevins-MacBook-Air", "event": "lesson", "task": "MT-6", "note": "A test that claims \"skipped because of condition C\" must fail when you delete the line that sets up C. Run that one muta"}
 {"at": "2026-11-17T10:02:13", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-7", "note": ""}
 {"at": "2026-11-17T10:02:47", "agent": "claude@Kevins-MacBook-Air", "event": "claim", "task": "MT-7", "note": ""}
+{"at": "2026-11-17T11:45:47", "agent": "claude@Kevins-MacBook-Air", "event": "handoff", "task": "MT-7", "note": "Paused by user. Built (opus-medium); arch PASS; round-1 fix done; round-1 review FAIL (see .lean/tasks/MT-7/verdict.md: "}
