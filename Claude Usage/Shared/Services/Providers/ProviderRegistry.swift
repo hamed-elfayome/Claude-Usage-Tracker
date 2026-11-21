@@ -35,6 +35,7 @@ enum ProviderRegistry {
                 credits: false
             ),
             credentialSections: [.claudeAI, .apiConsole, .cliAccount],
+            setupHintKey: "setup.choose_provider.anthropic_hint",
             primaryWindowLabelKey: "usage.window.session",
             secondaryWindowLabelKey: "usage.window.weekly"
         ),
@@ -55,6 +56,28 @@ enum ProviderRegistry {
                 credits: true
             ),
             credentialSections: [.codexAccount],
+            setupHintKey: "setup.choose_provider.codex_hint",
+            primaryWindowLabelKey: "usage.window.session",
+            secondaryWindowLabelKey: "usage.window.weekly"
+        ),
+        .grok: ProviderDescriptor(
+            id: .grok,
+            displayName: "Grok",
+            logoAssetName: "ProviderLogoGrok",
+            logoSystemSymbolFallback: "sparkles",
+            statusPageURL: nil,
+            capabilities: ProviderCapabilities(
+                tokenCounts: false,
+                perModelBreakdown: false,
+                consoleBilling: false,
+                cliAccountSync: false,
+                autoStartSession: false,
+                overageChecks: false,
+                personalSpend: false,
+                credits: false
+            ),
+            credentialSections: [.grokAccount],
+            setupHintKey: "setup.choose_provider.grok_hint",
             primaryWindowLabelKey: "usage.window.session",
             secondaryWindowLabelKey: "usage.window.weekly"
         ),
@@ -75,6 +98,8 @@ enum ProviderRegistry {
             return AnthropicUsageProvider.shared
         case .codex:
             return CodexUsageProvider.shared
+        case .grok:
+            return GrokUsageProvider.shared
         }
     }
 }

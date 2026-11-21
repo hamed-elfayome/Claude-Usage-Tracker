@@ -967,14 +967,15 @@ struct SmartUsageDashboard: View {
             // as the free plan does (#312); a 0% bar there would look like a reading.
             if usage.hasWeeklyLimit {
                 UsageRow(
-                    title: "menubar.all_models".localized,
-                    tag: "menubar.weekly".localized,
+                    title: capabilities.perModelBreakdown
+                        ? "menubar.all_models".localized
+                        : provider.descriptor.secondaryWindowLabelKey.localized,
+                    tag: provider.descriptor.secondaryWindowLabelKey.localized,
                     subtitle: nil,
                     usedPercentage: usage.weeklyPercentage,
                     showRemaining: showRemainingPercentage,
-                    resetTime: usage.weeklyResetTime,
-                    periodDuration: Constants.weeklyWindow,
-                    showTimeMarker: showTimeMarker,
+                    resetTime: usage.weeklyResetKnown ? usage.weeklyResetTime : nil,
+                    periodDuration: usage.weeklyResetKnown ? Constants.weeklyWindow : nil,
                     showPaceMarker: showPaceMarker,
                     usePaceColoring: usePaceColoring,
                     excludeWeekends: excludeWeekendsFromWeeklyPace,

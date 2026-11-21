@@ -5,6 +5,12 @@ All notable changes to Claude Usage Tracker will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **SuperGrok weekly quota**: a Grok profile reads the signed-in Grok CLI's weekly used percentage and reset time. The remainder is shown by the existing used/remaining display. A missing percentage is not stored as zero.
+
 ## [3.4.0] - 2026-11-13
 
 ### Added

@@ -257,6 +257,8 @@ struct Profile: Codable, Identifiable, Equatable {
             return hasClaudeAI || hasAPIConsole || hasValidCLIOAuth
         case .codex:
             return codexCredentialsJSON != nil || CodexAuthService.shared.authFileExists()
+        case .grok:
+            return GrokCLIClient.locateExecutable() != nil && GrokCLIClient.authFileExists()
         }
     }
 
@@ -272,6 +274,8 @@ struct Profile: Codable, Identifiable, Equatable {
             return hasClaudeAI || hasAPIConsole || cliCredentialsJSON != nil || customKeychainServiceName != nil
         case .codex:
             return codexCredentialsJSON != nil || CodexAuthService.shared.authFileExists()
+        case .grok:
+            return GrokCLIClient.locateExecutable() != nil && GrokCLIClient.authFileExists()
         }
     }
 }

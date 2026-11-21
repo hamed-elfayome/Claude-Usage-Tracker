@@ -1153,3 +1153,14 @@
 "keep_awake.consent_confirm" = "Add Hooks and Turn On";
 "keep_awake.problem_hooks" = "Auto mode can't see Claude Code: its hooks are missing from ~/.claude/settings.json. Turn auto mode off and on again to reinstall them.";
 "keep_awake.problem_listener" = "Auto mode can't see Claude Code: the local listener's port is in use by another app or another copy of Claude Usage.";
+
+"section.grok_account_title" = "Grok";
+"section.grok_account_desc" = "SuperGrok weekly quota";
+"setup.choose_provider.grok_hint" = "SuperGrok weekly quota from the Grok CLI";
+"grok.title" = "SuperGrok";
+"grok.subtitle" = "Weekly subscription quota from the signed-in Grok CLI";
+"grok.login_needed" = "In Terminal, run grok login, then test the connection. This app does not read or store the CLI token.";
+"grok.cli_missing" = "The grok command was not found. Install Grok Build, then run grok login.";
+"grok.unavailable" = "Weekly quota is unavailable. The last reading, if any, is unchanged.";
+"grok.ambiguous" = "This Grok profile cannot use the shared CLI login while another Grok profile is active.";
+"grok.test_success" = "Connected — %@, %d%% remaining";

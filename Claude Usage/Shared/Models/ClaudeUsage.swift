@@ -28,6 +28,10 @@ struct ClaudeUsage: Codable, Equatable {
     var weeklyPercentage: Double
     var weeklyResetTime: Date
 
+    /// False when a provider reported a weekly percentage but no reset time.
+    /// The popover then shows the percentage without inventing a countdown.
+    var weeklyResetKnown: Bool = true
+
     // Weekly data (Opus only)
     var opusWeeklyTokensUsed: Int
     var opusWeeklyPercentage: Double
@@ -148,7 +152,7 @@ enum UsageStatusLevel {
 extension ClaudeUsage {
     private enum CodingKeys: String, CodingKey {
         case sessionTokensUsed, sessionLimit, sessionPercentage, sessionResetTime, hasSessionLimit, hasWeeklyLimit
-        case weeklyTokensUsed, weeklyLimit, weeklyPercentage, weeklyResetTime
+        case weeklyTokensUsed, weeklyLimit, weeklyPercentage, weeklyResetTime, weeklyResetKnown
         case opusWeeklyTokensUsed, opusWeeklyPercentage
         case sonnetWeeklyTokensUsed, sonnetWeeklyPercentage, sonnetWeeklyResetTime
         case designWeeklyTokensUsed, designWeeklyPercentage, designWeeklyResetTime
@@ -173,6 +177,7 @@ extension ClaudeUsage {
             weeklyLimit: try c.decodeIfPresent(Int.self, forKey: .weeklyLimit) ?? 0,
             weeklyPercentage: try c.decodeIfPresent(Double.self, forKey: .weeklyPercentage) ?? 0,
             weeklyResetTime: try c.decodeIfPresent(Date.self, forKey: .weeklyResetTime) ?? Date(),
+            weeklyResetKnown: try c.decodeIfPresent(Bool.self, forKey: .weeklyResetKnown) ?? true,
             opusWeeklyTokensUsed: try c.decodeIfPresent(Int.self, forKey: .opusWeeklyTokensUsed) ?? 0,
             opusWeeklyPercentage: try c.decodeIfPresent(Double.self, forKey: .opusWeeklyPercentage) ?? 0,
             sonnetWeeklyTokensUsed: try c.decodeIfPresent(Int.self, forKey: .sonnetWeeklyTokensUsed) ?? 0,
