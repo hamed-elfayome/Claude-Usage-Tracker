@@ -5,6 +5,12 @@ All notable changes to Claude Usage Tracker will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Russian localization**: Russian (Русский) is now available as the 16th interface language, in the app and the desktop widgets. Profile counts use a number-neutral label.
+
 ## [3.4.0] - 2026-11-13
 
 ### Added
