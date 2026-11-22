@@ -593,7 +593,7 @@
 /* MARK: - Metric Card */
 /* ==================== */
 "metric.show_countdown" = "Показывать время до следующего сеанса";
-"metric.countdown_description" = "Показывать оставшееся время (например, →2ч) на значке";
+"metric.countdown_description" = "Показывать на значке оставшееся время (например, →2H)";
 
 /* ==================== */
 /* MARK: - Personal Usage (Additional) */
@@ -732,7 +732,7 @@
 "claudecode.button_reset" = "Сбросить";
 "claudecode.actions_title" = "Действия";
 "claudecode.component_profile" = "Имя профиля";
-"claudecode.context_info" = "Контекст может показывать ~80-95% вместо 100% — Claude сжимает его до лимита, а токены ответа тоже занимают место в контексте.";
+"claudecode.context_info" = "Индикатор может показывать 80–95% вместо 100%: Claude автоматически сжимает контекст ещё до достижения лимита, а токены ответа тоже занимают место в контексте.";
 "claudecode.element_colors_title" = "Цвета элементов";
 "claudecode.element_color_directory" = "Каталог";
 "claudecode.element_color_branch" = "Ветка";
@@ -1020,8 +1020,8 @@
 "notch.task.writing" = "Запись %@";
 "notch.task.editing" = "Правка %@";
 "notch.task.reading" = "Чтение %@";
-"notch.task.searching" = "Поиск файлов";
-"notch.task.subagent" = "Запуск субагента";
+"notch.task.searching" = "Поиск";
+"notch.task.subagent" = "Субагент работает";
 "notch.task.web" = "Просмотр веба";
 "notch.hooks.title" = "Хуки Claude Code";
 "notch.hooks.desc" = "HUD получает события через хуки в ~/.claude/settings.json";
