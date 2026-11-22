@@ -70,6 +70,7 @@
 		WIDGET_LOC_PTBR /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		WIDGET_LOC_TR /* tr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = tr; path = tr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		WIDGET_LOC_UK /* uk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = uk; path = uk.lproj/Localizable.strings; sourceTree = "<group>"; };
+		WIDGET_LOC_RU /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
 		WIDGET_LOC_ZHHANS /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		WIDGET_LOC_ZHHANT /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/Localizable.strings"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -269,6 +270,7 @@
 				ja,
 				ko,
 				uk,
+				ru,
 				"zh-ch",
 				"zh-CH",
 				"zh-Hans",
@@ -377,6 +379,7 @@
 				WIDGET_LOC_PTBR /* pt-BR */,
 				WIDGET_LOC_TR /* tr */,
 				WIDGET_LOC_UK /* uk */,
+				WIDGET_LOC_RU /* ru */,
 				WIDGET_LOC_ZHHANS /* zh-Hans */,
 				WIDGET_LOC_ZHHANT /* zh-Hant */,
 			);

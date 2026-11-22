@@ -33,7 +33,22 @@ final class LanguageManagerTests: XCTestCase {
         XCTAssertEqual(fa.flag, "🇮🇷")
     }
 
-    func testSupportedLanguageCountIs15() {
-        XCTAssertEqual(LanguageManager.SupportedLanguage.allCases.count, 15)
+    func testRussianCaseExists() {
+        let ru = LanguageManager.SupportedLanguage(rawValue: "ru")
+        XCTAssertNotNil(ru, "Russian ('ru') should be a supported language")
+    }
+
+    func testRussianProperties() {
+        guard let ru = LanguageManager.SupportedLanguage(rawValue: "ru") else {
+            return XCTFail("Russian case missing")
+        }
+        XCTAssertEqual(ru.code, "ru")
+        XCTAssertEqual(ru.displayName, "Русский")
+        XCTAssertEqual(ru.englishName, "Russian")
+        XCTAssertEqual(ru.flag, "🇷🇺")
+    }
+
+    func testSupportedLanguageCountIs16() {
+        XCTAssertEqual(LanguageManager.SupportedLanguage.allCases.count, 16)
     }
 }

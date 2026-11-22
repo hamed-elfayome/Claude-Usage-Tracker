@@ -1,0 +1,1156 @@
+/*
+   Localizable.strings
+   Claude Usage Tracker
+
+   Russian
+   Created by Claude Code on 2025-12-27.
+*/
+
+/* ==================== */
+/* MARK: - App Info */
+/* ==================== */
+"app.name" = "Claude Usage Tracker";
+"app.window.main" = "Claude Usage";
+"app.window.settings" = "Настройки";
+"app.window.github_prompt" = "Поддержите Claude Usage Tracker";
+
+/* ==================== */
+/* MARK: - Common Actions */
+/* ==================== */
+"common.ok" = "OK";
+"common.cancel" = "Отмена";
+"common.save" = "Сохранить";
+"common.delete" = "Удалить";
+"common.done" = "Готово";
+"common.close" = "Закрыть";
+"common.refresh" = "Обновить";
+"common.settings" = "Настройки";
+"common.quit" = "Завершить";
+"common.validate" = "Проверить";
+"common.yes" = "Да";
+"common.no" = "Нет";
+
+/* ==================== */
+/* MARK: - Settings Navigation */
+/* ==================== */
+"settings.title" = "Настройки";
+"settings.personal_usage" = "Личное использование";
+"settings.personal_usage.description" = "Отслеживайте использование бесплатного тарифа Claude.ai";
+"settings.api_billing" = "Оплата API";
+"settings.api_billing.description" = "Следите за оплатой и кредитами в API Console";
+"settings.general" = "Основные";
+"settings.general.description" = "Поведение приложения и параметры";
+"settings.appearance" = "Оформление";
+"settings.appearance.description" = "Настройка значка в строке меню";
+"settings.session_management" = "Управление сеансом";
+"settings.session_management.description" = "Автоматическое управление сеансом";
+"settings.notifications" = "Уведомления";
+"settings.notifications.description" = "Предупреждения об использовании";
+"settings.claude_cli" = "Claude CLI";
+"settings.claude_cli.description" = "Строка статуса в терминале";
+"settings.updates" = "Обновления";
+"settings.updates.description" = "Поддерживайте приложение в актуальном состоянии";
+"settings.about" = "О программе";
+"settings.about.description" = "Сведения о приложении и авторы";
+
+/* ==================== */
+/* MARK: - Menu Bar */
+/* ==================== */
+"menubar.claude_usage" = "Claude Usage";
+"menubar.session_usage" = "Использование сеанса";
+"menubar.session_remaining" = "Остаток сеанса";
+"menubar.weekly_usage" = "Неделя";
+"menubar.opus_usage" = "Opus";
+"menubar.sonnet_usage" = "Sonnet";
+"menubar.fable_usage" = "Fable";
+"menubar.design_usage" = "Design";
+"menubar.extra_usage" = "Дополнительное использование";
+"menubar.organization" = "Организация";
+"menubar.monthly_spend" = "Расход за месяц";
+"menubar.api_credits" = "Кредиты API";
+"menubar.api_cost" = "Стоимость API";
+"menubar.this_month" = "Этот месяц";
+"menubar.total" = "Всего";
+"menubar.cost_source.cli" = "Claude Code";
+"menubar.cost_source.api" = "API";
+"menubar.cost_source.unknown" = "Другое";
+"menubar.5_hour_window" = "5-часовое скользящее окно";
+"menubar.all_models" = "Все модели";
+"menubar.weekly" = "Неделя";
+"menubar.anthropic_console" = "Anthropic API Console";
+"menubar.used" = "Использовано";
+"menubar.remaining" = "Осталось";
+"menubar.resets_time" = "Сброс %@";
+"menubar.resets_in" = "Сброс через %@";
+"menubar.resets_both" = "Сброс через %@ (%@)";
+"menubar.click_status" = "Нажмите, чтобы открыть status.claude.com";
+
+/* ==================== */
+/* MARK: - Usage Status */
+/* ==================== */
+"usage.high_session" = "Высокое использование сеанса";
+"usage.high_session.desc" = "Сделайте паузу и дождитесь сброса окна сеанса";
+"usage.weekly_approaching" = "Недельный лимит близко";
+"usage.weekly_approaching.desc" = "Вы близки к недельному лимиту токенов";
+"usage.efficient" = "Экономное использование";
+"usage.efficient.desc" = "Расход токенов под контролем";
+
+/* ==================== */
+/* MARK: - General Settings */
+/* ==================== */
+"general.launch_at_login" = "Запускать при входе";
+"general.launch_at_login.description" = "Автоматически запускать Claude Usage Tracker при входе в Mac";
+"general.refresh_interval" = "Интервал обновления";
+"general.refresh_interval.description" = "Короткий интервал даёт более свежие данные, но сильнее расходует батарею";
+"general.check_overage_limit" = "Проверять лимит дополнительного использования";
+"general.check_overage_limit.description" = "Загружать и показывать месячный расход и лимит превышения";
+"general.language.title" = "Язык";
+"general.language.select" = "Выберите язык";
+"general.language.restart_note" = "Язык изменится после перезапуска приложения";
+"general.language.restart_app" = "Перезапустить, чтобы применить";
+
+/* ==================== */
+/* MARK: - Appearance Settings */
+/* ==================== */
+"appearance.menu_bar_icons" = "Значки в строке меню";
+"appearance.menu_bar_icons.subtitle" = "Выберите, какие показатели показывать в строке меню";
+"appearance.show_icon_names" = "Показывать названия значков";
+"appearance.show_icon_names.description" = "Показывать подписи показателей (S:, W:, API:) рядом со значками";
+"appearance.monochrome_mode" = "Монохром (адаптивный)";
+"appearance.monochrome_mode.description" = "Значки сами подстраиваются под светлый и тёмный режим";
+"appearance.metric_configuration" = "Настройка показателей";
+"appearance.drag_to_reorder" = "Перетащите, чтобы изменить порядок. Выключенные показатели скрыты из строки меню.";
+
+/* ==================== */
+/* MARK: - Session Management */
+/* ==================== */
+"session.auto_start" = "Автозапуск сеанса при сбросе";
+"session.auto_start.description" = "Автоматически отправлять «Hi» Claude, когда использование сеанса сбрасывается до 0%. Сеанс будет готов без ручных действий.";
+"session.enable_auto_start" = "Включить автозапуск сеанса";
+"session.beta_badge" = "БЕТА";
+
+/* ==================== */
+/* MARK: - Notifications Settings */
+/* ==================== */
+"notifications.enable" = "Включить уведомления";
+"notifications.enable.description" = "Получать предупреждения при приближении к лимитам";
+"notifications.alert_thresholds" = "Пороги предупреждений";
+"notifications.threshold.warning" = "Предупреждение";
+"notifications.threshold.high" = "Высокое использование";
+"notifications.threshold.critical" = "Критический уровень";
+"notifications.threshold.session_reset" = "Сброс сеанса";
+
+/* ==================== */
+/* MARK: - Setup Wizard */
+/* ==================== */
+"setup.welcome.title" = "Добро пожаловать в Claude Usage Tracker";
+"setup.welcome.subtitle" = "Настройте доступ, чтобы начать отслеживание";
+"setup.step.get_session_key" = "Получите ключ сеанса";
+"setup.step.get_session_key.description" = "Ключ сеанса нужно взять на claude.ai";
+"setup.step.enter_session_key" = "Введите ключ сеанса";
+"setup.open_claude_ai" = "Открыть claude.ai";
+"setup.show_instructions" = "Показать инструкцию";
+"setup.hide_instructions" = "Скрыть";
+"setup.instruction.step1" = "Откройте инструменты разработчика (F12 или Cmd+Option+I)";
+"setup.instruction.step2" = "Перейдите в Application/Storage → Cookies → https://claude.ai";
+"setup.instruction.step3" = "Найдите cookie «sessionKey»";
+"setup.instruction.step4" = "Дважды щёлкните Value и скопируйте (Cmd+C)";
+"setup.paste_session_key" = "Вставьте скопированное значение sessionKey";
+"setup.auto_start_session" = "Автозапуск сеанса при сбросе";
+"setup.auto_start_session.description" = "Автоматически отправлять «Hi» Claude 3.5 Haiku, когда использование сеанса сбрасывается до 0%. Сеанс будет готов без ручных действий.";
+"setup.enable_auto_start" = "Включить автозапуск сеанса";
+"setup.menubar_appearance" = "Оформление строки меню";
+"setup.choose_icon_style" = "Выберите стиль значка";
+"setup.monochrome_adaptive" = "Монохром (адаптивный)";
+"setup.validation.success" = "Подключение к организации выполнено";
+
+/* ==================== */
+/* MARK: - About */
+/* ==================== */
+"about.version" = "Версия %@";
+"about.check_updates" = "Проверить обновления";
+"about.created_by" = "Автор";
+"about.contributors" = "Участники (%d)";
+"about.contributors_loading" = "Участники";
+"about.contributors_failed" = "Не удалось загрузить участников";
+"about.links" = "Ссылки";
+"about.star_github" = "Поставить звезду на GitHub";
+"about.report_issue" = "Сообщить о проблеме";
+"about.send_feedback" = "Отправить отзыв";
+"about.mit_license" = "Лицензия MIT • открытый код";
+"about.copyright" = "© 2025 Hamed Elfayome";
+
+/* ==================== */
+/* MARK: - Updates Settings */
+/* ==================== */
+"settings.updates.title" = "Обновления программы";
+"settings.updates.current_version" = "Текущая версия";
+"settings.updates.last_check" = "Последняя проверка";
+"settings.updates.never_checked" = "Никогда";
+"settings.updates.automatic" = "Автоматические обновления";
+"settings.updates.automatic.description" = "Каждый день проверять и загружать обновления";
+"settings.updates.check_now" = "Проверить обновления";
+"settings.updates.info.title" = "Безопасные обновления";
+"settings.updates.info.description" = "Все обновления имеют криптографическую подпись и проверяются перед установкой";
+
+/* ==================== */
+/* MARK: - Icon Styles */
+/* ==================== */
+"icon_style.battery" = "Батарея";
+"icon_style.percentage" = "Проценты";
+"icon_style.text_only" = "Только текст";
+"icon_style.minimal" = "Минимальный";
+
+/* ==================== */
+/* MARK: - Metric Types */
+/* ==================== */
+"metric.session_usage" = "Использование сеанса";
+"metric.session_usage.description" = "Скользящее окно 5 часов";
+"metric.week_usage" = "Использование за неделю";
+"metric.week_usage.description" = "Недельное использование токенов (все модели)";
+"metric.api_credits" = "Кредиты API";
+"metric.api_credits.description" = "Кредиты оплаты в API Console";
+
+/* ==================== */
+/* MARK: - Display Modes */
+/* ==================== */
+"display.remaining_credits" = "Остаток кредитов";
+"display.remaining_credits.description" = "Показывать только оставшиеся кредиты";
+"display.used_amount" = "Израсходовано";
+"display.used_amount.description" = "Показывать только потраченную сумму";
+"display.both_used_total" = "Оба (израсходовано / всего)";
+"display.both_used_total.description" = "Показывать и расход, и сумму";
+"display.percentage" = "Проценты";
+"display.percentage.description" = "Показывать в процентах (например, 60%)";
+"display.token_count" = "Число токенов";
+"display.token_count.description" = "Показывать токены (например, 600K/1M)";
+
+/* ==================== */
+/* MARK: - Notification Messages */
+/* ==================== */
+"notification.session_warning.title" = "Предупреждение: сеанс";
+"notification.session_warning.message" = "Использовано %@ лимита 5-часового сеанса. %@";
+"notification.session_critical.title" = "Критический уровень: сеанс";
+"notification.session_critical.message" = "Использовано %@ лимита 5-часового сеанса! %@";
+"notification.session_reset.title" = "Сброс сеанса";
+"notification.session_reset.message" = "Сеанс сброшен. Доступен новый 5-часовой сеанс.";
+"notification.session_auto_started.title" = "Сеанс запущен автоматически";
+"notification.session_auto_started.message" = "Новый сеанс создан автоматически. Свежий 5-часовой сеанс готов.";
+"notification.session_auto_start_failed.title" = "Автозапуск не удался";
+"notification.session_auto_start_failed.message" = "Не удалось автоматически начать сеанс. Проверьте учётные данные.";
+"notification.weekly_warning.title" = "Предупреждение: неделя";
+"notification.weekly_warning.message" = "Использовано %@ недельного лимита. %@";
+"notification.weekly_critical.title" = "Критический уровень: неделя";
+"notification.weekly_critical.message" = "Использовано %@ недельного лимита! %@";
+"notification.opus_warning.title" = "Предупреждение: Opus";
+"notification.opus_warning.message" = "Использовано %@ недельного лимита Opus. %@";
+"notification.opus_critical.title" = "Критический уровень: Opus";
+"notification.opus_critical.message" = "Использовано %@ недельного лимита Opus! %@";
+"notification.enabled.title" = "Уведомления включены";
+"notification.enabled.message" = "Предупреждения придут при 75%, 90% и 95% использования, а также при сбросе сеанса.";
+"notification.profile_auto_switched.title" = "Профиль переключён автоматически";
+"notification.profile_auto_switched.message" = "%@ → %@, достигнут лимит сеанса";
+
+/* ==================== */
+/* MARK: - Auto-Switch Profile */
+/* ==================== */
+"auto_switch.title" = "Автопереключение профиля";
+"auto_switch.subtitle" = "Переключать автоматически, когда достигнут лимит сеанса";
+"auto_switch.enable_title" = "Включить автопереключение";
+"auto_switch.enable_description" = "Когда активный профиль достигает 100% сеанса, переключаться на следующий доступный профиль";
+
+/* ==================== */
+/* MARK: - Error Messages */
+/* ==================== */
+"error.session_key_not_found" = "Ключ сеанса не найден";
+"error.cli_login_expired" = "Сохранённый вход Claude Code для %@ истёк";
+"error.cli_login_expired_suggestion" = "Переключение отменено, текущий вход оставлен как есть, поэтому запущенные сеансы Claude Code продолжают работать. Чтобы снова связать %@, выполните /login в Claude Code с этой учётной записью, затем переключитесь на %@ ещё раз.";
+"error.session_key_not_found.suggestion" = "Укажите ключ сеанса Claude в настройках";
+"error.session_key_invalid" = "Неверный ключ сеанса";
+"error.session_key_invalid.suggestion" = "Проверьте формат ключа сеанса. Он должен начинаться с «sk-ant-»";
+"error.network_unavailable" = "Нет подключения к интернету";
+"error.network_unavailable.suggestion" = "Проверьте подключение к интернету и повторите попытку";
+"error.network_timeout" = "Время запроса истекло";
+"error.network_timeout.suggestion" = "Повторите попытку. Если проблема не исчезнет, проверьте состояние Claude на status.claude.com";
+"error.api_unauthorized" = "Нет доступа";
+"error.api_unauthorized.suggestion" = "Ключ сеанса мог истечь. Обновите его в настройках";
+"error.api_server_error" = "Ошибка сервера";
+"error.api_server_error.suggestion" = "На сервере произошла ошибка. Повторите попытку позже";
+"error.api_rate_limited" = "Превышен лимит запросов";
+"error.api_rate_limited.suggestion" = "Подождите немного и повторите попытку";
+
+/* ==================== */
+/* MARK: - Validation Messages */
+/* ==================== */
+"validation.session_key_too_short" = "Ключ сеанса слишком короткий";
+"validation.session_key_too_long" = "Ключ сеанса слишком длинный";
+"validation.invalid_prefix" = "Неверный префикс ключа сеанса";
+"validation.invalid_characters" = "Недопустимые символы в ключе сеанса";
+"validation.invalid_format" = "Неверный формат ключа сеанса";
+"validation.contains_whitespace" = "В ключе сеанса есть пробелы";
+
+/* ==================== */
+/* MARK: - GitHub Star Prompt */
+/* ==================== */
+"github.enjoy_app" = "Нравится Claude Usage Tracker?";
+"github.star_description" = "Если приложение полезно, поставьте ему звезду на GitHub. Так его найдут другие, а разработка продолжится.";
+"github.star_button" = "Поставить звезду на GitHub";
+"github.maybe_later" = "Позже";
+"github.never_show" = "Больше не показывать";
+
+/* ==================== */
+/* MARK: - API Settings */
+/* ==================== */
+"api.enable_tracking" = "Отслеживать API";
+"api.enable_tracking.description" = "Следить за кредитами и расходами в Anthropic API Console";
+"api.session_key_placeholder" = "sk-ant-api03-...";
+"api.configure" = "Настроить отслеживание API";
+"api.configure.description" = "Следить за использованием и кредитами Anthropic Console API";
+"api.instructions" = "Чтобы отслеживать использование API, нужен ключ сеанса API:";
+"api.instruction_step1" = "Войдите на console.anthropic.com";
+"api.instruction_step2" = "Откройте инструменты разработчика (F12 или Cmd+Option+I)";
+"api.instruction_step3" = "Перейдите в Application → Cookies → https://console.anthropic.com";
+"api.instruction_step4" = "Найдите «sessionKey» и скопируйте значение";
+
+/* ==================== */
+/* MARK: - Personal Usage */
+/* ==================== */
+"personal.configure" = "Настроить личное использование";
+"personal.configure.description" = "Отслеживать бесплатный тариф на claude.ai";
+"personal.status" = "Состояние";
+"personal.session_key" = "Ключ сеанса";
+"personal.session_key.configured" = "Настроен";
+"personal.session_key.not_configured" = "Не настроен";
+"personal.reconfigure" = "Настроить заново";
+"personal.remove" = "Удалить ключ сеанса";
+
+/* ==================== */
+/* MARK: - Claude Code (CLI) */
+/* ==================== */
+"claudecode.title" = "Интеграция с Claude CLI";
+"claudecode.description" = "Показывать данные об использовании в строке статуса терминала";
+"claudecode.coming_soon" = "Скоро";
+"claudecode.features_description" = "Интеграция с Claude Code CLI для строки статуса терминала появится в следующем обновлении.";
+
+/* ==================== */
+/* MARK: - Additional UI Labels */
+/* ==================== */
+"ui.app_behavior" = "Поведение приложения";
+"ui.usage_tracking" = "Отслеживание использования";
+"ui.global_settings" = "Общие настройки";
+"ui.menu_bar_metrics" = "Показатели в строке меню";
+"ui.quick_actions" = "Быстрые действия";
+"ui.how_it_works" = "Как это работает";
+"ui.display_components" = "Элементы отображения";
+"ui.requirements" = "Требования";
+"ui.live_preview" = "Живой просмотр";
+"ui.updates_realtime" = "Обновляется в реальном времени";
+"ui.organization" = "Организация";
+"ui.icon_style" = "Стиль значка";
+"ui.display_mode" = "Режим отображения";
+"ui.at_least_one_metric" = "Должен быть включён хотя бы один показатель";
+
+/* ==================== */
+/* MARK: - Session Management (Additional) */
+/* ==================== */
+"session.subtitle" = "Автоматическое создание и поддержание сеанса";
+"session.auto_description_line1" = "• Замечает, когда использование сеанса сбрасывается до 0%";
+"session.auto_description_line2" = "• Отправляет «Hi» Claude 3.5 Haiku (самая дешёвая модель)";
+"session.auto_description_line3" = "• Использует временный чат, которого не будет в истории";
+"session.auto_description_line4" = "• Новый 5-часовой сеанс готов сразу";
+
+/* ==================== */
+/* MARK: - Claude CLI (Additional) */
+/* ==================== */
+"claudecode.subtitle" = "Настройте строку статуса в терминале";
+"claudecode.preview_label" = "Живой просмотр";
+"claudecode.preview_description" = "Так строка статуса будет выглядеть в Claude CLI";
+"claudecode.component_model" = "Название модели";
+"claudecode.component_directory" = "Имя каталога";
+"claudecode.component_branch" = "Ветка Git";
+"claudecode.component_context" = "Окно контекста";
+"claudecode.component_context_tokens" = "Показывать в токенах (вместо %)";
+"claudecode.component_usage" = "Статистика использования";
+"claudecode.component_progressbar" = "Индикатор";
+"claudecode.component_pace_marker" = "Метка темпа";
+"claudecode.pace_marker_info" = "Цвет по прогнозному темпу (зелёный → фиолетовый)";
+"claudecode.component_resettime" = "Время сброса";
+"claudecode.component_weekly" = "Показывать использование за неделю";
+"claudecode.component_weekly_description" = "Недельное использование токенов с индикатором и временем сброса";
+"claudecode.component_extra_usage" = "Показывать дополнительное использование";
+"claudecode.component_extra_usage_description" = "Показатель стоимости (например, 9.49 USD)";
+"claudecode.component_cache" = "Показывать кэш промпта";
+"claudecode.component_cache_description" = "Доля попаданий в кэш и причина недавнего промаха (например, ⚡ 94% ✗ tools)";
+"claudecode.component_fable" = "Показывать Fable за неделю";
+"claudecode.component_fable_description" = "Недельный лимит Fable (например, Fable: 24%)";
+"claudecode.weekly_label" = "Показывать подпись \"Weekly:\"";
+"claudecode.requirement_sessionkey" = "• Ключ сеанса указан в разделе «Учётные данные» → вкладка Claude.ai";
+"claudecode.requirement_restart" = "• Перезапустите Claude CLI после применения изменений";
+"claudecode.error_no_components" = "Выберите хотя бы один элемент для отображения";
+"claudecode.error_no_sessionkey" = "Ключ сеанса не настроен. Сначала укажите его на вкладке личного использования.";
+"claudecode.success_applied" = "Настройки применены. Перезапустите Claude CLI, чтобы увидеть изменения.";
+"claudecode.success_disabled" = "Строка статуса выключена. Перезапустите Claude CLI.";
+"claudecode.preview_no_components" = "Элементы не выбраны";
+
+/* ==================== */
+/* MARK: - API Billing (Additional) */
+/* ==================== */
+"api.title" = "Оплата API";
+"api.subtitle" = "Следите за использованием и расходами API";
+"api.enable_billing_tracking" = "Отслеживать оплату API";
+"api.enable_billing_description" = "Следить за использованием API, текущим расходом и оставшимися предоплаченными кредитами";
+"api.label_api_session_key" = "Ключ сеанса API";
+"api.placeholder_api_session_key" = "sk-ant-api03-...";
+"api.help_api_session_key" = "Ключ сеанса с console.anthropic.com";
+"api.button_fetch_organizations" = "Получить организации";
+"api.button_fetching" = "Получение…";
+"api.button_save_configuration" = "Сохранить настройки";
+"api.success_organizations_found" = "Организаций: %d";
+"api.error_fetch_failed" = "Не удалось получить организации: %@";
+"api.success_configuration_saved" = "Настройки API сохранены";
+
+/* ==================== */
+/* MARK: - Personal Usage (Additional) */
+/* ==================== */
+"personal.title" = "Личное использование";
+"personal.subtitle" = "Отслеживайте использование и сеансы Claude.ai";
+"personal.label_session_key" = "Ключ сеанса";
+"personal.placeholder_session_key" = "sk-ant-sid-...";
+"personal.help_session_key" = "Вставьте cookie sessionKey из инструментов разработчика claude.ai";
+"personal.button_test_connection" = "Проверить подключение";
+"personal.button_save_and_continue" = "Сохранить и продолжить";
+"personal.button_remove_key" = "Удалить ключ";
+"personal.success_connected" = "Подключение к организации выполнено";
+"personal.confirm_remove_title" = "Удалить ключ сеанса?";
+"personal.confirm_remove_message" = "Отслеживание личного использования прекратится.";
+
+/* ==================== */
+/* MARK: - Error Presenter */
+/* ==================== */
+"error.code_label" = "Код ошибки:";
+"error.what_to_do" = "Что делать:";
+"error.occurred_at" = "Произошло: %@";
+
+/* ==================== */
+/* MARK: - General Settings (Additional) */
+/* ==================== */
+"general.slider_realtime" = "Обновления в реальном времени";
+"general.slider_frequent" = "Частые обновления";
+"general.slider_balanced" = "Сбалансированный режим";
+"general.slider_efficient" = "Экономия энергии";
+"general.slider_battery_saver" = "Экономия батареи";
+"general.slider_fast" = "Быстро";
+"general.slider_balanced_label" = "Баланс";
+"general.slider_battery_saver_label" = "Экономия батареи";
+"general.available_languages" = "Доступные языки (%d)";
+
+/* ==================== */
+/* MARK: - Badges */
+/* ==================== */
+"badge.new" = "НОВОЕ";
+"badge.beta" = "БЕТА";
+"badge.pro" = "PRO";
+
+/* ==================== */
+/* MARK: - Appearance (Additional) */
+/* ==================== */
+"appearance.title" = "Оформление строки меню";
+"appearance.subtitle" = "Настройте значки и показатели в строке меню";
+"appearance.global_settings" = "Общие настройки";
+"appearance.menu_bar_metrics" = "Показатели в строке меню";
+"appearance.monochrome_title" = "Монохром";
+"appearance.monochrome_description" = "Адаптивный цвет вместо цветов состояния (зелёный/оранжевый/красный)";
+"appearance.show_labels_title" = "Показывать подписи значков";
+"appearance.show_labels_description" = "Показывать префиксы (S:, W:, API:) у каждого показателя";
+"appearance.show_remaining_title" = "Показывать оставшийся процент";
+"appearance.show_remaining_description" = "Показывать остаток, а не использованный процент (как батарея macOS)";
+"appearance.pace_marker_section_title" = "Метка темпа";
+"appearance.pace_marker_section_subtitle" = "Сравнивать темп использования со временем до сброса";
+"appearance.show_time_marker_title" = "Показывать метку времени";
+"appearance.show_time_marker_description" = "Отметка на индикаторе: какая часть периода уже прошла";
+"appearance.show_pace_marker_title" = "Красить метку по темпу";
+"appearance.show_pace_marker_description" = "Цвет метки времени по прогнозному темпу (зелёный → фиолетовый). Для сеанса и недели.";
+"appearance.pace_coloring_title" = "Цвета индикатора по темпу";
+"appearance.pace_coloring_description" = "Красить индикаторы по прогнозному темпу, а не по текущему уровню. Показывает, будет ли лимит исчерпан к концу периода.";
+"appearance.exclude_weekends_title" = "Не учитывать выходные в недельном темпе";
+"appearance.exclude_weekends_description" = "Недельная метка времени и темп двигаются только по будням и стоят на выходных. Удобно, если Claude нужен в основном в рабочие дни.";
+"appearance.multiprofile_locked_title" = "Настройки оформления заблокированы";
+"appearance.multiprofile_locked_description" = "Эти настройки недоступны, пока включён показ нескольких профилей. В этом режиме у каждого профиля своё оформление.";
+"appearance.disable_multiprofile" = "Выключить показ нескольких профилей";
+
+/* ==================== */
+/* MARK: - Setup Wizard (Additional) */
+/* ==================== */
+"setup.step_number_1" = "1";
+"setup.step_number_2" = "2";
+"setup.step_title_get_key" = "Получите ключ сеанса";
+"setup.step_title_enter_key" = "Введите ключ сеанса";
+"setup.step_description_get_key" = "Ключ сеанса нужно взять на claude.ai";
+"setup.button_open_claude" = "Открыть claude.ai";
+"setup.paste_instruction" = "Вставьте скопированное значение sessionKey";
+
+/* ==================== */
+/* MARK: - Component Preview */
+/* ==================== */
+"preview.sample_text_claude" = "Claude";
+"preview.sample_percentage" = "60%";
+"preview.sample_card_content" = "Здесь содержимое карточки";
+"preview.sample_more_content" = "Ещё содержимое";
+"preview.sample_update_every" = "Обновлять каждые:";
+"preview.sample_5_minutes" = "5 мин";
+
+/* ==================== */
+/* MARK: - Manage Profiles */
+/* ==================== */
+"profiles.title" = "Управление профилями";
+"profiles.subtitle" = "Создавайте несколько учётных записей Claude и управляйте ими";
+"profiles.create_new" = "Создать профиль";
+"profiles.about_title" = "О профилях";
+"profiles.about_description" = "У каждого профиля свои:";
+"profiles.about_credentials" = "Учётные данные Claude.ai";
+"profiles.about_api" = "Учётные данные API Console";
+"profiles.about_cli" = "Синхронизация учётной записи CLI";
+"profiles.about_appearance" = "Оформление строки меню";
+"profiles.about_notifications" = "Настройки уведомлений";
+"profiles.about_refresh" = "Интервал обновления";
+"profiles.active_badge" = "Активный";
+"profiles.created" = "Создан";
+"profiles.cli_synced" = "CLI синхронизирован";
+"profiles.rename" = "Переименовать профиль";
+"profiles.activate" = "Активировать профиль";
+"profiles.delete" = "Удалить профиль";
+"profiles.delete_title" = "Удалить профиль";
+"profiles.delete_confirm" = "Удалить «%@»? Будут удалены все связанные учётные данные и настройки.";
+"profiles.create_title" = "Создать профиль";
+"profiles.name_label" = "Имя профиля (необязательно)";
+"profiles.name_placeholder" = "Оставьте пустым для случайного имени";
+"profiles.name_hint" = "Если оставить пустым, будет придумано забавное имя.";
+
+/* ==================== */
+/* MARK: - Multi-Profile Display */
+/* ==================== */
+"multiprofile.title" = "Несколько профилей";
+"multiprofile.subtitle" = "Показывать несколько профилей в строке меню";
+"multiprofile.enable_title" = "Показывать несколько профилей";
+"multiprofile.enable_description" = "Показывать выбранные профили компактными значками рядом";
+"multiprofile.select_profiles" = "Профили для показа:";
+"multiprofile.info" = "У каждого профиля цвет показывает состояние (зелёный/оранжевый/красный)";
+"multiprofile.active_badge" = "Активный";
+"multiprofile.at_least_one" = "Нужно выбрать хотя бы один профиль";
+"multiprofile.icon_style" = "Стиль значка";
+"multiprofile.style_circles" = "Круги";
+"multiprofile.style_bars" = "Полосы";
+"multiprofile.style_dots" = "Точки";
+"multiprofile.style_percent" = "Проценты";
+"multiprofile.show_week" = "Показывать использование за неделю";
+"multiprofile.show_week_description" = "Показывать неделю в дополнение к сеансу";
+"multiprofile.show_label" = "Показывать имя профиля";
+"multiprofile.show_label_description" = "Показывать имя профиля под значком";
+"multiprofile.use_system_color" = "Монохром";
+"multiprofile.use_system_color_description" = "Белый цвет вместо цветов состояния (зелёный/оранжевый/красный)";
+"multiprofile.active_indicator_title" = "Показывать индикатор активного профиля";
+"multiprofile.active_indicator_description" = "Маленькое зелёное подчёркивание под значком текущего профиля";
+
+/* ==================== */
+/* MARK: - General Settings (Profile-Level) */
+/* ==================== */
+"general.title" = "Основные";
+"general.subtitle" = "Интервал обновления, автозапуск и уведомления";
+"general.refresh_title" = "Интервал обновления";
+"general.refresh_subtitle" = "Как часто проверять обновления использования";
+"general.refresh_seconds" = "%d с";
+"general.refresh_min" = "10 с";
+"general.refresh_max" = "300 с";
+"general.spend_target_title" = "Месячный ориентир расхода";
+"general.spend_target_subtitle" = "Необязательный личный бюджет на месяц. Если указать, в панели появится индикатор расхода за месяц; если оставить пустым, будет только сумма.";
+"general.spend_target_placeholder" = "например, 1500";
+"general.autostart_title" = "Автозапуск сеанса";
+"general.autostart_subtitle" = "Автоматически начинать новый сеанс, когда это нужно";
+"general.autostart_toggle" = "Автозапуск нового сеанса";
+"general.autostart_description" = "Автоматически отправлять сообщение при сбросе сеанса";
+"general.autostart_requirement" = "• Ключ сеанса указан в разделе «Учётные данные» → вкладка Claude.ai";
+"general.notifications_title" = "Уведомления";
+"general.notifications_subtitle" = "Узнавать о порогах использования";
+"general.connected" = "Подключено";
+"general.not_connected" = "Не подключено";
+
+/* ==================== */
+/* MARK: - Updates Settings */
+/* ==================== */
+"updates.version_info" = "Сведения о версии";
+"updates.update_preferences" = "Параметры обновления";
+"updates.version_label" = "v%@ (%@)";
+
+/* ==================== */
+/* MARK: - Appearance (Additional) */
+/* ==================== */
+"appearance.global_subtitle" = "Поведение значка в строке меню";
+"appearance.metrics_subtitle" = "Какие показатели показывать в строке меню";
+"appearance.all_metrics_off_title" = "Режим логотипа";
+"appearance.all_metrics_off_description" = "Все показатели выключены. В строке меню будет логотип приложения. Нажмите его, чтобы открыть профили и настройки.";
+
+/* ==================== */
+/* MARK: - Metric Card */
+/* ==================== */
+"metric.show_countdown" = "Показывать время до следующего сеанса";
+"metric.countdown_description" = "Показывать на значке оставшееся время (например, →2H)";
+
+/* ==================== */
+/* MARK: - Personal Usage (Additional) */
+/* ==================== */
+"personal.configuration_title" = "Настройка";
+"personal.status_connected" = "Подключено";
+"personal.status_not_connected" = "Не подключено";
+
+/* ==================== */
+/* MARK: - Language Settings */
+/* ==================== */
+"language.title" = "Язык";
+"language.subtitle" = "Выберите язык";
+"language.select_language" = "Выберите язык";
+"language.available" = "Доступные языки";
+"language.restart_required" = "Нужен перезапуск";
+"language.restart_message" = "Чтобы язык изменился, приложение нужно перезапустить.";
+"language.restart_now" = "Перезапустить";
+"language.restart_later" = "Позже";
+
+/* ==================== */
+/* MARK: - Common Actions (Additional) */
+/* ==================== */
+"common.create" = "Создать";
+"common.rename" = "Переименовать";
+"common.activate" = "Активировать";
+"common.connected" = "Подключено";
+"common.not_connected" = "Не подключено";
+"common.back" = "Назад";
+"common.next" = "Далее";
+"common.remove" = "Удалить";
+"common.switch" = "Переключить";
+"common.retry" = "Повторить";
+
+/* ==================== */
+/* MARK: - Popover/Menu Bar */
+/* ==================== */
+"popover.manage_profiles" = "Управление профилями";
+"popover.no_profile" = "Нет профиля";
+"popover.profiles_count" = "Профилей: %d";
+"popover.profile_count_singular" = "Профилей: 1";
+
+/* ==================== */
+/* MARK: - Setup Wizard */
+/* ==================== */
+"setup.step.enter_session_key" = "Введите ключ";
+"wizard.test_connection" = "Проверить подключение";
+"wizard.select_org_title" = "Какую организацию отслеживать?";
+"wizard.select_org_subtitle" = "Выберите организацию Claude для отслеживания использования";
+"wizard.config_summary" = "Сводка настроек";
+"wizard.session_key" = "Ключ сеанса";
+"wizard.api_session_key" = "Ключ сеанса API";
+"wizard.organization" = "Организация";
+"wizard.organization_id" = "ID: %@";
+"wizard.select_organization" = "Выберите организацию";
+"wizard.choose_organization" = "Выберите, какую организацию отслеживать";
+"wizard.review_config" = "Проверьте настройки";
+"wizard.confirm_settings" = "Подтвердите настройки перед сохранением";
+"wizard.key_will_update" = "Ключ сеанса будет обновлён";
+"wizard.api_key_will_update" = "Ключ сеанса API будет обновлён";
+
+/* ==================== */
+/* MARK: - CLI Account */
+/* ==================== */
+"cli.access_token" = "Токен доступа";
+"cli.subscription" = "Подписка";
+"cli.scopes" = "Области доступа";
+"cli.sync_instructions" = "Нажмите «Синхронизировать из Claude Code» ниже, чтобы импортировать учётные данные";
+"cli.about_title" = "О синхронизации учётной записи CLI";
+"cli.benefits" = "Преимущества:";
+"cli.tracking_note" = "Примечание: отслеживание использования берёт учётные данные Claude.ai. Учётные данные CLI нужны только для переключения учётной записи.";
+
+/* ==================== */
+/* MARK: - Settings Sections (Titles & Descriptions) */
+/* ==================== */
+"section.credentials" = "УЧЁТНЫЕ ДАННЫЕ";
+"section.active_profile" = "Активный профиль";
+"section.settings" = "НАСТРОЙКИ";
+"section.app" = "ПРИЛОЖЕНИЕ";
+
+"section.claudeai_title" = "Claude.ai";
+"section.claudeai_desc" = "Учётные данные Claude.ai";
+"section.api_console_title" = "API Console";
+"section.api_console_desc" = "Учётные данные API Console";
+"section.cli_account_title" = "Учётная запись CLI";
+"section.cli_account_desc" = "Синхронизация учётной записи CLI";
+"section.appearance_title" = "Оформление";
+"section.appearance_desc" = "Оформление строки меню";
+"section.general_title" = "Основные";
+"section.general_desc" = "Основные настройки";
+"section.manage_profiles_title" = "Управление профилями";
+"section.manage_profiles_desc" = "Управление профилями";
+
+/* ==================== */
+/* MARK: - Creator Info */
+/* ==================== */
+"creator.name" = "Hamed Elfayome";
+"creator.username" = "@hamed-elfayome";
+
+/* ==================== */
+/* MARK: - Wizard Steps & Actions */
+/* ==================== */
+"wizard.enter_key" = "Введите ключ";
+"wizard.select_org" = "Выберите организацию";
+"wizard.confirm" = "Подтвердить";
+"wizard.testing" = "Проверка…";
+"wizard.test_connection" = "Проверить подключение";
+"wizard.fetching" = "Получение…";
+"wizard.fetch_organizations" = "Получить организации";
+"wizard.saving" = "Сохранение…";
+"wizard.save_configuration" = "Сохранить настройки";
+
+/* ==================== */
+/* MARK: - CLI Account Sync */
+/* ==================== */
+"cli.title" = "Учётная запись CLI";
+"cli.subtitle" = "Синхронизируйте учётную запись, под которой выполнен вход в Claude Code";
+"cli.synced" = "Учётная запись CLI синхронизирована";
+"cli.not_synced" = "Не синхронизировано";
+"cli.account_details" = "Сведения об учётной записи";
+"cli.credentials_synced" = "Синхронизированные учётные данные CLI";
+"cli.no_credentials" = "Учётные данные ещё не синхронизированы";
+"cli.resync" = "Синхронизировать снова";
+"cli.sync_from_code" = "Синхронизировать из Claude Code";
+"cli.benefit_1" = "Переключать вход Claude Code вместе с профилем";
+"cli.benefit_2" = "Держать учётные записи CLI и приложения согласованными";
+"cli.benefit_3" = "Обновлять учётные данные при переключении профиля";
+
+/* ==================== */
+/* MARK: - Additional Keys */
+/* ==================== */
+"api.single_organization" = "Найдена одна организация, она выбрана автоматически";
+"api.remove_title" = "Удалить учётные данные";
+"api.remove_subtitle" = "Безвозвратно удалить ключ сеанса API Console из этого профиля";
+"claudecode.button_apply" = "Применить";
+"claudecode.button_reset" = "Сбросить";
+"claudecode.actions_title" = "Действия";
+"claudecode.component_profile" = "Имя профиля";
+"claudecode.context_info" = "Индикатор может показывать 80–95% вместо 100%: Claude автоматически сжимает контекст ещё до достижения лимита, а токены ответа тоже занимают место в контексте.";
+"claudecode.element_colors_title" = "Цвета элементов";
+"claudecode.element_color_directory" = "Каталог";
+"claudecode.element_color_branch" = "Ветка";
+"claudecode.element_color_model" = "Модель";
+"claudecode.element_color_profile" = "Профиль";
+"claudecode.element_color_context" = "Контекст";
+"claudecode.element_color_separator" = "Разделитель";
+"claudecode.element_color_usage" = "Градиент использования";
+"claudecode.element_color_usage_desc" = "Заменить 10-уровневый градиент одним цветом";
+"claudecode.element_color_pace" = "Метка темпа";
+"claudecode.element_color_pace_desc" = "Заменить 6 ступеней цвета темпа одним цветом";
+"claudecode.element_color_weekly" = "Недельное использование";
+"claudecode.element_color_weekly_desc" = "Заменить градиент недельного использования одним цветом";
+"claudecode.element_color_extra" = "Дополнительное использование";
+"claudecode.element_color_extra_desc" = "Заменить градиент дополнительного использования (стоимость) одним цветом";
+"error.generic" = "Ошибка: %@";
+"personal.button_saving" = "Сохранение…";
+"personal.button_setup_wizard" = "Мастер настройки";
+"personal.button_open_claude" = "Открыть claude.ai";
+"personal.success_key_saved" = "Ключ сеанса сохранён";
+"personal.remove_title" = "Удалить учётные данные";
+"personal.remove_subtitle" = "Безвозвратно удалить ключ сеанса Claude.ai из этого профиля";
+"personal.signin_description" = "Войдите, чтобы ключ сеанса извлёкся автоматически.";
+"personal.signin_button" = "Войти в Claude.ai";
+"personal.signin_sheet_title" = "Вход в Claude.ai";
+"personal.advanced_manual_key" = "Дополнительно: ключ сеанса вручную";
+"about.run_setup_wizard" = "Запустить мастер настройки";
+
+/* ==================== */
+/* MARK: - Migration & Reset */
+/* ==================== */
+"wizard.migrate_old_data" = "Есть данные старой версии?";
+"wizard.migrate_description" = "Если была установлена предыдущая версия, нажмите ниже, чтобы импортировать старые профили и настройки. Система запросит разрешение на доступ к данным.";
+"wizard.migrate_button" = "Перенести";
+"wizard.migration_success" = "✅ Перенесено объектов: %d";
+"wizard.migration_failed" = "⚠️ Перенос не удался: %@";
+"about.reset_app_data" = "Сбросить данные приложения";
+"about.reset_confirmation_title" = "Сбросить все данные приложения?";
+"about.reset_confirm" = "Сбросить";
+"about.reset_confirmation_message" = "Будут безвозвратно удалены все профили, учётные данные и настройки. Приложение завершится, и настройку придётся пройти заново. Это нельзя отменить.";
+"wizard.skip_migration" = "Пропустить";
+"wizard.migration_skipped" = "Перенос пропущен. Старые данные можно синхронизировать вручную позже.";
+
+/* Claude Code Info */
+"wizard.claude_code_info_title" = "Пользуетесь Claude Code?";
+"wizard.claude_code_info_description" = "Отслеживание использования будет работать, но строка статуса CLI и автозапуск сеанса без ключа сеанса не заработают";
+"wizard.claude_code_skip_setup" = "Пропустить настройку";
+"wizard.migrate_description_short" = "Импортировать данные профилей из предыдущей версии";
+"wizard.skip_migration" = "Пропустить";
+"wizard.migration_skipped" = "Пропущено";
+
+/* ==================== */
+/* MARK: - Usage History */
+/* ==================== */
+"section.history_title" = "История";
+"section.history_desc" = "Просмотр истории использования";
+"section.support_title" = "Поддержка";
+"section.support_desc" = "Поддержать разработку проекта";
+"section.debug_title" = "Средства отладки";
+"section.debug_desc" = "Журнал сети и диагностика";
+"history.title" = "История использования";
+"history.subtitle" = "Следите за использованием со временем";
+"history.tab.session" = "Сеансы";
+"history.tab.weekly" = "Неделя";
+"history.tab.billing" = "Оплата";
+
+"history.chart.session_title" = "История использования сеанса";
+"history.chart.weekly_title" = "Тренд недельного использования";
+"history.chart.billing_title" = "Месячный расход API";
+"history.chart.now" = "Сейчас";
+"history.empty.session_title" = "Нет истории сеанса";
+"history.empty.session_description" = "Использование сеанса записывается после каждого 5-часового сброса";
+"history.empty.weekly_title" = "Нет недельной истории";
+"history.empty.weekly_description" = "Недельное использование записывается после каждого сброса в понедельник";
+"history.empty.billing_title" = "Нет истории оплаты";
+"history.empty.billing_description" = "Данные об оплате записываются после каждого месячного сброса";
+"history.list.title" = "Записи истории";
+"history.list.count" = "Записей: %d";
+"history.list.empty" = "Записей пока нет. История записывается автоматически при каждом сбросе.";
+"history.list.more" = "Ещё записей: %d";
+"history.export_button" = "Экспорт";
+"history.clear_button" = "Очистить";
+"history.no_profile" = "Нет активного профиля";
+"history.reset_type.session" = "Сброс сеанса";
+"history.reset_type.weekly" = "Недельный сброс";
+"history.reset_type.billing" = "Расчётный период";
+"history.label.total" = "Всего";
+"history.label.spent" = "Потрачено";
+"history.label.session" = "Сеанс";
+"history.time_scale.5_hours" = "5 ч";
+"history.time_scale.24_hours" = "24 ч";
+"history.time_scale.7_days" = "7 дн";
+"history.time_scale.30_days" = "30 дн";
+"history.chart.session_usage" = "Использование сеанса";
+"history.chart.weekly_usage" = "Недельное использование";
+"history.chart.api_billing" = "Оплата API";
+"history.chart.no_data" = "Нет данных в выбранном диапазоне";
+"history.export.title" = "Экспорт данных";
+"history.export.json" = "Экспорт в JSON";
+"history.export.csv" = "Экспорт в CSV";
+"history.chart.now" = "Сейчас";
+
+/* ==================== */
+/* MARK: - Support View */
+/* ==================== */
+"support.title" = "Поддержать проект";
+"support.subtitle" = "Claude Usage Tracker бесплатен и с открытым кодом";
+"support.all_features_free" = "Все функции бесплатны";
+"support.all_features_desc" = "Все функции этого приложения полностью бесплатны. Нет платных тарифов, ограничений и подписок.";
+"support.open_source" = "Открытый код";
+"support.open_source_desc" = "Исходный код опубликован на GitHub. Можно изучать, изменять и вносить вклад в проект.";
+"support.no_tracking" = "Без слежения";
+"support.no_tracking_desc" = "Конфиденциальность важна. Нет аналитики, телеметрии и сбора данных. Всё остаётся на вашем Mac.";
+"support.message" = "Если приложение полезно, поддержите его разработку";
+"support.buy_coffee" = "Купить мне кофе";
+"support.footer" = "Поддержка помогает проекту жить и развиваться";
+"support.also_support" = "Также можно поддержать";
+"support.star_github" = "Звездой на GitHub";
+
+/* ==================== */
+/* MARK: - Debug View */
+/* ==================== */
+"debug.title" = "Средства отладки";
+"debug.subtitle" = "Журнал сетевых запросов для диагностики";
+"debug.network_logger" = "Журнал сетевых запросов";
+"debug.network_logger_desc" = "Записывать все запросы API с подробностями";
+"debug.logging_duration" = "Длительность записи";
+"debug.logging_active" = "Запись идёт";
+"debug.logging_inactive" = "Запись не идёт";
+"debug.stops_in" = "Остановится через %@";
+"debug.start_logging" = "Начать запись";
+"debug.stop_logging" = "Остановить запись";
+"debug.clear_logs" = "Очистить журнал";
+"debug.clear_all_logs" = "Очистить весь журнал?";
+"debug.clear_logs_message" = "Все записанные сетевые запросы будут удалены безвозвратно.";
+"debug.captured_requests" = "Захваченные запросы";
+"debug.requests_logged" = "Запросов в журнале: %d";
+"debug.no_requests" = "Запросов в журнале пока нет";
+"debug.request_details" = "Сведения о запросе";
+"debug.basic_information" = "Основные сведения";
+"debug.request_body" = "Тело запроса";
+"debug.response_preview" = "Ответ (предпросмотр)";
+"debug.full_size" = "Полный размер: %@";
+"debug.error" = "Ошибка";
+"debug.url" = "URL";
+"debug.method" = "Метод";
+"debug.status_code" = "Код состояния";
+"debug.duration" = "Длительность";
+"debug.timestamp" = "Время";
+"debug.duration_seconds" = "%.3f с";
+
+/* ==================== */
+/* MARK: - Combined Usage Chart */
+/* ==================== */
+"history.chart.usage_overview" = "Обзор использования";
+
+/* ==================== */
+/* MARK: - Keyboard Shortcuts */
+/* ==================== */
+"section.shortcuts_title" = "Сочетания клавиш";
+"section.shortcuts_desc" = "Настройка сочетаний клавиш";
+"shortcuts.title" = "Сочетания клавиш";
+"shortcuts.subtitle" = "Глобальные сочетания для частых действий";
+"shortcuts.open_popover" = "Переключить панель";
+"shortcuts.open_popover_desc" = "Показать или скрыть панель использования";
+"shortcuts.refresh" = "Обновить использование";
+"shortcuts.refresh_desc" = "Получить свежие данные об использовании";
+"shortcuts.open_settings" = "Открыть настройки";
+"shortcuts.open_settings_desc" = "Открыть окно настроек";
+"shortcuts.next_profile" = "Следующий профиль";
+"shortcuts.next_profile_desc" = "Переключиться на следующий профиль";
+"shortcuts.record" = "Нажмите, чтобы записать";
+"shortcuts.recording" = "Нажмите сочетание…";
+"shortcuts.clear" = "Очистить";
+"shortcuts.none" = "Нет";
+"shortcuts.info_title" = "Глобальные сочетания";
+"shortcuts.info_desc" = "Сочетания работают из любого приложения. В каждом должна быть хотя бы одна клавиша-модификатор (Command, Option, Control или Shift). Избегайте конфликтов с системными сочетаниями.";
+
+/* ==================== */
+/* MARK: - Mobile App (Coming Soon) */
+/* ==================== */
+"section.mobile_app_title" = "Мобильное приложение";
+"section.mobile_app_desc" = "Мобильное приложение скоро появится";
+"mobile.title" = "Мобильное приложение";
+"mobile.subtitle" = "Следите за использованием Claude в пути";
+"mobile.coming_soon_badge" = "СКОРО";
+"mobile.cta_message" = "Интересно? Сообщите — мы напишем, когда всё будет готово.";
+"mobile.notify_me" = "Уведомить меня";
+"mobile.submitting" = "Отправка…";
+"mobile.notified" = "Вы в списке";
+"mobile.notified_desc" = "Мы сообщим, когда мобильное приложение станет доступно.";
+"mobile.privacy_note" = "Личные данные не собираются. Регистрируется только интерес.";
+"mobile.error_title" = "Запрос не выполнен";
+"mobile.error_message" = "Не удалось зарегистрировать интерес. Проверьте подключение к интернету и повторите.";
+
+/* ==================== */
+/* MARK: - Popover Settings */
+/* ==================== */
+"section.popover_title" = "Панель";
+"section.popover_desc" = "Настройка отображения панели";
+"section.app_settings_title" = "Настройки";
+"section.app_settings_desc" = "Настройки приложения и запуск";
+"popover.title" = "Панель";
+"popover.subtitle" = "Как панель показывает сведения об использовании";
+"popover.display_section" = "Отображение";
+"popover.time_display" = "Время сброса";
+"popover.time_display_desc" = "Что показывать для времени сброса в панели";
+"popover.time_display_reset" = "Время сброса";
+"popover.time_display_remaining" = "Осталось";
+"popover.time_display_both" = "Оба";
+"popover.time_format" = "Формат времени";
+"popover.time_format_desc" = "Как показывать время во всём приложении";
+"popover.time_format_system" = "Системный";
+"popover.time_format_12h" = "12-часовой";
+"popover.time_format_24h" = "24-часовой";
+
+/* ==================== */
+/* MARK: - Feedback Prompt */
+/* ==================== */
+"feedback.title" = "Помогите нам стать лучше";
+"feedback.subtitle" = "Отзывы определяют, каким станет приложение";
+"feedback.name_placeholder" = "Имя";
+"feedback.title_label" = "Роль";
+"feedback.contact_placeholder" = "Эл. почта";
+"feedback.message_placeholder" = "Напишите что угодно — отзыв, идеи, запросы функций…";
+"feedback.submit" = "Отправить";
+"feedback.submitting" = "Отправка…";
+"feedback.remind_later" = "Напомнить позже";
+"feedback.never_show" = "Больше не спрашивать";
+"feedback.thanks" = "Спасибо за отзыв!";
+"feedback.error_title" = "Не удалось отправить";
+"feedback.error_message" = "Не удалось отправить отзыв. Повторите позже.";
+"feedback.role_developer" = "Разработчик";
+"feedback.role_designer" = "Дизайнер";
+"feedback.role_manager" = "Руководитель";
+"feedback.role_student" = "Студент";
+"feedback.role_researcher" = "Исследователь";
+"feedback.role_other" = "Другое";
+
+// MARK: - Status Banners
+"popover.banner.credentials_expired" = "Срок учётных данных истёк. Обновите в настройках.";
+"popover.banner.refresh_failed" = "Сбоев обновления: %d";
+"popover.banner.updated_ago" = "Обновлено %d мин назад";
+
+// MARK: - Overage Balance
+"popover.overage_balance" = "Баланс";
+"popover.no_limits_reported" = "Этот план не сообщает лимиты использования, отслеживать здесь нечего.";
+
+// MARK: - Monthly Spend
+"popover.monthly_spend_period" = "В этом месяце";
+
+// MARK: - Setup Wizard CLI Detection
+"setup.cli_detecting" = "Проверка учётных данных CLI…";
+"setup.cli_detected.title" = "CLI найден";
+"setup.cli_detected.description" = "На этом Mac найдены учётные данные Claude Code CLI. Начните отслеживание одним нажатием.";
+"setup.cli_detected.start" = "Начать отслеживание";
+"setup.cli_detected.manual" = "Настроить вручную";
+
+// MARK: - Custom Notification Settings
+"notifications.custom_thresholds" = "Свои пороги";
+"notifications.custom_threshold" = "Своё уведомление";
+"notifications.custom_placeholder" = "например, 50";
+"notifications.custom_add" = "Добавить";
+"notifications.sound" = "Звук";
+"notifications.sound.default" = "По умолчанию";
+"notifications.sound.none" = "Нет";
+"notifications.sound.preview" = "Прослушать";
+
+/* Claude Code Notch HUD */
+"notch.hud.section_title" = "Dynamic Island";
+"notch.hud.section_desc" = "Компактный индикатор у выреза: чем занят Claude Code";
+"notch.hud.enable" = "Включить Dynamic Island";
+"notch.hud.enable_desc" = "Устанавливает хуки Claude Code и показывает активность сеанса у выреза";
+"notch.hud.auto_hide" = "Скрывать в простое";
+"notch.hud.auto_hide_desc" = "Скрывать HUD через несколько секунд после простоя всех сеансов";
+"notch.hud.expanded_title" = "Claude Code";
+"notch.no_sessions" = "Нет активных сеансов";
+"notch.status.thinking" = "Думает…";
+"notch.status.writing_code" = "Пишет…";
+"notch.status.reading_files" = "Читает…";
+"notch.status.running_command" = "Выполняет…";
+"notch.status.needs_attention" = "Нужен ввод";
+"notch.status.idle" = "Готово";
+"notch.task.running_command" = "Выполнение команды";
+"notch.task.writing" = "Запись %@";
+"notch.task.editing" = "Правка %@";
+"notch.task.reading" = "Чтение %@";
+"notch.task.searching" = "Поиск";
+"notch.task.subagent" = "Субагент работает";
+"notch.task.web" = "Просмотр веба";
+"notch.hooks.title" = "Хуки Claude Code";
+"notch.hooks.desc" = "HUD получает события через хуки в ~/.claude/settings.json";
+"notch.hooks.status_installed" = "Хуки установлены";
+"notch.hooks.status_partial" = "Хуки установлены частично";
+"notch.hooks.status_not_installed" = "Хуки не настроены";
+"notch.hooks.status_legacy" = "Обнаружены хуки предыдущей версии — они будут заменены при включении HUD.";
+"notch.hooks.install" = "Установить";
+"notch.hooks.repair" = "Восстановить";
+"notch.hooks.remove" = "Удалить";
+"notch.server.listening" = "Прослушивание: %@";
+"notch.server.port_busy" = "Порт %@ занят — не запущена ли другая копия приложения?";
+"notch.server.retry" = "Повторить";
+
+/* Keep Awake */
+"section.keep_awake_title" = "Не засыпать";
+"section.keep_awake_desc" = "Не давать Mac засыпать";
+"keep_awake.manual_title" = "Ручное управление";
+"keep_awake.manual_desc" = "Включайте «Не засыпать» сами, с необязательным таймером";
+"keep_awake.enable" = "Не давать Mac засыпать";
+"keep_awake.enable_desc" = "Временно не давать Mac переходить в сон";
+"keep_awake.status_active" = "Mac сейчас не засыпает";
+"keep_awake.remaining" = "Выключится через %@";
+"keep_awake.duration" = "Длительность";
+"keep_awake.duration.indefinite" = "Пока не выключите";
+"keep_awake.duration.custom" = "Своя…";
+"keep_awake.custom_hours" = "%d ч";
+"keep_awake.auto_title" = "Автоматически";
+"keep_awake.auto_card_desc" = "Рекомендуется: Mac не засыпает, только пока Claude Code реально работает";
+"keep_awake.auto" = "Не засыпать, пока работает Claude Code";
+"keep_awake.auto_desc" = "Не засыпает во время активных сеансов Claude Code, затем снова разрешает сон. Устанавливает хуки Claude Code";
+"keep_awake.grace" = "После остановки Claude Code";
+"keep_awake.grace.immediately" = "Заснуть сразу";
+"keep_awake.grace.stay" = "Не засыпать ещё %@";
+"keep_awake.hooks_note" = "Активность определяется через хуки Claude Code в ~/.claude/settings.json";
+"keep_awake.sleep_type" = "Предотвращение сна";
+"keep_awake.sleep_type_desc" = "Оставлять ли экран включённым, пока Mac не засыпает";
+"keep_awake.sleep_type.system" = "Экран может погаснуть";
+"keep_awake.sleep_type.display" = "Не гасить экран";
+"keep_awake.lid_note" = "С закрытой крышкой Mac всё равно заснёт, если он не подключён к питанию и внешнему дисплею";
+"keep_awake.state_off" = "Выкл.";
+"keep_awake.state_on_indefinite" = "Вкл. — не засыпает, пока не выключите (∞)";
+"keep_awake.state_on_remaining" = "Вкл. — осталось %@";
+"keep_awake.state_auto_active" = "Авто — Claude Code работает";
+"keep_awake.state_auto_grace" = "Авто — Claude закончил, не засыпает ещё %@";
+"keep_awake.state_auto_armed" = "Авто включено — Mac не засыпает, пока работает Claude Code";
+"keep_awake.hint_click_on" = "Нажмите, чтобы включить: Mac не засыпает, пока работает Claude Code";
+"keep_awake.hint_click_off" = "Нажмите, чтобы выключить";
+"keep_awake.hint_click_auto_off" = "Нажмите, чтобы выключить авторежим. Он останется выключенным, пока не включите снова";
+"keep_awake.menu_for" = "Не засыпать %@";
+"keep_awake.menu_indefinite" = "Не засыпать, пока не выключите";
+"keep_awake.menu_off" = "Выключить «Не засыпать»";
+
+/* Sponsor slot */
+"sponsor.slot_title" = "Это место доступно спонсорам";
+"sponsor.slot_cta" = "Связаться";
+"sponsor.label" = "Спонсор";
+"sponsor.open_in_browser" = "Открыть в браузере";
+
+/* Multi-Provider / OpenAI Codex */
+"section.codex_account_title" = "Учётная запись Codex";
+"section.codex_account_desc" = "Подключите учётную запись OpenAI Codex";
+"profiles.provider_label" = "Сервис";
+"profiles.provider_hint" = "Какой сервис отслеживает этот профиль. Позже изменить нельзя.";
+"usage.window.session" = "Сеанс";
+"usage.window.weekly" = "Неделя";
+"popover.credits_unlimited" = "Кредиты без лимита";
+"popover.credits_balance" = "Кредиты: %@";
+"codex.title" = "Учётная запись OpenAI Codex";
+"codex.subtitle" = "Отслеживайте лимиты использования Codex";
+"codex.connected" = "Подключено";
+"codex.not_connected" = "Не подключено";
+"codex.source_manual" = "Используются учётные данные, сохранённые вручную";
+"codex.source_authfile" = "Чтение из Codex CLI (auth.json)";
+"codex.signed_in_as" = "Выполнен вход: %@";
+"codex.test_connection" = "Проверить подключение";
+"codex.cli_detection_title" = "Codex CLI";
+"codex.cli_detection_subtitle" = "Учётные данные читаются из ~/.codex/auth.json";
+"codex.cli_detected" = "Codex CLI найден";
+"codex.last_refresh" = "Токены обновлены %@";
+"codex.live_read_note" = "Учётные данные читаются из auth.json сразу: войдите или выйдите через Codex CLI, и профиль последует за этим.";
+"codex.cli_not_detected" = "Codex CLI не найден";
+"codex.cli_not_detected_hint" = "Установите Codex CLI и выполните `codex`, чтобы войти, или вставьте учётные данные ниже.";
+"codex.rescan" = "Проверить снова";
+"codex.test_success" = "Подключение OK";
+"codex.test_success_plan" = "Подключено — план %@";
+"codex.manual_title" = "Учётные данные вручную";
+"codex.manual_subtitle" = "Вставьте содержимое auth.json, если CLI нет на этом Mac";
+"codex.manual_saved" = "Учётные данные сохранены";
+"codex.manual_remove" = "Удалить";
+"codex.manual_save" = "Сохранить учётные данные";
+"setup.choose_provider.subtitle" = "Какой сервис отслеживать?";
+"setup.choose_provider.anthropic_hint" = "Использование Claude.ai, Claude Code и Console";
+"setup.choose_provider.codex_hint" = "Лимиты использования OpenAI Codex CLI";
+"setup.choose_provider.skip" = "Пропустить";
+"setup.codex_detected.title" = "Codex CLI найден";
+"setup.codex_detected.description" = "Найдены учётные данные Codex CLI. Можно сразу отслеживать лимиты.";
+"setup.codex_not_detected.title" = "Подключить Codex";
+"setup.codex_not_detected.description" = "Вход Codex CLI не найден. Выполните `codex`, чтобы войти, или вставьте содержимое ~/.codex/auth.json ниже.";
+"notification.usage_updated.title" = "Использование обновлено";
+"notification.usage_updated.body" = "Данные об использовании загружены";
+"error.codex_credentials_invalid" = "Не удалось прочитать учётные данные Codex";
+"error.codex_credentials_invalid.suggestion" = "Вставьте полное содержимое ~/.codex/auth.json";
+"error.codex_credentials_not_found" = "Учётные данные Codex не найдены";
+"error.codex_credentials_not_found.suggestion" = "Выполните `codex`, чтобы войти, или вставьте учётные данные в настройках";
+"error.codex_auth_expired" = "Срок входа Codex истёк";
+"error.codex_auth_expired.suggestion" = "Выполните `codex` в терминале, чтобы войти снова";
+"error.codex_auth_refresh_failed" = "Не удалось обновить вход Codex";
+"error.codex_invalid_response" = "Неожиданный ответ API использования Codex";
+"error.codex_server_error" = "API использования Codex вернул ошибку";
+
+// MARK: - Terminal Launcher
+"launcher.title" = "Запуск из терминала";
+"launcher.subtitle" = "Запускайте Claude Code с этим профилем из любого терминала";
+"launcher.description" = "Устанавливает команду %@. Обычная команда claude продолжает использовать активный профиль; команда запуска всегда открывает вход Claude Code этого профиля.";
+"launcher.install" = "Установить команду запуска";
+"launcher.remove" = "Удалить";
+"launcher.login_needed" = "Однократная настройка: выполните %@ в терминале и войдите через /login. Приложение само привяжет эту учётную запись и начнёт её отслеживать.";
+"launcher.pinned" = "Привязано — отслеживание следует за этим входом.";
+"launcher.verify" = "Проверить вход";
+"launcher.path_warning" = "~/.local/bin нет в PATH. Добавьте эту строку в профиль оболочки:";
+"launcher.install_failed" = "Не удалось установить команду запуска: %@";
+"support.popup_title" = "Привет, я Hamed 👋";
+"support.popup_later" = "Может, позже";
+"support.popup_signature" = "один человек за Claude Usage";
+"support.popup_body" = "Бесплатно, с открытым кодом, сделано одним человеком — без рекламы и слежения. Если хоть раз уберегло от того, чтобы сжечь лимит сеанса, чашка кофе поможет продолжать.";
+"support.popup_days" = "Дней наблюдения за лимитами: %d — всегда бесплатно";
+"keep_awake.consent_title" = "Добавить хуки Claude Code?";
+"keep_awake.consent_message" = "Чтобы знать, когда работает Claude Code, «Не засыпать» добавляет хуки в ~/.claude/settings.json и слушает их только на этом Mac. Остальные хуки и настройки не меняются. Их можно убрать, выключив эту функцию.";
+"keep_awake.consent_confirm" = "Добавить хуки и включить";
+"keep_awake.problem_hooks" = "Авторежим не видит Claude Code: хуков нет в ~/.claude/settings.json. Выключите авторежим и включите снова, чтобы установить их заново.";
+"keep_awake.problem_listener" = "Авторежим не видит Claude Code: порт локального слушателя занят другим приложением или другой копией Claude Usage.";
