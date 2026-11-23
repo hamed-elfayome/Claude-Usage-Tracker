@@ -22,11 +22,20 @@ struct ClaudeUsage: Codable, Equatable {
         !hasSessionLimit || sessionResetTime < Date() ? 0.0 : sessionPercentage
     }
 
+    var hasCapacityForAutoSwitch: Bool {
+        if hasSessionLimit { return effectiveSessionPercentage < 100 }
+        return !hasWeeklyLimit || weeklyPercentage < 100
+    }
+
     // Weekly data (all models)
     var weeklyTokensUsed: Int
     var weeklyLimit: Int
     var weeklyPercentage: Double
     var weeklyResetTime: Date
+
+    /// Older readings always had a reset date. New providers may omit it.
+    var weeklyResetKnown: Bool = true
+    nonisolated var knownWeeklyResetTime: Date? { weeklyResetKnown ? weeklyResetTime : nil }
 
     // Weekly data (Opus only)
     var opusWeeklyTokensUsed: Int
@@ -148,7 +157,7 @@ enum UsageStatusLevel {
 extension ClaudeUsage {
     private enum CodingKeys: String, CodingKey {
         case sessionTokensUsed, sessionLimit, sessionPercentage, sessionResetTime, hasSessionLimit, hasWeeklyLimit
-        case weeklyTokensUsed, weeklyLimit, weeklyPercentage, weeklyResetTime
+        case weeklyTokensUsed, weeklyLimit, weeklyPercentage, weeklyResetTime, weeklyResetKnown
         case opusWeeklyTokensUsed, opusWeeklyPercentage
         case sonnetWeeklyTokensUsed, sonnetWeeklyPercentage, sonnetWeeklyResetTime
         case designWeeklyTokensUsed, designWeeklyPercentage, designWeeklyResetTime
@@ -173,6 +182,7 @@ extension ClaudeUsage {
             weeklyLimit: try c.decodeIfPresent(Int.self, forKey: .weeklyLimit) ?? 0,
             weeklyPercentage: try c.decodeIfPresent(Double.self, forKey: .weeklyPercentage) ?? 0,
             weeklyResetTime: try c.decodeIfPresent(Date.self, forKey: .weeklyResetTime) ?? Date(),
+            weeklyResetKnown: try c.decodeIfPresent(Bool.self, forKey: .weeklyResetKnown) ?? true,
             opusWeeklyTokensUsed: try c.decodeIfPresent(Int.self, forKey: .opusWeeklyTokensUsed) ?? 0,
             opusWeeklyPercentage: try c.decodeIfPresent(Double.self, forKey: .opusWeeklyPercentage) ?? 0,
             sonnetWeeklyTokensUsed: try c.decodeIfPresent(Int.self, forKey: .sonnetWeeklyTokensUsed) ?? 0,

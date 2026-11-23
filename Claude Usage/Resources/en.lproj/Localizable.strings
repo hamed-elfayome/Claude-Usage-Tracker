@@ -978,6 +978,7 @@
 
 // MARK: - Overage Balance
 "popover.overage_balance" = "Balance";
+"popover.no_usage_data" = "No usage data yet";
 "popover.no_limits_reported" = "This plan reports no usage limits, so there is nothing to track here.";
 
 // MARK: - Monthly Spend
@@ -1153,3 +1154,21 @@
 "keep_awake.consent_confirm" = "Add Hooks and Turn On";
 "keep_awake.problem_hooks" = "Auto mode can't see Claude Code: its hooks are missing from ~/.claude/settings.json. Turn auto mode off and on again to reinstall them.";
 "keep_awake.problem_listener" = "Auto mode can't see Claude Code: the local listener's port is in use by another app or another copy of Claude Usage.";
+
+"section.grok_account_title" = "Grok";
+"section.grok_account_desc" = "SuperGrok weekly quota";
+"setup.choose_provider.grok_hint" = "SuperGrok weekly quota from the Grok CLI";
+"grok.title" = "SuperGrok";
+"grok.subtitle" = "Weekly subscription quota from the signed-in Grok CLI";
+"grok.login_detected" = "CLI login file detected";
+"grok.login_needed" = "To sign in, run the grok login command below in Terminal, then test the connection. The app does not read or store the CLI token.";
+"grok.cli_missing" = "Install Grok Build, then run this command in Terminal to sign in to this profile’s Grok home.";
+"grok.unavailable" = "Weekly quota is unavailable. The last reading, if any, is unchanged.";
+"grok.ambiguous" = "This profile needs a valid Grok home that no other Grok profile uses.";
+"grok.home_label" = "Grok home directory";
+"grok.home_hint" = "Leave blank to use the default, or enter a path starting with / or ~/. Each Grok profile needs its own directory. You cannot change it after setup.";
+"grok.home_fixed" = "To track a different Grok home, create a new profile.";
+"grok.home_invalid" = "Enter a valid absolute path or a path starting with ~/.";
+"grok.home_taken" = "Another Grok profile already uses this directory. Choose a different one.";
+"grok.create_failed" = "The profile could not be created. Check that the Grok home is valid and is not used by another profile.";
+"grok.test_success" = "Connected — %@, %d%% remaining";

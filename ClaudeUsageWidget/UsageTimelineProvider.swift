@@ -92,8 +92,8 @@ struct UsageTimelineProvider: TimelineProvider {
             var boundaries = [snapshot.generatedAt.addingTimeInterval(UsageEntry.staleInterval)]
             for profile in snapshot.profiles {
                 boundaries.append(profile.lastUpdated.addingTimeInterval(UsageEntry.staleInterval))
-                boundaries.append(profile.sessionResetTime)
-                boundaries.append(profile.weeklyResetTime)
+                if profile.hasSessionLimit { boundaries.append(profile.sessionResetTime) }
+                if let reset = profile.weeklyResetTime { boundaries.append(reset) }
             }
             for boundary in boundaries where boundary > now && boundary < refresh {
                 dates.insert(boundary)

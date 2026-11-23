@@ -41,7 +41,7 @@ struct WidgetMeter: Identifiable {
 
     let kind: Kind
     let percentage: Double
-    let resetTime: Date
+    let resetTime: Date?
 
     var id: Int { kind == .session ? 0 : 1 }
 
@@ -50,6 +50,7 @@ struct WidgetMeter: Identifiable {
     /// How far through the window `now` is, or nil when the reset time is
     /// past or further away than the window is long (not a running window).
     func elapsedFraction(at now: Date) -> Double? {
+        guard let resetTime else { return nil }
         let remaining = resetTime.timeIntervalSince(now)
         guard remaining > 0, remaining <= kind.window else { return nil }
         return 1 - remaining / kind.window
@@ -162,7 +163,8 @@ private func levelColor(_ percentage: Double) -> Color {
 enum WidgetTimeText {
     /// "2d 7h", "2h 10m", "25m": short, localized by the system, and coarse
     /// enough to stay true between timeline entries.
-    static func countdown(to date: Date, from now: Date) -> String? {
+    static func countdown(to date: Date?, from now: Date) -> String? {
+        guard let date else { return nil }
         let seconds = date.timeIntervalSince(now)
         guard seconds > 0 else { return nil }
         let formatter = DateComponentsFormatter()

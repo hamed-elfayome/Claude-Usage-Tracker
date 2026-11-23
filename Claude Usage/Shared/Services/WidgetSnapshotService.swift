@@ -90,7 +90,7 @@ nonisolated final class WidgetSnapshotService: @unchecked Sendable {
                 sessionResetTime: usage.sessionResetTime,
                 hasSessionLimit: usage.hasSessionLimit,
                 weeklyPercentage: usage.weeklyPercentage,
-                weeklyResetTime: usage.weeklyResetTime,
+                weeklyResetTime: usage.knownWeeklyResetTime,
                 lastUpdated: usage.lastUpdated
             )
         }
@@ -153,8 +153,9 @@ nonisolated final class WidgetSnapshotService: @unchecked Sendable {
     /// and a widget reload on every cycle.
     static let resetTimeTolerance: TimeInterval = 5 * 60
 
-    private static func resetMoved(_ old: Date, _ new: Date) -> Bool {
-        abs(new.timeIntervalSince(old)) > resetTimeTolerance
+    private static func resetMoved(_ old: Date?, _ new: Date?) -> Bool {
+        guard let old, let new else { return old != new }
+        return abs(new.timeIntervalSince(old)) > resetTimeTolerance
     }
 
     /// Whole-percent or reset-time changes are worth a widget reload;

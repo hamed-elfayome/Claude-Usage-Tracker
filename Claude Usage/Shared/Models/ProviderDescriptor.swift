@@ -31,6 +31,9 @@ struct ProviderDescriptor {
     /// Credential settings sections this provider exposes in the sidebar.
     let credentialSections: [SettingsSection]
 
+    /// Localization key for the setup-wizard card hint.
+    let setupHintKey: String
+
     /// Localization keys for the two usage-window section labels.
     let primaryWindowLabelKey: String
     let secondaryWindowLabelKey: String

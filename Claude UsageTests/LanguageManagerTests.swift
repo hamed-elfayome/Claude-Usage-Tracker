@@ -33,6 +33,11 @@ final class LanguageManagerTests: XCTestCase {
         XCTAssertEqual(fa.flag, "🇮🇷")
     }
 
+    func testGrokLoginInstructionsRemainReadableWithoutATranslation() {
+        XCTAssertTrue("grok.login_needed".localized.contains("grok login"))
+        XCTAssertEqual("grok.title".localized, "SuperGrok")
+    }
+
     func testSupportedLanguageCountIs15() {
         XCTAssertEqual(LanguageManager.SupportedLanguage.allCases.count, 15)
     }

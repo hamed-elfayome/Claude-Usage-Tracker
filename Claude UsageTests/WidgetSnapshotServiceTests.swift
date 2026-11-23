@@ -185,6 +185,25 @@ final class WidgetSnapshotServiceTests: XCTestCase {
         return Profile(id: id, name: "Ultra", claudeUsage: usage)
     }
 
+    func testUnknownWeeklyResetIsNotPublishedAsADate() throws {
+        let service = makeService(reloadInterval: 0)
+        var profile = makeProfile(hasSessionLimit: false, sessionReset: currentDate, weekly: 0)
+        profile.claudeUsage?.weeklyResetKnown = false
+        service.publish(profiles: [Profile(name: "Unread"), profile], activeProfileId: profile.id)
+        let entries = try XCTUnwrap(writtenSnapshots.first?.profiles)
+        XCTAssertEqual(entries.map(\.id), [profile.id])
+        let entry = try XCTUnwrap(entries.first)
+        XCTAssertEqual(entry.weeklyPercentage, 0)
+        XCTAssertNil(entry.weeklyResetTime)
+
+        service.publish(profiles: [profile], activeProfileId: profile.id)
+        XCTAssertEqual(writtenSnapshots.count, 1)
+        profile.claudeUsage?.weeklyResetKnown = true
+        service.publish(profiles: [profile], activeProfileId: profile.id)
+        XCTAssertEqual(writtenSnapshots.count, 2)
+        XCTAssertEqual(writtenSnapshots.last?.profiles.first?.weeklyResetTime, profile.claudeUsage?.weeklyResetTime)
+    }
+
     func testProfileWithoutSessionLimitIsPublishedAsSuch() {
         let service = makeService()
         let profile = makeProfile(hasSessionLimit: false, sessionReset: currentDate.addingTimeInterval(5 * 3600))

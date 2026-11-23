@@ -8,7 +8,8 @@ final class WidgetSnapshotTests: XCTestCase {
         isActive: Bool = true,
         isDisplayed: Bool = true,
         sessionPercentage: Double = 42,
-        weeklyPercentage: Double = 61
+        weeklyPercentage: Double = 61,
+        weeklyResetTime: Date? = Date(timeIntervalSince1970: 1_700_080_000)
     ) -> WidgetSnapshot.ProfileEntry {
         WidgetSnapshot.ProfileEntry(
             id: UUID(),
@@ -18,7 +19,7 @@ final class WidgetSnapshotTests: XCTestCase {
             sessionPercentage: sessionPercentage,
             sessionResetTime: Date().addingTimeInterval(3600),
             weeklyPercentage: weeklyPercentage,
-            weeklyResetTime: Date().addingTimeInterval(86400),
+            weeklyResetTime: weeklyResetTime,
             lastUpdated: Date()
         )
     }
@@ -61,6 +62,21 @@ final class WidgetSnapshotTests: XCTestCase {
 
     // MARK: - Schema version
 
+    func testLoadPreservesWeeklyDateFromVersionTwo() throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: url) }
+        let fixture = """
+            {"schemaVersion":2,"generatedAt":"2023-11-14T22:13:20Z","profiles":[{
+              "id":"00000000-0000-0000-0000-000000000001","name":"Fixture","isActive":true,"isDisplayed":true,
+              "sessionPercentage":0,"sessionResetTime":"2023-11-14T22:13:20Z","hasSessionLimit":false,
+              "weeklyPercentage":23,"weeklyResetTime":"2023-11-14T22:13:20Z","lastUpdated":"2023-11-14T22:13:20Z"
+            }]}
+            """
+        try Data(fixture.utf8).write(to: url)
+        XCTAssertEqual(WidgetSnapshot.load(from: url)?.profiles.first?.weeklyResetTime,
+                       Date(timeIntervalSince1970: 1_700_000_000))
+    }
+
     func testLoadRejectsUnknownSchemaVersion() throws {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("WidgetSnapshotTests-\(UUID().uuidString)")
@@ -82,11 +98,12 @@ final class WidgetSnapshotTests: XCTestCase {
             .appendingPathComponent("snapshot.json")
         defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
 
-        let snapshot = WidgetSnapshot(generatedAt: Date(), profiles: [makeEntry(name: "RoundTrip")])
+        let snapshot = WidgetSnapshot(generatedAt: Date(), profiles: [makeEntry(name: "RoundTrip", weeklyResetTime: nil)])
         try snapshot.write(to: url)
 
         let loaded = WidgetSnapshot.load(from: url)
         XCTAssertNotNil(loaded)
         XCTAssertEqual(loaded?.profiles.first?.name, "RoundTrip")
+        XCTAssertNil(loaded?.profiles.first?.weeklyResetTime)
     }
 }

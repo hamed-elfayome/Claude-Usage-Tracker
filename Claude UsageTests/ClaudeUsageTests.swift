@@ -42,6 +42,15 @@ final class ClaudeUsageTests: XCTestCase {
         XCTAssertEqual(usage100.statusLevel, .critical)
     }
 
+    func testAutoSwitchRejectsExhaustedWeeklyOnlyProfile() {
+        var usage = ClaudeUsage.empty
+        usage.hasSessionLimit = false
+        usage.weeklyPercentage = 100
+        XCTAssertFalse(usage.hasCapacityForAutoSwitch)
+        usage.weeklyPercentage = 99
+        XCTAssertTrue(usage.hasCapacityForAutoSwitch)
+    }
+
     // MARK: - Empty Usage Tests
 
     func testEmptyUsage() {
