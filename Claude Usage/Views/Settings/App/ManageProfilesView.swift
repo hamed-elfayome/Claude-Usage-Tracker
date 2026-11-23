@@ -15,6 +15,10 @@ struct ManageProfilesView: View {
     @State private var newGrokHomePath = ""
     @State private var errorMessage: String?
 
+    private var grokHomeInput: Binding<String>? {
+        profileManager.hasGrokProfile && newProfileProvider == .grok ? $newGrokHomePath : nil
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: DesignTokens.Spacing.section) {
@@ -338,9 +342,9 @@ struct ManageProfilesView: View {
             CreateProfileSheet(
                 profileName: $newProfileName,
                 selectedProvider: $newProfileProvider,
-                grokHomePath: $newGrokHomePath,
+                grokHomePath: grokHomeInput,
                 homeAvailable: GrokUsageProvider.canConfigure(
-                    profileID: nil, homePath: newGrokHomePath, profiles: profileManager.profiles
+                    profileID: nil, homePath: grokHomeInput?.wrappedValue, profiles: profileManager.profiles
                 ),
                 errorMessage: errorMessage,
                 onSave: createNewProfile,
@@ -357,7 +361,7 @@ struct ManageProfilesView: View {
         let name = newProfileName.isEmpty ? nil : newProfileName
         guard profileManager.createProfile(
             name: name, provider: newProfileProvider,
-            grokHomePath: newProfileProvider == .grok ? newGrokHomePath : nil
+            grokHomePath: grokHomeInput?.wrappedValue
         ) != nil else {
             errorMessage = "grok.create_failed".localized
             return
@@ -524,7 +528,7 @@ struct ProfileRow: View {
 struct CreateProfileSheet: View {
     @Binding var profileName: String
     @Binding var selectedProvider: Provider
-    @Binding var grokHomePath: String
+    let grokHomePath: Binding<String>?
     let homeAvailable: Bool
     let errorMessage: String?
     let onSave: () -> Void
@@ -571,8 +575,8 @@ struct CreateProfileSheet: View {
                     .foregroundColor(.secondary)
             }
 
-            if selectedProvider == .grok {
-                GrokHomeField(path: $grokHomePath, available: homeAvailable)
+            if let grokHomePath {
+                GrokHomeField(path: grokHomePath, available: homeAvailable)
             }
 
             if let errorMessage {

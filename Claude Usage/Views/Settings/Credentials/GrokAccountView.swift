@@ -33,7 +33,8 @@ struct GrokAccountView: View {
     }
 
     private var homePath: String? {
-        editingHome ? draftPath : profileManager.activeProfile?.grokHomePath
+        guard editingHome else { return profileManager.activeProfile?.grokHomePath }
+        return profileManager.hasGrokProfile ? draftPath : nil
     }
 
     private var target: Target? {
@@ -59,12 +60,12 @@ struct GrokAccountView: View {
                     subtitle: "grok.subtitle".localized
                 )
 
-                if editingHome {
+                if editingHome && profileManager.hasGrokProfile {
                     GrokHomeField(path: Binding(get: { draftPath }, set: { newPath in
                         invalidateTest()
                         draftPath = newPath
                     }), available: target != nil)
-                } else {
+                } else if !editingHome {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("grok.home_label".localized)
                             .font(DesignTokens.Typography.bodyMedium)

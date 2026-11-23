@@ -18,6 +18,8 @@ class ProfileManager: ObservableObject {
     @Published var multiProfileConfig: MultiProfileDisplayConfig = .default
     @Published var isSwitchingProfile: Bool = false
 
+    var hasGrokProfile: Bool { profiles.contains { $0.provider == .grok } }
+
     private let profileStore = ProfileStore.shared
     private let cliSyncService = ClaudeCodeSyncService.shared
 

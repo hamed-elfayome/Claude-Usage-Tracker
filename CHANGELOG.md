@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **SuperGrok weekly quota**: track multiple accounts by choosing a different Grok CLI home for each profile. Existing profiles keep using the default CLI home. To sign in to another account, run the `GROK_HOME=… grok login` command shown in its settings. The tracker stores the directory path, not the token.
+- **SuperGrok weekly quota**: the first Grok profile automatically uses the default CLI home. When adding another Grok profile, choose a separate directory and run the `GROK_HOME=… grok login` command shown in its settings. The tracker stores the directory path, not the token.
 
 ## [3.4.0] - 2026-11-13
 
