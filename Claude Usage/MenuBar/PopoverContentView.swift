@@ -113,43 +113,25 @@ struct PopoverContentView: View {
         return "?"
     }
 
-    // Computed properties for multi-profile mode support
-    private var displayUsage: ClaudeUsage {
-        manager.clickedProfileUsage ?? manager.usage
-    }
-
-    private var displayAPIUsage: APIUsage? {
-        // When viewing a non-active profile, use only that profile's API data
-        // to avoid leaking the active profile's console data
-        if manager.clickedProfileUsage != nil {
-            return manager.clickedProfileAPIUsage
+    private var viewingProfile: Profile? {
+        if let id = manager.clickedProfileId {
+            return profileManager.profiles.first { $0.id == id }
         }
-        return manager.apiUsage
+        return profileManager.activeProfile
     }
 
-    /// Provider of the profile being viewed (clicked profile in multi-profile
-    /// mode, else the active profile).
-    private var displayProvider: Provider {
-        let viewingProfile = manager.clickedProfileId.flatMap { id in
-            profileManager.profiles.first(where: { $0.id == id })
-        } ?? profileManager.activeProfile
-        return viewingProfile?.provider ?? .anthropic
-    }
-
-    /// Monthly spend target of the profile being viewed (clicked profile in
-    /// multi-profile mode, else the active profile).
-    private var displayMonthlySpendLimitCents: Double? {
-        let viewingProfile = manager.clickedProfileId.flatMap { id in
-            profileManager.profiles.first(where: { $0.id == id })
-        } ?? profileManager.activeProfile
-        return viewingProfile?.monthlySpendLimitCents
+    private func statusPage(for provider: Provider?) -> URL? {
+        guard let provider, provider == manager.statusProvider,
+              let endpoint = provider.descriptor.statusPageURL else { return nil }
+        return URL(string: "/", relativeTo: endpoint)?.absoluteURL
     }
 
     var body: some View {
+        let viewingProfile = self.viewingProfile
         VStack(alignment: .leading, spacing: 0) {
             // Header
             SmartHeader(
-                usage: displayUsage,
+                statusPage: statusPage(for: viewingProfile?.provider),
                 status: manager.status,
                 isRefreshing: isRefreshing,
                 onRefresh: {
@@ -201,9 +183,7 @@ struct PopoverContentView: View {
 
             // Viewing usage tag (shown in multi-profile mode)
             if profileManager.displayMode == .multi,
-               let viewingProfile = manager.clickedProfileId.flatMap({ id in
-                   profileManager.profiles.first(where: { $0.id == id })
-               }) ?? profileManager.activeProfile {
+               let viewingProfile {
                 HStack(spacing: 8) {
                     // Profile initials avatar
                     ZStack {
@@ -252,16 +232,16 @@ struct PopoverContentView: View {
 
             // Usage
             SmartUsageDashboard(
-                usage: displayUsage,
-                apiUsage: displayAPIUsage,
-                provider: displayProvider,
-                monthlySpendLimitCents: displayMonthlySpendLimitCents
+                usage: viewingProfile?.claudeUsage,
+                apiUsage: viewingProfile?.apiUsage,
+                provider: viewingProfile?.provider ?? .anthropic,
+                monthlySpendLimitCents: viewingProfile?.monthlySpendLimitCents
             )
 
             // Contextual Insights
-            if showInsights {
+            if showInsights, let usage = viewingProfile?.claudeUsage {
                 PopoverDivider()
-                ContextualInsights(usage: displayUsage)
+                ContextualInsights(usage: usage)
                     .transition(.opacity)
             }
 
@@ -504,7 +484,7 @@ struct ProfileSwitcherBar: View {
 
 // MARK: - Smart Header Component
 struct SmartHeader: View {
-    let usage: ClaudeUsage
+    let statusPage: URL?
     let status: ClaudeStatus
     let isRefreshing: Bool
     let onRefresh: () -> Void
@@ -548,24 +528,21 @@ struct SmartHeader: View {
             VStack(alignment: .leading, spacing: 2) {
                 ProfileSwitcherCompact(onManageProfiles: onManageProfiles)
 
-                // Status
-                Button(action: {
-                    if let url = URL(string: "https://status.claude.com") {
-                        NSWorkspace.shared.open(url)
-                    }
-                }) {
-                    HStack(spacing: 4) {
-                        Circle()
-                            .fill(statusColor)
-                            .frame(width: 6, height: 6)
+                if let statusPage {
+                    Button(action: { NSWorkspace.shared.open(statusPage) }) {
+                        HStack(spacing: 4) {
+                            Circle()
+                                .fill(statusColor)
+                                .frame(width: 6, height: 6)
 
-                        Text(status.description)
-                            .font(.system(size: 9, weight: .medium))
-                            .foregroundColor(.secondary)
+                            Text(status.description)
+                                .font(.system(size: 9, weight: .medium))
+                                .foregroundColor(.secondary)
+                        }
                     }
+                    .buttonStyle(.plain)
+                    .help(statusPage.absoluteString)
                 }
-                .buttonStyle(.plain)
-                .help("Click to open status.claude.com")
             }
 
             Spacer()
@@ -884,7 +861,7 @@ private struct KeepAwakeActivationRipple: View {
 
 // MARK: - Smart Usage Dashboard
 struct SmartUsageDashboard: View {
-    let usage: ClaudeUsage
+    let usage: ClaudeUsage?
     let apiUsage: APIUsage?
     var provider: Provider = .anthropic
     var monthlySpendLimitCents: Double? = nil
@@ -932,8 +909,8 @@ struct SmartUsageDashboard: View {
         SharedDataStore.shared.loadPopoverTimeDisplay()
     }
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+    @ViewBuilder private var subscriptionRows: some View {
+        if let usage {
             // Primary: Session Usage (absent on plans without a 5-hour window, e.g. Ultra)
             if usage.hasSessionLimit {
                 UsageRow(
@@ -970,12 +947,13 @@ struct SmartUsageDashboard: View {
                     title: capabilities.perModelBreakdown
                         ? "menubar.all_models".localized
                         : provider.descriptor.secondaryWindowLabelKey.localized,
-                    tag: provider.descriptor.secondaryWindowLabelKey.localized,
+                    tag: capabilities.perModelBreakdown ? provider.descriptor.secondaryWindowLabelKey.localized : nil,
                     subtitle: nil,
                     usedPercentage: usage.weeklyPercentage,
                     showRemaining: showRemainingPercentage,
-                    resetTime: usage.weeklyResetKnown ? usage.weeklyResetTime : nil,
-                    periodDuration: usage.weeklyResetKnown ? Constants.weeklyWindow : nil,
+                    resetTime: usage.knownWeeklyResetTime,
+                    periodDuration: Constants.weeklyWindow,
+                    showTimeMarker: showTimeMarker,
                     showPaceMarker: showPaceMarker,
                     usePaceColoring: usePaceColoring,
                     excludeWeekends: excludeWeekendsFromWeeklyPace,
@@ -1092,6 +1070,16 @@ struct SmartUsageDashboard: View {
                 }
                 .padding(.top, 2)
             }
+        } else if apiUsage == nil || !capabilities.consoleBilling {
+            Text("popover.no_usage_data".localized)
+                .font(.system(size: 11))
+                .foregroundColor(.secondary)
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            subscriptionRows
 
             // API Usage (console-billing providers only)
             if capabilities.consoleBilling, let apiUsage = apiUsage {

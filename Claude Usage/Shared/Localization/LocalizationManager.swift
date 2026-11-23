@@ -7,21 +7,26 @@
 
 import Foundation
 
+private let englishStrings = Bundle.main.url(forResource: "en", withExtension: "lproj")
+    .flatMap(Bundle.init(url:))
+
 /// Extension for easy string localization
 extension String {
     /// Returns localized string
     var localized: String {
-        return NSLocalizedString(self, comment: "")
+        localized(comment: "")
     }
 
     /// Returns localized string with format arguments
     func localized(with args: CVarArg...) -> String {
-        return String(format: NSLocalizedString(self, comment: ""), arguments: args)
+        return String(format: localized, arguments: args)
     }
 
     /// Returns localized string with comment
     func localized(comment: String) -> String {
-        return NSLocalizedString(self, comment: comment)
+        let text = NSLocalizedString(self, comment: comment)
+        guard text == self else { return text }
+        return englishStrings?.localizedString(forKey: self, value: nil, table: nil) ?? text
     }
 }
 

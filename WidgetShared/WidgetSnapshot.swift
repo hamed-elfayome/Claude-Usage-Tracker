@@ -26,7 +26,7 @@ struct WidgetSnapshot: Codable {
         /// usage in their place.
         var hasSessionLimit: Bool = true
         let weeklyPercentage: Double
-        let weeklyResetTime: Date
+        let weeklyResetTime: Date?
         /// When this profile's usage was last fetched. Can lag behind
         /// `generatedAt`: the single-profile refresh path only updates the
         /// active profile, so per-profile staleness must use this value.
@@ -35,9 +35,10 @@ struct WidgetSnapshot: Codable {
 
     /// Bump when the on-disk format changes so an old widget build can
     /// detect a snapshot written by a newer app (and vice versa).
-    /// `load` rejects snapshots whose version doesn't match.
+    /// `load` accepts older compatible snapshots.
     /// 2: added `hasSessionLimit`.
-    static let currentSchemaVersion = 2
+    /// 3: weekly reset time may be absent.
+    static let currentSchemaVersion = 3
 
     var schemaVersion: Int = WidgetSnapshot.currentSchemaVersion
     let generatedAt: Date
@@ -94,7 +95,7 @@ struct WidgetSnapshot: Codable {
     static func load(from url: URL = snapshotURL) -> WidgetSnapshot? {
         guard let data = try? Data(contentsOf: url),
               let snapshot = try? decoder.decode(WidgetSnapshot.self, from: data),
-              snapshot.schemaVersion == currentSchemaVersion else { return nil }
+              (2...currentSchemaVersion).contains(snapshot.schemaVersion) else { return nil }
         return snapshot
     }
 }

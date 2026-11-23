@@ -366,8 +366,12 @@ final class StatusBarUIManager {
             // Get actual menu bar appearance from the button (based on wallpaper, not system mode)
             let menuBarIsDark = resolveMenuBarIsDark(for: button)
 
-            // Get usage data for this profile
-            let usage = profile.claudeUsage ?? ClaudeUsage.empty
+            guard let usage = profile.claudeUsage else {
+                let image = renderer.createNoDataImage(isDarkMode: menuBarIsDark)
+                image.isTemplate = true
+                button.image = image
+                continue
+            }
             let showRemaining = config.showRemainingPercentage
 
             // Plans without a 5-hour window (e.g. Ultra) draw weekly in the
@@ -389,17 +393,18 @@ final class StatusBarUIManager {
                 showRemaining: showRemaining
             )
 
-            let sessionElapsed = UsageStatusCalculator.elapsedFraction(
-                resetTime: hasSessionLimit ? usage.sessionResetTime : usage.weeklyResetTime,
-                duration: hasSessionLimit ? Constants.sessionWindow : Constants.weeklyWindow,
-                showRemaining: false
-            )
+            // The primary slot represents the week on weekly-only plans.
             let weekElapsed = UsageStatusCalculator.elapsedFraction(
-                resetTime: usage.weeklyResetTime,
+                resetTime: usage.knownWeeklyResetTime,
                 duration: Constants.weeklyWindow,
                 showRemaining: false,
                 excludingWeekends: config.excludeWeekendsFromWeeklyPace
             )
+            let sessionElapsed = hasSessionLimit ? UsageStatusCalculator.elapsedFraction(
+                resetTime: usage.sessionResetTime,
+                duration: Constants.sessionWindow,
+                showRemaining: false
+            ) : weekElapsed
             let sessionStatus = UsageStatusCalculator.calculateStatus(
                 usedPercentage: sessionUsed,
                 showRemaining: showRemaining,
@@ -598,12 +603,13 @@ final class StatusBarUIManager {
 
     /// Updates all status bar buttons based on current usage data
     func updateAllButtons(
-        usage: ClaudeUsage,
+        usage: ClaudeUsage?,
         apiUsage: APIUsage?
     ) {
         // Get config from active profile, adjusted for the plan's limits
         let profile = ProfileManager.shared.activeProfile
-        let config = (profile?.iconConfig ?? .default).effective(for: usage)
+        let savedConfig = profile?.iconConfig ?? .default
+        let config = usage.map { savedConfig.effective(for: $0) } ?? savedConfig
 
         // Keep the render path aligned with ClaudeAPIService/MenuBarManager auth
         // fallback logic so users authenticated only via `claude login` don't
@@ -654,7 +660,7 @@ final class StatusBarUIManager {
     /// Updates a specific metric's button
     func updateButton(
         for metricType: MenuBarMetricType,
-        usage: ClaudeUsage,
+        usage: ClaudeUsage?,
         apiUsage: APIUsage?
     ) {
         guard let statusItem = statusItems[metricType],
@@ -663,7 +669,8 @@ final class StatusBarUIManager {
         }
 
         // Get config from active profile, adjusted for the plan's limits
-        let config = (ProfileManager.shared.activeProfile?.iconConfig ?? .default).effective(for: usage)
+        let savedConfig = ProfileManager.shared.activeProfile?.iconConfig ?? .default
+        let config = usage.map { savedConfig.effective(for: $0) } ?? savedConfig
         guard let metricConfig = config.config(for: metricType) else {
             return
         }
@@ -695,6 +702,7 @@ final class StatusBarUIManager {
         guard let profile else { return false }
 
         if profile.hasUsageCredentials { return true }
+        guard profile.provider.descriptor.capabilities.cliAccountSync else { return false }
 
         do {
             if let systemCreds = try ClaudeCodeSyncService.shared.readSystemCredentials(),

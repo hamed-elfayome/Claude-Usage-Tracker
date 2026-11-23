@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **SuperGrok weekly quota**: a Grok profile reads the signed-in Grok CLI's weekly used percentage and reset time. The remainder is shown by the existing used/remaining display. A missing percentage is not stored as zero.
+- **SuperGrok weekly quota**: track multiple accounts by choosing a different Grok CLI home for each profile. Existing profiles keep using the default CLI home. To sign in to another account, run the `GROK_HOME=… grok login` command shown in its settings. The tracker stores the directory path, not the token.
 
 ## [3.4.0] - 2026-11-13
 

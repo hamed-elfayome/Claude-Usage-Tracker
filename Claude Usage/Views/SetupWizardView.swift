@@ -9,7 +9,7 @@ enum SetupMode {
     case cliDetected(credentials: String)
     case manualSetup
     case codexSetup
-    case grokSetup
+    case grokSetup(profileID: UUID, initialHomePath: String)
 }
 
 // MARK: - Wizard State Machine
@@ -38,6 +38,7 @@ struct SetupWizardState {
 /// Professional, native macOS setup wizard with 3-step flow
 struct SetupWizardView: View {
     @Environment(\.dismiss) var dismiss
+    @ObservedObject private var profileManager = ProfileManager.shared
     @State private var wizardState = SetupWizardState()
     @State private var hasClaudeCodeCredentials = false
     @State private var isMigrating = false
@@ -53,17 +54,20 @@ struct SetupWizardView: View {
             // call sites), so Back/Skip never leaves the profile converted
             // to a provider the user was merely exploring.
             ProviderChoiceSetupView(
+                allowsGrok: profileManager.activeProfile != nil,
                 onSelect: { provider in
                     switch provider {
                     case .anthropic:
-                        // Anthropic is the default; make it explicit in case a
-                        // previous codex setup was completed and re-entered.
-                        applyProvider(.anthropic)
                         setupMode = .loading
                     case .codex:
                         setupMode = .codexSetup
                     case .grok:
-                        setupMode = .grokSetup
+                        if let profile = profileManager.activeProfile {
+                            let path = profile.provider == .grok
+                                ? (profile.grokHomePath ?? "")
+                                : GrokHome.suggestedPath(in: profileManager.profiles, excluding: profile.id)
+                            setupMode = .grokSetup(profileID: profile.id, initialHomePath: path)
+                        }
                     }
                 },
                 onSkip: { dismiss() }
@@ -98,12 +102,21 @@ struct SetupWizardView: View {
                 },
                 onBack: { setupMode = .chooseProvider }
             )
-        case .grokSetup:
-            GrokAccountView(showsDone: true, onDone: {
-                applyProvider(.grok)
+        case .grokSetup(let profileID, let initialHomePath):
+            GrokAccountView(setupProfileID: profileID, initialHomePath: initialHomePath, onDone: { homePath in
+                guard let profile = GrokUsageProvider.setupProfile(
+                    for: profileID, activeID: profileManager.activeProfile?.id,
+                    profiles: profileManager.profiles, homePath: homePath
+                ) else {
+                    setupMode = .chooseProvider
+                    return
+                }
+                profileManager.updateProfile(profile)
                 NotificationCenter.default.post(name: .credentialsChanged, object: nil)
                 dismiss()
             }, onBack: { setupMode = .chooseProvider })
+            .frame(width: 580, height: 680)
+            .onChange(of: profileManager.activeProfile?.id) { _ in setupMode = .chooseProvider }
         }
     }
 
@@ -146,6 +159,7 @@ struct SetupWizardView: View {
 
         do {
             try ClaudeCodeSyncService.shared.syncToProfile(profileId)
+            applyProvider(.anthropic)
             NotificationCenter.default.post(name: .credentialsChanged, object: nil)
             dismiss()
         } catch {
@@ -802,6 +816,7 @@ struct ConfirmStepSetup: View {
 
                 // Also update the Profile model with the new credentials
                 if var profile = ProfileManager.shared.activeProfile {
+                    profile.provider = .anthropic
                     profile.claudeSessionKey = wizardState.sessionKey
                     profile.organizationId = wizardState.selectedOrgId
                     profile.autoStartSessionEnabled = wizardState.autoStartSessionEnabled
@@ -1043,6 +1058,7 @@ struct CLIDetectedSetupView: View {
 /// own setup views. Cards come from the registry, so new providers appear
 /// automatically.
 struct ProviderChoiceSetupView: View {
+    let allowsGrok: Bool
     let onSelect: (Provider) -> Void
     let onSkip: () -> Void
 
@@ -1082,7 +1098,7 @@ struct ProviderChoiceSetupView: View {
                                     .multilineTextAlignment(.center)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
-                            .frame(width: 180)
+                            .frame(width: 146)
                             .padding(.vertical, 24)
                             .padding(.horizontal, 12)
                             .background(
@@ -1096,6 +1112,7 @@ struct ProviderChoiceSetupView: View {
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
+                        .disabled(provider == .grok && !allowsGrok)
                     }
                 }
 

@@ -30,6 +30,9 @@ struct Profile: Codable, Identifiable, Equatable {
     /// the Keychain, excluded from the plist like the other credential fields.
     var codexCredentialsJSON: String?
 
+    /// Grok CLI data directory. Profiles saved before multi-account support use the CLI default.
+    var grokHomePath: String?
+
     // MARK: - CLI Account Sync Metadata
     var hasCliAccount: Bool
     var cliAccountSyncedAt: Date?
@@ -94,6 +97,7 @@ struct Profile: Codable, Identifiable, Equatable {
         apiSessionKeyExpiry: Date? = nil,
         cliCredentialsJSON: String? = nil,
         codexCredentialsJSON: String? = nil,
+        grokHomePath: String? = nil,
         hasCliAccount: Bool = false,
         cliAccountSyncedAt: Date? = nil,
         customKeychainServiceName: String? = nil,
@@ -121,6 +125,7 @@ struct Profile: Codable, Identifiable, Equatable {
         self.apiSessionKeyExpiry = apiSessionKeyExpiry
         self.cliCredentialsJSON = cliCredentialsJSON
         self.codexCredentialsJSON = codexCredentialsJSON
+        self.grokHomePath = grokHomePath
         self.hasCliAccount = hasCliAccount
         self.cliAccountSyncedAt = cliAccountSyncedAt
         self.customKeychainServiceName = customKeychainServiceName
@@ -153,6 +158,7 @@ struct Profile: Codable, Identifiable, Equatable {
         case apiSessionKey, apiOrganizationId, apiSessionKeyExpiry
         case cliCredentialsJSON
         case codexCredentialsJSON
+        case grokHomePath
         case hasCliAccount, cliAccountSyncedAt
         case customKeychainServiceName
         case terminalLauncherSlug
@@ -174,6 +180,7 @@ struct Profile: Codable, Identifiable, Equatable {
         // FUTURE app version with more providers) must degrade to .anthropic,
         // never throw — a throw here wipes the whole profile list.
         provider = (try? c.decodeIfPresent(Provider.self, forKey: .provider)) ?? .anthropic
+        grokHomePath = try c.decodeIfPresent(String.self, forKey: .grokHomePath)
         // Secrets: present only in legacy (pre-Keychain-migration) plists; hydrated
         // from the Keychain by ProfileStore after decoding.
         claudeSessionKey = try c.decodeIfPresent(String.self, forKey: .claudeSessionKey)
@@ -209,6 +216,7 @@ struct Profile: Codable, Identifiable, Equatable {
         try c.encode(id, forKey: .id)
         try c.encode(name, forKey: .name)
         try c.encode(provider, forKey: .provider)
+        try c.encodeIfPresent(grokHomePath, forKey: .grokHomePath)
         // Credentials live in the Keychain (per-profile items), NOT in the plist.
         // The plist on disk is world-readable cleartext — see #267.
         if (encoder.userInfo[Profile.includeSecretsKey] as? Bool) == true {
@@ -258,7 +266,8 @@ struct Profile: Codable, Identifiable, Equatable {
         case .codex:
             return codexCredentialsJSON != nil || CodexAuthService.shared.authFileExists()
         case .grok:
-            return GrokCLIClient.locateExecutable() != nil && GrokCLIClient.authFileExists()
+            guard let home = GrokHome.resolve(grokHomePath) else { return false }
+            return GrokCLIClient.locateExecutable() != nil && GrokCLIClient.authFileExists(in: home)
         }
     }
 
@@ -275,7 +284,7 @@ struct Profile: Codable, Identifiable, Equatable {
         case .codex:
             return codexCredentialsJSON != nil || CodexAuthService.shared.authFileExists()
         case .grok:
-            return GrokCLIClient.locateExecutable() != nil && GrokCLIClient.authFileExists()
+            return hasUsageCredentials
         }
     }
 }

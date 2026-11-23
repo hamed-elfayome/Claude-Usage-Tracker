@@ -1,3 +1,4 @@
+import CoreFoundation
 import Foundation
 
 /// A weekly SuperGrok quota reading. `usedPercent` is the share already
@@ -55,8 +56,9 @@ enum GrokBillingParser {
     }
 
     private static func number(_ value: Any?) -> Double? {
-        guard let value, !(value is String) else { return nil }
-        return (value as? NSNumber)?.doubleValue
+        // JSONSerialization bridges both numbers and booleans to NSNumber.
+        guard let number = value as? NSNumber, CFGetTypeID(number) != CFBooleanGetTypeID() else { return nil }
+        return number.doubleValue
     }
 
     private static func date(_ value: String?) -> Date? {
@@ -67,48 +69,23 @@ enum GrokBillingParser {
     }
 }
 
-/// Extracts the billing result from newline-delimited JSON-RPC stdout.
-/// Notifications are ignored. This does not launch the CLI.
-enum GrokCLIProtocol {
-    enum Failure: Equatable {
-        case authenticationRequired
-        case methodUnsupported
-        case invalidResponse
-    }
+/// `nil` means this line is not a reply to our outstanding request.
+nonisolated enum GrokCLIProtocol {
+    static func reply(to id: Int, in line: Data) -> Result<Data, GrokCLIError>? {
+        guard let object = try? JSONSerialization.jsonObject(with: line) as? [String: Any],
+              object["method"] == nil,
+              let replyID = object["id"] as? NSNumber, CFGetTypeID(replyID) != CFBooleanGetTypeID(),
+              replyID == NSNumber(value: id) else { return nil }
 
-    static func billingPayload(from lines: [String]) -> Data? {
-        guard case .payload(let data) = classify(lines) else { return nil }
-        return data
-    }
-
-    static func failure(from lines: [String]) -> Failure? {
-        guard case .failure(let failure) = classify(lines) else { return nil }
-        return failure
-    }
-
-    private static func classify(_ lines: [String]) -> Classification {
-        for line in lines {
-            guard let object = try? JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: Any],
-                  object["id"] as? Int == 2 else { continue }
-            if let error = object["error"] as? [String: Any] {
-                let code = (error["code"] as? NSNumber)?.intValue
-                let message = (error["message"] as? String)?.lowercased() ?? ""
-                if code == -32601 { return .failure(.methodUnsupported) }
-                if message.contains("authentication required") || message.contains("grok login") {
-                    return .failure(.authenticationRequired)
-                }
-                return .failure(.invalidResponse)
+        guard object["jsonrpc"] as? String == "2.0" else { return .failure(.unavailable) }
+        if let error = object["error"] as? [String: Any] {
+            let message = (error["message"] as? String)?.lowercased() ?? ""
+            if message.contains("authentication required") || message.contains("grok login") {
+                return .failure(.authenticationRequired)
             }
-            if object["result"] != nil, let data = line.data(using: .utf8) {
-                return .payload(data)
-            }
-            return .failure(.invalidResponse)
+            return .failure(.unavailable)
         }
-        return .failure(.invalidResponse)
-    }
-
-    private enum Classification {
-        case payload(Data)
-        case failure(Failure)
+        guard object["error"] == nil, object["result"] is [String: Any] else { return .failure(.unavailable) }
+        return .success(line)
     }
 }

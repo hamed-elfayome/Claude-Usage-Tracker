@@ -59,7 +59,12 @@ class ProfileManager: ObservableObject {
 
     // MARK: - Profile Operations
 
-    func createProfile(name: String? = nil, provider: Provider = .anthropic, copySettingsFrom: Profile? = nil) -> Profile {
+    func createProfile(name: String? = nil, provider: Provider = .anthropic, grokHomePath: String? = nil, copySettingsFrom: Profile? = nil) -> Profile? {
+        var home: URL?
+        if provider == .grok {
+            guard let directory = GrokHome.available(for: nil, path: grokHomePath, in: profiles) else { return nil }
+            home = directory
+        }
         let usedNames = profiles.map { $0.name }
         let profileName = name ?? FunnyNameGenerator.getRandomName(excluding: usedNames)
 
@@ -76,6 +81,7 @@ class ProfileManager: ObservableObject {
             id: UUID(),
             name: profileName,
             provider: provider,
+            grokHomePath: home?.path,
             hasCliAccount: false,
             iconConfig: iconConfig,
             refreshInterval: copySettingsFrom?.refreshInterval ?? 30.0,

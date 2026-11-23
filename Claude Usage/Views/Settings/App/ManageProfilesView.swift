@@ -12,6 +12,7 @@ struct ManageProfilesView: View {
     @State private var showingCreateProfile = false
     @State private var newProfileName = ""
     @State private var newProfileProvider: Provider = .anthropic
+    @State private var newGrokHomePath = ""
     @State private var errorMessage: String?
 
     var body: some View {
@@ -42,6 +43,8 @@ struct ManageProfilesView: View {
                     title: "profiles.create_new".localized,
                     icon: "plus.circle.fill"
                 ) {
+                    newGrokHomePath = GrokHome.suggestedPath(in: profileManager.profiles)
+                    errorMessage = nil
                     showingCreateProfile = true
                 }
 
@@ -328,12 +331,6 @@ struct ManageProfilesView: View {
                         .padding(.leading, DesignTokens.Spacing.small)
                     }
                 }
-
-                if let error = errorMessage {
-                    Text(error)
-                        .foregroundColor(.red)
-                        .font(.system(size: 11))
-                }
             }
             .padding()
         }
@@ -341,9 +338,12 @@ struct ManageProfilesView: View {
             CreateProfileSheet(
                 profileName: $newProfileName,
                 selectedProvider: $newProfileProvider,
-                onSave: {
-                    createNewProfile()
-                },
+                grokHomePath: $newGrokHomePath,
+                homeAvailable: GrokUsageProvider.canConfigure(
+                    profileID: nil, homePath: newGrokHomePath, profiles: profileManager.profiles
+                ),
+                errorMessage: errorMessage,
+                onSave: createNewProfile,
                 onCancel: {
                     showingCreateProfile = false
                     newProfileName = ""
@@ -355,7 +355,13 @@ struct ManageProfilesView: View {
 
     private func createNewProfile() {
         let name = newProfileName.isEmpty ? nil : newProfileName
-        _ = profileManager.createProfile(name: name, provider: newProfileProvider)
+        guard profileManager.createProfile(
+            name: name, provider: newProfileProvider,
+            grokHomePath: newProfileProvider == .grok ? newGrokHomePath : nil
+        ) != nil else {
+            errorMessage = "grok.create_failed".localized
+            return
+        }
         showingCreateProfile = false
         newProfileName = ""
         newProfileProvider = .anthropic
@@ -518,6 +524,9 @@ struct ProfileRow: View {
 struct CreateProfileSheet: View {
     @Binding var profileName: String
     @Binding var selectedProvider: Provider
+    @Binding var grokHomePath: String
+    let homeAvailable: Bool
+    let errorMessage: String?
     let onSave: () -> Void
     let onCancel: () -> Void
 
@@ -562,6 +571,16 @@ struct CreateProfileSheet: View {
                     .foregroundColor(.secondary)
             }
 
+            if selectedProvider == .grok {
+                GrokHomeField(path: $grokHomePath, available: homeAvailable)
+            }
+
+            if let errorMessage {
+                Text(errorMessage)
+                    .font(.caption)
+                    .foregroundColor(.red)
+            }
+
             HStack(spacing: 12) {
                 Button("common.cancel".localized) {
                     onCancel()
@@ -572,6 +591,7 @@ struct CreateProfileSheet: View {
                     onSave()
                 }
                 .buttonStyle(.borderedProminent)
+                .disabled(selectedProvider == .grok && !homeAvailable)
             }
         }
         .padding(24)

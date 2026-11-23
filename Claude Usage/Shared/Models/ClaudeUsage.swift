@@ -22,15 +22,20 @@ struct ClaudeUsage: Codable, Equatable {
         !hasSessionLimit || sessionResetTime < Date() ? 0.0 : sessionPercentage
     }
 
+    var hasCapacityForAutoSwitch: Bool {
+        if hasSessionLimit { return effectiveSessionPercentage < 100 }
+        return !hasWeeklyLimit || weeklyPercentage < 100
+    }
+
     // Weekly data (all models)
     var weeklyTokensUsed: Int
     var weeklyLimit: Int
     var weeklyPercentage: Double
     var weeklyResetTime: Date
 
-    /// False when a provider reported a weekly percentage but no reset time.
-    /// The popover then shows the percentage without inventing a countdown.
+    /// Older readings always had a reset date. New providers may omit it.
     var weeklyResetKnown: Bool = true
+    nonisolated var knownWeeklyResetTime: Date? { weeklyResetKnown ? weeklyResetTime : nil }
 
     // Weekly data (Opus only)
     var opusWeeklyTokensUsed: Int
