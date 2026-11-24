@@ -958,7 +958,11 @@ struct SmartUsageDashboard: View {
                     usedPercentage: usage.designWeeklyPercentage,
                     showRemaining: showRemainingPercentage,
                     resetTime: usage.designWeeklyResetTime,
-                    periodDuration: nil,
+                    periodDuration: Constants.weeklyWindow,
+                    showTimeMarker: showTimeMarker,
+                    showPaceMarker: showPaceMarker,
+                    usePaceColoring: usePaceColoring,
+                    excludeWeekends: excludeWeekendsFromWeeklyPace,
                     timeDisplay: timeDisplay
                 )
             }
@@ -996,8 +1000,12 @@ struct SmartUsageDashboard: View {
                     subtitle: nil,
                     usedPercentage: usage.fableWeeklyPercentage,
                     showRemaining: showRemainingPercentage,
-                    resetTime: usage.fableWeeklyResetTime,
-                    periodDuration: nil,
+                    resetTime: usage.fableWeeklyResetTime ?? usage.weeklyResetTime,
+                    periodDuration: Constants.weeklyWindow,
+                    showTimeMarker: showTimeMarker,
+                    showPaceMarker: showPaceMarker,
+                    usePaceColoring: usePaceColoring,
+                    excludeWeekends: excludeWeekendsFromWeeklyPace,
                     timeDisplay: timeDisplay
                 )
             }
@@ -1021,7 +1029,11 @@ struct SmartUsageDashboard: View {
                     usedPercentage: usage.sonnetWeeklyPercentage,
                     showRemaining: showRemainingPercentage,
                     resetTime: usage.sonnetWeeklyResetTime,
-                    periodDuration: nil,
+                    periodDuration: Constants.weeklyWindow,
+                    showTimeMarker: showTimeMarker,
+                    showPaceMarker: showPaceMarker,
+                    usePaceColoring: usePaceColoring,
+                    excludeWeekends: excludeWeekendsFromWeeklyPace,
                     timeDisplay: timeDisplay
                 )
             }
