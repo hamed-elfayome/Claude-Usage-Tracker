@@ -62,6 +62,67 @@ final class ClaudeAPIServiceParsingTests: XCTestCase {
         XCTAssertFalse(usage.hasWeeklyLimit)
     }
 
+    func testEnterpriseMemberSpendLimitIsParsed() throws {
+        // Enterprise seat with no usage windows but an org-set monthly spend
+        // limit; the spend object as claude.ai returns it.
+        let json = #"""
+        {"five_hour":null,"seven_day":null,"limits":[],
+         "spend":{"used":{"amount_minor":11359,"currency":"usd","exponent":2},
+                  "limit":{"amount_minor":50000,"currency":"USD","exponent":2},
+                  "percent":23,"severity":"normal","enabled":true,
+                  "cap":{"money":null,"credits":{"amount_minor":50000,"exponent":2}}}}
+        """#
+        let usage = try service.parseUsageResponse(Data(json.utf8))
+
+        XCTAssertFalse(usage.hasWeeklyLimit)
+        XCTAssertEqual(usage.personalSpendLimit, 50_000)
+        XCTAssertEqual(usage.personalSpendUsed, 11_359)
+        XCTAssertEqual(usage.personalSpendCurrency, "USD")
+        XCTAssertEqual(usage.effectiveMonthlySpendLimit(targetCents: nil), 50_000)
+        // A target the user set takes priority over the organization's limit.
+        XCTAssertEqual(usage.effectiveMonthlySpendLimit(targetCents: 100_000), 100_000)
+
+        let percentage = try XCTUnwrap(usage.reportedMonthlySpendPercentage(targetCents: nil))
+        XCTAssertEqual(percentage, 22.718, accuracy: 0.001)
+    }
+
+    func testReportedMonthlySpendPercentageNeedsAnOrganizationLimit() {
+        var usage = ClaudeUsage.empty
+        usage.hasSessionLimit = false
+        usage.hasWeeklyLimit = false
+        usage.personalSpendUsed = 11_359
+        // A user's own target alone isn't a reported limit.
+        XCTAssertNil(usage.reportedMonthlySpendPercentage(targetCents: 50_000))
+
+        usage.personalSpendLimit = 50_000
+        XCTAssertNotNil(usage.reportedMonthlySpendPercentage(targetCents: nil))
+
+        // Plans that report a weekly limit keep the weekly reading.
+        usage.hasWeeklyLimit = true
+        XCTAssertNil(usage.reportedMonthlySpendPercentage(targetCents: nil))
+    }
+
+    func testCurrentMonthWindowSpansTheCalendarMonth() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        let now = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 2, day: 10, hour: 12)))
+        let window = try XCTUnwrap(ClaudeUsage.currentMonthWindow(now: now, calendar: calendar))
+        XCTAssertEqual(window.resetTime, calendar.date(from: DateComponents(year: 2026, month: 3, day: 1)))
+        XCTAssertEqual(window.duration, 28 * 24 * 3600)
+    }
+
+    func testSpendWithoutLimitLeavesPersonalSpendUnset() throws {
+        // Personal plans report spend with a null limit; no Monthly Spend row.
+        let json = #"""
+        {"five_hour":null,"seven_day":{"utilization":27,"resets_at":"2026-11-29T15:00:00.552176+00:00"},
+         "spend":{"used":{"amount_minor":0,"currency":"USD","exponent":2},"limit":null,"enabled":false}}
+        """#
+        let usage = try service.parseUsageResponse(Data(json.utf8))
+
+        XCTAssertNil(usage.personalSpendLimit)
+        XCTAssertNil(usage.personalSpendUsed)
+    }
+
     func testUltraResponseStillHasAWeeklyLimit() throws {
         let json = #"""
         {"five_hour":null,"seven_day":{"utilization":47.0,"resets_at":"2026-11-03T17:00:00.036205+00:00"},"limits":[]}

@@ -1070,7 +1070,7 @@ class ClaudeAPIService: APIServiceProtocol {
             let designTokens = Int(Double(weeklyLimit) * (designPercentage / 100.0))
             let fableTokens = Int(Double(weeklyLimit) * (fablePercentage / 100.0))
 
-            let usage = ClaudeUsage(
+            var usage = ClaudeUsage(
                 sessionTokensUsed: sessionTokens,
                 sessionLimit: sessionLimit,
                 sessionPercentage: sessionPercentage,
@@ -1100,6 +1100,19 @@ class ClaudeAPIService: APIServiceProtocol {
                 userTimezone: .current
             )
 
+            // Member's monthly spend limit set by the organization (Enterprise
+            // seats). The month-to-date spend comes with it; /usage/spend, when
+            // available, overwrites that figure later with the same number.
+            if let spend = json["spend"] as? [String: Any],
+               let limit = parseMinorUnitsAsCents(spend["limit"]), limit > 0 {
+                usage.personalSpendLimit = limit
+                if let used = parseMinorUnitsAsCents(spend["used"]) {
+                    usage.personalSpendUsed = used
+                    let currency = (spend["used"] as? [String: Any])?["currency"] as? String
+                    usage.personalSpendCurrency = currency?.uppercased() ?? "USD"
+                }
+            }
+
             return usage
         }
 
@@ -1117,6 +1130,17 @@ class ClaudeAPIService: APIServiceProtocol {
             isRecoverable: false,
             recoverySuggestion: "Please check the error log and report this issue"
         )
+    }
+
+    /// Converts a `{"amount_minor": 50000, "exponent": 2}` money object to cents.
+    private func parseMinorUnitsAsCents(_ value: Any?) -> Double? {
+        guard let money = value as? [String: Any],
+              let amount = (money["amount_minor"] as? NSNumber)?.doubleValue else {
+            return nil
+        }
+        let exponent = (money["exponent"] as? NSNumber)?.intValue ?? 2
+        let cents = amount * pow(10.0, Double(2 - exponent))
+        return cents.isFinite ? cents : nil
     }
 
     // MARK: - Rate Limit Header Parsing

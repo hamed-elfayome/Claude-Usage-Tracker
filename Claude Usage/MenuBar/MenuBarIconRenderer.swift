@@ -23,8 +23,15 @@ final class MenuBarIconRenderer {
         colorMode: MenuBarColorMode,
         singleColorHex: String,
         showIconName: Bool,
-        showNextSessionTime: Bool
+        showNextSessionTime: Bool,
+        monthlySpendTargetCents: Double? = nil
     ) -> NSImage {
+        // On plans whose only limit is the organization's monthly spend limit,
+        // the week slot shows month-to-date spend against that limit instead.
+        let monthlySpendPercentage = metricType == .week
+            ? usage.reportedMonthlySpendPercentage(targetCents: monthlySpendTargetCents)
+            : nil
+
         // Get the metric value and percentage
         let metricData = getMetricData(
             metricType: metricType,
@@ -33,7 +40,8 @@ final class MenuBarIconRenderer {
             apiUsage: apiUsage,
             showRemaining: globalConfig.showRemainingPercentage,
             usePaceColoring: globalConfig.usePaceColoring,
-            excludeWeekends: globalConfig.excludeWeekendsFromWeeklyPace
+            excludeWeekends: globalConfig.excludeWeekendsFromWeeklyPace,
+            monthlySpendPercentage: monthlySpendPercentage
         )
 
         // Calculate time marker fraction for session/week metrics
@@ -42,7 +50,8 @@ final class MenuBarIconRenderer {
                 metricType: metricType,
                 usage: usage,
                 showRemaining: globalConfig.showRemainingPercentage,
-                excludeWeekends: globalConfig.excludeWeekendsFromWeeklyPace
+                excludeWeekends: globalConfig.excludeWeekendsFromWeeklyPace,
+                isMonthlySpend: monthlySpendPercentage != nil
             )
             : nil
 
@@ -52,12 +61,13 @@ final class MenuBarIconRenderer {
             // Get raw elapsed fraction (always non-inverted)
             guard let rawElapsed = calculateTimeMarkerFraction(
                 metricType: metricType, usage: usage, showRemaining: false,
-                excludeWeekends: globalConfig.excludeWeekendsFromWeeklyPace
+                excludeWeekends: globalConfig.excludeWeekendsFromWeeklyPace,
+                isMonthlySpend: monthlySpendPercentage != nil
             ) else { return nil }
             // Get raw used percentage
             let rawUsed: Double = metricType == .session
                 ? usage.sessionPercentage
-                : usage.weeklyPercentage
+                : monthlySpendPercentage ?? usage.weeklyPercentage
             return PaceStatus.calculate(
                 usedPercentage: rawUsed,
                 elapsedFraction: Double(rawElapsed)
@@ -150,6 +160,19 @@ final class MenuBarIconRenderer {
         let displayText: String
         let statusLevel: UsageStatusLevel
         let sessionResetTime: Date?  // Only populated for session metric
+        /// The week slot is showing monthly spend against the spend limit.
+        var isMonthlySpend = false
+
+        /// Single-letter label drawn beside bars and circles.
+        func shortLabel(for metricType: MenuBarMetricType) -> String {
+            if isMonthlySpend { return "M" }
+            return metricType == .session ? "S" : "W"
+        }
+
+        /// Prefix drawn before text values, e.g. "W:".
+        func prefixText(for metricType: MenuBarMetricType) -> String {
+            isMonthlySpend ? "M:" : metricType.prefixText
+        }
     }
 
     private func getMetricData(
@@ -159,8 +182,35 @@ final class MenuBarIconRenderer {
         apiUsage: APIUsage?,
         showRemaining: Bool,
         usePaceColoring: Bool = true,
-        excludeWeekends: Bool = false
+        excludeWeekends: Bool = false,
+        monthlySpendPercentage: Double? = nil
     ) -> MetricData {
+        if metricType == .week, let usedPercentage = monthlySpendPercentage {
+            let displayPercentage = UsageStatusCalculator.getDisplayPercentage(
+                usedPercentage: usedPercentage,
+                showRemaining: showRemaining
+            )
+            let monthWindow = ClaudeUsage.currentMonthWindow()
+            let monthElapsed: Double? = usePaceColoring
+                ? UsageStatusCalculator.elapsedFraction(
+                    resetTime: monthWindow?.resetTime,
+                    duration: monthWindow?.duration ?? 0,
+                    showRemaining: false
+                )
+                : nil
+            return MetricData(
+                percentage: displayPercentage,
+                displayText: "\(Int(displayPercentage))%",
+                statusLevel: UsageStatusCalculator.calculateStatus(
+                    usedPercentage: usedPercentage,
+                    showRemaining: showRemaining,
+                    elapsedFraction: monthElapsed
+                ),
+                sessionResetTime: nil,
+                isMonthlySpend: true
+            )
+        }
+
         switch metricType {
         case .session:
             let usedPercentage = usage.effectiveSessionPercentage
@@ -392,7 +442,7 @@ final class MenuBarIconRenderer {
             case .fable: word = "Fable"
             case .week, .api: word = "Week"
             }
-            text = word as NSString
+            text = (metricData.isMonthlySpend ? "Month" : word) as NSString
         } else {
             // No label mode - show percentage instead
             text = "\(Int(metricData.percentage))%" as NSString
@@ -445,7 +495,7 @@ final class MenuBarIconRenderer {
                 .font: NSFont.systemFont(ofSize: 10, weight: .semibold),
                 .foregroundColor: textColor.withAlphaComponent(0.9)
             ]
-            let label = (metricType == .session ? "S" : "W") as NSString
+            let label = metricData.shortLabel(for: metricType) as NSString
             let labelSize = label.size(withAttributes: labelAttributes)
             label.draw(
                 at: NSPoint(x: xOffset, y: (height - labelSize.height) / 2),
@@ -526,7 +576,7 @@ final class MenuBarIconRenderer {
         var fullText = ""
 
         if showIconName {
-            fullText = "\(metricType.prefixText) \(metricData.displayText)"
+            fullText = "\(metricData.prefixText(for: metricType)) \(metricData.displayText)"
         } else {
             fullText = metricData.displayText
         }
@@ -649,7 +699,7 @@ final class MenuBarIconRenderer {
                 .font: NSFont.systemFont(ofSize: 9, weight: .bold),
                 .foregroundColor: textColor
             ]
-            let label = (metricType == .session ? "S" : "W") as NSString
+            let label = metricData.shortLabel(for: metricType) as NSString
             let labelSize = label.size(withAttributes: labelAttributes)
             let labelX = center.x - labelSize.width / 2
             let labelY = center.y - labelSize.height / 2
@@ -695,7 +745,7 @@ final class MenuBarIconRenderer {
                 .font: NSFont.systemFont(ofSize: 9, weight: .medium),
                 .foregroundColor: textColor.withAlphaComponent(0.85)
             ]
-            let prefixText = metricType.prefixText as NSString
+            let prefixText = metricData.prefixText(for: metricType) as NSString
             let prefixSize = prefixText.size(withAttributes: prefixAttributes)
             prefixText.draw(
                 at: NSPoint(x: xOffset, y: (height - prefixSize.height) / 2),
@@ -1434,8 +1484,19 @@ final class MenuBarIconRenderer {
         metricType: MenuBarMetricType,
         usage: ClaudeUsage,
         showRemaining: Bool,
-        excludeWeekends: Bool = false
+        excludeWeekends: Bool = false,
+        isMonthlySpend: Bool = false
     ) -> CGFloat? {
+        if isMonthlySpend {
+            guard let month = ClaudeUsage.currentMonthWindow(),
+                  let f = UsageStatusCalculator.elapsedFraction(
+                    resetTime: month.resetTime,
+                    duration: month.duration,
+                    showRemaining: showRemaining
+                  ) else { return nil }
+            return CGFloat(f)
+        }
+
         let resetTime: Date?
         let duration: TimeInterval
 
