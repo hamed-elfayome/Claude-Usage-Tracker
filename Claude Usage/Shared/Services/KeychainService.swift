@@ -182,6 +182,10 @@ class KeychainService {
     /// so avoid a SecItemCopyMatching round-trip per field per profile per load.
     /// Single-process app; the cache is kept coherent by save/delete below.
     private var profileSecretCache: [String: String] = [:]
+    /// Values already proven readable from the keychain. `saveProfiles()` runs on
+    /// every refresh and verifies each secret; re-reading an unchanged value each
+    /// time leaks memory inside Security.framework's file-based keychain path (#366).
+    private var verifiedProfileSecrets: [String: String] = [:]
     private let cacheLock = NSLock()
 
     private func profileSecretAccount(_ profileId: UUID, _ field: ProfileSecretField) -> String {
@@ -209,7 +213,10 @@ class KeychainService {
         guard let value = value else {
             let ok = deleteItem(service: Self.profileSecretsService, account: account)
             if ok {
-                cacheLock.lock(); profileSecretCache.removeValue(forKey: account); cacheLock.unlock()
+                cacheLock.lock()
+                profileSecretCache.removeValue(forKey: account)
+                verifiedProfileSecrets.removeValue(forKey: account)
+                cacheLock.unlock()
             }
             return ok
         }
@@ -221,7 +228,10 @@ class KeychainService {
 
         do {
             try saveItem(value, service: Self.profileSecretsService, account: account)
-            cacheLock.lock(); profileSecretCache[account] = value; cacheLock.unlock()
+            cacheLock.lock()
+            profileSecretCache[account] = value
+            verifiedProfileSecrets.removeValue(forKey: account)
+            cacheLock.unlock()
             return true
         } catch {
             LoggingService.shared.logError("Keychain: failed to save profile secret \(field.rawValue)", error: error)
@@ -241,7 +251,10 @@ class KeychainService {
         guard let value = try? loadItem(service: Self.profileSecretsService, account: account) else {
             return nil
         }
-        cacheLock.lock(); profileSecretCache[account] = value; cacheLock.unlock()
+        cacheLock.lock()
+        profileSecretCache[account] = value
+        verifiedProfileSecrets[account] = value
+        cacheLock.unlock()
         return value
     }
 
@@ -251,10 +264,17 @@ class KeychainService {
     /// never cost the user their credentials.
     func verifyProfileSecret(_ expected: String, profileId: UUID, field: ProfileSecretField) -> Bool {
         let account = profileSecretAccount(profileId, field)
-        guard let onDisk = try? loadItem(service: Self.profileSecretsService, account: account) else {
+        cacheLock.lock()
+        let alreadyVerified = verifiedProfileSecrets[account] == expected
+        cacheLock.unlock()
+        if alreadyVerified { return true }
+
+        guard let onDisk = try? loadItem(service: Self.profileSecretsService, account: account),
+              onDisk == expected else {
             return false
         }
-        return onDisk == expected
+        cacheLock.lock(); verifiedProfileSecrets[account] = expected; cacheLock.unlock()
+        return true
     }
 
     /// Removes all Keychain secrets belonging to a profile (call on profile deletion).
