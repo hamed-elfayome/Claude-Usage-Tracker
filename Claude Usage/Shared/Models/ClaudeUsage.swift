@@ -60,6 +60,9 @@ struct ClaudeUsage: Codable, Equatable {
     // (see ClaudeAPIService.fetchPersonalSpend)
     var personalSpendUsed: Double?
     var personalSpendCurrency: String?
+    /// Member's monthly spend limit as set by the organization, in cents.
+    /// From the `/usage` response's `spend.limit`; `nil` when none is set.
+    var personalSpendLimit: Double?
 
     // Provider plan/credits (populated by providers that report them, e.g. Codex)
     var planType: String?
@@ -125,6 +128,38 @@ struct ClaudeUsage: Codable, Equatable {
         )
     }
 
+    /// The monthly spend limit to measure against: the user's own target when
+    /// set, otherwise the limit the organization reports for the member.
+    func effectiveMonthlySpendLimit(targetCents: Double?) -> Double? {
+        if let target = targetCents, target > 0, target.isFinite { return target }
+        if let limit = personalSpendLimit, limit > 0, limit.isFinite { return limit }
+        return nil
+    }
+
+    /// Month-to-date spend as a percentage of the monthly spend limit, for
+    /// plans whose only reported limit is the organization's spend limit. The
+    /// menu bar shows it in place of the weekly reading. `nil` when the plan
+    /// reports a session or weekly limit, or no spend limit.
+    func reportedMonthlySpendPercentage(targetCents: Double?) -> Double? {
+        guard !hasSessionLimit, !hasWeeklyLimit, personalSpendLimit != nil,
+              let used = personalSpendUsed, used.isFinite,
+              let limit = effectiveMonthlySpendLimit(targetCents: targetCents) else {
+            return nil
+        }
+        return used / limit * 100.0
+    }
+
+    /// The calendar month containing `now`, as the reset time (start of the
+    /// next month) and the month's length. Spend is month-to-date in the local
+    /// calendar (see ClaudeAPIService.fetchPersonalSpend).
+    static func currentMonthWindow(now: Date = Date(), calendar: Calendar = .current) -> (resetTime: Date, duration: TimeInterval)? {
+        guard let start = calendar.date(from: calendar.dateComponents([.year, .month], from: now)),
+              let end = calendar.date(byAdding: .month, value: 1, to: start) else {
+            return nil
+        }
+        return (end, end.timeIntervalSince(start))
+    }
+
 }
 
 /// Usage status level for color coding
@@ -155,7 +190,7 @@ extension ClaudeUsage {
         case fableWeeklyTokensUsed, fableWeeklyPercentage, fableWeeklyResetTime
         case costUsed, costLimit, costCurrency
         case overageBalance, overageBalanceCurrency
-        case personalSpendUsed, personalSpendCurrency
+        case personalSpendUsed, personalSpendCurrency, personalSpendLimit
         case planType, creditsBalance, creditsUnlimited
         case lastUpdated, userTimezone
     }
@@ -191,6 +226,7 @@ extension ClaudeUsage {
             overageBalanceCurrency: try c.decodeIfPresent(String.self, forKey: .overageBalanceCurrency),
             personalSpendUsed: try c.decodeIfPresent(Double.self, forKey: .personalSpendUsed),
             personalSpendCurrency: try c.decodeIfPresent(String.self, forKey: .personalSpendCurrency),
+            personalSpendLimit: try c.decodeIfPresent(Double.self, forKey: .personalSpendLimit),
             planType: try c.decodeIfPresent(String.self, forKey: .planType),
             creditsBalance: try c.decodeIfPresent(Double.self, forKey: .creditsBalance),
             creditsUnlimited: try c.decodeIfPresent(Bool.self, forKey: .creditsUnlimited),

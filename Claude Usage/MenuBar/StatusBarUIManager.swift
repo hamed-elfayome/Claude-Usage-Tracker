@@ -373,11 +373,17 @@ final class StatusBarUIManager {
             // Plans without a 5-hour window (e.g. Ultra) draw weekly in the
             // session (primary) slot and drop the secondary week value, so
             // weekly isn't drawn twice. The session* values below then hold weekly.
+            // Plans whose only limit is the organization's monthly spend limit
+            // draw month-to-date spend against that limit in that slot.
             let hasSessionLimit = usage.hasSessionLimit
             let showWeek = config.showWeek && hasSessionLimit
+            let monthlySpendPercentage = usage.reportedMonthlySpendPercentage(targetCents: profile.monthlySpendLimitCents)
+            let monthWindow = monthlySpendPercentage != nil ? ClaudeUsage.currentMonthWindow() : nil
 
             // Calculate percentages
-            let sessionUsed = hasSessionLimit ? usage.effectiveSessionPercentage : usage.weeklyPercentage
+            let sessionUsed = hasSessionLimit
+                ? usage.effectiveSessionPercentage
+                : monthlySpendPercentage ?? usage.weeklyPercentage
             let weekUsed = usage.weeklyPercentage
 
             let sessionDisplay = UsageStatusCalculator.getDisplayPercentage(
@@ -389,11 +395,26 @@ final class StatusBarUIManager {
                 showRemaining: showRemaining
             )
 
-            let sessionElapsed = UsageStatusCalculator.elapsedFraction(
-                resetTime: hasSessionLimit ? usage.sessionResetTime : usage.weeklyResetTime,
-                duration: hasSessionLimit ? Constants.sessionWindow : Constants.weeklyWindow,
-                showRemaining: false
-            )
+            let sessionElapsed: Double?
+            if hasSessionLimit {
+                sessionElapsed = UsageStatusCalculator.elapsedFraction(
+                    resetTime: usage.sessionResetTime,
+                    duration: Constants.sessionWindow,
+                    showRemaining: false
+                )
+            } else if let monthWindow {
+                sessionElapsed = UsageStatusCalculator.elapsedFraction(
+                    resetTime: monthWindow.resetTime,
+                    duration: monthWindow.duration,
+                    showRemaining: false
+                )
+            } else {
+                sessionElapsed = UsageStatusCalculator.elapsedFraction(
+                    resetTime: usage.weeklyResetTime,
+                    duration: Constants.weeklyWindow,
+                    showRemaining: false
+                )
+            }
             let weekElapsed = UsageStatusCalculator.elapsedFraction(
                 resetTime: usage.weeklyResetTime,
                 duration: Constants.weeklyWindow,
@@ -643,7 +664,8 @@ final class StatusBarUIManager {
                 colorMode: config.colorMode,
                 singleColorHex: config.singleColorHex,
                 showIconName: config.showIconNames,
-                showNextSessionTime: metricConfig.showNextSessionTime
+                showNextSessionTime: metricConfig.showNextSessionTime,
+                monthlySpendTargetCents: profile?.monthlySpendLimitCents
             )
 
             image.isTemplate = config.colorMode == .monochrome && !config.showPaceMarker
@@ -663,7 +685,8 @@ final class StatusBarUIManager {
         }
 
         // Get config from active profile, adjusted for the plan's limits
-        let config = (ProfileManager.shared.activeProfile?.iconConfig ?? .default).effective(for: usage)
+        let profile = ProfileManager.shared.activeProfile
+        let config = (profile?.iconConfig ?? .default).effective(for: usage)
         guard let metricConfig = config.config(for: metricType) else {
             return
         }
@@ -682,7 +705,8 @@ final class StatusBarUIManager {
             colorMode: config.colorMode,
             singleColorHex: config.singleColorHex,
             showIconName: config.showIconNames,
-            showNextSessionTime: metricConfig.showNextSessionTime
+            showNextSessionTime: metricConfig.showNextSessionTime,
+            monthlySpendTargetCents: profile?.monthlySpendLimitCents
         )
 
         image.isTemplate = config.colorMode == .monochrome && !config.showPaceMarker

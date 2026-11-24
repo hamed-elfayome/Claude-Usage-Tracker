@@ -932,6 +932,15 @@ struct SmartUsageDashboard: View {
         SharedDataStore.shared.loadPopoverTimeDisplay()
     }
 
+    /// The organization reports a monthly spend limit for the member, so the
+    /// Monthly Spend bar below tracks a limit and "no limits" would be wrong.
+    /// A target the user set themselves doesn't count: it isn't a plan limit.
+    private var showsReportedSpendLimit: Bool {
+        capabilities.personalSpend
+            && usage.personalSpendUsed != nil
+            && usage.personalSpendLimit != nil
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             // Primary: Session Usage (absent on plans without a 5-hour window, e.g. Ultra)
@@ -980,7 +989,7 @@ struct SmartUsageDashboard: View {
                     excludeWeekends: excludeWeekendsFromWeeklyPace,
                     timeDisplay: timeDisplay
                 )
-            } else if !usage.hasSessionLimit {
+            } else if !usage.hasSessionLimit && !showsReportedSpendLimit {
                 Text("popover.no_limits_reported".localized)
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
@@ -1060,7 +1069,7 @@ struct SmartUsageDashboard: View {
                 MonthlySpendRow(
                     usedMinorUnits: personalUsed,
                     currency: usage.personalSpendCurrency ?? "USD",
-                    limitCents: monthlySpendLimitCents,
+                    limitCents: usage.effectiveMonthlySpendLimit(targetCents: monthlySpendLimitCents),
                     showRemaining: showRemainingPercentage
                 )
             }
