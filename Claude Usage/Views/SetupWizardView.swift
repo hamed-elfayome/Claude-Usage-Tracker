@@ -9,6 +9,7 @@ enum SetupMode {
     case cliDetected(credentials: String)
     case manualSetup
     case codexSetup
+    case antigravitySetup
 }
 
 // MARK: - Wizard State Machine
@@ -61,6 +62,8 @@ struct SetupWizardView: View {
                         setupMode = .loading
                     case .codex:
                         setupMode = .codexSetup
+                    case .antigravity:
+                        setupMode = .antigravitySetup
                     }
                 },
                 onSkip: { dismiss() }
@@ -92,6 +95,17 @@ struct SetupWizardView: View {
                     // Provider flips to codex only now — setup completed.
                     applyProvider(.codex)
                     NotificationCenter.default.post(name: .credentialsChanged, object: nil)
+                    dismiss()
+                },
+                onBack: { setupMode = .chooseProvider }
+            )
+
+        case .antigravitySetup:
+            AntigravitySetupView(
+                onDone: { pool in
+                    // Provider flips to antigravity only now — setup completed.
+                    applyProvider(.antigravity)
+                    ProfileManager.shared.setActiveAntigravityPool(pool)
                     dismiss()
                 },
                 onBack: { setupMode = .chooseProvider }
@@ -1068,15 +1082,13 @@ struct ProviderChoiceSetupView: View {
                                 ProviderLogoView(provider: provider, size: 32)
                                 Text(provider.descriptor.displayName)
                                     .font(.system(size: 14, weight: .semibold))
-                                Text(provider == .anthropic
-                                     ? "setup.choose_provider.anthropic_hint".localized
-                                     : "setup.choose_provider.codex_hint".localized)
+                                Text(provider.descriptor.setupHintKey.localized)
                                     .font(.system(size: 11))
                                     .foregroundColor(.secondary)
                                     .multilineTextAlignment(.center)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
-                            .frame(width: 180)
+                            .frame(width: Provider.allCases.count > 2 ? 150 : 180)
                             .padding(.vertical, 24)
                             .padding(.horizontal, 12)
                             .background(

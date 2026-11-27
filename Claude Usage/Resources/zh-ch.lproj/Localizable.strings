@@ -1122,6 +1122,41 @@
 "error.codex_invalid_response" = "Codex 用量 API 返回了意外响应";
 "error.codex_server_error" = "Codex 用量 API 返回错误";
 
+/* Google Antigravity */
+"section.antigravity_account_title" = "Antigravity Account";
+"section.antigravity_account_desc" = "Track Google Antigravity quota via the agy CLI";
+"setup.choose_provider.antigravity_hint" = "Google Antigravity CLI quota";
+"antigravity.title" = "Google Antigravity";
+"antigravity.subtitle" = "Track your Antigravity quota through the agy CLI";
+"antigravity.cli_title" = "Antigravity CLI";
+"antigravity.cli_subtitle" = "Quota is read by running `agy /usage`, which uses no tokens";
+"antigravity.cli_found" = "agy CLI found";
+"antigravity.cli_not_found" = "agy CLI not found";
+"antigravity.cli_not_found_hint" = "Install the Antigravity CLI and run `agy` once to sign in with Google.";
+"antigravity.one_account_note" = "agy has one Google login, so every Antigravity profile shows that same account. Sign in or out with `agy` and all of them follow.";
+"antigravity.rescan" = "Rescan";
+"antigravity.test_connection" = "Test Connection";
+"antigravity.test_success" = "Connection OK";
+"antigravity.percent_left" = "%d%% left";
+"antigravity.pool_title" = "Menu Bar Quota";
+"antigravity.pool_subtitle" = "Antigravity models share limits per group. Choose the group the menu bar shows; the popover lists every group.";
+"antigravity.pool.third_party" = "Claude & GPT models (5-hour + weekly)";
+"antigravity.pool.gemini" = "Gemini models (weekly)";
+"setup.antigravity_detected.title" = "Antigravity CLI Detected";
+"setup.antigravity_detected.description" = "The agy CLI was found. Choose which quota group the menu bar shows; the popover lists every group.";
+"setup.antigravity_not_detected.title" = "Connect Antigravity";
+"setup.antigravity_not_detected.description" = "The agy CLI was not found. Install it, run `agy` once to sign in, then rescan.";
+"error.antigravity_cli_not_found" = "Antigravity CLI (agy) not found";
+"error.antigravity_cli_not_found.suggestion" = "Install the Antigravity CLI and run `agy` once to sign in";
+"error.antigravity_auth_required" = "Antigravity sign-in required";
+"error.antigravity_auth_required.suggestion" = "Run `agy` in your terminal to sign in with Google";
+"error.antigravity_timeout" = "The Antigravity CLI did not respond in time";
+"error.antigravity_cli_failed" = "The Antigravity CLI reported an error";
+"error.antigravity_unexpected_output" = "Unexpected output from the Antigravity CLI";
+"error.antigravity_pool_missing" = "Antigravity did not report this quota pool";
+"antigravity.quota.third_party" = "Claude & GPT";
+"antigravity.quota.gemini" = "Gemini";
+
 // MARK: - Terminal Launcher
 "launcher.title" = "终端启动器";
 "launcher.subtitle" = "在任意终端中以此配置文件运行 Claude Code";

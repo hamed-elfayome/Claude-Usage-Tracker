@@ -101,7 +101,7 @@ The terminal statusline needs a claude.ai sign-in even if the app itself runs on
 | Guide | What's in it |
 |---|---|
 | [Setup](docs/setup.md) | Signing in three ways, API Console billing, where settings live |
-| [Profiles](docs/profiles.md) | Multiple accounts, Codex profiles, terminal launchers |
+| [Profiles](docs/profiles.md) | Multiple accounts, Codex and Antigravity profiles, terminal launchers |
 | [Claude Code](docs/claude-code.md) | Statusline setup and components, Dynamic Island, Keep Awake |
 | [Widgets](docs/widgets.md) | The six desktop widgets and how to pick a profile |
 | [Troubleshooting](docs/troubleshooting.md) | Sign-in errors, missing icon, statusline problems |

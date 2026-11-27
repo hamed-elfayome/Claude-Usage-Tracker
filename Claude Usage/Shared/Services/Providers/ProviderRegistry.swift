@@ -36,7 +36,8 @@ enum ProviderRegistry {
             ),
             credentialSections: [.claudeAI, .apiConsole, .cliAccount],
             primaryWindowLabelKey: "usage.window.session",
-            secondaryWindowLabelKey: "usage.window.weekly"
+            secondaryWindowLabelKey: "usage.window.weekly",
+            setupHintKey: "setup.choose_provider.anthropic_hint"
         ),
         .codex: ProviderDescriptor(
             id: .codex,
@@ -56,7 +57,30 @@ enum ProviderRegistry {
             ),
             credentialSections: [.codexAccount],
             primaryWindowLabelKey: "usage.window.session",
-            secondaryWindowLabelKey: "usage.window.weekly"
+            secondaryWindowLabelKey: "usage.window.weekly",
+            setupHintKey: "setup.choose_provider.codex_hint"
+        ),
+        .antigravity: ProviderDescriptor(
+            id: .antigravity,
+            displayName: "Google Antigravity",
+            logoAssetName: "ProviderLogoAntigravity",
+            logoSystemSymbolFallback: "scope",
+            // Google publishes no Statuspage-compatible feed for Antigravity.
+            statusPageURL: nil,
+            capabilities: ProviderCapabilities(
+                tokenCounts: false,
+                perModelBreakdown: false,
+                consoleBilling: false,
+                cliAccountSync: false,
+                autoStartSession: false,
+                overageChecks: false,
+                personalSpend: false,
+                credits: false
+            ),
+            credentialSections: [.antigravityAccount],
+            primaryWindowLabelKey: "usage.window.session",
+            secondaryWindowLabelKey: "usage.window.weekly",
+            setupHintKey: "setup.choose_provider.antigravity_hint"
         ),
     ]
 
@@ -75,6 +99,8 @@ enum ProviderRegistry {
             return AnthropicUsageProvider.shared
         case .codex:
             return CodexUsageProvider.shared
+        case .antigravity:
+            return AntigravityUsageProvider.shared
         }
     }
 }

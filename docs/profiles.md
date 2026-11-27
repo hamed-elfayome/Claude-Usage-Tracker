@@ -5,7 +5,7 @@ A profile is one account: its credentials, its appearance, its notifications and
 ## Create and switch
 
 1. **Settings → Manage Profiles → Create New Profile.** It gets a generated name you can change.
-2. Select the profile in the sidebar and add credentials under **Claude.ai**, **API Console**, **CLI Account** or **Codex Account**.
+2. Select the profile in the sidebar and add credentials under **Claude.ai**, **API Console**, **CLI Account**, **Codex Account** or **Antigravity Account**.
 3. Switch from the popover's dropdown or the sidebar.
 
 Each profile keeps its own icon style, refresh interval, auto-start setting and notification thresholds.
@@ -46,5 +46,20 @@ When you create a profile, choose **OpenAI Codex** as its provider to track Code
 - Codex's 5-hour and weekly windows appear as the session and weekly rows.
 - Codex Pro has no 5-hour limit, so those profiles show the week only.
 - Claude-only features (statusline, auto-start, Dynamic Island) are hidden for Codex profiles.
+
+## Google Antigravity profiles
+
+Choose **Google Antigravity** as the provider to track Antigravity quota.
+
+- You need the Antigravity CLI (`agy`) installed and signed in: run `agy` once in a terminal.
+- The app runs `agy --print /usage`, which uses no tokens and no model turn, and reads the remaining quota from its output. It stores no Google credential.
+- Antigravity models share limits per group. The popover lists every group's windows, starting with the group the menu bar shows. Pick that group under **Antigravity Account** → **Menu Bar Quota**:
+  - **Claude & GPT models** (the default): the 5-hour window as the session metric and the weekly window as the week metric.
+  - **Gemini models**: the weekly window only, unless your plan also has a Gemini 5-hour window.
+- The same group drives notifications, history and widgets.
+- A window nobody has used yet shows no reset time in the popover, because it has no reset running.
+- `agy` has one Google login, so every Antigravity profile shows that same account. Several Antigravity profiles share one `agy` call per refresh.
+- `agy` is found in `~/.local/bin`, `/opt/homebrew/bin`, `/usr/local/bin` or your login shell's `PATH`. Set `AGY_BIN` to point at a different binary.
+- Antigravity has no status page the app can read, so the popover shows no service status for these profiles.
 
 Adding another provider is documented in [ADDING_A_PROVIDER.md](ADDING_A_PROVIDER.md).

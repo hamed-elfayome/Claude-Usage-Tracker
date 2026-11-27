@@ -34,6 +34,10 @@ struct ProviderDescriptor {
     /// Localization keys for the two usage-window section labels.
     let primaryWindowLabelKey: String
     let secondaryWindowLabelKey: String
+
+    /// Localization key for the one-line hint on the provider's card in the
+    /// setup wizard's provider choice.
+    let setupHintKey: String
 }
 
 /// Capability flags that gate provider-specific features. Every gate in the
