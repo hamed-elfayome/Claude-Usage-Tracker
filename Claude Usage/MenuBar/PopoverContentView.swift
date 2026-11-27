@@ -937,8 +937,29 @@ struct SmartUsageDashboard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
+            // Providers that report more quotas than the session/weekly pair
+            // (Antigravity's model groups) list all of them; the pair then
+            // only drives the menu bar.
+            ForEach(usage.quotas) { quota in
+                UsageRow(
+                    title: quota.titleKey.localized,
+                    // Same labels as the session and All models rows of other providers.
+                    tag: quota.window == .weekly ? "menubar.weekly".localized : nil,
+                    subtitle: quota.window == .session ? "menubar.5_hour_window".localized : nil,
+                    usedPercentage: quota.usedPercentage,
+                    showRemaining: showRemainingPercentage,
+                    resetTime: quota.resetTime,
+                    periodDuration: quota.window == .session ? Constants.sessionWindow : Constants.weeklyWindow,
+                    showTimeMarker: showTimeMarker,
+                    showPaceMarker: showPaceMarker,
+                    usePaceColoring: usePaceColoring,
+                    excludeWeekends: quota.window == .weekly && excludeWeekendsFromWeeklyPace,
+                    timeDisplay: timeDisplay
+                )
+            }
+
             // Primary: Session Usage (absent on plans without a 5-hour window, e.g. Ultra)
-            if usage.hasSessionLimit {
+            if usage.quotas.isEmpty && usage.hasSessionLimit {
                 UsageRow(
                     title: (showRemainingPercentage ? "menubar.session_remaining" : "menubar.session_usage").localized,
                     subtitle: "menubar.5_hour_window".localized,
@@ -968,7 +989,7 @@ struct SmartUsageDashboard: View {
 
             // All Models (Weekly). Absent when the plan reports no limits at all,
             // as the free plan does (#312); a 0% bar there would look like a reading.
-            if usage.hasWeeklyLimit {
+            if usage.quotas.isEmpty && usage.hasWeeklyLimit {
                 UsageRow(
                     title: "menubar.all_models".localized,
                     tag: "menubar.weekly".localized,
@@ -983,7 +1004,7 @@ struct SmartUsageDashboard: View {
                     excludeWeekends: excludeWeekendsFromWeeklyPace,
                     timeDisplay: timeDisplay
                 )
-            } else if !usage.hasSessionLimit {
+            } else if usage.quotas.isEmpty && !usage.hasSessionLimit {
                 Text("popover.no_limits_reported".localized)
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)

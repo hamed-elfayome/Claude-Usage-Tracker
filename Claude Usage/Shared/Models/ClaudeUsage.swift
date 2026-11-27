@@ -66,6 +66,13 @@ struct ClaudeUsage: Codable, Equatable {
     var creditsBalance: Double?
     var creditsUnlimited: Bool?
 
+    /// Every quota the provider reports, in display order, for providers whose
+    /// account has more limits than the session/weekly pair that drives the
+    /// menu bar (e.g. Antigravity's per-model-group pools). When non-empty the
+    /// popover lists these instead of the session/weekly rows. Empty for
+    /// providers that report only the pair.
+    var quotas: [UsageQuota] = []
+
     // Metadata
     var lastUpdated: Date
     var userTimezone: TimeZone
@@ -127,6 +134,24 @@ struct ClaudeUsage: Codable, Equatable {
 
 }
 
+/// One quota window as the provider reports it, for the popover's full list
+/// (`ClaudeUsage.quotas`).
+struct UsageQuota: Codable, Equatable, Identifiable {
+    enum Window: String, Codable {
+        case session  // 5-hour rolling window
+        case weekly
+    }
+
+    /// The provider's id for the quota (e.g. agy's `3p-weekly`).
+    let id: String
+    /// Localization key of the quota's name (e.g. the model group).
+    let titleKey: String
+    let window: Window
+    let usedPercentage: Double
+    /// `nil` while the window has not started: no countdown is shown then.
+    let resetTime: Date?
+}
+
 /// Usage status level for color coding
 /// Thresholds depend on display mode (used vs remaining percentage)
 enum UsageStatusLevel {
@@ -157,6 +182,7 @@ extension ClaudeUsage {
         case overageBalance, overageBalanceCurrency
         case personalSpendUsed, personalSpendCurrency
         case planType, creditsBalance, creditsUnlimited
+        case quotas
         case lastUpdated, userTimezone
     }
 
@@ -194,6 +220,7 @@ extension ClaudeUsage {
             planType: try c.decodeIfPresent(String.self, forKey: .planType),
             creditsBalance: try c.decodeIfPresent(Double.self, forKey: .creditsBalance),
             creditsUnlimited: try c.decodeIfPresent(Bool.self, forKey: .creditsUnlimited),
+            quotas: (try? c.decodeIfPresent([UsageQuota].self, forKey: .quotas)) ?? [],
             lastUpdated: try c.decodeIfPresent(Date.self, forKey: .lastUpdated) ?? Date(),
             userTimezone: try c.decodeIfPresent(TimeZone.self, forKey: .userTimezone) ?? .current
         )
