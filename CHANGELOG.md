@@ -5,6 +5,13 @@ All notable changes to Claude Usage Tracker will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **Providers without a status page show no status** in the popover header, instead of Anthropic's.
+- **Setup wizard provider hints come from the provider registry**, so each provider card shows its own hint.
+
 ## [3.4.0] - 2026-11-13
 
 ### Added

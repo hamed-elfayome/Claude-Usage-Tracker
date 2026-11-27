@@ -66,11 +66,12 @@ class MenuBarManager: NSObject, ObservableObject {
     private let statusService = ClaudeStatusService()
 
     /// Status service for the active profile's provider (Statuspage-compatible
-    /// endpoints across providers; falls back to the Anthropic default).
-    private var statusServiceForActiveProfile: ClaudeStatusService {
-        guard let url = profileManager.activeProfile?.provider.descriptor.statusPageURL else {
-            return statusService
-        }
+    /// endpoints across providers; the Anthropic default when no profile is
+    /// active). `nil` when the provider publishes no status page, so another
+    /// provider's status is never shown for it.
+    private var statusServiceForActiveProfile: ClaudeStatusService? {
+        guard let profile = profileManager.activeProfile else { return statusService }
+        guard let url = profile.provider.descriptor.statusPageURL else { return nil }
         return ClaudeStatusService(statusURL: url)
     }
     private let dataStore = DataStore.shared
@@ -1026,7 +1027,7 @@ class MenuBarManager: NSObject, ObservableObject {
 
             // Fetch Claude status (same as single profile mode)
             do {
-                let newStatus = try await statusServiceForActiveProfile.fetchStatus()
+                let newStatus = try await statusServiceForActiveProfile?.fetchStatus() ?? .unknown
                 await MainActor.run {
                     self.status = newStatus
                 }
@@ -1243,7 +1244,8 @@ class MenuBarManager: NSObject, ObservableObject {
             // for Anthropic this is the same no-arg fetchUsageData() chain as before)
             let providerService = ProviderRegistry.service(for: profile.provider)
             async let usageResult = providerService.fetchUsageForActiveProfile(profile)
-            async let statusResult = statusServiceForActiveProfile.fetchStatus()
+            let profileStatusService = statusServiceForActiveProfile, noStatus = ClaudeStatus.unknown
+            async let statusResult = profileStatusService?.fetchStatus() ?? noStatus
 
             var usageSuccess = false
 

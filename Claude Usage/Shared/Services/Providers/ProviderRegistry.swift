@@ -36,7 +36,8 @@ enum ProviderRegistry {
             ),
             credentialSections: [.claudeAI, .apiConsole, .cliAccount],
             primaryWindowLabelKey: "usage.window.session",
-            secondaryWindowLabelKey: "usage.window.weekly"
+            secondaryWindowLabelKey: "usage.window.weekly",
+            setupHintKey: "setup.choose_provider.anthropic_hint"
         ),
         .codex: ProviderDescriptor(
             id: .codex,
@@ -56,7 +57,8 @@ enum ProviderRegistry {
             ),
             credentialSections: [.codexAccount],
             primaryWindowLabelKey: "usage.window.session",
-            secondaryWindowLabelKey: "usage.window.weekly"
+            secondaryWindowLabelKey: "usage.window.weekly",
+            setupHintKey: "setup.choose_provider.codex_hint"
         ),
     ]
 

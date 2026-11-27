@@ -548,24 +548,27 @@ struct SmartHeader: View {
             VStack(alignment: .leading, spacing: 2) {
                 ProfileSwitcherCompact(onManageProfiles: onManageProfiles)
 
-                // Status
-                Button(action: {
-                    if let url = URL(string: "https://status.claude.com") {
-                        NSWorkspace.shared.open(url)
-                    }
-                }) {
-                    HStack(spacing: 4) {
-                        Circle()
-                            .fill(statusColor)
-                            .frame(width: 6, height: 6)
+                // Status (hidden for providers without a status page, rather
+                // than showing another provider's status)
+                if profileManager.activeProfile.map({ $0.provider.descriptor.statusPageURL != nil }) ?? true {
+                    Button(action: {
+                        if let url = URL(string: "https://status.claude.com") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }) {
+                        HStack(spacing: 4) {
+                            Circle()
+                                .fill(statusColor)
+                                .frame(width: 6, height: 6)
 
-                        Text(status.description)
-                            .font(.system(size: 9, weight: .medium))
-                            .foregroundColor(.secondary)
+                            Text(status.description)
+                                .font(.system(size: 9, weight: .medium))
+                                .foregroundColor(.secondary)
+                        }
                     }
+                    .buttonStyle(.plain)
+                    .help("Click to open status.claude.com")
                 }
-                .buttonStyle(.plain)
-                .help("Click to open status.claude.com")
             }
 
             Spacer()

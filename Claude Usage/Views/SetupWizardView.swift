@@ -1068,9 +1068,7 @@ struct ProviderChoiceSetupView: View {
                                 ProviderLogoView(provider: provider, size: 32)
                                 Text(provider.descriptor.displayName)
                                     .font(.system(size: 14, weight: .semibold))
-                                Text(provider == .anthropic
-                                     ? "setup.choose_provider.anthropic_hint".localized
-                                     : "setup.choose_provider.codex_hint".localized)
+                                Text(provider.descriptor.setupHintKey.localized)
                                     .font(.system(size: 11))
                                     .foregroundColor(.secondary)
                                     .multilineTextAlignment(.center)
