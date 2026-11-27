@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Google Antigravity provider**: track Antigravity quota beside Claude and Codex. The app runs the signed-in Antigravity CLI (`agy --print /usage`, which uses no tokens) and stores no Google credential. The popover lists every quota group; each profile picks the group its menu bar shows: Claude & GPT models (5-hour and weekly) or Gemini models (weekly). Every Antigravity profile shares one `agy` call per refresh.
+
 ### Changed
 
 - **Providers without a status page show no status** in the popover header, instead of Anthropic's.

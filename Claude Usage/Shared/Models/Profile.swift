@@ -73,6 +73,10 @@ struct Profile: Codable, Identifiable, Equatable {
     /// means no target — the popover then shows the amount without a bar.
     var monthlySpendLimitCents: Double?
 
+    /// Antigravity only: which quota pool this profile shows. `nil` means
+    /// the default (`.thirdParty`, the pool with both a 5-hour and a weekly window).
+    var antigravityPool: AntigravityPool?
+
     // MARK: - Notification Settings (Per-Profile)
     var notificationSettings: NotificationSettings
 
@@ -106,6 +110,7 @@ struct Profile: Codable, Identifiable, Equatable {
         autoStartSessionEnabled: Bool = false,
         checkOverageLimitEnabled: Bool = true,
         monthlySpendLimitCents: Double? = nil,
+        antigravityPool: AntigravityPool? = nil,
         notificationSettings: NotificationSettings = NotificationSettings(),
         isSelectedForDisplay: Bool = true,
         createdAt: Date = Date(),
@@ -133,6 +138,7 @@ struct Profile: Codable, Identifiable, Equatable {
         self.autoStartSessionEnabled = autoStartSessionEnabled
         self.checkOverageLimitEnabled = checkOverageLimitEnabled
         self.monthlySpendLimitCents = monthlySpendLimitCents
+        self.antigravityPool = antigravityPool
         self.notificationSettings = notificationSettings
         self.isSelectedForDisplay = isSelectedForDisplay
         self.createdAt = createdAt
@@ -161,6 +167,7 @@ struct Profile: Codable, Identifiable, Equatable {
         case iconConfig
         case refreshInterval, autoStartSessionEnabled, checkOverageLimitEnabled
         case monthlySpendLimitCents
+        case antigravityPool
         case notificationSettings
         case isSelectedForDisplay
         case createdAt, lastUsedAt
@@ -198,6 +205,8 @@ struct Profile: Codable, Identifiable, Equatable {
         autoStartSessionEnabled = try c.decodeIfPresent(Bool.self, forKey: .autoStartSessionEnabled) ?? false
         checkOverageLimitEnabled = try c.decodeIfPresent(Bool.self, forKey: .checkOverageLimitEnabled) ?? true
         monthlySpendLimitCents = try c.decodeIfPresent(Double.self, forKey: .monthlySpendLimitCents)
+        // Unknown raw value (a future pool) or malformed → nil → default pool.
+        antigravityPool = (try? c.decodeIfPresent(AntigravityPool.self, forKey: .antigravityPool)) ?? nil
         notificationSettings = try c.decodeIfPresent(NotificationSettings.self, forKey: .notificationSettings) ?? NotificationSettings()
         isSelectedForDisplay = try c.decodeIfPresent(Bool.self, forKey: .isSelectedForDisplay) ?? true
         createdAt = try c.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date()
@@ -232,6 +241,7 @@ struct Profile: Codable, Identifiable, Equatable {
         try c.encode(autoStartSessionEnabled, forKey: .autoStartSessionEnabled)
         try c.encode(checkOverageLimitEnabled, forKey: .checkOverageLimitEnabled)
         try c.encodeIfPresent(monthlySpendLimitCents, forKey: .monthlySpendLimitCents)
+        try c.encodeIfPresent(antigravityPool, forKey: .antigravityPool)
         try c.encode(notificationSettings, forKey: .notificationSettings)
         try c.encode(isSelectedForDisplay, forKey: .isSelectedForDisplay)
         try c.encode(createdAt, forKey: .createdAt)
@@ -251,12 +261,15 @@ struct Profile: Codable, Identifiable, Equatable {
     /// Anthropic: Claude.ai, CLI OAuth, or API Console (system keychain fallback is
     /// handled in ClaudeAPIService.getAuthentication() during actual API calls).
     /// Codex: manually pasted credentials or a readable `~/.codex/auth.json`.
+    /// Antigravity: the `agy` CLI is installed (it owns its own Google login).
     var hasUsageCredentials: Bool {
         switch provider {
         case .anthropic:
             return hasClaudeAI || hasAPIConsole || hasValidCLIOAuth
         case .codex:
             return codexCredentialsJSON != nil || CodexAuthService.shared.authFileExists()
+        case .antigravity:
+            return AntigravityCLILocator.shared.cachedExecutable() != nil
         }
     }
 
@@ -272,6 +285,8 @@ struct Profile: Codable, Identifiable, Equatable {
             return hasClaudeAI || hasAPIConsole || cliCredentialsJSON != nil || customKeychainServiceName != nil
         case .codex:
             return codexCredentialsJSON != nil || CodexAuthService.shared.authFileExists()
+        case .antigravity:
+            return AntigravityCLILocator.shared.cachedExecutable() != nil
         }
     }
 }

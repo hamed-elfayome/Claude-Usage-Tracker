@@ -60,6 +60,28 @@ enum ProviderRegistry {
             secondaryWindowLabelKey: "usage.window.weekly",
             setupHintKey: "setup.choose_provider.codex_hint"
         ),
+        .antigravity: ProviderDescriptor(
+            id: .antigravity,
+            displayName: "Google Antigravity",
+            logoAssetName: "ProviderLogoAntigravity",
+            logoSystemSymbolFallback: "scope",
+            // Google publishes no Statuspage-compatible feed for Antigravity.
+            statusPageURL: nil,
+            capabilities: ProviderCapabilities(
+                tokenCounts: false,
+                perModelBreakdown: false,
+                consoleBilling: false,
+                cliAccountSync: false,
+                autoStartSession: false,
+                overageChecks: false,
+                personalSpend: false,
+                credits: false
+            ),
+            credentialSections: [.antigravityAccount],
+            primaryWindowLabelKey: "usage.window.session",
+            secondaryWindowLabelKey: "usage.window.weekly",
+            setupHintKey: "setup.choose_provider.antigravity_hint"
+        ),
     ]
 
     static func descriptor(for provider: Provider) -> ProviderDescriptor {
@@ -77,6 +99,8 @@ enum ProviderRegistry {
             return AnthropicUsageProvider.shared
         case .codex:
             return CodexUsageProvider.shared
+        case .antigravity:
+            return AntigravityUsageProvider.shared
         }
     }
 }

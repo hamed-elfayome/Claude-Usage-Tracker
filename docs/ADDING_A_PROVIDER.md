@@ -8,7 +8,10 @@ no core files (`MenuBarManager`, `ProfileManager`, `PopoverContentView`,
 `SetupWizardView`) should need editing.
 
 The reference implementation is Codex:
-`Shared/Services/Providers/Codex/`.
+`Shared/Services/Providers/Codex/`. For a provider read through its own CLI
+instead of an HTTP API, see Antigravity (`Shared/Services/Providers/Antigravity/`):
+a bounded subprocess runner, a binary locator, and one cached fetch shared by
+every profile of a single-login CLI.
 
 ## Data model contract
 
@@ -62,8 +65,8 @@ denominator every provider has):
    switch and list it in the descriptor's `credentialSections`.
 
 7. **Setup wizard** — the descriptor's `setupHintKey` (the line under the
-   provider card in `ProviderChoiceSetupView`) and a setup view modeled on
-   `CodexSetupView`.
+   provider card in `ProviderChoiceSetupView`), a `SetupMode` case routed in
+   `SetupWizardView`, and a setup view modeled on `CodexSetupView`.
 
 8. **Logo** — asset named per the descriptor's `logoAssetName` in
    Assets.xcassets (template rendering); the SF Symbol fallback covers the
@@ -79,6 +82,6 @@ denominator every provider has):
 ## What you should NOT need to touch
 
 `MenuBarManager`, `ProfileManager`, `PopoverContentView`, `SetupWizardView`
-(beyond the hint string), `UsageHistoryService`, `NotificationManager`,
+(beyond the setup-mode routing), `UsageHistoryService`, `NotificationManager`,
 `MenuBarIconRenderer`. If a change seems to require editing one of these,
 the right fix is usually a new capability flag, not a provider check.
